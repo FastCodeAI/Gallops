@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# Gallops site configuration.
+#
+# Copy this file to `gallops.toml` and edit the paths for YOUR machine.
+# `gallops.toml` is gitignored: it is the only file that knows where anything
+# lives, which is what lets the rest of the repo be identical at every site.
+#
+#   cp gallops.toml.example gallops.toml
+#   $EDITOR gallops.toml
+#
+# Set GALLOPS_CONFIG=/path/to/other.toml to use a different file, so one
+# checkout can serve several layouts.
+# ---------------------------------------------------------------------------
+
+# Free-form label for this machine. Keep it stable, and keep it the SAME string
+# paddock uses in its own paddock.toml -- results from the two repos end up in
+# one history and a mismatch makes them look like different sites.
+site = "CHANGEME-org-hostname"
+
+[roots]
+# Where checkpoints are written.
+#
+# **Point this at the same directory as paddock's [roots.weights].** That is the
+# whole mechanism by which paddock finds a model this repo trained: gallops
+# writes {weights}/<model>/<train_run>/step_<n>/, paddock's adapter reads it.
+# Neither repo learns the other's layout; they share one root.
+weights = "/path/to/weights"
+
+# Logs, metrics, sample dumps, anything large that is not a checkpoint. Gets big
+# fast. NOT tracked by git.
+runs = "/path/to/gallops-runs"
+
+# ---------------------------------------------------------------------------
+# Datasets. Declare only the ones you have.
+#
+# Use the same dataset NAMES paddock uses in its datasets.yaml -- nuscenes,
+# kitscenes, navsim. Those names are what a checkpoint's `trained_on` field
+# records, and what paddock cross-checks a benchmark against to decide whether a
+# row is contaminated. A name that does not match is a check that silently
+# cannot run.
+# ---------------------------------------------------------------------------
+
+# [datasets.nuscenes]
+# path = "/path/to/nuscenes"          # contains samples/, maps/, v1.0-trainval/
+# version = "v1.0-trainval"
+
+# [datasets.kitscenes]
+# A search path, fastest tier first.
+#
+# Note the tiers here are NOT necessarily nested -- see docs/data.md. A training
+# run must record the scene list it actually read, not the tier it read from.
+# tiers = [
+#     "/path/to/fast/nvme/kitscenes/data",
+#     "/path/to/bulk/hdd/kitscenes/data",
+#     "/path/to/archive/nas/kitscenes/data",
+# ]
+
+# [datasets.navsim]
+# path = "/path/to/navsim/dataset"
+# exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}

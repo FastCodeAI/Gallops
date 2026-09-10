@@ -1,0 +1,67 @@
+[project]
+name = "gallops"
+version = "0.1.0"
+description = "Training for driving policies. Scored by paddock; imported by nobody."
+requires-python = ">=3.11"
+readme = "README.md"
+license = "Apache-2.0"
+
+# Deliberately thin at the base. The training stack (torch, and whatever a
+# given architecture needs) is an optional extra, so that reading a checkpoint
+# sidecar, resolving site config, or running `make check` on a machine with no
+# GPU costs nothing. This is the same reasoning as paddock's thin core, applied
+# one repo over: the parts that must run everywhere should depend on nothing.
+dependencies = [
+    "PyYAML>=6.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# The actual training stack. Pinned loosely here; a training run records the
+# exact resolved versions in its own sidecar notes.
+train = [
+    "torch>=2.4",
+    "numpy>=1.24",
+    "pillow>=10.0",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    # Advisory only, matching paddock: `make typecheck` runs it, `make check`
+    # does not. A check that reddens unrelated work is one people learn to
+    # ignore, and this repo will carry unannotated research code too.
+    "mypy>=1.10",
+]
+
+[project.scripts]
+gallops = "gallops.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gallops"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+# No per-file-ignores. Paddock carries a migration backlog because 9k lines of
+# rescued code arrived at once; this repo starts empty, so there is nothing to
+# grandfather. Keep it that way -- new code is linted from the start.
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = false
+warn_unused_ignores = false
+mypy_path = "src"
+follow_imports = "silent"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

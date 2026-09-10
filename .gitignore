@@ -1,0 +1,19 @@
+# The only file that knows where anything lives on this machine.
+gallops.toml
+
+# Environments
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Training output. Checkpoints go to [roots.weights], logs to [roots.runs];
+# neither belongs in git. If you find yourself wanting to commit a checkpoint,
+# what you actually want is its sidecar -- see docs/checkpoints.md.
+runs/
+wandb/
+*.safetensors
+*.ckpt
+*.pt
