@@ -28,6 +28,11 @@ plausible-looking score.
 - neuroNCAP wants **exactly six** waypoints — it builds six timestamps and
   indexes them positionally, so a seventh is dropped and a fifth raises
   `IndexError`.
+- **Six is the closed-loop slice, not the model's output width.** NAVSIM's
+  converter builds eight poses at 0.5 s and *raises* rather than extrapolating,
+  so a model that plans 3 s is locked out of the highest-resolution benchmark
+  in the suite. Plan **eight** waypoints at `dt = 0.5 s`; closed loop takes the
+  first six and drops the rest.
 - An **all-zero trajectory is a commanded emergency stop**, not "no plan". A
   model that has not warmed up returns `constant_velocity(obs.speed)`. Zeros
   score as a deliberate brake, which on a collision-avoidance benchmark looks

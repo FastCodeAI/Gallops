@@ -172,6 +172,13 @@ Paddock sets `[gpu] serialize = true` for exactly this reason. **Nothing of
 training scale runs on this box as it stands.** Securing compute is a
 prerequisite, not a detail, and it has a long lead time.
 
+> **Re-measured since, and materially different:** 63 GB of VRAM free, SM at
+> 19%, 213 of 600 W, six other processes; 60 GiB of host RAM available. Swap is
+> still fully consumed and the box is still shared, so this headroom is not
+> something to design against — but "nothing of training scale runs on this box"
+> is no longer true as written. The binding constraint today is data, not
+> compute. See [architecture.md](architecture.md) §5.
+
 ### Data: almost none of it is training data
 
 | dataset | what we hold | usable for training? |
@@ -196,6 +203,9 @@ paddock (UniDriveVLA 8B, ReCogDrive-8B, Qwen3-VL-8B-Thinking, OpenREAD).
 ## What to build
 
 ### The shape the evidence argues for
+
+*Turned into a buildable design — with two of the choices below revised
+against measurements — in [architecture.md](architecture.md).*
 
 A **small camera-only policy, well under 1 B parameters, with structurally
 separate lateral and longitudinal heads, on a self-supervised video-pretrained

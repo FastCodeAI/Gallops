@@ -82,6 +82,7 @@ Four reasons, in increasing order of importance:
 | Doc | Read it when |
 |---|---|
 | [docs/STRATEGY.md](docs/STRATEGY.md) | **start here** — why this exists, what the evidence says, what to build |
+| [docs/architecture.md](docs/architecture.md) | designing or changing the model — what gallops-v0 is, and which choices are measured |
 | [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
