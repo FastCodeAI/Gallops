@@ -50,7 +50,9 @@ from gallops.config import SiteConfig
 MEET_S = 5.0
 DURATION_S = 8.0
 PRIMING_STEPS = 2
-TIME_STEP = 0.5
+TIME_STEP = 0.1  # match the benchmark: scenarios_10hz steps at 10 Hz, and the
+#: model is evaluated there, so training data collected at 2 Hz would be a
+#: different control problem (and five times fewer samples per episode).
 #: A crossing actor starts this far off the path and ends as far past it.
 SIDE_OFFSET_M = 18.0
 #: An oncoming actor starts this far beyond the meeting point.
@@ -58,6 +60,15 @@ FRONTAL_LEAD_M = 45.0
 #: Annotated for at least this long to be worth re-routing: a poorly observed
 #: instance is a poorly reconstructed one.
 MIN_ANNOTATIONS = 10
+#: The reconstruction's own threshold for "this actor moves", and so for whether
+#: it exists as something the renderer can place elsewhere.
+MIN_MOTION_STD_M = 0.50
+#: Classes that are BOTH reconstructible (`ALLOWED_RIGID_CLASSES` in nerfstudio's
+#: nuScenes dataparser) and scored as a collision by the benchmark
+#: (`COLLISION_CLASSES_TO_CHECK` in neuro_ncap/evaluation/collision.py). Bicycles
+#: and motorcycles qualify on both counts but are left out here: they are too
+#: narrow to make a lane-blocking hazard, so a swerve around one teaches little.
+HAZARD_CLASSES = ("vehicle.car", "vehicle.truck", "vehicle.bus", "vehicle.trailer")
 
 
 @dataclass
@@ -114,11 +125,16 @@ def load_scene(root: Path, name: str, tables: dict) -> Scene:
 
 
 def pick_actor(root: Path, scene: Scene, tables: dict) -> tuple[str, list[float]]:
-    """The best-observed car in the scene: most annotations wins.
+    """The best-observed MOVING car in the scene.
 
     A re-routed actor is rendered from what the reconstruction learned about it,
-    so the one seen most often is the one that will look like a car when it is
-    moved somewhere it never was.
+    so more observations is better. But the reconstruction keeps only actors that
+    move: `_traj_dict_to_list` in nerfstudio's nuScenes dataparser drops anything
+    whose position standard deviation stays under 0.50 m, and a dropped actor is
+    not in the renderer's list, so the engine dies with a bare KeyError on its
+    uuid. Ranking on observation count alone picks parked cars -- annotated in
+    every frame, never moving, and never reconstructed. So the same test is
+    applied here, and only then does the count decide.
     """
     categories = {c["token"]: c["name"] for c in tables["category"]}
     instance_category = {i["token"]: categories[i["category_token"]] for i in tables["instance"]}
@@ -127,7 +143,7 @@ def pick_actor(root: Path, scene: Scene, tables: dict) -> tuple[str, list[float]
     per_instance: dict[str, list[dict]] = {}
     for a in tables["sample_annotation"]:
         if a["sample_token"] in scene_samples and instance_category.get(a["instance_token"], "").startswith(
-            "vehicle.car"
+            HAZARD_CLASSES
         ):
             per_instance.setdefault(a["instance_token"], []).append(a)
 
@@ -135,10 +151,16 @@ def pick_actor(root: Path, scene: Scene, tables: dict) -> tuple[str, list[float]
     for uuid, anns in ranked:
         if len(anns) < MIN_ANNOTATIONS:
             break
+        track = np.array([a["translation"][:2] for a in anns], dtype=float)
+        if not (track.std(axis=0) > MIN_MOTION_STD_M).any():
+            continue  # parked: the reconstruction never learned to move it
         size = np.median([a["size"] for a in anns], axis=0)  # w, l, h
-        if 1.4 < size[0] < 2.4 and 3.0 < size[1] < 6.0:
+        if 1.4 < size[0] < 3.0 and 3.0 < size[1] < 13.0:
             return uuid, [round(float(v), 2) for v in size]
-    raise SystemExit(f"{scene.name}: no car annotated >= {MIN_ANNOTATIONS} times with plausible dimensions")
+    raise SystemExit(
+        f"{scene.name}: no moving {'/'.join(HAZARD_CLASSES)} annotated >= {MIN_ANNOTATIONS} times "
+        "with plausible dimensions -- the reconstruction can only re-route actors it saw move"
+    )
 
 
 def _arc(scene: Scene) -> np.ndarray:
