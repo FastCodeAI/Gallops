@@ -61,6 +61,19 @@ class TestGrader:
         beside["poses"] = [p.tolist() for p in beside["poses"]]
         assert grader.grade(straight(10.0), np.eye(4), 0, [beside]).clear
 
+    def test_deviation_measures_to_the_path_not_to_its_sample_points(self):
+        """Regression: nearest-VERTEX inflated a trajectory sitting on the path.
+
+        With nuScenes keyframes about 5 m apart it reported 2.00 m instead of 0,
+        which shrank the trust band and, worse, would have marked a candidate that
+        genuinely swerved as off-path -- penalising the behaviour being taught.
+        """
+        reference = np.column_stack([np.arange(0.0, 200.0, 5.0), np.zeros(40)])
+        on_path = np.column_stack([np.arange(1, 9) * 5.0, np.zeros(8), np.zeros(8)])
+        worst, off = grader.deviation(on_path, np.eye(4), reference)
+        assert worst < 0.05
+        assert off is None
+
     def test_straying_past_the_trust_band_is_graded_even_when_nothing_is_hit(self):
         wide = straight(10.0)
         wide[:, 1] = 6.0  # 6 m off a reference that runs dead straight
@@ -74,13 +87,66 @@ class TestDrawnTrajectories:
     def test_the_ramp_respects_the_lateral_acceleration_limit(self):
         times = np.linspace(0, 4, 400)
         for offset in (1.0, 2.5, 3.5):
-            ramp = draw.min_ramp_for(offset)
+            ramp = draw.min_ramp_for(offset, speed=12.0)
             lateral = draw.lateral_profile(offset, ramp, times)
             peak = np.abs(np.gradient(np.gradient(lateral, times), times)).max()
             assert peak <= draw.LATERAL_ACCEL_MAX * 1.05
 
     def test_a_wider_evasion_needs_a_longer_ramp(self):
-        assert draw.min_ramp_for(3.5) > draw.min_ramp_for(1.5)
+        assert draw.min_ramp_for(3.5, speed=10.0) > draw.min_ramp_for(1.5, speed=10.0)
+
+    def test_the_ramp_lengthens_as_speed_falls(self):
+        """Regression: the acceleration budget alone permits an undrivable turn.
+
+        |d2y/dt2| stays inside the budget at any speed, so a 2.45 m offset at
+        1.8 m/s was drawn at a 1.7 m turn radius and taught as a target.
+        """
+        slow = draw.min_ramp_for(2.45, speed=1.8)
+        fast = draw.min_ramp_for(2.45, speed=10.0)
+        assert slow > fast
+        assert slow > draw.HORIZON_S, "a manoeuvre this tight must be refused, not drawn"
+
+    def test_a_drawn_swerve_stays_within_the_minimum_turn_radius(self):
+        times = np.arange(1, draw.POSES + 1) * draw.WAYPOINT_DT
+        for speed in (3.0, 6.0, 12.0):
+            offset = 2.45
+            ramp = draw.min_ramp_for(offset, speed)
+            if ramp > draw.HORIZON_S:
+                continue
+            points = np.column_stack(
+                [draw.speed_profile(speed, 1.0, times), draw.lateral_profile(offset, ramp, times)]
+            )
+            radii = []
+            for i in range(1, len(points) - 1):
+                a, b, c = points[i - 1], points[i], points[i + 1]
+                # scalar cross product; np.cross on 2-vectors is deprecated
+                area = abs((b - a)[0] * (c - a)[1] - (b - a)[1] * (c - a)[0]) / 2
+                if area > 1e-9:
+                    sides = np.linalg.norm(b - a) * np.linalg.norm(c - b) * np.linalg.norm(c - a)
+                    radii.append(sides / (4 * area))
+            assert min(radii) >= draw.MIN_TURN_RADIUS_M * 0.9, f"{speed} m/s: {min(radii):.1f} m"
+
+    def test_a_commanded_stop_brakes_at_the_stated_rate(self):
+        """Regression: the drop was spread over the horizon, so BRAKE_MAX was dead.
+
+        A stop from 1.8 m/s came out as 0.45 m/s^2 over 3.60 m, and every tick
+        labelled "brake" would have taught a lift-off.
+        """
+        times = np.arange(1, draw.POSES + 1) * draw.WAYPOINT_DT
+        for speed in (1.8, 3.96, 10.0):
+            travelled = draw.speed_profile(speed, 0.0, times)[-1]
+            assert travelled == pytest.approx(speed**2 / (2 * draw.BRAKE_MAX), rel=0.02)
+
+    def test_least_impact_prefers_the_slower_contact_over_the_later_one(self):
+        """Regression: it maximised hit_at, a time at 0.1 s resolution.
+
+        When every option hit in the same tenth of a second it returned whichever
+        was first in the list, once choosing an undrivable swerve over a stop.
+        """
+        fast = np.column_stack([np.arange(1, 9) * 5.0, np.zeros(8), np.zeros(8)])
+        slow = np.column_stack([np.arange(1, 9) * 0.5, np.zeros(8), np.zeros(8)])
+        assert draw.speed_at(fast, 1.0) > draw.speed_at(slow, 1.0)
+        assert draw.speed_at(slow, 1.0) == pytest.approx(1.0, abs=0.05)
 
     def test_distances_are_measured_from_the_ego_not_the_path_start(self):
         """Regression: the nominal plan must start where the car is now.

@@ -129,6 +129,28 @@ def first_hit(waypoints: np.ndarray, ego2world: np.ndarray, t0: int, targets: li
     return None
 
 
+def _to_polyline(point: np.ndarray, polyline: np.ndarray) -> float:
+    """Shortest distance from a point to the polyline itself, not to its vertices.
+
+    Measuring to the nearest vertex inflates the answer by up to half the sample
+    spacing. The reference here is nuScenes keyframes about 5 m apart, so a
+    trajectory sitting exactly ON the logged path reported 2.00 m of deviation.
+
+    That was wrong twice over. It shrank the usable trust band from 4.0 m to about
+    3.2 m, and -- far worse -- the same `grade()` labels the model's own 32
+    candidates for the scorer, so a candidate that did swerve about 2.5 m would be
+    marked off-path. The defect penalised precisely the behaviour this exists to
+    teach. `draw.follow` already projected onto segments; this did not.
+    """
+    if len(polyline) < 2:
+        return float(np.min(np.linalg.norm(polyline - point, axis=1)))
+    segment = np.diff(polyline, axis=0)
+    length_sq = np.maximum((segment**2).sum(1), 1e-9)
+    along = np.clip(((point - polyline[:-1]) * segment).sum(1) / length_sq, 0.0, 1.0)
+    feet = polyline[:-1] + along[:, None] * segment
+    return float(np.min(np.linalg.norm(feet - point, axis=1)))
+
+
 def deviation(
     waypoints: np.ndarray, ego2world: np.ndarray, reference: np.ndarray
 ) -> tuple[float, float | None]:
@@ -143,7 +165,7 @@ def deviation(
     worst, first = 0.0, None
     for k, tau in enumerate(HORIZON):
         point = origin + rotation @ np.array([x[k], y[k]])
-        gap = float(np.min(np.linalg.norm(reference - point, axis=1)))
+        gap = _to_polyline(point, reference)
         worst = max(worst, gap)
         if first is None and gap > TRUST_BAND_M:
             first = float(tau)

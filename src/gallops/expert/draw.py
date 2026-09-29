@@ -43,6 +43,14 @@ LATERAL_ACCEL_MAX = 4.0
 BRAKE_MAX = 5.0
 #: Clearance added to the two half-widths before a pass counts as a pass.
 MARGIN_M = 0.5
+#: Tightest path a passenger car can actually follow. The lateral-acceleration
+#: budget does NOT imply this: |d2y/dt2| stays small at low speed however tight
+#: the geometry, so a 2.45 m offset drawn at 1.8 m/s came out at a 1.7 m radius --
+#: undrivable, and taught as a target. Curvature is the quantity to bound.
+MIN_TURN_RADIUS_M = 5.0
+#: The planning horizon: 8 poses at 0.5 s. A manoeuvre that cannot be drawn
+#: drivably inside it is not available at all.
+HORIZON_S = 4.0
 
 
 @dataclass(frozen=True)
@@ -121,21 +129,38 @@ def lateral_profile(offset: float, ramp_s: float, times: np.ndarray) -> np.ndarr
     return offset * (1 - np.cos(np.pi * phase)) / 2
 
 
-def min_ramp_for(offset: float, accel_max: float = LATERAL_ACCEL_MAX) -> float:
-    """Shortest ramp whose peak lateral acceleration stays within the limit.
+def min_ramp_for(
+    offset: float,
+    speed: float,
+    accel_max: float = LATERAL_ACCEL_MAX,
+    min_radius: float = MIN_TURN_RADIUS_M,
+) -> float:
+    """Shortest ramp the car could actually follow, under BOTH limits.
 
-    The cosine profile peaks at |offset| * pi^2 / (2 T^2), so T follows directly.
-    This is where "when to start" comes from: the ramp is as short as the tyres
-    allow, not as long as a table happened to list.
+    The cosine profile peaks at |offset| * pi^2 / (2 T^2), which gives the
+    acceleration bound directly. That alone is not enough: path curvature is
+    roughly that acceleration over speed squared, so the same manoeuvre at
+    walking pace demands a turn no car can make. Bounding curvature adds a term
+    that grows as speed falls, which is what "when to start" really depends on.
+
+    Returns the ramp; the caller checks it against the horizon, because at low
+    speed a wide offset simply is not available.
     """
-    return float(np.pi * np.sqrt(abs(offset) / (2 * max(accel_max, 1e-6))))
+    by_accel = np.pi * np.sqrt(abs(offset) / (2 * max(accel_max, 1e-6)))
+    by_curvature = (np.pi / max(speed, 0.1)) * np.sqrt(abs(offset) * min_radius / 2)
+    return float(max(by_accel, by_curvature))
 
 
-def speed_profile(speed: float, scale: float, times: np.ndarray) -> np.ndarray:
-    """Distance travelled by each time under a constant deceleration to `scale`."""
+def speed_profile(speed: float, scale: float, times: np.ndarray, decel: float = BRAKE_MAX) -> np.ndarray:
+    """Distance travelled by each time, decelerating AT `decel` to `scale * speed`.
+
+    The drop used to be spread across the whole horizon, which made BRAKE_MAX dead
+    below 20 m/s -- a commanded stop from 1.8 m/s came out as 0.45 m/s^2 over
+    3.60 m, where a real stop is 0.32 m. Every tick labelled "brake" would have
+    taught a lift-off. The rate is now the rate.
+    """
     target = speed * scale
-    decel = min(BRAKE_MAX, max((speed - target) / max(times[-1], 1e-6), 0.0))
-    if decel <= 0:
+    if speed <= target or decel <= 0:
         return speed * times
     stop_time = (speed - target) / decel
     ramp = np.minimum(times, stop_time)
@@ -161,6 +186,14 @@ def required_offset(nominal: np.ndarray, predicted: np.ndarray, actor_dims) -> t
         if abs(this) > abs(need):
             need, when = float(this), float(tau)
     return need, when
+
+
+def speed_at(waypoints: np.ndarray, tau: float) -> float:
+    """The plan's own speed at time `tau`, from the spacing of its waypoints."""
+    points = np.vstack([[0.0, 0.0], waypoints[:, :2]])
+    steps = np.linalg.norm(np.diff(points, axis=0), axis=1) / WAYPOINT_DT
+    stamps = np.arange(1, len(waypoints) + 1) * WAYPOINT_DT
+    return float(np.interp(tau, stamps, steps))
 
 
 def _plan_from(
@@ -210,7 +243,10 @@ def teach(
     attempts: list[Plan] = []
 
     def attempt(kind: str, scale: float, offset: float) -> bool:
-        waypoints = _plan_from(reference_ego, speed, scale, offset, min_ramp_for(offset) if offset else 1.0)
+        ramp = min_ramp_for(offset, speed) if offset else 1.0
+        if ramp > HORIZON_S:
+            return False  # no drivable way to reach that offset in the time available
+        waypoints = _plan_from(reference_ego, speed, scale, offset, ramp)
         attempts.append(Plan(waypoints, judge(waypoints), kind, float(offset), float(waypoints[5, 0])))
         return attempts[-1].clear
 
@@ -239,6 +275,17 @@ def teach(
     if clear:
         return max(clear, key=lambda a: a.progress_m)
     if attempts:
-        latest = max(attempts, key=lambda a: a.verdict.hit_at or 0.0)
-        return Plan(latest.waypoints, latest.verdict, "least-impact", latest.offset_m, latest.progress_m)
+        # Nothing avoids it, so take the lowest speed we can be going at contact.
+        # This used to maximise `hit_at`, which is a TIME at 0.1 s resolution and
+        # says nothing about speed -- when every attempt hit in the same tenth of
+        # a second it returned whichever happened to be first in the list, once
+        # preferring an undrivable swerve over a full stop. Later contact only
+        # breaks ties now.
+        gentlest = min(
+            attempts,
+            key=lambda a: (speed_at(a.waypoints, a.verdict.hit_at or 0.0), -(a.verdict.hit_at or 0.0)),
+        )
+        return Plan(
+            gentlest.waypoints, gentlest.verdict, "least-impact", gentlest.offset_m, gentlest.progress_m
+        )
     return Plan(nominal, verdict, "least-impact", 0.0, float(nominal[5, 0]))
