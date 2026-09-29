@@ -211,6 +211,7 @@ def teach(
     speed: float,
     reference_world: np.ndarray,
     targets: list[dict],
+    area=None,
 ) -> Plan:
     """The trajectory the model should have produced at this tick.
 
@@ -222,7 +223,7 @@ def teach(
     reference_ego = to_ego(reference, ego2world)
 
     def judge(waypoints):
-        return grade(waypoints, ego2world, t0, targets, reference)
+        return grade(waypoints, ego2world, t0, targets, reference, area)
 
     nominal = _plan_from(reference_ego, speed, 1.0, 0.0, 1.0)
     verdict = judge(nominal)
@@ -251,13 +252,24 @@ def teach(
         return attempts[-1].clear
 
     if need:
-        # Widen in half-metre steps: the prediction is approximate, so the first
-        # solve can fall just short of an actor that is not quite constant velocity.
-        for extra in (0.0, 0.5, 1.0, 1.5):
-            offset = need + np.sign(need) * extra
-            if abs(offset) > TRUST_BAND_M:
-                break
-            if attempt("swerve", 1.0, offset):
+        # Away from the actor first, then the other side. Trying only one side was
+        # fine while nothing knew where the road was; once it does, the natural
+        # escape is often blocked -- on a two-lane street with the ego in the
+        # right-hand lane, "away from the oncoming car" is the parked cars, and the
+        # empty oncoming carriageway is on the side the actor came from.
+        found = False
+        for direction in (np.sign(need), -np.sign(need)):
+            # Widen in half-metre steps: the prediction is approximate, so the
+            # first solve can fall just short of an actor that is not quite
+            # constant velocity.
+            for extra in (0.0, 0.5, 1.0, 1.5):
+                offset = direction * (abs(need) + extra)
+                if abs(offset) > TRUST_BAND_M:
+                    break
+                if attempt("swerve", 1.0, offset):
+                    found = True
+                    break
+            if found:
                 break
 
     if not any(a.clear for a in attempts):

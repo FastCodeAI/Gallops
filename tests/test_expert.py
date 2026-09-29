@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gallops.expert import draw, grader
+from gallops.expert import draw, drivable, grader
 
 
 def straight(speed: float, poses: int = 8, dt: float = 0.5) -> np.ndarray:
@@ -194,3 +194,62 @@ class TestDrawnTrajectories:
         }
         predicted = draw.predict_actor(actor, 0, grader.HORIZON)
         assert np.abs(predicted[:, 1]).max() < 1.0
+
+
+def a_road(width_m: float = 7.0, length_m: float = 200.0) -> drivable.DrivableArea:
+    """A straight drivable strip along +x, centred on y = 0."""
+    cell = drivable.CELL_M
+    origin = np.array([-20.0, -30.0])
+    cols = int(length_m / cell)
+    rows = int(60.0 / cell)
+    mask = np.zeros((rows, cols), dtype=bool)
+    ys = origin[1] + (np.arange(rows) + 0.5) * cell
+    mask[np.abs(ys) <= width_m / 2, :] = True
+    return drivable.DrivableArea(mask=mask, origin=origin, cell=cell, scene="test", location="test")
+
+
+class TestDrivableArea:
+    def test_the_road_contains_its_own_centreline_and_not_the_pavement(self):
+        area = a_road()
+        assert area.contains(np.array([[10.0, 0.0]]))[0]
+        assert not area.contains(np.array([[10.0, 9.0]]))[0]
+
+    def test_a_point_outside_the_raster_is_not_drivable(self):
+        """Leaving the window means leaving what this was built to answer for."""
+        assert not a_road().contains(np.array([[5000.0, 0.0]]))[0]
+
+    def test_a_swerve_off_the_road_is_graded_as_such(self):
+        area = a_road()
+        straight = np.column_stack([np.arange(1, 9) * 5.0, np.zeros(8), np.zeros(8)])
+        assert grader.grade(straight, np.eye(4), 0, [], None, area).clear
+        wide = straight.copy()
+        wide[:, 1] = 6.0  # onto the pavement of a 7 m road
+        verdict = grader.grade(wide, np.eye(4), 0, [], None, area)
+        assert not verdict.clear
+        assert verdict.off_road_at is not None
+
+    def test_the_teacher_swerves_the_other_way_when_the_near_side_is_blocked(self):
+        """Regression: it only ever tried the side away from the actor.
+
+        On a two-lane street with the ego in the right-hand lane, "away from the
+        oncoming car" is the parked cars, and the empty carriageway is on the
+        side the actor came from. Trying one side steered it off the road.
+        """
+        # a road drivable only to the LEFT of the ego
+        area = a_road(width_m=7.0)
+        shifted = drivable.DrivableArea(
+            mask=area.mask,
+            origin=area.origin + np.array([0.0, 2.5]),
+            cell=area.cell,
+            scene="test",
+            location="test",
+        )
+        reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200), np.zeros(200)])
+        blocker = actor_ahead(26.0)
+        blocker["poses"] = [np.array(p) for p in blocker["poses"]]
+        for pose in blocker["poses"]:
+            pose[1, 3] = -0.4  # slightly right, so "away" would be left... then flip
+        blocker["poses"] = [p.tolist() for p in blocker["poses"]]
+        plan = draw.teach(np.eye(4), 0, 9.0, reference, [blocker], area=shifted)
+        if plan.kind == "swerve":
+            assert plan.offset_m > 0, "the only drivable side is to the left"

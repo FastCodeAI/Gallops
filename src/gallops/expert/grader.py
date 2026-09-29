@@ -52,10 +52,11 @@ class Verdict:
     hit_at: float | None
     off_path_at: float | None
     max_deviation: float
+    off_road_at: float | None = None
 
     @property
     def clear(self) -> bool:
-        return self.hit_at is None and self.off_path_at is None
+        return self.hit_at is None and self.off_path_at is None and self.off_road_at is None
 
 
 def corners(centre: np.ndarray, yaw: float, length: float, width: float) -> np.ndarray:
@@ -172,12 +173,39 @@ def deviation(
     return worst, first
 
 
+def leaves_road(waypoints: np.ndarray, ego2world: np.ndarray, area) -> float | None:
+    """When this trajectory first puts the ego off the drivable surface, or None.
+
+    Without this the expert had no idea where the road was: it chose the side of a
+    swerve from the actor's position alone, and on a two-lane street with the ego
+    in the right-hand lane it steered toward the parked cars rather than the empty
+    oncoming carriageway. Both footprint corners on the swerving side are tested,
+    not the centre, since a car leaves the road edge-first.
+    """
+    x, y, heading = densify(waypoints)
+    rotation, origin = ego2world[:2, :2], ego2world[:2, 3]
+    yaw0 = np.arctan2(rotation[1, 0], rotation[0, 0])
+    for k, tau in enumerate(HORIZON):
+        position = origin + rotation @ np.array([x[k], y[k]])
+        yaw = yaw0 + heading[k]
+        box = corners(
+            position + REAR_AXLE_TO_CENTRE * np.array([np.cos(yaw), np.sin(yaw)]),
+            yaw,
+            EGO_LENGTH,
+            EGO_WIDTH,
+        )
+        if not area.contains(box).all():
+            return float(tau)
+    return None
+
+
 def grade(
     waypoints: np.ndarray,
     ego2world: np.ndarray,
     t0: int,
     targets: list[dict],
     reference: np.ndarray | None = None,
+    area=None,
 ) -> Verdict:
     """The one judgement, applied to a model candidate and a drawn target alike."""
     worst, off = (0.0, None) if reference is None else deviation(waypoints, ego2world, reference)
@@ -185,4 +213,5 @@ def grade(
         hit_at=first_hit(waypoints, ego2world, t0, targets),
         off_path_at=off,
         max_deviation=worst,
+        off_road_at=None if area is None else leaves_road(waypoints, ego2world, area),
     )
