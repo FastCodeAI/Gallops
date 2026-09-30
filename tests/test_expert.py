@@ -9,10 +9,12 @@ geometry of an overlap, and the physics of what gets drawn.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
-from gallops.expert import draw, drivable, grader
+from gallops.expert import draw, drivable, grader, rounds
 
 
 def straight(speed: float, poses: int = 8, dt: float = 0.5) -> np.ndarray:
@@ -253,3 +255,48 @@ class TestDrivableArea:
         plan = draw.teach(np.eye(4), 0, 9.0, reference, [blocker], area=shifted)
         if plan.kind == "swerve":
             assert plan.offset_m > 0, "the only drivable side is to the left"
+
+
+class TestRounds:
+    def _round(self, tmp_path, index, ticks):
+        labelled = tmp_path / f"labelled{index}"
+        labelled.mkdir(exist_ok=True)
+        (labelled / "ep.jsonl").write_text("\n".join("{}" for _ in range(ticks)) + "\n")
+        return rounds.Round(
+            index=index,
+            checkpoint=f"ckpt{index}",
+            collected=str(tmp_path),
+            labelled=str(labelled),
+            episodes=1,
+            ticks=ticks,
+        )
+
+    def test_the_training_set_aggregates_every_round(self, tmp_path):
+        """The whole point: training on the newest round alone is where DAgger
+        implementations oscillate."""
+        for index in (0, 1, 2):
+            rounds.record(tmp_path, self._round(tmp_path, index, 10 * (index + 1)))
+        assert len(rounds.training_set(tmp_path)) == 3
+        assert len(rounds.training_set(tmp_path, through=1)) == 2
+
+    def test_rounds_stay_ordered_and_a_rerun_replaces_rather_than_duplicates(self, tmp_path):
+        rounds.record(tmp_path, self._round(tmp_path, 1, 5))
+        rounds.record(tmp_path, self._round(tmp_path, 0, 5))
+        rounds.record(tmp_path, self._round(tmp_path, 1, 7))
+        got = rounds.load(tmp_path)
+        assert [r.index for r in got] == [0, 1]
+        assert got[1].ticks == 7
+
+    def test_next_index_follows_the_last(self, tmp_path):
+        assert rounds.next_index(tmp_path) == 0
+        rounds.record(tmp_path, self._round(tmp_path, 0, 3))
+        assert rounds.next_index(tmp_path) == 1
+
+    def test_a_stale_manifest_fails_loudly(self, tmp_path):
+        entry = self._round(tmp_path, 0, 3)
+        rounds.record(tmp_path, entry)
+        for item in Path(entry.labelled).iterdir():
+            item.unlink()
+        Path(entry.labelled).rmdir()
+        with pytest.raises(SystemExit):
+            rounds.training_set(tmp_path)
