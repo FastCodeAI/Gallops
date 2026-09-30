@@ -378,3 +378,34 @@ class TestScorerTargets:
         off_road = score_target(None, 2.0, distance, 10.0)
         collision = score_target(2.0, None, distance, 10.0)
         assert on_road > off_road > collision
+
+
+def test_the_trainer_and_dataset_still_fit_together():
+    """The methods the training loop calls exist, without importing torch.
+
+    `make check` runs in an environment that deliberately lacks torch, so nothing
+    here can construct a TickDataset -- which meant an edit could delete a method
+    it uses and the gate would stay green. It did: `batch` was dropped by a bad
+    replace and the run died eight minutes in, after the model had loaded.
+    Parsing the source costs nothing and closes that hole.
+    """
+    import ast
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[1] / "src" / "gallops" / "train"
+    tree = ast.parse((source / "swerve_data.py").read_text())
+    dataset = next(
+        node for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and node.name == "TickDataset"
+    )
+    methods = {n.name for n in dataset.body if isinstance(n, ast.FunctionDef)}
+    assert {"agent_input", "features", "batch", "build"} <= methods, methods
+
+    called = {
+        node.func.attr
+        for node in ast.walk(ast.parse((source / "swerve.py").read_text()))
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id in {"dataset", "validation"}
+    }
+    assert called <= methods, f"the trainer calls {called - methods}, which do not exist"

@@ -284,6 +284,32 @@ class TickDataset:
             for key, value in built.items()
         }
 
+    def batch(self, indices: list[int]):
+        """One batch of (features, expert target, ticks used).
+
+        The ticks are returned because a tick that cannot be rebuilt is skipped,
+        so the caller cannot assume the batch lines up with what it asked for --
+        and the referee has to grade the trajectories of the ticks that are
+        actually in the batch.
+        """
+        torch = self.torch
+        collected, targets, used = [], [], []
+        for index in indices:
+            tick = self.ticks[index]
+            built = self.features(tick)
+            if built is None:
+                continue
+            collected.append(built)
+            targets.append(np.asarray(tick["expert"], dtype=np.float32))
+            used.append(tick)
+        if not collected:
+            return None, None, []
+        merged = {}
+        for key in collected[0]:
+            values = [item[key] for item in collected]
+            merged[key] = torch.cat(values, dim=0) if torch.is_tensor(values[0]) else values[0]
+        return merged, torch.from_numpy(np.stack(targets)).to(self.device), used
+
 
 def verify_fast_path(dataset, ticks, torch, model=None) -> None:
     """The fast feature build must not change what the model computes.
