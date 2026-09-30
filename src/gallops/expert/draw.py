@@ -51,6 +51,18 @@ MIN_TURN_RADIUS_M = 5.0
 #: The planning horizon: 8 poses at 0.5 s. A manoeuvre that cannot be drawn
 #: drivably inside it is not available at all.
 HORIZON_S = 4.0
+#: When to begin, tried latest first. Holding the lane while the situation is
+#: still developing is what a driver does, and at 10 Hz it is also what keeps the
+#: car from committing to an evasion on a two-frame prediction.
+DELAYS_S = (2.0, 1.5, 1.0, 0.5, 0.0)
+#: How long to take crossing, tried gentlest first. `min_ramp_for` gives the
+#: shortest the car could survive; that is a limit, not a target.
+RAMPS_S = (3.0, 2.5, 2.0, 1.5, 1.0)
+#: How long the recovery takes once the hazard is behind.
+RETURN_S = 1.5
+#: A beat after passing before starting back, so the return does not clip the
+#: actor the swerve just avoided.
+RETURN_GAP_S = 0.3
 
 
 @dataclass(frozen=True)
@@ -123,10 +135,40 @@ def _trajectory(points: np.ndarray) -> np.ndarray:
     return np.column_stack([points, np.arctan2(steps[:, 1], steps[:, 0])])
 
 
-def lateral_profile(offset: float, ramp_s: float, times: np.ndarray) -> np.ndarray:
-    """A cosine ease to `offset`, complete at `ramp_s`, flat after."""
-    phase = np.clip(times / max(ramp_s, 1e-6), 0.0, 1.0)
-    return offset * (1 - np.cos(np.pi * phase)) / 2
+def ease(phase: np.ndarray) -> np.ndarray:
+    """A cosine S-curve on [0, 1], flat outside it. Zero slope at both ends."""
+    return (1 - np.cos(np.pi * np.clip(phase, 0.0, 1.0))) / 2
+
+
+def lateral_profile(
+    offset: float,
+    ramp_s: float,
+    times: np.ndarray,
+    delay_s: float = 0.0,
+    return_at: float | None = None,
+    return_s: float = 1.5,
+) -> np.ndarray:
+    """Hold the lane, ease across to `offset`, and -- if there is time -- ease back.
+
+    The first version of this started the lateral motion at t = 0 and stayed out
+    there: `phase = times / ramp`, "flat after". Every tick of a closed-loop run
+    then re-commanded "be fully displaced, as fast as the tyres allow, starting
+    now", and a model trained on it threw the wheel over at first sight and sat at
+    an angle to the road. Which is what it did.
+
+    Two things were missing and both are here. `delay_s` is when to begin, so the
+    plan can say "straight for another second, then go" -- the thing the module
+    docstring claimed to solve for and did not. `return_at` is the recovery, so a
+    plan ends parallel to the road instead of leaving the car committed sideways
+    in a state no training tick ever shows it getting out of.
+
+    The return is the same eased step subtracted, so the whole profile is two
+    S-curves and the lateral acceleration stays bounded by each phase's own ramp.
+    """
+    across = offset * ease((times - delay_s) / max(ramp_s, 1e-6))
+    if return_at is None:
+        return across
+    return across - offset * ease((times - return_at) / max(return_s, 1e-6))
 
 
 def min_ramp_for(
@@ -196,12 +238,44 @@ def speed_at(waypoints: np.ndarray, tau: float) -> float:
     return float(np.interp(tau, stamps, steps))
 
 
+def rejoin(reference_ego: np.ndarray, speed: float, times: np.ndarray) -> np.ndarray:
+    """The lateral correction that gets a displaced car back to the path drivably.
+
+    `follow` returns points ON the logged path. For a car sitting on that path
+    that is what you want. For a car three metres off it -- which is every tick
+    after an evasion -- it means the plan's first waypoint is three metres
+    sideways half a second from now: 24.5 m/s^2, six times this module's own
+    comfort limit, and the car cannot do it. Taught as a target it is worse than
+    useless, because it is the answer to "how do I get back in the lane" and it is
+    a lie.
+
+    Round 0 never exposed this: the released model does not swerve, so the ego was
+    always already on the path and the correction was always zero. The finetuned
+    model reaches these states constantly, and sits at an angle to the road with
+    nothing sensible to imitate. This eases the rejoin over a ramp the car can
+    actually follow instead.
+    """
+    drift = -float(follow(reference_ego, np.zeros(1))[0, 1])
+    if abs(drift) < 1e-3:
+        return np.zeros_like(times)
+    ramp = min(min_ramp_for(drift, speed), HORIZON_S)
+    return drift * (1 - ease(times / max(ramp, 1e-6)))
+
+
 def _plan_from(
-    reference_ego: np.ndarray, speed: float, scale: float, offset: float, ramp_s: float
+    reference_ego: np.ndarray,
+    speed: float,
+    scale: float,
+    offset: float,
+    ramp_s: float,
+    delay_s: float = 0.0,
+    return_at: float | None = None,
 ) -> np.ndarray:
     times = np.arange(1, POSES + 1) * WAYPOINT_DT
     points = follow(reference_ego, speed_profile(speed, scale, times))
-    points[:, 1] += lateral_profile(offset, ramp_s, times)
+    # Start from where the car actually is, not from where the path is.
+    points[:, 1] += rejoin(reference_ego, speed, times)
+    points[:, 1] += lateral_profile(offset, ramp_s, times, delay_s, return_at)
     return _trajectory(points)
 
 
@@ -251,6 +325,43 @@ def teach(
         attempts.append(Plan(waypoints, judge(waypoints), kind, float(offset), float(waypoints[5, 0])))
         return attempts[-1].clear
 
+    # When the ego draws level with the nearest hazard, from the same prediction
+    # the offset was sized against. After this the lane is free again and the plan
+    # should be coming back, not holding a metre of offset to the horizon.
+    passes_at = None
+    for actor in targets:
+        predicted = predict_actor(actor, t0, HORIZON)
+        if predicted is None:
+            continue
+        ahead = to_ego(predicted, ego2world)[:, 0] - nominal_dense[:, 0]
+        level = np.flatnonzero(ahead <= 0.0)
+        if len(level):
+            when = float(HORIZON[level[0]])
+            passes_at = when if passes_at is None else min(passes_at, when)
+
+    def refine(offset: float, scale: float) -> Plan | None:
+        """The same evasion, drawn as late and as gently as it can still be drawn.
+
+        Feasibility already said this offset works; this asks how little of it the
+        car has to do early. Latest start first, then longest ramp, and a recovery
+        whenever one fits -- so the answer degrades gracefully to the old
+        drive-hard-immediately plan only when the closing speed leaves nothing else.
+        """
+        floor = min_ramp_for(offset, speed)
+        for delay in DELAYS_S:
+            for ramp in RAMPS_S:
+                if ramp < floor or delay + ramp > HORIZON_S:
+                    continue
+                returns = [None]
+                if passes_at is not None and passes_at + RETURN_GAP_S + RETURN_S <= HORIZON_S:
+                    returns.insert(0, passes_at + RETURN_GAP_S)
+                for back in returns:
+                    waypoints = _plan_from(reference_ego, speed, scale, offset, ramp, delay, back)
+                    verdict = judge(waypoints)
+                    if verdict.clear:
+                        return Plan(waypoints, verdict, "swerve", float(offset), float(waypoints[5, 0]))
+        return None
+
     if need:
         # Away from the actor first, then the other side. Trying only one side was
         # fine while nothing knew where the road was; once it does, the natural
@@ -271,6 +382,12 @@ def teach(
                     break
             if found:
                 break
+        if found:
+            # Feasibility used the harshest drawing of this offset. Take the
+            # gentlest one that still clears, which is the target worth teaching.
+            smoother = refine(attempts[-1].offset_m, 1.0)
+            if smoother is not None:
+                return smoother
 
     if not any(a.clear for a in attempts):
         for scale in (0.6, 0.3, 0.0):

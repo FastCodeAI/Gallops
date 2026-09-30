@@ -409,3 +409,86 @@ def test_the_trainer_and_dataset_still_fit_together():
         and node.func.value.id in {"dataset", "validation"}
     }
     assert called <= methods, f"the trainer calls {called - methods}, which do not exist"
+
+
+class TestPlanShape:
+    """The drawn plan has to look like driving, not like a step input.
+
+    The first version started the lateral move at t=0 with the shortest ramp the
+    tyres allow and held the offset to the horizon. Trained on that, the model
+    threw the wheel over at first sight and sat at an angle to the road with no
+    idea how to come back -- visible in the neuroNCAP videos before it was visible
+    in any number.
+    """
+
+    def test_it_holds_the_lane_before_it_moves(self):
+        from gallops.expert.draw import lateral_profile
+
+        times = np.arange(1, 9) * 0.5
+        y = lateral_profile(3.0, ramp_s=1.5, times=times, delay_s=1.5)
+        assert abs(y[0]) < 1e-9, "moving during the first half second"
+        assert abs(y[1]) < 1e-9, "moving before the delay is up"
+        assert y[-1] == pytest.approx(3.0, abs=0.01), "never gets there"
+
+    def test_it_comes_back(self):
+        from gallops.expert.draw import lateral_profile
+
+        times = np.arange(1, 9) * 0.5
+        y = lateral_profile(3.0, ramp_s=1.0, times=times, delay_s=0.0, return_at=2.0, return_s=1.5)
+        assert max(y) == pytest.approx(3.0, abs=0.05), "never reaches the offset"
+        assert abs(y[-1]) < 0.15, f"ends {y[-1]:.2f} m off the lane instead of back in it"
+
+    def test_the_ease_is_gentle_at_both_ends(self):
+        """Zero slope entering and leaving, so there is no step in lateral speed."""
+        from gallops.expert.draw import ease
+
+        phase = np.linspace(0, 1, 101)
+        slope = np.gradient(ease(phase), phase)
+        assert abs(slope[0]) < 0.05 and abs(slope[-1]) < 0.05
+
+    def test_a_gentler_ramp_pulls_less_lateral_g(self):
+        from gallops.expert.draw import lateral_profile
+
+        times = np.linspace(0.1, 4.0, 40)
+        peaks = []
+        for ramp in (1.0, 2.0, 3.0):
+            y = lateral_profile(3.0, ramp_s=ramp, times=times)
+            peaks.append(np.abs(np.gradient(np.gradient(y, times), times)).max())
+        assert peaks[0] > peaks[1] > peaks[2], "a longer ramp must be gentler"
+
+    def test_an_urgent_evasion_still_starts_now(self):
+        """The delay is a preference, not a rule: with no time it must collapse to 0."""
+        from gallops.expert.draw import lateral_profile
+
+        times = np.arange(1, 9) * 0.5
+        y = lateral_profile(3.0, ramp_s=1.0, times=times, delay_s=0.0)
+        assert y[1] > 1.0, "not committed by 1 s when it needs to be"
+
+
+def test_a_displaced_car_is_given_a_drivable_way_back():
+    """`follow` returns points ON the logged path, so a plan for a car that is off
+    it used to start with a jump straight back -- 3 m sideways in half a second,
+    24.5 m/s^2, six times this module's own comfort limit. Round 0 never showed it
+    because the released model never leaves the lane; the finetuned one lives
+    there."""
+    from gallops.expert.draw import LATERAL_ACCEL_MAX, rejoin
+
+    times = np.arange(1, 9) * 0.5
+    # a straight path running 3 m to the ego's right, i.e. the car is 3 m left of it
+    path = np.column_stack([np.linspace(-20, 80, 200), np.full(200, -3.0)])
+
+    correction = rejoin(path, speed=10.0, times=times)
+    assert correction[0] == pytest.approx(3.0, abs=0.6), "does not start where the car is"
+    assert abs(correction[-1]) < 0.05, "never actually rejoins the path"
+
+    lateral = np.gradient(np.gradient(correction, times), times)
+    assert np.abs(lateral).max() < LATERAL_ACCEL_MAX * 1.5, "the rejoin is not drivable"
+
+
+def test_a_car_already_on_the_path_gets_no_correction():
+    """The common case must be untouched, or every round-0 label moves for nothing."""
+    from gallops.expert.draw import rejoin
+
+    times = np.arange(1, 9) * 0.5
+    path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
+    assert np.abs(rejoin(path, speed=10.0, times=times)).max() < 1e-3
