@@ -59,14 +59,29 @@ def git_sha(repo: Path) -> str:
         return "unknown"
 
 
-def load_ticks(labelled: Path) -> list[dict]:
-    """Every labelled tick that has a frame to read and an expert plan to copy."""
-    ticks = []
+def load_ticks(labelled: Path, blind: bool = False) -> list[dict]:
+    """Every labelled tick that has a frame to read and an expert plan to copy.
+
+    Reactive targets whose hazard sits outside the one camera's frame are dropped.
+    In the side scenarios the crossing car is at a median 43.5 deg off axis and the
+    half-FOV is 32.6 deg, so about 390 of the round-0 ticks would otherwise teach
+    an evasion of something invisible -- a mapping from "empty road" to "swerve
+    left", which is worse than no training at all. `label.py` records the verdict
+    per tick; this only honours it. `--keep-blind` restores them for a comparison.
+    """
+    ticks, dropped = [], 0
     for path in sorted(labelled.glob("*.jsonl")):
         for line in path.read_text().splitlines():
             record = json.loads(line)
-            if record.get("frame") and record.get("expert"):
-                ticks.append(record)
+            if not (record.get("frame") and record.get("expert")):
+                continue
+            # Older labels predate the visibility field; absent means unfiltered.
+            if not blind and record.get("usable_for_imitation", True) is False:
+                dropped += 1
+                continue
+            ticks.append(record)
+    if dropped:
+        print(f"  dropped {dropped} ticks that react to a hazard the camera cannot see")
     return ticks
 
 
@@ -135,6 +150,11 @@ def main() -> None:
     parser.add_argument("--held-out", default="0058", help="a whole scene kept back")
     parser.add_argument("--train-run", default="swerve-stageA-round0")
     parser.add_argument("--limit", type=int, default=0, help="a smoke run over N ticks")
+    parser.add_argument(
+        "--keep-blind",
+        action="store_true",
+        help="keep reactive ticks whose hazard is off-camera (for comparison only)",
+    )
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
@@ -152,7 +172,7 @@ def main() -> None:
     os.environ.setdefault("NUPLAN_MAP_VERSION", "nuplan-maps-v1.0")
     os.environ.setdefault("DRIVE_JEPA_MSDA", "auto")
 
-    ticks = load_ticks(args.labelled)
+    ticks = load_ticks(args.labelled, blind=args.keep_blind)
     if args.limit:
         ticks = ticks[: args.limit]
     train, val = split_by_scene(ticks, args.held_out)
@@ -245,6 +265,7 @@ def main() -> None:
                     "history": history,
                     "caveat": "round-0 data only, no navtrain replay: drift on ordinary "
                     "driving is expected and unmeasured here",
+                    "off_camera_targets": "kept" if args.keep_blind else "dropped",
                 },
             ),
         )

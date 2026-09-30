@@ -306,3 +306,29 @@ class TestRounds:
         Path(entry.labelled).rmdir()
         with pytest.raises(SystemExit):
             rounds.training_set(tmp_path)
+
+
+def test_hazard_in_frame_follows_the_one_camera_it_reads():
+    """A crossing car at 45 deg is outside CAM_FRONT; one dead ahead is not.
+
+    This is the whole reason side-scenario swerve targets are dropped from the
+    imitation loss: the model reads CAM_FRONT alone, and half that frame is
+    32.6 deg wide, so it never sees the car it would be taught to avoid.
+    """
+    from gallops.expert.label import hazard_bearing
+
+    ego2world = np.eye(4)
+
+    bearing, in_frame = hazard_bearing(ego2world, 0, [actor_ahead(20.0)])
+    assert bearing < 1.0
+    assert in_frame
+
+    # the same box swung out to the left, where a crossing actor actually appears
+    crossing = actor_ahead(14.0)
+    for pose in crossing["poses"]:
+        pose[1][3] = 14.0
+    bearing, in_frame = hazard_bearing(ego2world, 0, [crossing])
+    assert bearing > 40.0
+    assert not in_frame
+
+    assert hazard_bearing(ego2world, 0, []) is None

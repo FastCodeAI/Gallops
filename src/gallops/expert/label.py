@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -37,6 +38,18 @@ import numpy as np
 from .draw import teach
 from .drivable import DrivableArea
 from .grader import first_hit, grade
+
+#: Drive-JEPA reads one camera. Half-FOV 32.6 deg (nuScenes CAM_FRONT, fx 1252.8
+#: over 1600 px), mounted 1.72 m ahead of the rear axle. A target that REACTS to a
+#: hazard outside that frame is a target the model has no information to produce,
+#: so the record says whether it could see what it is being taught to avoid, and
+#: the trainer drops the reactive ones that could not. `continue` is exempt:
+#: carrying on is the right answer precisely when nothing is visible.
+CAMERA_HALF_FOV_DEG = 32.6
+CAMERA_AHEAD_M = 1.72
+#: Half a car's diagonal, so a hazard counts as visible if any corner is in frame.
+HAZARD_HALF_EXTENT_M = 2.4
+REACTIVE = ("swerve", "brake", "swerve+brake", "least-impact")
 
 
 def episode_dirs(collect: Path):
@@ -66,6 +79,30 @@ def match_dump(directory: Path, dumps: Path) -> list[dict] | None:
     return None
 
 
+def hazard_bearing(ego2world: np.ndarray, stamp: int, targets: list[dict]) -> tuple[float, bool] | None:
+    """How far off the camera's axis the nearest hazard sits, and whether it is in frame."""
+    from .grader import actor_at
+
+    rotation, origin = ego2world[:2, :2], ego2world[:2, 3]
+    nearest = None
+    for actor in targets:
+        state = actor_at(actor, stamp)
+        if state is None:
+            continue
+        relative = (state[0] - origin) @ rotation
+        if nearest is None or np.hypot(*relative) < np.hypot(*nearest):
+            nearest = relative
+    if nearest is None:
+        return None
+    x, y = nearest[0] - CAMERA_AHEAD_M, nearest[1]
+    distance = math.hypot(x, y)
+    if distance < 0.5:
+        return 0.0, True
+    bearing = abs(math.degrees(math.atan2(y, x)))
+    slack = math.degrees(math.atan2(HAZARD_HALF_EXTENT_M, distance))
+    return bearing, bool(bearing - slack <= CAMERA_HALF_FOV_DEG)
+
+
 def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
     actors = json.loads((directory / "actors.json").read_text())
     targets = [a for a in actors if a["is_target_actor"]]
@@ -88,6 +125,9 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
         graded = [grade(p, ego2world, stamp, targets, reference, area) for p in proposals]
         verdicts = [v.hit_at for v in graded]
         driven = first_hit(np.asarray(row["trajectory"]), ego2world, stamp, targets)
+        seen = hazard_bearing(ego2world, stamp, targets)
+        bearing, in_frame = seen if seen else (None, False)
+        usable = plan.kind not in REACTIVE or in_frame
         out.append(
             {
                 "episode": f"{directory.parent.name}/{directory.name}",
@@ -101,6 +141,11 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 "expert_kind": plan.kind,
                 "expert_clear": plan.clear,
                 "expert_offset_m": round(plan.offset_m, 3),
+                "hazard_bearing_deg": None if bearing is None else round(bearing, 1),
+                "hazard_in_frame": in_frame,
+                # False where the target reacts to something the one camera cannot
+                # see; the trainer drops these rather than teach a guess.
+                "usable_for_imitation": usable,
                 # what to grade: None means that candidate stays clear
                 "candidate_hits": verdicts,
                 "candidate_off_road": [v.off_road_at for v in graded],
@@ -129,6 +174,7 @@ def main() -> None:
     totals = {"episodes": 0, "ticks": 0, "expert_clear": 0, "driven_hits": 0, "rescued": 0, "no_frame": 0}
     totals["candidates_clear"] = 0
     totals["candidates"] = 0
+    totals["blind_reactive"] = 0
     kinds: dict[str, int] = {}
     unmatched = []
     for directory in episode_dirs(args.collect):
@@ -154,6 +200,7 @@ def main() -> None:
             totals["no_frame"] += record["frame"] is None
             totals["candidates"] += len(record["candidate_clear"])
             totals["candidates_clear"] += sum(record["candidate_clear"])
+            totals["blind_reactive"] += not record["usable_for_imitation"]
             kinds[record["expert_kind"]] = kinds.get(record["expert_kind"], 0) + 1
 
     ticks = max(totals["ticks"], 1)
@@ -164,6 +211,11 @@ def main() -> None:
     print(f"  ticks with no saved frame    {totals['no_frame']:5}  (unusable for training)")
     share = totals["candidates_clear"] / max(totals["candidates"], 1)
     print(f"  of the model's own candidates, {share:6.1%} are clear")
+    blind = totals["blind_reactive"]
+    print(
+        f"  reacting to a hazard the one camera cannot see: {blind} ticks "
+        f"({blind / ticks:.1%}) -- dropped from the imitation loss"
+    )
     print(f"  what the expert chose: {kinds}")
     if unmatched:
         print(f"  UNMATCHED episodes (no dump): {len(unmatched)}")
