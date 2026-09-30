@@ -134,6 +134,7 @@ class TickDataset:
         self._episodes: dict[str, dict] = {}
         self._bev_cache: dict[str, dict] = {}
         self._feature_builder = None
+        self._frames: dict[str, np.ndarray] = {}
 
     def __len__(self) -> int:
         return len(self.ticks)
@@ -151,7 +152,7 @@ class TickDataset:
             }
         return self._episodes[key]
 
-    def agent_input(self, tick: dict):
+    def agent_input(self, tick: dict, resized: bool = False):
         from navsim.common.dataclasses import AgentInput, Camera, Cameras, EgoStatus
         from PIL import Image
 
@@ -180,7 +181,14 @@ class TickDataset:
                     driving_command=np.array(COMMAND_ONE_HOT[int(tick["command"])], dtype=np.int64),
                 )
             )
-            image = np.asarray(Image.open(episode["frames"][stamp]).convert("RGB"))
+            # `resized` is the fast path: the model reads cam_f0 cropped to
+            # 512x256, so decode straight to that and never hold the full frame.
+            # The slow path keeps full resolution because `_get_bev_feature` needs
+            # it once per scene to produce lidar2img and img_shape.
+            if resized:
+                image = self.frame(episode["frames"][stamp])
+            else:
+                image = np.asarray(Image.open(episode["frames"][stamp]).convert("RGB"))
             blank = np.zeros_like(image)
             # neuroNCAP sends the REAL lidar-to-ego calibration, not identity --
             # the engine reads it from nuScenes (`get_lidar_calibration`). Assuming
@@ -216,6 +224,29 @@ class TickDataset:
             )
         return AgentInput(ego_statuses=statuses, cameras=cameras, lidars=[])
 
+    def frame(self, path) -> np.ndarray:
+        """One frame, cropped and resized exactly as the model consumes it.
+
+        The whole of a tick's remaining cost is here. Four full-size JPEGs are
+        decoded per tick, of which the model reads two, and it reads them at
+        512x256 after a 28-row crop -- 0.4 MB where the decode produced 4.3 MB.
+        Across 7,330 ticks nothing stays in the page cache, so the same frames are
+        decoded again every epoch.
+
+        Cached at the size the model wants: about 0.4 MB a frame, a few GB for the
+        whole round, and epochs after the first do no image work at all. The crop
+        and resize are the vendor's own, from `_get_camera_feature`, so
+        `verify_fast_path` compares the result against it tensor for tensor.
+        """
+        import cv2
+        from PIL import Image
+
+        key = str(path)
+        if key not in self._frames:
+            image = np.asarray(Image.open(path).convert("RGB"))
+            self._frames[key] = cv2.resize(image[28:-28], (512, 256))
+        return self._frames[key]
+
     def _builder(self):
         from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
         from navsim.agents.drive_jepa_perception_based.drive_jepa_features import (
@@ -245,15 +276,16 @@ class TickDataset:
         builder = self._builder()
         if not fast:
             return builder.compute_features(agent_input)
-        if scene not in self._bev_cache:
-            self._bev_cache[scene] = builder.compute_features(agent_input)
+        # Populated by `features` from a FULL-RESOLUTION input: img_shape is the
+        # padded frame size and lidar2img is divided by it in the encoder, so
+        # deriving either from the 512x256 crop silently moves every projection.
         cached = self._bev_cache[scene]
         built = {
             "camera_feature": cached["camera_feature"],
             "img_shape": cached["img_shape"],
             "lidar2img": cached["lidar2img"],
         }
-        built.update(builder._get_camera_feature(agent_input))
+        built.update(self.camera_feature(agent_input))
         # The one piece restated rather than imported, because the vendor builds
         # it inline inside compute_features: a per-frame concat of pose, velocity,
         # acceleration and the one-hot command. verify_fast_path compares it.
@@ -274,11 +306,32 @@ class TickDataset:
         )
         return built
 
+    def camera_feature(self, agent_input) -> dict:
+        """`camera_feature_1` and `camera_feature_2`, from the cache.
+
+        The vendor's `_get_camera_feature` crops and resizes the last two frames
+        every call; `frame()` has already done that once, so this is the same two
+        lines of ToTensor over cached arrays. Two tensors, two frames, same order.
+        """
+        from torchvision import transforms
+
+        to_tensor = transforms.ToTensor()
+        return {
+            "camera_feature_1": to_tensor(agent_input.cameras[-1].cam_f0.image),
+            "camera_feature_2": to_tensor(agent_input.cameras[-2].cam_f0.image),
+        }
+
     def features(self, tick: dict, fast: bool = True):
-        agent_input = self.agent_input(tick)
+        scene = self._episode(tick)["scene"]
+        if fast and scene not in self._bev_cache:
+            full = self.agent_input(tick, resized=False)
+            if full is None:
+                return None
+            self._bev_cache[scene] = self._builder().compute_features(full)
+        agent_input = self.agent_input(tick, resized=fast)
         if agent_input is None:
             return None
-        built = self.build(agent_input, self._episode(tick)["scene"], fast=fast)
+        built = self.build(agent_input, scene, fast=fast)
         return {
             key: (value.to(self.device)[None] if hasattr(value, "to") else value)
             for key, value in built.items()
