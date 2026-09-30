@@ -35,7 +35,8 @@ from pathlib import Path
 import numpy as np
 
 from .draw import teach
-from .grader import first_hit
+from .drivable import DrivableArea
+from .grader import first_hit, grade
 
 
 def episode_dirs(collect: Path):
@@ -65,7 +66,7 @@ def match_dump(directory: Path, dumps: Path) -> list[dict] | None:
     return None
 
 
-def label_episode(directory: Path, rows: list[dict]) -> list[dict]:
+def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
     actors = json.loads((directory / "actors.json").read_text())
     targets = [a for a in actors if a["is_target_actor"]]
     poses = json.loads((directory / "ego_poses.json").read_text())
@@ -79,9 +80,13 @@ def label_episode(directory: Path, rows: list[dict]) -> list[dict]:
         if str(stamp) not in poses:
             continue  # a priming call or the impact tick: no pose was logged
         ego2world = np.asarray(poses[str(stamp)])
-        plan = teach(ego2world, stamp, float(row["speed"]), reference, targets)
+        plan = teach(ego2world, stamp, float(row["speed"]), reference, targets, area=area)
         proposals = np.asarray(row["proposals"])
-        verdicts = [first_hit(p, ego2world, stamp, targets) for p in proposals]
+        # The scorer's labels come from the SAME judgement the expert was held to,
+        # the road included: a candidate that dodges onto the pavement is not a
+        # good option, and grading it clear would teach exactly that.
+        graded = [grade(p, ego2world, stamp, targets, reference, area) for p in proposals]
+        verdicts = [v.hit_at for v in graded]
         driven = first_hit(np.asarray(row["trajectory"]), ego2world, stamp, targets)
         out.append(
             {
@@ -98,6 +103,8 @@ def label_episode(directory: Path, rows: list[dict]) -> list[dict]:
                 "expert_offset_m": round(plan.offset_m, 3),
                 # what to grade: None means that candidate stays clear
                 "candidate_hits": verdicts,
+                "candidate_off_road": [v.off_road_at for v in graded],
+                "candidate_clear": [v.clear for v in graded],
                 "driven_hits": driven,
                 "pdm_score": row.get("pdm_score"),
             }
@@ -110,10 +117,18 @@ def main() -> None:
     parser.add_argument("--collect", type=Path, required=True)
     parser.add_argument("--dumps", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
+    areas: dict[str, DrivableArea] = {}
+    if args.drivable:
+        for path in sorted(args.drivable.glob("scene-*.npz")):
+            areas[path.stem.removeprefix("scene-")] = DrivableArea.load(path)
+        print(f"  drivable-area rasters for {len(areas)} scenes")
     totals = {"episodes": 0, "ticks": 0, "expert_clear": 0, "driven_hits": 0, "rescued": 0, "no_frame": 0}
+    totals["candidates_clear"] = 0
+    totals["candidates"] = 0
     kinds: dict[str, int] = {}
     unmatched = []
     for directory in episode_dirs(args.collect):
@@ -121,7 +136,9 @@ def main() -> None:
         if rows is None:
             unmatched.append(str(directory))
             continue
-        labelled = label_episode(directory, rows)
+        # "frontal-0075/run_3" -> the raster built for scene-0075
+        scene = directory.parent.name.rsplit("-", 1)[-1]
+        labelled = label_episode(directory, rows, areas.get(scene))
         if not labelled:
             continue
         name = f"{directory.parent.name}__{directory.name}.jsonl"
@@ -135,6 +152,8 @@ def main() -> None:
             totals["driven_hits"] += record["driven_hits"] is not None
             totals["rescued"] += record["driven_hits"] is not None and record["expert_clear"]
             totals["no_frame"] += record["frame"] is None
+            totals["candidates"] += len(record["candidate_clear"])
+            totals["candidates_clear"] += sum(record["candidate_clear"])
             kinds[record["expert_kind"]] = kinds.get(record["expert_kind"], 0) + 1
 
     ticks = max(totals["ticks"], 1)
@@ -143,6 +162,8 @@ def main() -> None:
     print(f"  the expert finds a clear plan{totals['expert_clear'] / ticks:6.1%}")
     print(f"  it rescues                   {totals['rescued']:5} of {totals['driven_hits']} hitting ticks")
     print(f"  ticks with no saved frame    {totals['no_frame']:5}  (unusable for training)")
+    share = totals["candidates_clear"] / max(totals["candidates"], 1)
+    print(f"  of the model's own candidates, {share:6.1%} are clear")
     print(f"  what the expert chose: {kinds}")
     if unmatched:
         print(f"  UNMATCHED episodes (no dump): {len(unmatched)}")

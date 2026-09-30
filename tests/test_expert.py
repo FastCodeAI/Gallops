@@ -76,6 +76,12 @@ class TestGrader:
         assert worst < 0.05
         assert off is None
 
+    def test_a_three_column_reference_is_accepted(self):
+        """The logged route is stored as (x, y, z); `grade` may be called with it."""
+        reference = np.column_stack([np.arange(0.0, 200.0, 5.0), np.zeros(40), np.full(40, 1.2)])
+        on_path = np.column_stack([np.arange(1, 9) * 5.0, np.zeros(8), np.zeros(8)])
+        assert grader.grade(on_path, np.eye(4), 0, [], reference).clear
+
     def test_straying_past_the_trust_band_is_graded_even_when_nothing_is_hit(self):
         wide = straight(10.0)
         wide[:, 1] = 6.0  # 6 m off a reference that runs dead straight

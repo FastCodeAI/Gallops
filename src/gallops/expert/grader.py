@@ -162,6 +162,9 @@ def deviation(
     beside the collision rather than folded into the teacher's preferences.
     """
     x, y, _ = densify(waypoints)
+    # The logged route is stored as (x, y, z); everything here is in the plane.
+    # `teach` sliced it before calling, a caller reaching `grade` directly did not.
+    reference = np.asarray(reference)[:, :2]
     rotation, origin = ego2world[:2, :2], ego2world[:2, 3]
     worst, first = 0.0, None
     for k, tau in enumerate(HORIZON):
