@@ -14,7 +14,17 @@ Three numbers per checkpoint, on a scene held out of training:
 
     proposal reach   max |y| over the 32 x 8 poses -- what the refiner can offer
     selected reach   max |y| of the one the scorer picks -- what would be DRIVEN
+    expert reach     max |y| of the plan it is being taught, which is the only
+                     honest thing to compare the selected reach against
     escape rate      is any of the 32 clear of the hazard and on the road
+
+**Compare against the expert's geometry, not against zero.** An earlier version
+reported `expert_offset_m`, the offset the ladder COMMANDED, which is 0 for
+`continue` by construction. That is not the shape of the plan: scene 0053 curves,
+so a correct `continue` plan there sweeps 1.93 m sideways in the ego frame while
+scene 0075, which is straight, sweeps 0.17 m. Read against a constant 0 the first
+looks like a model drifting badly and the second like one behaving; both readings
+are artefacts of the wrong baseline. This cost a wrong diagnosis once already.
 
 The gap between the first two is the stage B case: if the refiner offers an escape
 and the frozen scorer keeps choosing a straight line, the scorer is what to train
@@ -74,6 +84,7 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
                         "selected_reach": float(np.abs(selected[offset][:, 1]).max()),
                         "escape": any(v.clear for v in verdicts),
                         "expert_offset": abs(tick["expert_offset_m"]),
+                        "expert_reach": float(np.abs(np.asarray(tick["expert"])[:, 1]).max()),
                     }
                 )
     return {"rows": rows}
@@ -83,16 +94,17 @@ def report(name: str, rows: list[dict]) -> None:
     swerve = [r for r in rows if r["kind"] == "swerve"]
     carry_on = [r for r in rows if r["kind"] == "continue"]
     print(f"\n  {name}")
-    print(f"    {'ticks':<10}{'n':>5}{'proposals':>11}{'selected':>10}{'escape':>9}{'expert':>9}")
+    print(f"    {'ticks':<10}{'n':>5}{'proposals':>11}{'selected':>10}{'expert':>9}{'gap':>8}{'escape':>9}")
     for label, group in (("swerve", swerve), ("continue", carry_on), ("all", rows)):
         if not group:
             continue
+        selected = np.median([r["selected_reach"] for r in group])
+        expert = np.median([r.get("expert_reach", float("nan")) for r in group])
         print(
             f"    {label:<10}{len(group):>5}"
             f"{np.median([r['proposal_reach'] for r in group]):>11.2f}"
-            f"{np.median([r['selected_reach'] for r in group]):>10.2f}"
+            f"{selected:>10.2f}{expert:>9.2f}{selected - expert:>+8.2f}"
             f"{np.mean([r['escape'] for r in group]):>9.0%}"
-            f"{np.median([r['expert_offset'] for r in group]):>9.2f}"
         )
 
 
