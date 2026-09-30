@@ -94,6 +94,29 @@ def _quat(q) -> np.ndarray:
     )
 
 
+def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
+    """The actors, pose and map a tick's trajectories are graded against.
+
+    One definition, used by the trainer and by the reach measurement, so a change
+    to how a proposal is judged cannot land in one and not the other.
+    """
+    from gallops.expert.drivable import DrivableArea
+
+    directory = Path(tick["frame"]).parent.parent
+    poses = json.loads((directory / "ego_poses.json").read_text())
+    actors = json.loads((directory / "actors.json").read_text())
+    area = None
+    if drivable:
+        path = Path(drivable) / f"scene-{directory.parent.name.rsplit('-', 1)[-1]}.npz"
+        if path.exists():
+            area = DrivableArea.load(path)
+    return (
+        np.asarray(poses[str(int(tick["timestamp"]))]),
+        [a for a in actors if a["is_target_actor"]],
+        area,
+    )
+
+
 class TickDataset:
     """Labelled ticks, rebuilt into the AgentInput the model consumes."""
 
@@ -109,6 +132,8 @@ class TickDataset:
             nuscenes_root = SiteConfig.load().resolve("{data.nuscenes}")
         self.nuscenes_root = str(nuscenes_root)
         self._episodes: dict[str, dict] = {}
+        self._bev_cache: dict[str, dict] = {}
+        self._feature_builder = None
 
     def __len__(self) -> int:
         return len(self.ticks)
@@ -191,36 +216,108 @@ class TickDataset:
             )
         return AgentInput(ego_statuses=statuses, cameras=cameras, lidars=[])
 
-    def features(self, tick: dict):
+    def _builder(self):
         from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
         from navsim.agents.drive_jepa_perception_based.drive_jepa_features import (
             DriveJEPAFeatureBuilder,
         )
 
+        if self._feature_builder is None:
+            self._feature_builder = DriveJEPAFeatureBuilder(DriveJEPAConfig())
+        return self._feature_builder
+
+    def build(self, agent_input, scene: str, fast: bool = True) -> dict:
+        """The model's feature dict, without rebuilding what cannot have changed.
+
+        `_get_bev_feature` casts all four camera images to float32, normalises,
+        rescales and stacks them -- about 1.2 s a tick, and the four-view tensor
+        it produces is read nowhere: the encoder takes `lidar2img` and `img_shape`
+        out of that dict and the model builds its own input from cam_f0 alone.
+        Worse, three of the four images are the blanks that exist only to hold the
+        projection ordering, so most of that second is spent normalising zeros.
+
+        `lidar2img` and `img_shape` depend on the scene's calibration and the
+        frame size, neither of which varies within a scene, so the slow path runs
+        once per scene and every later tick reuses it. `verify_fast_path` checks
+        the two agree, and the fidelity check against a recorded dump is what says
+        the whole reconstruction is faithful in the first place.
+        """
+        builder = self._builder()
+        if not fast:
+            return builder.compute_features(agent_input)
+        if scene not in self._bev_cache:
+            self._bev_cache[scene] = builder.compute_features(agent_input)
+        cached = self._bev_cache[scene]
+        built = {
+            "camera_feature": cached["camera_feature"],
+            "img_shape": cached["img_shape"],
+            "lidar2img": cached["lidar2img"],
+        }
+        built.update(builder._get_camera_feature(agent_input))
+        # The one piece restated rather than imported, because the vendor builds
+        # it inline inside compute_features: a per-frame concat of pose, velocity,
+        # acceleration and the one-hot command. verify_fast_path compares it.
+        built["ego_status"] = self.torch.stack(
+            [
+                self.torch.cat(
+                    [
+                        self.torch.tensor(status.ego_pose, dtype=self.torch.float32),
+                        self.torch.tensor(status.ego_velocity, dtype=self.torch.float32),
+                        self.torch.tensor(status.ego_acceleration, dtype=self.torch.float32),
+                        self.torch.tensor(status.driving_command, dtype=self.torch.float32),
+                    ],
+                    dim=-1,
+                )
+                for status in agent_input.ego_statuses
+                if status is not None
+            ]
+        )
+        return built
+
+    def features(self, tick: dict, fast: bool = True):
         agent_input = self.agent_input(tick)
         if agent_input is None:
             return None
-        built = DriveJEPAFeatureBuilder(DriveJEPAConfig()).compute_features(agent_input)
+        built = self.build(agent_input, self._episode(tick)["scene"], fast=fast)
         return {
             key: (value.to(self.device)[None] if hasattr(value, "to") else value)
             for key, value in built.items()
         }
 
-    def batch(self, indices: list[int]):
-        """One batch of (features, expert target). Ticks that cannot be rebuilt are skipped."""
-        torch = self.torch
-        collected, targets = [], []
-        for index in indices:
-            tick = self.ticks[index]
-            built = self.features(tick)
-            if built is None:
+
+def verify_fast_path(dataset, ticks, torch, model=None) -> None:
+    """The fast feature build must not change what the model computes.
+
+    An optimisation that shifts the model's input by a hair is the worst kind of
+    bug here: it trains fine and the numbers are quietly about something else.
+
+    Every key the encoder reads is compared exactly. `camera_feature` is the one
+    that legitimately differs -- it is the four-view tensor the fast path reuses
+    from another tick -- and rather than assert it is unused, passing a `model`
+    proves it: the 32 proposals must come out bit-identical either way.
+    """
+    reused = "camera_feature"
+    for tick in ticks:
+        slow = dataset.features(tick, fast=False)
+        fast = dataset.features(tick, fast=True)
+        assert set(slow) == set(fast), f"keys differ: {set(slow) ^ set(fast)}"
+        for key in slow:
+            if key == reused or not torch.is_tensor(slow[key]):
                 continue
-            collected.append(built)
-            targets.append(np.asarray(tick["expert"], dtype=np.float32))
-        if not collected:
-            return None, None
-        merged = {}
-        for key in collected[0]:
-            values = [item[key] for item in collected]
-            merged[key] = torch.cat(values, dim=0) if torch.is_tensor(values[0]) else values[0]
-        return merged, torch.from_numpy(np.stack(targets)).to(self.device)
+            if not torch.equal(slow[key], fast[key]):
+                worst = (slow[key].float() - fast[key].float()).abs().max()
+                raise SystemExit(f"{key} differs by up to {float(worst):.3e}")
+    print(f"  every key the encoder reads matches exactly on {len(ticks)} ticks")
+
+    if model is None:
+        print(f"  NOT checked: that {reused} is unused -- pass a model to prove it")
+        return
+    model.eval()
+    with torch.no_grad():
+        for tick in ticks:
+            slow = model(dataset.features(tick, fast=False))["proposals"]
+            fast = model(dataset.features(tick, fast=True))["proposals"]
+            worst = float((slow - fast).abs().max())
+            if worst > 0:
+                raise SystemExit(f"the 32 proposals move by {worst:.3e}: {reused} IS read")
+    print(f"  and the 32 proposals are bit-identical, so {reused} is genuinely unread")

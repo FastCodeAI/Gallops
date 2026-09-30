@@ -1,17 +1,30 @@
-"""Stage A: teach Drive-JEPA's refiner to propose a sideways plan at all.
+"""Teach Drive-JEPA to propose a sideways plan AND to rank it above driving into
+something -- both heads at once, because separating them did not work.
 
-Its scorer refuses a swerve when handed one, and its refiner never offers one --
-the widest of its 32 candidates reaches 0.70 m on a frontal tick. Both halves need
-training, and the two are taken one at a time so each ends on a measurement:
+**What the first attempt measured.** Training the refiner alone, behind a frozen
+scorer, moved the proposals: the widest of the 32 went from 0.70 m to over 5 m
+sideways. It also broke the model. On neuroNCAP scene 0103 the released model
+scores 5.0 ten times out of ten on the stationary and side scenarios; after that
+finetune it scored 1.09 and 0.68 and hit the obstacle in every run, while the
+frontal case it was built for got no better. The run is kept as
+`swerve-stageA-round0-seen` and the numbers in ops/dj_train/reach.json.
 
-    stage A  train the refiner, scorer frozen   -> do the 32 now reach past 0.70 m?
-    stage B  freeze the refiner, train the scorer -> does it rank clear above hitting?
+Two things caused it, and both are fixed here rather than worked around:
 
-This is stage A. The loss is the vendor's own shape (`trajectory_loss_anchors` in
-`drive_jepa_agent.py`): the L1 distance from the target to the CLOSEST of the 32
-proposals. Winner-takes-all is the whole reason this can work -- it pulls one
-proposal toward the expert's evasion without collapsing the other 31 onto it, so
-the model keeps proposing the ordinary plans it already gets right.
+1. **Half a loss.** The trainer used only the winner-takes-all term of the
+   vendor's `trajectory_loss_anchors`. The refiner is ONE module applied to all
+   32 proposals and reapplied four times, so moving the winner moves every
+   proposal, and the missing anchor term is what holds them to a vocabulary of
+   plausible plans. See `losses.py`, which restores it.
+2. **A frozen scorer ranking proposals it had never seen.** It was calibrated on
+   the released proposal distribution; once that distribution moved, its ranking
+   stopped meaning anything, and it picked a drifted plan. So the scorer trains
+   too, on soft targets from the same grader the expert is held to.
+
+The two are trained jointly with a stop-gradient between them, which is what the
+vendor does: `compute_score(targets, proposals.detach())` and then
+`proposals = proposals.detach()` before the trajectory loss. The scorer learns to
+rank the proposals the refiner currently makes; it never pulls the refiner around.
 
 **Almost nothing moves.** The V-JEPA encoder is 97.7% of the parameters and the
 earlier probe showed obstacles on the ego's path are already legible in what it
@@ -42,9 +55,14 @@ import numpy as np
 
 from gallops import checkpoint as sidecar
 from gallops.config import SiteConfig
+from gallops.expert.grader import grade
+from gallops.train.losses import score_target, scorer_loss, trajectory_loss, travelled
+from gallops.train.swerve_data import episode_context
 
 #: Only these move. Everything else, the encoder above all, is frozen.
-TRAINABLE = ("_trajectory_head", "init_feature", "hist_encoding")
+#: `scorer` is the addition the first run's failure argued for: 4.70 M more, and
+#: still under 3% of the model.
+TRAINABLE = ("_trajectory_head", "init_feature", "hist_encoding", "scorer")
 
 
 def git_sha(repo: Path) -> str:
@@ -132,13 +150,105 @@ def build_model(checkpoint_path: str, device: str, repo: str | None = None):
     return agent, model, torch
 
 
-def min_over_proposals(proposals, target, torch):
-    """The vendor's winner-takes-all: distance to the CLOSEST of the 32.
+class Referee:
+    """Grades trajectories for the scorer's targets, and picks each tick's anchors.
 
-    Anything that averages over the 32 instead would drag every proposal toward
-    the same plan and destroy the diversity the scorer needs to choose from.
+    Both jobs need the same episode context, and both are pure numpy, so they are
+    cached together: the anchor set for a tick never changes, and the episode's
+    actors and map are read once however many epochs run.
     """
-    return torch.linalg.norm(proposals - target[:, None], dim=-1, ord=1).mean(-1).amin(1).mean()
+
+    def __init__(self, anchors, drivable=None, per_tick: int = 32, seed: int = 0):
+        self.anchors = np.asarray(anchors)
+        self.drivable = drivable
+        self.per_tick = per_tick
+        self.random = np.random.default_rng(seed)
+        self._context: dict[str, tuple] = {}
+        self._anchor_cache: dict[tuple, np.ndarray] = {}
+
+    def context(self, tick: dict):
+        key = str(Path(tick["frame"]).parent.parent)
+        if key not in self._context:
+            self._context[key] = episode_context(tick, self.drivable)
+        return self._context[key]
+
+    def good_anchors(self, tick: dict) -> np.ndarray:
+        """A sample of anchors that neither hit anything nor leave the road here.
+
+        The vendor gets this set from the PDM simulator over a metric cache we do
+        not have for these scenes, so it comes from the grader instead. Sampled
+        rather than exhaustive: 8,192 anchors graded per tick would cost more than
+        the training step it regularises, and the term only needs a few.
+        """
+        key = (str(Path(tick["frame"]).parent.parent), int(tick["timestamp"]))
+        if key not in self._anchor_cache:
+            ego2world, targets, area = self.context(tick)
+            stamp = int(tick["timestamp"])
+            indices = self.random.choice(len(self.anchors), size=self.per_tick, replace=False)
+            clear = [
+                self.anchors[i]
+                for i in indices
+                if grade(self.anchors[i], ego2world, stamp, targets, None, area).clear
+            ]
+            self._anchor_cache[key] = np.asarray(clear) if clear else np.empty((0, 8, 3))
+        return self._anchor_cache[key]
+
+    def targets(self, tick: dict, proposals: np.ndarray) -> np.ndarray:
+        """A soft score in [0, 1] for each of the 32 proposals as they are now.
+
+        Recomputed every step, because the proposals move -- grading the ones
+        recorded at collection time would train the scorer against a distribution
+        the refiner has already left behind.
+        """
+        ego2world, actors, area = self.context(tick)
+        stamp = int(tick["timestamp"])
+        speed = float(tick["speed"])
+        out = np.empty(len(proposals), dtype=np.float32)
+        for i, proposal in enumerate(proposals):
+            verdict = grade(proposal, ego2world, stamp, actors, None, area)
+            out[i] = score_target(verdict.hit_at, verdict.off_road_at, travelled(proposal), speed)
+        return out
+
+
+#: Where each step's wall clock goes, so a slow run is diagnosed from its own log
+#: instead of re-derived later. One perf_counter per phase, reset every report.
+TIMING: dict[str, float] = {}
+
+
+def timed(name: str, work):
+    start = time.perf_counter()
+    value = work()
+    TIMING[name] = TIMING.get(name, 0.0) + time.perf_counter() - start
+    return value
+
+
+def combined_loss(output, target, ticks, referee, torch):
+    """Both losses for one batch: (trajectory, score).
+
+    The scorer's targets are computed from DETACHED proposals, because grading
+    them runs through numpy -- but the loss itself is on the live `pred_logit`,
+    so it backpropagates into the refiner through `bev_feature`, exactly as the
+    vendor's does. The scorer reads bev_feature rather than the proposal
+    coordinates (see `Scorer.forward`), so this is not a stop-gradient: both
+    losses train the shared trunk, and only the targets are frozen.
+    """
+    anchors = timed("anchors", lambda: [referee.good_anchors(t) for t in ticks])
+    trajectory = timed(
+        "traj_loss",
+        lambda: trajectory_loss(output["proposal_list"], target, anchors, torch)[0],
+    )
+    proposals = timed("to_cpu", lambda: output["proposals"].detach().float().cpu().numpy())
+    targets = timed(
+        "grade",
+        lambda: np.stack([referee.targets(tick, proposals[i]) for i, tick in enumerate(ticks)]),
+    )
+    scored = timed(
+        "score_loss",
+        lambda: scorer_loss(
+            output["pred_logit"], torch.from_numpy(targets).to(output["pred_logit"].device), torch
+        ),
+    )
+    return trajectory, scored
 
 
 def main() -> None:
@@ -147,7 +257,11 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--batch", type=int, default=8)
-    parser.add_argument("--held-out", default="0058", help="a whole scene kept back")
+    # 0058 was the first choice and a bad one: 54 swerve ticks in 1,673, exactly
+    # one of them frontal, so its held-out loss was measuring ordinary driving.
+    # 0053 has 444 swerve ticks (157 frontal) and the only balanced mix of all
+    # four target kinds, and it is a different city from most of the rest.
+    parser.add_argument("--held-out", default="0053", help="a whole scene kept back")
     parser.add_argument("--train-run", default="swerve-stageA-round0")
     parser.add_argument("--limit", type=int, default=0, help="a smoke run over N ticks")
     parser.add_argument(
@@ -156,6 +270,10 @@ def main() -> None:
         help="keep reactive ticks whose hazard is off-camera (for comparison only)",
     )
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
+    # The released config's own weights: trajectory_weight 1, final_score_weight 1.
+    parser.add_argument("--trajectory-weight", type=float, default=1.0)
+    parser.add_argument("--score-weight", type=float, default=1.0)
     args = parser.parse_args()
 
     cfg = SiteConfig.load()
@@ -174,7 +292,10 @@ def main() -> None:
 
     ticks = load_ticks(args.labelled, blind=args.keep_blind)
     if args.limit:
-        ticks = ticks[: args.limit]
+        # Evenly spaced, not the first N: the files are sorted by scenario-scene,
+        # so a head slice is one scene and a smoke run over it holds out its own
+        # entire training set.
+        ticks = [ticks[i] for i in np.linspace(0, len(ticks) - 1, args.limit).round().astype(int)]
     train, val = split_by_scene(ticks, args.held_out)
     print(f"  {len(ticks)} labelled ticks: {len(train)} train, {len(val)} held out (scene {args.held_out})")
     if not train:
@@ -189,6 +310,9 @@ def main() -> None:
     dataset = TickDataset(train, args.device)
     validation = TickDataset(val, args.device) if val else None
 
+    # `agent.anchors` is the vendor's own trajectory vocabulary: data/8192.npy,
+    # subsampled to the 8 poses the model plans over.
+    referee = Referee(agent.anchors, drivable=args.drivable)
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
@@ -203,23 +327,34 @@ def main() -> None:
         started = time.time()
         for start in range(0, len(order), args.batch):
             chunk = order[start : start + args.batch]
-            features, target = dataset.batch(chunk)
+            features, target, ticks_used = timed("data", lambda c=chunk: dataset.batch(c))
             if features is None:
                 continue
-            output = model(features)
-            loss = min_over_proposals(output["proposals"], target, torch)
+            output = timed("forward", lambda f=features: model(f))
+            trajectory, scored = combined_loss(output, target, ticks_used, referee, torch)
+            loss = args.trajectory_weight * trajectory + args.score_weight * scored
             optimiser.zero_grad(set_to_none=True)
-            loss.backward()
+            timed("backward", loss.backward)
             torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             optimiser.step()
-            losses.append(float(loss.detach()))
+            losses.append((float(trajectory.detach()), float(scored.detach())))
             step += 1
             if step % 25 == 0:
-                print(f"    epoch {epoch} step {step}: loss {np.mean(losses[-25:]):.4f}", flush=True)
+                recent = np.asarray(losses[-25:])
+                spent = "  ".join(f"{k} {v / 25:.2f}s" for k, v in sorted(TIMING.items()))
+                TIMING.clear()
+                print(
+                    f"    epoch {epoch} step {step}: "
+                    f"trajectory {recent[:, 0].mean():.4f}  score {recent[:, 1].mean():.4f}\n"
+                    f"      per step: {spent}",
+                    flush=True,
+                )
 
+        trained = np.asarray(losses)
         entry = {
             "epoch": epoch,
-            "train_loss": float(np.mean(losses)),
+            "train_trajectory": float(trained[:, 0].mean()),
+            "train_score": float(trained[:, 1].mean()),
             "minutes": (time.time() - started) / 60,
         }
         if validation is not None:
@@ -228,15 +363,20 @@ def main() -> None:
                 held = []
                 for start in range(0, len(validation), args.batch):
                     stop = min(start + args.batch, len(validation))
-                    features, target = validation.batch(list(range(start, stop)))
+                    features, target, ticks_used = validation.batch(list(range(start, stop)))
                     if features is None:
                         continue
-                    held.append(float(min_over_proposals(model(features)["proposals"], target, torch)))
-            entry["val_loss"] = float(np.mean(held)) if held else None
+                    trajectory, scored = combined_loss(model(features), target, ticks_used, referee, torch)
+                    held.append((float(trajectory), float(scored)))
+            if held:
+                validated = np.asarray(held)
+                entry["val_trajectory"] = float(validated[:, 0].mean())
+                entry["val_score"] = float(validated[:, 1].mean())
         history.append(entry)
         print(
-            f"  epoch {epoch}: train {entry['train_loss']:.4f} "
-            f"val {entry.get('val_loss')} in {entry['minutes']:.1f} min",
+            f"  epoch {epoch}: train traj {entry['train_trajectory']:.4f} "
+            f"score {entry['train_score']:.4f} | val traj {entry.get('val_trajectory')} "
+            f"score {entry.get('val_score')} in {entry['minutes']:.1f} min",
             flush=True,
         )
 

@@ -32,8 +32,8 @@ from pathlib import Path
 import numpy as np
 
 from gallops.config import SiteConfig
-from gallops.expert.drivable import DrivableArea
 from gallops.expert.grader import grade
+from gallops.train.swerve_data import episode_context
 
 
 def sample(ticks: list[dict], limit: int) -> list[dict]:
@@ -41,24 +41,6 @@ def sample(ticks: list[dict], limit: int) -> list[dict]:
     if not limit or limit >= len(ticks):
         return ticks
     return [ticks[i] for i in np.linspace(0, len(ticks) - 1, limit).round().astype(int)]
-
-
-def episode_context(tick: dict, drivable: Path | None) -> tuple:
-    """The actors and pose needed to grade a proposal, from the episode on disk."""
-    directory = Path(tick["frame"]).parent.parent
-    poses = json.loads((directory / "ego_poses.json").read_text())
-    actors = json.loads((directory / "actors.json").read_text())
-    area = None
-    if drivable:
-        scene = "scene-" + directory.parent.name.rsplit("-", 1)[-1]
-        path = drivable / f"{scene}.npz"
-        if path.exists():
-            area = DrivableArea.load(path)
-    return (
-        np.asarray(poses[str(int(tick["timestamp"]))]),
-        [a for a in actors if a["is_target_actor"]],
-        area,
-    )
 
 
 def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8) -> dict:
@@ -69,7 +51,7 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
     with torch.no_grad():
         for start in range(0, len(ticks), batch):
             chunk = list(range(start, min(start + batch, len(ticks))))
-            features, _ = dataset.batch(chunk)
+            features, _, _ = dataset.batch(chunk)
             if features is None:
                 continue
             output = model(features)

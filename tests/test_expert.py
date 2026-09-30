@@ -332,3 +332,49 @@ def test_hazard_in_frame_follows_the_one_camera_it_reads():
     assert not in_frame
 
     assert hazard_bearing(ego2world, 0, []) is None
+
+
+class TestScorerTargets:
+    """The soft targets the scorer is trained on, which are our referee, not PDM's."""
+
+    def test_a_clear_plan_that_keeps_up_scores_top(self):
+        from gallops.train.losses import score_target, travelled
+
+        plan = straight(10.0)
+        assert score_target(None, None, travelled(plan), 10.0) == pytest.approx(1.0, abs=0.02)
+
+    def test_braking_beats_crashing_but_loses_to_driving_on(self):
+        """The emergency-stop trap: a stopped plan hits nothing, and must not win.
+
+        An all-zero trajectory is a commanded emergency stop. If safety alone set
+        the target it would score 1.0 everywhere and the scorer would learn to
+        brake for nothing, which reads as a good neuroNCAP result for the wrong
+        reason.
+        """
+        from gallops.train.losses import score_target, travelled
+
+        driving = score_target(None, None, travelled(straight(10.0)), 10.0)
+        stopped = score_target(None, None, 0.0, 10.0)
+        crashing = score_target(1.0, None, travelled(straight(10.0)), 10.0)
+
+        assert driving > stopped > crashing
+        assert stopped == pytest.approx(0.5, abs=0.01)
+
+    def test_a_later_crash_scores_above_an_earlier_one(self):
+        """Every proposal crashes on a late frontal tick, so the ranking among
+        them is the whole signal -- a hard zero would throw it away."""
+        from gallops.train.losses import score_target, travelled
+
+        distance = travelled(straight(10.0))
+        early = score_target(0.5, None, distance, 10.0)
+        late = score_target(3.5, None, distance, 10.0)
+        assert late > early > 0.0
+
+    def test_leaving_the_road_costs_but_beats_a_collision(self):
+        from gallops.train.losses import score_target, travelled
+
+        distance = travelled(straight(10.0))
+        on_road = score_target(None, None, distance, 10.0)
+        off_road = score_target(None, 2.0, distance, 10.0)
+        collision = score_target(2.0, None, distance, 10.0)
+        assert on_road > off_road > collision
