@@ -174,13 +174,36 @@ class TestDrawnTrajectories:
         assert plan.kind == "continue"
         assert plan.clear
 
-    def test_it_draws_a_swerve_around_a_parked_car_and_the_swerve_is_clear(self):
+    def test_it_brakes_for_a_parked_car_rather_than_swerving_round_it(self):
+        """Braking removes the ego's own closing speed, and a parked car supplies
+        none of its own -- so stopping resolves it and is far more robust than a
+        lateral move. On neuroNCAP 0103 the released model scores 5.0 ten times
+        out of ten by simply stopping, while a model taught to swerve here went
+        the wrong way into the obstacle."""
         reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200)])
         plan = draw.teach(np.eye(4), 0, 10.0, reference, [actor_ahead(25.0)])
-        assert plan.kind == "swerve"
+        assert plan.kind == "brake"
         assert plan.clear
-        assert abs(plan.offset_m) <= grader.TRUST_BAND_M
+        assert plan.offset_m == 0.0, "braking should not also leave the lane"
+
+    def test_it_still_swerves_for_a_car_coming_at_us(self):
+        """The opposite case: an oncoming car supplies the closing speed itself,
+        so braking only changes how fast you are going when it arrives."""
+        reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200)])
+        oncoming = actor_ahead(45.0)
+        # driving toward us at 9 m/s, which is what the frontal scenarios do
+        poses = []
+        for seconds in (-10.0, 0.0, 10.0):
+            pose = np.eye(4)
+            pose[0, 3] = 45.0 - 9.0 * seconds
+            poses.append(pose.tolist())
+        oncoming["timestamps"], oncoming["poses"] = [-10e6, 0, 10e6], poses
+
+        plan = draw.teach(np.eye(4), 0, 10.0, reference, [oncoming])
+        assert plan.kind == "swerve", f"braked at a closing car ({plan.kind})"
+        assert plan.clear
         assert abs(plan.offset_m) >= 1.0
+        assert abs(plan.offset_m) <= grader.TRUST_BAND_M
 
     def test_it_never_teaches_a_trajectory_that_would_crash_when_one_exists(self):
         reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200)])

@@ -63,6 +63,12 @@ RETURN_S = 1.5
 #: A beat after passing before starting back, so the return does not clip the
 #: actor the swerve just avoided.
 RETURN_GAP_S = 0.3
+#: Below this, the actor supplies the closing speed itself and slowing down only
+#: means being hit while stationary -- so the lane has to be left. Above it,
+#: braking removes the ego's own contribution and that is enough. Measured on the
+#: round-0 corpus, the two cases do not overlap anywhere near this line: oncoming
+#: ticks close at -8.7 m/s (p90 -7.0), crossing at 0.1 (p10 -1.7), parked at 0.0.
+APPROACHING_MPS = -3.0
 
 
 @dataclass(frozen=True)
@@ -307,13 +313,18 @@ def teach(
     # Size the evasion against what was predictable, not against the logged future.
     nominal_dense = follow(reference_ego, speed_profile(speed, 1.0, HORIZON))
     need = 0.0
+    closing = 0.0
     for actor in targets:
         predicted = predict_actor(actor, t0, HORIZON)
         if predicted is None:
             continue
-        this, _when = required_offset(nominal_dense, to_ego(predicted, ego2world), actor["dims"])
+        ego_frame = to_ego(predicted, ego2world)
+        this, _when = required_offset(nominal_dense, ego_frame, actor["dims"])
         if abs(this) > abs(need):
             need = this
+        # How fast it closes on us along our own heading, which is what decides
+        # whether braking can resolve this at all.
+        closing = min(closing, (ego_frame[-1, 0] - ego_frame[0, 0]) / float(HORIZON[-1]))
 
     attempts: list[Plan] = []
 
@@ -361,6 +372,25 @@ def teach(
                     if verdict.clear:
                         return Plan(waypoints, verdict, "swerve", float(offset), float(waypoints[5, 0]))
         return None
+
+    # A hazard that is not coming at us -- a parked car, a car crossing ahead --
+    # is one that braking genuinely resolves: slowing removes the ego's own
+    # contribution to the closing speed, and the crossing car clears the lane by
+    # itself. Measured on round 0, braking alone was clear on 197 of 197 sampled
+    # stationary swerve ticks and 10 of 10 side ones, yet the ladder never tried
+    # it, because it only reached braking when no swerve worked. So a model
+    # trained on this learned to swerve round a parked car at full speed, and on
+    # neuroNCAP 0103 it swerved the wrong way into it while the released model
+    # scored 5.0 by simply stopping.
+    #
+    # An oncoming car is the opposite case and keeps the swerve: it supplies the
+    # closing speed itself, so braking only changes how fast you are going when it
+    # arrives. That is the one split in this ladder, and it is geometric -- the
+    # expert never learns which scenario it is in.
+    if closing > APPROACHING_MPS:
+        for scale in (0.6, 0.3, 0.0):
+            if attempt("brake", scale, 0.0):
+                return attempts[-1]
 
     if need:
         # Away from the actor first, then the other side. Trying only one side was
