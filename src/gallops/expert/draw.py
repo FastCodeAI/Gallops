@@ -199,20 +199,37 @@ def min_ramp_for(
     return float(max(by_accel, by_curvature))
 
 
-def speed_profile(speed: float, scale: float, times: np.ndarray, decel: float = BRAKE_MAX) -> np.ndarray:
-    """Distance travelled by each time, decelerating AT `decel` to `scale * speed`.
+def speed_profile(
+    speed: float,
+    scale: float,
+    times: np.ndarray,
+    decel: float = BRAKE_MAX,
+    delay_s: float = 0.0,
+) -> np.ndarray:
+    """Distance travelled by each time: hold speed for `delay_s`, then decelerate
+    AT `decel` to `scale * speed`.
 
     The drop used to be spread across the whole horizon, which made BRAKE_MAX dead
     below 20 m/s -- a commanded stop from 1.8 m/s came out as 0.45 m/s^2 over
     3.60 m, where a real stop is 0.32 m. Every tick labelled "brake" would have
     taught a lift-off. The rate is now the rate.
+
+    `delay_s` is the other half of that, and it was missing. The swerve was given
+    a "when to begin" and the brake was not, so a brake began at t = 0 however far
+    away the hazard was. Measured on round 0, the expert first reacts at a
+    time-to-contact of 3.85 s -- the edge of its 4 s horizon, which is as late as
+    a 4 s planner can see -- and then slowed from the first instant, which is what
+    makes a reaction to a car 63 m away look like a flinch. Coasting first is what
+    a driver does with four seconds in hand.
     """
     target = speed * scale
     if speed <= target or decel <= 0:
         return speed * times
+    held = np.minimum(times, max(delay_s, 0.0))
+    after = np.maximum(times - max(delay_s, 0.0), 0.0)
     stop_time = (speed - target) / decel
-    ramp = np.minimum(times, stop_time)
-    return speed * ramp - 0.5 * decel * ramp**2 + target * np.maximum(times - stop_time, 0.0)
+    ramp = np.minimum(after, stop_time)
+    return speed * held + speed * ramp - 0.5 * decel * ramp**2 + target * np.maximum(after - stop_time, 0.0)
 
 
 def required_offset(nominal: np.ndarray, predicted: np.ndarray, actor_dims) -> tuple[float, float]:
@@ -276,9 +293,10 @@ def _plan_from(
     ramp_s: float,
     delay_s: float = 0.0,
     return_at: float | None = None,
+    brake_delay_s: float = 0.0,
 ) -> np.ndarray:
     times = np.arange(1, POSES + 1) * WAYPOINT_DT
-    points = follow(reference_ego, speed_profile(speed, scale, times))
+    points = follow(reference_ego, speed_profile(speed, scale, times, delay_s=brake_delay_s))
     # Start from where the car actually is, not from where the path is.
     points[:, 1] += rejoin(reference_ego, speed, times)
     points[:, 1] += lateral_profile(offset, ramp_s, times, delay_s, return_at)
@@ -328,11 +346,11 @@ def teach(
 
     attempts: list[Plan] = []
 
-    def attempt(kind: str, scale: float, offset: float) -> bool:
+    def attempt(kind: str, scale: float, offset: float, brake_delay_s: float = 0.0) -> bool:
         ramp = min_ramp_for(offset, speed) if offset else 1.0
         if ramp > HORIZON_S:
             return False  # no drivable way to reach that offset in the time available
-        waypoints = _plan_from(reference_ego, speed, scale, offset, ramp)
+        waypoints = _plan_from(reference_ego, speed, scale, offset, ramp, brake_delay_s=brake_delay_s)
         attempts.append(Plan(waypoints, judge(waypoints), kind, float(offset), float(waypoints[5, 0])))
         return attempts[-1].clear
 
@@ -388,9 +406,14 @@ def teach(
     # arrives. That is the one split in this ladder, and it is geometric -- the
     # expert never learns which scenario it is in.
     if closing > APPROACHING_MPS:
-        for scale in (0.6, 0.3, 0.0):
-            if attempt("brake", scale, 0.0):
-                return attempts[-1]
+        # Latest start first, then gentlest -- the same order the swerve is refined
+        # in, for the same reason: with four seconds in hand a driver coasts before
+        # slowing, and a plan that slows from t = 0 whatever the distance is what
+        # makes a reaction to a car 60 m away look like a flinch.
+        for delay in DELAYS_S:
+            for scale in (0.6, 0.3, 0.0):
+                if attempt("brake", scale, 0.0, brake_delay_s=delay):
+                    return attempts[-1]
 
     if need:
         # Away from the actor first, then the other side. Trying only one side was
@@ -420,8 +443,8 @@ def teach(
                 return smoother
 
     if not any(a.clear for a in attempts):
-        for scale in (0.6, 0.3, 0.0):
-            if attempt("brake", scale, 0.0):
+        for delay in DELAYS_S:
+            if any(attempt("brake", scale, 0.0, brake_delay_s=delay) for scale in (0.6, 0.3, 0.0)):
                 break
 
     if not any(a.clear for a in attempts) and need:

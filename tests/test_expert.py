@@ -495,3 +495,33 @@ def test_the_trainer_still_fits_the_objects_it_drives():
     assert {"targets", "good_anchors", "context", "reference"} <= referee, referee
     missing = called_on(trainer, {"referee"}) - referee
     assert not missing, f"the trainer calls Referee.{missing}, which do not exist"
+
+
+def test_a_brake_holds_its_speed_before_it_slows():
+    """The swerve was given a when-to-begin and the brake was not, so a brake
+    started at t=0 however far away the hazard was. With four seconds in hand a
+    driver coasts first, which is what makes a reaction to a car 60 m away stop
+    looking like a flinch."""
+    from gallops.expert.draw import speed_profile
+
+    times = np.arange(1, 9) * 0.5
+    at_once = speed_profile(10.0, 0.5, times)
+    delayed = speed_profile(10.0, 0.5, times, delay_s=1.5)
+
+    assert delayed[0] == pytest.approx(5.0, abs=0.01), "not holding speed in the first half second"
+    assert delayed[2] == pytest.approx(15.0, abs=0.01), "not holding speed through the delay"
+    assert delayed[-1] > at_once[-1], "the delayed brake should cover more ground"
+    # and it still ends up slowed, not coasting
+    assert (delayed[-1] - delayed[-2]) / 0.5 == pytest.approx(5.0, abs=0.2)
+
+
+def test_a_delayed_brake_still_decelerates_at_the_commanded_rate():
+    """The delay must not quietly soften the deceleration -- that was the earlier
+    bug where a commanded stop came out as a lift-off."""
+    from gallops.expert.draw import BRAKE_MAX, speed_profile
+
+    times = np.linspace(0.05, 4.0, 80)
+    distance = speed_profile(12.0, 0.0, times, delay_s=1.0)
+    speed = np.gradient(distance, times)
+    slowing = np.abs(np.gradient(speed, times))
+    assert slowing.max() >= BRAKE_MAX * 0.7, f"peak deceleration only {slowing.max():.1f} m/s^2"
