@@ -368,13 +368,18 @@ class TestScorerTargets:
     8.0 and swerved, whichever way the expert was changed.
     """
 
-    def test_matching_the_expert_scores_top_and_exceeding_it_adds_nothing(self):
+    def test_the_score_peaks_at_the_expert_distance_and_falls_off_both_sides(self):
+        """Capping instead of penalising was the bug: a brake and a full-speed
+        plan both reached the cap, tied, and the lane term decided. The model then
+        accelerated 26% on ticks where the expert braked 38%."""
         from gallops.train.losses import score_target
 
         matched = score_target(None, None, travelled_m=20.0, expert_travelled_m=20.0)
         further = score_target(None, None, travelled_m=40.0, expert_travelled_m=20.0)
+        shorter = score_target(None, None, travelled_m=5.0, expert_travelled_m=20.0)
         assert matched == pytest.approx(1.0, abs=0.01)
-        assert further == pytest.approx(matched, abs=1e-6), "rewarded for overshooting"
+        assert further < matched, "overshooting the expert is not penalised"
+        assert shorter < matched, "undershooting the expert is not penalised"
 
     def test_a_brake_outscores_a_swerve_when_the_expert_braked(self):
         """The ordering the whole change exists for."""

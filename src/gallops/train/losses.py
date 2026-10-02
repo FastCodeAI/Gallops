@@ -113,7 +113,13 @@ def score_target(
     else:
         # Later is better: a crash at the horizon is one there was time to avoid.
         base = COLLISION_CEILING * min(1.0, max(0.0, hit_at) / max(horizon_s, 1e-6))
-    progress = min(1.0, travelled_m / max(expert_travelled_m, 1e-6))
+    # Peaks AT the expert's distance and falls away on both sides. Capping it
+    # instead -- min(1, travelled/expert) -- removed the reward for overshooting
+    # without penalising it, so a brake and a full-speed plan both scored 1.0 and
+    # tied, leaving the lane term to decide. Measured: the model then accelerated
+    # 26% on ticks where the expert braked 38%.
+    progress = 1.0 - abs(travelled_m - expert_travelled_m) / max(expert_travelled_m, 1e-6)
+    progress = max(0.0, progress)
     lane = 1.0 - LANE_PENALTY * min(1.0, abs(deviation_m) / max(trust_band_m, 1e-6))
     scored = base * (PROGRESS_FLOOR + (1 - PROGRESS_FLOOR) * progress) * lane
     return float(np.clip(scored, 0.0, 1.0))
