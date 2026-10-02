@@ -448,3 +448,45 @@ def test_a_car_already_on_the_path_gets_no_correction():
     times = np.arange(1, 9) * 0.5
     path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
     assert np.abs(rejoin(path, speed=10.0, times=times)).max() < 1e-3
+
+
+def test_the_trainer_still_fits_the_objects_it_drives():
+    """Every method the training loop calls on the dataset and the referee exists.
+
+    `make check` runs where torch is absent, so nothing here can construct a
+    TickDataset, and nothing constructs a Referee either. An edit can delete a
+    method the loop depends on and the gate stays green. It has happened three
+    times: `TickDataset.batch` was dropped by a bad replace and the run died eight
+    minutes in; `Referee.reference` was never written while `Referee.targets`
+    already called it; and this very test was swallowed by a span-replace of the
+    block above it. Parsing the source costs nothing and closes all of them.
+    """
+    import ast
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[1] / "src" / "gallops" / "train"
+    trainer = ast.parse((source / "swerve.py").read_text())
+
+    def methods_of(tree, name):
+        node = next(n for n in ast.walk(tree) if isinstance(n, ast.ClassDef) and n.name == name)
+        return {n.name for n in node.body if isinstance(n, ast.FunctionDef)}
+
+    def called_on(tree, names):
+        return {
+            node.func.attr
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id in names
+        }
+
+    dataset = methods_of(ast.parse((source / "swerve_data.py").read_text()), "TickDataset")
+    assert {"agent_input", "features", "batch", "build"} <= dataset, dataset
+    missing = called_on(trainer, {"dataset", "validation"}) - dataset
+    assert not missing, f"the trainer calls TickDataset.{missing}, which do not exist"
+
+    referee = methods_of(trainer, "Referee")
+    assert {"targets", "good_anchors", "context", "reference"} <= referee, referee
+    missing = called_on(trainer, {"referee"}) - referee
+    assert not missing, f"the trainer calls Referee.{missing}, which do not exist"
