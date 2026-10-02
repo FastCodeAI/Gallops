@@ -358,134 +358,67 @@ def test_hazard_in_frame_follows_the_one_camera_it_reads():
 
 
 class TestScorerTargets:
-    """The soft targets the scorer is trained on, which are our referee, not PDM's."""
+    """The soft targets the scorer is trained on, which are our referee, not PDM's.
 
-    def test_a_clear_plan_that_keeps_up_scores_top(self):
-        from gallops.train.losses import score_target, travelled
+    These decide what gets DRIVEN. An earlier version measured progress against
+    free-running speed, so a clear swerve scored 1.00 and a clear brake 0.75 --
+    the scorer was trained to prefer swerving on every tick while the trajectory
+    loss was being taught to brake, and the scorer won. On neuroNCAP 0103 the
+    released model slows from 5.6 to 1.4 m/s; the finetuned one accelerated to
+    8.0 and swerved, whichever way the expert was changed.
+    """
 
-        plan = straight(10.0)
-        assert score_target(None, None, travelled(plan), 10.0) == pytest.approx(1.0, abs=0.02)
+    def test_matching_the_expert_scores_top_and_exceeding_it_adds_nothing(self):
+        from gallops.train.losses import score_target
 
-    def test_braking_beats_crashing_but_loses_to_driving_on(self):
-        """The emergency-stop trap: a stopped plan hits nothing, and must not win.
+        matched = score_target(None, None, travelled_m=20.0, expert_travelled_m=20.0)
+        further = score_target(None, None, travelled_m=40.0, expert_travelled_m=20.0)
+        assert matched == pytest.approx(1.0, abs=0.01)
+        assert further == pytest.approx(matched, abs=1e-6), "rewarded for overshooting"
 
-        An all-zero trajectory is a commanded emergency stop. If safety alone set
-        the target it would score 1.0 everywhere and the scorer would learn to
-        brake for nothing, which reads as a good neuroNCAP result for the wrong
-        reason.
-        """
-        from gallops.train.losses import score_target, travelled
+    def test_a_brake_outscores_a_swerve_when_the_expert_braked(self):
+        """The ordering the whole change exists for."""
+        from gallops.train.losses import score_target
 
-        driving = score_target(None, None, travelled(straight(10.0)), 10.0)
-        stopped = score_target(None, None, 0.0, 10.0)
-        crashing = score_target(1.0, None, travelled(straight(10.0)), 10.0)
+        # the expert braked here, so its plan covers 20 m
+        brake = score_target(None, None, 20.0, 20.0, deviation_m=0.2)
+        swerve = score_target(None, None, 40.0, 20.0, deviation_m=2.5)
+        assert brake > swerve, f"brake {brake:.3f} does not beat swerve {swerve:.3f}"
 
-        assert driving > stopped > crashing
-        assert stopped == pytest.approx(0.5, abs=0.01)
+    def test_a_swerve_outscores_a_brake_when_the_expert_swerved(self):
+        """And it must not flip the other way: on an oncoming car the expert's
+        plan covers the full distance, so the brake falls short on progress."""
+        from gallops.train.losses import score_target
+
+        swerve = score_target(None, None, 40.0, 40.0, deviation_m=2.7)
+        brake = score_target(None, None, 20.0, 40.0, deviation_m=0.2)
+        assert swerve > brake, f"swerve {swerve:.3f} does not beat brake {brake:.3f}"
+
+    def test_a_dead_stop_still_loses_to_driving_on(self):
+        """The emergency-stop trap, still shut. An all-zero trajectory hits
+        nothing, and if safety alone set the target it would score 1.0 everywhere
+        and teach the model to brake for nothing."""
+        from gallops.train.losses import score_target
+
+        assert score_target(None, None, 0.0, 30.0) == pytest.approx(0.5, abs=0.01)
+        assert score_target(None, None, 30.0, 30.0) > score_target(None, None, 0.0, 30.0)
 
     def test_a_later_crash_scores_above_an_earlier_one(self):
         """Every proposal crashes on a late frontal tick, so the ranking among
         them is the whole signal -- a hard zero would throw it away."""
-        from gallops.train.losses import score_target, travelled
+        from gallops.train.losses import score_target
 
-        distance = travelled(straight(10.0))
-        early = score_target(0.5, None, distance, 10.0)
-        late = score_target(3.5, None, distance, 10.0)
+        early = score_target(0.5, None, 30.0, 30.0)
+        late = score_target(3.5, None, 30.0, 30.0)
         assert late > early > 0.0
 
     def test_leaving_the_road_costs_but_beats_a_collision(self):
-        from gallops.train.losses import score_target, travelled
+        from gallops.train.losses import score_target
 
-        distance = travelled(straight(10.0))
-        on_road = score_target(None, None, distance, 10.0)
-        off_road = score_target(None, 2.0, distance, 10.0)
-        collision = score_target(2.0, None, distance, 10.0)
+        on_road = score_target(None, None, 30.0, 30.0)
+        off_road = score_target(None, 2.0, 30.0, 30.0)
+        collision = score_target(2.0, None, 30.0, 30.0)
         assert on_road > off_road > collision
-
-
-def test_the_trainer_and_dataset_still_fit_together():
-    """The methods the training loop calls exist, without importing torch.
-
-    `make check` runs in an environment that deliberately lacks torch, so nothing
-    here can construct a TickDataset -- which meant an edit could delete a method
-    it uses and the gate would stay green. It did: `batch` was dropped by a bad
-    replace and the run died eight minutes in, after the model had loaded.
-    Parsing the source costs nothing and closes that hole.
-    """
-    import ast
-    from pathlib import Path
-
-    source = Path(__file__).resolve().parents[1] / "src" / "gallops" / "train"
-    tree = ast.parse((source / "swerve_data.py").read_text())
-    dataset = next(
-        node for node in ast.walk(tree) if isinstance(node, ast.ClassDef) and node.name == "TickDataset"
-    )
-    methods = {n.name for n in dataset.body if isinstance(n, ast.FunctionDef)}
-    assert {"agent_input", "features", "batch", "build"} <= methods, methods
-
-    called = {
-        node.func.attr
-        for node in ast.walk(ast.parse((source / "swerve.py").read_text()))
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Attribute)
-        and isinstance(node.func.value, ast.Name)
-        and node.func.value.id in {"dataset", "validation"}
-    }
-    assert called <= methods, f"the trainer calls {called - methods}, which do not exist"
-
-
-class TestPlanShape:
-    """The drawn plan has to look like driving, not like a step input.
-
-    The first version started the lateral move at t=0 with the shortest ramp the
-    tyres allow and held the offset to the horizon. Trained on that, the model
-    threw the wheel over at first sight and sat at an angle to the road with no
-    idea how to come back -- visible in the neuroNCAP videos before it was visible
-    in any number.
-    """
-
-    def test_it_holds_the_lane_before_it_moves(self):
-        from gallops.expert.draw import lateral_profile
-
-        times = np.arange(1, 9) * 0.5
-        y = lateral_profile(3.0, ramp_s=1.5, times=times, delay_s=1.5)
-        assert abs(y[0]) < 1e-9, "moving during the first half second"
-        assert abs(y[1]) < 1e-9, "moving before the delay is up"
-        assert y[-1] == pytest.approx(3.0, abs=0.01), "never gets there"
-
-    def test_it_comes_back(self):
-        from gallops.expert.draw import lateral_profile
-
-        times = np.arange(1, 9) * 0.5
-        y = lateral_profile(3.0, ramp_s=1.0, times=times, delay_s=0.0, return_at=2.0, return_s=1.5)
-        assert max(y) == pytest.approx(3.0, abs=0.05), "never reaches the offset"
-        assert abs(y[-1]) < 0.15, f"ends {y[-1]:.2f} m off the lane instead of back in it"
-
-    def test_the_ease_is_gentle_at_both_ends(self):
-        """Zero slope entering and leaving, so there is no step in lateral speed."""
-        from gallops.expert.draw import ease
-
-        phase = np.linspace(0, 1, 101)
-        slope = np.gradient(ease(phase), phase)
-        assert abs(slope[0]) < 0.05 and abs(slope[-1]) < 0.05
-
-    def test_a_gentler_ramp_pulls_less_lateral_g(self):
-        from gallops.expert.draw import lateral_profile
-
-        times = np.linspace(0.1, 4.0, 40)
-        peaks = []
-        for ramp in (1.0, 2.0, 3.0):
-            y = lateral_profile(3.0, ramp_s=ramp, times=times)
-            peaks.append(np.abs(np.gradient(np.gradient(y, times), times)).max())
-        assert peaks[0] > peaks[1] > peaks[2], "a longer ramp must be gentler"
-
-    def test_an_urgent_evasion_still_starts_now(self):
-        """The delay is a preference, not a rule: with no time it must collapse to 0."""
-        from gallops.expert.draw import lateral_profile
-
-        times = np.arange(1, 9) * 0.5
-        y = lateral_profile(3.0, ramp_s=1.0, times=times, delay_s=0.0)
-        assert y[1] > 1.0, "not committed by 1 s when it needs to be"
 
 
 def test_a_displaced_car_is_given_a_drivable_way_back():

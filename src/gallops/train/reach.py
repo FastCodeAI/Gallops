@@ -16,7 +16,15 @@ Three numbers per checkpoint, on a scene held out of training:
     selected reach   max |y| of the one the scorer picks -- what would be DRIVEN
     expert reach     max |y| of the plan it is being taught, which is the only
                      honest thing to compare the selected reach against
+    slowing          how much shorter the driven plan is than carrying on at the
+                     current speed, beside the same figure for the expert's plan
     escape rate      is any of the 32 clear of the hazard and on the road
+
+**Lateral reach cannot see a brake.** It was the right measure while the question
+was whether the refiner would ever offer a sideways plan at all. Once the expert
+prefers braking for anything not closing on us -- which is most of the corpus --
+a model doing exactly the right thing scores nothing on it. `slowing` is the
+other half, and the two together say what the plan actually is.
 
 **Compare against the expert's geometry, not against zero.** An earlier version
 reported `expert_offset_m`, the offset the ladder COMMANDED, which is 0 for
@@ -77,9 +85,13 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
                 ego2world, targets, area = contexts[key]
                 stamp = int(tick["timestamp"])
                 verdicts = [grade(p, ego2world, stamp, targets, None, area) for p in proposals[offset]]
+                # 0 means it holds its speed; 1 means it stops dead.
+                free_running = max(float(tick["speed"]) * 4.0, 1e-6)
                 rows.append(
                     {
                         "kind": tick["expert_kind"],
+                        "slowing": 1.0 - _length(selected[offset]) / free_running,
+                        "expert_slowing": 1.0 - _length(tick["expert"]) / free_running,
                         "proposal_reach": float(np.abs(proposals[offset][:, :, 1]).max()),
                         "selected_reach": float(np.abs(selected[offset][:, 1]).max()),
                         "escape": any(v.clear for v in verdicts),
@@ -90,20 +102,30 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
     return {"rows": rows}
 
 
+def _length(waypoints) -> float:
+    """Path length of a plan from the ego, in metres."""
+    points = np.vstack([[0.0, 0.0], np.asarray(waypoints)[:, :2]])
+    return float(np.linalg.norm(np.diff(points, axis=0), axis=1).sum())
+
+
 def report(name: str, rows: list[dict]) -> None:
-    swerve = [r for r in rows if r["kind"] == "swerve"]
-    carry_on = [r for r in rows if r["kind"] == "continue"]
     print(f"\n  {name}")
-    print(f"    {'ticks':<10}{'n':>5}{'proposals':>11}{'selected':>10}{'expert':>9}{'gap':>8}{'escape':>9}")
-    for label, group in (("swerve", swerve), ("continue", carry_on), ("all", rows)):
+    print(
+        f"    {'ticks':<12}{'n':>5}{'proposals':>11}{'sideways':>10}{'expert':>9}"
+        f"{'slows':>8}{'expert':>8}{'escape':>9}"
+    )
+    kinds = ("swerve", "brake", "continue", "least-impact")
+    groups = [(k, [r for r in rows if r["kind"] == k]) for k in kinds] + [("all", rows)]
+    for label, group in groups:
         if not group:
             continue
-        selected = np.median([r["selected_reach"] for r in group])
-        expert = np.median([r.get("expert_reach", float("nan")) for r in group])
         print(
-            f"    {label:<10}{len(group):>5}"
+            f"    {label:<12}{len(group):>5}"
             f"{np.median([r['proposal_reach'] for r in group]):>11.2f}"
-            f"{selected:>10.2f}{expert:>9.2f}{selected - expert:>+8.2f}"
+            f"{np.median([r['selected_reach'] for r in group]):>10.2f}"
+            f"{np.median([r.get('expert_reach', np.nan) for r in group]):>9.2f}"
+            f"{np.median([r.get('slowing', np.nan) for r in group]):>8.0%}"
+            f"{np.median([r.get('expert_slowing', np.nan) for r in group]):>8.0%}"
             f"{np.mean([r['escape'] for r in group]):>9.0%}"
         )
 

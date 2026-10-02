@@ -65,33 +65,58 @@ COLLISION_CEILING = 0.3
 #: stops dead scores half of one that keeps up. An all-zero trajectory is a
 #: commanded emergency stop, and must not be the highest-scoring option.
 PROGRESS_FLOOR = 0.5
+#: How much a plan loses for leaving its lane when it did not have to. Small
+#: enough that avoiding a crash always beats staying in lane, large enough to
+#: settle the choice between two plans that are both clear.
+LANE_PENALTY = 0.3
 
 
 def score_target(
     hit_at: float | None,
     off_road_at: float | None,
     travelled_m: float,
-    speed: float,
+    expert_travelled_m: float,
+    deviation_m: float = 0.0,
+    trust_band_m: float = 4.0,
     horizon_s: float = 4.0,
 ) -> float:
     """One proposal's soft score in [0, 1], in PDM's multiplicative shape.
 
     PDM multiplies hard safety terms by a weighted average of soft ones. This
-    keeps that structure with the terms our grader can actually measure: whether
-    the plan hits anything, whether it leaves the road, and how far it gets.
+    keeps that structure with the terms our grader can measure: whether the plan
+    hits anything, whether it leaves the road, how far it gets, and how far from
+    its lane it strays.
 
     Graded rather than binary on collisions, because on a late frontal tick every
     proposal crashes -- a hard zero would leave the scorer no way to rank a 2 m/s
     impact above a 12 m/s one, which is exactly the choice neuroNCAP scores.
+
+    **The expert's own plan sets the progress bar, not free-running speed.** The
+    first version measured progress against carrying on at the current speed, so a
+    clear swerve at full speed scored 1.00 and a clear brake, covering half the
+    ground, scored 0.75. The scorer was therefore trained to rank swerving above
+    braking on every tick -- while the trajectory loss was being taught to brake.
+    The scorer picks what gets driven, so the scorer won: measured on neuroNCAP
+    0103, the released model slows from 5.6 to 1.4 m/s and the finetuned one
+    accelerates to 8.0 and swerves, in every scenario, however the expert was
+    changed. Scoring against what the expert achieved makes matching a brake worth
+    full marks and exceeding it worth nothing extra.
+
+    `deviation_m` settles what progress alone cannot: two plans that are both
+    clear and both make the distance, where one holds its lane and the other
+    leaves it. A swerve has a direction to get wrong and a brake does not, so the
+    lane-keeping one should win unless leaving is what avoids the crash -- and if
+    it is, the other plan is not clear and never reaches this comparison.
     """
     if hit_at is None:
         base = OFF_ROAD_SCORE if off_road_at is not None else 1.0
     else:
         # Later is better: a crash at the horizon is one there was time to avoid.
         base = COLLISION_CEILING * min(1.0, max(0.0, hit_at) / max(horizon_s, 1e-6))
-    expected = max(speed, 0.1) * horizon_s
-    progress = min(1.0, travelled_m / expected)
-    return float(np.clip(base * (PROGRESS_FLOOR + (1 - PROGRESS_FLOOR) * progress), 0.0, 1.0))
+    progress = min(1.0, travelled_m / max(expert_travelled_m, 1e-6))
+    lane = 1.0 - LANE_PENALTY * min(1.0, abs(deviation_m) / max(trust_band_m, 1e-6))
+    scored = base * (PROGRESS_FLOOR + (1 - PROGRESS_FLOOR) * progress) * lane
+    return float(np.clip(scored, 0.0, 1.0))
 
 
 def travelled(waypoints: np.ndarray) -> float:

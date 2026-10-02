@@ -165,12 +165,29 @@ class Referee:
         self.random = np.random.default_rng(seed)
         self._context: dict[str, tuple] = {}
         self._anchor_cache: dict[tuple, np.ndarray] = {}
+        self._references: dict[str, np.ndarray] = {}
 
     def context(self, tick: dict):
         key = str(Path(tick["frame"]).parent.parent)
         if key not in self._context:
             self._context[key] = episode_context(tick, self.drivable)
         return self._context[key]
+
+    def reference(self, tick: dict) -> np.ndarray:
+        """The logged human path for this episode, which is the lane.
+
+        The grader measures a plan's deviation from it, and that deviation is what
+        settles the choice between two plans that are both clear: the one holding
+        its lane wins, because a swerve has a direction to get wrong.
+        """
+        directory = Path(tick["frame"]).parent.parent
+        key = str(directory)
+        if key not in self._references:
+            logged = json.loads((directory / "reference_trajectory.json").read_text())
+            self._references[key] = np.asarray(
+                [v for _, v in sorted(logged.items(), key=lambda kv: int(kv[0]))]
+            )[:, :2]
+        return self._references[key]
 
     def good_anchors(self, tick: dict) -> np.ndarray:
         """A sample of anchors that neither hit anything nor leave the road here.
@@ -202,11 +219,21 @@ class Referee:
         """
         ego2world, actors, area = self.context(tick)
         stamp = int(tick["timestamp"])
-        speed = float(tick["speed"])
+        reference = self.reference(tick)
+        # The expert's own plan sets the bar: matching it is full marks and going
+        # further earns nothing. Measured against free-running speed instead, the
+        # scorer ranked a full-speed swerve above the brake the expert chose.
+        expert_travelled = travelled(np.asarray(tick["expert"]))
         out = np.empty(len(proposals), dtype=np.float32)
         for i, proposal in enumerate(proposals):
-            verdict = grade(proposal, ego2world, stamp, actors, None, area)
-            out[i] = score_target(verdict.hit_at, verdict.off_road_at, travelled(proposal), speed)
+            verdict = grade(proposal, ego2world, stamp, actors, reference, area)
+            out[i] = score_target(
+                verdict.hit_at,
+                verdict.off_road_at,
+                travelled(proposal),
+                expert_travelled,
+                verdict.max_deviation,
+            )
         return out
 
 
