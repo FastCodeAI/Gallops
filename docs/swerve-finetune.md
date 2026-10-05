@@ -5,9 +5,12 @@ built, what each run measured, and the five defects the measurements exposed.
 Numbers here are measurements unless the text says they are an argument — the
 standard [conventions.md](conventions.md) holds both repos to.
 
-**Status: not finished.** The best checkpoint beats the released model on a
-three-pair subset of neuroNCAP, and it does so by braking harder rather than by
-evading. The capability this was built to add is still absent.
+**Status: not finished, and the expert is not agreed.** The best checkpoint beats
+the released model on a three-pair subset of neuroNCAP, and it does so by braking
+harder rather than by evading — the capability this was built to add is still
+absent. The drawn targets have not yet convinced the person who has to trust
+them, and the iteration loop at six and a half hours a round is too slow to
+settle that. Both are open, and both are below.
 
 ---
 
@@ -123,6 +126,16 @@ them.
 
 ## What is still wrong
 
+**The drawn targets are not yet convincing to the person who has to trust them.**
+This is the owner's standing judgement after reviewing them case by case against
+the camera, and it is recorded here because it is the live objection, not a
+resolved one. Four rounds of changes came out of that review — the delay before a
+swerve begins, the recovery back to the lane, braking for what is not closing on
+us, and the brake's own delay — and the targets still do not read as what a driver
+would do. The specific complaints that remain open are the occluded-hazard
+reactions below and a reaction that is triggered by geometry rather than by
+sight. **Nothing here should be treated as a settled expert.**
+
 **The scorer's lane term is absolute where its progress term is relative.** A
 clear swerve is docked for leaving the lane even when the expert's own plan
 leaves it, so on frontal ticks the expert's correct answer never scores full
@@ -157,6 +170,45 @@ other. The brake ladder was measured four ways:
 The third is in use. The fourth buys no extra waiting and costs emergency
 braking; nuScenes driving almost never passes 4 m/s².
 
+## The loop is too slow to iterate on
+
+A full round is about six and a half hours:
+
+| stage | wall clock | measured where |
+|---|---|---|
+| collect, 150 episodes | **4 h 48 m** | round 0, 02:09 to 06:57, ~1.9 min an episode |
+| label | 25 m | |
+| train, one epoch | 40 m | 25 m once the frame cache is warm |
+| evaluate — reach, 0103 smoke, videos | 35 m | |
+
+That is far too long to answer "did this change help", and it is the reason four
+expert revisions in one day each cost a relabel and a retrain without ever
+reaching a closed-loop check. Three things would shorten it, in increasing order
+of effort.
+
+**Separate checking behaviour from collecting data.** Only a DAgger round needs
+the 4 h 48 m; a behaviour check does not. The 0103 smoke plus `reach` is about
+35 minutes and already answers "does it brake, does it swerve, does it still
+drive" — it just needs to be the default first question rather than the thing
+done at the end. The expert revisions above were judged on relabelled targets
+when the quicker and more honest check was to drive them.
+
+**Collect less per round.** Seeds are the cheapest axis to cut: 3 instead of 10
+keeps all 15 scenario-scenes and their variety and takes about 1 h 25 m. For a
+check aimed only at the frontal gap, 3 seeds over the 5 frontal pairs is 15
+episodes, roughly **30 minutes**. A round does not have to be the same size every
+time, and the manifest already records episodes and ticks per round so a small
+round is honestly labelled as one.
+
+**Run the scenes in parallel.** Collection is one renderer per scene, strictly
+serial, and a renderer is ~8 GB with the scene load measured at about a minute.
+Five at once is ~40 GB plus the model node — affordable when the card is free,
+which it often is not on a shared box. This is the only change of the three that
+needs new code, and it would take a full round to roughly an hour.
+
+Nothing here is built. It is written down because the iteration cost, not the
+GPU cost, is what actually limited this experiment.
+
 ## Instruments
 
 Built because the obvious measurement was the wrong one more than once.
@@ -188,10 +240,16 @@ exactly one of them frontal, so its validation loss measures ordinary driving.
 
 In the order the evidence supports, not the order of effort.
 
-1. **The lane term**, one line, no new data, retrains in 40 minutes.
-2. **Occlusion-aware visibility**, a second render pass per scene.
-3. **Round 1 of the on-policy loop** — but under a checkpoint that actually
-   swerves. v4 does not, so a round collected under it revisits round 0's
-   distribution with harder braking. 18 episodes were collected under v4 and
-   stopped for exactly this reason; they are kept, with a note, rather than
-   folded in.
+1. **A faster check.** Make the 35-minute smoke the first question after any
+   expert or loss change, before a relabel. Everything below is cheaper to judge
+   once this is the habit.
+2. **The lane term**, one line, no new data, retrains in 40 minutes.
+3. **Occlusion-aware visibility**, a second render pass per scene. This is also
+   the change most likely to make the drawn targets convincing, because it moves
+   the reaction from "geometry says contact is coming" to "the car is visible and
+   something must be done".
+4. **Round 1 of the on-policy loop** — but under a checkpoint that actually
+   swerves, and at 3 seeds rather than 10. v4 does not swerve, so a round
+   collected under it revisits round 0's distribution with harder braking. 18
+   episodes were collected under v4 and stopped for exactly this reason; they are
+   kept, with a note, rather than folded in.
