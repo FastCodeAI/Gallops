@@ -193,21 +193,63 @@ drive" — it just needs to be the default first question rather than the thing
 done at the end. The expert revisions above were judged on relabelled targets
 when the quicker and more honest check was to drive them.
 
-**Collect less per round.** Seeds are the cheapest axis to cut: 3 instead of 10
-keeps all 15 scenario-scenes and their variety and takes about 1 h 25 m. For a
-check aimed only at the frontal gap, 3 seeds over the 5 frontal pairs is 15
-episodes, roughly **30 minutes**. A round does not have to be the same size every
-time, and the manifest already records episodes and ticks per round so a small
-round is honestly labelled as one.
+**Stop each episode when it stops teaching anything.** This is the largest lever
+and it comes from where the signal actually sits. Episodes are 70 ticks, 7
+seconds, and what the expert teaches across them is not uniform:
+
+| tenth of the episode | continue | brake | swerve | least-impact |
+|---|---|---|---|---|
+| 0–10% | 13% | **73%** | 15% | 0% |
+| 10–20% | 33% | 49% | 18% | 0% |
+| 20–30% | 44% | 37% | 19% | 0% |
+| 40–50% | 56% | 16% | **23%** | 5% |
+| 60–70% | 61% | 8% | 3% | 27% |
+| 80–90% | 62% | 5% | **0%** | 33% |
+| 90–100% | 63% | 2% | **0%** | 35% |
+
+The scenarios are authored so the actor is already on a collision course at t = 0,
+so **the expert reacts from the very first tick** — there is no gentle opening to
+get through. The waste is the tail. Swerve targets fall to 3% by 60% of the way in
+and are zero through the last third, while least-impact climbs to 35%: the car has
+already lost, and a policy that handles the decision never reaches those states at
+all. Cutting each episode at about 60% keeps every swerve target and roughly 95%
+of the brakes, and takes collection to **2 h 50 m**.
+
+One caveat before dropping the tail: neuroNCAP scores impact speed, so
+least-impact behaviour does earn partial credit when a crash is genuinely
+unavoidable, and that is 1,381 of 9,495 ticks. Truncating is right by the
+on-policy argument and may cost a little of that credit. Worth watching the
+frontal number when it lands rather than assuming either way.
+
+**Collect fewer seeds.** 3 instead of 10 keeps all 15 scenario-scenes and their
+variety. For a check aimed only at the frontal gap, 3 seeds over the 5 frontal
+pairs is 15 episodes. A round does not have to be the same size every time, and
+the manifest already records episodes and ticks per round so a small round is
+honestly labelled as one.
 
 **Run the scenes in parallel.** Collection is one renderer per scene, strictly
 serial, and a renderer is ~8 GB with the scene load measured at about a minute.
 Five at once is ~40 GB plus the model node — affordable when the card is free,
-which it often is not on a shared box. This is the only change of the three that
-needs new code, and it would take a full round to roughly an hour.
+which it often is not on a shared box.
 
-Nothing here is built. It is written down because the iteration cost, not the
-GPU cost, is what actually limited this experiment.
+Stacked, on round 0's measured pace:
+
+| | wall clock |
+|---|---|
+| full episodes, 10 seeds, serial scenes | 4 h 48 m — what was done |
+| truncated at 60% | 2 h 50 m |
+| + 3 seeds | 50 m |
+| + scenes in parallel | ~15 m |
+
+Three independent changes, not one risky one. Nothing here is built. It is
+written down because the iteration cost, not the GPU cost, is what actually
+limited this experiment.
+
+**And then let the rounds extend the horizon.** Truncation makes a round cheap;
+it does not make the tail unnecessary forever. As the model starts surviving the
+decision it reaches states around tick 40 that the current model never gets to,
+and those exist only if it drives again. That is what a round is for, and it is
+the argument for many small rounds over one large one.
 
 ## Instruments
 
