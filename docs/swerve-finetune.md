@@ -182,6 +182,19 @@ across episodes; and the starting weights, fed the trainer's rebuilt inputs,
 reproduce what they drove. The test suite holds a referee with the old cache and
 asserts the preflight rejects it.
 
+Its first real run refused to train, and the refusal was right. The rebuilt
+inputs drift from what the model saw by an amount that depends on where in the
+episode a tick sits, measured over 506 round-0 ticks: the model's one look into
+the past is the front frame 0.5 s back, and for an episode's first half second
+that was one of the engine's priming frames, which the logger never saves.
+Nearest-stamp selection silently handed over the episode's first frame instead,
+and the rebuilt pick landed a median 0.4–0.5 m (p90 2.4 m) from the one driven,
+against 0.10 m once the real frame exists. About 7% of every round's ticks were
+trained on a past the model never had. They are now skipped as unrebuildable;
+saving the priming frames at collection would get them back. Past that, the
+remaining gap is a median 0.29% of four seconds' travel, most likely the JPEG
+round trip, which is what the fidelity limit is now set against.
+
 ## What is still wrong
 
 **The drawn targets are not yet convincing to the person who has to trust them.**

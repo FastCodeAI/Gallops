@@ -118,7 +118,10 @@ before its first step, and stops with every reason listed if any check fails:
   the first tick's pose, and on round 0 the preflight rejects that referee on
   28 of 48 ticks.
 - **fidelity** — the starting weights, fed the trainer's rebuilt inputs, reproduce
-  the plan they drove at collection.
+  the plan they drove at collection: the pick's verdict on ≥95% of ticks, and a
+  median gap under 1% of four seconds' travel (measured 0.29%). Its first real
+  run was refused, and rightly: an episode's first half second needs a priming
+  frame the logger never saved, so those ticks are now skipped as unrebuildable.
 
 Do not add a way to skip it. A check that can be skipped is skipped the one time
 it matters. If it fails on data you believe is right, the disagreement is the

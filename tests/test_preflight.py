@@ -162,3 +162,20 @@ def test_a_failure_lists_every_problem():
     assert "one" in str(error) and "two" in str(error)
     with pytest.raises(preflight.PreflightFailed):
         raise error
+
+
+def test_a_tick_whose_past_was_a_priming_frame_is_not_rebuilt():
+    """The model reads one past frame, 0.5 s back. Early in an episode that was a
+    priming frame the logger never saved, and nearest-stamp selection would hand
+    over the episode's first frame instead -- measured 0.4-0.5 m of pick error
+    against 0.10 m once the real frame exists. Such a tick is refused, not guessed.
+    """
+    from gallops.train.swerve_data import history_stamps
+
+    frames = [1_000_000 + 100_000 * i for i in range(30)]  # 10 Hz from t = 1.0 s
+    assert history_stamps(frames, now=frames[2]) is None  # 0.5 s back is before the first frame
+    assert history_stamps(frames, now=frames[4]) is None  # nearest is the first frame, 0.1 s off
+    assert history_stamps(frames, now=frames[5]) is not None  # the first frame IS 0.5 s back
+    chosen = history_stamps(frames, now=frames[10])
+    assert chosen is not None
+    assert chosen[-1] == frames[10] and chosen[-2] == frames[5]
