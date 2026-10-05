@@ -1,0 +1,197 @@
+# Teaching Drive-JEPA to evade
+
+The record of the first end-to-end training experiment in this repo: what was
+built, what each run measured, and the five defects the measurements exposed.
+Numbers here are measurements unless the text says they are an argument — the
+standard [conventions.md](conventions.md) holds both repos to.
+
+**Status: not finished.** The best checkpoint beats the released model on a
+three-pair subset of neuroNCAP, and it does so by braking harder rather than by
+evading. The capability this was built to add is still absent.
+
+---
+
+## The question
+
+Paddock's neuroNCAP sweep put Drive-JEPA's frontal split at 2.42 against 4.23 on
+stationary: it drives into oncoming traffic. An earlier probe found why — across
+all 32 of its trajectory proposals, the widest reaches **0.70 m sideways on a
+frontal tick**, which is not an evasion of anything. The model cannot propose a
+swerve, so no amount of better selection will produce one.
+
+Navtrain cannot teach it either: 20 hours of driving contains **1.5 seconds** of
+emergency braking and no evasions. The data does not exist, so it has to be made.
+
+## What was built
+
+Five nuScenes train scenes reconstructed with NeuRAD (7.5 h of GPU each,
+measured), actors inserted on collision courses, and the released model driven
+through them while an expert labels every tick offline.
+
+```
+reconstruct  ->  author scenarios  ->  collect (the model drives)  ->  label  ->  train  ->  measure
+```
+
+The expert is in [expert/draw.py](../src/gallops/expert/draw.py). It **solves**
+the evasion rather than picking from a lattice: the offset comes from geometry,
+the timing from a lateral-acceleration and curvature budget. Two rules keep a
+drawn target honest.
+
+- **Draw from a prediction, verify against the truth.** The offset is sized
+  against a constant-velocity extrapolation of the actor — roughly what two
+  frames would show — then graded against the actor's real future. The target is
+  always something the model had the information to produce, and a target that
+  would crash is never taught.
+- **Everything goes through the same grader as the model's own 32.** It
+  reproduces paddock's `check.json` exactly: 38,080 of 38,080 candidate verdicts.
+
+Round 0: 150 episodes, 9,495 labelled ticks.
+
+## What each run measured
+
+neuroNCAP scene 0103, two runs per scenario. Every one is recorded
+`valid: false` — three of twenty pairs under a checkpoint override is not a
+neuroNCAP score, and `paddock report` excludes it.
+
+| | frontal | stationary | side | mean |
+|---|---|---|---|---|
+| released (n=10) | 2.05–2.26, hits 10/10 | 5.0 ×10 | 5.0 ×10 | 4.05 |
+| v1 — refiner only | **5.00, 5.00** | 0.00 | 0.00 / 5.00 | 2.56 |
+| v2/v3 — brake-first expert | 1.602 | 5.00 | 2.537 | 3.05 |
+| v4 — scorer scored against the expert | 2.153 / 5.000 | 5.0, 5.0 | 5.0, 5.0 | **4.53** |
+
+**v4 is the best result and it is not the capability we wanted.** It drives like
+the released model with harder braking: 0.11–0.21 m of lateral motion, slowing
+from 7.7 to about 2 m/s. On held-out swerve ticks it moves 0.07 m where the
+expert asks for 4.59. The frontal gain is lower impact speed, plus one seed of
+two avoided entirely — not an evasion.
+
+## The five defects, and what found each
+
+The experiments were worth more for these than for the scores. Each was found by
+a different instrument, and three were invisible to every summary statistic.
+
+**1. Teaching reactions to an off-camera hazard.** *Found by plotting the
+training set.* Drive-JEPA reads one camera, half-FOV 32.6°, and the crossing
+actor sits at a median 43.5° off axis. 400 of 9,495 ticks taught an evasion of
+something outside the frame — a mapping from "empty road" to "swerve left", which
+is worse than no training because it fires on ordinary driving. Every tick now
+records the hazard's bearing and whether it is in frame; reactive targets that
+cannot see their hazard are dropped, `continue` is kept at any bearing.
+
+**2. A target that began at t = 0 and never came back.** *Found by watching the
+closed-loop video.* The drawn swerve started its lateral move in the first
+instant with the shortest ramp the tyres allow, and held the offset to the
+horizon — "flat after". At 10 Hz that re-commands "be fully displaced, as hard as
+possible, now" on every tick, and the model threw the wheel over at first sight
+and sat at an angle. The plan now holds its lane, then moves, then recovers.
+
+**3. An undrivable recovery.** *Found by probing a state round 0 never visits.*
+`follow()` returns points **on** the logged path, so a plan for a car three
+metres off it began with a three-metre jump half a second later: **24.5 m/s²**,
+six times this module's own comfort limit. That is the answer to "how do I get
+back in my lane", it is physically impossible, and it was taught at every tick
+after an evasion. Round 0 hid it completely, because the released model never
+leaves its lane. `rejoin()` eases the correction instead: 1.7 m/s², back in lane
+by 4 s.
+
+**4. Swerving where braking was available.** *Found by measurement.* The ladder
+only reached braking when no swerve was clear, so it never braked for a parked
+car. Braking alone was clear on **197 of 197** sampled stationary swerve ticks
+and 10 of 10 side ones, every one taught as a swerve — while on 0103 the released
+model scores 5.0 ten times out of ten by simply stopping. The split is geometric,
+not by scenario name: braking removes the ego's own contribution to the closing
+speed, so it resolves a parked or crossing car and not an oncoming one. Measured
+closing speeds do not overlap near the −3.0 m/s threshold (oncoming −8.7 median,
+crossing 0.1, parked 0.0).
+
+**5. The scorer was trained to want the opposite of the expert.** *Found by
+measuring behaviour after the data was already right.* `score_target` measured
+progress against free-running speed, so a clear swerve scored 1.00 and a clear
+brake 0.75 — every tick, all 32 proposals. The scorer picks what gets driven, so
+changing the expert from swerve-first to brake-first moved 1,200 targets and
+changed the behaviour **not at all**. Capping progress at the expert's distance
+was not enough either: brake and full-speed both reached the cap and tied. The
+term now peaks at the expert's distance and falls away on both sides, and slowing
+on brake ticks went from −26% (accelerating) to +47%, against an expert asking
+38% and a released model doing 50%.
+
+The proposals were never the problem, which is worth recording because it was the
+first guess: a third of the 32 travel under 75% of free-running and the shortest
+is a near-dead stop. The brakes were always on offer; the scorer was declining
+them.
+
+## What is still wrong
+
+**The scorer's lane term is absolute where its progress term is relative.** A
+clear swerve is docked for leaving the lane even when the expert's own plan
+leaves it, so on frontal ticks the expert's correct answer never scores full
+marks. The preference the scorer is taught is **+0.594 for braking and +0.072 for
+swerving** — eight to one, for a model we are trying to teach to swerve. The fix
+is one line, by analogy with progress, and has not been trained on yet.
+
+**The expert reacts to hazards it cannot see.** Not off-camera this time —
+occluded. On side-0070 the inserted car is behind a tree line for the first three
+of its braking ticks; the box projects fully on-screen, so the bearing test passes
+all 45. The render is correct and the expert is wrong. A geometric test cannot
+see occlusion; the clean fix is a second render per scene without the inserted
+actor, diffed per tick, which would also catch anything else the reconstruction
+hides. Not built.
+
+**Reaction timing is bounded by the horizon, not by perception.** The expert first
+stops saying `continue` at a time-to-contact of 3.85 s (frontal), which is the
+edge of a 4 s planning horizon — it cannot see further, so anything inside is
+something its plan must avoid. Distances that look absurd are not: 60–70 m at
+13–17 m/s of closing speed is under four seconds. But reacting on geometry rather
+than on sight is why it looks early, and gating the reaction on real visibility
+would move it later **and** let it stay gentle, instead of trading one for the
+other. The brake ladder was measured four ways:
+
+| ordering | holds speed | peak decel | slows to |
+|---|---|---|---|
+| no delay at all | 0.0 s | 3.3 m/s² | 59% |
+| gentlest, then as late as that allows | 1.0 s | 3.3 m/s² | 59% |
+| **latest first, delays to 2.0 s** | **2.0 s** | **4.0 m/s²** | **30%** |
+| latest first, delays to 3.5 s | 2.0 s | 4.6 m/s² | 30% |
+
+The third is in use. The fourth buys no extra waiting and costs emergency
+braking; nuScenes driving almost never passes 4 m/s².
+
+## Instruments
+
+Built because the obvious measurement was the wrong one more than once.
+
+- [train/reach.py](../src/gallops/train/reach.py) — lateral reach of the 32 **and**
+  how much the plan slows, both against the expert's own geometry. Comparing
+  against `expert_offset_m` is wrong: it is 0 for `continue` by construction,
+  while a correct `continue` plan on curving scene 0053 sweeps 1.93 m. That
+  baseline produced one wrong diagnosis before it was caught.
+- [train/export.py](../src/gallops/train/export.py) — `model.pt` to the vendor's
+  checkpoint shape, so paddock's adapter needs no change to evaluate a finetune.
+- `ops/dj_video/compare.py` — two runs side by side, each panel carrying its own
+  score, which is the only form in which "it swerved the wrong way" is obvious.
+- `plot_expert_cases.py` — the camera the model read beside the same tick from
+  above. Three of the five defects above were found in a picture.
+
+## Reproducing
+
+```bash
+bash ops/dj_train/run_joint.sh                        # train, detached, resumable
+bash ops/dj_train/evaluate.sh <run> <step>            # reach, smoke on 0103, videos
+python -m gallops.expert.rounds show --root <runs>    # which rounds exist
+```
+
+The held-out scene is **0053**, not 0058: 0058 has 54 swerve ticks of 1,673,
+exactly one of them frontal, so its validation loss measures ordinary driving.
+
+## What would come next
+
+In the order the evidence supports, not the order of effort.
+
+1. **The lane term**, one line, no new data, retrains in 40 minutes.
+2. **Occlusion-aware visibility**, a second render pass per scene.
+3. **Round 1 of the on-policy loop** — but under a checkpoint that actually
+   swerves. v4 does not, so a round collected under it revisits round 0's
+   distribution with harder braking. 18 episodes were collected under v4 and
+   stopped for exactly this reason; they are kept, with a note, rather than
+   folded in.
