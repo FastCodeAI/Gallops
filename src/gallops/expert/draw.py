@@ -54,7 +54,25 @@ HORIZON_S = 4.0
 #: When to begin, tried latest first. Holding the lane while the situation is
 #: still developing is what a driver does, and at 10 Hz it is also what keeps the
 #: car from committing to an evasion on a two-frame prediction.
+#:
+#: Capped at 2.0 s on purpose. Later starts are available -- a full stop could be
+#: begun 3.0 s out on some ticks -- but lateness is bought with force, and the
+#: four orderings measured on the braking ticks came out:
+#:
+#:     no delay at all                 holds 0.0 s   peak 3.3 m/s^2   slows to 59%
+#:     gentlest, then as late as it can holds 1.0 s   peak 3.3          59%
+#:     latest first, delays to 2.0 s    holds 2.0 s   peak 4.0          30%
+#:     latest first, delays to 3.5 s    holds 2.0 s   peak 4.6          30%
+#:
+#: 2.0 s keeps the speed while the situation develops without reaching the 4.6
+#: m/s^2 of the longer ladder, which is emergency braking: nuScenes driving almost
+#: never passes 4.
 DELAYS_S = (2.0, 1.5, 1.0, 0.5, 0.0)
+#: How hard to slow, tried gentlest first WITHIN a delay. Delay is the outer loop,
+#: so the choice is "as late as it can be left, and at that lateness as gentle as
+#: it can be" -- keep driving until something has to be done, which is what a
+#: driver does and what the earlier gentle-first ordering gave up.
+BRAKE_SCALES = (0.6, 0.3, 0.0)
 #: How long to take crossing, tried gentlest first. `min_ramp_for` gives the
 #: shortest the car could survive; that is a limit, not a target.
 RAMPS_S = (3.0, 2.5, 2.0, 1.5, 1.0)
@@ -411,7 +429,7 @@ def teach(
         # slowing, and a plan that slows from t = 0 whatever the distance is what
         # makes a reaction to a car 60 m away look like a flinch.
         for delay in DELAYS_S:
-            for scale in (0.6, 0.3, 0.0):
+            for scale in BRAKE_SCALES:
                 if attempt("brake", scale, 0.0, brake_delay_s=delay):
                     return attempts[-1]
 
@@ -444,7 +462,7 @@ def teach(
 
     if not any(a.clear for a in attempts):
         for delay in DELAYS_S:
-            if any(attempt("brake", scale, 0.0, brake_delay_s=delay) for scale in (0.6, 0.3, 0.0)):
+            if any(attempt("brake", scale, 0.0, brake_delay_s=delay) for scale in BRAKE_SCALES):
                 break
 
     if not any(a.clear for a in attempts) and need:
