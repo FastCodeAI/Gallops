@@ -295,6 +295,13 @@ def main() -> None:
     )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
+    parser.add_argument(
+        "--dumps",
+        type=Path,
+        required=True,
+        help="the candidate dumps these labels were made from, collected by the weights training "
+        "starts from; the preflight re-grades them through the trainer and must match the labels",
+    )
     # The released config's own weights: trajectory_weight 1, final_score_weight 1.
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
@@ -337,6 +344,24 @@ def main() -> None:
     # `agent.anchors` is the vendor's own trajectory vocabulary: data/8192.npy,
     # subsampled to the 8 poses the model plans over.
     referee = Referee(agent.anchors, drivable=args.drivable)
+
+    # Before any step: the code is committed and its tests pass, the trainer's own
+    # grading reproduces the labels exactly, and the starting weights reproduce
+    # what they drove. v1-v4 trained on targets graded 14-16 m from where the car
+    # was, and nothing that existed could see it. See preflight.py.
+    from gallops.train import preflight
+
+    checked = preflight.run(
+        Path(__file__).resolve().parents[3],
+        train,
+        referee,
+        args.dumps,
+        model,
+        TickDataset,
+        torch,
+        args.device,
+    )
+
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
@@ -424,8 +449,16 @@ def main() -> None:
                 params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
                 precision="fp32",
                 notes={
-                    "stage": "A -- refiner only, scorer and encoder frozen",
-                    "loss": "min over 32 proposals of L1 to the expert trajectory",
+                    # These two read "stage A -- refiner only" and "L1 to the expert"
+                    # long after the trainer became joint; they now say what runs.
+                    "stage": "joint -- refiner and scorer train, encoder frozen",
+                    "loss": "vendor trajectory_loss_anchors (winner + good anchors) + scorer BCE "
+                    "against score_target",
+                    # Which label set and which dumps: v4 could only be traced to
+                    # its labels by file timestamps.
+                    "labelled": str(args.labelled),
+                    "dumps": str(args.dumps),
+                    "preflight": checked,
                     "history": history,
                     "caveat": "round-0 data only, no navtrain replay: drift on ordinary "
                     "driving is expected and unmeasured here",

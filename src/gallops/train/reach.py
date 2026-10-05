@@ -68,16 +68,15 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
     with torch.no_grad():
         for start in range(0, len(ticks), batch):
             chunk = list(range(start, min(start + batch, len(ticks))))
-            features, _, _ = dataset.batch(chunk)
+            features, _, used = dataset.batch(chunk)
             if features is None:
                 continue
             output = model(features)
             proposals = output["proposals"].float().cpu().numpy()
             selected = output["trajectory"].float().cpu().numpy()
-            for offset, index in enumerate(chunk):
-                if offset >= len(proposals):
-                    break
-                tick = ticks[index]
+            # `used`, not `chunk`: batch skips a tick it cannot rebuild, and pairing
+            # by position would then grade one tick's plans against the next.
+            for offset, tick in enumerate(used):
                 ego2world, targets, area = episode_context(tick, drivable)
                 stamp = int(tick["timestamp"])
                 verdicts = [grade(p, ego2world, stamp, targets, None, area) for p in proposals[offset]]
