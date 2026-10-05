@@ -153,9 +153,9 @@ def build_model(checkpoint_path: str, device: str, repo: str | None = None):
 class Referee:
     """Grades trajectories for the scorer's targets, and picks each tick's anchors.
 
-    Both jobs need the same episode context, and both are pure numpy, so they are
-    cached together: the anchor set for a tick never changes, and the episode's
-    actors and map are read once however many epochs run.
+    Both jobs need the same context, and both are pure numpy: the anchor set for a
+    tick never changes, and `episode_context` reads an episode's actors and map
+    once however many epochs run.
     """
 
     def __init__(self, anchors, drivable=None, per_tick: int = 32, seed: int = 0):
@@ -163,15 +163,12 @@ class Referee:
         self.drivable = drivable
         self.per_tick = per_tick
         self.random = np.random.default_rng(seed)
-        self._context: dict[str, tuple] = {}
         self._anchor_cache: dict[tuple, np.ndarray] = {}
         self._references: dict[str, np.ndarray] = {}
 
     def context(self, tick: dict):
-        key = str(Path(tick["frame"]).parent.parent)
-        if key not in self._context:
-            self._context[key] = episode_context(tick, self.drivable)
-        return self._context[key]
+        # Per tick, never cached per episode: the pose is the tick's own.
+        return episode_context(tick, self.drivable)
 
     def reference(self, tick: dict) -> np.ndarray:
         """The logged human path for this episode, which is the lane.

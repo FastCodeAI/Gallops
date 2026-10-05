@@ -497,6 +497,44 @@ def test_the_trainer_still_fits_the_objects_it_drives():
     assert not missing, f"the trainer calls Referee.{missing}, which do not exist"
 
 
+def test_each_tick_is_graded_where_the_ego_is_at_that_tick(tmp_path):
+    """The referee grades a tick from that tick's pose, whichever tick came first.
+
+    It used to cache the whole context per episode, pose included, so every tick
+    was graded from wherever the first one looked up had the ego -- 14-16 m off
+    on round 0, flipping a fifth of the stationary verdicts the scorer learns
+    from. Two ticks 15 m apart with a car parked ahead: the same short plan is
+    clear from the first and a crash from the second, and asking about the first
+    must not change the answer for the second.
+    """
+    import json
+
+    from gallops.train.swerve import Referee
+
+    episode = tmp_path / "stationary-0099" / "run_0"
+    (episode / "CAM_FRONT").mkdir(parents=True)
+    early, late = 1_000_000, 2_000_000
+    poses = {}
+    for stamp, x in ((early, 0.0), (late, 15.0)):
+        pose = np.eye(4)
+        pose[0, 3] = x
+        poses[str(stamp)] = pose.tolist()
+    (episode / "ego_poses.json").write_text(json.dumps(poses))
+    (episode / "actors.json").write_text(json.dumps([actor_ahead(22.0, t0=late)]))
+
+    def tick(stamp):
+        return {"frame": str(episode / "CAM_FRONT" / f"{stamp}.jpg"), "timestamp": stamp}
+
+    referee = Referee(anchors=np.zeros((1, 8, 3)))
+    plan = straight(speed=2.0)
+    first = referee.context(tick(early))
+    second = referee.context(tick(late))
+
+    assert second[0][0, 3] == pytest.approx(15.0)
+    assert grader.grade(plan, first[0], early, first[1]).hit_at is None
+    assert grader.grade(plan, second[0], late, second[1]).hit_at is not None
+
+
 def test_a_brake_holds_its_speed_before_it_slows():
     """The swerve was given a when-to-begin and the brake was not, so a brake
     started at t=0 however far away the hazard was. With four seconds in hand a

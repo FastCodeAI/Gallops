@@ -99,22 +99,34 @@ def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
 
     One definition, used by the trainer and by the reach measurement, so a change
     to how a proposal is judged cannot land in one and not the other.
+
+    **The pose belongs to the tick; only the rest belongs to the episode.** Both
+    callers used to cache this tuple per episode, so every tick was graded with
+    the ego wherever the FIRST tick looked up had it -- 14-16 m off on average.
+    Re-grading round 0's dumped proposals that way flipped the hit/clear verdict
+    on 19.5% of stationary and 36.6% of frontal candidates, and those verdicts are
+    the scorer's targets and the anchor term's filter. The per-episode part is
+    cached here instead, so callers call this per tick and cannot bring it back.
     """
+    directory = str(Path(tick["frame"]).parent.parent)
+    poses, targets, area = _episode_static(directory, str(drivable) if drivable else None)
+    return np.asarray(poses[str(int(tick["timestamp"]))]), targets, area
+
+
+@lru_cache(maxsize=512)
+def _episode_static(directory: str, drivable: str | None) -> tuple:
+    """What does not change within an episode: every pose, the target actors, the map."""
     from gallops.expert.drivable import DrivableArea
 
-    directory = Path(tick["frame"]).parent.parent
-    poses = json.loads((directory / "ego_poses.json").read_text())
-    actors = json.loads((directory / "actors.json").read_text())
+    root = Path(directory)
+    poses = json.loads((root / "ego_poses.json").read_text())
+    actors = json.loads((root / "actors.json").read_text())
     area = None
     if drivable:
-        path = Path(drivable) / f"scene-{directory.parent.name.rsplit('-', 1)[-1]}.npz"
+        path = Path(drivable) / f"scene-{root.parent.name.rsplit('-', 1)[-1]}.npz"
         if path.exists():
             area = DrivableArea.load(path)
-    return (
-        np.asarray(poses[str(int(tick["timestamp"]))]),
-        [a for a in actors if a["is_target_actor"]],
-        area,
-    )
+    return poses, [a for a in actors if a["is_target_actor"]], area
 
 
 class TickDataset:

@@ -64,7 +64,6 @@ def sample(ticks: list[dict], limit: int) -> list[dict]:
 def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8) -> dict:
     """Reach and escape rate over `ticks`, split by what the expert asked for."""
     rows = []
-    contexts: dict[str, tuple] = {}
     model.eval()
     with torch.no_grad():
         for start in range(0, len(ticks), batch):
@@ -79,10 +78,7 @@ def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8)
                 if offset >= len(proposals):
                     break
                 tick = ticks[index]
-                key = str(Path(tick["frame"]).parent.parent)
-                if key not in contexts:
-                    contexts[key] = episode_context(tick, drivable)
-                ego2world, targets, area = contexts[key]
+                ego2world, targets, area = episode_context(tick, drivable)
                 stamp = int(tick["timestamp"])
                 verdicts = [grade(p, ego2world, stamp, targets, None, area) for p in proposals[offset]]
                 # 0 means it holds its speed; 1 means it stops dead.
