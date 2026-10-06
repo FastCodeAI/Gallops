@@ -294,6 +294,10 @@ def main() -> None:
         action="store_true",
         help="keep reactive ticks whose hazard is off-camera (for comparison only)",
     )
+    # A scene whose inserted car renders as nothing teaches reactions to an empty
+    # road. scene-0064's car was only ever seen 47 m+ away, and in its frontal
+    # episodes it is not visible at all.
+    parser.add_argument("--exclude-scene", action="append", default=[], help="e.g. 0064; repeatable")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
     parser.add_argument(
@@ -323,6 +327,10 @@ def main() -> None:
     os.environ.setdefault("DRIVE_JEPA_MSDA", "auto")
 
     ticks = load_ticks(args.labelled, blind=args.keep_blind)
+    if args.exclude_scene:
+        kept = [t for t in ticks if not any(f"-{scene}/" in t["episode"] for scene in args.exclude_scene)]
+        print(f"  excluded scenes {', '.join(args.exclude_scene)}: {len(ticks) - len(kept)} ticks dropped")
+        ticks = kept
     if args.limit:
         # Evenly spaced, not the first N: the files are sorted by scenario-scene,
         # so a head slice is one scene and a smoke run over it holds out its own
@@ -464,6 +472,7 @@ def main() -> None:
                     "caveat": "round-0 data only, no navtrain replay: drift on ordinary "
                     "driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
+                    "excluded_scenes": args.exclude_scene,
                 },
             ),
         )
