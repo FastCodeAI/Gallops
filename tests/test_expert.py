@@ -438,7 +438,7 @@ def test_a_displaced_car_is_given_a_drivable_way_back():
     # a straight path running 3 m to the ego's right, i.e. the car is 3 m left of it
     path = np.column_stack([np.linspace(-20, 80, 200), np.full(200, -3.0)])
 
-    correction = rejoin(path, speed=10.0, times=times)
+    correction = rejoin(path, speed=10.0, distances=10.0 * times)
     assert correction[0] == pytest.approx(3.0, abs=0.6), "does not start where the car is"
     assert abs(correction[-1]) < 0.05, "never actually rejoins the path"
 
@@ -452,7 +452,42 @@ def test_a_car_already_on_the_path_gets_no_correction():
 
     times = np.arange(1, 9) * 0.5
     path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
-    assert np.abs(rejoin(path, speed=10.0, times=times)).max() < 1e-3
+    assert np.abs(rejoin(path, speed=10.0, distances=10.0 * times)).max() < 1e-3
+
+
+def test_a_car_braking_to_a_stop_does_not_slide_back_onto_the_path():
+    """The rejoin was timed by the clock, so a plan that stopped within a metre still
+    covered the whole sideways gap: 934 of 9,495 round-0 targets slid up to 2 m
+    sideways, one step pointing 90 deg off the road. Laid out over distance, a car
+    that stops early stops part of the way back, still pointing down the road."""
+    from gallops.expert.draw import _plan_from, undrivable
+
+    path = np.column_stack([np.linspace(-20, 80, 200), np.full(200, 1.0)])  # car 1 m right of it
+    plan = _plan_from(path, speed=2.0, scale=0.0, offset=0.0, ramp_s=1.0)
+    assert undrivable(plan) is None
+    assert plan[-1, 0] < 1.0, "the fixture should stop within a metre"
+    assert abs(plan[-1, 1]) < 0.2, "a stopped car moved sideways"
+    assert np.abs(plan[:, 2]).max() < np.radians(20), "a stopped car turned to face sideways"
+
+
+def test_a_braked_swerve_keeps_its_turning_radius():
+    """Sized for the starting speed, a swerve drawn while braking used to tighten as
+    the car slowed. Laid out over distance it cannot."""
+    from gallops.expert.draw import _plan_from, min_ramp_for, undrivable
+
+    path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
+    for scale in (1.0, 0.6, 0.3, 0.0):
+        plan = _plan_from(path, speed=8.0, scale=scale, offset=2.0, ramp_s=min_ramp_for(2.0, 8.0))
+        assert undrivable(plan) is None, scale
+
+
+def test_the_drivability_check_flags_a_sideways_slide():
+    from gallops.expert.draw import undrivable
+
+    slide = np.array([[0.3 * k, 0.4 * k, 0.0] for k in range(1, 9)])  # 53 deg off the car's heading at once
+    assert undrivable(slide) is not None
+    straight = np.array([[2.0 * k, 0.0, 0.0] for k in range(1, 9)])
+    assert undrivable(straight) is None
 
 
 def test_the_trainer_still_fits_the_objects_it_drives():

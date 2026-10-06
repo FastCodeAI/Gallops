@@ -131,7 +131,10 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
         driven = first_hit(np.asarray(row["trajectory"]), ego2world, stamp, targets)
         seen = hazard_bearing(ego2world, stamp, targets)
         bearing, in_frame = seen if seen else (None, False)
-        usable = plan.kind not in REACTIVE or in_frame
+        # A target no car could follow is not taught either: imitating it is
+        # learning to slide sideways. `teach` rejects such plans; this catches the
+        # one it cannot, a nominal plan whose own path is undrivable.
+        usable = (plan.kind not in REACTIVE or in_frame) and plan.drivable
         out.append(
             {
                 "episode": f"{directory.parent.name}/{directory.name}",
@@ -144,6 +147,7 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 "expert": np.asarray(plan.waypoints).round(4).tolist(),
                 "expert_kind": plan.kind,
                 "expert_clear": plan.clear,
+                "expert_drivable": plan.drivable,
                 "expert_offset_m": round(plan.offset_m, 3),
                 "hazard_bearing_deg": None if bearing is None else round(bearing, 1),
                 "hazard_in_frame": in_frame,

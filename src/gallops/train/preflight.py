@@ -159,10 +159,22 @@ def _dump_index(dumps: str) -> dict[int, list[Path]]:
 
 def grading_checks(sample: list[dict], referee, dumps: Path) -> tuple[dict, list[str]]:
     """The trainer's grading path against what labelling recorded, exactly."""
+    from gallops.expert.draw import undrivable
     from gallops.expert.grader import first_hit, grade
 
     problems, cache = [], {}
     agree = Counter()
+    # Every target trained on must be one a car could follow. 934 of 9,495 round-0
+    # targets were not -- stops that slid up to 2 m sideways -- and nothing noticed.
+    sliding = [
+        t for t in sample if t.get("usable_for_imitation", True) and undrivable(np.asarray(t["expert"]))
+    ]
+    if sliding:
+        problems.append(
+            f"{len(sliding)} of {len(sample)} sampled targets are undrivable "
+            f"({undrivable(np.asarray(sliding[0]['expert']))}, {sliding[0]['episode']}): "
+            "relabel with the current expert"
+        )
     clear_scores, hit_scores = [], []
     missing = 0
     for tick in sample:
