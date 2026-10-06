@@ -56,6 +56,7 @@ import numpy as np
 from gallops import checkpoint as sidecar
 from gallops.config import SiteConfig
 from gallops.expert.grader import grade
+from gallops.expert.lanes import load_references, reference_at
 from gallops.train.losses import score_target, scorer_loss, trajectory_loss, travelled
 from gallops.train.swerve_data import episode_context
 
@@ -171,20 +172,20 @@ class Referee:
         return episode_context(tick, self.drivable)
 
     def reference(self, tick: dict) -> np.ndarray:
-        """The logged human path for this episode, which is the lane.
+        """The path this tick's plans are graded against: the lane the car is in.
 
         The grader measures a plan's deviation from it, and that deviation is what
         settles the choice between two plans that are both clear: the one holding
-        its lane wins, because a swerve has a direction to get wrong.
+        its lane wins, because a swerve has a direction to get wrong. It is the
+        lane centre where `gallops.expert.lanes` has run, the logged human path
+        otherwise -- read through the same function labelling uses.
         """
         directory = Path(tick["frame"]).parent.parent
         key = str(directory)
         if key not in self._references:
-            logged = json.loads((directory / "reference_trajectory.json").read_text())
-            self._references[key] = np.asarray(
-                [v for _, v in sorted(logged.items(), key=lambda kv: int(kv[0]))]
-            )[:, :2]
-        return self._references[key]
+            self._references[key] = load_references(directory)
+        logged, lanes = self._references[key]
+        return reference_at(int(tick["timestamp"]), logged, lanes)[0]
 
     def good_anchors(self, tick: dict) -> np.ndarray:
         """A sample of anchors that neither hit anything nor leave the road here.

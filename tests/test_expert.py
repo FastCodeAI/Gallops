@@ -598,3 +598,50 @@ def test_a_delayed_brake_still_decelerates_at_the_commanded_rate():
     speed = np.gradient(distance, times)
     slowing = np.abs(np.gradient(speed, times))
     assert slowing.max() >= BRAKE_MAX * 0.7, f"peak deceleration only {slowing.max():.1f} m/s^2"
+
+
+def test_the_expert_follows_the_lane_the_car_is_in_when_one_was_computed(tmp_path):
+    """Scene 0058: the human moved one lane over. With the lane centre on file, a
+    plan for an empty road stays in the car's own lane instead of following them,
+    and the label says which path it was drawn against."""
+    import json
+
+    from gallops.expert.label import label_episode
+
+    episode = tmp_path / "stationary-0099" / "run_0"
+    (episode / "CAM_FRONT").mkdir(parents=True)
+    stamps = [1_000_000, 1_100_000]
+    poses = {str(s): np.eye(4).tolist() for s in stamps}
+    (episode / "ego_poses.json").write_text(json.dumps(poses))
+    far = actor_ahead(200.0)
+    (episode / "actors.json").write_text(json.dumps([{**far, "uuid": "x"}]))
+    # the human path runs 3 m to the left, one lane over
+    (episode / "reference_trajectory.json").write_text(
+        json.dumps({str(i): [float(i) - 20.0, 3.0, 0.0] for i in range(120)})
+    )
+    lane = [[float(x), 0.0] for x in range(-10, 90)]
+    (episode / "lane_reference.json").write_text(json.dumps({str(s): lane for s in stamps}))
+    plan = straight(8.0)
+    rows = [
+        {
+            "timestamp": s,
+            "speed": 8.0,
+            "accel": 0.0,
+            "command": 2,
+            "trajectory": plan.tolist(),
+            "proposals": [plan.tolist()] * 32,
+        }
+        for s in stamps
+    ]
+
+    labelled = label_episode(episode, rows)
+    assert all(t["reference"] == "lane" for t in labelled)
+    assert all(t["expert_kind"] == "continue" for t in labelled)
+    assert max(abs(y) for t in labelled for _, y, _ in t["expert"]) < 0.2, "followed the human, not the lane"
+
+    (episode / "lane_reference.json").unlink()
+    drifted = label_episode(episode, rows)
+    assert all(t["reference"] == "logged" for t in drifted)
+    assert max(abs(y) for t in drifted for _, y, _ in t["expert"]) > 1.0, (
+        "fixture should show the old behaviour"
+    )
