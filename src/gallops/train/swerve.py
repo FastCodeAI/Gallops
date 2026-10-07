@@ -57,7 +57,7 @@ from gallops import checkpoint as sidecar
 from gallops.config import SiteConfig
 from gallops.expert.grader import grade
 from gallops.expert.lanes import load_references, reference_at
-from gallops.train.losses import score_target, scorer_loss, trajectory_loss, travelled
+from gallops.train.losses import score_target, scorer_loss, soft_target_floor, trajectory_loss, travelled
 from gallops.train.swerve_data import episode_context
 
 #: Only these move. Everything else, the encoder above all, is frozen.
@@ -248,7 +248,13 @@ def timed(name: str, work):
 
 
 def combined_loss(output, target, ticks, referee, torch):
-    """Both losses for one batch: (trajectory, score).
+    """Both losses for one batch: (trajectory, score, parts).
+
+    `parts` is what gets logged: the trajectory loss split into its pull toward
+    the expert (`traj_winner`, last stage) and toward the anchors (`traj_anchor`),
+    and the scorer's BCE beside its floor -- the entropy of the soft targets,
+    which no scorer can go below -- and their difference, the part that can
+    actually reach zero.
 
     The scorer's targets are computed from DETACHED proposals, because grading
     them runs through numpy -- but the loss itself is on the live `pred_logit`,
@@ -258,22 +264,41 @@ def combined_loss(output, target, ticks, referee, torch):
     losses train the shared trunk, and only the targets are frozen.
     """
     anchors = timed("anchors", lambda: [referee.good_anchors(t) for t in ticks])
-    trajectory = timed(
+    trajectory, winner, anchored = timed(
         "traj_loss",
-        lambda: trajectory_loss(output["proposal_list"], target, anchors, torch)[0],
+        lambda: trajectory_loss(output["proposal_list"], target, anchors, torch),
     )
     proposals = timed("to_cpu", lambda: output["proposals"].detach().float().cpu().numpy())
     targets = timed(
         "grade",
         lambda: np.stack([referee.targets(tick, proposals[i]) for i, tick in enumerate(ticks)]),
     )
-    scored = timed(
-        "score_loss",
-        lambda: scorer_loss(
-            output["pred_logit"], torch.from_numpy(targets).to(output["pred_logit"].device), torch
-        ),
-    )
-    return trajectory, scored
+    soft = torch.from_numpy(targets).to(output["pred_logit"].device)
+    scored = timed("score_loss", lambda: scorer_loss(output["pred_logit"], soft, torch))
+    floor = float(soft_target_floor(soft.float(), torch))
+    parts = {
+        "traj_total": float(trajectory.detach()),
+        "traj_winner": float(winner.detach()),
+        "traj_anchor": float((anchored - winner).detach()),
+        "score_bce": float(scored.detach()),
+        "score_floor": floor,
+        "score_above_floor": float(scored.detach()) - floor,
+    }
+    return trajectory, scored, parts
+
+
+def evaluate(model, dataset, indices, referee, torch, batch: int) -> dict:
+    """Mean loss parts over `indices` of `dataset`, no gradient, model left in train mode."""
+    model.eval()
+    rows = []
+    with torch.no_grad():
+        for start in range(0, len(indices), batch):
+            features, target, ticks_used = dataset.batch(list(indices[start : start + batch]))
+            if features is None:
+                continue
+            rows.append(combined_loss(model(features), target, ticks_used, referee, torch)[2])
+    model.train()
+    return {key: float(np.mean([r[key] for r in rows])) for key in rows[0]} if rows else {}
 
 
 def main() -> None:
@@ -310,6 +335,15 @@ def main() -> None:
     # The released config's own weights: trajectory_weight 1, final_score_weight 1.
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
+    # Validation during the epoch, not only after it: the held-out trajectory loss
+    # ended at 2.1-2.4 against ~1.0 in training on every run so far, and a single
+    # number at the end cannot say when that gap opens.
+    parser.add_argument(
+        "--val-every", type=int, default=100, help="steps between held-out checks; 0 = epoch end only"
+    )
+    parser.add_argument(
+        "--val-sample", type=int, default=400, help="held-out ticks per interim check; 0 = all"
+    )
     args = parser.parse_args()
 
     cfg = SiteConfig.load()
@@ -375,6 +409,28 @@ def main() -> None:
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
     out_root = Path(cfg.resolve("{weights}")) / "drivejepa_swerve" / args.train_run
+    out_root.mkdir(parents=True, exist_ok=True)
+    # One JSON line per 25 training steps and per held-out check, beside the
+    # checkpoints, so curves can be drawn from the run itself.
+    metrics_path = out_root / "metrics.jsonl"
+    metrics = metrics_path.open("a")
+
+    def record(kind: str, **fields) -> None:
+        metrics.write(json.dumps({"kind": kind, "time": round(time.time(), 1), **fields}) + "\n")
+        metrics.flush()
+
+    record(
+        "start",
+        run=args.train_run,
+        labelled=str(args.labelled),
+        train_ticks=len(dataset),
+        val_ticks=len(validation) if validation else 0,
+        excluded_scenes=args.exclude_scene,
+    )
+    interim = []
+    if validation is not None:
+        n = len(validation) if not args.val_sample else min(args.val_sample, len(validation))
+        interim = sorted({int(i) for i in np.linspace(0, len(validation) - 1, n).round()})
     history = []
     step = 0
     for epoch in range(args.epochs):
@@ -382,6 +438,7 @@ def main() -> None:
         order = list(range(len(dataset)))
         random.Random(epoch).shuffle(order)
         losses = []
+        recent_parts: list[dict] = []
         started = time.time()
         for start in range(0, len(order), args.batch):
             chunk = order[start : start + args.batch]
@@ -389,22 +446,38 @@ def main() -> None:
             if features is None:
                 continue
             output = timed("forward", lambda f=features: model(f))
-            trajectory, scored = combined_loss(output, target, ticks_used, referee, torch)
+            trajectory, scored, parts = combined_loss(output, target, ticks_used, referee, torch)
             loss = args.trajectory_weight * trajectory + args.score_weight * scored
             optimiser.zero_grad(set_to_none=True)
             timed("backward", loss.backward)
             torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             optimiser.step()
             losses.append((float(trajectory.detach()), float(scored.detach())))
+            recent_parts.append(parts)
             step += 1
             if step % 25 == 0:
                 recent = np.asarray(losses[-25:])
+                record(
+                    "train",
+                    epoch=epoch,
+                    step=step,
+                    **{k: float(np.mean([r[k] for r in recent_parts[-25:]])) for k in recent_parts[-1]},
+                )
                 spent = "  ".join(f"{k} {v / 25:.2f}s" for k, v in sorted(TIMING.items()))
                 TIMING.clear()
                 print(
                     f"    epoch {epoch} step {step}: "
                     f"trajectory {recent[:, 0].mean():.4f}  score {recent[:, 1].mean():.4f}\n"
                     f"      per step: {spent}",
+                    flush=True,
+                )
+            if interim and args.val_every and step % args.val_every == 0:
+                held_out = evaluate(model, validation, interim, referee, torch, args.batch)
+                record("val", epoch=epoch, step=step, ticks=len(interim), **held_out)
+                nan = float("nan")
+                print(
+                    f"    held-out at step {step}: trajectory {held_out.get('traj_total', nan):.4f}  "
+                    f"score above floor {held_out.get('score_above_floor', nan):.4f}",
                     flush=True,
                 )
 
@@ -416,20 +489,12 @@ def main() -> None:
             "minutes": (time.time() - started) / 60,
         }
         if validation is not None:
-            model.eval()
-            with torch.no_grad():
-                held = []
-                for start in range(0, len(validation), args.batch):
-                    stop = min(start + args.batch, len(validation))
-                    features, target, ticks_used = validation.batch(list(range(start, stop)))
-                    if features is None:
-                        continue
-                    trajectory, scored = combined_loss(model(features), target, ticks_used, referee, torch)
-                    held.append((float(trajectory), float(scored)))
-            if held:
-                validated = np.asarray(held)
-                entry["val_trajectory"] = float(validated[:, 0].mean())
-                entry["val_score"] = float(validated[:, 1].mean())
+            held_out = evaluate(model, validation, list(range(len(validation))), referee, torch, args.batch)
+            if held_out:
+                record("val_full", epoch=epoch, step=step, ticks=len(validation), **held_out)
+                entry["val_trajectory"] = held_out["traj_total"]
+                entry["val_score"] = held_out["score_bce"]
+                entry["val_score_above_floor"] = held_out["score_above_floor"]
         history.append(entry)
         print(
             f"  epoch {epoch}: train traj {entry['train_trajectory']:.4f} "
@@ -469,6 +534,8 @@ def main() -> None:
                     "dumps": str(args.dumps),
                     "preflight": checked,
                     "history": history,
+                    # every 25-step mean and held-out check of this run, beside the checkpoints
+                    "metrics_file": "../metrics.jsonl",
                     "caveat": "round-0 data only, no navtrain replay: drift on ordinary "
                     "driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
@@ -476,7 +543,8 @@ def main() -> None:
                 },
             ),
         )
-    print(f"  wrote checkpoints under {out_root}")
+    metrics.close()
+    print(f"  wrote checkpoints and {metrics_path.name} under {out_root}")
 
 
 if __name__ == "__main__":

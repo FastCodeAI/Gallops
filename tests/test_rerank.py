@@ -110,3 +110,16 @@ def test_mismatched_arrays_are_refused(tmp_path):
     )
     with pytest.raises(ValueError, match="disagree"):
         rerank.train(path, tmp_path / "w", "m", "r", rerank.Settings(epochs=5), "abc1234")
+
+
+def test_the_scorer_floor_is_the_entropy_of_the_soft_targets():
+    """BCE against soft targets cannot go below their entropy, so that floor is
+    logged beside it: ln 2 at y = 0.5, zero at y = 0 or 1, and BCE(y, y) itself."""
+    torch = pytest.importorskip("torch")
+    from gallops.train.losses import soft_target_floor
+
+    assert float(soft_target_floor(torch.tensor([0.5, 0.5]), torch)) == pytest.approx(np.log(2), abs=1e-5)
+    assert float(soft_target_floor(torch.tensor([0.0, 1.0]), torch)) == pytest.approx(0.0, abs=1e-4)
+    y = torch.tensor([0.2, 0.75, 0.9])
+    at_target = torch.nn.functional.binary_cross_entropy(y, y)
+    assert float(soft_target_floor(y, torch)) == pytest.approx(float(at_target), abs=1e-5)
