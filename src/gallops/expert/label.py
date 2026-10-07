@@ -163,6 +163,12 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 "candidate_off_road": [v.off_road_at for v in graded],
                 "candidate_clear": [v.clear for v in graded],
                 "driven_hits": driven,
+                # Who drove at collection, and -- when that was not the model -- what its
+                # own pick would have hit: in GT-driven rounds `driven_hits` is the human's.
+                "driver": row.get("drive", "model"),
+                "model_hits": first_hit(np.asarray(row["model_trajectory"]), ego2world, stamp, targets)
+                if row.get("model_trajectory") is not None
+                else driven,
                 "pdm_score": row.get("pdm_score"),
             }
         )
