@@ -137,6 +137,55 @@ def test_the_sample_visits_each_episode_late_tick_first():
         assert stamps == sorted(stamps, reverse=True) and len(stamps) == 4
 
 
+def _two_rounds(tmp_path):
+    """Round 0 and a DAgger round of the same scenario: same episode name, same stamps."""
+    r0, d0 = build_episode(tmp_path / "round0")
+    r1, d1 = build_episode(tmp_path / "round1")
+    for tick in r1:
+        tick["source"] = 1
+    for tick in r0:
+        tick["source"] = 0
+    return r0 + r1, d0, d1
+
+
+def test_two_rounds_of_one_scenario_stay_two_episodes(tmp_path):
+    ticks, _, _ = _two_rounds(tmp_path)
+    assert len({t["episode"] for t in ticks}) == 1  # the name alone would merge them
+    sample = preflight.sample_ticks(ticks, episodes=2, per_episode=4)
+    assert len({preflight.episode_key(t) for t in sample}) == 2
+    assert preflight.describe(ticks)["episodes"] == 2
+
+
+def test_grading_reads_each_sources_own_dumps(tmp_path):
+    ticks, d0, d1 = _two_rounds(tmp_path)
+    referee = Referee(anchors=np.zeros((1, 8, 3)))
+    sources = [
+        preflight.Source("r0", str(d0), preflight.START),
+        preflight.Source("r1", str(d1), "later-checkpoint"),
+    ]
+    report, problems = preflight.grading_checks(ticks, referee, sources)
+    assert problems == [] and report["graded"] == 8, problems
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    sources[1] = preflight.Source("r1", str(empty), "later-checkpoint")
+    report, problems = preflight.grading_checks(ticks, referee, sources)
+    assert report["no_dump"] == 4 and report["graded"] == 4
+
+
+def test_no_source_from_the_starting_weights_is_refused(tmp_path, monkeypatch):
+    """Fidelity is the only check on the rebuilt inputs; a run cannot skip it entirely."""
+    ticks, _, d1 = _two_rounds(tmp_path)
+    ticks = [t for t in ticks if t["source"] == 1]
+    for tick in ticks:
+        tick["source"] = 0
+        tick["expert_kind"] = "brake"
+    monkeypatch.setattr(preflight, "code_checks", lambda repo: ({}, []))
+    sources = [preflight.Source("r1", str(d1), "later-checkpoint")]
+    with pytest.raises(preflight.PreflightFailed) as failed:
+        preflight.run(tmp_path, ticks, Referee(anchors=np.zeros((1, 8, 3))), sources, None, None, None, "cpu")
+    assert "no source was driven by the starting weights" in str(failed.value)
+
+
 def test_code_checks_refuse_uncommitted_source(tmp_path):
     repo = tmp_path / "repo"
     (repo / "src").mkdir(parents=True)

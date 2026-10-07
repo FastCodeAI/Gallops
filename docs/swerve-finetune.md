@@ -357,6 +357,18 @@ The trainer requires `--dumps`: the candidate dumps the labels were made from,
 collected by the weights training starts from. The preflight re-grades them
 through the trainer and stops the run if they disagree with the labels.
 
+DAgger trains on every round at once, and each round was driven by a different
+checkpoint, so each data set comes as its own `--source LABELLED DUMPS DROVE`:
+
+    --source labelled_round0_v5 collect_dumps          start   # the released model drove
+    --source labelled_round1_l5 collect_dumps_round1-l5 l5      # l5 drove
+
+Every source is re-graded against its own dumps. Fidelity -- the starting weights
+reproduce what they drove -- runs only on `start` sources; a round 1 dump was made
+by l5, and comparing the released weights with it would fail for the right reason.
+Episodes are keyed by their directory, not their name: round 1 replays round 0's
+scenarios and seeds, so `stationary-0070/run_3` and its timestamps exist once per round.
+
 The held-out scene is **0053**, not 0058: 0058 has 54 swerve ticks of 1,673,
 exactly one of them frontal, so its validation loss measures ordinary driving.
 

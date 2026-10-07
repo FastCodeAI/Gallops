@@ -126,8 +126,10 @@ before its first step, and stops with every reason listed if any check fails:
 Do not add a way to skip it. A check that can be skipped is skipped the one time
 it matters. If it fails on data you believe is right, the disagreement is the
 finding: find which side is wrong before training on either. Pass `--dumps` (the
-candidate dumps the labels were made from); the report lands in the checkpoint
-sidecar beside `labelled` and `dumps`.
+candidate dumps the labels were made from), or one `--source LABELLED DUMPS DROVE`
+per data set when training on several (DAgger rounds, GT-shadow); the report lands
+in the checkpoint sidecar beside `sources`. Fidelity runs only on sources the
+starting weights drove (`DROVE` = `start`), and a run with none is refused.
 
 **Any new code that grades, labels or builds inputs gets a check here**, in the
 form "what the trainer computes equals what was recorded". Testing the parts

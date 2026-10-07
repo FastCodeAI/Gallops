@@ -78,7 +78,7 @@ def git_sha(repo: Path) -> str:
         return "unknown"
 
 
-def load_ticks(labelled: Path, blind: bool = False) -> list[dict]:
+def load_ticks(labelled: Path, blind: bool = False, source: int = 0) -> list[dict]:
     """Every labelled tick that has a frame to read and an expert plan to copy.
 
     Reactive targets whose hazard sits outside the one camera's frame are dropped.
@@ -98,6 +98,7 @@ def load_ticks(labelled: Path, blind: bool = False) -> list[dict]:
             if not blind and record.get("usable_for_imitation", True) is False:
                 dropped += 1
                 continue
+            record["source"] = source
             ticks.append(record)
     if dropped:
         print(f"  dropped {dropped} ticks that react to a hazard the camera cannot see")
@@ -303,7 +304,9 @@ def evaluate(model, dataset, indices, referee, torch, batch: int) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--labelled", type=Path, required=True)
+    parser.add_argument(
+        "--labelled", type=Path, help="one source, driven by the starting weights; or use --source"
+    )
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--batch", type=int, default=8)
@@ -328,9 +331,20 @@ def main() -> None:
     parser.add_argument(
         "--dumps",
         type=Path,
-        required=True,
-        help="the candidate dumps these labels were made from, collected by the weights training "
+        help="the candidate dumps --labelled was made from, collected by the weights training "
         "starts from; the preflight re-grades them through the trainer and must match the labels",
+    )
+    # DAgger trains on the UNION of every round (see gallops.expert.rounds), and
+    # each round was driven by a different checkpoint, so each needs its own dumps
+    # and its own answer to "can the starting weights be held to these?".
+    parser.add_argument(
+        "--source",
+        nargs=3,
+        action="append",
+        default=[],
+        metavar=("LABELLED", "DUMPS", "DROVE"),
+        help="repeatable: a labelled dir, its dumps, and who drove -- 'start' for the weights this "
+        "run starts from (round 0, GT-shadow), else the driving checkpoint's name (a DAgger round)",
     )
     # The released config's own weights: trajectory_weight 1, final_score_weight 1.
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
@@ -360,7 +374,23 @@ def main() -> None:
     os.environ.setdefault("NUPLAN_MAP_VERSION", "nuplan-maps-v1.0")
     os.environ.setdefault("DRIVE_JEPA_MSDA", "auto")
 
-    ticks = load_ticks(args.labelled, blind=args.keep_blind)
+    from gallops.train.preflight import START, Source
+
+    sources = [Source(*spec) for spec in args.source]
+    if args.labelled or args.dumps:
+        if not (args.labelled and args.dumps):
+            raise SystemExit("--labelled and --dumps go together")
+        sources.insert(0, Source(str(args.labelled), str(args.dumps), START))
+    if not sources:
+        raise SystemExit("nothing to train on: give --labelled/--dumps or --source")
+    ticks = [
+        t
+        for i, s in enumerate(sources)
+        for t in load_ticks(Path(s.labelled), blind=args.keep_blind, source=i)
+    ]
+    for i, s in enumerate(sources):
+        n = sum(1 for t in ticks if t["source"] == i)
+        print(f"  source {i}: {n} ticks from {s.labelled} (drove: {s.drove})")
     if args.exclude_scene:
         kept = [t for t in ticks if not any(f"-{scene}/" in t["episode"] for scene in args.exclude_scene)]
         print(f"  excluded scenes {', '.join(args.exclude_scene)}: {len(ticks) - len(kept)} ticks dropped")
@@ -398,7 +428,7 @@ def main() -> None:
         Path(__file__).resolve().parents[3],
         train,
         referee,
-        args.dumps,
+        sources,
         model,
         TickDataset,
         torch,
@@ -422,7 +452,7 @@ def main() -> None:
     record(
         "start",
         run=args.train_run,
-        labelled=str(args.labelled),
+        sources=[s._asdict() for s in sources],
         train_ticks=len(dataset),
         val_ticks=len(validation) if validation else 0,
         excluded_scenes=args.exclude_scene,
@@ -530,14 +560,12 @@ def main() -> None:
                     "against score_target",
                     # Which label set and which dumps: v4 could only be traced to
                     # its labels by file timestamps.
-                    "labelled": str(args.labelled),
-                    "dumps": str(args.dumps),
+                    "sources": [s._asdict() for s in sources],
                     "preflight": checked,
                     "history": history,
                     # every 25-step mean and held-out check of this run, beside the checkpoints
                     "metrics_file": "../metrics.jsonl",
-                    "caveat": "round-0 data only, no navtrain replay: drift on ordinary "
-                    "driving is expected and unmeasured here",
+                    "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
                     "excluded_scenes": args.exclude_scene,
                 },
