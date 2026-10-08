@@ -123,3 +123,30 @@ def test_the_scorer_floor_is_the_entropy_of_the_soft_targets():
     y = torch.tensor([0.2, 0.75, 0.9])
     at_target = torch.nn.functional.binary_cross_entropy(y, y)
     assert float(soft_target_floor(y, torch)) == pytest.approx(float(at_target), abs=1e-5)
+
+
+def test_the_ranking_loss_prefers_the_scorer_that_puts_the_safe_plan_first():
+    """Two scorers within 0.05 of every target score alike under BCE; the ranking
+    loss separates the one whose argmax is the plan the targets rank first."""
+    torch = pytest.importorskip("torch")
+    from gallops.train.losses import pick_regret, ranking_loss, scorer_loss
+
+    targets = torch.tensor([[0.70, 0.66, 0.10]])  # safe, unsafe but close, crash
+    logit = lambda p: torch.logit(torch.tensor(p)).reshape(1, 3, 1)  # noqa: E731
+    right = logit([0.70, 0.65, 0.12])
+    wrong = logit([0.66, 0.70, 0.12])
+    assert abs(float(scorer_loss(right, targets, torch) - scorer_loss(wrong, targets, torch))) < 0.01
+    assert float(ranking_loss(right, targets, torch)) < float(ranking_loss(wrong, targets, torch))
+    assert pick_regret(right, targets, torch) == (pytest.approx(0.0), pytest.approx(1.0))
+    regret, best = pick_regret(wrong, targets, torch)
+    assert regret == pytest.approx(0.04, abs=1e-6) and best == 0.0
+
+
+def test_the_ranking_loss_is_lowest_when_the_scorer_matches_the_targets_ordering():
+    torch = pytest.importorskip("torch")
+    from gallops.train.losses import RANK_TEMPERATURE, ranking_loss
+
+    targets = torch.tensor([[0.9, 0.5, 0.1]])
+    matched = (targets / RANK_TEMPERATURE).unsqueeze(-1)
+    reversed_ = matched.flip(1)
+    assert float(ranking_loss(matched, targets, torch)) < float(ranking_loss(reversed_, targets, torch))

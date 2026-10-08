@@ -174,6 +174,38 @@ def soft_target_floor(targets, torch):
     return -(y * torch.log(y) + (1 - y) * torch.log(1 - y)).mean()
 
 
+#: Softmax temperature on the targets for the ranking loss. Safe and unsafe plans
+#: are often within 0.05 of each other in target (25% of training ticks where both
+#: exist); at 0.05 such a gap is a factor of e in the wanted probability.
+RANK_TEMPERATURE = 0.05
+
+
+def ranking_loss(pred_logit, targets, torch, temperature: float = RANK_TEMPERATURE):
+    """Cross-entropy from the targets' ranking to the scorer's, over the 32 plans.
+
+    BCE fits each plan's score on its own, so a scorer can land every value within
+    0.05 and still put an unsafe plan first: l5 did, on scenes it trained on, with
+    the targets preferring a safe plan on 95% of those ticks. Driving reads only
+    the argmax. This loss is about the ordering: the wanted distribution is a
+    softmax of the targets at `temperature`, the scorer's a softmax of its logits.
+    """
+    logits = pred_logit[..., -1]
+    want = torch.softmax(targets / temperature, dim=-1)
+    return -(want * torch.log_softmax(logits, dim=-1)).sum(-1).mean()
+
+
+def pick_regret(pred_logit, targets, torch) -> tuple[float, float]:
+    """(mean target the scorer's pick gives up against the best plan, share of ticks it picks the best).
+
+    The quantity driving cares about, which neither loss measures directly.
+    """
+    pick = pred_logit[..., -1].argmax(-1)
+    best = targets.max(-1).values
+    picked = targets.gather(-1, pick.unsqueeze(-1)).squeeze(-1)
+    regret = best - picked
+    return float(regret.mean()), float((regret <= 1e-6).float().mean())
+
+
 def scorer_loss(pred_logit, targets, torch):
     """BCE with logits on the one channel `pdm_score` reads, against soft targets.
 
