@@ -132,7 +132,7 @@ def split_by_scene(ticks: list[dict], held_out: str) -> tuple[list[dict], list[d
     return train, val
 
 
-def build_model(checkpoint_path: str, device: str, repo: str | None = None, trainable=None):
+def build_model(checkpoint_path: str, device: str, repo: str | None = None, train_parts=None):
     """Load the released model and freeze everything but the refiner path.
 
     `repo` is the working directory the agent needs: it opens
@@ -154,7 +154,7 @@ def build_model(checkpoint_path: str, device: str, repo: str | None = None, trai
 
     frozen = trainable = 0
     for name, parameter in model.named_parameters():
-        parameter.requires_grad = any(part in name for part in (trainable or TRAINABLE))
+        parameter.requires_grad = any(part in name for part in (train_parts or TRAINABLE))
         if parameter.requires_grad:
             trainable += parameter.numel()
         else:
@@ -461,7 +461,7 @@ def main() -> None:
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
-        trainable=TRAINABLE_SCORER if scorer_only else TRAINABLE,
+        train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE,
     )
     loss_options = {"with_trajectory": not scorer_only, "rank_weight": args.rank_weight}
 
