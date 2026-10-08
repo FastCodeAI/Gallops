@@ -80,6 +80,27 @@ TRAINABLE = ("_trajectory_head", "init_feature", "hist_encoding", "scorer")
 #: model's, each tick's targets stop moving, and only the choice is trained.
 TRAINABLE_SCORER = ("scorer",)
 
+#: `--train-only refiner`: everything that makes the 32 candidates, nothing that picks
+#: among them. The scorer's loss is skipped, so the only pull on the refiner is the
+#: expert's plans -- in l5 the scorer loss reached the refiner through bev_feature and
+#: drifted its candidates. The scorer is retrained on the new candidates afterwards.
+TRAINABLE_REFINER = ("_trajectory_head", "init_feature", "hist_encoding")
+
+
+def oversampled(ticks: list[dict], factors: dict[str, int]) -> list[int]:
+    """Indices into `ticks`, each repeated by its expert kind's factor (default 1).
+
+    Repeating swerve ticks gives the refiner more of the one behaviour the released
+    candidates never contain, without dropping the ordinary driving that keeps it
+    from swerving everywhere.
+    """
+    return [i for i, tick in enumerate(ticks) for _ in range(factors.get(tick.get("expert_kind", ""), 1))]
+
+
+def excluded(ticks: list[dict], prefixes: list[str]) -> list[dict]:
+    """Ticks whose episode starts with none of `prefixes` (e.g. "frontal-0064")."""
+    return [t for t in ticks if not any(t["episode"].startswith(p) for p in prefixes)]
+
 
 def git_sha(repo: Path) -> str:
     try:
@@ -263,7 +284,9 @@ def timed(name: str, work):
     return value
 
 
-def combined_loss(output, target, ticks, referee, torch, with_trajectory=True, rank_weight=0.0):
+def combined_loss(
+    output, target, ticks, referee, torch, with_trajectory=True, rank_weight=0.0, with_score=True
+):
     """Both losses for one batch: (trajectory, score, parts).
 
     `parts` is what gets logged: the trajectory loss split into its pull toward
@@ -287,6 +310,17 @@ def combined_loss(output, target, ticks, referee, torch, with_trajectory=True, r
         )
     else:  # the refiner is frozen: nothing for this loss to move, and its anchors cost 0.85 s a step
         trajectory = torch.zeros((), device=output["pred_logit"].device)
+    parts = {}
+    if with_trajectory:
+        parts.update(
+            traj_total=float(trajectory.detach()),
+            traj_winner=float(winner.detach()),
+            traj_anchor=float((anchored - winner).detach()),
+        )
+    if (
+        not with_score
+    ):  # the scorer is frozen: grading the 32 plans would cost 1 s a step for nothing to train
+        return trajectory, torch.zeros((), device=output["pred_logit"].device), parts
     proposals = timed("to_cpu", lambda: output["proposals"].detach().float().cpu().numpy())
     targets = timed(
         "grade",
@@ -297,13 +331,6 @@ def combined_loss(output, target, ticks, referee, torch, with_trajectory=True, r
     scored = bce
     floor = float(soft_target_floor(soft.float(), torch))
     regret, best = pick_regret(output["pred_logit"].detach().float(), soft.float(), torch)
-    parts = {}
-    if with_trajectory:
-        parts.update(
-            traj_total=float(trajectory.detach()),
-            traj_winner=float(winner.detach()),
-            traj_anchor=float((anchored - winner).detach()),
-        )
     parts.update(
         score_bce=float(bce.detach()),
         score_floor=floor,
@@ -382,10 +409,31 @@ def main() -> None:
     # The released config's own weights: trajectory_weight 1, final_score_weight 1.
     parser.add_argument(
         "--train-only",
-        choices=("all", "scorer"),
+        choices=("all", "scorer", "refiner"),
         default="all",
         help="'scorer': freeze the refiner, queries and ego encoder too, so the candidates stay the "
-        "released model's and only the choice between them trains",
+        "released model's and only the choice between them trains. 'refiner': the reverse -- the "
+        "trajectory loss alone trains what makes the candidates; the scorer is frozen and its loss skipped",
+    )
+    parser.add_argument(
+        "--oversample",
+        action="append",
+        default=[],
+        metavar="KIND=N",
+        help="repeat ticks whose expert kind is KIND N times per epoch, e.g. swerve=4; repeatable",
+    )
+    parser.add_argument(
+        "--exclude-episodes",
+        action="append",
+        default=[],
+        metavar="PREFIX",
+        help="drop episodes whose name starts with PREFIX, e.g. frontal-0064; repeatable",
+    )
+    parser.add_argument(
+        "--init",
+        type=Path,
+        help="model.pt to start from, loaded AFTER the preflight (which holds the released weights to "
+        "the dumps they drove); e.g. the refiner stage's checkpoint, to retrain the scorer on its candidates",
     )
     parser.add_argument(
         "--rank-weight",
@@ -441,6 +489,12 @@ def main() -> None:
         kept = [t for t in ticks if not any(f"-{scene}/" in t["episode"] for scene in args.exclude_scene)]
         print(f"  excluded scenes {', '.join(args.exclude_scene)}: {len(ticks) - len(kept)} ticks dropped")
         ticks = kept
+    if args.exclude_episodes:
+        kept = excluded(ticks, args.exclude_episodes)
+        print(
+            f"  excluded episodes {', '.join(args.exclude_episodes)}: {len(ticks) - len(kept)} ticks dropped"
+        )
+        ticks = kept
     if args.limit:
         # Evenly spaced, not the first N: the files are sorted by scenario-scene,
         # so a head slice is one scene and a smoke run over it holds out its own
@@ -457,13 +511,33 @@ def main() -> None:
         "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
     )
     scorer_only = args.train_only == "scorer"
+    refiner_only = args.train_only == "refiner"
+    factors = {k: int(v) for k, v in (spec.split("=", 1) for spec in args.oversample)}
     agent, model, torch = build_model(
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
-        train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE,
+        train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE_REFINER if refiner_only else TRAINABLE,
     )
-    loss_options = {"with_trajectory": not scorer_only, "rank_weight": args.rank_weight}
+    loss_options = {
+        "with_trajectory": not scorer_only,
+        "rank_weight": args.rank_weight,
+        "with_score": not refiner_only,
+    }
+    # Held-out checks still grade the candidates when training skips it: how the frozen
+    # scorer picks among the refiner's new plans is the thing to watch.
+    eval_options = {**loss_options, "with_score": True}
+    if scorer_only:
+        stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen"
+    elif refiner_only:
+        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped"
+    else:
+        stage_note = "joint -- refiner and scorer train, encoder frozen"
+    loss_note = "vendor trajectory_loss_anchors (winner + good anchors)" if not scorer_only else ""
+    if not refiner_only:
+        loss_note += (" + " if loss_note else "") + "scorer BCE against score_target"
+        if args.rank_weight:
+            loss_note += f" + {args.rank_weight} x ranking loss over the 32 plans"
 
     def training_mode() -> None:
         # Frozen parts run as at inference, so the candidates are exactly the ones the
@@ -471,6 +545,9 @@ def main() -> None:
         if scorer_only:
             model.eval()
             model.scorer.train()
+        elif refiner_only:
+            model.train()
+            model.scorer.eval()
         else:
             model.train()
 
@@ -498,6 +575,12 @@ def main() -> None:
         args.device,
     )
 
+    if args.init:
+        # Only now: the preflight above held the released weights to the dumps they drove,
+        # which a later checkpoint never drove. Which parameters train is unchanged.
+        model.load_state_dict(torch.load(args.init, map_location=args.device, weights_only=True))
+        print(f"  started from {args.init}", flush=True)
+
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
@@ -521,6 +604,9 @@ def main() -> None:
         excluded_scenes=args.exclude_scene,
         train_only=args.train_only,
         rank_weight=args.rank_weight,
+        oversample=factors,
+        excluded_episodes=args.exclude_episodes,
+        init=str(args.init) if args.init else None,
     )
     interim = []
     if validation is not None:
@@ -530,7 +616,7 @@ def main() -> None:
     step = 0
     for epoch in range(args.epochs):
         training_mode()
-        order = list(range(len(dataset)))
+        order = oversampled(dataset.ticks, factors) if factors else list(range(len(dataset)))
         random.Random(epoch).shuffle(order)
         losses = []
         recent_parts: list[dict] = []
@@ -569,7 +655,7 @@ def main() -> None:
                     flush=True,
                 )
             if interim and args.val_every and step % args.val_every == 0:
-                held_out = evaluate(model, validation, interim, referee, torch, args.batch, **loss_options)
+                held_out = evaluate(model, validation, interim, referee, torch, args.batch, **eval_options)
                 record("val", epoch=epoch, step=step, ticks=len(interim), **held_out)
                 nan = float("nan")
                 print(
@@ -589,7 +675,7 @@ def main() -> None:
         }
         if validation is not None:
             held_out = evaluate(
-                model, validation, list(range(len(validation))), referee, torch, args.batch, **loss_options
+                model, validation, list(range(len(validation))), referee, torch, args.batch, **eval_options
             )
             if held_out:
                 record("val_full", epoch=epoch, step=step, ticks=len(validation), **held_out)
@@ -629,14 +715,11 @@ def main() -> None:
                 notes={
                     # These two read "stage A -- refiner only" and "L1 to the expert"
                     # long after the trainer became joint; they now say what runs.
-                    "stage": "scorer only -- refiner, queries, ego encoder and encoder frozen"
-                    if scorer_only
-                    else "joint -- refiner and scorer train, encoder frozen",
-                    "loss": (
-                        "" if scorer_only else "vendor trajectory_loss_anchors (winner + good anchors) + "
-                    )
-                    + "scorer BCE against score_target"
-                    + (f" + {args.rank_weight} x ranking loss over the 32 plans" if args.rank_weight else ""),
+                    "stage": stage_note,
+                    "loss": loss_note,
+                    "init": str(args.init) if args.init else "released checkpoint",
+                    "oversample": factors,
+                    "excluded_episodes": args.exclude_episodes,
                     # Which label set and which dumps: v4 could only be traced to
                     # its labels by file timestamps.
                     "sources": [s._asdict() for s in sources],
