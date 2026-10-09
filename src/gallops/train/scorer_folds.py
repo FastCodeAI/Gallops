@@ -210,7 +210,7 @@ def train(kind: str, state: dict, x, y, train_idx, args, torch):
         order = rng.permutation(train_idx)
         for s in range(0, len(order), args.batch):
             b = order[s : s + args.batch]
-            feats = x[b].float()
+            feats = x[b].to(args.device).float()
             target = y[b]
             logits = mlp(feats)
             if kind == "control":
@@ -246,17 +246,27 @@ def main() -> None:
     args = parser.parse_args()
 
     started = time.time()
-    d = load(args.cache, {name: Path(p) for name, p in args.labelled})
+    # Reading 450 cache files from the NAS takes ~7 min; keep the reduced arrays beside them.
+    reduced = args.cache / "folds_input.npz"
+    if reduced.exists():
+        d = dict(np.load(reduced))
+    else:
+        d = load(args.cache, {name: Path(p) for name, p in args.labelled})
+        np.savez(reduced, **d)
     print(
         f"  loaded {len(d['scene'])} ticks x {d['features'].shape[1]} plans in {time.time() - started:.0f} s",
         flush=True,
     )
     state = released_state(args.checkpoint, torch)
     released = make_mlp(state, torch).to(args.device).eval()
-    x = torch.from_numpy(d["features"]).to(args.device)  # fp16
+    # fp16 features stay in host memory and go to the GPU a batch at a time: the GPU is
+    # shared and often within a few GB of full, and the first run died holding them all.
+    x = torch.from_numpy(d["features"])
     with torch.no_grad():
         rel_logits = (
-            torch.cat([released(x[s : s + 256].float()) for s in range(0, len(x), 256)]).cpu().numpy()
+            torch.cat([released(x[s : s + 256].to(args.device).float()) for s in range(0, len(x), 256)])
+            .cpu()
+            .numpy()
         )
     drift = np.abs(rel_logits[:, :32] - d["logit"]).max()
     agree = (rel_logits[:, :32, -1].argmax(1) == d["logit"][..., -1].argmax(1)).mean()
@@ -292,7 +302,12 @@ def main() -> None:
             t0 = time.time()
             mlp = train(kind, state, x, y, train_idx, args, torch)
             with torch.no_grad():
-                logits = torch.cat([mlp(x[s : s + 256].float()) for s in range(0, len(x), 256)])[test_idx]
+                logits = torch.cat(
+                    [
+                        mlp(x[test_idx[s : s + 256]].to(args.device).float())
+                        for s in range(0, len(test_idx), 256)
+                    ]
+                )
                 final = logits[..., -1].cpu().numpy()
                 picked = formula(logits, torch).cpu().numpy()
             if kind == "control":
