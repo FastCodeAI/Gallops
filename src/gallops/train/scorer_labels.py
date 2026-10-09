@@ -123,11 +123,16 @@ def main() -> None:
     parser.add_argument("--cache", type=Path, required=True)
     parser.add_argument("--drivable", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--only", nargs="*", default=None, help="source directory names to label (to run shards in parallel)"
+    )
     args = parser.parse_args()
     rng = np.random.default_rng(args.seed)
     files = sorted(
         p for p in args.cache.glob("*/*.npz") if not p.name.endswith(".labels.npz") and ".tmp" not in p.name
     )
+    if args.only:
+        files = [f for f in files if f.parent.name in args.only]
     started, done, checked = time.time(), 0, 0
     for f in files:
         if f.with_name(f.name.replace(".npz", ".labels.npz")).exists():
