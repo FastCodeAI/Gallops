@@ -38,6 +38,8 @@ from gallops.train.losses import RANK_TEMPERATURE, score_target, travelled
 SCENES = ("0053", "0058", "0064", "0070", "0075")
 LANE_LINE_M = 1.75
 CHANNELS = ("nc", "dac", "ttc", "lk", "ep", "final")
+#: Gated pick: override the released pick only when sigma(NC) of it is below this. Fixed, not tuned.
+VETO = 0.5
 
 
 def load(cache: Path, labelled: dict[str, Path]) -> dict:
@@ -283,6 +285,7 @@ def main() -> None:
     y_ctl = torch.from_numpy(ctl).to(args.device)
     usable = d["usable"]
     folds = [("smoke", None)] if args.smoke_split else [(s, s) for s in SCENES if (d["scene"] == s).any()]
+    saved = {}
     results = {"released_drift": float(drift), "released_pick_agreement": float(agree), "folds": {}}
     for name, scene in folds:
         if scene is None:
@@ -315,6 +318,21 @@ def main() -> None:
             else:
                 picks["subscores_formula"] = picked
                 picks["subscores_final"] = final
+                # Gated: keep the released pick unless the collision head says it hits
+                # (sigma(NC) < VETO, fixed before any fold ran), then take the formula's pick.
+                rel_pick = picks["released_natives"].argmax(1)
+                nc_rel = (
+                    torch.sigmoid(logits[torch.arange(len(rel_pick)), torch.as_tensor(rel_pick), 0])
+                    .cpu()
+                    .numpy()
+                )
+                veto = nc_rel < VETO
+                gated = np.full_like(picked, -np.inf)
+                gated[np.arange(len(rel_pick)), rel_pick] = 0.0
+                gated[veto] = picked[veto]
+                picks["subscores_gated"] = gated
+                fold["veto_rate"] = float(veto.mean())
+                saved[name] = {"test_idx": test_idx, "logits": logits.cpu().numpy()}
                 lg = logits.cpu().numpy()
                 fold["auc"] = {
                     c: auc(lg[..., k].ravel(), sub[test_idx][..., k].ravel())
@@ -336,6 +354,10 @@ def main() -> None:
         print(json.dumps({name: {k: v for k, v in fold.items() if k != "by_shape"}}, indent=1), flush=True)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=1))
+    np.savez(
+        args.out.with_suffix(".logits.npz"),
+        **{f"{k}_{f}": v[k] for f, v in saved.items() for k in ("test_idx", "logits")},
+    )
     print(f"  wrote {args.out}", flush=True)
 
 
