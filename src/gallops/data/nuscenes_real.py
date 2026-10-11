@@ -131,9 +131,10 @@ def rasterise(polygons, low, rows: int, cols: int, cell: float) -> np.ndarray:
 
 
 def main() -> None:
+    from nuscenes.map_expansion.map_api import NuScenesMap
+
     from gallops.expert.drivable import CELL_M, PAD_M
     from gallops.expert.lanes import episode_lanes
-    from nuscenes.map_expansion.map_api import NuScenesMap
 
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--nuscenes", type=Path, required=True)
@@ -317,14 +318,14 @@ def main() -> None:
             if not link.exists():
                 os.symlink(args.nuscenes / r["filename"], link)
         (episode / "ego_poses.json").write_text(
-            json.dumps({str(t): p.round(6).tolist() for t, p in zip(stamps, ego)})
+            json.dumps({str(t): p.round(6).tolist() for t, p in zip(stamps, ego, strict=True)})
         )
         (episode / "actors.json").write_text(json.dumps(actors))
         (episode / "reference_trajectory.json").write_text(
             json.dumps(
                 {
                     str(t): [float(p[0, 3]), float(p[1, 3]), float(math.atan2(p[1, 0], p[0, 0]))]
-                    for t, p in zip(stamps, ego)
+                    for t, p in zip(stamps, ego, strict=True)
                 }
             )
         )
@@ -333,7 +334,7 @@ def main() -> None:
         (episode / "lane_reference.json").write_text(json.dumps(lanes))
 
         rows_out = []
-        for k, (t, p) in enumerate(zip(stamps, ego)):
+        for k, (t, p) in enumerate(zip(stamps, ego, strict=True)):
             if k == 0 or k + FUTURE_STEPS >= len(stamps):
                 continue
             if abs((t - stamps[k - 1]) - HISTORY_DT_US) > HISTORY_TOLERANCE_US:
