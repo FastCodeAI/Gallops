@@ -1,0 +1,227 @@
+{
+ "W1d_init_strict": {
+  "ok": true,
+  "ckpt": "{runs}/alpasim_bulk/navsim-exp/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt",
+  "sha256_expected": "740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d30d05",
+  "tensors": 495,
+  "missing": 0,
+  "unexpected": 0
+ },
+ "W1d_encoder_frozen": {
+  "ok": true,
+  "params": {
+   "scorer": 4704992,
+   "generator": 2389827,
+   "encoder": 304147712
+  },
+  "trainable": {
+   "scorer": 4704992,
+   "generator": 2381123,
+   "encoder": 0
+  },
+  "optimiser_groups": [
+   [
+    75,
+    0.0001
+   ]
+  ],
+  "encoder_dropout_p_gt0": 0,
+  "encoder_droppath": 0,
+  "projector_in_encoder_group": true
+ },
+ "W1b_vocab_file": {
+  "ok": true,
+  "orig": "(8192, 40, 3)",
+  "ext": "(10240, 40, 3)",
+  "first_8192_bit_identical": true,
+  "sha256_orig": "cc44a31e75a53406db59f026f0358de97931e726f10254542f98d2a87a38ad35",
+  "sha256_ext": "4b0bc3c9a55c1787cd54d4a27c8bfd7119bbe6ae2cbe1bf1cfe3343da639e785",
+  "agent_anchors": "(10240, 8, 3)"
+ },
+ "W1b_no_model_tensor_depends_on_vocab": {
+  "ok": true,
+  "state_dict_tensors_with_dim_8192_or_10240": [],
+  "init_feature": "(256, 256)",
+  "note": "only self.anchors (agent :49-50, used :246) has the vocabulary size"
+ },
+ "W1c_accel_slots": {
+  "ok": true,
+  "checked": 11,
+  "max_abs_diff_slot5_6_vs_samples_csv_ax_ay": 4.440892098500626e-16,
+  "ego_status_shape": "(1, 11)",
+  "other_9_slots_untouched": true,
+  "flag_default": "zero_accel=True"
+ },
+ "W1c_all_640_loaded": {
+  "ok": true,
+  "samples": 640,
+  "max_abs_accel": 0.0,
+  "has_label2_any": false,
+  "load_s": 7.4
+ },
+ "W1a_raw_only_batch": {
+  "ok": true,
+  "tokens": [
+   "49bcab6f_02000",
+   "12ed6f9c_04500",
+   "f1fd39ee_03000",
+   "88272099_05000"
+  ],
+  "loss": 8.921463003094807,
+  "trajectory_loss": 8.921463003094807,
+  "scorer_terms": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "scorer_param_tensors": 30,
+  "scorer_grads_None": 30,
+  "scorer_grad_max": 0.0,
+  "generator_grad_max": 2.589226722717285,
+  "encoder_grad_max": 0.0,
+  "metric_cache_lookups": 0,
+  "cpu_s_fwd_bwd_b4": 4.3
+ },
+ "W1a_labelled_batch": {
+  "ok": true,
+  "tokens": [
+   "0771fd01_00500",
+   "2f3ed8fe_05500",
+   "7d257301_10500",
+   "fcd8cc77_15500"
+  ],
+  "loss": 20.370542645269982,
+  "trajectory_loss": 19.65852710586225,
+  "sub_score_loss": 0.7116503119468689,
+  "final_score_loss": 0.6417422294616699,
+  "pred_ce_loss": 0.026303362101316452,
+  "pred_l1_loss": 0.0,
+  "pred_area_loss": 0.021984973922371864,
+  "inter_loss0": -1.0,
+  "inter_loss": -0.3579886257648468,
+  "min_loss0": 20.198043848572688,
+  "min_loss": 17.942127090652868,
+  "score": 0.805071234703064,
+  "best_score": 0.8178483247756958,
+  "n_label2": 4.0,
+  "scorer_grad_max": 0.31269770860671997,
+  "generator_grad_max": 2.6135129928588867,
+  "scoring_calls": 1
+ },
+ "W1a_mixed_batch": {
+  "ok": true,
+  "has_label2": [
+   false,
+   true,
+   false,
+   true
+  ],
+  "loss": 13.26061654921433,
+  "grad_on_scorer_outputs_raw_rows_vs_labelled_rows": {
+   "pred_logit": [
+    0.0,
+    0.013501827605068684
+   ],
+   "pred_agents_states": [
+    0.0,
+    6.238027708604932e-05
+   ],
+   "pred_area_logit": [
+    0.0,
+    0.0003770602052100003
+   ]
+  },
+  "scorer_terms_mixed": [
+   0.6807249188423157,
+   0.5697193741798401,
+   0.03190942853689194,
+   0.0,
+   0.009203425608575344
+  ],
+  "scorer_terms_labelled_rows_alone": [
+   0.6807249188423157,
+   0.5697193741798401,
+   0.03190942853689194,
+   0.0,
+   0.009203425608575344
+  ],
+  "max_abs_diff": 0.0
+ },
+ "W1b_vocab_flag_in_loss": {
+  "ok": true,
+  "labelled_min_loss_orig_index": 13.103611332138465,
+  "labelled_min_loss_ext_index": 17.942127090652868,
+  "raw_only_loss_orig": 8.921463003094807,
+  "raw_only_loss_ext": 8.921463003094807,
+  "ext_index_on_orig_vocab_refused": true,
+  "note": "DUMMY index fixtures (12 orig rows; 8 orig + 8 added rows) - shape / wiring only"
+ },
+ "W1a_equals_upstream_when_all_labelled": {
+  "ok": true,
+  "max_abs_diff_any_loss_key": {
+   "upstream": 0.0,
+   "s3": 0.0
+  },
+  "upstream_loss": 15.776986106822108,
+  "keys": 13,
+  "note": "vendored DriveJEPAAgent.pad_loss vs patched, same predictions, same seed, original vocabulary; S2 caches use the Pacifica box and carry no D3 flag, so the s3 scorer must agree too"
+ },
+ "W1a_raw_only_step_leaves_scorer": {
+  "ok": true,
+  "weights_changed_after_one_raw_only_Adam_step": {
+   "scorer": false,
+   "generator": true,
+   "encoder": false
+  }
+ },
+ "W1d_frozen_encoder_never_moves": {
+  "ok": true,
+  "after_labelled_step": {
+   "scorer": true,
+   "generator": true,
+   "encoder": false
+  },
+  "after_following_raw_only_step": {
+   "scorer": false,
+   "generator": true,
+   "encoder": false
+  },
+  "note": "torch Adam skips parameters whose grad is None, so with zero_grad(set_to_none=True) a raw-only step leaves the scorer bit-identical even after labelled steps have built momentum"
+ },
+ "W1b_s3_layout_real_ext_index": {
+  "ok": true,
+  "tokens": [
+   "06b3e399_03500",
+   "0009402a_15500"
+  ],
+  "speeds": [
+   37.0,
+   34.1
+  ],
+  "index_rows": [
+   20,
+   23
+  ],
+  "index_rows_ge_8192": [
+   20,
+   23
+  ],
+  "loss": 62.98445631247766,
+  "trajectory_loss": 59.932843100845886,
+  "sub_score_loss": 0.8601386547088623,
+  "final_score_loss": 0.9377768635749817,
+  "pred_ce_loss": 0.17839941382408142,
+  "pred_l1_loss": 17.186256408691406,
+  "pred_area_loss": 0.10840563476085663,
+  "inter_loss0": -1.0,
+  "inter_loss": -0.9283568263053894,
+  "min_loss0": 62.034548648316786,
+  "min_loss": 53.72938823601421,
+  "score": 0.275754451751709,
+  "best_score": 0.6778525114059448,
+  "n_label2": 2.0,
+  "note": "S3 not final; read-only"
+ }
+}
