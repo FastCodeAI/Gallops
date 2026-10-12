@@ -1,0 +1,413 @@
+{
+ "0.1.4": {
+  "n": 30,
+  "mean_progress_rel_to_total": 0.5091184661159883,
+  "mean_progress_full_clip": 0.5988364690664567,
+  "mean_progress_at_handover": 0.14932913774187512,
+  "mean_scored_window_fraction": 0.5550303382989984,
+  "median_scored_window_fraction": 0.5266272189349113,
+  "n_full_window": 8,
+  "why_counts": {
+   "end_of_clip": 8,
+   "collision_at_fault": 7,
+   "dist_to_gt>=4m": 5,
+   "collision_not_at_fault": 5,
+   "offroad": 5
+  },
+  "mean_s5_score": 0.42087713857390796,
+  "at_fault": [
+   "02eadd92",
+   "04394343",
+   "5f064b02",
+   "791d68ce",
+   "8023dce5",
+   "b1b170d0",
+   "b44a4a44",
+   "bd07fb91",
+   "d1a25a99",
+   "e3ed554f"
+  ],
+  "any_collision": [
+   "0245ff75",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "791d68ce",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44",
+   "bd07fb91",
+   "d1a25a99",
+   "e3ed554f"
+  ],
+  "front_or_lateral_any_tick": [
+   "0245ff75",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "791d68ce",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44",
+   "bd07fb91",
+   "d1a25a99",
+   "e3ed554f"
+  ],
+  "collisions_after_window": [
+   "791d68ce",
+   "bd07fb91",
+   "d1a25a99"
+  ],
+  "offroad": [
+   "0245ff75",
+   "04394343",
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "b1b170d0",
+   "bae463d3",
+   "bd07fb91"
+  ],
+  "at_fault_in_window": [
+   "02eadd92",
+   "04394343",
+   "5f064b02",
+   "8023dce5",
+   "b1b170d0",
+   "b44a4a44",
+   "e3ed554f"
+  ],
+  "offroad_in_window": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "bae463d3",
+   "bd07fb91"
+  ],
+  "collision_in_window": [
+   "0245ff75",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44",
+   "e3ed554f"
+  ],
+  "mean_dist_traveled_after_handover_m": 69.7341100008768,
+  "mean_dist_metric_agg_m": 74.68535174290133,
+  "mean_dist_before_handover_m": 26.23689920498641,
+  "mean_human_dist_m": 143.88846602656568,
+  "steer_gt_0p3": [
+   "0245ff75",
+   "02eadd92",
+   "04394343",
+   "04749bb9",
+   "acd22430",
+   "b1b170d0",
+   "bae463d3",
+   "bd07fb91",
+   "cdd9448c",
+   "d1a25a99"
+  ],
+  "median_peak_demanded_decel": null,
+  "mean_speed": 4.160242867250854
+ },
+ "0.1.4b": {
+  "n": 30,
+  "mean_progress_rel_to_total": 0.5366459254899983,
+  "mean_progress_full_clip": 0.6372936223578647,
+  "mean_progress_at_handover": 0.14932913774187512,
+  "mean_scored_window_fraction": 0.6134668738968557,
+  "median_scored_window_fraction": 0.6924323512787904,
+  "n_full_window": 10,
+  "why_counts": {
+   "end_of_clip": 10,
+   "dist_to_gt>=4m": 6,
+   "collision_not_at_fault": 6,
+   "collision_at_fault": 4,
+   "offroad": 4
+  },
+  "mean_s5_score": 0.5433270979008733,
+  "at_fault": [
+   "04394343",
+   "8023dce5",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "any_collision": [
+   "0245ff75",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "791d68ce",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "front_or_lateral_any_tick": [
+   "0245ff75",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "collisions_after_window": [
+   "791d68ce"
+  ],
+  "offroad": [
+   "04394343",
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "b1b170d0",
+   "bd07fb91"
+  ],
+  "at_fault_in_window": [
+   "04394343",
+   "8023dce5",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "offroad_in_window": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "bd07fb91"
+  ],
+  "collision_in_window": [
+   "0245ff75",
+   "032b6f21",
+   "04394343",
+   "2e1ce314",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "mean_dist_traveled_after_handover_m": 71.856801385455,
+  "mean_dist_metric_agg_m": 75.81687517521442,
+  "mean_dist_before_handover_m": 26.236899204986457,
+  "mean_human_dist_m": 143.88846602656568,
+  "steer_gt_0p3": [
+   "032b6f21",
+   "04394343",
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "b1b170d0",
+   "bae463d3",
+   "bd07fb91",
+   "cdd9448c",
+   "d1a25a99"
+  ],
+  "median_peak_demanded_decel": 7.453598499298096,
+  "mean_speed": 4.286530963455566
+ },
+ "0.1.6": {
+  "n": 30,
+  "mean_progress_rel_to_total": 0.6977075337647115,
+  "mean_progress_full_clip": 0.7900719924545434,
+  "mean_progress_at_handover": 0.14932913774187512,
+  "mean_scored_window_fraction": 0.7215821250131339,
+  "median_scored_window_fraction": 0.8118755816199322,
+  "n_full_window": 9,
+  "why_counts": {
+   "dist_to_gt>=4m": 11,
+   "end_of_clip": 9,
+   "collision_not_at_fault": 5,
+   "offroad": 3,
+   "collision_at_fault": 2
+  },
+  "mean_s5_score": 0.7032255676810347,
+  "at_fault": [
+   "8023dce5",
+   "b44a4a44",
+   "bd07fb91"
+  ],
+  "any_collision": [
+   "0245ff75",
+   "5f064b02",
+   "791d68ce",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b44a4a44",
+   "bd07fb91",
+   "d1a25a99"
+  ],
+  "front_or_lateral_any_tick": [
+   "0245ff75",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b44a4a44",
+   "bd07fb91",
+   "d1a25a99"
+  ],
+  "collisions_after_window": [
+   "791d68ce",
+   "bd07fb91"
+  ],
+  "offroad": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430"
+  ],
+  "at_fault_in_window": [
+   "8023dce5",
+   "b44a4a44"
+  ],
+  "offroad_in_window": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430"
+  ],
+  "collision_in_window": [
+   "0245ff75",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b44a4a44",
+   "d1a25a99"
+  ],
+  "mean_dist_traveled_after_handover_m": 109.7515669982243,
+  "mean_dist_metric_agg_m": 115.3880267191939,
+  "mean_dist_before_handover_m": 26.236899204994497,
+  "mean_human_dist_m": 143.88846602656568,
+  "steer_gt_0p3": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "bae463d3",
+   "bd07fb91",
+   "d1a25a99",
+   "d2715023"
+  ],
+  "median_peak_demanded_decel": 1.4419288635253906,
+  "mean_speed": 6.53809095411702
+ },
+ "cv_0.2.3": {
+  "n": 30,
+  "mean_progress_rel_to_total": 0.5410513984918993,
+  "mean_progress_full_clip": 0.7347008399937198,
+  "mean_progress_at_handover": 0.14932913774187512,
+  "mean_scored_window_fraction": 0.533551190845473,
+  "median_scored_window_fraction": 0.43259354204343936,
+  "n_full_window": 7,
+  "why_counts": {
+   "dist_to_gt>=4m": 10,
+   "end_of_clip": 7,
+   "collision_not_at_fault": 6,
+   "offroad": 5,
+   "collision_at_fault": 2
+  },
+  "mean_s5_score": 0.487552899870872,
+  "at_fault": [
+   "1acf2f5d",
+   "2e1ce314",
+   "8023dce5",
+   "89f2eeb8",
+   "b44a4a44",
+   "e121e37d"
+  ],
+  "any_collision": [
+   "01d503d4",
+   "0245ff75",
+   "1acf2f5d",
+   "2e1ce314",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b44a4a44",
+   "cdd9448c",
+   "e121e37d",
+   "e3ed554f"
+  ],
+  "front_or_lateral_any_tick": [
+   "01d503d4",
+   "0245ff75",
+   "1acf2f5d",
+   "2e1ce314",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "b44a4a44",
+   "cdd9448c",
+   "e121e37d",
+   "e3ed554f"
+  ],
+  "collisions_after_window": [
+   "1acf2f5d",
+   "2e1ce314",
+   "89f2eeb8",
+   "e121e37d"
+  ],
+  "offroad": [
+   "026d6a39",
+   "16b83346",
+   "1acf2f5d",
+   "2e1ce314",
+   "791d68ce",
+   "acd22430",
+   "b1b170d0",
+   "bd07fb91",
+   "d1a25a99",
+   "e121e37d"
+  ],
+  "at_fault_in_window": [
+   "8023dce5",
+   "b44a4a44"
+  ],
+  "offroad_in_window": [
+   "1acf2f5d",
+   "791d68ce",
+   "acd22430",
+   "bd07fb91",
+   "e121e37d"
+  ],
+  "collision_in_window": [
+   "01d503d4",
+   "0245ff75",
+   "5f064b02",
+   "8023dce5",
+   "98dd56b2",
+   "b44a4a44",
+   "cdd9448c",
+   "e3ed554f"
+  ],
+  "mean_dist_traveled_after_handover_m": 138.13843651386188,
+  "mean_dist_metric_agg_m": 100.17022226246542,
+  "mean_dist_before_handover_m": 26.23689920473128,
+  "mean_human_dist_m": 143.88846602656568,
+  "steer_gt_0p3": [],
+  "median_peak_demanded_decel": null,
+  "mean_speed": 8.222152188834965
+ }
+}
