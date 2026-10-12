@@ -1,0 +1,2317 @@
+{
+ "04749bb9": {
+  "014b": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.7,
+     "human_speed": 23.6,
+     "chosen_first_half_s": 16.4,
+     "chosen_mean_4s": 13.0,
+     "chosen_end": 10.6,
+     "fastest_of_32_mean_4s": 28.1,
+     "fastest_of_32_end": 15.2,
+     "slowest_mean_4s": 10.4,
+     "demanded_accel_first_half_s": -14.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 20.2,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.8,
+     "chosen_mean_4s": 3.2,
+     "chosen_end": 2.3,
+     "fastest_of_32_mean_4s": 8.8,
+     "fastest_of_32_end": 13.7,
+     "slowest_mean_4s": 3.2,
+     "demanded_accel_first_half_s": -30.9,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 15.7,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.6,
+     "chosen_mean_4s": 3.1,
+     "chosen_end": 2.8,
+     "fastest_of_32_mean_4s": 8.6,
+     "fastest_of_32_end": 16.6,
+     "slowest_mean_4s": 3.1,
+     "demanded_accel_first_half_s": -22.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 11.1,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 3.4,
+     "chosen_mean_4s": 1.9,
+     "chosen_end": 3.3,
+     "fastest_of_32_mean_4s": 8.3,
+     "fastest_of_32_end": 14.3,
+     "slowest_mean_4s": 1.9,
+     "demanded_accel_first_half_s": -15.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 6.6,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.7,
+     "chosen_mean_4s": 2.6,
+     "chosen_end": 2.1,
+     "fastest_of_32_mean_4s": 6.7,
+     "fastest_of_32_end": 10.1,
+     "slowest_mean_4s": 0.4,
+     "demanded_accel_first_half_s": -3.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 3.5,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 2.2,
+     "chosen_mean_4s": 0.5,
+     "chosen_end": 0.2,
+     "fastest_of_32_mean_4s": 5.2,
+     "fastest_of_32_end": 11.3,
+     "slowest_mean_4s": 0.0,
+     "demanded_accel_first_half_s": -2.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 1.5,
+     "human_speed": 23.9,
+     "chosen_first_half_s": 0.4,
+     "chosen_mean_4s": 0.1,
+     "chosen_end": 0.1,
+     "fastest_of_32_mean_4s": 3.0,
+     "fastest_of_32_end": 8.6,
+     "slowest_mean_4s": 0.1,
+     "demanded_accel_first_half_s": -2.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    15.9,
+    6.8,
+    1.6
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "016": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.7,
+     "human_speed": 23.6,
+     "chosen_first_half_s": 20.3,
+     "chosen_mean_4s": 18.9,
+     "chosen_end": 9.1,
+     "fastest_of_32_mean_4s": 67.8,
+     "fastest_of_32_end": 40.4,
+     "slowest_mean_4s": 14.6,
+     "demanded_accel_first_half_s": -6.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 22.1,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 15.9,
+     "chosen_mean_4s": 12.8,
+     "chosen_end": 18.4,
+     "fastest_of_32_mean_4s": 25.9,
+     "fastest_of_32_end": 38.0,
+     "slowest_mean_4s": 9.8,
+     "demanded_accel_first_half_s": -12.3,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 18.2,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 17.6,
+     "chosen_mean_4s": 22.1,
+     "chosen_end": 28.7,
+     "fastest_of_32_mean_4s": 28.2,
+     "fastest_of_32_end": 28.9,
+     "slowest_mean_4s": 11.7,
+     "demanded_accel_first_half_s": -1.3,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 18.8,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 17.8,
+     "chosen_mean_4s": 18.1,
+     "chosen_end": 15.9,
+     "fastest_of_32_mean_4s": 27.4,
+     "fastest_of_32_end": 40.5,
+     "slowest_mean_4s": 13.0,
+     "demanded_accel_first_half_s": -2.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 20.0,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 19.5,
+     "chosen_mean_4s": 21.1,
+     "chosen_end": 13.5,
+     "fastest_of_32_mean_4s": 28.0,
+     "fastest_of_32_end": 28.8,
+     "slowest_mean_4s": 11.7,
+     "demanded_accel_first_half_s": -0.9,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 21.4,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 18.7,
+     "chosen_mean_4s": 19.0,
+     "chosen_end": 13.1,
+     "fastest_of_32_mean_4s": 61.4,
+     "fastest_of_32_end": 32.0,
+     "slowest_mean_4s": 15.6,
+     "demanded_accel_first_half_s": -5.3,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 21.9,
+     "human_speed": 23.9,
+     "chosen_first_half_s": 14.8,
+     "chosen_mean_4s": 8.8,
+     "chosen_end": 5.8,
+     "fastest_of_32_mean_4s": 23.2,
+     "fastest_of_32_end": 44.5,
+     "slowest_mean_4s": 8.8,
+     "demanded_accel_first_half_s": -14.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    18.4,
+    20.0,
+    21.9
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "017": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.7,
+     "human_speed": 23.6,
+     "chosen_first_half_s": 23.6,
+     "chosen_mean_4s": 23.6,
+     "chosen_end": 22.9,
+     "fastest_of_32_mean_4s": 33.0,
+     "fastest_of_32_end": 36.2,
+     "slowest_mean_4s": 19.0,
+     "demanded_accel_first_half_s": -0.2,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 0.5,
+     "car_speed": 23.7,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 23.7,
+     "chosen_mean_4s": 24.1,
+     "chosen_end": 23.6,
+     "fastest_of_32_mean_4s": 32.2,
+     "fastest_of_32_end": 33.4,
+     "slowest_mean_4s": 18.8,
+     "demanded_accel_first_half_s": -0.0,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 1.0,
+     "car_speed": 24.0,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 24.0,
+     "chosen_mean_4s": 24.4,
+     "chosen_end": 24.0,
+     "fastest_of_32_mean_4s": 32.8,
+     "fastest_of_32_end": 35.1,
+     "slowest_mean_4s": 19.1,
+     "demanded_accel_first_half_s": -0.1,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 24.4,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 24.2,
+     "chosen_mean_4s": 24.5,
+     "chosen_end": 24.2,
+     "fastest_of_32_mean_4s": 34.5,
+     "fastest_of_32_end": 40.3,
+     "slowest_mean_4s": 20.1,
+     "demanded_accel_first_half_s": -0.3,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 2.0,
+     "car_speed": 24.6,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 24.6,
+     "chosen_mean_4s": 25.0,
+     "chosen_end": 24.8,
+     "fastest_of_32_mean_4s": 34.8,
+     "fastest_of_32_end": 38.2,
+     "slowest_mean_4s": 20.5,
+     "demanded_accel_first_half_s": 0.1,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 24.8,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 24.5,
+     "chosen_mean_4s": 24.4,
+     "chosen_end": 23.9,
+     "fastest_of_32_mean_4s": 34.1,
+     "fastest_of_32_end": 34.7,
+     "slowest_mean_4s": 20.0,
+     "demanded_accel_first_half_s": -0.6,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 24.9,
+     "human_speed": 23.9,
+     "chosen_first_half_s": 25.0,
+     "chosen_mean_4s": 25.1,
+     "chosen_end": 24.6,
+     "fastest_of_32_mean_4s": 34.1,
+     "fastest_of_32_end": 36.8,
+     "slowest_mean_4s": 19.6,
+     "demanded_accel_first_half_s": 0.2,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    24.0,
+    24.5,
+    25.0
+   ],
+   "holds_23p5": true,
+   "all_chosen_ge_0p8_human_first_3s": true
+  }
+ },
+ "acd22430": {
+  "014b": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 14.8,
+     "chosen_mean_4s": 13.0,
+     "chosen_end": 12.2,
+     "fastest_of_32_mean_4s": 29.3,
+     "fastest_of_32_end": 17.4,
+     "slowest_mean_4s": 10.4,
+     "demanded_accel_first_half_s": -17.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 20.2,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 6.0,
+     "chosen_mean_4s": 3.0,
+     "chosen_end": 1.1,
+     "fastest_of_32_mean_4s": 8.4,
+     "fastest_of_32_end": 12.1,
+     "slowest_mean_4s": 3.0,
+     "demanded_accel_first_half_s": -28.4,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 15.7,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 4.6,
+     "chosen_mean_4s": 2.5,
+     "chosen_end": 0.7,
+     "fastest_of_32_mean_4s": 9.0,
+     "fastest_of_32_end": 15.1,
+     "slowest_mean_4s": 2.5,
+     "demanded_accel_first_half_s": -22.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 11.1,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 3.6,
+     "chosen_mean_4s": 2.0,
+     "chosen_end": 3.1,
+     "fastest_of_32_mean_4s": 7.9,
+     "fastest_of_32_end": 14.3,
+     "slowest_mean_4s": 2.0,
+     "demanded_accel_first_half_s": -15.0,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 6.6,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 4.8,
+     "chosen_mean_4s": 2.1,
+     "chosen_end": 1.6,
+     "fastest_of_32_mean_4s": 6.5,
+     "fastest_of_32_end": 9.9,
+     "slowest_mean_4s": 0.4,
+     "demanded_accel_first_half_s": -3.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 3.5,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 2.1,
+     "chosen_mean_4s": 0.5,
+     "chosen_end": 0.5,
+     "fastest_of_32_mean_4s": 4.9,
+     "fastest_of_32_end": 10.4,
+     "slowest_mean_4s": 0.0,
+     "demanded_accel_first_half_s": -2.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 1.3,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 0.2,
+     "chosen_mean_4s": 0.1,
+     "chosen_end": 0.0,
+     "fastest_of_32_mean_4s": 2.3,
+     "fastest_of_32_end": 9.6,
+     "slowest_mean_4s": 0.1,
+     "demanded_accel_first_half_s": -2.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    15.9,
+    6.8,
+    1.4
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "016": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 20.7,
+     "chosen_mean_4s": 20.4,
+     "chosen_end": 17.5,
+     "fastest_of_32_mean_4s": 67.1,
+     "fastest_of_32_end": 34.8,
+     "slowest_mean_4s": 14.7,
+     "demanded_accel_first_half_s": -5.4,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 22.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 16.4,
+     "chosen_mean_4s": 15.1,
+     "chosen_end": 2.6,
+     "fastest_of_32_mean_4s": 62.8,
+     "fastest_of_32_end": 48.5,
+     "slowest_mean_4s": 10.7,
+     "demanded_accel_first_half_s": -12.0,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 19.2,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 18.4,
+     "chosen_mean_4s": 20.6,
+     "chosen_end": 19.7,
+     "fastest_of_32_mean_4s": 26.8,
+     "fastest_of_32_end": 48.8,
+     "slowest_mean_4s": 12.3,
+     "demanded_accel_first_half_s": -1.6,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 18.1,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 14.0,
+     "chosen_mean_4s": 12.2,
+     "chosen_end": 10.7,
+     "fastest_of_32_mean_4s": 27.4,
+     "fastest_of_32_end": 34.3,
+     "slowest_mean_4s": 12.2,
+     "demanded_accel_first_half_s": -8.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 16.1,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 12.7,
+     "chosen_mean_4s": 9.8,
+     "chosen_end": 5.1,
+     "fastest_of_32_mean_4s": 27.0,
+     "fastest_of_32_end": 34.7,
+     "slowest_mean_4s": 9.8,
+     "demanded_accel_first_half_s": -6.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 12.3,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 10.4,
+     "chosen_mean_4s": 6.6,
+     "chosen_end": 8.9,
+     "fastest_of_32_mean_4s": 15.5,
+     "fastest_of_32_end": 21.7,
+     "slowest_mean_4s": 6.6,
+     "demanded_accel_first_half_s": -3.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 8.9,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 7.8,
+     "chosen_mean_4s": 4.8,
+     "chosen_end": 5.0,
+     "fastest_of_32_mean_4s": 14.8,
+     "fastest_of_32_end": 26.1,
+     "slowest_mean_4s": 4.8,
+     "demanded_accel_first_half_s": -2.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    19.4,
+    16.3,
+    9.1
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "017": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 22.2,
+     "chosen_mean_4s": 22.4,
+     "chosen_end": 21.2,
+     "fastest_of_32_mean_4s": 32.5,
+     "fastest_of_32_end": 39.7,
+     "slowest_mean_4s": 19.8,
+     "demanded_accel_first_half_s": -2.4,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 0.5,
+     "car_speed": 23.0,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 21.9,
+     "chosen_mean_4s": 21.7,
+     "chosen_end": 20.6,
+     "fastest_of_32_mean_4s": 31.8,
+     "fastest_of_32_end": 40.0,
+     "slowest_mean_4s": 19.2,
+     "demanded_accel_first_half_s": -2.2,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 1.0,
+     "car_speed": 22.3,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 22.3,
+     "chosen_mean_4s": 22.4,
+     "chosen_end": 22.3,
+     "fastest_of_32_mean_4s": 30.4,
+     "fastest_of_32_end": 35.3,
+     "slowest_mean_4s": 18.5,
+     "demanded_accel_first_half_s": 0.1,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 1.5,
+     "car_speed": 22.3,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 22.5,
+     "chosen_mean_4s": 23.4,
+     "chosen_end": 23.5,
+     "fastest_of_32_mean_4s": 31.0,
+     "fastest_of_32_end": 36.8,
+     "slowest_mean_4s": 18.7,
+     "demanded_accel_first_half_s": 0.4,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 22.8,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 22.8,
+     "chosen_mean_4s": 23.2,
+     "chosen_end": 23.0,
+     "fastest_of_32_mean_4s": 31.3,
+     "fastest_of_32_end": 34.3,
+     "slowest_mean_4s": 19.2,
+     "demanded_accel_first_half_s": -0.0,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 2.5,
+     "car_speed": 23.2,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 22.8,
+     "chosen_mean_4s": 22.9,
+     "chosen_end": 22.0,
+     "fastest_of_32_mean_4s": 31.8,
+     "fastest_of_32_end": 35.3,
+     "slowest_mean_4s": 19.4,
+     "demanded_accel_first_half_s": -0.8,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    },
+    {
+     "t": 3.0,
+     "car_speed": 23.3,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 23.4,
+     "chosen_mean_4s": 23.6,
+     "chosen_end": 23.4,
+     "fastest_of_32_mean_4s": 32.1,
+     "fastest_of_32_end": 35.2,
+     "slowest_mean_4s": 19.4,
+     "demanded_accel_first_half_s": 0.2,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": true
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    22.3,
+    22.8,
+    23.3
+   ],
+   "holds_23p5": true,
+   "all_chosen_ge_0p8_human_first_3s": true
+  }
+ },
+ "d2715023": {
+  "014b": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 19.0,
+   "best_rank_median": 11.5,
+   "best_rank_min": 10,
+   "departing_picked": 0,
+   "median_score_chosen": 0.92,
+   "median_best_score_departing": 0.361,
+   "max_disp_any_plan_m": 9.7
+  },
+  "016": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 21.0,
+   "best_rank_median": 12.0,
+   "best_rank_min": 10,
+   "departing_picked": 0,
+   "median_score_chosen": 0.952,
+   "median_best_score_departing": 0.3825,
+   "max_disp_any_plan_m": 11.3
+  },
+  "017": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 17.0,
+   "best_rank_median": 13.0,
+   "best_rank_min": 1,
+   "departing_picked": 1,
+   "median_score_chosen": 0.9755,
+   "median_best_score_departing": 0.692,
+   "max_disp_any_plan_m": 14.2
+  }
+ },
+ "b44a4a44": {
+  "014b": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 25.0,
+   "best_rank_median": 8.0,
+   "best_rank_min": 4,
+   "departing_picked": 0,
+   "median_score_chosen": 0.716,
+   "median_best_score_departing": 0.487,
+   "max_disp_any_plan_m": 14.1
+  },
+  "016": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 24.0,
+   "best_rank_median": 9.0,
+   "best_rank_min": 7,
+   "departing_picked": 0,
+   "median_score_chosen": 0.9285000000000001,
+   "median_best_score_departing": 0.853,
+   "max_disp_any_plan_m": 17.6
+  },
+  "017": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 23.0,
+   "best_rank_median": 9.0,
+   "best_rank_min": 6,
+   "departing_picked": 0,
+   "median_score_chosen": 0.952,
+   "median_best_score_departing": 0.8975,
+   "max_disp_any_plan_m": 18.3
+  }
+ },
+ "89f2eeb8": {
+  "014b": {
+   "min_speed": 0.0,
+   "ticks": [
+    {
+     "t": 0.0,
+     "car": 14.6,
+     "human": 14.7,
+     "chosen_mean_4s": 12.1,
+     "demanded_accel": -3.5,
+     "fastest_mean_4s": 13.8
+    },
+    {
+     "t": 0.5,
+     "car": 13.4,
+     "human": 14.7,
+     "chosen_mean_4s": 7.1,
+     "demanded_accel": -6.0,
+     "fastest_mean_4s": 12.2
+    },
+    {
+     "t": 1.0,
+     "car": 10.5,
+     "human": 14.7,
+     "chosen_mean_4s": 3.6,
+     "demanded_accel": -7.5,
+     "fastest_mean_4s": 8.9
+    },
+    {
+     "t": 1.5,
+     "car": 6.4,
+     "human": 14.8,
+     "chosen_mean_4s": 0.5,
+     "demanded_accel": -9.5,
+     "fastest_mean_4s": 5.2
+    },
+    {
+     "t": 2.0,
+     "car": 2.1,
+     "human": 14.8,
+     "chosen_mean_4s": 0.4,
+     "demanded_accel": -2.5,
+     "fastest_mean_4s": 3.2
+    },
+    {
+     "t": 2.5,
+     "car": 0.1,
+     "human": 14.8,
+     "chosen_mean_4s": 1.3,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.8
+    },
+    {
+     "t": 3.0,
+     "car": 0.0,
+     "human": 14.9,
+     "chosen_mean_4s": 2.2,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.8
+    },
+    {
+     "t": 3.5,
+     "car": 0.2,
+     "human": 14.9,
+     "chosen_mean_4s": 2.8,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.9
+    },
+    {
+     "t": 4.0,
+     "car": 0.6,
+     "human": 14.9,
+     "chosen_mean_4s": 3.2,
+     "demanded_accel": 0.6,
+     "fastest_mean_4s": 4.4
+    },
+    {
+     "t": 4.5,
+     "car": 1.3,
+     "human": 14.9,
+     "chosen_mean_4s": 3.5,
+     "demanded_accel": 0.7,
+     "fastest_mean_4s": 5.0
+    },
+    {
+     "t": 5.0,
+     "car": 2.1,
+     "human": 15.0,
+     "chosen_mean_4s": 4.9,
+     "demanded_accel": 1.0,
+     "fastest_mean_4s": 5.9
+    },
+    {
+     "t": 5.5,
+     "car": 3.0,
+     "human": 15.0,
+     "chosen_mean_4s": 6.6,
+     "demanded_accel": 0.9,
+     "fastest_mean_4s": 7.1
+    },
+    {
+     "t": 6.0,
+     "car": 4.1,
+     "human": 15.1,
+     "chosen_mean_4s": 7.8,
+     "demanded_accel": 1.1,
+     "fastest_mean_4s": 8.3
+    }
+   ]
+  },
+  "016": {
+   "min_speed": 9.7,
+   "ticks": [
+    {
+     "t": 0.0,
+     "car": 14.6,
+     "human": 14.7,
+     "chosen_mean_4s": 12.9,
+     "demanded_accel": -1.6,
+     "fastest_mean_4s": 18.3
+    },
+    {
+     "t": 0.5,
+     "car": 14.0,
+     "human": 14.7,
+     "chosen_mean_4s": 14.1,
+     "demanded_accel": -0.5,
+     "fastest_mean_4s": 18.5
+    },
+    {
+     "t": 1.0,
+     "car": 13.7,
+     "human": 14.7,
+     "chosen_mean_4s": 12.5,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 17.9
+    },
+    {
+     "t": 1.5,
+     "car": 13.3,
+     "human": 14.8,
+     "chosen_mean_4s": 12.4,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 17.8
+    },
+    {
+     "t": 2.0,
+     "car": 12.7,
+     "human": 14.8,
+     "chosen_mean_4s": 11.8,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 16.8
+    },
+    {
+     "t": 2.5,
+     "car": 12.2,
+     "human": 14.8,
+     "chosen_mean_4s": 11.3,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 16.3
+    },
+    {
+     "t": 3.0,
+     "car": 11.7,
+     "human": 14.9,
+     "chosen_mean_4s": 11.7,
+     "demanded_accel": -0.9,
+     "fastest_mean_4s": 15.8
+    },
+    {
+     "t": 3.5,
+     "car": 11.4,
+     "human": 14.9,
+     "chosen_mean_4s": 11.5,
+     "demanded_accel": -1.0,
+     "fastest_mean_4s": 15.6
+    },
+    {
+     "t": 4.0,
+     "car": 11.3,
+     "human": 14.9,
+     "chosen_mean_4s": 11.4,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 4.5,
+     "car": 11.1,
+     "human": 14.9,
+     "chosen_mean_4s": 11.4,
+     "demanded_accel": -0.6,
+     "fastest_mean_4s": 15.5
+    },
+    {
+     "t": 5.0,
+     "car": 11.0,
+     "human": 15.0,
+     "chosen_mean_4s": 11.3,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 5.5,
+     "car": 11.0,
+     "human": 15.0,
+     "chosen_mean_4s": 11.2,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 6.0,
+     "car": 10.9,
+     "human": 15.1,
+     "chosen_mean_4s": 11.1,
+     "demanded_accel": -0.7,
+     "fastest_mean_4s": 15.2
+    }
+   ]
+  },
+  "017": {
+   "min_speed": 14.58,
+   "ticks": [
+    {
+     "t": 0.0,
+     "car": 14.6,
+     "human": 14.7,
+     "chosen_mean_4s": 14.9,
+     "demanded_accel": -0.1,
+     "fastest_mean_4s": 17.6
+    },
+    {
+     "t": 0.5,
+     "car": 14.7,
+     "human": 14.7,
+     "chosen_mean_4s": 14.4,
+     "demanded_accel": -0.4,
+     "fastest_mean_4s": 18.0
+    },
+    {
+     "t": 1.0,
+     "car": 14.7,
+     "human": 14.7,
+     "chosen_mean_4s": 14.7,
+     "demanded_accel": -0.2,
+     "fastest_mean_4s": 18.0
+    },
+    {
+     "t": 1.5,
+     "car": 14.6,
+     "human": 14.8,
+     "chosen_mean_4s": 14.9,
+     "demanded_accel": -0.2,
+     "fastest_mean_4s": 18.4
+    },
+    {
+     "t": 2.0,
+     "car": 14.7,
+     "human": 14.8,
+     "chosen_mean_4s": 15.0,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.2
+    },
+    {
+     "t": 2.5,
+     "car": 14.8,
+     "human": 14.8,
+     "chosen_mean_4s": 15.0,
+     "demanded_accel": -0.4,
+     "fastest_mean_4s": 18.5
+    },
+    {
+     "t": 3.0,
+     "car": 14.9,
+     "human": 14.9,
+     "chosen_mean_4s": 15.0,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.3
+    },
+    {
+     "t": 3.5,
+     "car": 14.9,
+     "human": 14.9,
+     "chosen_mean_4s": 15.0,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.2
+    },
+    {
+     "t": 4.0,
+     "car": 14.9,
+     "human": 14.9,
+     "chosen_mean_4s": 15.1,
+     "demanded_accel": -0.2,
+     "fastest_mean_4s": 18.4
+    },
+    {
+     "t": 4.5,
+     "car": 15.0,
+     "human": 14.9,
+     "chosen_mean_4s": 15.2,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.6
+    },
+    {
+     "t": 5.0,
+     "car": 15.1,
+     "human": 15.0,
+     "chosen_mean_4s": 15.3,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.7
+    },
+    {
+     "t": 5.5,
+     "car": 15.2,
+     "human": 15.0,
+     "chosen_mean_4s": 15.3,
+     "demanded_accel": -0.3,
+     "fastest_mean_4s": 18.8
+    },
+    {
+     "t": 6.0,
+     "car": 15.3,
+     "human": 15.1,
+     "chosen_mean_4s": 15.4,
+     "demanded_accel": -0.2,
+     "fastest_mean_4s": 18.9
+    }
+   ]
+  }
+ },
+ "worse": {
+  "b1b170d0": {
+   "014b": {
+    "exit": "fail:collision_at_fault",
+    "exit_s": 0.4,
+    "first_collision_any_s": 0.4,
+    "first_time_4m_off_path_s": 0.85,
+    "abs_lat_at_exit": 0.93,
+    "mean_speed_to_exit": 16.37,
+    "mean_speed_whole_clip": 6.4,
+    "dist_at_exit_m": 6.5,
+    "longest_below_1ms": 3.25,
+    "human_dist_to_exit_m": 5.0
+   },
+   "016": {
+    "exit": "end_of_clip",
+    "exit_s": 16.8,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 3.85,
+    "mean_speed_to_exit": 13.82,
+    "mean_speed_whole_clip": 13.82,
+    "dist_at_exit_m": 231.4,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 275.9
+   },
+   "017": {
+    "exit": "early_stop_pass",
+    "exit_s": 9.05,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": 9.15,
+    "abs_lat_at_exit": 3.99,
+    "mean_speed_to_exit": 17.04,
+    "mean_speed_whole_clip": 16.15,
+    "dist_at_exit_m": 154.3,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 151.2
+   }
+  },
+  "bd07fb91": {
+   "014b": {
+    "exit": "fail:offroad",
+    "exit_s": 0.7,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 1.07,
+    "mean_speed_to_exit": 14.69,
+    "mean_speed_whole_clip": 3.16,
+    "dist_at_exit_m": 10.2,
+    "longest_below_1ms": 11.05,
+    "human_dist_to_exit_m": 10.8
+   },
+   "016": {
+    "exit": "early_stop_pass",
+    "exit_s": 6.45,
+    "first_collision_any_s": 7.15,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 3.59,
+    "mean_speed_to_exit": 15.22,
+    "mean_speed_whole_clip": 7.16,
+    "dist_at_exit_m": 98.1,
+    "longest_below_1ms": 3.65,
+    "human_dist_to_exit_m": 85.2
+   },
+   "017": {
+    "exit": "fail:collision_at_fault",
+    "exit_s": 7.1,
+    "first_collision_any_s": 7.1,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 2.66,
+    "mean_speed_to_exit": 14.65,
+    "mean_speed_whole_clip": 8.97,
+    "dist_at_exit_m": 104.0,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 92.9
+   }
+  },
+  "d1a25a99": {
+   "014b": {
+    "exit": "early_stop_pass",
+    "exit_s": 7.75,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": 9.5,
+    "abs_lat_at_exit": 2.84,
+    "mean_speed_to_exit": 1.59,
+    "mean_speed_whole_clip": 2.84,
+    "dist_at_exit_m": 12.1,
+    "longest_below_1ms": 2.0500000000000003,
+    "human_dist_to_exit_m": 52.2
+   },
+   "016": {
+    "exit": "early_stop_pass",
+    "exit_s": 10.45,
+    "first_collision_any_s": 10.45,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 0.25,
+    "mean_speed_to_exit": 4.48,
+    "mean_speed_whole_clip": 4.82,
+    "dist_at_exit_m": 46.7,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 86.9
+   },
+   "017": {
+    "exit": "fail:offroad",
+    "exit_s": 6.25,
+    "first_collision_any_s": 10.5,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 2.89,
+    "mean_speed_to_exit": 4.19,
+    "mean_speed_whole_clip": 5.31,
+    "dist_at_exit_m": 26.2,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 31.9
+   }
+  }
+ },
+ "steer": {
+  "01d503d4": {
+   "014b": {
+    "peak": 0.065,
+    "peak_t": 4.4,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 11.7,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.003,
+    "peak_t": 6.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.9,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.003,
+    "peak_t": 0.6,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 13.9,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "023b7fcc": {
+   "014b": {
+    "peak": 0.134,
+    "peak_t": 15.6,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.006,
+    "peak_t": 0.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.009,
+    "peak_t": 0.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.35,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "0245ff75": {
+   "014b": {
+    "peak": 0.006,
+    "peak_t": 6.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 12.9,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 12.9,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.004,
+    "peak_t": 14.4,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 11.0,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 11.0,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.003,
+    "peak_t": 6.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 15.65,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "026d6a39": {
+   "014b": {
+    "peak": 0.053,
+    "peak_t": 11.4,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 11.5,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.029,
+    "peak_t": 12.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 8.2,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.243,
+    "peak_t": 14.0,
+    "first_above_0p2_s": 12.95,
+    "seconds_above_0p2": 1.9,
+    "speed_at_first_above": 3.5,
+    "scoring_ends_s": 7.8,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 10.75,
+    "first_offroad_s": 14.8,
+    "above_0p2_only_after_scoring": true
+   }
+  },
+  "02e075b9": {
+   "014b": {
+    "peak": 0.004,
+    "peak_t": 14.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 15.6,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.003,
+    "peak_t": 10.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.5,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.004,
+    "peak_t": 16.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.8,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "02eadd92": {
+   "014b": {
+    "peak": 0.038,
+    "peak_t": 4.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.004,
+    "peak_t": 11.1,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 12.35,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.003,
+    "peak_t": 0.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 8.8,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "032b6f21": {
+   "014b": {
+    "peak": 0.764,
+    "peak_t": 8.8,
+    "first_above_0p2_s": 8.6,
+    "seconds_above_0p2": 2.3,
+    "speed_at_first_above": 8.1,
+    "scoring_ends_s": 4.45,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 4.45,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": true
+   },
+   "016": {
+    "peak": 0.014,
+    "peak_t": 13.9,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.75,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.006,
+    "peak_t": 11.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "04394343": {
+   "014b": {
+    "peak": 0.785,
+    "peak_t": 1.2,
+    "first_above_0p2_s": 0.05,
+    "seconds_above_0p2": 6.5,
+    "speed_at_first_above": 14.9,
+    "scoring_ends_s": 2.15,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 2.15,
+    "first_offroad_s": 10.85,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.019,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.031,
+    "peak_t": 15.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "04749bb9": {
+   "014b": {
+    "peak": 0.785,
+    "peak_t": 2.0,
+    "first_above_0p2_s": 0.05,
+    "seconds_above_0p2": 16.15,
+    "speed_at_first_above": 23.5,
+    "scoring_ends_s": 0.4,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": 0.4,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.784,
+    "peak_t": 6.4,
+    "first_above_0p2_s": 0.05,
+    "seconds_above_0p2": 12.65,
+    "speed_at_first_above": 23.5,
+    "scoring_ends_s": 2.7,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": 2.7,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.775,
+    "peak_t": 14.3,
+    "first_above_0p2_s": 11.7,
+    "seconds_above_0p2": 2.55,
+    "speed_at_first_above": 30.6,
+    "scoring_ends_s": 10.5,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 10.6,
+    "first_offroad_s": 11.8,
+    "above_0p2_only_after_scoring": true
+   }
+  },
+  "048b974e": {
+   "014b": {
+    "peak": 0.066,
+    "peak_t": 3.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.006,
+    "peak_t": 15.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 13.35,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.008,
+    "peak_t": 3.2,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 13.6,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "16b83346": {
+   "014b": {
+    "peak": 0.089,
+    "peak_t": 8.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.35,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.086,
+    "peak_t": 9.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 11.5,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.083,
+    "peak_t": 6.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 9.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "1acf2f5d": {
+   "014b": {
+    "peak": 0.105,
+    "peak_t": 13.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.115,
+    "peak_t": 8.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.04,
+    "peak_t": 4.9,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "2e1ce314": {
+   "014b": {
+    "peak": 0.025,
+    "peak_t": 2.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 8.95,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 8.95,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.014,
+    "peak_t": 5.7,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.014,
+    "peak_t": 2.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.0,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "5f064b02": {
+   "014b": {
+    "peak": 0.106,
+    "peak_t": 16.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.25,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 14.25,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.008,
+    "peak_t": 2.2,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 14.55,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.014,
+    "peak_t": 2.3,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "6725df2d": {
+   "014b": {
+    "peak": 0.115,
+    "peak_t": 6.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.003,
+    "peak_t": 0.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 13.9,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.004,
+    "peak_t": 15.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 11.6,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "71d7d03b": {
+   "014b": {
+    "peak": 0.187,
+    "peak_t": 11.2,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 10.75,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.008,
+    "peak_t": 16.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.007,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 15.45,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "791d68ce": {
+   "014b": {
+    "peak": 0.327,
+    "peak_t": 12.0,
+    "first_above_0p2_s": 11.55,
+    "seconds_above_0p2": 0.95,
+    "speed_at_first_above": 2.8,
+    "scoring_ends_s": 0.0,
+    "exit": "fail:offroad",
+    "first_collision_any_s": 10.0,
+    "first_offroad_s": -3.208965,
+    "above_0p2_only_after_scoring": true
+   },
+   "016": {
+    "peak": 0.451,
+    "peak_t": 10.0,
+    "first_above_0p2_s": 8.2,
+    "seconds_above_0p2": 3.85,
+    "speed_at_first_above": 2.1,
+    "scoring_ends_s": 0.0,
+    "exit": "fail:offroad",
+    "first_collision_any_s": 12.5,
+    "first_offroad_s": -3.208965,
+    "above_0p2_only_after_scoring": true
+   },
+   "017": {
+    "peak": 0.035,
+    "peak_t": 1.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 0.0,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": -3.208965,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "8023dce5": {
+   "014b": {
+    "peak": 0.161,
+    "peak_t": 2.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 4.1,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 4.1,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.208,
+    "peak_t": 10.0,
+    "first_above_0p2_s": 9.9,
+    "seconds_above_0p2": 0.35,
+    "speed_at_first_above": 2.7,
+    "scoring_ends_s": 7.2,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 7.2,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": true
+   },
+   "017": {
+    "peak": 0.129,
+    "peak_t": 16.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "89f2eeb8": {
+   "014b": {
+    "peak": 0.124,
+    "peak_t": 5.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 8.5,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 8.5,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.013,
+    "peak_t": 1.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 14.85,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 14.85,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.015,
+    "peak_t": 16.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "98dd56b2": {
+   "014b": {
+    "peak": 0.056,
+    "peak_t": 16.7,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 5.45,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 5.45,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.004,
+    "peak_t": 10.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 7.8,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 7.8,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.011,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "acd22430": {
+   "014b": {
+    "peak": 0.785,
+    "peak_t": 2.0,
+    "first_above_0p2_s": 0.05,
+    "seconds_above_0p2": 15.85,
+    "speed_at_first_above": 23.4,
+    "scoring_ends_s": 0.15,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": 0.15,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.782,
+    "peak_t": 2.0,
+    "first_above_0p2_s": 0.1,
+    "seconds_above_0p2": 5.55,
+    "speed_at_first_above": 23.4,
+    "scoring_ends_s": 0.25,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": 0.25,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.008,
+    "peak_t": 13.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 15.4,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 15.4,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "b1b170d0": {
+   "014b": {
+    "peak": 0.785,
+    "peak_t": 0.7,
+    "first_above_0p2_s": 0.05,
+    "seconds_above_0p2": 5.7,
+    "speed_at_first_above": 16.7,
+    "scoring_ends_s": 0.4,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 0.4,
+    "first_offroad_s": 1.0,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.016,
+    "peak_t": 13.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.033,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 9.05,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "b44a4a44": {
+   "014b": {
+    "peak": 0.003,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 6.6,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 6.6,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.003,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 6.6,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 6.6,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.001,
+    "peak_t": 16.8,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 6.6,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 6.6,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "bae463d3": {
+   "014b": {
+    "peak": 0.603,
+    "peak_t": 11.7,
+    "first_above_0p2_s": 7.65,
+    "seconds_above_0p2": 6.75,
+    "speed_at_first_above": 3.4,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.621,
+    "peak_t": 12.5,
+    "first_above_0p2_s": 8.2,
+    "seconds_above_0p2": 8.7,
+    "speed_at_first_above": 1.3,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.296,
+    "peak_t": 16.85,
+    "first_above_0p2_s": 11.65,
+    "seconds_above_0p2": 3.35,
+    "speed_at_first_above": 0.4,
+    "scoring_ends_s": 15.55,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   }
+  },
+  "bd07fb91": {
+   "014b": {
+    "peak": 0.772,
+    "peak_t": 1.0,
+    "first_above_0p2_s": 0.55,
+    "seconds_above_0p2": 12.3,
+    "speed_at_first_above": 14.0,
+    "scoring_ends_s": 0.7,
+    "exit": "fail:offroad",
+    "first_collision_any_s": null,
+    "first_offroad_s": 0.7,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.776,
+    "peak_t": 6.5,
+    "first_above_0p2_s": 6.05,
+    "seconds_above_0p2": 1.8,
+    "speed_at_first_above": 14.3,
+    "scoring_ends_s": 6.45,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 7.15,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.183,
+    "peak_t": 9.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 7.1,
+    "exit": "fail:collision_at_fault",
+    "first_collision_any_s": 7.1,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "cdd9448c": {
+   "014b": {
+    "peak": 0.363,
+    "peak_t": 15.5,
+    "first_above_0p2_s": 13.95,
+    "seconds_above_0p2": 1.75,
+    "speed_at_first_above": 2.7,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.271,
+    "peak_t": 13.0,
+    "first_above_0p2_s": 11.7,
+    "seconds_above_0p2": 2.1,
+    "speed_at_first_above": 3.7,
+    "scoring_ends_s": 13.4,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.223,
+    "peak_t": 13.0,
+    "first_above_0p2_s": 11.85,
+    "seconds_above_0p2": 0.75,
+    "speed_at_first_above": 3.5,
+    "scoring_ends_s": 16.85,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   }
+  },
+  "d1a25a99": {
+   "014b": {
+    "peak": 0.467,
+    "peak_t": 6.5,
+    "first_above_0p2_s": 6.05,
+    "seconds_above_0p2": 4.6,
+    "speed_at_first_above": 3.0,
+    "scoring_ends_s": 7.75,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "016": {
+    "peak": 0.305,
+    "peak_t": 4.4,
+    "first_above_0p2_s": 1.4,
+    "seconds_above_0p2": 3.65,
+    "speed_at_first_above": 3.9,
+    "scoring_ends_s": 10.45,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": 10.45,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.241,
+    "peak_t": 2.4,
+    "first_above_0p2_s": 1.9,
+    "seconds_above_0p2": 2.85,
+    "speed_at_first_above": 3.8,
+    "scoring_ends_s": 6.25,
+    "exit": "fail:offroad",
+    "first_collision_any_s": 10.5,
+    "first_offroad_s": 6.25,
+    "above_0p2_only_after_scoring": false
+   }
+  },
+  "d2715023": {
+   "014b": {
+    "peak": 0.199,
+    "peak_t": 1.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.319,
+    "peak_t": 11.5,
+    "first_above_0p2_s": 0.6,
+    "seconds_above_0p2": 16.25,
+    "speed_at_first_above": 0.1,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   },
+   "017": {
+    "peak": 0.218,
+    "peak_t": 1.0,
+    "first_above_0p2_s": 0.45,
+    "seconds_above_0p2": 15.5,
+    "speed_at_first_above": 0.4,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": false
+   }
+  },
+  "e121e37d": {
+   "014b": {
+    "peak": 0.06,
+    "peak_t": 1.0,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.034,
+    "peak_t": 0.7,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 9.65,
+    "exit": "early_stop_pass",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.034,
+    "peak_t": 8.4,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  },
+  "e3ed554f": {
+   "014b": {
+    "peak": 0.021,
+    "peak_t": 16.5,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "016": {
+    "peak": 0.016,
+    "peak_t": 14.1,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   },
+   "017": {
+    "peak": 0.014,
+    "peak_t": 1.1,
+    "first_above_0p2_s": null,
+    "seconds_above_0p2": 0.0,
+    "speed_at_first_above": null,
+    "scoring_ends_s": 16.8,
+    "exit": "end_of_clip",
+    "first_collision_any_s": null,
+    "first_offroad_s": null,
+    "above_0p2_only_after_scoring": null
+   }
+  }
+ }
+}

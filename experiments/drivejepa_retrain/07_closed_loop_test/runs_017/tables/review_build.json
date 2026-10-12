@@ -1,0 +1,55 @@
+{
+ "out": "{runs}/drivejepa_retrain/07_closed_loop_test_017/review",
+ "n": 30,
+ "missing": [],
+ "key": [
+  "Mean score over the 30 scenes: 0.703 (0.1.6) \u2192 0.770 (0.1.7); 0.1.4b 0.543. Mean progress 0.698 \u2192 0.828 (0.1.4b 0.537); mean distance driven 115 m \u2192 152 m (0.1.4b 76 m).",
+  "Score up on 9, down on 3, unchanged on 18. Scenes at full score: 15 \u2192 21 (0.1.4b 10).",
+  "At-fault collisions: 2 (8023dce5, b44a4a44) \u2192 3 (acd22430, b44a4a44, bd07fb91); 0.1.4b 4. 8023dce5's is gone; acd22430's and bd07fb91's are new in the score. Any collision inside the scored window: 7 \u2192 3 (0.1.4b 10).",
+  "Off-road exits: 3 (04749bb9, 791d68ce, acd22430) \u2192 2 (791d68ce, d1a25a99); 0.1.4b 4. Both highway scenes no longer leave the road inside the scored window; d1a25a99 is new (about 1.7 m wider through a turn, flagged for 2.15 s).",
+  "Steering: scenes with a peak above 0.3 rad anywhere in the clip 7 \u2192 1 (04749bb9, after scoring has ended); above 0.2 rad 9 \u2192 6. 0.1.4b: 10 and 10.",
+  "Braking asked by the driven plan (largest first-half-second demand, median over scenes): 1.4 \u2192 0.8 m/s\u00b2 (0.1.4b 7.5).",
+  "The nudge (\u00a73.5 momentum re-score) changed the pick on 479 of 1,170 replans (41 %) under 0.1.6 and 512 of 1,170 (44 %) under 0.1.7; 0.1.4b 366 (31 %).",
+  "Not visible in the score: under 0.1.7 three scenes have a collision or road exit after their scoring window has closed (04749bb9: collision at +10.6 s, off the road at +11.8 s; 026d6a39: collision at +10.75 s, off the road at +14.8 s; d1a25a99: collision at +10.5 s, after its road exit). Under 0.1.6 two scenes did (bd07fb91, collision at +7.15 s; 791d68ce, collision at +12.5 s)."
+ ],
+ "groups": {
+  "improved": [
+   "8023dce5",
+   "04749bb9",
+   "98dd56b2",
+   "e121e37d",
+   "5f064b02",
+   "0245ff75",
+   "1acf2f5d",
+   "89f2eeb8",
+   "cdd9448c"
+  ],
+  "decreased": [
+   "b1b170d0",
+   "d1a25a99",
+   "bd07fb91"
+  ],
+  "same": [
+   "01d503d4",
+   "023b7fcc",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "048b974e",
+   "16b83346",
+   "2e1ce314",
+   "6725df2d",
+   "71d7d03b",
+   "e3ed554f",
+   "d2715023",
+   "791d68ce",
+   "acd22430",
+   "b44a4a44",
+   "bae463d3"
+  ]
+ },
+ "disagree": [],
+ "bytes": 96261724
+}

@@ -1,0 +1,18 @@
+2c2,3
+< """DRIVEJEPA_014B site support: regenerate the 32-proposal menu at every replan of a 0.1.4b run (the rollout log carries the
+---
+> """S5 TRIAL copy of baseline_014b/b014b_menus.py for the 0.1.6 runs (diff: tables/s5_menus_diff.txt -- package drivejepa016, i.e. the S4
+> candidate weights with the 0.1.6 switches ON as deployed; helper paths). Original docstring: DRIVEJEPA_014B site support: regenerate the 32-proposal menu at every replan of a 0.1.4b run (the rollout log carries the
+14c15
+< HERE = pathlib.Path(__file__).resolve().parent; ALP = HERE.parents[2]
+---
+> HERE = pathlib.Path(__file__).resolve().parent; ALP = HERE.parents[2]; (HERE / "logs").mkdir(exist_ok=True)
+18,20c19,22
+< import drivejepa014b.planner as P14B  # noqa: E402
+< import drivejepa014b.constants as K  # noqa: E402
+< from drivejepa014b.bridge import BridgedDriveJEPA  # noqa: E402
+---
+> import drivejepa016.planner as P14B  # noqa: E402   (name kept from the original; this is the 0.1.6 planner)
+> import drivejepa016.constants as K  # noqa: E402
+> from drivejepa016.bridge import BridgedDriveJEPA  # noqa: E402
+> assert (K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION) == ("0.1.6", 37, True, True)

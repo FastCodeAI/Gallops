@@ -1,0 +1,71 @@
+4c4
+< # DRIVEJEPA_014B Stage B: 30-scene baseline on drive-jepa 0.1.4b (copy of s5/run_s5_scene.sh; diff in baseline_014b/tables/runner_diff.txt) -- S5: 30-scene campaign (copy of s5c/run_s5c_scene.sh; paths only) -- S5c: one scene on drive-jepa 0.1.5 + veto (copy of s5a/run_s5a_scene.sh; paths + veto provenance gate) (reranker on|off), shared 20 Hz referee.
+---
+> # S5 TRIAL (Retrain-data/07_closed_loop_test): 30 census scenes on drive-jepa 0.1.6 = 0.1.4b + S4 pass-9 weights + bonnet mask + zeroed acceleration (copy of baseline_014b/run_014b_scene.sh; diff in 07_closed_loop_test/tables/runner_diff.txt) -- DRIVEJEPA_014B Stage B: 30-scene baseline on drive-jepa 0.1.4b (copy of s5/run_s5_scene.sh; diff in baseline_014b/tables/runner_diff.txt) -- S5: 30-scene campaign (copy of s5c/run_s5c_scene.sh; paths only) -- S5c: one scene on drive-jepa 0.1.5 + veto (copy of s5a/run_s5a_scene.sh; paths + veto provenance gate) (reranker on|off), shared 20 Hz referee.
+53c53,54
+< S5A={runs}/alpasim_bulk/baseline_014b   # run dirs on the HDD: root disk is at the 15 GiB preflight floor (2026-10-01)
+---
+> S5A="$BASE/runs/drivejepa"   # S5 trial: run dirs under runs/drivejepa/drivejepa_016_<scene>/ (Sid); root had 42 GiB free at the start (floor 15)
+> TRIAL=experiments/drivejepa_retrain/07_closed_loop_test
+56c57
+< LANE_DIR="$S5A"
+---
+> LANE_DIR="$TRIAL/lane"
+65c66
+<     DRAFT="$BASE/drafts/drivejepa-0.1.4b"                     # S5a: the 0.1.5 launcher/draft ...
+---
+>     DRAFT="$BASE/drafts/drivejepa-0.1.6"                     # S5a: the 0.1.5 launcher/draft ...
+67c68
+<     LOGDIR="$S5A/runs/b014b_${SHORT}_${MODE}"
+---
+>     LOGDIR="$S5A/drivejepa_016_${SHORT}"
+70c71
+<     NAME="b014b_${SHORT}_${MODE}"; VIDEO_TAG="drivejepa_014b_${MODE}"; LINK_PREFIX="run_" ;;
+---
+>     NAME="drivejepa_016_${SHORT}"; VIDEO_TAG="drivejepa_016"; LINK_PREFIX="run_" ;;
+86c87
+< case "$LOGDIR" in "$S5A"/runs/*) : ;;
+---
+> case "$LOGDIR" in "$S5A"/drivejepa_016_*) : ;;
+147,155c148,154
+<   case "$PLANNER_REAL" in "$BASE"/adapters/drivejepa014b/planner.py) : ;;
+<     *) log "FATAL prov: draft planner resolves to $PLANNER_REAL, not adapters/drivejepa014b/"; exit "$EX_PROV" ;; esac
+<   AV=$("$VENV" -B -c "import sys; sys.path.insert(0,'$BASE/adapters'); from drivejepa014b import constants as K; print(K.ADAPTER_VERSION)")
+<   [ "$AV" = "0.1.4b" ] || { log "FATAL prov: ADAPTER_VERSION=$AV"; exit "$EX_PROV"; }
+<   MSHA=$(sha256sum "$BASE/adapters/drivejepa014b/momentum.py" | cut -d' ' -f1)
+<   grep -q "adapters_drivejepa014b/momentum.py,.*,$MSHA" {runs}/drivejepa_retrain/builds/drivejepa-0.1.4b-2026-10-01/MANIFEST.csv || { log "FATAL prov: momentum.py sha $MSHA not the archived build"; exit "$EX_PROV"; }
+<   PSHA=$(sha256sum "$PLANNER_REAL" | cut -d' ' -f1)
+<   grep -q "adapters_drivejepa014b/planner.py,.*,$PSHA" {runs}/drivejepa_retrain/builds/drivejepa-0.1.4b-2026-10-01/MANIFEST.csv || { log "FATAL prov: planner.py sha $PSHA not the archived build"; exit "$EX_PROV"; }
+<   log "prov OK: planner $PLANNER_REAL, ADAPTER_VERSION $AV, momentum.py sha ${MSHA:0:12}, mode $MODE, launcher sha $(sha256sum "$DRAFT/serve_drivejepa_0_1_4b.py" | cut -c1-12)"
+---
+>   case "$PLANNER_REAL" in "$BASE"/adapters/drivejepa016/planner.py) : ;;
+>     *) log "FATAL prov: draft planner resolves to $PLANNER_REAL, not adapters/drivejepa016/"; exit "$EX_PROV" ;; esac
+>   AV=$("$VENV" -B -c "import sys; sys.path.insert(0,'$BASE/adapters'); from drivejepa016 import constants as K; print(K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION, K.CHECKPOINT_SHA256)")
+>   [ "$AV" = "0.1.6 37 True True 8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2" ] || { log "FATAL prov: ADAPTER_VERSION=$AV"; exit "$EX_PROV"; }
+>   MSHA=$(sha256sum "$BASE/adapters/drivejepa016/momentum.py" | cut -d' ' -f1); PSHA=$(sha256sum "$PLANNER_REAL" | cut -d' ' -f1)
+>   ( cd "$BASE/adapters" && sha256sum -c --quiet "$TRIAL/tables/build_016.sha256" ) || { log "FATAL prov: adapters/drivejepa016 or the launcher differs from the build frozen after Step 1 (tables/build_016.sha256)"; exit "$EX_PROV"; }
+>   log "prov OK: planner $PLANNER_REAL, build $AV, momentum.py sha ${MSHA:0:12}, planner.py sha ${PSHA:0:12}, mode $MODE, launcher sha $(sha256sum "$DRAFT/serve_drivejepa_0_1_6.py" | cut -c1-12)"
+232c231
+<   DRIVEJEPA_MOMENTUM="$MODE" "$VENV" "$DRAFT/serve_drivejepa_0_1_4b.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
+---
+>   DRIVEJEPA_MOMENTUM="$MODE" "$VENV" "$DRAFT/serve_drivejepa_0_1_6.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
+236c235
+<   for _ in $(seq 1 600); do driver_up && break; kill -0 "$DRIVER_PID" 2>/dev/null || { log "FATAL: driver died while loading"; tail -30 "$LOGDIR/driver.log"; exit "$EX_DRIVER"; }; sleep 1; done
+---
+>   for _ in $(seq 1 3600); do driver_up && break; kill -0 "$DRIVER_PID" 2>/dev/null || { log "FATAL: driver died while loading"; tail -30 "$LOGDIR/driver.log"; exit "$EX_DRIVER"; }; sleep 1; done
+241,243c240,242
+<   grep -q "adapter_version=0.1.4b " "$LOGDIR/driver.log" || { log "FATAL: wrong adapter_version"; exit "$EX_PROV"; }
+<   grep -q "adapters/drivejepa014b/planner.py" "$LOGDIR/driver.log" || { log "FATAL: planner not from the live 0.1.4b package"; exit "$EX_PROV"; }
+<   grep -q "drivejepa-0.1.4b | paper §3.5 momentum-aware selection (upstream calibrate_score)" "$LOGDIR/driver.log" || { log "FATAL: 0.1.4b provenance line missing"; exit "$EX_PROV"; }
+---
+>   grep -q "adapter_version=0.1.6 " "$LOGDIR/driver.log" || { log "FATAL: wrong adapter_version"; exit "$EX_PROV"; }
+>   grep -q "adapters/drivejepa016/planner.py" "$LOGDIR/driver.log" || { log "FATAL: planner not from the live 0.1.6 package"; exit "$EX_PROV"; }
+>   grep -q "drivejepa-0.1.6 | S4 pass-9 weights, bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score | paper §3.5 momentum-aware selection (upstream calibrate_score)" "$LOGDIR/driver.log" || { log "FATAL: 0.1.6 provenance line missing"; exit "$EX_PROV"; }
+246c245
+<   grep -m1 "drivejepa-0.1.4b | paper" "$LOGDIR/driver.log"
+---
+>   grep -m1 "drivejepa-0.1.6 | S4" "$LOGDIR/driver.log"
+301c300
+<     "$VENV" -B "{runs}/paddock_sid/Alpasim/analysis_3.0/Re-ranker/baseline_014b/dj_extra_gates_014b.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
+---
+>     "$VENV" -B "$TRIAL/dj_extra_gates_016.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
