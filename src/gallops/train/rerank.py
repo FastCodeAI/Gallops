@@ -266,10 +266,21 @@ def train(
             f"{dataset}: {len(set(scenes.tolist()))} scene(s) leave nothing to train on once the "
             "selection scenes are held out; at least two are needed"
         )
-    ranker, mean, std, epoch, metric = fit(x, ade, held, settings)
+    ranker, mean, std, epoch, _ = fit(x, ade, held, settings)
+
+    # fp32 on disk, as the sidecar declares. Everything below is computed from the
+    # cast arrays, so the probe and the reported pick ADE describe the weights
+    # paddock loads, not the float64 ones fit() held. Paddock's forward pass
+    # promotes the features to float64, and so does this one.
+    for name, value in ranker.state().items():
+        setattr(ranker, name, value.astype(np.float32))
+    mean, std = mean.astype(np.float32), std.astype(np.float32)
+    held_scores, _ = ranker.forward((x[held] - mean) / std)
+    metric = float(ade[held][np.arange(held.sum()), held_scores.argmax(1)].mean())
 
     # The probe: a few real held-out samples, raw features in, scores out. Paddock
-    # replays it through its own forward pass at load time.
+    # replays it through its own forward pass at load time. These are test
+    # vectors rather than weights, so they keep float64.
     probe_x = x[held][:4]
     probe_scores, _ = ranker.forward((probe_x - mean) / std)
 

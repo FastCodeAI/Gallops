@@ -83,6 +83,10 @@ def test_writes_weights_paddock_can_verify(tmp_path, hidden):
     assert str(arrays["format"]) == rerank.FORMAT
     assert tuple(arrays["feature_names"].tolist()) == FEATURES
     assert ("w1" in arrays) == bool(hidden)
+    # The sidecar says fp32, so the weights and the standardisation are.
+    assert read(result.directory).precision == "fp32"
+    for key in ("mean", "std", "w2", "b2") + (("w1", "b1") if hidden else ()):
+        assert arrays[key].dtype == np.float32, key
 
     # Replay the probe the way paddock's reader does, from the file alone.
     z = (arrays["probe_x"] - arrays["mean"]) / arrays["std"]
