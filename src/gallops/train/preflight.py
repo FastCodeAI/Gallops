@@ -38,6 +38,14 @@ Three groups, cheapest first:
                all (see `HISTORY_TOLERANCE_S` in swerve_data.py). Both were
                measured before the limit moved, and the second was a defect the
                trainer now skips rather than a reason to loosen anything.
+    sight      the starting weights' plan changes when the front camera is
+               blanked. Fidelity compares the trainer with a recording, and a
+               recording can carry the same mistake: before paddock #62 both
+               placed the cameras relative to nuScenes' LIDAR_TOP (yawed -90
+               degrees), no image sample landed in the frame, and fidelity
+               passed because the model had driven blind too. Stage A through
+               s3 trained that way. A plan that a black frame does not move is
+               a model that is not looking, whatever it agrees with.
 
 The sample is drawn across episodes and visited LATE TICK FIRST, so anything
 that caches per episode is caught by the first episode it touches.
@@ -84,6 +92,12 @@ FIDELITY_VERDICT_TOLERANCE = 0.05
 #: seconds' travel at the tick's speed. Measured 0.29%; a gap this size is three
 #: times what the JPEG round trip explains.
 FIDELITY_MEDIAN_PICK_FRACTION = 0.01
+#: Blanking the front camera must move the starting weights' plan by more than
+#: this somewhere in the sample. Camera-blind it moved 0.000 m on every tick;
+#: with the cameras on the ego frame, 9.6 m on a frontal tick near impact.
+SIGHT_MIN_MOVE_M = 0.05
+#: Ticks the sight check runs, two forward passes each.
+SIGHT_TICKS = 8
 #: The dump adapter writes `timestamp` first on every line.
 LEADING_TIMESTAMP = re.compile(r'\{"timestamp": (\d+)')
 
@@ -326,6 +340,44 @@ def fidelity_check(
     return report, problems
 
 
+def sight_check(model, dataset_cls, sample: list[dict], torch, device: str) -> tuple[dict, list[str]]:
+    """The starting weights, on rebuilt inputs, with and without the front image."""
+    ticks = sample[:SIGHT_TICKS]
+    dataset = dataset_cls(ticks, device)
+    moves = []
+    was_training = model.training
+    model.eval()
+    with torch.no_grad():
+        for index in range(len(ticks)):
+            # One tick per pass: the vendor model mixes ticks within a batch. And two
+            # separate builds, because its forward rewrites `lidar2img` in the dict
+            # it is given, so the same dict cannot be fed to it twice.
+            real, _, used = dataset.batch([index])
+            if real is None:
+                continue
+            dark, _, _ = dataset.batch([index])
+            for key in ("camera_feature_1", "camera_feature_2"):
+                dark[key] = torch.zeros_like(dark[key])
+            seen = model(real)["trajectory"].float().cpu().numpy()
+            blind = model(dark)["trajectory"].float().cpu().numpy()
+            moves.append(float(np.abs(seen[..., :2] - blind[..., :2]).max()))
+    model.train(was_training)
+    if not moves:
+        return {}, ["sight: the dataset rebuilt none of the sampled ticks"]
+    report = {
+        "compared": len(moves),
+        "max_move_m": round(max(moves), 3),
+        "median_move_m": round(float(np.median(moves)), 3),
+    }
+    if max(moves) <= SIGHT_MIN_MOVE_M:
+        return report, [
+            f"sight: blanking the front camera moves the plan at most {max(moves):.3f} m over "
+            f"{len(moves)} ticks (limit {SIGHT_MIN_MOVE_M} m) -- the image is not reaching the "
+            "model; check the camera extrinsics"
+        ]
+    return report, []
+
+
 def describe(ticks: list[dict]) -> dict:
     """What is about to be trained on, for the log and the sidecar."""
     shapes = Counter(t["episode"].split("-", 1)[0] for t in ticks)
@@ -380,6 +432,11 @@ def run(
             "fidelity: no source was driven by the starting weights, so nothing checks that the "
             "trainer rebuilds the inputs the model saw; add one (round 0 always qualifies)"
         )
+    if model is None:
+        problems.append("sight: no model was given, so nothing checks that it reads the camera")
+    else:
+        report["sight"], found = sight_check(model, dataset_cls, sample, torch, device)
+        problems += found
     report["sources"] = [
         {
             "labelled": s.labelled,

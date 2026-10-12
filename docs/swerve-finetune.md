@@ -5,6 +5,16 @@ built, what each run measured, and the six defects the measurements exposed.
 Numbers here are measurements unless the text says they are an argument — the
 standard [conventions.md](conventions.md) holds both repos to.
 
+> **Correction (2026-10-12): every run on this page was camera-blind.** The trainer's
+> inputs (`swerve_data.py`) and the paddock adapter that drove every collection both
+> placed the cameras relative to nuScenes' LIDAR_TOP, yawed −90°. Drive-JEPA reads the
+> image at points in ego coordinates, so none landed in the front image: a black
+> frame gave the identical plan. Stage A, joint v1–v4, v4fix, l4fix, l5 and s1–s3
+> were trained, and their episodes collected, without the image. The numbers below
+> are what those runs measured; what they say about teaching Drive-JEPA to *see* a
+> hazard and evade does not stand. Fixed here (`camera_extrinsics`) and in paddock
+> #62, and `preflight.py` now refuses a model a blanked camera does not move.
+
 **Status (2026-10-08): not finished; the capability is still absent.** Eleven
 runs. The only one not worse than the released model is s1, the scorer retrained
 alone: 3.671 against 3.568 over the full neuroNCAP set, +0.10 with a pair-level

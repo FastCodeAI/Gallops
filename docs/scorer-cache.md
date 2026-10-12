@@ -4,6 +4,16 @@ What came after s3 ([swerve-finetune.md](swerve-finetune.md)): can Drive-JEPA's
 scorer learn to pick a safe plan on a scene it has never seen? Measurements
 unless marked as an argument, as [conventions.md](conventions.md) asks.
 
+> **Correction (2026-10-12): every cache here was camera-blind.** `scorer_cache`
+> rebuilds inputs with `swerve_data.py`, which placed the cameras relative to
+> nuScenes' LIDAR_TOP (yawed −90°), so no image reached the refiner. Found by testing
+> whether the scorer's answers change when only the hazard car changes: on GT drives,
+> where 30 runs of a scene share every pose, the cached tokens were bit-identical
+> across runs whose images differ by up to 23% of pixels. So the scorer learned from
+> plan geometry and ego motion only — the "place, not the car" result below. Caches
+> v1, v2 and v3_nusc must be rebuilt; the grader, labels' geometry, vocabulary and
+> the real-nuScenes conversion are unaffected.
+
 **Status (2026-10-12): not yet.** Open loop, a scorer trained on cached features
 ranks a held-out scene's plans far better than chance for the first time, and
 rescues some frontal moments. It does not survive real nuScenes data, and the

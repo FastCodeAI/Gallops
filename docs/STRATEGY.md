@@ -53,6 +53,15 @@ sample-for-sample:
 | Alpamayo − Drive-JEPA | +0.16 | 0.14 | 1.12 |
 | Alpamayo − VisionPilot | **+2.15** | 0.17 | **12.89** |
 
+> **Correction (2026-10-12): Drive-JEPA's row is camera-blind.** Paddock placed its
+> cameras relative to nuScenes' LIDAR_TOP, which is yawed −90°, and the model reads
+> the image at points it treats as lidar-frame (NAVSIM's lidar frame is the ego
+> frame), so none landed in the front image and it planned from ego status alone.
+> Fixed in paddock #62; on scene 0103 the seeing model scores frontal 2.36, stationary
+> 5.0 and side 1.67 (3 runs each, against 2.14 / 5.0 / 5.0 blind), because it now
+> drives at a normal pace and the crossing car hits it. A full sweep replaces 3.57.
+> Its KITScenes and NAVSIM rows are unaffected (identity lidar2ego there).
+
 **The top three are statistically indistinguishable.** A 10 B vision-language
 model needing 26 GB of VRAM is tied, on collision avoidance, with a 60.9 MB
 model that runs on a CPU. Only VisionPilot separates, and it separates downward.

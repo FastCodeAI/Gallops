@@ -29,9 +29,22 @@ reads only `ego_status[:, -1]`, the current one, so the speed and acceleration
 copied into the older slots are never read. The pixels it does read from the past
 are `camera_feature_2`, the frame nearest 0.5 s back.
 
+**The cameras sit on the ego frame** (`camera_extrinsics`). NAVSIM gives each
+camera relative to the lidar, and in OpenScene the lidar frame is the ego frame,
+so the model applies `lidar2img` straight to sample points in ego coordinates.
+This module used to compose nuScenes' real LIDAR_TOP into the extrinsics, copying
+paddock; LIDAR_TOP is yawed -90 degrees, so no sample point landed in the front
+image and the model planned from ego status alone. Every episode collected before
+paddock #62 was driven by that camera-blind model, and every checkpoint trained
+here before this fix (stage A, joint v1-v4, v4fix, l4fix, l5, s1-s3, the cached
+scorers) learned from features with no image in them. The fidelity check now
+refuses those collections, rightly; the sight check in `preflight.py` refuses a
+model whose plan does not move when the camera is blanked.
+
 Transcribed from paddock's `adapters/models/drivejepa/policy.py`, which built the
 same AgentInput when these episodes were driven. The repos do not import each
-other, so `verify` is what keeps the copy honest.
+other, so `verify` is what keeps the copy honest -- and it kept the bug too,
+because a copy that agrees with its source cannot say the source is wrong.
 """
 
 from __future__ import annotations
@@ -123,6 +136,18 @@ def _quat(q) -> np.ndarray:
             [2 * (x * z - y * w), 2 * (x * w + y * z), 1 - 2 * (x * x + y * y)],
         ]
     )
+
+
+def camera_extrinsics(calibration: dict) -> dict[str, np.ndarray]:
+    """Each camera slot's `sensor2lidar`, which for this model is its pose on the car.
+
+    NAVSIM's lidar frame is the ego frame (identity lidar2ego in every OpenScene
+    log), and the model's image sample points are written in ego coordinates. So
+    the camera goes in at `camera2ego`; LIDAR_TOP in `calibration` is not used.
+    """
+    return {
+        slot: np.asarray(calibration[NUSCENES_CAMERAS[slot]][0], dtype=np.float64) for slot in CAMERA_SLOTS
+    }
 
 
 def history_stamps(stamps: list[int], now: int) -> list[int] | None:
@@ -247,17 +272,9 @@ class TickDataset:
             else:
                 image = np.asarray(Image.open(episode["frames"][stamp]).convert("RGB"))
             blank = np.zeros_like(image)
-            # neuroNCAP sends the REAL lidar-to-ego calibration, not identity --
-            # the engine reads it from nuScenes (`get_lidar_calibration`). Assuming
-            # identity shifts every camera's projection by the lidar's mounting
-            # offset, about 1.8 m up and 0.94 m forward, and the proposals move
-            # metres. That is what the fidelity check caught.
-            ego2lidar = np.linalg.inv(calibration["LIDAR_TOP"][0])
             slots = {}
-            for slot in CAMERA_SLOTS:
-                channel = NUSCENES_CAMERAS[slot]
-                cam2ego, intrinsics = calibration[channel]
-                sensor2lidar = ego2lidar @ cam2ego
+            for slot, sensor2lidar in camera_extrinsics(calibration).items():
+                intrinsics = calibration[NUSCENES_CAMERAS[slot]][1]
                 slots[slot] = Camera(
                     # only cam_f0's pixels are ever read; the other three are here
                     # to hold the projection ordering, nothing more
