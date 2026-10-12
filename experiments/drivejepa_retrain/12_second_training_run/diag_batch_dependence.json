@@ -1,0 +1,54 @@
+{
+ "examples": 32,
+ "clips": 8,
+ "what": "pass 9, eval mode; A = the 32 rows as one batch in clip order (the readout's way), 16-bit",
+ "spacing_sq_mean": {
+  "A_clip_order_batch": 140.89317321777344,
+  "A_float32": 140.9102783203125,
+  "A_reversed_order": 135.06167602539062,
+  "each_row_alone_batch1": 357.8769226074219,
+  "first8_in_A": 80.21485137939453,
+  "first8_alone": 25.831064224243164,
+  "first8_alone_float32": 26.583417892456055,
+  "first8_as_row0_with_31_training_rows": 1.2509735822677612,
+  "first8_as_last_row_after_31_training_rows": 1.0405681133270264
+ },
+ "plans_abs_diff_max_and_median_per_row": {
+  "A_vs_float32": [
+   3.7961692810058594,
+   0.5647125244140625
+  ],
+  "A_vs_reversed_order": [
+   55.0,
+   19.9375
+  ],
+  "A_vs_alone": [
+   98.28125,
+   54.765625
+  ],
+  "alone_vs_alone_float32": [
+   8.044265747070312,
+   0.43636322021484375
+  ],
+  "alone_vs_row0_of_mixed_batch": [
+   59.578125,
+   5.8125
+  ],
+  "alone_vs_last_row_of_mixed_batch": [
+   59.4609375,
+   5.875
+  ]
+ },
+ "vs_s6_seen_dump_menu_9": {
+  "rows": 15,
+  "spacing_sq_mean_s6": 99.09593963623047,
+  "alone_vs_s6": [
+   99.78780364990234,
+   80.72784423828125
+  ],
+  "A_vs_s6": [
+   100.12841796875,
+   51.399688720703125
+  ]
+ }
+}

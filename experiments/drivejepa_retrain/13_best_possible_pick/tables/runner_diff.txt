@@ -1,0 +1,73 @@
+4c4
+< # S5 TRIAL, GENERATOR ONLY (07_closed_loop_test/runs_017): 30 census scenes on drive-jepa 0.1.7 = 0.1.6 + S10 generator weights + batch fix on (copy of 07_closed_loop_test/run_016_scene.sh; diff in runs_017/tables/runner_diff.txt; run dirs on the NAS, root-disk floor 15 -> 4 GiB because the run writes to the NAS) -- S5 TRIAL (Retrain-data/07_closed_loop_test): 30 census scenes on drive-jepa 0.1.6 = 0.1.4b + S4 pass-9 weights + bonnet mask + zeroed acceleration (copy of baseline_014b/run_014b_scene.sh; diff in 07_closed_loop_test/tables/runner_diff.txt) -- DRIVEJEPA_014B Stage B: 30-scene baseline on drive-jepa 0.1.4b (copy of s5/run_s5_scene.sh; diff in baseline_014b/tables/runner_diff.txt) -- S5: 30-scene campaign (copy of s5c/run_s5c_scene.sh; paths only) -- S5c: one scene on drive-jepa 0.1.5 + veto (copy of s5a/run_s5a_scene.sh; paths + veto provenance gate) (reranker on|off), shared 20 Hz referee.
+---
+> # STEP 0 ORACLE PICK (13_best_possible_pick): d2715023 and b44a4a44 on drivejepa017_oracle = 0.1.7 with the scorer's pick replaced by the calculator's (PREREG.md); copy of 07_closed_loop_test/runs_017/run_017_scene.sh, diff in tables/runner_diff.txt: run dirs under NAS 13_best_possible_pick/runs, oracle launcher + its env, mode must be off, oracle provenance gate, RAM/load bar and a port re-check added, extra-gates copy with the oracle version id, actor-replay check after the run -- S5 TRIAL, GENERATOR ONLY (07_closed_loop_test/runs_017): 30 census scenes on drive-jepa 0.1.7 = 0.1.6 + S10 generator weights + batch fix on (copy of 07_closed_loop_test/run_016_scene.sh; diff in runs_017/tables/runner_diff.txt; run dirs on the NAS, root-disk floor 15 -> 4 GiB because the run writes to the NAS) -- S5 TRIAL (Retrain-data/07_closed_loop_test): 30 census scenes on drive-jepa 0.1.6 = 0.1.4b + S4 pass-9 weights + bonnet mask + zeroed acceleration (copy of baseline_014b/run_014b_scene.sh; diff in 07_closed_loop_test/tables/runner_diff.txt) -- DRIVEJEPA_014B Stage B: 30-scene baseline on drive-jepa 0.1.4b (copy of s5/run_s5_scene.sh; diff in baseline_014b/tables/runner_diff.txt) -- S5: 30-scene campaign (copy of s5c/run_s5c_scene.sh; paths only) -- S5c: one scene on drive-jepa 0.1.5 + veto (copy of s5a/run_s5a_scene.sh; paths + veto provenance gate) (reranker on|off), shared 20 Hz referee.
+46a47
+> [ "$LANE" = dj ] && [ "$MODE" = off ] || { echo "oracle: lane must be dj and mode must be off (momentum nudge off, PREREG.md)"; exit 2; }
+53c54
+< S5A={runs}/drivejepa_retrain/07_closed_loop_test_017/runs   # 0.1.7: run dirs on the NAS (Sid: outputs not on root), <S5A>/drivejepa_017_<scene>/
+---
+> S5A={runs}/drivejepa_retrain/13_best_possible_pick/runs   # 0.1.7: run dirs on the NAS (Sid: outputs not on root), <S5A>/drivejepa_017_<scene>/
+55c56,57
+< export TMPDIR={runs}/drivejepa_retrain/07_closed_loop_test_017/tmp MPLCONFIGDIR={runs}/drivejepa_retrain/07_closed_loop_test_017/tmp/mpl
+---
+> ORC=experiments/drivejepa_retrain/13_best_possible_pick; ORC_NAS={runs}/drivejepa_retrain/13_best_possible_pick
+> export TMPDIR={runs}/drivejepa_retrain/13_best_possible_pick/tmp MPLCONFIGDIR={runs}/drivejepa_retrain/13_best_possible_pick/tmp/mpl
+58c60
+< LANE_DIR="$TRIAL/lane"
+---
+> LANE_DIR="$ORC/lane"
+69c71
+<     LOGDIR="$S5A/drivejepa_017_${SHORT}"
+---
+>     LOGDIR="$S5A/drivejepa_017oracle_${SHORT}"
+72c74
+<     NAME="drivejepa_017_${SHORT}"; VIDEO_TAG="drivejepa_017"; LINK_PREFIX="run_" ;;
+---
+>     NAME="drivejepa_017oracle_${SHORT}"; VIDEO_TAG="drivejepa_017oracle"; LINK_PREFIX="run_" ;;
+88c90
+< case "$LOGDIR" in "$S5A"/drivejepa_017_*) : ;;
+---
+> case "$LOGDIR" in "$S5A"/drivejepa_017oracle_*) : ;;
+128,130c130,132
+<   G=$(gpu_free); G=${G:-0}; O=$(ours_running)
+<   if [ "$O" = 0 ] && [ "$G" -ge "$GPU_FLOOR_MIB" ]; then
+<     STREAK=$((STREAK+1)); log "preflight ${STREAK}/2: gpu free ${G} MiB >= floor ${GPU_FLOOR_MIB}, no other wizard of ours"
+---
+>   G=$(gpu_free); G=${G:-0}; O=$(ours_running); RMA=$(free -g | awk '/^Mem:/{print $7}'); L5=$(awk '{print int($2)}' /proc/loadavg)
+>   if [ "$O" = 0 ] && [ "$G" -ge "$GPU_FLOOR_MIB" ] && [ "$RMA" -ge 40 ] && [ "$L5" -lt 32 ]; then
+>     STREAK=$((STREAK+1)); log "preflight ${STREAK}/2: gpu free ${G} MiB >= floor ${GPU_FLOOR_MIB}, no other wizard of ours, ram avail ${RMA} GiB >= 40, load5 ${L5} < 32"
+133c135
+<     STREAK=0; log "WAIT: gpu free ${G} MiB (floor ${GPU_FLOOR_MIB}), other wizards of ours: ${O}"
+---
+>     STREAK=0; log "WAIT: gpu free ${G} MiB (floor ${GPU_FLOOR_MIB}), other wizards of ours: ${O}, ram avail ${RMA} GiB (bar 40), load5 ${L5} (bar 32)"
+159a162,167
+>   ( cd "$ORC" && sha256sum -c --quiet tables/build_oracle.sha256 ) || { log "FATAL prov: the oracle files differ from the build frozen after the offline gate (tables/build_oracle.sha256)"; exit "$EX_PROV"; }
+>   grep -q '"ok": true' "$ORC/tables/gate_offline.json" && [ "$("$VENV" -B -c "import json; print(json.load(open('$ORC/tables/gate_offline.json'))['ok'])")" = True ] || { log "FATAL prov: offline gate not passed"; exit "$EX_PROV"; }
+>   ( cd "$ORC" && head -1 prereg.sha256 | sha256sum -c --quiet ) || { log "FATAL prov: PREREG.md changed since it was hashed"; exit "$EX_PROV"; }
+>   ACTORS="$ORC_NAS/actors/${SHORT}.npz"; ASHA=$(sha256sum "$ACTORS" | cut -d' ' -f1)
+>   [ "$ASHA" = "$("$VENV" -B -c "import json; print(json.load(open('$ORC_NAS/actors/${SHORT}.json'))['sha256'])")" ] || { log "FATAL prov: actor file sha256 differs from its record"; exit "$EX_PROV"; }
+>   log "prov oracle: build sha256 file $(sha256sum "$ORC/tables/build_oracle.sha256" | cut -c1-12), PREREG.md sha256 $(cut -c1-12 "$ORC/prereg.sha256" | head -1), actors $ACTORS sha256 ${ASHA:0:12}"
+237c245
+<   DRIVEJEPA_BATCH_FIX=on DRIVEJEPA_WORKER_LOG="$LOGDIR/driver_worker.log" DRIVEJEPA_MOMENTUM="$MODE" "$VENV" "$DRAFT/serve_drivejepa_0_1_7.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
+---
+>   DRIVEJEPA_BATCH_FIX=on DRIVEJEPA_WORKER_LOG="$LOGDIR/driver_worker.log" DRIVEJEPA_MOMENTUM="$MODE" ORACLE_ACTORS="$ACTORS" ORACLE_STEP_LOG="$LOGDIR/oracle_steps.jsonl" ORACLE_GRADER_LOG="$LOGDIR/oracle_grader.log" "$VENV" "$ORC/draft/serve_drivejepa_0_1_7_oracle.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
+253a262,264
+>   grep -q "drivejepa-0.1.7-oracle | pick = highest calculator grade (collision-free x progress, PREREG.md), scorer bypassed, momentum off | version_id=drivejepa-v2-driver-0.1.7-oracle" "$LOGDIR/driver.log" || { log "FATAL: oracle provenance line missing"; exit "$EX_PROV"; }
+>   grep -q "built ok: version_id=drivejepa-v2-driver-0.1.7-oracle" "$LOGDIR/driver.log" || { log "FATAL: the served planner is not the oracle"; exit "$EX_PROV"; }
+>   grep -m1 "drivejepa-0.1.7-oracle |" "$LOGDIR/driver.log" | cut -c1-400
+266a278,279
+> for p in $(seq 9100 9111); do ! ss -ltn 2>/dev/null | grep -q ":${p}\b" || { log "FATAL: port ${p} of the wizard block is in use right before launch -- standing down"; exit "$EX_PORT"; }; done
+> [ "$(ours_running)" = 0 ] || { log "FATAL: another wizard of ours appeared before launch -- standing down"; exit "$EX_BUSY"; }
+308c321
+<     "$VENV" -B "$TRIAL/dj_extra_gates_017.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
+---
+>     "$VENV" -B "$ORC/dj_extra_gates_oracle.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
+315a329,335
+> fi
+> 
+> if [ "$rc" = 0 ]; then
+>   CHK=$(CUDA_VISIBLE_DEVICES="" "$VENV" -B "$ORC/extract_actors.py" "$SHORT" --check "$LOGDIR" 2>/dev/null | tail -1); echo "$CHK" > "$LOGDIR/actors_check.json"
+>   gate "actors_replayed_equal" "$(echo "$CHK" | grep -q '"same_actor_ids": true, "same_timestamps": true, "same_presence": true, "max_abs_pose_diff": 0.0' && echo 0 || echo 1)" "$CHK"
+>   NST=$(wc -l < "$LOGDIR/oracle_steps.jsonl" 2>/dev/null || echo 0); gate "oracle_step_log" "$([ "$NST" -ge 30 ] && echo 0 || echo 1)" "$NST replans logged in $LOGDIR/oracle_steps.jsonl"
+>   gate "oracle_grader_clean" "$(grep -q "Traceback" "$LOGDIR/oracle_grader.log" && echo 1 || echo 0)" "no traceback in oracle_grader.log"

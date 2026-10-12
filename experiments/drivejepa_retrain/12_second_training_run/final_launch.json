@@ -1,0 +1,27 @@
+{
+ "run": "final_P0",
+ "chosen_arm": "P0 (pilot_fix_l0: lambda 0, standard range, batch fix on)",
+ "choice_file": "S10/pilot_choice.json sha256 4ee1da80acb5910bba671a01a1e77b24aa3902811d5bc510d193e1dad1d59aab",
+ "launcher": "S10/launch_final_gated.sh (setsid nohup, started 2026-10-09T16:15:42+05:30, PID 3385620); it waited until the 5-min load was under 30, then exec'd the command",
+ "training_started": "2026-10-09T16:48:12+05:30 (5-min load 29.54 at that moment; 65 waiting lines in launch_gate.log)",
+ "pid_python": 3637372,
+ "pid_bash_parent_and_process_group": 3385641,
+ "command": "./run_s10.sh --mode train --run final_P0 --init {runs}/drivejepa_retrain/12_second_training_run/gen/pilot_fix_l0/pass_01.pt --lr 2.5e-5 --passes 2 --workers 2 --lam 0 >> {runs}/drivejepa_retrain/12_second_training_run/gen/final_P0/stdout.log 2>&1 < /dev/null   (cwd S10; --batch-fix on and --ref-range std are the defaults)",
+ "log": "{runs}/drivejepa_retrain/12_second_training_run/gen/final_P0/stdout.log (same lines in train.log); gate log launch_gate.log",
+ "out_dir": "{runs}/drivejepa_retrain/12_second_training_run/gen/final_P0",
+ "settings": {"lr": 2.5e-5, "lam": 0.0, "w": 0.0, "ref_range": "std", "batch_fix": "on", "passes": 2, "steps_per_pass": 4377, "batch": 32, "workers": 2, "data": "S4 manifest minus the 145 SEEN held-out clips (122,581 examples), same sampler"},
+ "optimiser": "fresh Adam and fresh GradScaler. s10_gen_train.py:327 always builds a new optimiser and :62 loads only the 'trainable' entry of the checkpoint; pass_01.pt holds 'opt' and 'scaler' but no code path reads them, and the hashed trainer was not edited. Log line: 'optimiser: fresh Adam, 41 tensors, 2381123 elements'",
+ "first_steps": {"step_1": "total 0.5258, gradient non-finite in 16-bit, update skipped (as in every pilot)", "step_50": "total 0.6590 (mean of 49 steps), 2 updates skipped, scaler factor 16384", "step_100": "2026-10-09 16:54:38: total 0.6407 | human 0.5143 | catalogue 0.1264 | raw spacing 0.9134 | 3.11 s/step | GPU 9.2 GiB | 2 updates skipped", "finite_through_step_100": true},
+ "expected_finish": "8,754 steps + 2 readouts. At the 2.2-3.1 s/step seen in the first 100 steps: 5.5 to 7.7 h, i.e. about 22:30 to 00:30. At the 1.1 s/step of an idle machine: about 19:45",
+ "naming": "in this run pass_01.pt = pilot + 1 pass, pass_02.pt = pilot + 2 passes; each has its own readout_pass_0N.json (16-bit, SEEN held-out)",
+ "note_sampler": "the trainer seeds its sampler with seed + pass number, so pass 1 of this run draws the examples in the same order as the pilot's pass 1 (seed 20261008 + 1); pass 2 uses seed + 2",
+ "how_to_check": [
+  "tail -1 {runs}/drivejepa_retrain/12_second_training_run/gen/final_P0/train.log   (a line every 50 steps; ends with DONE {... \"pass_done\": 2, \"stopped\": null})",
+  "state.json: pass_done == 2 and stopped == null (non-finite loss -> stopped set, exit 3; frozen tensors changed -> exit 4)",
+  "files: pass_01.pt, pass_02.pt, readout_pass_01.json, readout_pass_02.json, steps_pass_01.csv, steps_pass_02.csv",
+  "pgrep -f 'run final_P0' prints nothing when it has ended",
+  "float32 readout of a checkpoint: ./run_s10_t6_readout.sh --mode readout --run t6_readout/<name> --init <pass_0N.pt> --workers 2 --reserve-gb 0  -> gen/t6_readout/<name>/t6_readout.json; then compare with S10/pilot_choice.json (limits 1.3767 / 0.4642 / 0.3850)",
+  "pause / continue: kill -STOP -3385641 ; kill -CONT -3385641"
+ ],
+ "load_at_report": "5-min load 39.5 at 16:57 with this run active (other users' jobs dominate); the run was NOT paused by me"
+}

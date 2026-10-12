@@ -1,0 +1,18 @@
+{
+ "dump": "{runs}/drivejepa_retrain/12_second_training_run/base_b1",
+ "shards": 47,
+ "instants": 11842,
+ "clips": 401,
+ "highway_share_good_plan_pct": 54.509803921568626,
+ "highway_ge20_swing_all32_median_mps": 25.013422384253516,
+ "highway_ge20_slots_comfort_above_25pct": 0,
+ "highway_ge20_max_slot_comfort_rate": 0.20540540540540542,
+ "highway_human_path_term": 1.664974950175995,
+ "all_picks_graded_0_pct": 7.980070933963858,
+ "all_regret_mean": 0.11341537462144441,
+ "all_rank_agreement_median": 0.37764924101469294,
+ "highway_ge20_swing_best_plan_median_mps": 16.070141498173882,
+ "highway_swing_best_plan_no_good_plan_median_mps": 18.603706003204042,
+ "highway_ge20_share_good_plan_pct": 31.189189189189186,
+ "all_pick_equals_best_pct": 38.34656308056071
+}

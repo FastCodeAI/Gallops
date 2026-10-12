@@ -1,0 +1,41 @@
+{
+ "definition": "x_hi = 99th percentile (numpy linear interpolation) of trajectory[7, 0] (human path, forward metres at 4 s) over the training examples; the forward reference axis maps -32 m .. x_hi onto 0 .. 1, lateral axis unchanged (-32 .. 32 m)",
+ "forward_axis": "last-axis index 0 of ref_2d / reference_points (x); see train_patch/ref_range.py and AGENT/bevformer/encoder.py:235",
+ "examples": 122581,
+ "clips": 3870,
+ "x_hi": 114.18003021418856,
+ "X99": 114.18003021418856,
+ "scale_on_upstream_value": 0.43781630025814583,
+ "forward_4s_percentiles_m": {
+  "0": -15.123801995409943,
+  "1": -0.019222437147045926,
+  "50": 30.290951680090785,
+  "90": 56.17633811336243,
+  "95": 61.98774883385101,
+  "99": 114.18003021418856,
+  "99.9": 145.9207057123371,
+  "100": 160.58193537667447
+ },
+ "share_above_32m": 0.47123942535955815,
+ "share_above_x_hi": 0.01000154999551317,
+ "highway_ge20": {
+  "examples": 3357,
+  "forward_4s_percentiles_m": {
+   "1": 75.15198261739903,
+   "50": 105.89072930617557,
+   "99": 149.30766447527625,
+   "100": 160.58193537667447
+  },
+  "share_above_x_hi": 0.36520703008638666
+ },
+ "lateral_4s_abs_percentiles_m": {
+  "50": 0.6324327206840081,
+  "99": 19.797673876841262,
+  "100": 37.077142438756354
+ },
+ "full_s4_manifest": {
+  "examples": 126981,
+  "X99": 117.62012898717363
+ },
+ "manifest_sha256": "ce834ee735fbd745e8b073f069803c7df1ebc64d86f48b6947a85f674ad7f1be"
+}
