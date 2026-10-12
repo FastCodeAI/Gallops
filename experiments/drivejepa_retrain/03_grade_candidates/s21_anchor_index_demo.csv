@@ -1,0 +1,5 @@
+token,type,human_speed,secs,anchors_ge_0_95,best,max_speed_among_ok,median_speed_among_ok,human_grade
+fcd8cc77_04500,A,31.4,14.8,0,0.724,,,1.0
+ad134e5b_03000,A,22.8,17.3,0,0.748,,,1.0
+2f3ed8fe_04500,T,5.5,18.3,383,1.0,10.1,2.8,0.0
+25020844_10500,O,4.1,24.9,556,1.0,7.0,1.8,1.0

@@ -1,0 +1,1019 @@
+{
+ "4bdcda96-d062-4d63-ba55-5c1664943a7c": {
+  "uuid": "4bdcda96-d062-4d63-ba55-5c1664943a7c",
+  "usdz_size": 1758619741,
+  "accept_ranges": "bytes",
+  "final_host": "us.aws.cdn.hf.co",
+  "n_members": 39,
+  "cd_bytes": 2815,
+  "cd_requests": 3,
+  "members": [
+   {
+    "name": "default.usda",
+    "size": 1078,
+    "comp": 0,
+    "csize": 1078,
+    "offset": 0
+   },
+   {
+    "name": "mesh_ground.usd",
+    "size": 6731392,
+    "comp": 0,
+    "csize": 6731392,
+    "offset": 1120
+   },
+   {
+    "name": "volume.usda",
+    "size": 6391,
+    "comp": 0,
+    "csize": 6391,
+    "offset": 6732557
+   },
+   {
+    "name": "pose_record.json",
+    "size": 83059,
+    "comp": 0,
+    "csize": 83059,
+    "offset": 6738989
+   },
+   {
+    "name": "volume.nurec",
+    "size": 579663157,
+    "comp": 0,
+    "csize": 579663157,
+    "offset": 6822094
+   },
+   {
+    "name": "sequence_tracks.json",
+    "size": 1621505,
+    "comp": 0,
+    "csize": 1621505,
+    "offset": 586485293
+   },
+   {
+    "name": "mesh_ground.ply",
+    "size": 12374417,
+    "comp": 0,
+    "csize": 12374417,
+    "offset": 588106848
+   },
+   {
+    "name": "rig_trajectories.json",
+    "size": 2156781,
+    "comp": 0,
+    "csize": 2156781,
+    "offset": 600481310
+   },
+   {
+    "name": "checkpoint.ckpt",
+    "size": 1147253191,
+    "comp": 0,
+    "csize": 1147253191,
+    "offset": 602638142
+   },
+   {
+    "name": "map.xodr",
+    "size": 682213,
+    "comp": 0,
+    "csize": 682213,
+    "offset": 1749891378
+   },
+   {
+    "name": "sequence_tracks.usda",
+    "size": 994419,
+    "comp": 0,
+    "csize": 994419,
+    "offset": 1750573629
+   },
+   {
+    "name": "parsed_config.yaml",
+    "size": 215693,
+    "comp": 0,
+    "csize": 215693,
+    "offset": 1751568098
+   },
+   {
+    "name": "datasource_summary.json",
+    "size": 4240444,
+    "comp": 0,
+    "csize": 4240444,
+    "offset": 1751783839
+   },
+   {
+    "name": "rig_trajectories.usda",
+    "size": 67828,
+    "comp": 0,
+    "csize": 67828,
+    "offset": 1756024336
+   },
+   {
+    "name": "metadata.yaml",
+    "size": 598,
+    "comp": 0,
+    "csize": 598,
+    "offset": 1756092215
+   },
+   {
+    "name": "data_info.json",
+    "size": 2018,
+    "comp": 0,
+    "csize": 2018,
+    "offset": 1756092856
+   },
+   {
+    "name": "clipgt/traffic_sign.parquet",
+    "size": 14350,
+    "comp": 0,
+    "csize": 14350,
+    "offset": 1756094918
+   },
+   {
+    "name": "clipgt/road_boundary.parquet",
+    "size": 40504,
+    "comp": 0,
+    "csize": 40504,
+    "offset": 1756109325
+   },
+   {
+    "name": "clipgt/road_island.parquet",
+    "size": 9345,
+    "comp": 0,
+    "csize": 9345,
+    "offset": 1756149887
+   },
+   {
+    "name": "clipgt/calibration_estimate.parquet",
+    "size": 8356,
+    "comp": 0,
+    "csize": 8356,
+    "offset": 1756159288
+   },
+   {
+    "name": "clipgt/gore_area.parquet",
+    "size": 8802,
+    "comp": 0,
+    "csize": 8802,
+    "offset": 1756167709
+   },
+   {
+    "name": "clipgt/buffer_zone.parquet",
+    "size": 3846,
+    "comp": 0,
+    "csize": 3846,
+    "offset": 1756176565
+   },
+   {
+    "name": "clipgt/intersection_area.parquet",
+    "size": 9451,
+    "comp": 0,
+    "csize": 9451,
+    "offset": 1756180467
+   },
+   {
+    "name": "clipgt/egomotion_estimate.parquet",
+    "size": 17311,
+    "comp": 0,
+    "csize": 17311,
+    "offset": 1756189980
+   },
+   {
+    "name": "clipgt/clip.parquet",
+    "size": 4741,
+    "comp": 0,
+    "csize": 4741,
+    "offset": 1756207354
+   },
+   {
+    "name": "clipgt/lane_line.parquet",
+    "size": 36873,
+    "comp": 0,
+    "csize": 36873,
+    "offset": 1756212144
+   },
+   {
+    "name": "clipgt/wait_line.parquet",
+    "size": 12362,
+    "comp": 0,
+    "csize": 12362,
+    "offset": 1756249071
+   },
+   {
+    "name": "clipgt/traffic_light.parquet",
+    "size": 9815,
+    "comp": 0,
+    "csize": 9815,
+    "offset": 1756261487
+   },
+   {
+    "name": "clipgt/road_marking.parquet",
+    "size": 21907,
+    "comp": 0,
+    "csize": 21907,
+    "offset": 1756271360
+   },
+   {
+    "name": "clipgt/mads_trace.parquet",
+    "size": 2521,
+    "comp": 0,
+    "csize": 2521,
+    "offset": 1756293324
+   },
+   {
+    "name": "clipgt/pole.parquet",
+    "size": 19765,
+    "comp": 0,
+    "csize": 19765,
+    "offset": 1756295900
+   },
+   {
+    "name": "clipgt/lane.parquet",
+    "size": 150904,
+    "comp": 0,
+    "csize": 150904,
+    "offset": 1756315714
+   },
+   {
+    "name": "clipgt/obstacle.parquet",
+    "size": 1062458,
+    "comp": 0,
+    "csize": 1062458,
+    "offset": 1756466667
+   },
+   {
+    "name": "clipgt/crosswalk.parquet",
+    "size": 12172,
+    "comp": 0,
+    "csize": 12172,
+    "offset": 1757529178
+   },
+   {
+    "name": "clipgt/association.parquet",
+    "size": 35604,
+    "comp": 0,
+    "csize": 35604,
+    "offset": 1757541404
+   },
+   {
+    "name": "frames/camera_cross_left_120fov/30561143903.jpeg",
+    "size": 259693,
+    "comp": 0,
+    "csize": 259693,
+    "offset": 1757577064
+   },
+   {
+    "name": "frames/camera_cross_right_120fov/30561243886.jpeg",
+    "size": 209487,
+    "comp": 0,
+    "csize": 209487,
+    "offset": 1757836835
+   },
+   {
+    "name": "frames/camera_front_tele_30fov/30561250312.jpeg",
+    "size": 327162,
+    "comp": 0,
+    "csize": 327162,
+    "offset": 1758046401
+   },
+   {
+    "name": "frames/camera_front_wide_120fov/30561116966.jpeg",
+    "size": 243272,
+    "comp": 0,
+    "csize": 243272,
+    "offset": 1758373640
+   }
+  ],
+  "fetched": {
+   "clipgt/egomotion_estimate.parquet": {
+    "member": "clipgt/egomotion_estimate.parquet",
+    "bytes": 17311,
+    "fetched": 18335,
+    "secs": 1.39
+   },
+   "clipgt/obstacle.parquet": {
+    "member": "clipgt/obstacle.parquet",
+    "bytes": 1062458,
+    "fetched": 1063482,
+    "secs": 1.47
+   },
+   "clipgt/lane.parquet": {
+    "member": "clipgt/lane.parquet",
+    "bytes": 150904,
+    "fetched": 151928,
+    "secs": 1.14
+   },
+   "clipgt/drivable_space.parquet": null,
+   "sequence_tracks.json": {
+    "member": "sequence_tracks.json",
+    "bytes": 1621505,
+    "fetched": 1622529,
+    "secs": 3.49
+   },
+   "rig_trajectories.json": {
+    "member": "rig_trajectories.json",
+    "bytes": 2156781,
+    "fetched": 2157805,
+    "secs": 1.9
+   },
+   "map.xodr": {
+    "member": "map.xodr",
+    "bytes": 682213,
+    "fetched": 683237,
+    "secs": 1.34
+   },
+   "metadata.yaml": {
+    "member": "metadata.yaml",
+    "bytes": 598,
+    "fetched": 1024,
+    "secs": 0.59
+   },
+   "data_info.json": {
+    "member": "data_info.json",
+    "bytes": 2018,
+    "fetched": 3042,
+    "secs": 1.13
+   }
+  },
+  "total_bytes_fetched": 5704197,
+  "total_requests": 18,
+  "secs": 15.0,
+  "frac_of_usdz": 0.003243564749680585
+ },
+ "6eb099c6-e0d0-4258-a47c-64d730f72ce8": {
+  "uuid": "6eb099c6-e0d0-4258-a47c-64d730f72ce8",
+  "usdz_size": 1923945978,
+  "accept_ranges": "bytes",
+  "final_host": "us.aws.cdn.hf.co",
+  "n_members": 39,
+  "cd_bytes": 2819,
+  "cd_requests": 3,
+  "members": [
+   {
+    "name": "pose_record.json",
+    "size": 81929,
+    "comp": 0,
+    "csize": 81929,
+    "offset": 0
+   },
+   {
+    "name": "mesh_ground.usd",
+    "size": 16289727,
+    "comp": 0,
+    "csize": 16289727,
+    "offset": 81975
+   },
+   {
+    "name": "sequence_tracks.json",
+    "size": 354856,
+    "comp": 0,
+    "csize": 354856,
+    "offset": 16371747
+   },
+   {
+    "name": "map.xodr",
+    "size": 238187,
+    "comp": 0,
+    "csize": 238187,
+    "offset": 16726653
+   },
+   {
+    "name": "parsed_config.yaml",
+    "size": 215693,
+    "comp": 0,
+    "csize": 215693,
+    "offset": 16964878
+   },
+   {
+    "name": "rig_trajectories.json",
+    "size": 2169373,
+    "comp": 0,
+    "csize": 2169373,
+    "offset": 17180619
+   },
+   {
+    "name": "sequence_tracks.usda",
+    "size": 806162,
+    "comp": 0,
+    "csize": 806162,
+    "offset": 19350043
+   },
+   {
+    "name": "datasource_summary.json",
+    "size": 2881191,
+    "comp": 0,
+    "csize": 2881191,
+    "offset": 20156255
+   },
+   {
+    "name": "data_info.json",
+    "size": 2035,
+    "comp": 0,
+    "csize": 2035,
+    "offset": 23037499
+   },
+   {
+    "name": "metadata.yaml",
+    "size": 600,
+    "comp": 0,
+    "csize": 600,
+    "offset": 23039578
+   },
+   {
+    "name": "default.usda",
+    "size": 1079,
+    "comp": 0,
+    "csize": 1079,
+    "offset": 23040221
+   },
+   {
+    "name": "rig_trajectories.usda",
+    "size": 67931,
+    "comp": 0,
+    "csize": 67931,
+    "offset": 23041342
+   },
+   {
+    "name": "volume.nurec",
+    "size": 628467862,
+    "comp": 0,
+    "csize": 628467862,
+    "offset": 23109324
+   },
+   {
+    "name": "volume.usda",
+    "size": 7669,
+    "comp": 0,
+    "csize": 7669,
+    "offset": 651577228
+   },
+   {
+    "name": "mesh_ground.ply",
+    "size": 28836618,
+    "comp": 0,
+    "csize": 28836618,
+    "offset": 651584938
+   },
+   {
+    "name": "checkpoint.ckpt",
+    "size": 1242647983,
+    "comp": 0,
+    "csize": 1242647983,
+    "offset": 680421601
+   },
+   {
+    "name": "clipgt/association.parquet",
+    "size": 13380,
+    "comp": 0,
+    "csize": 13380,
+    "offset": 1923069629
+   },
+   {
+    "name": "clipgt/obstacle.parquet",
+    "size": 225577,
+    "comp": 0,
+    "csize": 225577,
+    "offset": 1923083065
+   },
+   {
+    "name": "clipgt/pole.parquet",
+    "size": 5209,
+    "comp": 0,
+    "csize": 5209,
+    "offset": 1923308695
+   },
+   {
+    "name": "clipgt/road_boundary.parquet",
+    "size": 23862,
+    "comp": 0,
+    "csize": 23862,
+    "offset": 1923313953
+   },
+   {
+    "name": "clipgt/buffer_zone.parquet",
+    "size": 3846,
+    "comp": 0,
+    "csize": 3846,
+    "offset": 1923337873
+   },
+   {
+    "name": "clipgt/lane.parquet",
+    "size": 39254,
+    "comp": 0,
+    "csize": 39254,
+    "offset": 1923341775
+   },
+   {
+    "name": "clipgt/traffic_sign.parquet",
+    "size": 8597,
+    "comp": 0,
+    "csize": 8597,
+    "offset": 1923381078
+   },
+   {
+    "name": "clipgt/calibration_estimate.parquet",
+    "size": 8465,
+    "comp": 0,
+    "csize": 8465,
+    "offset": 1923389732
+   },
+   {
+    "name": "clipgt/road_island.parquet",
+    "size": 3846,
+    "comp": 0,
+    "csize": 3846,
+    "offset": 1923398262
+   },
+   {
+    "name": "clipgt/intersection_area.parquet",
+    "size": 4159,
+    "comp": 0,
+    "csize": 4159,
+    "offset": 1923402164
+   },
+   {
+    "name": "clipgt/wait_line.parquet",
+    "size": 5587,
+    "comp": 0,
+    "csize": 5587,
+    "offset": 1923406385
+   },
+   {
+    "name": "clipgt/gore_area.parquet",
+    "size": 3623,
+    "comp": 0,
+    "csize": 3623,
+    "offset": 1923412026
+   },
+   {
+    "name": "clipgt/lane_line.parquet",
+    "size": 17203,
+    "comp": 0,
+    "csize": 17203,
+    "offset": 1923415703
+   },
+   {
+    "name": "clipgt/clip.parquet",
+    "size": 4741,
+    "comp": 0,
+    "csize": 4741,
+    "offset": 1923432960
+   },
+   {
+    "name": "clipgt/crosswalk.parquet",
+    "size": 3824,
+    "comp": 0,
+    "csize": 3824,
+    "offset": 1923437750
+   },
+   {
+    "name": "clipgt/egomotion_estimate.parquet",
+    "size": 17178,
+    "comp": 0,
+    "csize": 17178,
+    "offset": 1923441628
+   },
+   {
+    "name": "clipgt/traffic_light.parquet",
+    "size": 5714,
+    "comp": 0,
+    "csize": 5714,
+    "offset": 1923458869
+   },
+   {
+    "name": "clipgt/mads_trace.parquet",
+    "size": 2521,
+    "comp": 0,
+    "csize": 2521,
+    "offset": 1923464641
+   },
+   {
+    "name": "clipgt/road_marking.parquet",
+    "size": 3865,
+    "comp": 0,
+    "csize": 3865,
+    "offset": 1923467217
+   },
+   {
+    "name": "frames/camera_cross_left_120fov/494838556848.jpeg",
+    "size": 97080,
+    "comp": 0,
+    "csize": 97080,
+    "offset": 1923471139
+   },
+   {
+    "name": "frames/camera_cross_right_120fov/494838490176.jpeg",
+    "size": 121082,
+    "comp": 0,
+    "csize": 121082,
+    "offset": 1923568298
+   },
+   {
+    "name": "frames/camera_front_tele_30fov/494838475982.jpeg",
+    "size": 136161,
+    "comp": 0,
+    "csize": 136161,
+    "offset": 1923689460
+   },
+   {
+    "name": "frames/camera_front_wide_120fov/494838509291.jpeg",
+    "size": 117445,
+    "comp": 0,
+    "csize": 117445,
+    "offset": 1923825699
+   }
+  ],
+  "fetched": {
+   "clipgt/egomotion_estimate.parquet": {
+    "member": "clipgt/egomotion_estimate.parquet",
+    "bytes": 17178,
+    "fetched": 18202,
+    "secs": 1.39
+   },
+   "clipgt/obstacle.parquet": {
+    "member": "clipgt/obstacle.parquet",
+    "bytes": 225577,
+    "fetched": 226601,
+    "secs": 1.37
+   },
+   "clipgt/lane.parquet": {
+    "member": "clipgt/lane.parquet",
+    "bytes": 39254,
+    "fetched": 40278,
+    "secs": 1.12
+   },
+   "clipgt/drivable_space.parquet": null,
+   "sequence_tracks.json": {
+    "member": "sequence_tracks.json",
+    "bytes": 354856,
+    "fetched": 355880,
+    "secs": 1.27
+   },
+   "rig_trajectories.json": {
+    "member": "rig_trajectories.json",
+    "bytes": 2169373,
+    "fetched": 2170397,
+    "secs": 1.32
+   },
+   "map.xodr": {
+    "member": "map.xodr",
+    "bytes": 238187,
+    "fetched": 239211,
+    "secs": 1.19
+   },
+   "metadata.yaml": {
+    "member": "metadata.yaml",
+    "bytes": 600,
+    "fetched": 1024,
+    "secs": 0.58
+   },
+   "data_info.json": {
+    "member": "data_info.json",
+    "bytes": 2035,
+    "fetched": 3059,
+    "secs": 1.08
+   }
+  },
+  "total_bytes_fetched": 3057471,
+  "total_requests": 18,
+  "secs": 11.9,
+  "frac_of_usdz": 0.0015891667619370132
+ },
+ "7f34da5c-9ef6-44a9-a5bd-194adbbd3b31": {
+  "uuid": "7f34da5c-9ef6-44a9-a5bd-194adbbd3b31",
+  "usdz_size": 1787566299,
+  "accept_ranges": "bytes",
+  "final_host": "us.aws.cdn.hf.co",
+  "n_members": 39,
+  "cd_bytes": 2815,
+  "cd_requests": 3,
+  "members": [
+   {
+    "name": "mesh_ground.ply",
+    "size": 16157700,
+    "comp": 0,
+    "csize": 16157700,
+    "offset": 0
+   },
+   {
+    "name": "datasource_summary.json",
+    "size": 3353009,
+    "comp": 0,
+    "csize": 3353009,
+    "offset": 16157745
+   },
+   {
+    "name": "metadata.yaml",
+    "size": 598,
+    "comp": 0,
+    "csize": 598,
+    "offset": 19510807
+   },
+   {
+    "name": "rig_trajectories.json",
+    "size": 2132880,
+    "comp": 0,
+    "csize": 2132880,
+    "offset": 19511448
+   },
+   {
+    "name": "sequence_tracks.json",
+    "size": 871391,
+    "comp": 0,
+    "csize": 871391,
+    "offset": 21644379
+   },
+   {
+    "name": "parsed_config.yaml",
+    "size": 215693,
+    "comp": 0,
+    "csize": 215693,
+    "offset": 22515820
+   },
+   {
+    "name": "checkpoint.ckpt",
+    "size": 1164457031,
+    "comp": 0,
+    "csize": 1164457031,
+    "offset": 22731561
+   },
+   {
+    "name": "volume.usda",
+    "size": 6517,
+    "comp": 0,
+    "csize": 6517,
+    "offset": 1187188637
+   },
+   {
+    "name": "mesh_ground.usd",
+    "size": 8544570,
+    "comp": 0,
+    "csize": 8544570,
+    "offset": 1187195195
+   },
+   {
+    "name": "default.usda",
+    "size": 1078,
+    "comp": 0,
+    "csize": 1078,
+    "offset": 1195739810
+   },
+   {
+    "name": "volume.nurec",
+    "size": 588285515,
+    "comp": 0,
+    "csize": 588285515,
+    "offset": 1195740930
+   },
+   {
+    "name": "map.xodr",
+    "size": 107737,
+    "comp": 0,
+    "csize": 107737,
+    "offset": 1784026487
+   },
+   {
+    "name": "pose_record.json",
+    "size": 83035,
+    "comp": 0,
+    "csize": 83035,
+    "offset": 1784134262
+   },
+   {
+    "name": "rig_trajectories.usda",
+    "size": 66994,
+    "comp": 0,
+    "csize": 66994,
+    "offset": 1784217343
+   },
+   {
+    "name": "data_info.json",
+    "size": 2018,
+    "comp": 0,
+    "csize": 2018,
+    "offset": 1784284388
+   },
+   {
+    "name": "sequence_tracks.usda",
+    "size": 781535,
+    "comp": 0,
+    "csize": 781535,
+    "offset": 1784286450
+   },
+   {
+    "name": "clipgt/lane_line.parquet",
+    "size": 11058,
+    "comp": 0,
+    "csize": 11058,
+    "offset": 1785068035
+   },
+   {
+    "name": "clipgt/road_marking.parquet",
+    "size": 3865,
+    "comp": 0,
+    "csize": 3865,
+    "offset": 1785079147
+   },
+   {
+    "name": "clipgt/mads_trace.parquet",
+    "size": 2521,
+    "comp": 0,
+    "csize": 2521,
+    "offset": 1785083069
+   },
+   {
+    "name": "clipgt/intersection_area.parquet",
+    "size": 6245,
+    "comp": 0,
+    "csize": 6245,
+    "offset": 1785085645
+   },
+   {
+    "name": "clipgt/calibration_estimate.parquet",
+    "size": 8491,
+    "comp": 0,
+    "csize": 8491,
+    "offset": 1785091952
+   },
+   {
+    "name": "clipgt/road_boundary.parquet",
+    "size": 15164,
+    "comp": 0,
+    "csize": 15164,
+    "offset": 1785100508
+   },
+   {
+    "name": "clipgt/road_island.parquet",
+    "size": 5341,
+    "comp": 0,
+    "csize": 5341,
+    "offset": 1785115730
+   },
+   {
+    "name": "clipgt/gore_area.parquet",
+    "size": 3623,
+    "comp": 0,
+    "csize": 3623,
+    "offset": 1785121127
+   },
+   {
+    "name": "clipgt/pole.parquet",
+    "size": 3745,
+    "comp": 0,
+    "csize": 3745,
+    "offset": 1785124804
+   },
+   {
+    "name": "clipgt/clip.parquet",
+    "size": 4741,
+    "comp": 0,
+    "csize": 4741,
+    "offset": 1785128598
+   },
+   {
+    "name": "clipgt/traffic_sign.parquet",
+    "size": 5694,
+    "comp": 0,
+    "csize": 5694,
+    "offset": 1785133388
+   },
+   {
+    "name": "clipgt/buffer_zone.parquet",
+    "size": 3846,
+    "comp": 0,
+    "csize": 3846,
+    "offset": 1785139139
+   },
+   {
+    "name": "clipgt/egomotion_estimate.parquet",
+    "size": 17246,
+    "comp": 0,
+    "csize": 17246,
+    "offset": 1785143041
+   },
+   {
+    "name": "clipgt/traffic_light.parquet",
+    "size": 5714,
+    "comp": 0,
+    "csize": 5714,
+    "offset": 1785160350
+   },
+   {
+    "name": "clipgt/wait_line.parquet",
+    "size": 6923,
+    "comp": 0,
+    "csize": 6923,
+    "offset": 1785166122
+   },
+   {
+    "name": "clipgt/obstacle.parquet",
+    "size": 561771,
+    "comp": 0,
+    "csize": 561771,
+    "offset": 1785173099
+   },
+   {
+    "name": "clipgt/lane.parquet",
+    "size": 35482,
+    "comp": 0,
+    "csize": 35482,
+    "offset": 1785734923
+   },
+   {
+    "name": "clipgt/association.parquet",
+    "size": 8093,
+    "comp": 0,
+    "csize": 8093,
+    "offset": 1785770454
+   },
+   {
+    "name": "clipgt/crosswalk.parquet",
+    "size": 3824,
+    "comp": 0,
+    "csize": 3824,
+    "offset": 1785778603
+   },
+   {
+    "name": "frames/camera_cross_left_120fov/18390244287.jpeg",
+    "size": 442588,
+    "comp": 0,
+    "csize": 442588,
+    "offset": 1785782481
+   },
+   {
+    "name": "frames/camera_cross_right_120fov/18390310960.jpeg",
+    "size": 432131,
+    "comp": 0,
+    "csize": 432131,
+    "offset": 1786225147
+   },
+   {
+    "name": "frames/camera_front_tele_30fov/18390220599.jpeg",
+    "size": 530545,
+    "comp": 0,
+    "csize": 530545,
+    "offset": 1786657357
+   },
+   {
+    "name": "frames/camera_front_wide_120fov/18390220582.jpeg",
+    "size": 375491,
+    "comp": 0,
+    "csize": 375491,
+    "offset": 1787187979
+   }
+  ],
+  "fetched": {
+   "clipgt/egomotion_estimate.parquet": {
+    "member": "clipgt/egomotion_estimate.parquet",
+    "bytes": 17246,
+    "fetched": 18270,
+    "secs": 1.13
+   },
+   "clipgt/obstacle.parquet": {
+    "member": "clipgt/obstacle.parquet",
+    "bytes": 561771,
+    "fetched": 562795,
+    "secs": 1.34
+   },
+   "clipgt/lane.parquet": {
+    "member": "clipgt/lane.parquet",
+    "bytes": 35482,
+    "fetched": 36506,
+    "secs": 1.11
+   },
+   "clipgt/drivable_space.parquet": null,
+   "sequence_tracks.json": {
+    "member": "sequence_tracks.json",
+    "bytes": 871391,
+    "fetched": 872415,
+    "secs": 1.41
+   },
+   "rig_trajectories.json": {
+    "member": "rig_trajectories.json",
+    "bytes": 2132880,
+    "fetched": 2133904,
+    "secs": 1.22
+   },
+   "map.xodr": {
+    "member": "map.xodr",
+    "bytes": 107737,
+    "fetched": 108761,
+    "secs": 1.08
+   },
+   "metadata.yaml": {
+    "member": "metadata.yaml",
+    "bytes": 598,
+    "fetched": 1024,
+    "secs": 0.61
+   },
+   "data_info.json": {
+    "member": "data_info.json",
+    "bytes": 2018,
+    "fetched": 3042,
+    "secs": 1.16
+   }
+  },
+  "total_bytes_fetched": 3739532,
+  "total_requests": 18,
+  "secs": 11.5,
+  "frac_of_usdz": 0.0020919682822908266
+ }
+}
