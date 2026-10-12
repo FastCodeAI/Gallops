@@ -106,6 +106,28 @@ def test_sidecar_declares_what_it_saw_and_chose_on(tmp_path):
     assert sidecar.selection_split and sidecar.selection_split.startswith("kitscenes/train")
     assert sidecar.weights_sha256 and len(sidecar.weights_sha256) == 64
     assert len(sidecar.notes["holdout_scenes"]) == result.holdout_scenes
+    # The scene list it read, split into what it trained on and what it chose on.
+    train, held = set(sidecar.notes["train_scenes"]), set(sidecar.notes["holdout_scenes"])
+    assert not train & held
+    assert train | held == {f"scene{i:02d}" for i in range(24)}
+    assert sidecar.notes["numpy"] == np.__version__
+
+
+def test_sidecar_carries_the_exports_sample_ids_and_geometry(tmp_path):
+    ids = np.array([f"scene{i % 24:02d}/{i}" for i in range(240)])
+    result = rerank.train(
+        a_dataset(tmp_path / "data.npz", sample_id=ids, image_geometry=np.array("openscene")),
+        a_site(tmp_path),
+        "m",
+        "r",
+        rerank.Settings(hidden=4, epochs=10),
+        "abc1234",
+    )
+    notes = read(result.directory).notes
+    assert notes["image_geometry"] == "openscene"
+    # Order-free, so it can be recomputed from any manifest of the same samples.
+    assert notes["sample_ids_sha256"] == hashlib.sha256("\n".join(sorted(ids)).encode()).hexdigest()
+    assert notes["sample_ids_sha256"] == rerank.sample_ids_digest(ids[::-1])
 
 
 def test_mismatched_arrays_are_refused(tmp_path):
@@ -180,6 +202,7 @@ NAN_X = np.where(np.arange(3) == 1, np.nan, 0.0) * np.ones((240, 8, 3))
         (dict(model_pick=np.full(240, 8)), "model_pick"),
         (dict(x=NAN_X), "NaN"),
         (dict(x=np.zeros((240, 8)), ade=np.zeros(240)), "disagree"),
+        (dict(sample_id=np.array(["a"] * 239)), "sample ids"),
     ],
 )
 def test_an_export_that_would_fit_badly_writes_nothing(tmp_path, dataset, refusal):

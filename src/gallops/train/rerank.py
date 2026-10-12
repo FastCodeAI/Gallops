@@ -204,6 +204,17 @@ def check_export(path: Path, x, ade, scenes, feature_names, model_pick) -> None:
         raise ValueError(f"{path}: model_pick must be one candidate index in [0, {x.shape[1]}) per sample")
 
 
+def sample_ids_digest(sample_ids: np.ndarray) -> str:
+    """sha256 of the sample ids, sorted and newline-joined.
+
+    Sorted so it can be recomputed from any manifest of the same samples, in any
+    order. Sample-id overlap is the real contamination check (docs/checkpoints.md);
+    the ids themselves are thousands of lines, so the sidecar carries the hash
+    and the export carries the list.
+    """
+    return hashlib.sha256("\n".join(sorted(sample_ids.tolist())).encode()).hexdigest()
+
+
 def git_sha(repo: Path) -> str:
     """HEAD of the training repo, with `-dirty` when uncommitted changes exist.
 
@@ -243,7 +254,11 @@ def train(
         feature_names = npz["feature_names"]
         source, split = str(npz["dataset"]), str(npz["split"])
         model_pick = npz["model_pick"] if "model_pick" in npz.files else None
+        sample_ids = npz["sample_id"].astype(str) if "sample_id" in npz.files else None
+        geometry = str(npz["image_geometry"]) if "image_geometry" in npz.files else None
     check_export(dataset, x, ade, scenes, feature_names, model_pick)
+    if sample_ids is not None and sample_ids.shape != (len(x),):
+        raise ValueError(f"{dataset}: {sample_ids.shape} sample ids for {len(x)} samples")
 
     held = split_by_scene(scenes, settings.holdout_frac, settings.seed)
     if held.all():
@@ -272,6 +287,7 @@ def train(
     weights = buffer.getvalue()
 
     held_scenes = sorted(set(scenes[held].tolist()))
+    train_scenes = sorted(set(scenes[~held].tolist()))
     n_params = sum(value.size for value in ranker.state().values())
     model_pick_ade = None
     if model_pick is not None:
@@ -293,8 +309,17 @@ def train(
             "dataset_sha256": hashlib.sha256(raw).hexdigest(),
             "samples": int(len(x)),
             "scenes": int(len(set(scenes.tolist()))),
+            # The scenes actually read, not the split they came from: `trained_on`
+            # says kitscenes/train, and only these say which of its scenes.
+            "train_scenes": train_scenes,
             "holdout_scenes": held_scenes,
             "holdout_pick_ade": metric,
+            "numpy": np.__version__,
+            **({"sample_ids_sha256": sample_ids_digest(sample_ids)} if sample_ids is not None else {}),
+            # The camera geometry the candidates were produced under. The same
+            # sample gives different candidates under another, and paddock's
+            # report checks a dump against model.yaml, never against the weights.
+            **({"image_geometry": geometry} if geometry is not None else {}),
         },
     )
     directory = cfg.checkpoint_dir(model, train_run, epoch)
