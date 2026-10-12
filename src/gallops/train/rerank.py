@@ -7,8 +7,9 @@ NAVSIM that scorer ranks close to random: on KITScenes the best of its 32 is
 selector -- recovers most of that gap for the cost of a CPU minute. See
 docs/STRATEGY.md.
 
-The input is a dataset exported by paddock (`tools/models/drivejepa/rerank.py
-dataset`), not raw model output, so that paddock alone defines the features:
+The input is the dataset `python -m gallops.data.rerank dataset` builds from
+paddock's candidate dump, not raw model output. Its features are a transcription
+of paddock's; that module says what holds the two equal:
 
     x              (N, K, F)  features of K candidates for N samples
     ade            (N, K)     each candidate's ADE to the logged future

@@ -35,6 +35,8 @@ CLI (after `source .venv/bin/activate`, or as `.venv/bin/gallops`):
 gallops config              # what this machine resolved — run this first
 gallops show <ckpt-dir>     # what a checkpoint claims about itself
 gallops train-rerank <dataset.npz> --train-run <name>   # re-ranker over a frozen model's candidates
+python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, for paddock to dump candidates for
+python -m gallops.data.rerank dataset <dump.jsonl> --dataset kitscenes --split train -o <dataset.npz>
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.

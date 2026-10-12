@@ -1,0 +1,254 @@
+"""The re-ranker's training data: which keyframes, and the labelled dataset.
+
+`gallops train-rerank` fits a selector over Drive-JEPA's 32 candidates. Its
+input takes three steps, and two of them are here:
+
+1. `keyframes` lists the KITScenes train keyframes to dump: every keyframe of
+   the scenes in `rerank_train_scenes.txt`.
+2. Paddock runs Drive-JEPA on each, through its own input path
+   (`tools/models/drivejepa/paddock_candidates.py --rows`), and writes one JSON
+   row of candidates per keyframe. That step runs the model, so it stays in
+   paddock.
+3. `dataset` turns that dump into the `.npz` `train-rerank` reads: each
+   candidate's features, and its ADE to the logged future, which is the label.
+
+    python -m gallops.data.rerank keyframes -o train_samples.pkl
+    python -m gallops.data.rerank dataset train.jsonl --dataset kitscenes --split train -o train.npz
+
+**The features are paddock's.** The selector runs inside paddock's
+`drivejepa_rerank` adapter, which computes them with `candidate_features` in
+`adapters/models/drivejepa_rerank/ranker.py`. Neither repo imports the other,
+so `candidate_features` below is a transcription of it. Weights fitted to a
+different definition would still load and pass paddock's probe, which replays
+the forward pass on stored features, and then drive the wrong candidate. Two
+checks hold the copies equal:
+- paddock's loader refuses weights whose `feature_names` differ from its own
+- both repos test their copy against the same input and expected values
+  (`GOLDEN` in tests/test_rerank_data.py here, `test_features_match_gallops`
+  in paddock's drivejepa_rerank tests)
+Change one, change both.
+
+numpy only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import pickle
+from pathlib import Path
+
+import numpy as np
+
+from gallops.config import ConfigError, SiteConfig
+
+# --- which keyframes -----------------------------------------------------------
+
+#: The 373 train scenes the first checkpoint was trained on. They follow no rule,
+#: so the list itself is the record.
+SCENES = Path(__file__).with_name("rerank_train_scenes.txt")
+
+# The Drive-JEPA devkit KITScenes loader's valid_keyframes(num_future_frames=8,
+# stride=10), restated, because that loader imports navsim:
+# HISTORY_STRIDE * (NUM_HISTORY_FRAMES - 1) frames of history, then
+# NUM_FUTURE_FRAMES poses of future, HISTORY_STRIDE frames apart.
+HISTORY_STRIDE = 5
+NUM_HISTORY_FRAMES = 4
+NUM_FUTURE_FRAMES = 8
+STRIDE = 10
+
+
+def keyframes(num_frames: int) -> list[int]:
+    """Every 10th 10 Hz frame, from the first with 1.5 s of history to the last with 4 s of future."""
+    first = HISTORY_STRIDE * (NUM_HISTORY_FRAMES - 1)
+    last = num_frames - NUM_FUTURE_FRAMES * HISTORY_STRIDE - 1
+    return list(range(first, last + 1, STRIDE)) if last >= first else []
+
+
+def read_scene_ids(path: Path) -> list[str]:
+    return [
+        line.strip() for line in path.read_text().splitlines() if line.strip() and not line.startswith("#")
+    ]
+
+
+def list_keyframes(args: argparse.Namespace) -> None:
+    try:
+        roots = SiteConfig.load().datasets["kitscenes"].roots
+    except ConfigError as exc:
+        raise SystemExit(str(exc)) from exc
+    except KeyError as exc:
+        raise SystemExit("gallops.toml configures no [datasets.kitscenes]") from exc
+
+    ids = read_scene_ids(args.scenes)
+    rows, missing = [], []
+    for scene_id in ids:
+        # Tiers hold different scenes, not nested copies, so look in each.
+        scene = next((r / "train" / scene_id for r in roots if (r / "train" / scene_id).is_dir()), None)
+        if scene is None:
+            missing.append(scene_id)
+            continue
+        # One pose per 10 Hz frame; paddock's loader reads the same file the same way.
+        num_frames = len(np.loadtxt(scene / "poses.txt", ndmin=2))
+        rows += [{"scene_id": scene_id, "split": "train", "keyframe_index": k} for k in keyframes(num_frames)]
+    if missing:
+        raise SystemExit(
+            f"{len(missing)} of {len(ids)} listed scenes are under no kitscenes tier's train/: "
+            f"{', '.join(missing[:5])} ..."
+        )
+    args.output.write_bytes(pickle.dumps(rows))
+    print(f"wrote {args.output}: {len(rows)} keyframes from {len(ids)} scenes")
+
+
+# --- features: transcribed from paddock's ranker.py, keep equal ---------------
+
+#: Waypoints the features look at: 3 s at 0.5 s.
+HORIZON = 6
+
+FEATURE_NAMES = (
+    "logit_0",
+    "logit_1",
+    "logit_2",
+    "logit_3",
+    "logit_4",
+    "logit_5",
+    "travel_1s",
+    "travel_2s",
+    "travel_3s",
+    "lateral_3s",
+    "heading_3s",
+    "max_abs_lateral",
+    "step_mean",
+    "step_min",
+    "step_max",
+    "step_std",
+    "total_turning",
+    "ego_speed",
+)
+
+
+def candidate_features(proposals: np.ndarray, logits: np.ndarray, speed: float) -> np.ndarray:
+    """(K, F) features for K candidates, in `FEATURE_NAMES` order. Nothing here sees the label."""
+    proposals = np.asarray(proposals, dtype=np.float64)
+    xy = proposals[:, :HORIZON, :2]
+    heading = proposals[:, :HORIZON, 2]
+    path = np.concatenate([np.zeros((len(xy), 1, 2)), xy], axis=1)
+    steps = np.linalg.norm(np.diff(path, axis=1), axis=2)  # metres per 0.5 s
+    dist = np.linalg.norm(xy, axis=2)  # straight-line distance from ego
+
+    features = np.column_stack(
+        [
+            np.asarray(logits, dtype=np.float64),
+            dist[:, 1],
+            dist[:, 3],
+            dist[:, 5],
+            xy[:, 5, 1],
+            heading[:, 5],
+            np.abs(xy[:, :, 1]).max(axis=1),
+            steps.mean(axis=1),
+            steps.min(axis=1),
+            steps.max(axis=1),
+            steps.std(axis=1),
+            np.abs(np.diff(heading, axis=1)).sum(axis=1),
+            np.full(len(xy), float(speed)),
+        ]
+    )
+    if features.shape[1] != len(FEATURE_NAMES):
+        raise ValueError(f"built {features.shape[1]} features, FEATURE_NAMES lists {len(FEATURE_NAMES)}")
+    return features
+
+
+# --- the label and the dataset -------------------------------------------------
+
+#: The label is ADE over 3 s at 0.5 s, the horizon paddock's KITScenes metric
+#: scores (`displacement_errors(pred, gt, 0.5, 3.0)`).
+ADE_STEPS = 6
+
+
+def ade3(pred: np.ndarray, gt: np.ndarray) -> float:
+    n = min(len(pred), len(gt), ADE_STEPS)
+    return float(np.linalg.norm(pred[:n, :2] - gt[:n, :2], axis=-1).mean())
+
+
+def load_rows(paths: list[Path]) -> list[dict]:
+    rows = []
+    for path in paths:
+        rows += [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    return rows
+
+
+def speed(row: dict) -> float:
+    return float(np.linalg.norm(row["ego_velocity"]))
+
+
+def geometry_of(rows: list[dict]) -> str:
+    """The one DRIVEJEPA_IMAGE_GEOMETRY a dump was made with; refuses mixed or unrecorded.
+
+    The same sample gives different candidates under `native` and `openscene`,
+    so weights fitted on one only fit the model run with the same setting.
+    """
+    found = {(r.get("variant") or {}).get("image_geometry") for r in rows}
+    if None in found or len(found) != 1:
+        raise SystemExit(
+            f"dump records image_geometry {sorted(map(str, found))}; expected exactly one. "
+            "Re-dump with paddock's paddock_candidates.py, which records it per row."
+        )
+    return found.pop()
+
+
+def features_and_labels(rows: list[dict]):
+    """(N, K, F) features, (N, K) ADE@3s, (N,) model pick, (N,) scene id."""
+    x, ade, picks, scenes = [], [], [], []
+    for row in rows:
+        proposals = np.asarray(row["proposals"])
+        human = np.asarray(row["human_poses"])[:, :2]
+        x.append(candidate_features(proposals, np.asarray(row["logits"]), speed(row)))
+        ade.append([ade3(p[:, :2], human) for p in proposals])
+        picks.append(int(row["picked"]))
+        scenes.append(row["scene_id"])
+    return np.stack(x), np.array(ade), np.array(picks), np.array(scenes)
+
+
+def export(args: argparse.Namespace) -> None:
+    rows = load_rows(args.candidates)
+    geometry = geometry_of(rows)
+    x, ade, picks, scenes = features_and_labels(rows)
+    np.savez(
+        args.output,
+        x=x,
+        ade=ade,
+        model_pick=picks,
+        scene=scenes,
+        sample_id=np.array([r.get("sample_id") or f"{r['scene_id']}/{r['keyframe_index']}" for r in rows]),
+        feature_names=np.array(FEATURE_NAMES),
+        dataset=np.array(args.dataset),
+        split=np.array(args.split),
+        image_geometry=np.array(geometry),
+    )
+    n_scenes = len(set(scenes.tolist()))
+    print(f"wrote {args.output}: {len(rows)} samples, {n_scenes} scenes, {x.shape[-1]} features")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    kf = sub.add_parser("keyframes", help="list the train keyframes for paddock to dump candidates for")
+    kf.add_argument("-o", "--output", type=Path, required=True)
+    kf.add_argument("--scenes", type=Path, default=SCENES, help="one scene id per line; # comments")
+    kf.set_defaults(func=list_keyframes)
+
+    ds = sub.add_parser("dataset", help="turn a paddock candidate dump into a `train-rerank` dataset")
+    ds.add_argument("candidates", type=Path, nargs="+")
+    ds.add_argument("--dataset", required=True, help="the dataset the samples come from, for `trained_on`")
+    ds.add_argument("--split", required=True)
+    ds.add_argument("-o", "--output", type=Path, required=True)
+    ds.set_defaults(func=export)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
