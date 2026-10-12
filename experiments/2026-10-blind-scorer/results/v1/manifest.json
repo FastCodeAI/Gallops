@@ -1,0 +1,19 @@
+{
+ "sources": [
+  [
+   "{runs}/labelled_round0_v5",
+   "round0_v5"
+  ],
+  [
+   "{runs}/labelled_gt",
+   "gt"
+  ],
+  [
+   "{runs}/labelled_round1_s2",
+   "round1_s2"
+  ]
+ ],
+ "vocab": "{dj_cache}/v1/vocab.py",
+ "checkpoint": "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt",
+ "slots": 32
+}

@@ -1,0 +1,35 @@
+{
+ "step": 20,
+ "unit": "epochs",
+ "train_git_sha": "cb529798bdac0a54e07f0d58340242c3f6c52418",
+ "model": "drivejepa_subscore",
+ "trained_on": [
+  {
+   "dataset": "gallops rendered neuroNCAP-style episodes",
+   "scenes": [
+    "0053",
+    "0058",
+    "0064",
+    "0070",
+    "0075"
+   ],
+   "sources": [
+    "round0_v5",
+    "gt",
+    "round1_s2"
+   ]
+  },
+  {
+   "dataset": "nuscenes",
+   "split": "train minus neuroNCAP scenes, scene-0061 and the 5 reconstructed scenes, minus 66 held-out",
+   "labels_used": [
+    "on_road",
+    "in_lane",
+    "progress"
+   ]
+  }
+ ],
+ "params": 2011654,
+ "precision": "fp32",
+ "note": "closed-loop experiment only; its collision answer does not transfer to real camera images (real held-out override rate 55%)"
+}

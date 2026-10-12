@@ -1,0 +1,23 @@
+{
+ "architecture": "MLP(own 256 + ctx 256 + geo 25 -> 1024 -> LN -> ReLU -> 1024 -> LN -> ReLU -> 6), ctx = MultiheadAttention(256, 4 heads, batch_first) with query Linear(own+geo -> 256) over the 256 probe tokens + learned pos (256x256)",
+ "channels": [
+  "no_collision",
+  "on_road",
+  "no_ttc",
+  "in_lane",
+  "progress",
+  "final"
+ ],
+ "own": "per-candidate max over its 8 last-stage refiner tokens; candidates = 32 native (pass 1) + 32 swerves (pass 2)",
+ "probe": "32 probe paths x 8 waypoints = 256 tokens, probe-major, from pass 2",
+ "geo": "candidate (x, y) / 20 m (16), heading (8), ego speed / 10 m/s (1)",
+ "vocab": "paddock-runs/ops/dj_cache/vocab_v1_probes.py (vocab_v1 swerves 0-31, probe_v1 32-63)",
+ "pick": "released pick unless mean-of-seeds sigmoid(no_collision) of it < 0.5; then argmax of nc^4 * on_road * (5 progress + 5 no_ttc + 2 in_lane) / 12",
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ]
+}

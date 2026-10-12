@@ -1,0 +1,83 @@
+
+== frontal, runs [0, 1, 2]  (rescue ticks: 531)
+  native 32                    safe   160/531 (30%)  in-lane  123/531 (23%)   >2s  143/266 (54%)  1-2s     9/126 (7%)  <1s     8/139 (6%)
+  current A, as built          safe   273/531 (51%)  in-lane   66/531 (12%)   >2s  204/266 (77%)  1-2s   59/126 (47%)  <1s    10/139 (7%)
+  current A, drivable only     safe     30/531 (6%)  in-lane    28/531 (5%)   >2s   30/266 (11%)  1-2s     0/126 (0%)  <1s     0/139 (0%)
+  current B, as built          safe   263/531 (50%)  in-lane    28/531 (5%)   >2s  170/266 (64%)  1-2s   82/126 (65%)  <1s    11/139 (8%)
+  current B, drivable only     safe    79/531 (15%)  in-lane     4/531 (1%)   >2s   74/266 (28%)  1-2s     5/126 (4%)  <1s     0/139 (0%)
+  current A+B drivable (64)    safe   101/531 (19%)  in-lane    30/531 (6%)   >2s   96/266 (36%)  1-2s     5/126 (4%)  <1s     0/139 (0%)
+  RECOMMENDED 32               safe   261/531 (49%)  in-lane  129/531 (24%)   >2s  227/266 (85%)  1-2s   30/126 (24%)  <1s     4/139 (3%)
+  RECOMMENDED 32, in trust band safe   231/531 (44%)  in-lane  129/531 (24%)   >2s  206/266 (77%)  1-2s   21/126 (17%)  <1s     4/139 (3%)
+  per scene (any safe):
+   scene-0053   n=120: native 32 25 | current A, as built 55 | current B, as built 42 | current A+B drivable (64) 9 | RECOMMENDED 32 41
+   scene-0058   n=122: native 32 35 | current A, as built 23 | current B, as built 24 | current A+B drivable (64) 15 | RECOMMENDED 32 62
+   scene-0064   n=119: native 32 26 | current A, as built 59 | current B, as built 64 | current A+B drivable (64) 9 | RECOMMENDED 32 54
+   scene-0070   n=48: native 32 47 | current A, as built 46 | current B, as built 46 | current A+B drivable (64) 35 | RECOMMENDED 32 43
+   scene-0075   n=122: native 32 27 | current A, as built 90 | current B, as built 87 | current A+B drivable (64) 33 | RECOMMENDED 32 61
+  unions with natives:
+   natives alone                      safe   160/531 (30%)  in-lane  160/531 (30%)   >2s  143/266 (54%)  1-2s     9/126 (7%)  <1s     8/139 (6%)
+   natives + current A+B drivable     safe   172/531 (32%)  in-lane  172/531 (32%)   >2s  155/266 (58%)  1-2s     9/126 (7%)  <1s     8/139 (6%)
+   natives + current A+B as built     safe   332/531 (63%)  in-lane  332/531 (63%)   >2s  238/266 (89%)  1-2s   82/126 (65%)  <1s    12/139 (9%)
+   natives + RECOMMENDED              safe   275/531 (52%)  in-lane  275/531 (52%)   >2s  236/266 (89%)  1-2s   30/126 (24%)  <1s     9/139 (6%)
+
+== stationary, runs [0, 1, 2]  (rescue ticks: 118)
+  native 32                    safe   115/118 (97%)  in-lane  115/118 (97%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    28/31 (90%)
+  current A, as built          safe    84/118 (71%)  in-lane   72/118 (61%)   >2s   62/62 (100%)  1-2s    18/25 (72%)  <1s     4/31 (13%)
+  current A, drivable only     safe    22/118 (19%)  in-lane   22/118 (19%)   >2s    22/62 (35%)  1-2s      0/25 (0%)  <1s      0/31 (0%)
+  current B, as built          safe    61/118 (52%)  in-lane   24/118 (20%)   >2s    30/62 (48%)  1-2s    23/25 (92%)  <1s     8/31 (26%)
+  current B, drivable only     safe      4/118 (3%)  in-lane     4/118 (3%)   >2s      4/62 (6%)  1-2s      0/25 (0%)  <1s      0/31 (0%)
+  current A+B drivable (64)    safe    22/118 (19%)  in-lane   22/118 (19%)   >2s    22/62 (35%)  1-2s      0/25 (0%)  <1s      0/31 (0%)
+  RECOMMENDED 32               safe   106/118 (90%)  in-lane  106/118 (90%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    19/31 (61%)
+  RECOMMENDED 32, in trust band safe   106/118 (90%)  in-lane  106/118 (90%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    19/31 (61%)
+  per scene (any safe):
+   scene-0053   n=36: native 32 35 | current A, as built 29 | current B, as built 29 | current A+B drivable (64) 4 | RECOMMENDED 32 33
+   scene-0058   n=41: native 32 40 | current A, as built 27 | current B, as built 12 | current A+B drivable (64) 11 | RECOMMENDED 32 35
+   scene-0064   n=40: native 32 39 | current A, as built 27 | current B, as built 19 | current A+B drivable (64) 6 | RECOMMENDED 32 37
+   scene-0070   n=1: native 32 1 | current A, as built 1 | current B, as built 1 | current A+B drivable (64) 1 | RECOMMENDED 32 1
+  unions with natives:
+   natives alone                      safe   115/118 (97%)  in-lane  115/118 (97%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    28/31 (90%)
+   natives + current A+B drivable     safe   115/118 (97%)  in-lane  115/118 (97%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    28/31 (90%)
+   natives + current A+B as built     safe   115/118 (97%)  in-lane  115/118 (97%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    28/31 (90%)
+   natives + RECOMMENDED              safe   115/118 (97%)  in-lane  115/118 (97%)   >2s   62/62 (100%)  1-2s   25/25 (100%)  <1s    28/31 (90%)
+
+== side: no rescue ticks (pick hits with hazard in view) in runs [0, 1, 2]; ticks 1047, pick hits 0
+
+ticks where the pick is already safe: 1897; recommended safe paths per tick: median 18, mean 19.6, zero on 0
+  current A as built: mean 18.3; B: 16.1
+
+per-slot usefulness on 649 frontal+stationary rescue ticks: safe / only-safe-in-vocab / only-safe-incl-natives / in-band safe
+   0 pick     +1.0:   40    0    0    0
+   1 pick     -1.0:   35    0    0   34
+   2 pick     +1.5:   48    0    0    8
+   3 pick     -1.5:   27    0    0   27
+   4 pick     +2.0:   76    0    0   36
+   5 pick     -2.0:   20    0    0   20
+   6 pick     +2.5:   97    0    0   57
+   7 pick     -2.5:    1    0    0    1
+   8 pick     +3.0:  151    0    0  111
+   9 pick     -3.0:    8    0    0    8
+  10 pick     +3.5:  172    0    0  111
+  11 pick     -3.5:   37    0    0   37
+  12 pick     +4.0:  174    0    0   50
+  13 pick     -4.0:   47    0    0   47
+  14 straight +1.0:   40    0    0    0
+  15 straight -1.0:   70   20   13   57
+  16 straight +1.5:   68    0    0   28
+  17 straight -1.5:   36    0    0   33
+  18 straight +2.0:   78    0    0   38
+  19 straight -2.0:   27    0    0   27
+  20 straight +2.5:  153    0    0  113
+  21 straight -2.5:    2    0    0    2
+  22 straight +3.0:  170    0    0  130
+  23 straight -3.0:    5    0    0    5
+  24 straight +3.5:  174    0    0   73
+  25 straight -3.5:   20    0    0   20
+  26 straight +4.0:  176    2    2   11
+  27 straight -4.0:   37    1    0   37
+  28 brake    +1.0:  168    0    0  168
+  29 brake    -1.0:  175    0    0  175
+  30 brake    +1.5:  168    0    0  168
+  31 brake    -1.5:  136    0    0  136
+
+current A per-slot drivable share on rescue ticks: [0.0, 0.02, 0.12, 0.16, 0.16, 0.12, 0.02, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.0, 0.01, 0.04, 0.11, 0.11, 0.04, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+max peak lateral accel (recommended): 3.95  min radius: 5.0

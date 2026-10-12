@@ -1,0 +1,15 @@
+{
+ "sources": [
+  [
+   "{runs}/labelled_nusc",
+   "nusc"
+  ],
+  [
+   "{runs}/labelled_nusc_holdout",
+   "nusc_holdout"
+  ]
+ ],
+ "vocab": "{dj_cache}/v3_nusc/vocab.py",
+ "checkpoint": "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt",
+ "slots": 32
+}

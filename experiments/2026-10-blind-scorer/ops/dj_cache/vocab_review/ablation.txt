@@ -1,0 +1,25 @@
+runs 0-9 frontal+stationary rescue ticks 2050 | full: union 1126 union in-band 1110 vocab alone 1050 {'0053': 194, '0058': 306, '0064': 283, '0070': 122, '0075': 221}
+  drop brake    +-1.0: union   +0  in-band   +0  alone   -2 {}
+  drop brake    +-1.5: union   +0  in-band   +0  alone   +0 {}
+  drop pick     +-1.0: union   -3  in-band   -3  alone   -3 {'0058': -3}
+  drop pick     +-1.5: union   +0  in-band   +0  alone   +0 {}
+  drop pick     +-2.0: union   +0  in-band   -2  alone   +0 {}
+  drop pick     +-2.5: union   +0  in-band   +0  alone   +0 {}
+  drop pick     +-3.0: union   +0  in-band   +0  alone   +0 {}
+  drop pick     +-3.5: union   +0  in-band   -2  alone   +0 {}
+  drop pick     +-4.0: union   -6  in-band   -5  alone   -9 {'0053': -5, '0075': -1}
+  drop straight +-1.0: union  -36  in-band  -36  alone  -54 {'0058': -36}
+  drop straight +-1.5: union   +0  in-band   +0  alone   +0 {}
+  drop straight +-2.0: union   +0  in-band   +0  alone   +0 {}
+  drop straight +-2.5: union   +0  in-band   +0  alone   +0 {}
+  drop straight +-3.0: union   +0  in-band   +0  alone   +0 {}
+  drop straight +-3.5: union   +0  in-band   +0  alone   +0 {}
+  drop straight +-4.0: union   -5  in-band   -5  alone   -7 {'0064': -5}
+  drop all pick: union -9 in-band -14 alone -13 {'0053': -5, '0058': -3, '0075': -1}
+  drop all straight: union -42 in-band -42 alone -62 {'0058': -36, '0064': -5, '0075': -1}
+  drop all brake: union +0 in-band +0 alone -162 {}
+natives alone 786 771
+16: pick+straight x +-{1,2,3,4}      frontal runs0-9: alone 703 in-band 622 union 796  (full 32: alone 753 in-band 689 union 796, natives 456, n 1710)
+12: +-{1,2.5,4}                      frontal runs0-9: alone 703 in-band 595 union 796  (full 32: alone 753 in-band 689 union 796, natives 456, n 1710)
+28: all 7 mags, no brake             frontal runs0-9: alone 703 in-band 624 union 796  (full 32: alone 753 in-band 689 union 796, natives 456, n 1710)
+safe options per covered frontal rescue tick: median 7.0 p10 2.0

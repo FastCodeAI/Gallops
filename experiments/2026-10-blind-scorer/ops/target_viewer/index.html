@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scorer Target Viewer</title>
+<style>
+  :root {
+    --bg: #141615; --panel: #1b1e1d; --ink: #eef1f0; --ink2: #b9c0bf; --muted: #8b9493; --rule: #2d3331;
+    --accent: #63b6cf; --clear: #0ca30c; --offlane: #fab219; --offroad: #ec835a; --hit: #d03b3b; --pick: #e040fb;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; background: var(--bg); z-index: 5; }
+  h1 { font-size: 15px; margin: 0 8px 0 0; font-weight: 600; }
+  label { color: var(--ink2); display: inline-flex; gap: 6px; align-items: center; }
+  select, button, input[type=range] { background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 6px; font: inherit; }
+  button { cursor: pointer; } button:hover, button:focus-visible { border-color: var(--accent); outline: none; }
+  #tick { width: 260px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 8px 16px; color: var(--ink2); border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--ink); font-weight: 600; }
+  main { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 12px; padding: 12px 16px; }
+  .view { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 8px; min-width: 0; }
+  .view h2 { font-size: 12px; margin: 0 0 6px; color: var(--ink2); font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 3px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0 16px 8px; color: var(--ink2); }
+  .sw { display: inline-block; width: 18px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  .tablewrap { padding: 0 16px 24px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 12px; }
+  th, td { padding: 3px 7px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--bg); color: var(--ink2); cursor: pointer; font-weight: 600; }
+  th.l, td.l { text-align: left; }
+  th.grp { cursor: default; text-align: center; color: var(--muted); border-bottom: none; }
+  tr:hover td { background: #222826; }
+  tr.sel td { background: #2a2433; }
+  td.cat { font-weight: 600; }
+  .bar { display: inline-block; height: 8px; background: var(--accent); vertical-align: middle; border-radius: 2px; }
+  .flag { color: var(--pick); font-weight: 700; }
+  .note { color: var(--muted); padding: 0 16px 10px; max-width: 110ch; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Scorer target viewer</h1>
+  <label>source <select id="src"></select></label>
+  <label>scenario <select id="shape"></select></label>
+  <label>scene <select id="scene"></select></label>
+  <label>run <select id="run"></select></label>
+  <button id="prev" title="previous tick (←)">◀</button>
+  <input id="tick" type="range" min="0" max="0" value="0" aria-label="tick">
+  <button id="next" title="next tick (→)">▶</button>
+  <button id="nexthit" title="next tick where the released pick hits">next pick-hits</button>
+  <button id="nextveto" title="next tick where the gate overrides">next override</button>
+  <label>colour by <select id="colour">
+    <option value="cat">label (hit / off-road / off-lane / clear)</option>
+    <option value="tnc">target: no collision</option>
+    <option value="pnc">predicted: no collision</option>
+    <option value="tfinal">target: final</option>
+    <option value="formula">predicted: formula score</option>
+  </select></label>
+  <label><input type="checkbox" id="shownat" checked> natives</label>
+  <label><input type="checkbox" id="showsw" checked> swerves</label>
+  <label><input type="checkbox" id="showpr" checked> probes</label>
+</header>
+<div class="facts" id="facts">loading…</div>
+<div class="legend">
+  <span><span class="sw" style="background:var(--clear)"></span>clear, in lane</span>
+  <span><span class="sw" style="background:var(--offlane)"></span>clear, off lane (&gt;1.75 m)</span>
+  <span><span class="sw" style="background:var(--offroad)"></span>leaves the drivable map</span>
+  <span><span class="sw" style="background:var(--hit)"></span>hits a vehicle within 5 s</span>
+  <span><span class="sw" style="background:#fff"></span>released pick</span>
+  <span><span class="sw" style="background:var(--pick)"></span>trained scorer's pick (gated)</span>
+  <span><span class="sw" style="background:#5ac8ff;height:6px;width:6px;border-radius:3px"></span>probe points (context only)</span>
+  <span>thin = native plan, thick = swerve · click a table row to highlight a plan</span>
+</div>
+<main>
+  <div class="view"><h2>Front camera (what the model read)</h2><canvas id="cam" width="1600" height="900"></canvas></div>
+  <div class="view"><h2>Top-down, ego frame (up = forward)</h2><canvas id="bev" width="700" height="900"></canvas></div>
+</main>
+<p class="note">Targets are what the scorer is trained on: no collision = no overlap with any vehicle within 5 s (plan continued 1 s at its final velocity), on road = no footprint corner off the drivable map within 4 s, TTC = no vehicle ahead overlapped by the box carried 0.3/0.6/0.9 s at its current velocity (to 3 s), in lane = max distance from the lane centre ≤ 1.75 m, progress = min(1, travel ÷ human travel over 4 s), final = NC·DAC·(5·EP + 5·TTC + 2·LK)/12. Predictions are the average of 5 probe+geometry scorers from the fold where this scene was held out. Formula = σ(NC)⁴·σ(DAC)·(5·EP + 5·TTC + 2·LK)/12. The gate overrides the released pick only if its predicted no-collision is below 0.5.</p>
+<div class="tablewrap"><table id="tbl"></table></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const COL = { clear: "#0ca30c", "off-lane": "#fab219", "off-road": "#ec835a", hit: "#d03b3b" };
+let EPISODES = [], EP = null, TICK = 0, SEL = new Set(), SORT = { key: "idx", dir: 1 }, IMG = new Image();
+
+function cat(t, p) {
+  if (t.hit5[p] !== null) return "hit";
+  if (t.off_road[p] !== null) return "off-road";
+  if (t.dev[p] > 1.75) return "off-lane";
+  return "clear";
+}
+function ramp(v) { // 0 -> red, 1 -> green, via amber; no value -> grey
+  if (v === null || v === undefined || Number.isNaN(v)) return "#8b9493";
+  v = Math.max(0, Math.min(1, v));
+  const a = [208, 59, 59], b = [250, 178, 25], c = [12, 163, 12];
+  const [p, q, w] = v < 0.5 ? [a, b, v * 2] : [b, c, (v - 0.5) * 2];
+  return `rgb(${p.map((x, i) => Math.round(x + (q[i] - x) * w)).join(",")})`;
+}
+function colourOf(t, p) {
+  const mode = $("colour").value;
+  if (mode === "cat") return COL[cat(t, p)];
+  if (mode === "tnc") return ramp(t.target[p][0]);
+  if (mode === "pnc") return ramp(t.pred[p][0]);
+  if (mode === "tfinal") return ramp(t.target[p][5]);
+  const f = t.formula.filter((v) => v !== null), mx = f.length ? Math.max(...f) : 0;
+  return t.formula[p] === null ? ramp(null) : ramp(mx > 0 ? t.formula[p] / mx : 0);
+}
+function visible(p) { return p < 32 ? $("shownat").checked : $("showsw").checked; }
+
+// Each dropdown lists only what exists under the choices to its left; a value that no longer exists
+// falls back to the first option, so every selection names a real episode.
+const LEVELS = [["src", "source"], ["shape", "shape"], ["scene", "scene"], ["run", "run"]];
+function cascade(from) {
+  for (let i = from; i < LEVELS.length; i++) {
+    const [id, k] = LEVELS[i], keep = $(id).value;
+    const vals = [...new Set(EPISODES.filter((e) => LEVELS.slice(0, i).every(([pid, pk]) => e[pk] === $(pid).value)).map((e) => e[k]))];
+    if (k === "run") vals.sort((a, b) => +a.split("_")[1] - +b.split("_")[1]);
+    $(id).innerHTML = vals.map((v) => `<option>${v}</option>`).join("");
+    $(id).value = vals.includes(keep) ? keep : vals[0];
+  }
+}
+async function init() {
+  EPISODES = await (await fetch("/api/episodes")).json();
+  cascade(0);
+  LEVELS.forEach(([id], i) => $(id).onchange = () => { cascade(i + 1); load(); });
+  $("tick").oninput = () => { TICK = +$("tick").value; draw(); };
+  $("prev").onclick = () => step(-1); $("next").onclick = () => step(1);
+  $("nexthit").onclick = () => seek((t) => t.hit5[t.rel] !== null);
+  $("nextveto").onclick = () => seek((t) => t.veto);
+  for (const id of ["colour", "shownat", "showsw", "showpr"]) $(id).onchange = draw;
+  document.addEventListener("keydown", (e) => { if (e.target.tagName === "SELECT") return; if (e.key === "ArrowRight") step(1); if (e.key === "ArrowLeft") step(-1); });
+  const h = location.hash.slice(1);
+  if (h) h.split(".").forEach((v, i) => { if (i < LEVELS.length) { cascade(i); $(LEVELS[i][0]).value = v; } });
+  cascade(0);
+  load();
+}
+function step(d) { if (!EP) return; TICK = Math.max(0, Math.min(EP.ticks.length - 1, TICK + d)); $("tick").value = TICK; draw(); }
+function seek(f) {
+  if (!EP) return;
+  for (let k = 1; k <= EP.ticks.length; k++) { const i = (TICK + k) % EP.ticks.length; if (f(EP.ticks[i])) { TICK = i; $("tick").value = i; draw(); return; } }
+  $("facts").insertAdjacentHTML("afterbegin", "<span><b>no such tick in this episode</b></span>");
+}
+async function load() {
+  const name = `${$("src").value}/${$("shape").value}-${$("scene").value}__${$("run").value}`;
+  $("facts").textContent = `loading ${name}…`;
+  const r = await fetch(`/api/episode?name=${encodeURIComponent(name)}`);
+  if (!r.ok) { $("facts").textContent = `${name}: ${await r.text()}`; EP = null; return; }
+  EP = await r.json(); TICK = 0; SEL.clear(); $("tick").max = EP.ticks.length - 1; $("tick").value = 0;
+  location.hash = `${$("src").value}.${$("shape").value}.${$("scene").value}.${$("run").value}`;
+  draw();
+}
+function draw() {
+  if (!EP) return; const t = EP.ticks[TICK];
+  const anySafe = t.hit5.some((h, p) => h === null && t.off_road[p] === null);
+  $("facts").innerHTML = [
+    `<span><b>${EP.name}</b> (held-out fold ${EP.fold})</span>`, `<span>tick <b>${TICK + 1}/${EP.ticks.length}</b>, t = <b>${t.t.toFixed(1)} s</b></span>`,
+    `<span>speed <b>${t.speed.toFixed(1)} m/s</b></span>`, `<span>human 4 s travel <b>${t.human_travel} m</b></span>`,
+    `<span>hazard in view <b>${t.in_frame ? "yes" : "no"}</b>${t.usable ? "" : " · <b>not trained on</b>"}</span>`,
+    `<span>released pick #${t.rel}: <b>${cat(t, t.rel)}</b>${t.hit5[t.rel] !== null ? " at " + t.hit5[t.rel] + " s" : ""}, pred NC <b>${t.pred[t.rel][0] === null ? "— (trained on)" : t.pred[t.rel][0].toFixed(2)}</b></span>`,
+    `<span>scorer pick #${t.pick}: <b>${cat(t, t.pick)}</b>${t.veto ? " (override)" : " (kept released)"}</span>`,
+    `<span>any safe plan <b>${anySafe ? "yes" : "no"}</b></span>`, `<span>lane ref: ${t.lane_kind}</span>`,
+  ].join("");
+  drawCam(t); drawBev(t); drawTable(t);
+}
+function project(xy) { // the engine's FC_TRAJ projection: z = 0.25 m, densified 20x
+  const pts = [[0, 0], ...xy], out = [], A = EP.calib.ego2img, C = EP.calib.ego2cam;
+  for (let k = 0; k < pts.length - 1; k++) for (let j = 0; j < 20; j++) {
+    const w = j / 20, x = pts[k][0] + (pts[k + 1][0] - pts[k][0]) * w, y = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * w, v = [x, y, 0.25, 1];
+    const zc = C[2].reduce((s, a, i) => s + a * v[i], 0);
+    const p = [0, 1, 2].map((r) => A[r].reduce((s, a, i) => s + a * v[i], 0));
+    out.push(zc > 0.5 ? [p[0] / p[2], p[1] / p[2]] : null);
+  }
+  return out;
+}
+function poly(ctx, pts, colour, width) {
+  ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.beginPath(); let on = false;
+  for (const p of pts) { if (!p) { on = false; continue; } if (!on) { ctx.moveTo(p[0], p[1]); on = true; } else ctx.lineTo(p[0], p[1]); }
+  ctx.stroke();
+}
+function drawCam(t) {
+  const c = $("cam"), ctx = c.getContext("2d");
+  const paint = () => {
+    ctx.drawImage(IMG, 0, 0, 1600, 900);
+    if ($("showpr").checked) { ctx.fillStyle = "rgba(90,200,255,.7)"; for (const pr of t.probes) for (const p of project(pr).filter((_, i) => i % 20 === 19)) if (p) ctx.fillRect(p[0] - 3, p[1] - 3, 6, 6); }
+    ctx.lineJoin = "round";
+    for (let p = 0; p < 64; p++) if (visible(p) && !SEL.has(p)) poly(ctx, project(t.plans[p]), colourOf(t, p), p < 32 ? 2 : 4);
+    for (const [p, col, w] of [[t.rel, "#ffffff", 6], [t.pick, "#e040fb", 4]]) { const pts = project(t.plans[p]); poly(ctx, pts, "rgba(0,0,0,.8)", w + 4); poly(ctx, pts, col, w); }
+    for (const p of SEL) { const pts = project(t.plans[p]); poly(ctx, pts, "#000", 11); poly(ctx, pts, colourOf(t, p), 7); }
+  };
+  if (IMG.dataset.src === t.frame && IMG.complete) paint(); else { IMG.onload = paint; IMG.dataset.src = t.frame; IMG.src = t.frame; }
+}
+function drawBev(t) {
+  const c = $("bev"), ctx = c.getContext("2d"), S = 9, cx = 350, cy = 840;
+  const P = (x, y) => [cx - y * S, cy - x * S];
+  ctx.fillStyle = "#1a1a19"; ctx.fillRect(0, 0, c.width, c.height);
+  const g = EP.grid, bits = atob(t.drivable); ctx.fillStyle = "#34352f";
+  for (let i = 0; i < g.nx; i++) for (let j = 0; j < g.ny; j++) {
+    const k = i * g.ny + j; if ((bits.charCodeAt(k >> 3) >> (7 - (k & 7))) & 1) { const [u, v] = P(g.x0 + i * g.step, g.y0 + j * g.step); ctx.fillRect(u - S * g.step, v - S * g.step, S * g.step + 0.5, S * g.step + 0.5); }
+  }
+  ctx.strokeStyle = "#2b2f2d"; ctx.lineWidth = 1;
+  for (let x = 0; x <= 90; x += 10) { const [, v] = P(x, 0); ctx.beginPath(); ctx.moveTo(0, v); ctx.lineTo(c.width, v); ctx.stroke(); ctx.fillStyle = "#8b9493"; ctx.font = "11px sans-serif"; ctx.fillText(`${x} m`, 4, v - 3); }
+  ctx.setLineDash([6, 6]); poly(ctx, t.lane.map(([x, y]) => P(x, y)), "#b9c0bf", 1.2); ctx.setLineDash([]);
+  for (const a of t.actors) {
+    const pts = a.box.map(([x, y]) => P(x, y)); ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath();
+    if (a.t) { ctx.fillStyle = "#d9d6cc"; ctx.fill(); } ctx.strokeStyle = a.t ? "#fff" : "#7d7c76"; ctx.lineWidth = a.t ? 1.5 : 1; ctx.stroke();
+    if (a.future) for (const f of a.future) {
+      const q = f.box.map(([x, y]) => P(x, y)); ctx.setLineDash([3, 3]); ctx.beginPath(); q.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); ctx.strokeStyle = "#fff"; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#b9c0bf"; ctx.font = "11px sans-serif"; ctx.fillText(`+${f.k}s`, q[0][0] + 4, q[0][1]);
+    }
+  }
+  if ($("showpr").checked) { ctx.fillStyle = "rgba(90,200,255,.6)"; for (const pr of t.probes) for (const [x, y] of pr) { const [u, v] = P(x, y); ctx.fillRect(u - 1.5, v - 1.5, 3, 3); } }
+  const path = (p) => [[0, 0], ...t.plans[p]].map(([x, y]) => P(x, y));
+  for (let p = 0; p < 64; p++) if (visible(p) && !SEL.has(p)) poly(ctx, path(p), colourOf(t, p), p < 32 ? 1 : 2);
+  for (const [p, col, w] of [[t.rel, "#ffffff", 3], [t.pick, "#e040fb", 2.5]]) { poly(ctx, path(p), "#000", w + 3); poly(ctx, path(p), col, w); }
+  for (const p of SEL) { poly(ctx, path(p), "#000", 6); poly(ctx, path(p), colourOf(t, p), 4); }
+  const e = [[2.509, 0.925], [2.509, -0.925], [-1.509, -0.925], [-1.509, 0.925]].map(([x, y]) => P(x, y));
+  ctx.beginPath(); e.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+}
+const NAMES = ["NC", "DAC", "TTC", "LK", "EP", "final"];
+function drawTable(t) {
+  const rows = [...Array(64).keys()].filter(visible).map((p) => ({
+    idx: p, kind: EP.kinds[p], travel: t.travel[p], cat: cat(t, p), hit5: t.hit5[p], hitT: t.hit_target[p], road: t.off_road[p], ttc: t.ttc[p], dev: t.dev[p],
+    t: t.target[p], q: t.pred[p], f: t.formula[p], pdm: p < 32 ? t.pdm[p] : null,
+  }));
+  const keyv = (r) => SORT.key.startsWith("t") && SORT.key.length === 2 ? r.t[+SORT.key[1]] : SORT.key.startsWith("q") && SORT.key.length === 2 ? r.q[+SORT.key[1]] : r[SORT.key];
+  rows.sort((a, b) => { const x = keyv(a), y = keyv(b); return ((x ?? 99) > (y ?? 99) ? 1 : (x ?? 99) < (y ?? 99) ? -1 : 0) * SORT.dir; });
+  const fmt = (v, d = 2) => v === null ? "—" : (+v).toFixed(d);
+  let h = `<tr><th class="grp" colspan="9"></th><th class="grp" colspan="6">targets (trained on)</th><th class="grp" colspan="6">predicted (held out)</th><th class="grp" colspan="2"></th></tr><tr>`;
+  const cols = [["idx", "#", "l"], ["kind", "plan", "l"], ["travel", "travel m"], ["cat", "label", "l"], ["hit5", "hit at s"], ["hitT", "hits target at"], ["road", "off road at"], ["ttc", "TTC at"], ["dev", "lane dev m"]]
+    .concat(NAMES.map((n, i) => [`t${i}`, n])).concat(NAMES.map((n, i) => [`q${i}`, n])).concat([["f", "formula"], ["pdm", "released score"]]);
+  h += cols.map(([k, n, cls]) => `<th class="${cls || ""}" data-k="${k}">${n}${SORT.key === k ? (SORT.dir > 0 ? " ▲" : " ▼") : ""}</th>`).join("") + "</tr>";
+  for (const r of rows) {
+    const flags = (r.idx === t.rel ? " R" : "") + (r.idx === t.pick ? " P" : "") + (r.idx === t.best ? " B" : "");
+    h += `<tr data-p="${r.idx}" class="${SEL.has(r.idx) ? "sel" : ""}"><td class="l">${r.idx}<span class="flag">${flags}</span></td><td class="l">${r.kind}</td><td>${fmt(r.travel, 1)}</td>`
+      + `<td class="l cat" style="color:${COL[r.cat]}">${r.cat}</td><td>${fmt(r.hit5, 1)}</td><td>${fmt(r.hitT, 1)}</td><td>${fmt(r.road, 1)}</td><td>${fmt(r.ttc, 1)}</td><td>${fmt(r.dev)}</td>`
+      + r.t.map((v) => `<td style="color:${ramp(v)}">${fmt(v)}</td>`).join("") + r.q.map((v) => `<td style="color:${ramp(v)}">${fmt(v)}</td>`).join("")
+      + `<td>${fmt(r.f, 3)}</td><td>${fmt(r.pdm, 3)}</td></tr>`;
+  }
+  $("tbl").innerHTML = h;
+  $("tbl").querySelectorAll("th[data-k]").forEach((th) => th.onclick = () => { const k = th.dataset.k; SORT = { key: k, dir: SORT.key === k ? -SORT.dir : 1 }; drawTable(t); });
+  $("tbl").querySelectorAll("tr[data-p]").forEach((tr) => tr.onclick = () => { const p = +tr.dataset.p; SEL.has(p) ? SEL.delete(p) : SEL.add(p); draw(); });
+}
+init();
+</script>
+<p class="note">Flags: R = released pick, P = trained scorer's pick, B = best plan by the training target. Keys ← → step ticks. The URL remembers the episode.</p>
+</body>
+</html>

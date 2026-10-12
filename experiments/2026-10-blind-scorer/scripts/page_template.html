@@ -1,0 +1,329 @@
+<title>Drive-JEPA Swerve Vocabulary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~68ch) for text; figures break out to a wider measure. */
+:root {
+  --bg: #f6f7f6;
+  --surface: #ffffff;
+  --ink: #15191a;
+  --ink-2: #4a5254;
+  --muted: #6b7476;
+  --rule: #d9dedd;
+  --accent: #1d6a80;
+  --accent-soft: #e2eff2;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --measure: 68ch;
+  --wide: 1180px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141716; --surface: #1c201f; --ink: #eef1f0; --ink-2: #c3cac9; --muted: #98a2a1;
+    --rule: #2f3634; --accent: #63b6cf; --accent-soft: #1b2d33; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141716; --surface: #1c201f; --ink: #eef1f0; --ink-2: #c3cac9; --muted: #98a2a1;
+  --rule: #2f3634; --accent: #63b6cf; --accent-soft: #1b2d33; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55; }
+.page { max-width: var(--wide); margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; gap: 56px; }
+.col { max-width: var(--measure); }
+header { display: grid; gap: 14px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4.6vw, 46px); line-height: 1.08; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 25px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--display); font-weight: 600; font-size: 19px; margin: 0; }
+p { margin: 0; }
+.lede { font-size: 19px; color: var(--ink-2); max-width: var(--measure); }
+section.block { display: grid; gap: 18px; }
+.muted { color: var(--muted); }
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; font-size: 15px; min-width: 100%; }
+th, td { text-align: left; padding: 7px 12px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; letter-spacing: 0.02em; }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 14px; white-space: nowrap; }
+tr.total td { font-weight: 600; border-bottom: none; border-top: 1.5px solid var(--ink-2); }
+.bad { color: var(--critical); }
+ul, ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+.key { display: grid; gap: 4px; padding: 14px 16px; background: var(--accent-soft); border-radius: 6px; max-width: var(--measure); }
+.key b { font-family: var(--display); font-weight: 600; }
+.formula { font-family: var(--mono); font-size: 14.5px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); overflow-x: auto; white-space: nowrap; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: start; }
+.two > * { min-width: 0; }
+.profile { width: 100%; max-width: 420px; height: auto; display: block; }
+.profile .grid { stroke: var(--rule); stroke-width: 1; }
+.profile .axis { stroke: var(--ink-2); stroke-width: 1; }
+.profile .tick { fill: var(--muted); font: 10px var(--mono); }
+.profile .ylab { fill: var(--muted); font: 10px var(--mono); }
+.profile .lbl { fill: var(--ink-2); font: 11px var(--body); }
+.profile .s1 { stroke: var(--accent); stroke-width: 2; }
+.profile .s2 { stroke: var(--ink-2); stroke-width: 2; stroke-dasharray: 5 4; }
+figure { margin: 0; display: grid; gap: 8px; }
+figure img { width: 100%; height: auto; border-radius: 4px; display: block; background: #1a1a19; }
+figcaption { font-size: 14px; color: var(--muted); max-width: 90ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 15px; align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.chip { display: inline-block; width: 22px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.chip.clear { background: var(--good); } .chip.off-lane { background: var(--warning); }
+.chip.off-road { background: var(--serious); } .chip.hit { background: var(--critical); }
+.chip.pick { background: var(--ink); height: 5px; }
+.legend .dash { background: repeating-linear-gradient(90deg, var(--ink-2) 0 6px, transparent 6px 10px); }
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 12px; max-width: var(--measure); }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 10px; }
+.steps li::before { content: counter(s); font-family: var(--display); font-weight: 600; color: var(--accent); font-size: 20px; line-height: 1.3; }
+.scenes { display: grid; gap: 64px; }
+.scene { display: grid; gap: 14px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.scene-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.scene h3 { text-transform: capitalize; }
+.tag { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.note { color: var(--ink-2); max-width: var(--measure); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px 24px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font-size: 12.5px; color: var(--muted); letter-spacing: 0.02em; }
+.facts dd { margin: 2px 0 0; font-family: var(--mono); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.cam { max-width: 860px; }
+.cover { max-width: var(--measure); color: var(--ink-2); }
+.compare { display: grid; gap: 22px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; }
+.toc a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+.toc a:hover, .toc a:focus-visible { border-bottom-color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { body { font-size: 16px; } .page { padding-inline: 16px; gap: 44px; } }
+</style>
+
+<div class="page">
+<header>
+  <div class="eyebrow">Drive-JEPA · neuroNCAP frontal gap · 8 Oct 2026, PDT</div>
+  <h1>Swerve vocabulary, checked on real ticks</h1>
+  <p class="lede">Drive-JEPA never proposes a plan that steers around an oncoming car, so neuroNCAP's frontal scenarios cap it at about what braking alone can score. This page proposes adding 32 extra swerve paths to its candidate set and training a scorer for them on cached features. Below, those 32 paths are drawn and graded on six real ticks from our reconstructed scenes, for you to check before anything is built.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#overnight">Real data</a><a href="#results">First results</a><a href="#revised">Revised vocabulary</a><a href="#standing">Where training stands</a><a href="#test">The test</a><a href="#vocab">The vocabulary</a><a href="#changed">Which speed</a><a href="#scenes">Six scenes</a><a href="#check">What to check</a>
+  </nav>
+</header>
+
+
+
+
+<section class="block" id="overnight">
+  <h2>Real nuScenes data and where the scorer route stands (11 Oct)</h2>
+  <p class="col">613 real nuScenes train scenes were added to training (66 more held out), graded the same way: about 20,000 real ticks beside the 21,934 rendered ones. Checks before training: the converter reproduces the existing drivable raster cell for cell; on 3,521 real ticks the human's own path grades as a hit on 1.1% and off-road on 2.2% (label noise), and the released pick's error against the human path (ADE@3s 1.26 m median) matches its published nuScenes value. Five seeds per row; "held-out" means a scene the model never trained on.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>scorer (probes + geometry)</th><th class="num">rendered held-out net</th><th class="num">frontal &gt;2 s rescued, 0064 / 0070 / 0075</th><th class="num">real held-out: gate overrides</th><th class="num">real held-out: safe ticks kept safe</th><th class="num">real held-out: collision AUC</th></tr></thead>
+    <tbody>
+      <tr><td>rendered only</td><td class="num">+1,177</td><td class="num">5% / 39% / 34%</td><td class="num">not measured</td><td class="num">not measured</td><td class="num">not measured</td></tr>
+      <tr><td>real + rendered, all answers</td><td class="num">+62</td><td class="num">0% / 6% / 3%</td><td class="num">3%</td><td class="num">99%</td><td class="num">0.69</td></tr>
+      <tr><td>real at one fifth weight</td><td class="num">+91</td><td class="num">0% / 6% / 5%</td><td class="num">7%</td><td class="num">97%</td><td class="num">0.66</td></tr>
+      <tr><td>real trains on-road, in-lane, progress only</td><td class="num"><b>+1,277</b></td><td class="num">13% / 45% / 36%</td><td class="num bad">55%</td><td class="num bad">68%</td><td class="num bad">0.44</td></tr>
+    </tbody>
+  </table></div>
+  <div class="key">
+    <b>What this says</b>
+    <p>The two data sources pull in opposite directions. In real logs a car ahead is nearly always a lead car going the same way, and a short braking plan behind it is safe; trained on real collision labels, the scorer learns exactly that, and on our frontal scenes it then rates the braking plan as safe (AUC 0.26 to 0.36, worse than chance). Trained on rendered collision labels only, it learns the frontal lesson, but that answer does not carry over to real camera images: on normal real driving it would override the released plan on half of all ticks. No weighting found a middle. Telling a lead car from an oncoming one needs the motion between the two frames, and nothing in the scorer's input makes that explicit.</p>
+  </div>
+  <ul class="col">
+    <li>Also measured: the released model's own auxiliary heads do not help (key-agent collision head AUC 0.52; area head 0.65 to 0.71, below ours). A hazard-localisation target, dropping frontal-0064, and a gate threshold chosen on the other folds did not fix frontal either.</li>
+    <li>The vendor model mixes the ticks in a batch: batch 1 reproduces what it drove, batch 4 drifts up to 1 m. The caches are now built at batch 1; earlier gallops training ran at batch 8.</li>
+    <li>Every tick, rendered and real, can be inspected in the target viewer on shakaal, port 8932.</li>
+  </ul>
+</section>
+
+<section class="block" id="results">
+  <h2>First results: does it generalise? (9 Oct, overnight)</h2>
+  <p class="col">The cache is built: 450 episodes, 21,934 ticks, 64 plans each (32 native and 32 from the revised vocabulary), with every plan graded. Two guards held on every batch: the native plans put back in their own slots reproduce their features exactly (drift 0.0), and the scorer on the cache reproduces the model's own logits (drift 0.0). 1,536 sampled plans re-graded with the original grader all agreed. Each scene was then held out in turn and the scorer trained on the other four (20 epochs, constants fixed in advance, nothing tuned on the held-out scene).</p>
+  <p class="col">Each cell gives <b>rescued</b> (ticks where the released pick hits, with the hazard in view, on which the new pick is safe) and then <b>kept safe</b> (ticks where the released pick was already safe, on which the new pick stays safe). Safe means no hit within 5 s and staying on the road. This is open loop, one tick at a time, on the held-out scene.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>held-out scene</th><th class="num">hit ticks / safe ticks</th><th class="num">rescue possible</th><th class="num">released (today)</th><th class="num">old target, trained properly</th><th class="num">yes/no answers, formula</th><th class="num">yes/no answers, gated</th></tr></thead>
+    <tbody><tr><td>0053</td><td class="num">1382 / 1120</td><td class="num">61%</td><td class="num">0% · 100%</td><td class="num">8% · 38%</td><td class="num">9% · 67%</td><td class="num">4% · 98%</td></tr><tr><td>0058</td><td class="num">1190 / 1236</td><td class="num">53%</td><td class="num">0% · 100%</td><td class="num">18% · 69%</td><td class="num">10% · 44%</td><td class="num">9% · 90%</td></tr><tr><td>0064</td><td class="num">1820 / 1164</td><td class="num">58%</td><td class="num">0% · 100%</td><td class="num">4% · 46%</td><td class="num">34% · 92%</td><td class="num">9% · 100%</td></tr><tr><td>0070</td><td class="num">1174 / 2428</td><td class="num">77%</td><td class="num">0% · 100%</td><td class="num">24% · 85%</td><td class="num">33% · 90%</td><td class="num">23% · 97%</td></tr><tr><td>0075</td><td class="num">1429 / 1479</td><td class="num">63%</td><td class="num">0% · 100%</td><td class="num">23% · 81%</td><td class="num">41% · 92%</td><td class="num">31% · 97%</td></tr><tr class="total"><td>all five</td><td></td><td></td><td class="num">+1 −1</td><td class="num">+1,009 −2,343</td><td class="num">+1,836 −1,507</td><td class="num">+1,044 −260</td></tr></tbody>
+  </table></div>
+  <p class="col muted">The last row is ticks rescued, minus safe ticks broken, summed over the five scenes. "Gated" keeps the released pick unless the collision answer for it is below 0.5. Only then does it take the formula's pick. The 0.5 was fixed before the run.</p>
+  <div class="key">
+    <b>What this says</b>
+    <p>This is the first scorer trained on these scenes that does something useful on a scene it never saw. s1 to s3 ranked plans no better than chance on held-out scenes. The yes/no answers rescue up to 41% of hit ticks, but used alone they break many safe ticks, worst in the two Singapore scenes, 0053 and 0058, where traffic drives on the other side and only one other scene shows it. Gating keeps 97 to 100% of safe ticks safe in four scenes (90% in 0058), at the cost of fewer rescues. The old blended target, trained the same way, breaks more than it fixes.</p>
+  </div>
+  <h3>Gated pick, by scenario shape</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>held-out scene</th><th class="num">frontal rescued</th><th class="num">frontal possible</th><th class="num">stationary rescued</th><th class="num">stationary possible</th></tr></thead>
+    <tbody><tr><td>0053</td><td class="num">4%</td><td class="num">52%</td><td class="num">4%</td><td class="num">76%</td></tr><tr><td>0058</td><td class="num">2%</td><td class="num">46%</td><td class="num">26%</td><td class="num">68%</td></tr><tr><td>0064</td><td class="num">7%</td><td class="num">52%</td><td class="num">11%</td><td class="num">72%</td></tr><tr><td>0070</td><td class="num">12%</td><td class="num">78%</td><td class="num">42%</td><td class="num">80%</td></tr><tr><td>0075</td><td class="num">29%</td><td class="num">60%</td><td class="num">48%</td><td class="num">73%</td></tr></tbody>
+  </table></div>
+  <p class="col">Frontal, the case this was built for, is still weak except 0075 (29% of hit ticks rescued, 60% possible). Stationary does better (up to 48%).</p>
+  <h3>How well each answer is learned (held-out AUC)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>held-out scene</th><th class="num">no collision</th><th class="num">TTC</th><th class="num">on road</th><th class="num">in lane</th><th class="num">released score vs no collision</th></tr></thead>
+    <tbody><tr><td>0053</td><td class="num">0.66</td><td class="num">0.70</td><td class="num">0.50</td><td class="num">0.66</td><td class="num">0.50</td></tr><tr><td>0058</td><td class="num">0.71</td><td class="num">0.71</td><td class="num">0.80</td><td class="num">0.88</td><td class="num">0.54</td></tr><tr><td>0064</td><td class="num">0.70</td><td class="num">0.71</td><td class="num">0.89</td><td class="num">0.91</td><td class="num">0.59</td></tr><tr><td>0070</td><td class="num">0.83</td><td class="num">0.85</td><td class="num">0.89</td><td class="num">0.70</td><td class="num">0.53</td></tr><tr><td>0075</td><td class="num">0.75</td><td class="num">0.77</td><td class="num">0.88</td><td class="num">0.92</td><td class="num">0.57</td></tr></tbody>
+  </table></div>
+  <p class="col">The released score barely tracks collisions on these ticks (AUC 0.50 to 0.59). The trained no-collision answer reaches 0.66 to 0.83.</p>
+  <ul class="col">
+    <li>Measured: everything in these tables, open loop, on held-out scenes.</li>
+    <li>Not measured: closed-loop neuroNCAP. A rescued tick is not a rescued episode, ticks within an episode are correlated, and a model that swerves earlier meets different states.</li>
+    <li>Next, if you agree: a paddock adapter that runs the second pass and the gated pick, a smoke run on 0103, then the full sweep paired with released.</li>
+  </ul>
+</section>
+
+<section class="block" id="revised">
+  <h2>Revised vocabulary (9 Oct, after review)</h2>
+  <p class="col">A second agent reviewed the first vocabulary over all 150 round-0 episodes (runs 0-2 to design, runs 3-9 held out) and found its main problem. Rescue ticks come after the released model has braked (median 3.1 m/s), and a car can only move sideways as fast as it moves forward. At that speed the first vocabulary's swerves need turning circles of 0.1 to 1.9 m: most of its "safe" paths cannot be driven. The revised set is drivable by construction, and it is what the cache is being built with.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>32 paths</th><th>built from</th></tr></thead>
+    <tbody>
+      <tr><td class="num">14</td><td>the pick's path, driven at the current speed, moved over by ±1.0 to ±4.0 m in 0.5 m steps, measured across the path</td></tr>
+      <tr><td class="num">14</td><td>straight ahead at the current speed, the same 14 offsets</td></tr>
+      <tr><td class="num">4</td><td>the pick's path braking at 3 m/s², nudged ±1.0 and ±1.5 m</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">Each path moves over along a cosine curve and stays there. The curve advances with distance travelled (a car cannot crab sideways) and is as short as two limits allow: 4 m/s² sideways and a 5 m turning radius. Both sides are always offered, because the safe side flips between Singapore and Boston and nothing the model sees at drive time says which. "Pass and come back", braking-based swerves and the pick's own speed profile were cut.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>frontal ticks where the pick hits, hazard in view</th><th class="num">a safe and drivable plan exists</th></tr></thead>
+    <tbody>
+      <tr><td>native 32 alone (reviewer, runs 3-9)</td><td class="num">296 / 1,179 (25%)</td></tr>
+      <tr><td>natives + first vocabulary, drivable paths only</td><td class="num">316 (27%)</td></tr>
+      <tr><td>natives + revised vocabulary</td><td class="num">521 (44%)</td></tr>
+      <tr><td>…more than 2 s before contact</td><td class="num">474 / 582 (81%)</td></tr>
+      <tr><td>…1 to 2 s before contact</td><td class="num">46 / 282 (16%)</td></tr>
+      <tr><td>…under 1 s before contact</td><td class="num">1 / 315</td></tr>
+      <tr class="total"><td>my own check, 5 held-out episodes, gallops-cache grader</td><td class="num">61 → 84 / 197</td></tr>
+    </tbody>
+  </table></div>
+  <div class="key">
+    <b>What this means</b>
+    <p>Under 2 s from an oncoming car there is almost never a drivable escape, for any vocabulary. That is physics: the released model has already slowed down, so the swerve has to start early. The gain is uneven by scene: in my check 0064 went from 6 to 14 and 0075 from 9 to 22, while 0053 went from 5 to 7 and 0058 did not move. Coverage is measured; whether the scorer will pick these paths is not.</p>
+  </div>
+  <p class="col">The same six ticks, with the revised paths. Panels: the pick's path at the current speed, straight ahead at the current speed, and brake-and-nudge.</p>
+  {{V2}}
+</section>
+
+<section class="block" id="standing">
+  <h2>Where training stands</h2>
+  <p class="col">Scene 0103 on neuroNCAP. Released and s1 are full sweeps (10 runs per scenario). s2 and s3 are 2 runs each.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>model</th><th class="num">frontal</th><th class="num">stationary</th><th class="num">side</th></tr></thead>
+    <tbody>
+      <tr><td>released</td><td class="num">2.16 · 9/10 hit</td><td class="num">5.00</td><td class="num">5.00</td></tr>
+      <tr><td>s1 · scorer only</td><td class="num">2.39 · 9/10 hit</td><td class="num">5.00</td><td class="num">5.00</td></tr>
+      <tr><td>s2 · refiner, then scorer</td><td class="num">2.19 · 2/2 hit</td><td class="num bad">3.07 · 1/2 hit</td><td class="num bad">1.06 · 2/2 hit</td></tr>
+      <tr><td>s3 · DAgger round 1 from s2</td><td class="num bad">0.68 · 2/2 hit</td><td class="num bad">0.93 · 2/2 hit</td><td class="num bad">0.80 · 2/2 hit</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">The full s1 sweep over all 20 pairs is +0.10 against released (pair SE 0.08, t 1.3), which cannot be separated from released. Frontal collisions stayed at 78%.</p>
+  <div class="key">
+    <b>Why the trained scorers fail</b>
+    <p>On the held-out scene, the scorer's ranking loss ends at 3.45 (s1), 3.58 (s2) and 3.56 (s3). A scorer that ranks the 32 plans at random scores 3.47. Its pick is the best plan on 23%, 7% and 4% of held-out ticks, where chance is 3%. On the four training scenes it reaches 22 to 49%: it memorises them. Each step also reruns the 300 M-parameter image encoder, so a run gets only about 2,000 steps at batch 8.</p>
+  </div>
+</section>
+
+<section class="block" id="test">
+  <h2>The test this feeds</h2>
+  <p class="col">Run the frozen released model once per tick and save what its scorer reads. Then train on that cache, holding out one scene at a time, which takes minutes per run. This settles whether five scenes are enough to learn from at all, or whether earlier runs were just under-trained.</p>
+  <div class="two">
+    <div class="table-wrap"><table>
+      <thead><tr><th>what is saved per tick</th><th class="num">size</th></tr></thead>
+      <tbody>
+        <tr><td>per-waypoint tokens from the refiner's last pass, 64 plans × 8 × 256</td><td class="num">262 KB</td></tr>
+        <tr><td>the 64 plans (8 × 3), ego speed, acceleration, command</td><td class="num">small</td></tr>
+        <tr><td>verdicts per plan: hit, off-road, distance from lane centre</td><td class="num">small</td></tr>
+      </tbody>
+    </table></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>data</th><th class="num">ticks</th></tr></thead>
+      <tbody>
+        <tr><td>round 0 v5 (released drove)</td><td class="num">9,025</td></tr>
+        <tr><td>GT (human drove, model in shadow)</td><td class="num">4,063</td></tr>
+        <tr><td>round 1 (s2b drove)</td><td class="num">5,555</td></tr>
+        <tr class="total"><td>total, all 5 scenes incl. frontal-0064</td><td class="num">18,643</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="col">That is about 1.19 M graded plans, close to Navvrat's 1 M, but drawn from only 15 setups (5 scenes × 3 shapes). Navvrat's came from 1,000 clips.</p>
+  <h3>The target</h3>
+  <p class="col">Three yes/no answers per plan, graded against where every vehicle really went. No drawn expert is involved.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>answer</th><th>label</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip hit"></span>hit</td><td>the footprint overlaps any vehicle within 4 s, or within 1 s after that at its final speed; counts with the ego stopped too, as neuroNCAP does</td></tr>
+      <tr><td><span class="chip off-road"></span>off-road</td><td>a footprint corner leaves the drivable map within 4 s</td></tr>
+      <tr><td><span class="chip off-lane"></span>off-lane</td><td>the largest distance from the lane centre is over 1.75 m</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">A fixed formula picks the plan. Its constants are tuned on the training folds only:</p>
+  <div class="formula">score = (1 − P<sub>hit</sub>)<sup>4</sup> × (1 − P<sub>off-road</sub>) × (1 − 0.3·P<sub>off-lane</sub>) × min(1, travel ÷ travel of the released pick)</div>
+  <p class="col">On a normal road the released pick wins, because a swerve pays the off-lane cost for no gain. In a frontal scenario a swerve wins, because the straight plan hits. Faster plans gain nothing, which blocks the s1 to s3 habit of picking 17 to 22 m plans where 14 to 16 m was right. The current blended target trained the same way runs alongside as the control.</p>
+</section>
+
+<section class="block" id="vocab">
+  <h2>The first vocabulary</h2>
+  <p class="col">32 paths built every tick from the released model's own pick, so they follow the road's curve.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>choice</th><th>values</th></tr></thead>
+    <tbody>
+      <tr><td>sideways offset</td><td class="mono">−3.5, −2.5, −1.5, −1.0, +1.0, +1.5, +2.5, +3.5 m (left positive)</td></tr>
+      <tr><td>speed</td><td>hold the current speed, or brake to 40% of it by 4 s (70% of the distance)</td></tr>
+      <tr><td>shape</td><td>move over in 2 s and stay; or move over in 1.5 s, hold for 1 s, come back by 4 s</td></tr>
+    </tbody>
+  </table></div>
+  <div class="two">
+    <figure>{{SVG_A}}<figcaption>Share of the sideways offset reached. Solid: move over and stay. Dashed: pass and come back. The widest, 3.5 m in 2 s, peaks at 2.9 m/s² sideways.</figcaption></figure>
+    <figure>{{SVG_B}}<figcaption>Distance along the pick's path, as a share of 4 s at the current speed. Solid: own speed held. Dashed: braking.</figcaption></figure>
+  </div>
+  <h3>How the paths get into the model</h3>
+  <ol class="steps">
+    <li><span><b>Pass 1.</b> The unchanged model runs: 32 native plans, their features, and the released pick.</span></li>
+    <li><span><b>Build</b> the 32 paths from the pick and the current speed.</span></li>
+    <li><span><b>Pass 2</b> reruns only the refiner's last stage, with the same image features and queries. Each new path takes the slot of the native plan it is closest to (one-to-one), so its memory comes from a similar plan. The refiner samples the image along each new path. The 300 M encoder does not run again; this costs a few milliseconds.</span></li>
+    <li><span><b>Score</b> all 64 and let the formula pick.</span></li>
+  </ol>
+  <p class="col muted">It has to be a second pass because the refiner's query grid is fixed at 32 × 8. Guard: putting the native 32 back into their own slots in pass 2 must reproduce pass 1 bit for bit.</p>
+</section>
+
+<section class="block" id="changed">
+  <h2>Which speed the swerves should use</h2>
+  <p class="col">The first version built the swerves on the pick's own speed. By the time the car is close, the released model has already slowed: at the three frontal ticks chosen by the rule, its pick covers 7.5 to 7.8 m in 4 s while the ego is doing 3.7 to 4.7 m/s. The second version keeps the pick's path but drives it at the current speed, which covers 15 to 19 m in 4 s.</p>
+  <div class="compare">
+    <figure><img src="{{A_STEM}}_bev_A.png" alt="First version on frontal-0053: swerves on the pick's own speed" loading="lazy" width="1600" height="740"><figcaption>frontal-0053, first version: swerves on the pick's own speed.</figcaption></figure>
+    <figure><img src="{{A_STEM}}_bev.png" alt="Second version on the same tick: swerves at the current speed" loading="lazy" width="1600" height="740"><figcaption>Same tick, second version: swerves at the current speed.</figcaption></figure>
+  </div>
+  <p class="col">Over every tick of the episodes on this page where the released pick hits with the hazard in view, does any path miss everything and stay on the road? Leaving the lane is allowed.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>episode</th><th class="num">pick hits, hazard in view</th><th class="num">a native plan is safe</th><th class="num">pick-speed swerves</th><th class="num">current-speed swerves</th><th class="num">…and stays in lane</th></tr></thead>
+    <tbody>{{TOTAL_ROWS}}</tbody>
+  </table></div>
+  <div class="key">
+    <b>What this says</b>
+    <p>On the frontal episodes, a safe option exists on {{FR_NAT}} of {{FR_N}} hit ticks with the native plans alone, and on {{FR_A}} with either version of the swerves. Neither version wins overall. They differ scene by scene, so the proposal is to carry both in the cache: 64 extra paths, two extra refiner passes, still a few milliseconds. The per-variant tally over all 18,643 ticks then decides which 32 to keep. Almost no safe frontal option stays in its lane, so the off-lane cost in the formula has to stay mild.</p>
+  </div>
+  <p class="col">Second version only, at the ticks shown below: how many of each group of 8 are safe.</p>
+  <div class="table-wrap"><table>{{VARIANTS}}</table></div>
+  <p class="col muted">This is one episode per scene and shape, so it is a sample, not the training-set rate. "Pass and come back" returns into an oncoming car's path at exactly the wrong moment; it is kept for parked cars, and the tally will show whether it earns its slots.</p>
+</section>
+
+<section class="block" id="scenes">
+  <h2>Six scenes</h2>
+  <p class="col">One tick per episode, chosen by a fixed rule: the hazard is in view, the ego is at 3 m/s or more, and a straight path at the current speed would hit it closest to 3 s from now. The first run (of 0 to 9) with such a tick is used. frontal-0070 and side-0070 have no such tick (the released model is below 3 m/s by the time the car is close, and a straight path never meets the crossing car), so they show the in-view tick where the car is closest to 20 m away.</p>
+  <div class="legend" aria-label="Colour key">
+    <span><span class="chip clear"></span>clear, stays in lane</span>
+    <span><span class="chip off-lane"></span>clear, leaves the lane</span>
+    <span><span class="chip off-road"></span>leaves the road</span>
+    <span><span class="chip hit"></span>hits a vehicle</span>
+    <span><span class="chip pick"></span>released pick</span>
+  </div>
+  <div class="scenes">{{SCENES}}</div>
+</section>
+
+<section class="block" id="check">
+  <h2>What to check</h2>
+  <ul class="col">
+    <li>Do the swerves look like moves a driver could make: 1 to 3.5 m over 2 s at the current speed?</li>
+    <li>On frontal ticks, is at least one path safe where the pick hits? The table above has the counts.</li>
+    <li>Scene 0070: the released model drifts 2 to 2.6 m off the human's path within 3.5 s in every shape, so its own plans are graded off-lane on every tick where they do not hit (60 of 70, 38 of 64 and 70 of 70 ticks). Is 1.75 m the right off-lane line?</li>
+    <li>Are the off-road verdicts right? They come from the nuScenes drivable map at 0.25 m. Some edges in the top-down views may be stricter than the real kerb.</li>
+    <li>frontal-0064: its car does not render, so it adds hit labels the image cannot support. It is in the data as you asked, and its fold will be reported on its own.</li>
+    <li>Paths never steer back after "move over and stay". That is fine for picking a plan every 0.5 s, but it is not a driving style.</li>
+  </ul>
+  <p class="col muted">Sources: rendered episodes in paddock-runs/gallops/collect (round 0 v5), released candidates from collect_dumps, verdicts from the gallops grader (neuroNCAP's footprint and overlap test). Script: swerve_vocab.py.</p>
+</section>
+</div>
