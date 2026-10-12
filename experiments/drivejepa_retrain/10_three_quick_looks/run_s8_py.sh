@@ -2,7 +2,7 @@
 # S8 entry (no model forward pass): conda drive-jepa python, CPU only, nice 10, cwd = vendored navsim_v2 for its imports.
 # Start gate (brief + the RAM rule kept from S6): 5-min load < 32 AND free swap > 15 GB AND available RAM > 40 GB. Waits, logs, starts nothing else.
 # Usage: run_s8_py.sh <threads> <script.py> [args]
-A=$HOME/renesas-sid/Paddock/paddock-sid/Alpasim; H=$(cd "$(dirname "$0")" && pwd); T=$1; S=$2; shift 2
+A={runs}/paddock_sid/Alpasim; H=$(cd "$(dirname "$0")" && pwd); T=$1; S=$2; shift 2
 state() { read l1 l5 l15 _ < /proc/loadavg; echo "$(date -Is),$l1,$l5,$l15,$(awk '/SwapFree/{printf "%.1f",$2/1048576}' /proc/meminfo),$(awk '/MemAvailable/{printf "%.1f",$2/1048576}' /proc/meminfo),$(df -BG --output=avail / | tail -1 | tr -dc 0-9),$(df -BG --output=avail {nas} | tail -1 | tr -dc 0-9 | awk '{printf "%.2f",$1/1024}'),$1" >> $H/state_log.csv; }
 while true; do
   read _ l5 _ < /proc/loadavg; sf=$(awk '/SwapFree/{print int($2/1048576)}' /proc/meminfo); ma=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo)

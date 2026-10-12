@@ -25,7 +25,7 @@ The folders are numbered in the order the work was done.
 | `09_three_hypotheses/` | three explanations, each checked on stored outputs | `REPORT.md` |
 | `10_three_quick_looks/` | three further checks before any more GPU time | `REPORT.md` |
 | `11_scorer_head_and_pullout_grades/` | a small replacement scorer head on frozen features, and grades for pulling out from a standstill | `REPORT.md` |
-| `12_second_training_run/` | the second training run: generator only, scorer frozen | **none** — tables only, see below |
+| `12_second_training_run/` | the second training run: generator only, scorer frozen | **none** — tables, and `unseen_clip_evaluation.md` for its own targets |
 | `13_best_possible_pick/` | would the two scenes where the car never moves be driven if the best candidate were always picked | `REPORT.md` |
 | `14_after_retraining_diagnosis/` | why the first run's checkpoint still swerves and still does not pull out, in five parts | `NOTE_FOR_SID.md`, a `README.md` per part |
 
@@ -52,10 +52,11 @@ folder are unchanged.
   files are committed as diffs against upstream at `e21f474`
   (`05_small_overfit_check/train_patch/dataset.diff`, `drive_jepa_agent.diff`,
   and `12_second_training_run/train_patch/drive_jepa_agent_s10.diff`, which
-  applies on top of the second). Applying them reproduces the files that
-  trained, byte for byte; their sha256 are in `docs/drivejepa-retrain.md`.
+  applies on top of the second). Applying them reproduces the files as they
+  stood when training ended, byte for byte; their sha256 are in `docs/drivejepa-retrain.md`.
 - **No weights, arrays, frames, videos, caches or logs**, and no table over
-  100 KB outside the closed-loop test. [POINTERS.md](POINTERS.md) lists them
+  100 KB outside the closed-loop test, except the list of converted clips
+  (`04_training_set/clips.csv`, 283 KB). [POINTERS.md](POINTERS.md) lists them
   with sizes and hashes.
 
 ## Reading a path in these files
@@ -74,7 +75,7 @@ they still rebuild the files that trained.
 | `{runs}/paddock_sid` | a personal working tree inside a paddock checkout, where the drivers and earlier analyses live |
 | `{paddock}` | that paddock checkout |
 | `{runs}/vm_paddock_sid`, `{runs}/vm_alpasim_bulk`, `{vm_home}` | the same things on an earlier machine |
-| `{home}`, `{nas}`, `{bulk_disk}`, `{site-host}`, `{site-nfs}`, `{hf-account}`, `/tmp/{session}` | a home directory, a mount, a disk, a host address, an NFS export, an account name, a temporary directory |
+| `{home}`, `{nas}`, `{bulk_disk}`, `{site-host}`, `{site-nfs}`, `{hf-account}`, `/tmp/{session}`, `{session-id}` | a home directory, a mount, a disk, a host address, an NFS export, an account name, a temporary directory, the id of one working session |
 
 Only `{runs}` and `{weights}` are variables `gallops.config` expands. The
 rest are labels: **a script here will not run until its placeholders are put
@@ -82,7 +83,7 @@ back to real locations, and none has been run since they were put in.** The
 folder names apply under `{runs}/drivejepa_retrain` too: on the training site's
 store each folder still carries its working name.
 
-[AS_RUN.sha256](AS_RUN.sha256) holds the sha256 of each of the 206 files as it
+[AS_RUN.sha256](AS_RUN.sha256) holds the sha256 of each of the 207 files as it
 was before these replacements, against its original path. Its first line
 records the one file name that was also replaced: the retrained checkpoint's. It is a record of
 the originals, so `sha256sum -c` does not pass against the committed files;

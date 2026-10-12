@@ -69,9 +69,9 @@ mirrored whole. What the retrain read, and how it split it, is recorded in
 
 | | |
 |---|---|
-| Access | restricted; each site accepts the terms on its own account. Nothing from it is redistributed from this repository: no frames, no clips, no derived arrays |
+| Access | restricted; each site accepts the terms on its own account. No frames, clips, trajectories, coordinates or arrays from it are in this repository. Tables derived from it are: lists of clip ids, a per-clip table of id, chunk, split and country (`04_training_set/clips.csv`), and per-event measurements computed from its ego motion and object labels, such as speeds, clearances and actor sizes (`01_find_clips/d3_around.csv`). Whether the dataset's terms allow publishing those is for whoever accepted the terms to confirm before this repository is opened beyond the people who have |
 | Splits | NVIDIA's own `train` / `val` / `test`, by chunk. Every one of the 3,146 chunks lies in exactly one split (asserted) |
-| Read for training | `train` only: 4,018 clips → 126,981 samples. The clip list is `experiments/drivejepa_retrain/04_training_set/clips.csv` |
+| Read for training | `train` only: 4,015 clips → 126,981 samples (4,018 converted; three yielded none). The list of converted clips is `experiments/drivejepa_retrain/04_training_set/clips.csv` |
 | Read for choosing a checkpoint | `val`: 801 clips → 24,657 examples |
 | Never read | `test`; and the AlpaSim simulator's 913 public scenes (`experiments/drivejepa_retrain/01_find_clips/exam_exclusions.txt`), which are reconstructions of clips from this dataset and are what paddock's AlpaSim benchmark scores on |
 | Name in a sidecar | `physicalai_av` |

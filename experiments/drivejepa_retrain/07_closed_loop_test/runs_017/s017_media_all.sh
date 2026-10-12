@@ -6,7 +6,7 @@ BASE={runs}/paddock_sid/Alpasim; T=$BASE/analysis_3.0/Retrain-data/07_closed_loo
 export TMPDIR=$N/tmp PYTHONDONTWRITEBYTECODE=1
 log() { echo "[$(date -Is)] $*"; }
 cd "$BASE"
-# Memory gate (memory note shakaal-swap-gate): start a worker only when the 5-minute load is below 32 AND available RAM is above 40 GB.
+# Memory gate (memory note {site-host}-swap-gate): start a worker only when the 5-minute load is below 32 AND available RAM is above 40 GB.
 gate() {
   local n=0
   while :; do

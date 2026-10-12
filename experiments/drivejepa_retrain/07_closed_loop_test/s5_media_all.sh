@@ -6,7 +6,7 @@ set -uo pipefail
 BASE={runs}/paddock_sid/Alpasim; T=$BASE/analysis_3.0/Retrain-data/07_closed_loop_test; VENV=$BASE/alpasim/.venv/bin/python
 log() { echo "[$(date -Is)] $*"; }
 cd "$BASE"
-# Swap gate (Sid, 2026-10-07; memory note shakaal-swap-gate): start a worker only when the 5-minute load is below 32 AND free swap is
+# Swap gate (Sid, 2026-10-07; memory note {site-host}-swap-gate): start a worker only when the 5-minute load is below 32 AND free swap is
 # above 15 GB -- nice does not protect the S5 sweep running beside this. MEDIA_FORCE=1 skips the gate. Waiting is logged every 20 min.
 gate() {
   [ "${MEDIA_FORCE:-0}" = 1 ] && return 0; local n=0
@@ -34,7 +34,7 @@ while :; do
   if [ ! -f "$T/logs/one_scene_proof.log" ]; then
     one=$(ls "$T"/videos/d016_*.json 2>/dev/null | head -1 | sed 's/.*d016_\(.*\)\.json/\1/')
     if [ -n "$one" ]; then
-      { "$VENV" "$T/s5_proof_one.py" "$one" 2>&1 | grep -v -i warn; SC=/tmp/{session}/e5d35d6d-1add-4c09-94d5-c7ede10a70c5/scratchpad
+      { "$VENV" "$T/s5_proof_one.py" "$one" 2>&1 | grep -v -i warn; SC=/tmp/{session}/{session-id}/scratchpad
         PLAYWRIGHT_BROWSERS_PATH=$SC/pw-browsers "$SC/pw/bin/python" "$T/s5_check_review.py" "$T/review_standin_one" 2>&1; cat "$T/menus/d016_$one.json"; } > "$T/logs/one_scene_proof.log.tmp" 2>&1
       mv "$T/logs/one_scene_proof.log.tmp" "$T/logs/one_scene_proof.log"; log "one-scene proof written: logs/one_scene_proof.log"
     fi

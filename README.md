@@ -56,10 +56,10 @@ drives. The bottom 37 rows of each camera frame are blacked out (the bonnet
 mask: the recording car's own bonnet is in every training frame and the
 simulator never draws one). Acceleration is fed as zero. And the list of path
 shapes the generator builds its candidates from grows from 8,192 to 10,240, to
-add shapes faster than 15 m/s.
+add shapes taken from human driving at 14 m/s and above.
 
 **Data and splits.** NVIDIA Physical AI AV. Training reads the `train` split
-only: 126,981 samples from 4,018 clips. Each run makes several passes (a pass
+only: 126,981 samples from 4,015 clips. Each run makes several passes (a pass
 is one sweep through the training data) and keeps one of them: which pass of
 the first run to keep was chosen on `val`; which pass of the second, on 145
 `train` clips held out of that run. `test` is excluded. So are the simulator's 913 public scenes, which
@@ -85,10 +85,19 @@ momentum (a step from the Drive-JEPA paper that favours candidates consistent
 with the plan already being driven); 0.1.7 is the same driver with the
 retrained checkpoint. The middle row, 0.1.6, drove the first training run's
 checkpoint, was never shipped, and is shown once so the two runs can be told
-apart. An at-fault collision is one the scoring attributes to the driven car,
-because it ran into something. For scale, a constant-velocity baseline (a car
-that keeps its current speed and heading, with no model) scores 0.4876 on the
-same 30 scenes.
+apart. An at-fault collision is one the scoring attributes to the driven car.
+For scale, a constant-velocity baseline (a car that keeps its current speed and
+heading, with no model) scores 0.4876 on the same 30 scenes; it ran with one
+simulator setting different and is a reference only.
+
+Each column is narrower than its heading. Collisions and off-road are counted
+only up to the point where a scene's scoring stops; over the whole clip 0.1.7
+has 6 scenes with a collision and 4 off-road, not 3 and 2. "Stalls" does not
+count the two scenes where the car never moves under any version. One scene
+scores 0 for any driver, and one "at-fault" collision is pedestrians walking
+into the stationary car. And 0.1.7 against 0.1.6 is 0.066 with a standard
+error of 0.068, so the table does not show that the second run beat the first.
+The definitions are in the experiment doc, under "How to read the columns".
 
 Most steps of the experiment did not pass the checks they set themselves
 beforehand, and the experiment doc has that table too.

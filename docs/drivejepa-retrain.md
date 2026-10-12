@@ -18,9 +18,9 @@ steers a simulated car, and the next camera frame it sees depends on where that
 plan took it. On 30 scenes in the AlpaSim simulator, one drive each, the mean
 `scene_score` goes from 0.5433 with the released checkpoint to 0.7697 with the
 retrained one. At-fault collisions — collisions the scoring attributes to the
-driven car, because it ran into something — go from 4 to 3, and two of those 3
-are in scenes the released checkpoint drove without one. Read the caveats at
-the end before quoting either number.
+driven car — go from 4 to 3, and two of those 3 are in scenes the released
+checkpoint drove without one. Read "How to read the columns" below and the
+caveats at the end before quoting either number.
 
 <!-- table:results -->
 | Adapter | Weights | Mean `scene_score` | At-fault collisions | Any collision | Off-road | Stalls | Mean progress | Mean distance (m) |
@@ -39,22 +39,66 @@ run's checkpoint and was never shipped; it is shown once so the two runs can be
 told apart.
 
 For scale, a constant-velocity baseline — a car that keeps its current speed
-and heading, with no model — scores 0.4876 on the same 30 scenes.
+and heading, with no model — scores 0.4876 on the same 30 scenes. It is a
+reference only: it ran with one simulator setting different from the Drive-JEPA
+runs (the driver is not called during the 3.0 s replay of the recorded drive;
+`14_after_retraining_diagnosis/part1_inventory/INVENTORY.md`).
 
-Three things this page will not let a reader assume:
+**How to read the columns.** Each is narrower than its heading, and all of
+this is in `07_closed_loop_test/runs_017/tables/per_scene.csv`:
+
+- **The scored window.** A scene's score, and the collision and off-road
+  columns, cover the drive only up to the first collision or the moment the car
+  is 4 m off the recorded path. Over the whole 20 s clip the counts are higher:
+  for 0.1.7, 6 scenes with a collision and 4 off-road, against 3 and 2 in the
+  table (0.1.4b: 11 and 6; 0.1.6: 9 and 3).
+- **At-fault** is the scoring's label, not a judgement of who moved. On scene
+  b44a4a44, at-fault in all three rows, the car has driven 0.2 m and the
+  recorded pedestrians walk into it (`14_after_retraining_diagnosis/NOTE_FOR_SID.md`).
+- **One scene scores 0 for any driver.** 791d68ce is off the road during the
+  replay of the recorded drive, before any model has control. It is averaged
+  into every mean on this page, the baseline's included, and is one of the
+  off-road scenes in every row. Differences between rows are unaffected by it.
+- **Stalls** means: after the handover the car spends at least 3 s in a row
+  below 1 m/s while driver 0.1.4 (the released checkpoint without momentum, a
+  fourth run not in this table) averaged at least 1 m/s over the same seconds.
+  It is measured over the whole clip. It therefore does **not** count the two
+  scenes where the car never moves under any version (b44a4a44, 0.2 m driven;
+  d2715023, 1.7 m), and it does count 8023dce5 for 0.1.7, a scene that scores
+  1.0. The script that computes it is not in this repository.
+- **0.1.6 against 0.1.7 is not a resolved difference.** Paired over the 30
+  scenes, 0.1.7 is 0.066 above 0.1.6 with a standard error of 0.068. Against
+  the released checkpoint it is 0.226 above with a standard error of 0.069.
+  Both checkpoints were driven on these scenes and the page leads with the
+  higher; nothing written beforehand said the second run would ship whatever
+  it scored.
+
+Four things this page will not let a reader assume:
 
 - **The scorer was trained once, and it did not pass.** Its check asked that on
-  held-out clips it pick the truly best of the 32 candidates at least 50 % of
-  the time. It does so 37.9 % of the time (the released scorer: 34.2 %). It was
-  not trained again; the shipped file holds it bit for bit
+  NVIDIA's `val` clips it pick the truly best of the 32 candidates at least
+  50 % of the time. In the first run's checkpoint it did so 37.9 % of the time
+  (the released scorer: 34.2 %). `val` is also the split that chose which pass
+  of that run to keep, and the figure was measured 32 examples at a time,
+  before the batch correction existed. The scorer was not trained again; the
+  shipped file holds its weights bit for bit
   (`06_first_training_run/REPORT.md`, line 43;
   `12_second_training_run/s10_gen_train.py`, line 65;
   `12_second_training_run/gen_ckpt.json`).
+- **37.9 % is not the shipped checkpoint's figure.** The scorer reads features
+  that the generator produces, and the second run retrained the generator, so
+  identical scorer weights do not give identical picks. Measured one example
+  at a time on the same `val` examples, the shipped checkpoint picks the best
+  candidate 54.6 % of the time (52.1 to 56.9) and the first run's checkpoint
+  38.3 % (`12_second_training_run/unseen_clip_evaluation.md`).
 - **The spacing term was switched off.** The second run's code has a loss term
   that penalises unevenly spaced waypoints. It exists in the code and was tried
   at weights 0.1, 1 and 10 in a pilot of one pass (a pass is one sweep through
   the training data), but it was switched off (weight 0) for the shipped
-  checkpoint.
+  checkpoint. That was a tie-break: weight 0.1 gave the steadier highway speed
+  in the pilot (3.58 against 3.99 m/s), within the 0.5 m/s the rule written
+  beforehand treats as a tie, and the rule then takes the smaller weight
+  (`12_second_training_run/pilot_choice.json`).
 - **The committed code has not been re-run.** Machine paths were replaced by
   placeholders before committing and nothing has been executed since. See
   [the experiment README](../experiments/drivejepa_retrain/README.md).
@@ -85,10 +129,13 @@ required again when the model drives:
   shapes built from human driving at 14 m/s and above, because the fastest
   released shape is 14.8 m/s.
 
-The second run also corrects two lines in the upstream model code that mix up
-the examples of a batch (`12_second_training_run/train_patch/batch_fix.py`).
+The second run also corrects three lines in the upstream model code that mix
+up the examples of a batch (`12_second_training_run/train_patch/batch_fix.py`).
 With one example at a time the correction changes nothing; training runs 32 at
 a time, so the generator was trained with it on and must be run with it on.
+The first run trained and was evaluated without it: the shipped scorer, and
+every validation figure of the first run, come from batches of 32 with those
+lines uncorrected.
 
 ## Data and splits
 
@@ -97,29 +144,40 @@ held.
 
 | Use | Split | Size | Where it is recorded |
 |---|---|---|---|
-| Training | NVIDIA `train` only | 126,981 samples from 4,018 clips, 1,398 chunks, 25 countries | `04_training_set/clips.csv` (the clip list); manifest in POINTERS.md |
+| Training | NVIDIA `train` only | 126,981 samples from 4,015 clips. 4,018 clips were converted (1,398 chunks, 25 countries); three of them yielded no sample | `04_training_set/clips.csv` (the 4,018 converted); `04_training_set/checks.json` (4,015); manifest in POINTERS.md |
 | Choosing which pass of the first run to keep | NVIDIA `val` | 24,657 examples from 801 clips | `06_first_training_run/REPORT.md` |
-| Choosing which pass of the second run to keep | 145 clips of `train`, held out of that run | 4,400 examples | `12_second_training_run/final_choice.json` |
+| Choosing which pass of the second run to keep | 145 clips of `train`, held out of that run only: the first run trained on them, and the second run starts from the first run's weights | 4,400 examples | `12_second_training_run/final_choice.json` |
 | Excluded from everything | NVIDIA `test` | — | asserted in `04_training_set/s3_common.py` |
 | Excluded from everything | the simulator's 913 public scenes, which include the 30 test scenes | — | `01_find_clips/exam_exclusions.txt`; asserted in every step's scripts |
 | Reporting | the 30 test scenes | 30 | `07_closed_loop_test/runs_017/tables/` |
 
 Every chunk of the dataset lies in exactly one of NVIDIA's splits (asserted over
-all 3,146), so a clip cannot leak across them by sharing a recording session.
+all 3,146). The dataset's metadata names no drive, session, date or city, so
+the chunk is the nearest thing to a recording session that can be checked;
+that two clips of one session never sit in different chunks is assumed, not
+shown. The evaluation scenes are excluded by clip id. Only 9 of the 30 test
+scenes (198 of the 913 ids) are clips of this dataset at all, all in `test`;
+for the rest the id is on the list and nothing more can be checked.
 `tests/test_drivejepa_retrain.py` re-checks the two exclusions from the
 committed lists: no training clip is on the exclusion list, and each of the 30
 test scenes is.
 
-**The 30 scenes are not untouched.** No weights were chosen on them. But the
-first run's failures on these same scenes are what the diagnosis steps
-examined, and that diagnosis shaped the second run. The 0.1.7 number is a
+**The 30 scenes are not untouched.** No pass of either run was chosen on them.
+But the first run's failures on these same scenes are what the diagnosis steps
+examined, and that diagnosis shaped the second run: its highway target and the
+decision to freeze the scorer both come from them. The 0.1.7 number is a
 report on scenes that informed the design, not on scenes nobody had looked at.
+And both runs' checkpoints were driven on them, with the higher-scoring one
+shipped (see "How to read the columns").
 
 ## The steps, and what each one's own check said
 
 Each step wrote down its pass conditions before running. Most did not pass,
-and the work went on by a recorded decision each time. That is the honest
-shape of this experiment, so it is the shape of this table.
+and the work went on. A decision to go on is written in the reports of
+`01_find_clips/` and `04_training_set/` only; the reports of steps 02, 03, 05,
+06 and 07 record the failure, and in two cases ask for a decision, without
+recording the answer. That is the honest shape of this experiment, so it is
+the shape of this table.
 
 | Folder | What it did | What its own check said |
 |---|---|---|
@@ -131,7 +189,7 @@ shape of this experiment, so it is the shape of this table.
 | `06_first_training_run/` | generator and scorer, 10 passes | **partly passed**: the generator improves on unseen clips, the scorer does not (two of five checks fail) |
 | `07_closed_loop_test/` | 30 simulated scenes, first run's checkpoint | **mixed**: two conditions fail, two hold; neither highway scene and neither scene that starts from a standstill is fixed |
 | `08_scorer_diagnosis/`, `09_three_hypotheses/`, `10_three_quick_looks/`, `11_scorer_head_and_pullout_grades/` | why the scorer did not improve; a small replacement scorer head on frozen features | diagnosis; the replacement head fails on unseen clips |
-| `12_second_training_run/` | generator only, scorer frozen | no written report; tables below |
+| `12_second_training_run/` | generator only, scorer frozen | no written report; tables below. **One of its five targets missed at the point estimate**: highway instants with a good plan among the candidates, 78.9 % (74.1 to 82.9) against at least 80 %. The other four hold (`unseen_clip_evaluation.md`) |
 | `13_best_possible_pick/` | would the two scenes where the car never moves be driven if the best candidate were always picked | **no**: three of three conditions fail |
 | `14_after_retraining_diagnosis/` | why the first run's checkpoint still swerves and stalls | written about the first run's checkpoint, not the shipped one |
 
@@ -200,7 +258,7 @@ one waypoint to the next.
 
 Compared on 4,400 examples from 145 training clips held out of the second run, in float32.
 
-The two further passes, run `final_P0`: learning rate 2.5e-05, spacing weight (`lam`) 0.0, 2 passes, 4377 steps.
+The two further passes, run `final_P0`: learning rate 2.5e-05, spacing weight (`lam`) 0.0, 2 passes of 4377 steps each.
 <!-- /table:second_run_choice -->
 
 What the shipped file is made of:
@@ -220,9 +278,12 @@ What the shipped file is made of:
 | Merged file vs the trainer's own file, 16 examples: max plan difference | 0.0 |
 <!-- /table:second_run_checkpoint -->
 
-After the checkpoint was chosen and merged, it was also evaluated on clips it
-had not seen. Those tables and the nine scripts that made them read the
-finished checkpoint and played no part in producing or choosing it; they were
+After the checkpoint was chosen and merged, it was evaluated on `val` clips,
+which neither run trained on. That evaluation is where the second run's own
+targets, fixed beforehand in `PREDICTIONS_phase1.md`, were measured, so two of
+its tables are committed as `12_second_training_run/unseen_clip_evaluation.md`:
+the targets (one missed, above) and what the scorer picks from the shipped
+checkpoint's candidates. The rest of it and the nine scripts that made it were
 written straight to the training site's store and are not in this repository
 (POINTERS.md, last row).
 
@@ -294,7 +355,7 @@ The `checkpoint.json` written beside the weights, with `gallops.checkpoint`:
 }
 ```
 
-Four things about it that a reader should not have to infer:
+Six things about it that a reader should not have to infer:
 
 - **`train_git_sha` was set after the fact.** The training code was not in any
   git repository when either run was made. The sha recorded is the commit on
@@ -309,6 +370,12 @@ Four things about it that a reader should not have to infer:
   key of that name yet. Until it does, paddock cannot cross-check this
   declaration against a benchmark's scenes. `navsim` / `navtrain` is listed
   too, because the released checkpoint this started from was trained on it.
+- **`step` is a pass, not an optimiser step.** `step: 2` means the second of
+  the two further passes (8,754 optimiser steps); `notes.step_meaning` says so.
+- **`trained_on` leaves out `val`.** `docs/checkpoints.md` asks for every split
+  that contributed, including one used only to choose a checkpoint. `val` chose
+  which pass of the first run to keep and appears only in the free-text
+  `selection_split`.
 - **The weights file is not `model.safetensors`.** It is upstream's `.ckpt`
   layout, because upstream's loader is what reads it.
 
@@ -316,7 +383,10 @@ Four things about it that a reader should not have to infer:
 
 Three Drive-JEPA training files were changed. They are committed as diffs, and
 the diffs were checked before committing: applied to upstream at `e21f474`,
-they reproduce the files that trained, byte for byte.
+they reproduce the files as they stood when training ended, byte for byte.
+The first of them was last edited during the first run, between its first and
+second pass (the run was resumed three times; `06_first_training_run/REPORT.md`),
+and no earlier copy was kept.
 
 | Diff | Applies to | Result's sha256 |
 |---|---|---|
@@ -332,11 +402,12 @@ The spacing term is in the third (`spacing_rows`, `generator_loss_s10`).
 |---|---|---|
 | The training set is `train` only and holds no evaluation scene | asserted in every step's scripts; re-checked from the committed clip lists by `tests/test_drivejepa_retrain.py` | **strong** |
 | The shipped file is released encoder + first-run scorer + second-run generator | `gen_ckpt.json`: 294 of 294, 30 of 30, 155 of 171 tensors, compared bit for bit | **proof** |
+| The model saw the camera image, in training and in the simulator | the training samples' camera matrix is built by the driver's own functions from the camera AlpaSim declares (`02_build_samples/s1_convert.py`, lines 49 and 132); with that camera a point 10 m ahead of the car projects to the image centre, and paddock's driver tests assert it. This is the check that the fault found in paddock's Drive-JEPA node on nuScenes (cameras placed relative to a lidar that is turned a quarter turn, so the model read no image; paddock #62) does not apply here | **strong** |
 | The driver and the trainer compute the same plans from that file | `gate_017.json`: 16 examples, agreement within 2 cm | **strong** |
 | The three diffs rebuild the trained files | applied at `e21f474`, compared with `cmp`, at commit time | **proof** |
-| The committed files differ from the as-run ones only in paths and folder names | undoing the replacements reproduces all 206 hashes in `AS_RUN.sha256` | **proof** |
+| The committed files differ from the as-run ones only in paths and folder names | undoing the replacements reproduces the hashes in `AS_RUN.sha256` (207 files) | **proof** |
 | 0.1.7 scores 0.7697 on the 30 scenes, 0.1.4b 0.5433 | `totals.json`; 30 of 30 drives complete, each with its checks passed and its driver version and checkpoint hash verified | **moderate** — one drive per scene |
-| The gain from the first run to the second is the generator's | the scorer is identical between the first run's checkpoint and the shipped one, and the score still rose | **argued** — the batch correction changed between them too, and it is one drive per scene |
+| The second run improved on the first in the simulator | 0.7697 against 0.7032 | **not supported**: paired over the 30 scenes the difference is 0.066 with a standard error of 0.068. The scorer's weights are the same in both, but its picks are not, and the batch correction changed between them too |
 | The retrained model is safer | at-fault collisions 4 → 3 | **not supported**: two of the three are new, and one drive per scene cannot separate 4 from 3 |
 
 **Not verified:** any repeat or seed sweep; any scene outside the 30; any
@@ -355,7 +426,7 @@ is not here at all.
 
 ## Where this came from
 
-This is the only place the working names appear. The experiment was run from a
+This is the only place the working folder names are mapped. The experiment was run from a
 personal working tree, in folders named by step code, and the reports and
 scripts inside each folder still use those codes. `AS_RUN.sha256` lists files
 under these original paths.
@@ -391,3 +462,5 @@ exception: they are byte for byte as they were, so that they still rebuild the
 files that trained, and their comments keep the working names. Three working names occur only
 inside files: the first run is S4, the second run is S10, and the first run's
 kept checkpoint is "pass 9". File names inside the folders were not changed.
+The path of the working tree itself (`Retrain-data`, `analysis_3.0`) also
+survives in script comments and headers.

@@ -64,9 +64,18 @@ def training_clips() -> list[dict[str, str]]:
 
 def test_the_training_set_is_the_train_split_and_nothing_else(training_clips) -> None:
     """Select on one split, report on another: the set that trained is `train`."""
+    # clips.csv lists the 4,018 clips that were converted. Three of them yielded
+    # no sample, so the training manifest holds 4,015 (04_training_set/checks.json),
+    # and 4,015 is the figure the docs quote.
     assert len(training_clips) == 4018
     assert {row["split"] for row in training_clips} == {"train"}
     assert len({row["uuid"] for row in training_clips}) == 4018
+    checks = _json(EXP / "04_training_set" / "checks.json")
+    assert checks["clips"] == 4015
+    for name in ("README.md", "docs/data.md", "docs/drivejepa-retrain.md"):
+        text = (REPO_ROOT / name).read_text()
+        assert "4,015 clips" in text, name
+        assert "from 4,018 clips" not in text, name
 
 
 def test_no_training_clip_is_an_evaluation_scene(training_clips) -> None:
@@ -114,6 +123,69 @@ def test_the_headline_is_what_totals_json_says() -> None:
         "acd22430",
         "bd07fb91",
     }
+
+
+def test_totals_json_is_what_the_per_scene_table_adds_up_to() -> None:
+    """The doc tables are rendered from totals.json; this ties totals.json to the 30 rows under it."""
+    totals = _json(TRIAL / "totals.json")
+    with open(TRIAL / "per_scene.csv", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == totals["n"] == 30
+    for arm in ("014b", "016", "017"):
+        scores = [float(row[f"{arm}_scene_score"]) for row in rows]
+        assert sum(scores) / len(scores) == pytest.approx(totals[arm]["mean_score"], abs=1e-9), arm
+        at_fault = sorted(row["scene"][:8] for row in rows if float(row[f"{arm}_collision_at_fault"]) > 0)
+        assert len(at_fault) == totals[arm]["at_fault"], arm
+        assert at_fault == sorted(totals[arm]["at_fault_scenes"]), arm
+
+
+def test_the_figures_the_docs_state_outside_the_rendered_tables_are_the_recorded_ones() -> None:
+    """Prose numbers are not covered by the table tests; these are the ones a reader quotes."""
+    with open(TRIAL / "per_scene.csv", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    def paired(a: str, b: str) -> tuple[float, float]:
+        diffs = [float(r[f"{a}_scene_score"]) - float(r[f"{b}_scene_score"]) for r in rows]
+        mean = sum(diffs) / len(diffs)
+        var = sum((d - mean) ** 2 for d in diffs) / (len(diffs) - 1)
+        return round(mean, 3), round((var / len(diffs)) ** 0.5, 3)
+
+    assert paired("017", "016") == (0.066, 0.068)
+    assert paired("017", "014b") == (0.226, 0.069)
+    whole_clip = {
+        arm: (
+            sum(bool(r[f"{arm}_first_collision_any_s"]) for r in rows),
+            sum(bool(r[f"{arm}_first_offroad_s"]) for r in rows),
+        )
+        for arm in ("014b", "016", "017")
+    }
+    assert whole_clip == {"014b": (11, 6), "016": (9, 3), "017": (6, 4)}
+    doc = (REPO_ROOT / "docs" / "drivejepa-retrain.md").read_text()
+    for needle in (
+        "0.066 above 0.1.6 with a standard error of 0.068",
+        "0.226 above with a standard error of 0.069",
+        "6 scenes with a collision and 4 off-road",
+        "(0.1.4b: 11 and 6; 0.1.6: 9 and 3)",
+        "scores 0.4876 on the same 30 scenes",
+    ):
+        assert needle in doc, needle
+    compare = _json(TRIAL / "models_compare.json")
+    assert any(round(v, 4) == 0.4876 for v in _floats(compare)), "0.4876 is not in models_compare.json"
+    evaluation = (SECOND_RUN / "unseen_clip_evaluation.md").read_text()
+    assert "| pick = true best, % | all | 11842 | 54.6 (52.1 to 56.9) | 38.3 (35.6 to 41.5) |" in evaluation
+    assert "| T-G1 highway instants with a plan graded >= 0.95, % | 78.9 (74.1 to 82.9) |" in evaluation
+    assert "54.6 % of the time (52.1 to 56.9)" in doc and "78.9 % (74.1 to 82.9)" in doc
+
+
+def _floats(node):
+    if isinstance(node, float):
+        yield node
+    elif isinstance(node, dict):
+        for value in node.values():
+            yield from _floats(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _floats(value)
 
 
 def test_one_checkpoint_is_named_by_the_merge_the_closed_loop_test_and_the_pointers() -> None:
@@ -232,7 +304,7 @@ def test_as_run_lists_original_paths_that_map_to_real_files_here() -> None:
     folders = _original_folders()
     header, *lines = (EXP / "AS_RUN.sha256").read_text().splitlines()
     assert header.startswith("# ")
-    assert len(lines) == 206
+    assert len(lines) == 207
     for line in lines:
         digest, original = line.split("  ", 1)
         assert re.fullmatch(r"[0-9a-f]{64}", digest), line

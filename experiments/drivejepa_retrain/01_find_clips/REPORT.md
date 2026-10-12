@@ -159,7 +159,7 @@ Exclusion sizes: candidate A 913 ids (159 in 26.04) → pool 1,447; strict 30 id
 - **F4** `clipgt/drivable_space.parquet` is absent from the 26.04 usdz (19 clipgt tables; nearest `road_boundary`).
 - **F5** Mode-2 gap is measured from the rig origin (egomotion frame), not the front bumper; the ego overhang is unknown from these files.
 - **F6** 22 of our 30 diagnosed scenes are not in 26.04 at all; the 8 that are carry a different *artifact* uuid in 26.04 (in-place
-  re-reconstruction, NRE 26.4.96 vs 26.1.112) — the 26.01 usdz cached on shakaal is not the 26.04 artifact.
+  re-reconstruction, NRE 26.4.96 vs 26.1.112) — the 26.01 usdz cached on {site-host} is not the 26.04 artifact.
 - **F7** The 3 pilot scenes are now touched (metadata + clipgt tables read) and must be excluded from any future random exam draw.
 
 

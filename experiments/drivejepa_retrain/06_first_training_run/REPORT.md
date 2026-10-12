@@ -3,7 +3,7 @@
 **VERDICT: PARTIAL — V2 and V3 fail.** All 10 passes ran, no tripwire fired. The generator improved a lot on unseen clips; the scorer did
 not. Candidate = pass 9 (lowest unseen total error, 1.33 against 6.74 for the shipped weights).
 
-Run 2026-10-07 01:20 → 13:32 on shakaal. Everything below is on `val_full` (24,657 unseen examples, 11,842 graded) unless it says otherwise.
+Run 2026-10-07 01:20 → 13:32 on {site-host}. Everything below is on `val_full` (24,657 unseen examples, 11,842 graded) unless it says otherwise.
 
 ## Pre-registered, at the best pass (9)
 

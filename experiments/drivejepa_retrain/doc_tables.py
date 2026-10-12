@@ -202,7 +202,7 @@ def second_run_choice() -> str:
     rows.append("")
     rows.append(
         f"The two further passes, run `{state['run']}`: learning rate {state['lr']}, "
-        f"spacing weight (`lam`) {state['lam']}, {state['pass_done']} passes, {state['steps']} steps."
+        f"spacing weight (`lam`) {state['lam']}, {state['pass_done']} passes of {state['steps']} steps each."
     )
     return "\n".join(rows)
 
