@@ -59,6 +59,31 @@ Note OpenScene is a redistribution of **nuPlan**, not nuScenes — a different
 collection campaign, rig, cities and map format. The nuScenes copy cannot serve
 it.
 
+## NVIDIA Physical AI AV — used by the Drive-JEPA retrain
+
+Not one of the three corpora above, and not held the way they are: it is
+an access-restricted Hugging Face dataset, read by range request and cached per step, never
+mirrored whole. What the retrain read, and how it split it, is recorded in
+[drivejepa-retrain.md](drivejepa-retrain.md) and, step by step, under
+`experiments/drivejepa_retrain/`.
+
+| | |
+|---|---|
+| Access | restricted; each site accepts the terms on its own account. Nothing from it is redistributed from this repository: no frames, no clips, no derived arrays |
+| Splits | NVIDIA's own `train` / `val` / `test`, by chunk. Every one of the 3,146 chunks lies in exactly one split (asserted) |
+| Read for training | `train` only: 4,018 clips → 126,981 samples. The clip list is `experiments/drivejepa_retrain/04_training_set/clips.csv` |
+| Read for choosing a checkpoint | `val`: 801 clips → 24,657 examples |
+| Never read | `test`; and the AlpaSim simulator's 913 public scenes (`experiments/drivejepa_retrain/01_find_clips/exam_exclusions.txt`), which are reconstructions of clips from this dataset and are what paddock's AlpaSim benchmark scores on |
+| Name in a sidecar | `physicalai_av` |
+
+**`physicalai_av` is not a key in paddock's `datasets.yaml`.** Everything above
+about names matching paddock's applies in reverse here: a checkpoint that
+declares `trained_on: physicalai_av` is making a declaration paddock cannot yet
+cross-check against a benchmark's scene list. The exclusion of the evaluation
+scenes is enforced by assertions in the training scripts and re-checked from
+the committed lists by `tests/test_drivejepa_retrain.py`. Registering the
+dataset in paddock, so that the check runs there, is open.
+
 ## Synthetic data
 
 `cosmos-transfer2.5` and `Cosmos-Drive-Dreams` are already on this machine,
