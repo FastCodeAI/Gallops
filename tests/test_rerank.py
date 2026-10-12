@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 import numpy as np
 import pytest
 
@@ -12,16 +14,16 @@ from gallops.train import rerank
 FEATURES = ("signal", "noise_a", "noise_b")
 
 
-def a_dataset(path, n=240, k=8, scenes=24, seed=0):
+def a_dataset(path, n=240, k=8, scenes=24, seed=0, **override):
     """Candidates whose ADE is carried by one feature, plus two of noise.
 
     The model's own pick is random, so the trainer has something to beat.
+    `override` replaces or adds arrays, to build a broken export.
     """
     rng = np.random.default_rng(seed)
     x = rng.normal(size=(n, k, len(FEATURES)))
     ade = np.abs(x[..., 0]) + 0.05 * rng.random((n, k))
-    np.savez(
-        path,
+    arrays = dict(
         x=x,
         ade=ade,
         scene=np.array([f"scene{i % scenes:02d}" for i in range(n)]),
@@ -30,6 +32,7 @@ def a_dataset(path, n=240, k=8, scenes=24, seed=0):
         split=np.array("train"),
         model_pick=rng.integers(0, k, n),
     )
+    np.savez(path, **{**arrays, **override})
     return path
 
 
@@ -154,3 +157,45 @@ def test_a_sidecar_that_cannot_be_built_leaves_no_weights(tmp_path):
             a_dataset(tmp_path / "data.npz"), a_site(tmp_path), "m", "r", rerank.Settings(epochs=10), ""
         )
     assert files_under(tmp_path / "weights") == []
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [dict(epochs=0), dict(holdout_frac=0.0), dict(holdout_frac=1.0), dict(temperature=0.0)],
+)
+def test_settings_that_fit_nothing_are_refused(settings):
+    with pytest.raises(ValueError):
+        rerank.Settings(**settings)
+
+
+NAN_X = np.where(np.arange(3) == 1, np.nan, 0.0) * np.ones((240, 8, 3))
+
+
+@pytest.mark.parametrize(
+    "dataset, refusal",
+    [
+        (dict(scenes=1), "nothing to train on"),
+        (dict(feature_names=np.array(FEATURES + ("extra",))), "4 feature names for 3"),
+        (dict(model_pick=np.zeros(239, dtype=int)), "model_pick"),
+        (dict(model_pick=np.full(240, 8)), "model_pick"),
+        (dict(x=NAN_X), "NaN"),
+        (dict(x=np.zeros((240, 8)), ade=np.zeros(240)), "disagree"),
+    ],
+)
+def test_an_export_that_would_fit_badly_writes_nothing(tmp_path, dataset, refusal):
+    with pytest.raises(ValueError, match=refusal):
+        rerank.train(
+            a_dataset(tmp_path / "data.npz", **dataset),
+            a_site(tmp_path),
+            "m",
+            "r",
+            rerank.Settings(hidden=4, epochs=10),
+            "abc1234",
+        )
+    assert files_under(tmp_path / "weights") == []
+
+
+def test_the_dataset_hash_is_of_the_bytes_trained_on(tmp_path):
+    data = a_dataset(tmp_path / "data.npz")
+    result = rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=10), "abc1234")
+    assert read(result.directory).notes["dataset_sha256"] == hashlib.sha256(data.read_bytes()).hexdigest()

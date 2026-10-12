@@ -63,6 +63,16 @@ class Settings:
     holdout_frac: float = 0.15
     seed: int = 0
 
+    def __post_init__(self) -> None:
+        # Each of these fits nothing and would still write a checkpoint: zero
+        # epochs saves the random initial weights.
+        if self.epochs < 1:
+            raise ValueError(f"epochs must be at least 1, got {self.epochs}")
+        if not 0 < self.holdout_frac < 1:
+            raise ValueError(f"holdout_frac must be strictly between 0 and 1, got {self.holdout_frac}")
+        if not self.temperature > 0:
+            raise ValueError(f"temperature must be positive, got {self.temperature}")
+
 
 @dataclass
 class Result:
@@ -173,6 +183,27 @@ def fit(x: np.ndarray, ade: np.ndarray, held: np.ndarray, settings: Settings):
     return ranker, mean, std, best[1], best[0]
 
 
+def check_export(path: Path, x, ade, scenes, feature_names, model_pick) -> None:
+    """Refuse an export that would fit into a checkpoint that looks fine and is not.
+
+    Paddock checks the feature *names* and replays a probe of the same width as
+    the weights, so a name list that does not match the columns passes both and
+    fails only on the first real sample.
+    """
+    if x.ndim != 3 or ade.shape != x.shape[:2] or scenes.shape != (len(x),):
+        raise ValueError(f"{path}: x {x.shape}, ade {ade.shape}, scene {scenes.shape} disagree")
+    if np.shape(feature_names) != (x.shape[-1],):
+        raise ValueError(f"{path}: {np.size(feature_names)} feature names for {x.shape[-1]} feature columns")
+    if not (np.isfinite(x).all() and np.isfinite(ade).all()):
+        raise ValueError(f"{path}: x or ade holds a NaN or an infinity")
+    if model_pick is not None and not (
+        model_pick.shape == (len(x),)
+        and model_pick.dtype.kind in "iu"
+        and ((model_pick >= 0) & (model_pick < x.shape[1])).all()
+    ):
+        raise ValueError(f"{path}: model_pick must be one candidate index in [0, {x.shape[1]}) per sample")
+
+
 def git_sha(repo: Path) -> str:
     """HEAD of the training repo, with `-dirty` when uncommitted changes exist.
 
@@ -204,15 +235,22 @@ def train(
     run_dir = cfg.run_dir(model, train_run)
     if run_dir.exists():
         raise ValueError(f"{run_dir} already exists; one fit is one run, so name a new --train-run")
-    with np.load(dataset, allow_pickle=False) as npz:
+    # Read once, and hash what is read: hashing the file again when the sidecar
+    # is written would record whatever is on disk by then, not what was fitted.
+    raw = dataset.read_bytes()
+    with np.load(io.BytesIO(raw), allow_pickle=False) as npz:
         x, ade, scenes = npz["x"].astype(np.float64), npz["ade"].astype(np.float64), npz["scene"]
         feature_names = npz["feature_names"]
         source, split = str(npz["dataset"]), str(npz["split"])
         model_pick = npz["model_pick"] if "model_pick" in npz.files else None
-    if x.shape[:2] != ade.shape or len(scenes) != len(x):
-        raise ValueError(f"{dataset}: x {x.shape}, ade {ade.shape}, scene {scenes.shape} disagree")
+    check_export(dataset, x, ade, scenes, feature_names, model_pick)
 
     held = split_by_scene(scenes, settings.holdout_frac, settings.seed)
+    if held.all():
+        raise ValueError(
+            f"{dataset}: {len(set(scenes.tolist()))} scene(s) leave nothing to train on once the "
+            "selection scenes are held out; at least two are needed"
+        )
     ranker, mean, std, epoch, metric = fit(x, ade, held, settings)
 
     # The probe: a few real held-out samples, raw features in, scores out. Paddock
@@ -252,7 +290,7 @@ def train(
         weights_sha256=hashlib.sha256(weights).hexdigest(),
         notes={
             "settings": settings.__dict__,
-            "dataset_sha256": hashlib.sha256(dataset.read_bytes()).hexdigest(),
+            "dataset_sha256": hashlib.sha256(raw).hexdigest(),
             "samples": int(len(x)),
             "scenes": int(len(set(scenes.tolist()))),
             "holdout_scenes": held_scenes,
