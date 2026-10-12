@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gallops.checkpoint import read
+from gallops.checkpoint import SidecarError, read
+from gallops.config import SiteConfig
 from gallops.train import rerank
 
 FEATURES = ("signal", "noise_a", "noise_b")
@@ -32,6 +33,14 @@ def a_dataset(path, n=240, k=8, scenes=24, seed=0):
     return path
 
 
+def a_site(tmp_path) -> SiteConfig:
+    return SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+
+
+def files_under(root) -> list[str]:
+    return sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()) if root.exists() else []
+
+
 def test_holdout_is_whole_scenes():
     scenes = np.array([f"s{i % 10}" for i in range(100)])
     held = rerank.split_by_scene(scenes, 0.3, seed=0)
@@ -43,7 +52,7 @@ def test_holdout_is_whole_scenes():
 def test_learns_the_recoverable_choice(tmp_path):
     result = rerank.train(
         a_dataset(tmp_path / "data.npz"),
-        tmp_path / "weights",
+        a_site(tmp_path),
         model="drivejepa_rerank",
         train_run="synthetic",
         settings=rerank.Settings(hidden=16, epochs=200),
@@ -58,14 +67,13 @@ def test_learns_the_recoverable_choice(tmp_path):
 def test_writes_weights_paddock_can_verify(tmp_path, hidden):
     result = rerank.train(
         a_dataset(tmp_path / "data.npz"),
-        tmp_path / "weights",
+        a_site(tmp_path),
         model="drivejepa_rerank",
         train_run="synthetic",
         settings=rerank.Settings(hidden=hidden, epochs=50),
         train_git_sha="abc1234",
     )
-    expected = tmp_path / "weights" / "drivejepa_rerank" / "synthetic" / f"step_{result.epoch:09d}"
-    assert result.directory == expected
+    assert result.directory == a_site(tmp_path).checkpoint_dir("drivejepa_rerank", "synthetic", result.epoch)
 
     with np.load(result.directory / rerank.WEIGHTS_NAME, allow_pickle=False) as npz:
         arrays = {key: npz[key] for key in npz.files}
@@ -83,7 +91,7 @@ def test_writes_weights_paddock_can_verify(tmp_path, hidden):
 def test_sidecar_declares_what_it_saw_and_chose_on(tmp_path):
     result = rerank.train(
         a_dataset(tmp_path / "data.npz"),
-        tmp_path / "weights",
+        a_site(tmp_path),
         model="drivejepa_rerank",
         train_run="synthetic",
         settings=rerank.Settings(hidden=8, epochs=20),
@@ -109,4 +117,40 @@ def test_mismatched_arrays_are_refused(tmp_path):
         split=np.array("train"),
     )
     with pytest.raises(ValueError, match="disagree"):
-        rerank.train(path, tmp_path / "w", "m", "r", rerank.Settings(epochs=5), "abc1234")
+        rerank.train(path, a_site(tmp_path), "m", "r", rerank.Settings(epochs=5), "abc1234")
+
+
+def test_a_run_is_one_fit(tmp_path):
+    """A second fit under the same --train-run would read as part of the first's sweep."""
+    data = a_dataset(tmp_path / "data.npz")
+    first = rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=20), "abc1234")
+    before = files_under(tmp_path / "weights")
+    with pytest.raises(ValueError, match="one fit is one run"):
+        rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=10), "abc1234")
+    assert files_under(tmp_path / "weights") == before
+    assert read(first.directory).step == first.epoch
+
+
+@pytest.mark.parametrize(
+    "model, train_run",
+    [("a/b", "r"), ("m", "nested/run"), ("m", ".."), ("m", "/an/absolute/run")],
+)
+def test_a_name_that_is_not_one_directory_writes_nothing(tmp_path, model, train_run):
+    with pytest.raises(ValueError, match="single directory name"):
+        rerank.train(
+            a_dataset(tmp_path / "data.npz"),
+            a_site(tmp_path),
+            model,
+            train_run,
+            rerank.Settings(hidden=4, epochs=10),
+            "abc1234",
+        )
+    assert files_under(tmp_path) == ["data.npz"]
+
+
+def test_a_sidecar_that_cannot_be_built_leaves_no_weights(tmp_path):
+    with pytest.raises(SidecarError, match="train_git_sha"):
+        rerank.train(
+            a_dataset(tmp_path / "data.npz"), a_site(tmp_path), "m", "r", rerank.Settings(epochs=10), ""
+        )
+    assert files_under(tmp_path / "weights") == []

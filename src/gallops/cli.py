@@ -14,7 +14,7 @@ import json
 import typer
 
 from gallops import checkpoint as ckpt
-from gallops.config import ConfigError, SiteConfig
+from gallops.config import REPO_ROOT, ConfigError, SiteConfig
 
 app = typer.Typer(add_completion=False, help="Training for driving policies.")
 
@@ -90,11 +90,11 @@ def train_rerank(
     )
     result = rerank.train(
         Path(dataset),
-        cfg.weights,
+        cfg,
         model=model,
         train_run=train_run,
         settings=settings,
-        train_git_sha=rerank.git_sha(Path(__file__).resolve().parents[2]),
+        train_git_sha=rerank.git_sha(REPO_ROOT),
     )
     typer.echo(f"wrote     {result.directory}")
     typer.echo(f"epoch     {result.epoch}")

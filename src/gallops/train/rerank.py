@@ -35,6 +35,7 @@ numpy only. `pip install -e ".[train]"` provides it.
 from __future__ import annotations
 
 import hashlib
+import io
 import math
 import subprocess
 from dataclasses import dataclass
@@ -42,7 +43,8 @@ from pathlib import Path
 
 import numpy as np
 
-from gallops.checkpoint import Checkpoint, TrainedOn, write
+from gallops.checkpoint import Checkpoint, TrainedOn, staged, write
+from gallops.config import SiteConfig
 
 #: Must equal paddock's `adapters/models/drivejepa_rerank/ranker.py::FORMAT`.
 #: A contract string, not an import: neither repo imports the other.
@@ -187,13 +189,21 @@ def git_sha(repo: Path) -> str:
 
 def train(
     dataset: Path,
-    weights_root: Path,
+    cfg: SiteConfig,
     model: str,
     train_run: str,
     settings: Settings,
     train_git_sha: str,
 ) -> Result:
-    """Fit a re-ranker on an exported dataset and write it as a gallops checkpoint."""
+    """Fit a re-ranker on an exported dataset and write it as a gallops checkpoint.
+
+    One call is one run. A `train_run` that already exists is refused rather
+    than added to: paddock groups a run's steps as one sweep, so a second fit
+    beside the first would read as part of it.
+    """
+    run_dir = cfg.run_dir(model, train_run)
+    if run_dir.exists():
+        raise ValueError(f"{run_dir} already exists; one fit is one run, so name a new --train-run")
     with np.load(dataset, allow_pickle=False) as npz:
         x, ade, scenes = npz["x"].astype(np.float64), npz["ade"].astype(np.float64), npz["scene"]
         feature_names = npz["feature_names"]
@@ -210,8 +220,6 @@ def train(
     probe_x = x[held][:4]
     probe_scores, _ = ranker.forward((probe_x - mean) / std)
 
-    directory = weights_root / model / train_run / f"step_{epoch:09d}"
-    directory.mkdir(parents=True, exist_ok=True)
     arrays = {
         "format": np.array(FORMAT),
         "feature_names": np.asarray(feature_names).astype(str),
@@ -221,38 +229,40 @@ def train(
         "probe_scores": probe_scores,
         **ranker.state(),
     }
-    weights = directory / WEIGHTS_NAME
-    with open(weights, "wb") as handle:
-        np.savez(handle, **arrays)
-    digest = hashlib.sha256(weights.read_bytes()).hexdigest()
+    buffer = io.BytesIO()
+    np.savez(buffer, **arrays)
+    weights = buffer.getvalue()
 
     held_scenes = sorted(set(scenes[held].tolist()))
     n_params = sum(value.size for value in ranker.state().values())
-    write(
-        directory,
-        Checkpoint(
-            model=model,
-            step=epoch,
-            train_git_sha=train_git_sha,
-            train_run=train_run,
-            trained_on=(TrainedOn(source, split),),
-            selection_split=f"{source}/{split}: {len(held_scenes)} held-out scenes (seed {settings.seed})",
-            params_m=n_params / 1e6,
-            precision="fp32",
-            weights_sha256=digest,
-            notes={
-                "settings": settings.__dict__,
-                "dataset_sha256": hashlib.sha256(dataset.read_bytes()).hexdigest(),
-                "samples": int(len(x)),
-                "scenes": int(len(set(scenes.tolist()))),
-                "holdout_scenes": held_scenes,
-                "holdout_pick_ade": metric,
-            },
-        ),
-    )
     model_pick_ade = None
     if model_pick is not None:
         model_pick_ade = float(ade[held][np.arange(held.sum()), model_pick[held]].mean())
+    # Built, and so validated, before anything is written: a sidecar that cannot
+    # be constructed must not leave its weights behind on disk.
+    checkpoint = Checkpoint(
+        model=model,
+        step=epoch,
+        train_git_sha=train_git_sha,
+        train_run=train_run,
+        trained_on=(TrainedOn(source, split),),
+        selection_split=f"{source}/{split}: {len(held_scenes)} held-out scenes (seed {settings.seed})",
+        params_m=n_params / 1e6,
+        precision="fp32",
+        weights_sha256=hashlib.sha256(weights).hexdigest(),
+        notes={
+            "settings": settings.__dict__,
+            "dataset_sha256": hashlib.sha256(dataset.read_bytes()).hexdigest(),
+            "samples": int(len(x)),
+            "scenes": int(len(set(scenes.tolist()))),
+            "holdout_scenes": held_scenes,
+            "holdout_pick_ade": metric,
+        },
+    )
+    directory = cfg.checkpoint_dir(model, train_run, epoch)
+    with staged(directory) as tmp:
+        (tmp / WEIGHTS_NAME).write_bytes(weights)
+        write(tmp, checkpoint)
     return Result(
         directory=directory,
         epoch=epoch,
