@@ -6,8 +6,10 @@ import hashlib
 
 import numpy as np
 import pytest
+from typer.testing import CliRunner
 
 from gallops.checkpoint import SidecarError, read
+from gallops.cli import app
 from gallops.config import SiteConfig
 from gallops.train import rerank
 
@@ -62,7 +64,7 @@ def test_learns_the_recoverable_choice(tmp_path):
         train_git_sha="abc1234",
     )
     # Random picks average ~0.8 here; the best candidate ~0.1.
-    assert result.holdout_pick_ade < 0.3
+    assert result.selection_pick_ade < 0.3
     assert result.holdout_model_pick_ade is not None and result.holdout_model_pick_ade > 0.5
 
 
@@ -115,6 +117,8 @@ def test_sidecar_declares_what_it_saw_and_chose_on(tmp_path):
     assert not train & held
     assert train | held == {f"scene{i:02d}" for i in range(24)}
     assert sidecar.notes["numpy"] == np.__version__
+    # Named for the split it was selected on, so nobody quotes it as held-out.
+    assert "selection_pick_ade" in sidecar.notes and "holdout_pick_ade" not in sidecar.notes
 
 
 def test_sidecar_carries_the_exports_sample_ids_and_geometry(tmp_path):
@@ -226,3 +230,20 @@ def test_the_dataset_hash_is_of_the_bytes_trained_on(tmp_path):
     data = a_dataset(tmp_path / "data.npz")
     result = rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=10), "abc1234")
     assert read(result.directory).notes["dataset_sha256"] == hashlib.sha256(data.read_bytes()).hexdigest()
+
+
+def test_the_cli_names_the_selection_split_and_keeps_a_zero(tmp_path, monkeypatch):
+    """A model pick of exactly 0.0 m is a number to print, not a missing one."""
+    rng = np.random.default_rng(0)
+    ade = rng.random((240, 8)) + 0.1
+    ade[:, 0] = 0.0
+    data = a_dataset(tmp_path / "data.npz", ade=ade, model_pick=np.zeros(240, dtype=int))
+    config = tmp_path / "gallops.toml"
+    config.write_text(f'[roots]\nweights = "{tmp_path / "weights"}"\nruns = "{tmp_path / "runs"}"\n')
+    monkeypatch.setenv("GALLOPS_CONFIG", str(config))
+    monkeypatch.setattr(rerank, "git_sha", lambda repo: "abc1234")
+
+    out = CliRunner().invoke(app, ["train-rerank", str(data), "--train-run", "r", "--epochs", "10"])
+    assert out.exit_code == 0, out.output
+    assert "selection " in out.output and "held-out" not in out.output
+    assert "model's own pick 0.000" in out.output

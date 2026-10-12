@@ -96,12 +96,18 @@ def train_rerank(
         settings=settings,
         train_git_sha=rerank.git_sha(REPO_ROOT),
     )
-    typer.echo(f"wrote     {result.directory}")
-    typer.echo(f"epoch     {result.epoch}")
+    typer.echo(f"wrote      {result.directory}")
+    typer.echo(f"epoch      {result.epoch}")
+    # "selection split", not "held-out": the epoch was chosen on these scenes, so
+    # the pick ADE is optimistic. Report from a split nothing was selected on.
     typer.echo(
-        f"held-out  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
-        f"pick ADE {result.holdout_pick_ade:.3f}"
-        + (f", model's own pick {result.holdout_model_pick_ade:.3f}" if result.holdout_model_pick_ade else "")
+        f"selection  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
+        f"pick ADE {result.selection_pick_ade:.3f}"
+        + (
+            f", model's own pick {result.holdout_model_pick_ade:.3f}"
+            if result.holdout_model_pick_ade is not None
+            else ""
+        )
         + f", best of the candidates {result.holdout_best_ade:.3f}"
     )
 

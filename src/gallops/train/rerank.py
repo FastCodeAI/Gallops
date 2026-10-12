@@ -78,7 +78,11 @@ class Settings:
 class Result:
     directory: Path
     epoch: int
-    holdout_pick_ade: float
+    #: Mean ADE of the re-ranker's pick on the held-out scenes -- the same scenes
+    #: the epoch was chosen on, so it is optimistic (by ~0.01-0.02 m on the
+    #: shipped checkpoint) and not a result to report. The two numbers below do
+    #: not depend on that choice.
+    selection_pick_ade: float
     holdout_model_pick_ade: float | None
     holdout_best_ade: float
     train_samples: int
@@ -324,7 +328,7 @@ def train(
             # says kitscenes/train, and only these say which of its scenes.
             "train_scenes": train_scenes,
             "holdout_scenes": held_scenes,
-            "holdout_pick_ade": metric,
+            "selection_pick_ade": metric,
             "numpy": np.__version__,
             **({"sample_ids_sha256": sample_ids_digest(sample_ids)} if sample_ids is not None else {}),
             # The camera geometry the candidates were produced under. The same
@@ -340,7 +344,7 @@ def train(
     return Result(
         directory=directory,
         epoch=epoch,
-        holdout_pick_ade=metric,
+        selection_pick_ade=metric,
         holdout_model_pick_ade=model_pick_ade,
         holdout_best_ade=float(ade[held].min(1).mean()),
         train_samples=int((~held).sum()),
