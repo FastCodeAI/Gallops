@@ -8,23 +8,33 @@
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
 #
 # Site config this needs (gallops.toml):
-#   [python] train      Python >= 3.11 with torch (the head stages and the checkpoint writer)
-#   [python] drivejepa  Drive-JEPA's own interpreter (Python 3.9, navsim installed) for the generator
-#   [code]   drivejepa  the Drive-JEPA checkout (its navsim_v2/ is the generator stage's cwd)
-#   [datasets.navsim]   path + exp, as in paddock.toml (the released checkpoint is under exp)
-#   [datasets.bench2drive] rerank = the candidate / feature / label tree, teachers = the MTD-H teacher set
+#   [python] train              Python >= 3.11 with torch (the head stages and the checkpoint writer)
+#   [python] drivejepa          Drive-JEPA's own interpreter (Python 3.9, navsim installed) for the generator
+#   [code]   drivejepa          the Drive-JEPA checkout (its navsim_v2/ is the generator stage's cwd)
+#   [datasets.navsim]           path + exp, as in paddock.toml: the generator stage's environment
+#   [datasets.drivejepa_b2d]    path = the frozen data dump: rerank/ (rows, head inputs, labels, the feature
+#                               cache, the new generator's candidates), release/ (the released checkpoint),
+#                               teachers/ (MTD-H). Its file list and sha256 are recipes/drivejepa_b2d/data_*.json;
+#                               the check-data stages compare a site's copy against them.
 
 description = "Drive-JEPA retrained on Bench2Drive base: Split-v4 and the Final"
 
 [vars]
-rerank = "{data.bench2drive.rerank}"
-release = "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
+rerank = "{data.drivejepa_b2d}/rerank"
+release = "{data.drivejepa_b2d}/release/drive_jepa_perception_based_agent_vitl_v2.ckpt"
 heldout = "{repo}/recipes/drivejepa_b2d/heldout_150.json"
 out = "{runs}/drivejepa_b2d"
 
 # ---------------------------------------------------------------------------------------------
 # Split-v4: only the scorer head changes. Three head stages, each initialised from the one before.
 # ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "check-data"
+python = "train"
+module = "drivejepa_b2d.check_data"
+# Sizes only, in seconds; add "--hash" to compare contents.
+args = ["--root", "{data.drivejepa_b2d}", "--manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json"]
 
 [[stage]]
 name = "ipad-base-start"
@@ -98,6 +108,12 @@ args = [
 # ---------------------------------------------------------------------------------------------
 
 [[stage]]
+name = "check-data-final"
+python = "train"
+module = "drivejepa_b2d.check_data"
+args = ["--root", "{data.drivejepa_b2d}", "--manifest", "{repo}/recipes/drivejepa_b2d/data_final.json"]
+
+[[stage]]
 name = "final-generator"
 python = "drivejepa"
 module = "drivejepa_b2d.train_generator"
@@ -107,7 +123,7 @@ cwd = "{code.drivejepa}/navsim_v2"
 env = { NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim}/maps", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", DRIVE_JEPA_MSDA = "auto" }
 args = [
   "--cache", "{rerank}/_genft_cache",
-  "--teachers", "{data.bench2drive.teachers}",
+  "--teachers", "{data.drivejepa_b2d}/teachers",
   "--checkpoint", "{release}",
   "--out", "{out}/final-generator",
 ]

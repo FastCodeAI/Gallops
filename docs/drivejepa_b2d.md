@@ -73,27 +73,41 @@ batch 1. Deployment runs batch 1, so closed-loop numbers are unaffected, but
 anything that trains the refiner batched is. The Final's generator was trained
 with the fix.
 
-## What the stages read
+## The data
 
-Named in `gallops.toml`, never in a tracked file:
+The stages read one frozen dump, `[datasets.drivejepa_b2d]` in `gallops.toml`:
 
-| Template | What |
+| In the dump | What |
 |---|---|
-| `{python.train}` | Python >= 3.11 with torch |
-| `{data.navsim.exp}` | holds the released checkpoint, `Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt` |
-| `{data.bench2drive.rerank}` | the candidate tree: `_dataset/` (rows), `_feats/` (the (32, 256) head inputs), `_labels/`; for the Final also `_genft_cache/` (backbone features) and `_mtdh/` (the new generator's candidates, head inputs and labels) |
-| `{python.drivejepa}`, `{code.drivejepa}` | Drive-JEPA's interpreter and checkout; the generator stage runs with `navsim_v2/` as its cwd, as paddock's node does |
-| `{data.bench2drive.teachers}` | the MTD-H teacher set, one npz per clip |
+| `release/` | the released Drive-JEPA checkpoint every stage starts from |
+| `rerank/_dataset/` | the rows: base 20,449 and route-start 3,000 frames, with each candidate's ADE and the clip |
+| `rerank/_feats/` | the (32, 256) features the scorer head sees, per row (base, start, augmented) |
+| `rerank/_labels/` | rule labels per candidate: iPad `final` (v2), col / lane / ttc (v3), red (v4) |
+| `rerank/_genft_cache/` | the Final: backbone features per frame, which the generator trains from |
+| `rerank/_mtdh/` | the Final: the new generator's candidates and head inputs, with their labels (`labels/` v6 steps, `labels_m05b/`) |
+| `teachers/` | the Final: the MTD-H teacher set, one npz per clip |
 
-**Not produced by this repo yet.** The rows, the head-input features and the
-labels were made by paddock-side tooling: the candidate and feature dump
+Its file list, sizes and sha256 are tracked in
+[`recipes/drivejepa_b2d/data_split_v4.json`](../recipes/drivejepa_b2d/data_split_v4.json) and
+[`data_final.json`](../recipes/drivejepa_b2d/data_final.json); the `check-data`
+and `check-data-final` stages compare a site's copy against them (sizes in seconds,
+`--hash` for contents). This machine's copy is `drivejepa_b2d-v1`, made 13 Oct
+2026 by copying exactly these files out of the working directories they were
+trained from, each hashed as it was copied.
+
+The Final's generator stage also needs Drive-JEPA's own interpreter and checkout,
+`{python.drivejepa}` and `{code.drivejepa}`: it runs with `navsim_v2/` as its
+cwd and the `[datasets.navsim]` environment, as paddock's node does.
+
+**How the dump was made is not in this repo yet.** The rows, features and labels
+come from paddock-side tooling: the candidate and feature dump
 (`tools/models/drivejepa/b2d_candidates.py`, which runs the released model
 through paddock's own adapter so the features are exactly what the head sees in
 closed loop), the row builder (`rerank.py dataset`), the light-frame
 augmentation, and the label chain (v3 col / lane / ttc, v4 red). For the Final
 also the backbone-feature cache, the MTD stages 1-3 that build the teachers, the
 re-dump of the candidates with the new generator, and their m05b / v6 labels.
-The stages here read their recorded output. Moving that tooling is a separate
+The dump is their recorded output; moving that tooling here is a separate
 change.
 
 ## Verified, and how
@@ -101,11 +115,13 @@ change.
 | Claim | Strength | How |
 |---|---|---|
 | The three head stages reproduce the recorded heads | **verified** | 13 Oct: `ipad-base-start`, `split-full` and `split-v4aug` rerun from this code on the recorded data, each initialised from the previous rerun's output; every `head_best.pt` **bitwise identical** to the recorded one (same GPU and torch build) |
+| The dump holds the files they were trained on | **verified** for Split-v4 | the bitwise rerun read the same files the dump copied (sha256 recorded during the copy); each file is also older than the head trained from it |
 | The held-out list is the original one | **verified** | it follows from the above: different clips would give different training data and different weights |
 | The deployed Split-v4 checkpoint is the release + this head | **verified** | its 10 head tensors equal `split-v4aug/head_best.pt` and its other 495 equal the release, tensor by tensor |
 | `write_checkpoint` writes that checkpoint | **argued** | ported from the writer that produced it, same tensor replacement; not run from this repo |
 | The deployed Final checkpoint = release + the generator + the m05b split head | **verified** | 13 Oct: its 10 head tensors equal the m05b head, the generator's 45 tensors equal its 171 (the refiner copied into four heads), and nothing else differs from the release |
 | The Final's generator, split head and area head stages reproduce the recorded ones | **argued** | ported with the arithmetic unchanged; none of the three was rerun from this repo |
+| The dump holds the files the Final was trained on | **argued** | copied from the paths its trainers read; every file is older than the model trained from it; not rerun |
 
 ## Before quoting a number from these checkpoints
 
