@@ -645,3 +645,25 @@ def test_the_expert_follows_the_lane_the_car_is_in_when_one_was_computed(tmp_pat
     assert max(abs(y) for t in drifted for _, y, _ in t["expert"]) > 1.0, (
         "fixture should show the old behaviour"
     )
+
+
+def test_labelling_refuses_an_existing_label_set(tmp_path):
+    """labelled_round0_v2 was rewritten in place between two runs that both name it."""
+    from gallops.expert.label import fresh_out
+
+    out = tmp_path / "labelled"
+    fresh_out(out)
+    assert out.is_dir()
+    fresh_out(out)  # empty: nothing to overwrite
+    (out / "frontal-0053__run_0.jsonl").write_text("{}\n")
+    with pytest.raises(SystemExit, match="already holds labels"):
+        fresh_out(out)
+
+
+def test_a_gt_row_without_the_models_pick_is_refused():
+    from gallops.expert.label import model_pick
+
+    assert model_pick({"timestamp": 1, "trajectory": [[1, 0, 0]]}) is None  # model drove
+    assert model_pick({"timestamp": 1, "drive": "gt", "model_trajectory": [[2, 0, 0]]}) == [[2, 0, 0]]
+    with pytest.raises(SystemExit, match="no model_trajectory"):
+        model_pick({"timestamp": 1, "drive": "gt", "trajectory": [[1, 0, 0]]})

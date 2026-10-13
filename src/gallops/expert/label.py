@@ -166,13 +166,51 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 # Who drove at collection, and -- when that was not the model -- what its
                 # own pick would have hit: in GT-driven rounds `driven_hits` is the human's.
                 "driver": row.get("drive", "model"),
-                "model_hits": first_hit(np.asarray(row["model_trajectory"]), ego2world, stamp, targets)
-                if row.get("model_trajectory") is not None
+                "model_hits": first_hit(np.asarray(pick), ego2world, stamp, targets)
+                if (pick := model_pick(row)) is not None
                 else driven,
                 "pdm_score": row.get("pdm_score"),
             }
         )
     return out
+
+
+def fresh_out(out: Path) -> None:
+    """Refuse an `--out` that already holds labels.
+
+    Labelling into an existing directory rewrote `labelled_round0_v2` in place
+    between v1 and v2, both of which name it, so neither sidecar can say which
+    labels it trained on. A new label set gets a new directory.
+    """
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"{out} already holds labels; label into a new directory")
+    out.mkdir(parents=True, exist_ok=True)
+
+
+def manifest(args, sha: str) -> dict:
+    """What made this label set: the expert's commit and the inputs it read."""
+    return {
+        "git_sha": sha,
+        "collect": str(args.collect),
+        "dumps": str(args.dumps),
+        "drivable": str(args.drivable) if args.drivable else None,
+    }
+
+
+def model_pick(row: dict) -> list | None:
+    """The model's own pick in a dump row; refused where the dump cannot give it.
+
+    In a GT-driven round the engine drove the human's path, so `trajectory` is
+    not the model's choice, and without `model_trajectory` there is nothing to
+    hold it to. A silent fallback would grade the human's plan as the model's.
+    """
+    if row.get("model_trajectory") is not None:
+        return row["model_trajectory"]
+    if row.get("drive", "model") != "model":
+        raise SystemExit(
+            f"dump row @{row['timestamp']} was driven by {row['drive']!r} and has no model_trajectory"
+        )
+    return None
 
 
 def main() -> None:
@@ -182,7 +220,11 @@ def main() -> None:
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
     args = parser.parse_args()
-    args.out.mkdir(parents=True, exist_ok=True)
+    fresh_out(args.out)
+    from gallops.config import REPO_ROOT
+    from gallops.train.swerve import git_sha
+
+    (args.out / "manifest.json").write_text(json.dumps(manifest(args, git_sha(REPO_ROOT)), indent=1) + "\n")
 
     areas: dict[str, DrivableArea] = {}
     if args.drivable:
