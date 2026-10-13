@@ -9,13 +9,14 @@ docs/STRATEGY.md.
 
 The input is the dataset `python -m gallops.data.rerank dataset` builds from
 paddock's candidate dump, not raw model output. Its features are a transcription
-of paddock's; that module says what holds the two equal:
+of paddock's, and that module says what holds the two equal. The dataset holds:
 
     x              (N, K, F)  features of K candidates for N samples
     ade            (N, K)     each candidate's ADE to the logged future
     scene          (N,)       scene id, so held-out selection splits by scene
     feature_names  (F,)       copied into the weights for paddock to check
     dataset, split            what the samples are, for `trained_on`
+    feature_probe_*           optional; copied into the weights (`FEATURE_PROBE`)
 
 The label is a soft target over the K, softmax(-ade / temperature); the loss is
 listwise cross-entropy; the model is a one-hidden-layer MLP trained full-batch
