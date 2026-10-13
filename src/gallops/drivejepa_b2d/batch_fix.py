@@ -19,15 +19,23 @@ fix.
      TemporalSelfAttention flattens element-major. Fixed to ref_pos.repeat_interleave(2, 0) (`apply_enc`).
 
 2 and 3 patch one line of the upstream source each and assert that line is still there, so an upstream change
-fails loudly instead of silently un-fixing. Ported from paddock-ops mtd/stage4/sca_fix.py. Valid Python 3.9:
-it runs inside Drive-JEPA's interpreter."""
+fails loudly instead of silently un-fixing. 1 replaces the whole forward with a copy, so it checks that the
+upstream forward is still the one the copy was made from (its source's sha256). Ported from paddock-ops
+mtd/stage4/sca_fix.py. Valid Python 3.9: it runs inside Drive-JEPA's interpreter."""
 
 from __future__ import annotations
 
+import hashlib
 import inspect
 import textwrap
 
 import torch
+
+#: sha256 of upstream SpatialCrossAttention.forward's source, as inspect.getsource gives it under
+#: Drive-JEPA's Python 3.9 (e21f474, the sha paddock pins; paddock's msda patch does not touch this method).
+#: _sca_forward is that forward with one change, so on any other upstream it would silently revert whatever
+#: upstream changed.
+SCA_UPSTREAM_SHA256 = "fe084490d1709dfccdd669e11040ebe6da9e51565e7ef22e4ed45caf695cbf5a"
 
 
 def _sca_forward(
@@ -116,7 +124,13 @@ def _patch(module, cls_name: str, old: str, new: str, label: str) -> None:
 def apply_sca() -> None:
     from navsim.agents.drive_jepa_perception_based.bevformer import spatial_cross_attention
 
-    spatial_cross_attention.SpatialCrossAttention.forward = _sca_forward
+    cls = spatial_cross_attention.SpatialCrossAttention
+    got = hashlib.sha256(inspect.getsource(cls.forward).encode()).hexdigest()
+    assert got == SCA_UPSTREAM_SHA256, (
+        f"upstream SpatialCrossAttention.forward changed (source sha256 {got[:12]}, the copy was made from "
+        f"{SCA_UPSTREAM_SHA256[:12]}): re-derive _sca_forward from the new one"
+    )
+    cls.forward = _sca_forward
 
 
 def apply_tsa() -> None:
