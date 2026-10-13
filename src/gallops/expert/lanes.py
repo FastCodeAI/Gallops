@@ -122,6 +122,9 @@ def lane_path(nusc_map, x: float, y: float, yaw: float, guide: np.ndarray) -> np
         forward.append(lane[1:])
         length += float(np.linalg.norm(np.diff(lane, axis=0), axis=1).sum())
     ahead = np.vstack(forward)
+    if len(ahead) < 2:
+        # the car is at the very end of a lane with nothing after it: no centreline to follow
+        return None
     direction = ahead[1] - ahead[0]
     direction = direction / max(float(np.linalg.norm(direction)), 1e-9)
     behind = ahead[0] - direction * np.arange(BEHIND_M, 0.0, -SPACING_M)[:, None]

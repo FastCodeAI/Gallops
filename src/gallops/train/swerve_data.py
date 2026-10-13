@@ -73,7 +73,24 @@ def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
 
 @lru_cache(maxsize=32)
 def scene_calibration(nuscenes_root: str, scene_name: str) -> dict:
-    """Per-camera (camera2ego, intrinsics) for one scene, from nuScenes."""
+    """Per-camera (camera2ego, intrinsics) for one scene, from nuScenes.
+
+    Each new scene costs a full parse of the ~1.3 GB sample_data table. For the
+    hundreds of real scenes `gallops.data.nuscenes_real` writes, it precomputes the
+    same first-keyframe records into GALLOPS_SCENE_CALIB/<scene>.json, read here.
+    """
+    import os
+
+    cached = Path(os.environ.get("GALLOPS_SCENE_CALIB", "/nonexistent")) / f"{scene_name}.json"
+    if cached.exists():
+        raw = json.loads(cached.read_text())
+        return {
+            ch: (
+                np.asarray(v["pose"]),
+                np.asarray(v["intrinsics"], dtype=np.float32) if v["intrinsics"] else None,
+            )
+            for ch, v in raw.items()
+        }
     tables = Path(nuscenes_root) / "v1.0-trainval"
     sensors = {s["token"]: s["channel"] for s in json.loads((tables / "sensor.json").read_text())}
     calib = {c["token"]: c for c in json.loads((tables / "calibrated_sensor.json").read_text())}
