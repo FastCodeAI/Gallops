@@ -262,7 +262,18 @@ def train(
         source, split = str(npz["dataset"]), str(npz["split"])
         model_pick = npz["model_pick"] if "model_pick" in npz.files else None
         sample_ids = npz["sample_id"].astype(str) if "sample_id" in npz.files else None
-        geometry = str(npz["image_geometry"]) if "image_geometry" in npz.files else None
+        if "image_geometry" not in npz.files:
+            # Paddock's exporter always writes it now, so its absence means an
+            # export from before it did. The same sample gives different candidates
+            # under another geometry, and paddock's report checks a dump against
+            # model.yaml, never against the weights: a checkpoint that cannot say
+            # which one it saw can be served under the wrong one with every check
+            # passing.
+            raise ValueError(
+                f"{dataset}: no image_geometry, so this export predates paddock recording it; "
+                "re-export it with paddock's current exporter"
+            )
+        geometry = str(npz["image_geometry"])
     check_export(dataset, x, ade, scenes, feature_names, model_pick)
     if sample_ids is not None and sample_ids.shape != (len(x),):
         raise ValueError(f"{dataset}: {sample_ids.shape} sample ids for {len(x)} samples")
@@ -334,10 +345,8 @@ def train(
             "selection_pick_ade": metric,
             "numpy": np.__version__,
             **({"sample_ids_sha256": sample_ids_digest(sample_ids)} if sample_ids is not None else {}),
-            # The camera geometry the candidates were produced under. The same
-            # sample gives different candidates under another, and paddock's
-            # report checks a dump against model.yaml, never against the weights.
-            **({"image_geometry": geometry} if geometry is not None else {}),
+            # The camera geometry the candidates were produced under (see above).
+            "image_geometry": geometry,
         },
     )
     directory = cfg.checkpoint_dir(model, train_run, epoch)

@@ -20,7 +20,7 @@ def a_dataset(path, n=240, k=8, scenes=24, seed=0, **override):
     """Candidates whose ADE is carried by one feature, plus two of noise.
 
     The model's own pick is random, so the trainer has something to beat.
-    `override` replaces or adds arrays, to build a broken export.
+    `override` replaces or adds arrays, to build a broken export; None drops one.
     """
     rng = np.random.default_rng(seed)
     x = rng.normal(size=(n, k, len(FEATURES)))
@@ -33,8 +33,9 @@ def a_dataset(path, n=240, k=8, scenes=24, seed=0, **override):
         dataset=np.array("kitscenes"),
         split=np.array("train"),
         model_pick=rng.integers(0, k, n),
+        image_geometry=np.array("openscene"),
     )
-    np.savez(path, **{**arrays, **override})
+    np.savez(path, **{key: v for key, v in {**arrays, **override}.items() if v is not None})
     return path
 
 
@@ -148,6 +149,7 @@ def test_mismatched_arrays_are_refused(tmp_path):
         feature_names=np.array(FEATURES),
         dataset=np.array("kitscenes"),
         split=np.array("train"),
+        image_geometry=np.array("openscene"),
     )
     with pytest.raises(ValueError, match="disagree"):
         rerank.train(path, a_site(tmp_path), "m", "r", rerank.Settings(epochs=5), "abc1234")
@@ -211,6 +213,7 @@ NAN_X = np.where(np.arange(3) == 1, np.nan, 0.0) * np.ones((240, 8, 3))
         (dict(x=NAN_X), "NaN"),
         (dict(x=np.zeros((240, 8)), ade=np.zeros(240)), "disagree"),
         (dict(sample_id=np.array(["a"] * 239)), "sample ids"),
+        (dict(image_geometry=None), "image_geometry"),
     ],
 )
 def test_an_export_that_would_fit_badly_writes_nothing(tmp_path, dataset, refusal):
