@@ -1,7 +1,7 @@
 # Drive-JEPA retrained on Bench2Drive: the stages behind Split-v4 (Bench2Drive 50 routes, mean DS 68.1).
 #
 #   gallops recipe drivejepa_b2d                       print every command for this machine
-#   gallops recipe drivejepa_b2d split-full --run      run one stage
+#   gallops recipe drivejepa_b2d split-full --run      run one stage (only the named ones: name check-data too)
 #
 # Lineage, data, and what was verified: docs/drivejepa_b2d.md. Every stage refuses to write into an
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
