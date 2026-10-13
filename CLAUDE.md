@@ -37,6 +37,7 @@ gallops show <ckpt-dir>     # what a checkpoint claims about itself
 gallops train-rerank <dataset.npz> --train-run <name>   # re-ranker over a frozen model's candidates
 python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, for paddock to dump candidates for
 python -m gallops.data.rerank dataset <dump.jsonl> --split train -o <dataset.npz>
+gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.

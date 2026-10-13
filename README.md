@@ -37,6 +37,10 @@ package.** It is under
 that ran, in folders numbered in the order the work was done, and is described
 in the next section.
 
+**One recipe:** the training behind Drive-JEPA's Bench2Drive results. It is not
+gallops-v0; it was moved here so it is tracked and portable. See
+[docs/drivejepa_b2d.md](docs/drivejepa_b2d.md).
+
 Read [docs/STRATEGY.md](docs/STRATEGY.md) first. It carries what paddock's
 results already established about what to build, and what this machine can and
 cannot actually do today.
@@ -190,6 +194,7 @@ Four reasons, in increasing order of importance:
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
 | [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
 | [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
+| [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
 
 ## Licence
 
