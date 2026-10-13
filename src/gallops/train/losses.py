@@ -160,6 +160,20 @@ def trajectory_loss(proposal_list, target, anchor_sets, torch):
     return total, winner, anchored
 
 
+def soft_target_floor(targets, torch):
+    """The lowest BCE any scorer can reach on these soft targets: their entropy.
+
+    BCE against a soft target y is minimised at p = y, where it equals
+    -[y log y + (1 - y) log(1 - y)] -- 0.69 at y = 0.5, 0 only at y = 0 or 1.
+    The scorer loss sat at 0.61-0.66 through every run so far, which by itself
+    cannot say whether the scorer learned nothing or was already near this
+    floor. BCE minus the floor is the part that can go to zero, so that is what
+    gets logged beside it.
+    """
+    y = targets.clamp(1e-6, 1 - 1e-6)
+    return -(y * torch.log(y) + (1 - y) * torch.log(1 - y)).mean()
+
+
 def scorer_loss(pred_logit, targets, torch):
     """BCE with logits on the one channel `pdm_score` reads, against soft targets.
 

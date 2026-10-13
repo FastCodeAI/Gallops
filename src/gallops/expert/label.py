@@ -38,6 +38,7 @@ import numpy as np
 from .draw import teach
 from .drivable import DrivableArea
 from .grader import first_hit, grade
+from .lanes import load_references, reference_at
 
 #: Drive-JEPA reads one camera. Half-FOV 32.6 deg (nuScenes CAM_FRONT, fx 1252.8
 #: over 1600 px), mounted 1.72 m ahead of the rear axle. A target that REACTS to a
@@ -111,8 +112,9 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
     actors = json.loads((directory / "actors.json").read_text())
     targets = [a for a in actors if a["is_target_actor"]]
     poses = json.loads((directory / "ego_poses.json").read_text())
-    logged = json.loads((directory / "reference_trajectory.json").read_text())
-    reference = np.asarray([v for _, v in sorted(logged.items(), key=lambda kv: int(kv[0]))])
+    # The lane the car is in at each tick when `gallops.expert.lanes` has run over
+    # this episode; the logged human path otherwise.
+    logged, lanes = load_references(directory)
     frames = {int(p.stem): p for p in (directory / "CAM_FRONT").glob("*.jpg")}
 
     out = []
@@ -121,6 +123,7 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
         if str(stamp) not in poses:
             continue  # a priming call or the impact tick: no pose was logged
         ego2world = np.asarray(poses[str(stamp)])
+        reference, reference_kind = reference_at(stamp, logged, lanes)
         plan = teach(ego2world, stamp, float(row["speed"]), reference, targets, area=area)
         proposals = np.asarray(row["proposals"])
         # The scorer's labels come from the SAME judgement the expert was held to,
@@ -131,7 +134,10 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
         driven = first_hit(np.asarray(row["trajectory"]), ego2world, stamp, targets)
         seen = hazard_bearing(ego2world, stamp, targets)
         bearing, in_frame = seen if seen else (None, False)
-        usable = plan.kind not in REACTIVE or in_frame
+        # A target no car could follow is not taught either: imitating it is
+        # learning to slide sideways. `teach` rejects such plans; this catches the
+        # one it cannot, a nominal plan whose own path is undrivable.
+        usable = (plan.kind not in REACTIVE or in_frame) and plan.drivable
         out.append(
             {
                 "episode": f"{directory.parent.name}/{directory.name}",
@@ -144,6 +150,8 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 "expert": np.asarray(plan.waypoints).round(4).tolist(),
                 "expert_kind": plan.kind,
                 "expert_clear": plan.clear,
+                "expert_drivable": plan.drivable,
+                "reference": reference_kind,
                 "expert_offset_m": round(plan.offset_m, 3),
                 "hazard_bearing_deg": None if bearing is None else round(bearing, 1),
                 "hazard_in_frame": in_frame,
@@ -155,6 +163,12 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
                 "candidate_off_road": [v.off_road_at for v in graded],
                 "candidate_clear": [v.clear for v in graded],
                 "driven_hits": driven,
+                # Who drove at collection, and -- when that was not the model -- what its
+                # own pick would have hit: in GT-driven rounds `driven_hits` is the human's.
+                "driver": row.get("drive", "model"),
+                "model_hits": first_hit(np.asarray(row["model_trajectory"]), ego2world, stamp, targets)
+                if row.get("model_trajectory") is not None
+                else driven,
                 "pdm_score": row.get("pdm_score"),
             }
         )

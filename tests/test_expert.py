@@ -438,7 +438,7 @@ def test_a_displaced_car_is_given_a_drivable_way_back():
     # a straight path running 3 m to the ego's right, i.e. the car is 3 m left of it
     path = np.column_stack([np.linspace(-20, 80, 200), np.full(200, -3.0)])
 
-    correction = rejoin(path, speed=10.0, times=times)
+    correction = rejoin(path, speed=10.0, distances=10.0 * times)
     assert correction[0] == pytest.approx(3.0, abs=0.6), "does not start where the car is"
     assert abs(correction[-1]) < 0.05, "never actually rejoins the path"
 
@@ -452,7 +452,42 @@ def test_a_car_already_on_the_path_gets_no_correction():
 
     times = np.arange(1, 9) * 0.5
     path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
-    assert np.abs(rejoin(path, speed=10.0, times=times)).max() < 1e-3
+    assert np.abs(rejoin(path, speed=10.0, distances=10.0 * times)).max() < 1e-3
+
+
+def test_a_car_braking_to_a_stop_does_not_slide_back_onto_the_path():
+    """The rejoin was timed by the clock, so a plan that stopped within a metre still
+    covered the whole sideways gap: 934 of 9,495 round-0 targets slid up to 2 m
+    sideways, one step pointing 90 deg off the road. Laid out over distance, a car
+    that stops early stops part of the way back, still pointing down the road."""
+    from gallops.expert.draw import _plan_from, undrivable
+
+    path = np.column_stack([np.linspace(-20, 80, 200), np.full(200, 1.0)])  # car 1 m right of it
+    plan = _plan_from(path, speed=2.0, scale=0.0, offset=0.0, ramp_s=1.0)
+    assert undrivable(plan) is None
+    assert plan[-1, 0] < 1.0, "the fixture should stop within a metre"
+    assert abs(plan[-1, 1]) < 0.2, "a stopped car moved sideways"
+    assert np.abs(plan[:, 2]).max() < np.radians(20), "a stopped car turned to face sideways"
+
+
+def test_a_braked_swerve_keeps_its_turning_radius():
+    """Sized for the starting speed, a swerve drawn while braking used to tighten as
+    the car slowed. Laid out over distance it cannot."""
+    from gallops.expert.draw import _plan_from, min_ramp_for, undrivable
+
+    path = np.column_stack([np.linspace(-20, 80, 200), np.zeros(200)])
+    for scale in (1.0, 0.6, 0.3, 0.0):
+        plan = _plan_from(path, speed=8.0, scale=scale, offset=2.0, ramp_s=min_ramp_for(2.0, 8.0))
+        assert undrivable(plan) is None, scale
+
+
+def test_the_drivability_check_flags_a_sideways_slide():
+    from gallops.expert.draw import undrivable
+
+    slide = np.array([[0.3 * k, 0.4 * k, 0.0] for k in range(1, 9)])  # 53 deg off the car's heading at once
+    assert undrivable(slide) is not None
+    straight = np.array([[2.0 * k, 0.0, 0.0] for k in range(1, 9)])
+    assert undrivable(straight) is None
 
 
 def test_the_trainer_still_fits_the_objects_it_drives():
@@ -563,3 +598,50 @@ def test_a_delayed_brake_still_decelerates_at_the_commanded_rate():
     speed = np.gradient(distance, times)
     slowing = np.abs(np.gradient(speed, times))
     assert slowing.max() >= BRAKE_MAX * 0.7, f"peak deceleration only {slowing.max():.1f} m/s^2"
+
+
+def test_the_expert_follows_the_lane_the_car_is_in_when_one_was_computed(tmp_path):
+    """Scene 0058: the human moved one lane over. With the lane centre on file, a
+    plan for an empty road stays in the car's own lane instead of following them,
+    and the label says which path it was drawn against."""
+    import json
+
+    from gallops.expert.label import label_episode
+
+    episode = tmp_path / "stationary-0099" / "run_0"
+    (episode / "CAM_FRONT").mkdir(parents=True)
+    stamps = [1_000_000, 1_100_000]
+    poses = {str(s): np.eye(4).tolist() for s in stamps}
+    (episode / "ego_poses.json").write_text(json.dumps(poses))
+    far = actor_ahead(200.0)
+    (episode / "actors.json").write_text(json.dumps([{**far, "uuid": "x"}]))
+    # the human path runs 3 m to the left, one lane over
+    (episode / "reference_trajectory.json").write_text(
+        json.dumps({str(i): [float(i) - 20.0, 3.0, 0.0] for i in range(120)})
+    )
+    lane = [[float(x), 0.0] for x in range(-10, 90)]
+    (episode / "lane_reference.json").write_text(json.dumps({str(s): lane for s in stamps}))
+    plan = straight(8.0)
+    rows = [
+        {
+            "timestamp": s,
+            "speed": 8.0,
+            "accel": 0.0,
+            "command": 2,
+            "trajectory": plan.tolist(),
+            "proposals": [plan.tolist()] * 32,
+        }
+        for s in stamps
+    ]
+
+    labelled = label_episode(episode, rows)
+    assert all(t["reference"] == "lane" for t in labelled)
+    assert all(t["expert_kind"] == "continue" for t in labelled)
+    assert max(abs(y) for t in labelled for _, y, _ in t["expert"]) < 0.2, "followed the human, not the lane"
+
+    (episode / "lane_reference.json").unlink()
+    drifted = label_episode(episode, rows)
+    assert all(t["reference"] == "logged" for t in drifted)
+    assert max(abs(y) for t in drifted for _, y, _ in t["expert"]) > 1.0, (
+        "fixture should show the old behaviour"
+    )
