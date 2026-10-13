@@ -8,7 +8,7 @@ sideways. It also broke the model. On neuroNCAP scene 0103 the released model
 scores 5.0 ten times out of ten on the stationary and side scenarios; after that
 finetune it scored 1.09 and 0.68 and hit the obstacle in every run, while the
 frontal case it was built for got no better. The run is kept as
-`swerve-stageA-round0-seen` and the numbers in ops/dj_train/reach.json.
+`swerve-stageA-round0-seen`; its reach numbers were in a site-local ops file, not this repo.
 
 Two things caused it, and both are fixed here rather than worked around:
 

@@ -43,7 +43,8 @@ HORIZON = np.round(np.arange(0.1, 4.0001, 0.1), 1)
 #: How far off the logged path a trajectory may go before the NeuRAD
 #: reconstruction stops being something to trust. Reasoned, not measured: one
 #: lane width clears a car, and Drive-JEPA's own episodes stay under 4 m while
-#: the renders are visibly fine. See docs/models/drivejepa-neuroncap.md.
+#: the renders are visibly fine. See paddock's docs/models/drivejepa-neuroncap.md
+#: (on its unmerged `analysis/drivejepa-ncap-candidates` branch).
 TRUST_BAND_M = 4.0
 
 

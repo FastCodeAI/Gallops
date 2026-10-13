@@ -13,7 +13,8 @@ standard [conventions.md](conventions.md) holds both repos to.
 > were trained, and their episodes collected, without the image. The numbers below
 > are what those runs measured; what they say about teaching Drive-JEPA to *see* a
 > hazard and evade does not stand. Fixed here (`camera_extrinsics`) and in paddock
-> #62, and `preflight.py` now refuses a model a blanked camera does not move.
+> #62 (open; paddock `main` still composes LIDAR_TOP), and `preflight.py` now
+> refuses a model a blanked camera does not move.
 >
 > **And batched (2026-10-14).** Every run here trained at `--batch 8`. The vendor's
 > spatial cross-attention picks each camera's queries from batch element 0's mask
@@ -22,13 +23,20 @@ standard [conventions.md](conventions.md) holds both repos to.
 > the model was blind; it would from the first seeing run. Every forward pass is now
 > one tick (`TICKS_PER_PASS` in `swerve_data.py`), and `--batch` refuses anything else.
 
-**Status (2026-10-08): not finished; the capability is still absent.** Eleven
-runs. The only one not worse than the released model is s1, the scorer retrained
-alone: 3.671 against 3.568 over the full neuroNCAP set, +0.10 with a pair-level
-standard error of 0.08, so not a proven win. Every run that retrains the plan
-generator drives faster and loses the braking that earns the released model its
-5.0 on stationary and side. [After the fix](#after-the-fix-l4fix-to-s3) has the
-runs since the pose bug and what they taught.
+**Status (2026-10-12): not finished; the capability is still absent.** Eleven
+runs. On 0103, v4, v4fix and l4fix score above the released model (4.53, 4.51,
+4.40 against 4.05) and s1 matches it (4.04), but those six episodes are what chose
+among the runs, and v4's whole gain is one episode. s1, the scorer retrained
+alone, is the only run taken to the full neuroNCAP set: 3.671 against 3.568,
++0.10 with a pair-level standard error of 0.08, so not a proven win. The runs that
+retrain the refiner after the lane-centre expert (l5, s2, s3) drive faster and lose
+the braking that earns the released model its 5.0 on stationary and side; v4,
+v4fix and l4fix retrained it too and kept it. The open-loop held-out check and
+closed loop disagree about s1: 8% safe picks on 0053's stationary approach ticks,
+yet 5.0 on both stationary 0103 runs and +0.16 per pair on stationary over the full
+set. That is unexplained, so the held-out column below is read as a diagnostic, not
+a ranking. [After the fix](#after-the-fix-l4fix-to-s3) has the runs since the pose
+bug and what they taught.
 
 **v1 to v4 trained their scorers on targets graded from the wrong place.** Found
 on 2026-10-06: the trainer graded each tick as if the car were where the
@@ -72,6 +80,8 @@ drawn target honest.
   would crash is never taught.
 - **Everything goes through the same grader as the model's own 32.** It
   reproduces paddock's `check.json` exactly: 38,080 of 38,080 candidate verdicts.
+  (`check.json` is the output of paddock's `candidate_check.py`, which exists only
+  on paddock branch `analysis/drivejepa-ncap-candidates`, with no PR yet.)
 
 Three data sets, each 150 episodes over the same 15 situations (5 scenes × 3
 hazard types × 10 seeds):
@@ -102,7 +112,7 @@ digest in its `run.json`.
 | v4fix — v4, pose fixed | 2.07 / 5.00 | 5.00 / 5.00 | 5.00 / 5.00 | 4.51 |
 | l4fix — + brake-to-stop expert | 1.41 / 5.00 | 5.00 / 5.00 | 5.00 / 5.00 | 4.40 |
 | l5 — + lane-centre, drivable expert | 3.05 / 3.05 | 2.51 / 2.44 | 2.40 / 2.45 | 2.65 |
-| s1 — scorer only, ranking loss, + GT | 2.02 / 2.23 | 5.00 / 5.00 | 5.00 / 5.00 | 4.04 |
+| s1 — scorer only, ranking loss, + GT (kept frontal-0064) | 2.02 / 2.23 | 5.00 / 5.00 | 5.00 / 5.00 | 4.04 |
 | s2 — refiner only (swerves ×4), then scorer | 2.19 / 2.19 | 5.00 / 1.15 | 1.07 / 1.04 | 2.11 |
 | s3 — DAgger round 1, from s2 | 0.56 / 0.80 | 1.04 / 0.83 | 0.73 / 0.86 | **0.80** |
 
@@ -113,7 +123,14 @@ never run on 0103**: no override run's digest matches its checkpoint. Measured
 offline, its capped target tied braking with full speed and the model sped up 26%
 where the expert braked 38%; v4 replaced it the same day.
 
-**v4 is the best result and it is not the capability we wanted.** It drives like
+**v4 has the highest mean here, and that is selection, not a result.** It is the
+best of four checkpoints chosen on these same six 0103 episodes, and its whole
++0.47 over the released model is one episode: frontal run_1 scored 5.0 where the
+released model averages 2.16, and (5.0 − 2.16) / 6 = 0.47; the other five tie or
+match the released model. Its sidecar's `selection_split` says 0053, but 0103 is
+what chose among v1–v4. "Beats" needs a split nothing was chosen on.
+
+**And it is not the capability we wanted.** It drives like
 the released model with harder braking: 0.11–0.21 m of lateral motion, slowing
 from 7.7 to about 2 m/s. On held-out swerve ticks it moves 0.07 m where the
 expert asks for 4.59. The frontal gain is lower impact speed, plus one seed of
@@ -125,6 +142,16 @@ Two provenance notes on the v4 row. **The v4 checkpoint trained on
 on 2026-10-06. Its sidecar recorded neither, and said "stage A — refiner only"
 for a joint run; it now records both, correctly. And **all four scorers carry
 defect 6.**
+
+Two sidecars name a commit that did not train them, because `train_git_sha` was
+read at each save from whatever was checked out by then (the sha is now taken once,
+by the preflight). **v4fix's says 85e1f9c; c18f488 trained it** (its chain log;
+85e1f9c was committed mid-run), so v4fix ran without the preflight and without the
+history skip. **l5's says a9ef8ba; cdfdb64 trained it** (a9ef8ba was committed 80
+minutes into the epoch, and l5's sidecar lacks the fields a9ef8ba writes). Neither
+sidecar is edited. **s1 kept frontal-0064**: it predates `--exclude-episodes`, and
+882 of its 10,499 ticks (8.4%) were graded against a car that never renders; its
+sidecar records no exclusion, which is true.
 
 ## The six defects, and what found each
 
@@ -199,6 +226,13 @@ Re-grading round 0's dumped proposals both ways measured what it cost:
 | frontal | 13.8 m | **36.6%** of 3,008 |
 | side | 15.6 m | 1.6% of 3,808 |
 
+This table fills the cache from each episode's earliest tick, which is `reach.py`'s
+order. The trainer filled its cache in epoch 0's shuffle order; regrading a 1-in-20
+sample of v2's train ticks that way gave mean pose errors of 7.4 / 7.5 / 6.3 m and
+wrong verdicts on 19.0% / 16.0% / 12.2% (stationary / frontal / side; measured in
+#3's review). The conclusion stands; the side row understates what the trainer got
+wrong.
+
 The lane term was measured from the wrong place on nearly every tick. Progress is
 the one term that needs no pose, and it was the one part of the target that was
 right — which fits what v4 learned: to travel as far as the expert, and nothing
@@ -255,7 +289,9 @@ ticks it cannot rebuild, and samples each episode's earliest tick.
 ## After the fix: l4fix to s3
 
 Each row changes one thing from the one above, for the reason given. "Held out"
-is [train/safety_check.py](../src/gallops/train/safety_check.py) on scene 0053,
+was produced by the ops copy of what is now
+[train/safety_check.py](../src/gallops/train/safety_check.py) (the module was
+checked against that copy on scene 0075 only), on scene 0053,
 never trained on: the share of approach ticks (stationary, expert brakes) where
 the model's pick is safe. The released model scores 89%.
 
@@ -446,18 +482,33 @@ Built because the obvious measurement was the wrong one more than once.
   labels used the lane centre, and only a training scene exposed it.
 - [train/export.py](../src/gallops/train/export.py) — `model.pt` to the vendor's
   checkpoint shape, so paddock's adapter needs no change to evaluate a finetune.
-- `ops/dj_video/compare.py` — two runs side by side, each panel carrying its own
-  score, which is the only form in which "it swerved the wrong way" is obvious.
-- `plot_expert_cases.py` — the camera the model read beside the same tick from
-  above. Three of the six defects above were found in a picture.
+- *Not in this repo:* a side-by-side video of two runs, each panel carrying its
+  own score, which is the only form in which "it swerved the wrong way" is obvious;
+  and a plot of the camera the model read beside the same tick from above. Three of
+  the six defects above were found in a picture. Both are site-local ops scripts.
 
 ## Reproducing
 
+The trainer runs in Drive-JEPA's own interpreter, Python 3.9, where `pip install
+-e .` is refused (`requires-python >=3.11`). The route there is the path, not an
+install: gallops' `src/` and paddock's `src/` on `PYTHONPATH` (the trainer imports
+paddock's `Command`), and `tomli` installed, the name `tomllib` had before 3.11
+(`config.py` falls back to it).
+
 ```bash
-bash ops/dj_train/run_joint.sh                        # train, detached, resumable; passes --dumps
-bash ops/dj_train/evaluate.sh <run> <step>            # reach, smoke on 0103, videos
+export PYTHONPATH=<gallops>/src:<paddock>/src GALLOPS_CONFIG=<gallops>/gallops.toml
+<drive-jepa python> -m gallops.train.swerve --source <labelled> <dumps> start \
+    --train-run <a new name> --held-out 0053 --drivable <rasters> --epochs 1
+<drive-jepa python> -m gallops.train.export --run {weights}/drivejepa_swerve/<run>
+<drive-jepa python> -m gallops.train.reach --labelled <labelled> --run {weights}/drivejepa_swerve/<run>
 python -m gallops.expert.rounds show --root <runs>    # which rounds exist
 ```
+
+The runs above were launched by site-local wrappers of these commands, which are
+in neither repo; the commands here are the reproducible form. A `--train-run` that
+already holds a fit is refused, so a run is not resumed by rerunning it. The 0103
+smokes are paddock neuroNCAP runs with `DRIVEJEPA_CHECKPOINT` set to an exported
+`agent.ckpt`.
 
 The trainer requires `--dumps`: the candidate dumps the labels were made from,
 collected by the weights training starts from. The preflight re-grades them
@@ -477,12 +528,13 @@ by s2, and comparing the released weights with it would fail for the right reaso
 The stages since s1 train one part at a time:
 
     --train-only scorer --rank-weight 1.0                    # s1, and the second stage of s2, s3
-    --train-only refiner --oversample swerve=4               # the first stage of s2, s3
+    --train-only refiner --oversample swerve=4 --oversample swerve+brake=4   # first stage of s2, s3
     --init <checkpoint>/model.pt                             # start from a previous run, after the preflight
     --exclude-episodes frontal-0064                          # its inserted car never renders
 
     python -m gallops.train.safety_check --labelled <dir> --drivable <dir> \
         --scene 0053 [--shape frontal --kind swerve] --checkpoint NAME=<model.pt> --out check.json
+
 Episodes are keyed by their directory, not their name: round 1 replays round 0's
 scenarios and seeds, so `stationary-0070/run_3` and its timestamps exist once per round.
 
