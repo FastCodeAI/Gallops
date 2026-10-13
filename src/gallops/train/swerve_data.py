@@ -35,7 +35,7 @@ so the model applies `lidar2img` straight to sample points in ego coordinates.
 This module used to compose nuScenes' real LIDAR_TOP into the extrinsics, copying
 paddock; LIDAR_TOP is yawed -90 degrees, so no sample point landed in the front
 image and the model planned from ego status alone. Every episode collected before
-paddock #62 was driven by that camera-blind model, and every checkpoint trained
+paddock #62 (open) was driven by that camera-blind model, and every checkpoint trained
 here before this fix (stage A, joint v1-v4, v4fix, l4fix, l5, s1-s3, the cached
 scorers) learned from features with no image in them. The fidelity check now
 refuses those collections, rightly; the sight check in `preflight.py` refuses a

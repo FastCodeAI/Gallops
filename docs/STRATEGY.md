@@ -8,6 +8,18 @@ Everything below that cites a number is citing a measurement recorded in
 paddock, not an opinion. Where something is argued rather than measured, it says
 so — that distinction is the standard both repos are held to.
 
+> **Correction (2026-10-12): every Drive-JEPA neuroNCAP number on this page is
+> camera-blind** (§1's table and §6's 3.57). Paddock placed its cameras relative to
+> nuScenes' LIDAR_TOP, which is yawed −90°, and the model reads the image at points
+> it treats as lidar-frame (NAVSIM's lidar frame is the ego frame), so none landed
+> in the front image and it planned from ego status alone. The fix is paddock #62
+> (open; paddock `main` still composes LIDAR_TOP). On scene 0103 the seeing model
+> scores frontal 2.36, stationary 5.0 and side 1.67 (run `20261012T205915-7153f0`,
+> on #62's branch, 3 runs each, `valid: false`), against 2.14 / 5.0 / 5.0 blind
+> (runs 0–2 of scene 0103 in `20260905T220225-f11ac0`), because it now drives at a
+> normal pace and the crossing car hits it. A full sweep replaces 3.57. Its
+> KITScenes and NAVSIM rows are unaffected (identity lidar2ego there).
+
 ---
 
 ## Why this repo exists
@@ -53,14 +65,7 @@ sample-for-sample:
 | Alpamayo − Drive-JEPA | +0.16 | 0.14 | 1.12 |
 | Alpamayo − VisionPilot | **+2.15** | 0.17 | **12.89** |
 
-> **Correction (2026-10-12): Drive-JEPA's row is camera-blind.** Paddock placed its
-> cameras relative to nuScenes' LIDAR_TOP, which is yawed −90°, and the model reads
-> the image at points it treats as lidar-frame (NAVSIM's lidar frame is the ego
-> frame), so none landed in the front image and it planned from ego status alone.
-> Fixed in paddock #62; on scene 0103 the seeing model scores frontal 2.36, stationary
-> 5.0 and side 1.67 (3 runs each, against 2.14 / 5.0 / 5.0 blind), because it now
-> drives at a normal pace and the crossing car hits it. A full sweep replaces 3.57.
-> Its KITScenes and NAVSIM rows are unaffected (identity lidar2ego there).
+> Drive-JEPA's row is camera-blind; see the correction at the top of this page.
 
 **The top three are statistically indistinguishable.** A 10 B vision-language
 model needing 26 GB of VRAM is tied, on collision avoidance, with a 60.9 MB
@@ -142,7 +147,7 @@ paddock's `docs/design/model-card-and-latency.md`.
 | VisionPilot, NAVSIM | 0.640 (4 scenarios) | **0.431** (12,146) |
 | Alpamayo, NAVSIM | 0.226 (4 scenarios) | **0.608** (12,146) |
 | Alpamayo, neuroNCAP | 2.46 (1 scene) | **3.73** (20 pairs) |
-| Drive-JEPA, neuroNCAP | 4.04 (1 scene) | **3.57** (20 pairs) |
+| Drive-JEPA, neuroNCAP (camera-blind; see the top) | 4.04 (1 scene) | **3.57** (20 pairs) |
 | OpenPilot, neuroNCAP | 3.80 | **void** — a one-hot bug; all runs `valid: false` |
 
 Paddock's roadmap draws the lesson — "Sample size is the lesson… Two conclusions

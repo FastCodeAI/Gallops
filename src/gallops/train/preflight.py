@@ -46,7 +46,7 @@ Three groups, cheapest first:
                anything is counted.
     sight      the starting weights' plan changes when the front camera is
                blanked. Fidelity compares the trainer with a recording, and a
-               recording can carry the same mistake: before paddock #62 both
+               recording can carry the same mistake: before paddock #62 (open) both
                placed the cameras relative to nuScenes' LIDAR_TOP (yawed -90
                degrees), no image sample landed in the frame, and fidelity
                passed because the model had driven blind too. Stage A through
