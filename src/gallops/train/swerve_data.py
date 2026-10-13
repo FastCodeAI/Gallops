@@ -87,8 +87,27 @@ HISTORY_TOLERANCE_S = 0.05
 #: has at inference. Until that selection is per element, every pass is one tick.
 TICKS_PER_PASS = 1
 
-#: NeuroNCAP's Command enum -> NAVSIM's one-hot [left, straight, right, unknown].
-COMMAND_ONE_HOT = {0: [0, 0, 1, 0], 1: [1, 0, 0, 0], 2: [0, 1, 0, 0], 3: [0, 0, 0, 1]}
+
+def command_one_hot() -> dict[int, list[int]]:
+    """Paddock's `Command`, as the dumps record it, -> NAVSIM's one-hot [left, straight, right, unknown].
+
+    Keyed by paddock's own enum, imported rather than restated: it is paddock's
+    adapter that turned each Command into the one-hot the model saw, and a copy of
+    the numbers here would go on agreeing with itself after paddock's moved.
+    """
+    try:
+        from paddock.policy.protocol import Command
+    except ModuleNotFoundError as error:
+        raise SystemExit(
+            "paddock is not importable: put paddock's src/ on PYTHONPATH (CLAUDE.md: contracts are "
+            "imported, never restated)"
+        ) from error
+    return {
+        int(Command.LEFT): [1, 0, 0, 0],
+        int(Command.STRAIGHT): [0, 1, 0, 0],
+        int(Command.RIGHT): [0, 0, 1, 0],
+        int(Command.FOLLOW_REFERENCE): [0, 0, 0, 1],
+    }
 
 
 def one_tick_per_pass(batch: int | str) -> int:
@@ -269,6 +288,7 @@ class TickDataset:
         self._bev_cache: dict[str, dict] = {}
         self._feature_builder = None
         self._frames: dict[str, np.ndarray] = {}
+        self._command = command_one_hot()
 
     def __len__(self) -> int:
         return len(self.ticks)
@@ -310,7 +330,7 @@ class TickDataset:
                     ego_pose=relative_pose(pose, current_pose),
                     ego_velocity=np.array([tick["speed"], 0.0], dtype=np.float32),
                     ego_acceleration=np.array([tick["accel"], 0.0], dtype=np.float32),
-                    driving_command=np.array(COMMAND_ONE_HOT[int(tick["command"])], dtype=np.int64),
+                    driving_command=np.array(self._command[int(tick["command"])], dtype=np.int64),
                 )
             )
             # `resized` is the fast path: the model reads cam_f0 cropped to
