@@ -49,6 +49,7 @@ class TestGrader:
             pytest.skip("set NEURO_NCAP_REPO to check the constants against the vendor")
         source = (__import__("pathlib").Path(repo) / "neuro_ncap" / "evaluation" / "collision.py").read_text()
         assert "4.018" in source and "1.85" in source
+        assert "0.5" in source, "the box centre sits 0.5 m ahead of the rear axle"
 
     def test_a_box_dead_ahead_is_a_collision(self):
         verdict = grader.grade(straight(10.0), np.eye(4), 0, [actor_ahead(15.0)])
@@ -276,14 +277,19 @@ class TestDrivableArea:
             location="test",
         )
         reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200), np.zeros(200)])
-        blocker = actor_ahead(26.0)
-        blocker["poses"] = [np.array(p) for p in blocker["poses"]]
-        for pose in blocker["poses"]:
-            pose[1, 3] = -0.4  # slightly right, so "away" would be left... then flip
-        blocker["poses"] = [p.tolist() for p in blocker["poses"]]
+        # Oncoming at 8 m/s and slightly LEFT, so "away from it" is right, off the
+        # road. Parked, the expert brakes instead, and this test never asserted.
+        poses = []
+        for t in (-10.0, 10.0):
+            pose = np.eye(4)
+            pose[:2, :2] = [[-1.0, 0.0], [0.0, -1.0]]
+            pose[0, 3], pose[1, 3] = 40.0 - 8.0 * t, 0.4
+            poses.append(pose.tolist())
+        blocker = {"timestamps": [-10e6, 10e6], "poses": poses, "dims": [1.9, 4.5, 1.6]}
+        blocker["is_target_actor"] = True
         plan = draw.teach(np.eye(4), 0, 9.0, reference, [blocker], area=shifted)
-        if plan.kind == "swerve":
-            assert plan.offset_m > 0, "the only drivable side is to the left"
+        assert plan.kind == "swerve", plan.kind
+        assert plan.offset_m > 0, "the only drivable side is to the left"
 
 
 class TestRounds:
