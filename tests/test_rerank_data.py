@@ -251,3 +251,54 @@ def test_a_flag_that_disagrees_with_the_rows_is_refused(tmp_path, flags, refusal
 def test_a_dump_that_does_not_say_its_split_is_refused(tmp_path, override):
     with pytest.raises(SystemExit, match="tier, split"):
         an_export_of([a_dump(tmp_path / "train.jsonl", **override)], tmp_path / "x.npz")
+
+
+def test_the_weights_carry_a_feature_probe_a_reader_can_recompute(tmp_path):
+    """The score probe replays stored features, so only this one sees the feature copies part.
+
+    Paddock's loader does not recompute it yet; this pins gallops' half: the
+    raw inputs reach the weights, and a definition that drifted disagrees with them.
+    """
+    out = an_export(a_dump(tmp_path / "train.jsonl"), tmp_path / "train.npz")
+    site = SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+    result = rerank.train(out, site, "m", "r", rerank.Settings(hidden=4, epochs=5), "abc1234")
+
+    with np.load(result.directory / rerank.WEIGHTS_NAME) as npz:
+        assert str(npz["format"]) == rerank.FORMAT
+        probe = {key: npz[key] for key in rerank.FEATURE_PROBE}
+    keys = ("feature_probe_proposals", "feature_probe_logits", "feature_probe_speed")
+    inputs = zip(*(probe[key] for key in keys), strict=True)
+    recomputed = np.stack([data.candidate_features(*sample) for sample in inputs])
+    assert recomputed.shape == (data.FEATURE_PROBE_SAMPLES, 3, len(data.FEATURE_NAMES))
+    np.testing.assert_array_equal(recomputed, probe["feature_probe_x"])
+
+    # travel_1s read from the wrong waypoint: the drift the score probe passes.
+    drifted = recomputed.copy()
+    drifted[..., 6] = np.linalg.norm(probe["feature_probe_proposals"][:, :, 2, :2], axis=-1)
+    assert not np.allclose(drifted, probe["feature_probe_x"])
+
+
+@pytest.mark.parametrize(
+    "probe, refusal",
+    [
+        (dict(feature_probe_x=np.zeros((4, 3, 18))), "needs all of"),
+        ("short", "does not fit"),
+    ],
+)
+def test_a_feature_probe_that_cannot_be_replayed_writes_nothing(tmp_path, probe, refusal):
+    out = an_export(a_dump(tmp_path / "train.jsonl"), tmp_path / "train.npz")
+    with np.load(out) as npz:
+        arrays = {key: npz[key] for key in npz.files}
+    for key in rerank.FEATURE_PROBE:
+        if probe == "short":
+            if arrays[key].ndim > 1:
+                arrays[key] = arrays[key][:, :2]  # two candidates of the export's three
+        else:
+            arrays.pop(key)
+    if probe != "short":
+        arrays.update(probe)
+    np.savez(tmp_path / "broken.npz", **arrays)
+    site = SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+    with pytest.raises(ValueError, match=refusal):
+        rerank.train(tmp_path / "broken.npz", site, "m", "r", rerank.Settings(hidden=4, epochs=5), "abc1234")
+    assert not (tmp_path / "weights").exists() or not any((tmp_path / "weights").rglob("*.npz"))

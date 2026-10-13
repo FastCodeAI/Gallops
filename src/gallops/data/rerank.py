@@ -24,12 +24,17 @@ only check that record.
 `adapters/models/drivejepa_rerank/ranker.py`. Neither repo imports the other,
 so `candidate_features` below is a transcription of it. Weights fitted to a
 different definition would still load and pass paddock's probe, which replays
-the forward pass on stored features, and then drive the wrong candidate. Two
-checks hold the copies equal:
+the forward pass on stored features, and then drive the wrong candidate. What
+holds the copies equal:
 - paddock's loader refuses weights whose `feature_names` differ from its own
 - both repos test their copy against the same input and expected values
   (`GOLDEN` in tests/test_rerank_data.py here, `test_features_match_gallops`
   in paddock's drivejepa_rerank tests)
+- the export keeps a feature probe, the raw inputs of its first few samples
+  with their features, and the trainer copies it into the weights
+  (`gallops.train.rerank.FEATURE_PROBE`), so a reader can recompute it with
+  its own definition. Paddock's loader does not do so yet: until it does, the
+  two tests above are the only check, and each guards only its own side.
 Change one, change both.
 
 numpy only.
@@ -45,6 +50,7 @@ from pathlib import Path
 import numpy as np
 
 from gallops.config import ConfigError, SiteConfig
+from gallops.train.rerank import FEATURE_PROBE
 
 # --- which keyframes -----------------------------------------------------------
 
@@ -231,6 +237,22 @@ def features_and_labels(rows: list[dict]):
     return np.stack(x), np.array(ade), np.array(picks), np.array(scenes)
 
 
+#: Samples whose raw inputs the export keeps as its feature probe.
+FEATURE_PROBE_SAMPLES = 4
+
+
+def feature_probe(rows: list[dict], x: np.ndarray) -> dict[str, np.ndarray]:
+    """The first few samples' raw candidates, logits and speed, beside the features built from them."""
+    head = rows[:FEATURE_PROBE_SAMPLES]
+    inputs = (
+        np.array([r["proposals"] for r in head], dtype=np.float64),
+        np.array([r["logits"] for r in head], dtype=np.float64),
+        np.array([speed(r) for r in head]),
+        x[: len(head)],
+    )
+    return dict(zip(FEATURE_PROBE, inputs, strict=True))
+
+
 def export(args: argparse.Namespace) -> None:
     rows = load_rows(args.candidates)
     geometry = geometry_of(rows)
@@ -250,6 +272,7 @@ def export(args: argparse.Namespace) -> None:
         dataset=np.array(dataset),
         split=np.array(split),
         image_geometry=np.array(geometry),
+        **feature_probe(rows, x),
     )
     n_scenes = len(set(scenes.tolist()))
     print(f"wrote {args.output}: {len(rows)} samples, {n_scenes} scenes, {x.shape[-1]} features")
