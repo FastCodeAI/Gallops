@@ -15,8 +15,9 @@ comparison is the heart of this module, and it fails loudly on that bug.
 
 Three groups, cheapest first:
 
-    code       the tree is committed, so `train_git_sha` names the code that
-               ran, and the test suite passes under the interpreter that trains
+    code       the tree is committed, and its sha -- taken here, once -- is the
+               `train_git_sha` of every checkpoint the run writes; the test
+               suite passes under the interpreter that trains
     grading    on a sample of ticks, the trainer's own grading path -- the
                Referee -- reproduces what labelling recorded, EXACTLY: the
                expert's verdict, the driven plan's hit time, and all 32
@@ -123,6 +124,14 @@ def code_checks(repo: Path) -> tuple[dict, list[str]]:
             "commit first, so train_git_sha names the code that actually ran"
         )
     report["git_clean"] = status.returncode == 0 and not status.stdout.strip()
+    # The sha is taken HERE, beside the check that makes it mean something, and the
+    # trainer writes this one into every sidecar of the run. Read again at save time
+    # it names whatever was checked out by then: v4fix's sidecar says 85e1f9c and
+    # c18f488 trained it; l5's says a9ef8ba and cdfdb64 trained it.
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True)
+    report["sha"] = (
+        head.stdout.strip() + ("" if report["git_clean"] else "-dirty") if head.returncode == 0 else "unknown"
+    )
 
     env = dict(os.environ, PYTHONPATH=str(repo / "src") + os.pathsep + os.environ.get("PYTHONPATH", ""))
     tests = subprocess.run(

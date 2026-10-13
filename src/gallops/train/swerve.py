@@ -54,7 +54,7 @@ from pathlib import Path
 import numpy as np
 
 from gallops import checkpoint as sidecar
-from gallops.config import SiteConfig
+from gallops.config import REPO_ROOT, SiteConfig
 from gallops.expert.grader import grade
 from gallops.expert.lanes import load_references, reference_at
 from gallops.train.losses import (
@@ -102,16 +102,49 @@ def excluded(ticks: list[dict], prefixes: list[str]) -> list[dict]:
     return [t for t in ticks if not any(t["episode"].startswith(p) for p in prefixes)]
 
 
+#: The paddock adapter family these checkpoints load under.
+MODEL = "drivejepa_swerve"
+
+
 def git_sha(repo: Path) -> str:
+    """HEAD, with `-dirty` when `src/` or `tests/` hold uncommitted changes."""
     try:
-        return subprocess.run(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        head = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain", "--", "src", "tests"],
             capture_output=True,
             text=True,
             check=True,
         ).stdout.strip()
+        return head + ("-dirty" if dirty else "")
     except Exception:
         return "unknown"
+
+
+def head_moved(started: str, repo: Path) -> dict:
+    """`{"git_head_at_save": sha}` when HEAD is no longer the commit the run started from.
+
+    The sidecar's `train_git_sha` is the start's (the preflight's), because that is
+    the code Python loaded. A checkout or commit during the run does not change it,
+    but a reader should know the tree moved under the run, so it is recorded beside.
+    """
+    now = git_sha(repo)
+    return {} if now == started else {"git_head_at_save": now}
+
+
+def fresh_run(cfg: SiteConfig, train_run: str) -> Path:
+    """The run directory for `train_run`, refused if a fit is already in it.
+
+    One fit is one run. Rerun into an existing one and the new fit starts again from
+    the released weights, overwrites step directories it reaches and lands new ones
+    beside the old fit's -- which paddock then groups as one sweep.
+    """
+    run = cfg.checkpoint_dir(MODEL, train_run, 0).parent
+    if run.exists() and any(run.iterdir()):
+        raise SystemExit(f"{run} already holds a fit; one fit is one run -- choose a new --train-run")
+    return run
 
 
 def load_ticks(labelled: Path, blind: bool = False, source: int = 0) -> list[dict]:
@@ -457,6 +490,8 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = SiteConfig.load()
+    out_root = fresh_run(cfg, args.train_run)  # before any of the minutes below
+    loaded = git_sha(REPO_ROOT)  # the commit whose modules this process imported
     # The agent reads these at construction, exactly as paddock's model.yaml
     # supplies them to its node. NAVSIM_EXP_ROOT in particular is where it looks
     # for the V-JEPA weights the encoder is built on.
@@ -567,7 +602,7 @@ def main() -> None:
     from gallops.train import preflight
 
     checked = preflight.run(
-        Path(__file__).resolve().parents[3],
+        REPO_ROOT,
         train,
         referee,
         sources,
@@ -576,6 +611,12 @@ def main() -> None:
         torch,
         args.device,
     )
+
+    if checked["code"]["sha"] != loaded:
+        raise SystemExit(
+            f"HEAD moved from {loaded} to {checked['code']['sha']} while the model loaded; the "
+            "preflight checked a tree this process did not import -- start again"
+        )
 
     if args.init:
         # Only now: the preflight above held the released weights to the dumps they drove,
@@ -586,12 +627,12 @@ def main() -> None:
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
-    out_root = Path(cfg.resolve("{weights}")) / "drivejepa_swerve" / args.train_run
     out_root.mkdir(parents=True, exist_ok=True)
     # One JSON line per 25 training steps and per held-out check, beside the
-    # checkpoints, so curves can be drawn from the run itself.
+    # checkpoints, so curves can be drawn from the run itself. "x": a second fit
+    # appending here would put two runs' curves under both runs' sidecars.
     metrics_path = out_root / "metrics.jsonl"
-    metrics = metrics_path.open("a")
+    metrics = metrics_path.open("x")
 
     def record(kind: str, **fields) -> None:
         metrics.write(json.dumps({"kind": kind, "time": round(time.time(), 1), **fields}) + "\n")
@@ -695,15 +736,18 @@ def main() -> None:
             flush=True,
         )
 
-        directory = out_root / f"step_{step:09d}"
+        directory = cfg.checkpoint_dir(MODEL, args.train_run, step)
         directory.mkdir(parents=True, exist_ok=True)
         torch.save({k: v for k, v in model.state_dict().items()}, directory / "model.pt")
+        moved = head_moved(checked["code"]["sha"], REPO_ROOT)
+        if moved:
+            print(f"  HEAD moved during the run to {moved['git_head_at_save']}; recorded beside", flush=True)
         sidecar.write(
             directory,
             sidecar.Checkpoint(
-                model="drivejepa_swerve",
+                model=MODEL,
                 step=step,
-                train_git_sha=git_sha(Path(__file__).resolve().parents[3]),
+                train_git_sha=checked["code"]["sha"],
                 train_run=args.train_run,
                 trained_on=(
                     sidecar.TrainedOn(
@@ -732,6 +776,7 @@ def main() -> None:
                     "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
                     "excluded_scenes": args.exclude_scene,
+                    **moved,
                 },
             ),
         )

@@ -200,10 +200,47 @@ def test_code_checks_refuse_uncommitted_source(tmp_path):
     report, problems = preflight.code_checks(repo)
     assert problems == [], problems
     assert report["git_clean"]
+    head = subprocess.run([*git, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    assert report["sha"] == head, "the sha every sidecar of the run records is taken here"
 
     (repo / "src" / "thing.py").write_text("X = 2\n")
-    _, problems = preflight.code_checks(repo)
+    report, problems = preflight.code_checks(repo)
     assert any("uncommitted" in p for p in problems), problems
+    assert report["sha"] == head + "-dirty"
+
+
+def test_a_commit_during_the_run_does_not_change_the_recorded_sha(tmp_path):
+    """v4fix's sidecar named 85e1f9c, committed mid-run; c18f488 had trained it."""
+    from gallops.train.swerve import git_sha, head_moved
+
+    repo = tmp_path / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "tests").mkdir()
+    (repo / "src" / "thing.py").write_text("X = 1\n")
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(repo)]
+    subprocess.run([*git, "init", "-q"], check=True)
+    subprocess.run([*git, "add", "."], check=True)
+    subprocess.run([*git, "commit", "-qm", "one"], check=True)
+    started = git_sha(repo)
+    assert head_moved(started, repo) == {}
+    (repo / "src" / "thing.py").write_text("X = 2\n")
+    subprocess.run([*git, "commit", "-qam", "two"], check=True)
+    moved = head_moved(started, repo)
+    assert moved["git_head_at_save"] == git_sha(repo) != started
+
+
+def test_a_second_fit_into_an_existing_run_is_refused(tmp_path):
+    from gallops.config import SiteConfig
+    from gallops.train.swerve import MODEL, fresh_run
+
+    cfg = SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+    run = fresh_run(cfg, "smoke")
+    assert run == cfg.checkpoint_dir(MODEL, "smoke", 1).parent and not run.exists()
+    run.mkdir(parents=True)
+    assert fresh_run(cfg, "smoke") == run  # an empty directory is not a fit
+    (run / "metrics.jsonl").write_text("")
+    with pytest.raises(SystemExit, match="already holds a fit"):
+        fresh_run(cfg, "smoke")
 
 
 def test_a_failure_lists_every_problem():
