@@ -1,0 +1,555 @@
+"""Rebuild the model's own inputs from a collected tick, so training sees what it saw.
+
+A labelled tick names one frame. Drive-JEPA needs more: two front frames half a
+second apart, a four-frame ego-status history, and calibration for four camera
+slots. All of it is recoverable from the episode directory the engine wrote --
+frames are keyed by timestamp, and so are the ego poses.
+
+The training preflight (`preflight.py`) rebuilds sampled ticks, runs the starting
+weights on them, and compares the plan with the one the dump recorded at the time.
+They do NOT agree to floating-point noise, and that is measured, not assumed:
+over 506 round-0 ticks the rebuilt pick sits a median 0.29% of four seconds'
+travel from the driven one, most likely the JPEG round trip -- the logger saved
+the frames the model was sent, re-encoded. Where the input cannot be rebuilt at
+all the gap is metres; see `HISTORY_TOLERANCE_S`.
+
+**Only the front camera's pixels exist, and only the front camera's pixels are
+read.** `_get_camera_feature` uses `cam_f0` alone (the "stitch l0, f0, r0" comment
+in the vendor file is stale), and the four-view tensor the feature builder also
+assembles is read nowhere in the model. But the projection matrices ARE built from
+all four slots in the order [b0, f0, l0, r0], skipping any slot with no image, and
+the model then keeps index 1 -- so dropping the three unread cameras silently
+shifts the front camera's projection to another slot. They are supplied as blank
+images of the right shape for that reason alone: to hold the ordering. Nothing
+reads their contents.
+
+**The model looks back exactly once: the front frame 0.5 s ago.** The feature
+builder assembles a four-frame ego-status history, but `DriveJEPAModel.forward`
+reads only `ego_status[:, -1]`, the current one, so the speed and acceleration
+copied into the older slots are never read. The pixels it does read from the past
+are `camera_feature_2`, the frame nearest 0.5 s back.
+
+**The cameras sit on the ego frame** (`camera_extrinsics`). NAVSIM gives each
+camera relative to the lidar, and in OpenScene the lidar frame is the ego frame,
+so the model applies `lidar2img` straight to sample points in ego coordinates.
+This module used to compose nuScenes' real LIDAR_TOP into the extrinsics, copying
+paddock; LIDAR_TOP is yawed -90 degrees, so no sample point landed in the front
+image and the model planned from ego status alone. Every episode collected before
+paddock #62 (open) was driven by that camera-blind model, and every checkpoint trained
+here before this fix (stage A, joint v1-v4, v4fix, l4fix, l5, s1-s3, the cached
+scorers) learned from features with no image in them. The fidelity check now
+refuses those collections, rightly; the sight check in `preflight.py` refuses a
+model whose plan does not move when the camera is blanked.
+
+Transcribed from paddock's `adapters/models/drivejepa/policy.py`, which built the
+same AgentInput when these episodes were driven. The repos do not import each
+other, so the preflight's fidelity check is what keeps the copy honest -- and it
+kept the bug too, because a copy that agrees with its source cannot say the
+source is wrong. The sight check is the one whose reference is no recording.
+"""
+
+from __future__ import annotations
+
+import json
+from functools import lru_cache
+from pathlib import Path
+
+import numpy as np
+
+CAMERA_SLOTS = ("cam_b0", "cam_f0", "cam_l0", "cam_r0")
+NUSCENES_CAMERAS = {
+    "cam_f0": "CAM_FRONT",
+    "cam_l0": "CAM_FRONT_LEFT",
+    "cam_r0": "CAM_FRONT_RIGHT",
+    "cam_b0": "CAM_BACK",
+}
+HISTORY_FRAMES = 4
+HISTORY_DT = 0.5
+#: How far the frame chosen as "0.5 s ago" may sit from 0.5 s ago. Frames are
+#: exactly 0.1 s apart on disk (round 0, every gap), so a real one is at 0 s; at
+#: 0.1 s the tolerance would wave through tick 4, whose "past" is the first frame
+#: 0.4 s back. A tick in an episode's first half second
+#: needs one of the engine's priming frames there, which the logger never saves;
+#: nearest-stamp selection then hands the model the episode's first frame as its
+#: past, and the rebuilt pick lands a median 0.4-0.5 m (p90 2.4 m) from the one it
+#: drove, against 0.10 m once the frame exists (round 0, 506 ticks). Such a tick
+#: cannot be rebuilt, so it is not trained on.
+HISTORY_TOLERANCE_S = 0.05
+#: Ticks per forward pass of the vendor model, everywhere. Its spatial cross-attention
+#: chooses which queries sample each camera from `mask_per_img[0]` -- batch element
+#: 0's mask -- for every element of the batch (`bevformer/spatial_cross_attention.py`,
+#: where the per-camera `indexes` are built). BEVFormer's queries are one grid shared
+#: by every sample, so there that is harmless. Drive-JEPA's are each tick's own
+#: proposals, so a tick behind a batch-mate whose points miss the frame takes no image
+#: features at all: camera-blind, made blind by its neighbour. Measured on the real
+#: model with 8 fixed-camera ticks, batching moved the plans 0.16-3.65 m against the
+#: same ticks one at a time, and took the fidelity median from 0.00% to 1.65% of
+#: travel. Paddock drives one tick at a time, so a batch is an input the model never
+#: has at inference. Until that selection is per element, every pass is one tick.
+TICKS_PER_PASS = 1
+
+
+def command_one_hot() -> dict[int, list[int]]:
+    """Paddock's `Command`, as the dumps record it, -> NAVSIM's one-hot [left, straight, right, unknown].
+
+    Keyed by paddock's own enum, imported rather than restated: it is paddock's
+    adapter that turned each Command into the one-hot the model saw, and a copy of
+    the numbers here would go on agreeing with itself after paddock's moved.
+    """
+    try:
+        from paddock.policy.protocol import Command
+    except ModuleNotFoundError as error:
+        raise SystemExit(
+            "paddock is not importable: put paddock's src/ on PYTHONPATH (CLAUDE.md: contracts are "
+            "imported, never restated)"
+        ) from error
+    return {
+        int(Command.LEFT): [1, 0, 0, 0],
+        int(Command.STRAIGHT): [0, 1, 0, 0],
+        int(Command.RIGHT): [0, 0, 1, 0],
+        int(Command.FOLLOW_REFERENCE): [0, 0, 0, 1],
+    }
+
+
+def one_tick_per_pass(batch: int | str) -> int:
+    """`--batch`, refused unless it is `TICKS_PER_PASS`; usable as an argparse `type`."""
+    batch = int(batch)
+    if batch != TICKS_PER_PASS:
+        raise SystemExit(
+            f"--batch {batch}: Drive-JEPA mixes the ticks of a batch (one tick's image mask is "
+            f"used for all of them), so every pass is {TICKS_PER_PASS} tick; see TICKS_PER_PASS"
+        )
+    return batch
+
+
+def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    """`pose` expressed in `reference`'s frame, as (x, y, heading)."""
+    delta = np.linalg.inv(reference) @ pose
+    return np.array([delta[0, 3], delta[1, 3], float(np.arctan2(delta[1, 0], delta[0, 0]))], dtype=np.float32)
+
+
+@lru_cache(maxsize=32)
+def scene_calibration(nuscenes_root: str, scene_name: str) -> dict:
+    """Per-camera (camera2ego, intrinsics) for one scene, from nuScenes.
+
+    Each new scene costs a full parse of the ~1.3 GB sample_data table. For the
+    hundreds of real scenes `gallops.data.nuscenes_real` writes, it precomputes the
+    same first-keyframe records into GALLOPS_SCENE_CALIB/<scene>.json, read here.
+    """
+    import os
+
+    cached = Path(os.environ.get("GALLOPS_SCENE_CALIB", "/nonexistent")) / f"{scene_name}.json"
+    if cached.exists():
+        raw = json.loads(cached.read_text())
+        return {
+            ch: (
+                np.asarray(v["pose"]),
+                np.asarray(v["intrinsics"], dtype=np.float32) if v["intrinsics"] else None,
+            )
+            for ch, v in raw.items()
+        }
+    tables = Path(nuscenes_root) / "v1.0-trainval"
+    sensors = {s["token"]: s["channel"] for s in json.loads((tables / "sensor.json").read_text())}
+    calib = {c["token"]: c for c in json.loads((tables / "calibrated_sensor.json").read_text())}
+    scene = next(s for s in json.loads((tables / "scene.json").read_text()) if s["name"] == scene_name)
+    first = scene["first_sample_token"]
+    out = {}
+    for record in json.loads((tables / "sample_data.json").read_text()):
+        if record["sample_token"] != first or not record["is_key_frame"]:
+            continue
+        channel = sensors[calib[record["calibrated_sensor_token"]]["sensor_token"]]
+        if channel in NUSCENES_CAMERAS.values() or channel == "LIDAR_TOP":
+            entry = calib[record["calibrated_sensor_token"]]
+            pose = np.eye(4)
+            pose[:3, :3] = _quat(entry["rotation"])
+            pose[:3, 3] = entry["translation"]
+            intrinsics = entry["camera_intrinsic"]
+            out[channel] = (
+                pose,
+                np.asarray(intrinsics, dtype=np.float32) if intrinsics else None,
+            )
+    return out
+
+
+def _quat(q) -> np.ndarray:
+    w, x, y, z = q
+    return np.array(
+        [
+            [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+            [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+            [2 * (x * z - y * w), 2 * (x * w + y * z), 1 - 2 * (x * x + y * y)],
+        ]
+    )
+
+
+def camera_extrinsics(calibration: dict) -> dict[str, np.ndarray]:
+    """Each camera slot's `sensor2lidar`, which for this model is its pose on the car.
+
+    NAVSIM's lidar frame is the ego frame (identity lidar2ego in every OpenScene
+    log), and the model's image sample points are written in ego coordinates. So
+    the camera goes in at `camera2ego`; LIDAR_TOP in `calibration` is not used.
+    """
+    return {
+        slot: np.asarray(calibration[NUSCENES_CAMERAS[slot]][0], dtype=np.float64) for slot in CAMERA_SLOTS
+    }
+
+
+def history_stamps(stamps: list[int], now: int) -> list[int] | None:
+    """The frames the four history slots take, oldest first -- or None.
+
+    None when the frame the model actually reads from the past, the one 0.5 s
+    back, is not on disk: nearest-stamp selection would quietly substitute a
+    different moment, and the model would be trained on a past it never had.
+    """
+    chosen = []
+    for back in range(HISTORY_FRAMES - 1, -1, -1):
+        target = now - int(back * HISTORY_DT * 1e6)
+        chosen.append(min(stamps, key=lambda s: abs(s - target)))
+    if abs(chosen[-2] - (now - int(HISTORY_DT * 1e6))) > HISTORY_TOLERANCE_S * 1e6:
+        return None
+    return chosen
+
+
+@lru_cache(maxsize=4096)
+def _episode_stamps(directory: str) -> tuple[list[int], frozenset]:
+    """An episode's saved front frames, sorted, and the stamps it logged a pose for."""
+    root = Path(directory)
+    frames = sorted(int(p.stem) for p in (root / "CAM_FRONT").glob("*.jpg"))
+    poses = frozenset(int(k) for k in json.loads((root / "ego_poses.json").read_text()))
+    return frames, poses
+
+
+def rebuildable(tick: dict) -> bool:
+    """Whether `TickDataset` can rebuild this tick's input: the same two tests it makes.
+
+    The past it reads (0.5 s back) must be on disk, and the current frame needs a
+    logged pose. Without torch, so the trainer can drop such ticks BEFORE it counts
+    and records what it trains on -- `TickDataset.batch` skipping them silently left
+    the sidecar claiming ticks the model never saw (on l4fix, 269 of 1,423 brake).
+    """
+    if not tick.get("frame"):
+        return False
+    frames, poses = _episode_stamps(str(Path(tick["frame"]).parent.parent))
+    if not frames:
+        return False
+    chosen = history_stamps(frames, int(tick["timestamp"]))
+    return chosen is not None and chosen[-1] in poses
+
+
+def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
+    """The actors, pose and map a tick's trajectories are graded against.
+
+    One definition, used by the trainer and by the reach measurement, so a change
+    to how a proposal is judged cannot land in one and not the other.
+
+    **The pose belongs to the tick; only the rest belongs to the episode.** Both
+    callers used to cache this tuple per episode, so every tick was graded with
+    the ego wherever the FIRST tick looked up had it -- 14-16 m off on average.
+    Re-grading round 0's dumped proposals that way flipped the hit/clear verdict
+    on 19.5% of stationary and 36.6% of frontal candidates, and those verdicts are
+    the scorer's targets and the anchor term's filter. The per-episode part is
+    cached here instead, so callers call this per tick and cannot bring it back.
+    """
+    directory = str(Path(tick["frame"]).parent.parent)
+    poses, targets, area = _episode_static(directory, str(drivable) if drivable else None)
+    return np.asarray(poses[str(int(tick["timestamp"]))]), targets, area
+
+
+@lru_cache(maxsize=512)
+def _episode_static(directory: str, drivable: str | None) -> tuple:
+    """What does not change within an episode: every pose, the target actors, the map."""
+    from gallops.expert.drivable import DrivableArea
+
+    root = Path(directory)
+    poses = json.loads((root / "ego_poses.json").read_text())
+    actors = json.loads((root / "actors.json").read_text())
+    area = None
+    if drivable:
+        path = Path(drivable) / f"scene-{root.parent.name.rsplit('-', 1)[-1]}.npz"
+        if not path.exists():
+            # Silently None, the road check is skipped and a plan that leaves the road
+            # grades clear -- which is what a relative --drivable did after build_model's chdir.
+            raise FileNotFoundError(f"{path}: a drivable directory was given without this scene's raster")
+        area = DrivableArea.load(path)
+    return poses, [a for a in actors if a["is_target_actor"]], area
+
+
+class TickDataset:
+    """Labelled ticks, rebuilt into the AgentInput the model consumes."""
+
+    def __init__(self, ticks: list[dict], device: str, nuscenes_root: str | None = None):
+        import torch
+
+        self.torch = torch
+        self.ticks = ticks
+        self.device = device
+        if nuscenes_root is None:
+            from gallops.config import SiteConfig
+
+            nuscenes_root = SiteConfig.load().resolve("{data.nuscenes}")
+        self.nuscenes_root = str(nuscenes_root)
+        self._episodes: dict[str, dict] = {}
+        self._bev_cache: dict[str, dict] = {}
+        self._feature_builder = None
+        self._frames: dict[str, np.ndarray] = {}
+        self._command = command_one_hot()
+
+    def __len__(self) -> int:
+        return len(self.ticks)
+
+    def _episode(self, tick: dict) -> dict:
+        directory = Path(tick["frame"]).parent.parent
+        key = str(directory)
+        if key not in self._episodes:
+            poses = json.loads((directory / "ego_poses.json").read_text())
+            self._episodes[key] = {
+                "dir": directory,
+                "poses": {int(k): np.asarray(v) for k, v in poses.items()},
+                "frames": {int(p.stem): p for p in (directory / "CAM_FRONT").glob("*.jpg")},
+                "scene": "scene-" + directory.parent.name.rsplit("-", 1)[-1],
+            }
+        return self._episodes[key]
+
+    def agent_input(self, tick: dict, resized: bool = False):
+        from navsim.common.dataclasses import AgentInput, Camera, Cameras, EgoStatus
+        from PIL import Image
+
+        episode = self._episode(tick)
+        stamps = sorted(episode["frames"])
+        now = int(tick["timestamp"])
+        chosen = history_stamps(stamps, now)
+        if chosen is None:
+            return None  # its past was a priming frame; see HISTORY_TOLERANCE_S
+        calibration = scene_calibration(self.nuscenes_root, episode["scene"])
+
+        current_pose = episode["poses"].get(chosen[-1])
+        if current_pose is None:
+            return None
+
+        statuses, cameras = [], []
+        for stamp in chosen:
+            pose = episode["poses"].get(stamp, current_pose)
+            statuses.append(
+                EgoStatus(
+                    ego_pose=relative_pose(pose, current_pose),
+                    ego_velocity=np.array([tick["speed"], 0.0], dtype=np.float32),
+                    ego_acceleration=np.array([tick["accel"], 0.0], dtype=np.float32),
+                    driving_command=np.array(self._command[int(tick["command"])], dtype=np.int64),
+                )
+            )
+            # `resized` is the fast path: the model reads cam_f0 cropped to
+            # 512x256, so decode straight to that and never hold the full frame.
+            # The slow path keeps full resolution because `_get_bev_feature` needs
+            # it once per scene to produce lidar2img and img_shape.
+            if resized:
+                image = self.frame(episode["frames"][stamp])
+            else:
+                image = np.asarray(Image.open(episode["frames"][stamp]).convert("RGB"))
+            blank = np.zeros_like(image)
+            slots = {}
+            for slot, sensor2lidar in camera_extrinsics(calibration).items():
+                intrinsics = calibration[NUSCENES_CAMERAS[slot]][1]
+                slots[slot] = Camera(
+                    # only cam_f0's pixels are ever read; the other three are here
+                    # to hold the projection ordering, nothing more
+                    image=image if slot == "cam_f0" else blank,
+                    sensor2lidar_rotation=sensor2lidar[:3, :3].astype(np.float32),
+                    sensor2lidar_translation=sensor2lidar[:3, 3].astype(np.float32),
+                    intrinsics=intrinsics,
+                )
+            empty = Camera()
+            cameras.append(
+                Cameras(
+                    cam_f0=slots["cam_f0"],
+                    cam_l0=slots["cam_l0"],
+                    cam_l1=empty,
+                    cam_l2=empty,
+                    cam_r0=slots["cam_r0"],
+                    cam_r1=empty,
+                    cam_r2=empty,
+                    cam_b0=slots["cam_b0"],
+                )
+            )
+        return AgentInput(ego_statuses=statuses, cameras=cameras, lidars=[])
+
+    def frame(self, path) -> np.ndarray:
+        """One frame, cropped and resized exactly as the model consumes it.
+
+        The whole of a tick's remaining cost is here. Four full-size JPEGs are
+        decoded per tick, of which the model reads two, and it reads them at
+        512x256 after a 28-row crop -- 0.4 MB where the decode produced 4.3 MB.
+        Across 7,330 ticks nothing stays in the page cache, so the same frames are
+        decoded again every epoch.
+
+        Cached at the size the model wants: about 0.4 MB a frame, a few GB for the
+        whole round, and epochs after the first do no image work at all. The crop
+        and resize are the vendor's own, from `_get_camera_feature`, so
+        `verify_fast_path` compares the result against it tensor for tensor.
+        """
+        import cv2
+        from PIL import Image
+
+        key = str(path)
+        if key not in self._frames:
+            image = np.asarray(Image.open(path).convert("RGB"))
+            self._frames[key] = cv2.resize(image[28:-28], (512, 256))
+        return self._frames[key]
+
+    def _builder(self):
+        from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+        from navsim.agents.drive_jepa_perception_based.drive_jepa_features import (
+            DriveJEPAFeatureBuilder,
+        )
+
+        if self._feature_builder is None:
+            self._feature_builder = DriveJEPAFeatureBuilder(DriveJEPAConfig())
+        return self._feature_builder
+
+    def build(self, agent_input, scene: str, fast: bool = True) -> dict:
+        """The model's feature dict, without rebuilding what cannot have changed.
+
+        `_get_bev_feature` casts all four camera images to float32, normalises,
+        rescales and stacks them -- about 1.2 s a tick, and the four-view tensor
+        it produces is read nowhere: the encoder takes `lidar2img` and `img_shape`
+        out of that dict and the model builds its own input from cam_f0 alone.
+        Worse, three of the four images are the blanks that exist only to hold the
+        projection ordering, so most of that second is spent normalising zeros.
+
+        `lidar2img` and `img_shape` depend on the scene's calibration and the
+        frame size, neither of which varies within a scene, so the slow path runs
+        once per scene and every later tick reuses it. `verify_fast_path` checks
+        the two agree, and the fidelity check against a recorded dump is what says
+        the whole reconstruction is faithful in the first place.
+        """
+        builder = self._builder()
+        if not fast:
+            return builder.compute_features(agent_input)
+        # Populated by `features` from a FULL-RESOLUTION input: img_shape is the
+        # padded frame size and lidar2img is divided by it in the encoder, so
+        # deriving either from the 512x256 crop silently moves every projection.
+        cached = self._bev_cache[scene]
+        built = {
+            "camera_feature": cached["camera_feature"],
+            "img_shape": cached["img_shape"],
+            "lidar2img": cached["lidar2img"],
+        }
+        built.update(self.camera_feature(agent_input))
+        # The one piece restated rather than imported, because the vendor builds
+        # it inline inside compute_features: a per-frame concat of pose, velocity,
+        # acceleration and the one-hot command. verify_fast_path compares it.
+        built["ego_status"] = self.torch.stack(
+            [
+                self.torch.cat(
+                    [
+                        self.torch.tensor(status.ego_pose, dtype=self.torch.float32),
+                        self.torch.tensor(status.ego_velocity, dtype=self.torch.float32),
+                        self.torch.tensor(status.ego_acceleration, dtype=self.torch.float32),
+                        self.torch.tensor(status.driving_command, dtype=self.torch.float32),
+                    ],
+                    dim=-1,
+                )
+                for status in agent_input.ego_statuses
+                if status is not None
+            ]
+        )
+        return built
+
+    def camera_feature(self, agent_input) -> dict:
+        """`camera_feature_1` and `camera_feature_2`, from the cache.
+
+        The vendor's `_get_camera_feature` crops and resizes the last two frames
+        every call; `frame()` has already done that once, so this is the same two
+        lines of ToTensor over cached arrays. Two tensors, two frames, same order.
+        """
+        from torchvision import transforms
+
+        to_tensor = transforms.ToTensor()
+        return {
+            "camera_feature_1": to_tensor(agent_input.cameras[-1].cam_f0.image),
+            "camera_feature_2": to_tensor(agent_input.cameras[-2].cam_f0.image),
+        }
+
+    def features(self, tick: dict, fast: bool = True):
+        scene = self._episode(tick)["scene"]
+        if fast and scene not in self._bev_cache:
+            full = self.agent_input(tick, resized=False)
+            if full is None:
+                return None
+            self._bev_cache[scene] = self._builder().compute_features(full)
+        agent_input = self.agent_input(tick, resized=fast)
+        if agent_input is None:
+            return None
+        built = self.build(agent_input, scene, fast=fast)
+        return {
+            key: (value.to(self.device)[None] if hasattr(value, "to") else value)
+            for key, value in built.items()
+        }
+
+    def batch(self, indices: list[int]):
+        """One batch of (features, expert target, ticks used).
+
+        The ticks are returned because a tick that cannot be rebuilt is skipped,
+        so the caller cannot assume the batch lines up with what it asked for --
+        and the referee has to grade the trajectories of the ticks that are
+        actually in the batch.
+        """
+        if len(indices) > TICKS_PER_PASS:
+            # Refused here, where every caller passes: a batch of ticks is not what the
+            # model sees at inference (see TICKS_PER_PASS).
+            raise ValueError(f"{len(indices)} ticks in one pass; Drive-JEPA takes {TICKS_PER_PASS}")
+        torch = self.torch
+        collected, targets, used = [], [], []
+        for index in indices:
+            tick = self.ticks[index]
+            built = self.features(tick)
+            if built is None:
+                continue
+            collected.append(built)
+            targets.append(np.asarray(tick["expert"], dtype=np.float32))
+            used.append(tick)
+        if not collected:
+            return None, None, []
+        merged = {}
+        for key in collected[0]:
+            values = [item[key] for item in collected]
+            merged[key] = torch.cat(values, dim=0) if torch.is_tensor(values[0]) else values[0]
+        return merged, torch.from_numpy(np.stack(targets)).to(self.device), used
+
+
+def verify_fast_path(dataset, ticks, torch, model=None) -> None:
+    """The fast feature build must not change what the model computes.
+
+    An optimisation that shifts the model's input by a hair is the worst kind of
+    bug here: it trains fine and the numbers are quietly about something else.
+
+    Every key the encoder reads is compared exactly. `camera_feature` is the one
+    that legitimately differs -- it is the four-view tensor the fast path reuses
+    from another tick -- and rather than assert it is unused, passing a `model`
+    proves it: the 32 proposals must come out bit-identical either way.
+    """
+    reused = "camera_feature"
+    ticks = [t for t in ticks if rebuildable(t)]  # `features` is None for the rest
+    for tick in ticks:
+        slow = dataset.features(tick, fast=False)
+        fast = dataset.features(tick, fast=True)
+        assert set(slow) == set(fast), f"keys differ: {set(slow) ^ set(fast)}"
+        for key in slow:
+            if key == reused or not torch.is_tensor(slow[key]):
+                continue
+            if not torch.equal(slow[key], fast[key]):
+                worst = (slow[key].float() - fast[key].float()).abs().max()
+                raise SystemExit(f"{key} differs by up to {float(worst):.3e}")
+    print(f"  every key the encoder reads matches exactly on {len(ticks)} ticks")
+
+    if model is None:
+        print(f"  NOT checked: that {reused} is unused -- pass a model to prove it")
+        return
+    model.eval()
+    with torch.no_grad():
+        for tick in ticks:
+            slow = model(dataset.features(tick, fast=False))["proposals"]
+            fast = model(dataset.features(tick, fast=True))["proposals"]
+            worst = float((slow - fast).abs().max())
+            if worst > 0:
+                raise SystemExit(f"the 32 proposals move by {worst:.3e}: {reused} IS read")
+    print(f"  and the 32 proposals are bit-identical, so {reused} is genuinely unread")

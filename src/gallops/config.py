@@ -27,7 +27,14 @@ from __future__ import annotations
 
 import os
 import re
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9, the model envs
+    # gallops itself is 3.11, but a trainer runs inside the model's own
+    # interpreter, and Drive-JEPA's is 3.9. tomli is the same parser under the
+    # name it had before it entered the standard library.
+    import tomli as tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -178,6 +185,18 @@ class SiteConfig:
             return str(extra)
         return str(dataset.resolve())
 
+    def run_dir(self, model: str, train_run: str) -> Path:
+        """Where one training run's checkpoints go.
+
+        Each name must be one path component: an absolute or nested `train_run`
+        would otherwise land outside `{weights}`, or a level deeper than paddock
+        looks.
+        """
+        for label, name in (("model", model), ("train_run", train_run)):
+            if name in ("", ".", "..") or Path(name).name != name:
+                raise ValueError(f"{label} must be a single directory name, got {name!r}")
+        return self.weights / model / train_run
+
     def checkpoint_dir(self, model: str, train_run: str, step: int) -> Path:
         """Where one checkpoint goes.
 
@@ -185,7 +204,7 @@ class SiteConfig:
         docs/checkpoints.md -- so it lives here rather than being spelled out at
         each call site, where the two would eventually drift.
         """
-        return self.weights / model / train_run / f"step_{step:09d}"
+        return self.run_dir(model, train_run) / f"step_{step:09d}"
 
 
 def _abs(value: str | Path) -> Path:

@@ -15,7 +15,7 @@ Measured on this workspace, not assumed.
 | dataset | held here | usable for training |
 |---|---|---|
 | **nuScenes** | full 850 scenes, 34,149 keyframes, ~54 GB | **Yes** — the one real corpus we have. |
-| **KITScenes** | 127 of 1,006 sequences, all `val` / `overlap_train_val` | **No** — roughly 40 minutes of front-camera driving, and no `train` split at all. |
+| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly** — enough to train the re-ranker (5,711 keyframes from those 373); not re-measured since. |
 | **NAVSIM / OpenScene** | `navtest` only: 136 logs, 12,146 scenes | **No** — evaluation split only. |
 
 ### nuScenes — usable, with caveats
@@ -26,11 +26,14 @@ keyframe count. Camera-only training is viable; sensor fusion is not, and
 generating `nuscenes_infos*.pkl` against a keyframe-only copy degrades silently
 rather than failing.
 
-### KITScenes — not a training set here
+### KITScenes — part of `train`
 
 The full public release is ~4.2 TB across 1,006 sequences: 533 `train`
 (2.38 TB), 206 `test`, 117 `val`, 127 `test-e2e`, 23 `overlap_train_val`. **We
-hold none of `train`.** A full pull only fits on the largest available volume.
+hold part of `train`:** at least the 373 sequences the re-ranker trained on, the
+first to finish downloading in 2026-09. A full pull only fits on the largest
+available volume. Since the subset follows no rule, a checkpoint trained on it
+records the scenes it read (`notes.train_scenes`), not just the split.
 
 Two properties that matter for training:
 

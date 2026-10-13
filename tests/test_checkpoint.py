@@ -12,6 +12,7 @@ from gallops.checkpoint import (
     SidecarError,
     TrainedOn,
     read,
+    staged,
     write,
 )
 
@@ -104,3 +105,36 @@ def test_malformed_json_names_the_file(tmp_path):
     (tmp_path / SIDECAR_NAME).write_text("{not json")
     with pytest.raises(SidecarError, match="not valid JSON"):
         read(tmp_path)
+
+
+def test_a_staged_checkpoint_appears_whole(tmp_path):
+    directory = tmp_path / "m" / "r" / "step_000000001"
+    with staged(directory) as tmp:
+        (tmp / "model.safetensors").write_bytes(b"weights")
+        write(tmp, a_checkpoint())
+        assert not directory.exists(), "visible before it was complete"
+    assert sorted(p.name for p in directory.iterdir()) == [SIDECAR_NAME, "model.safetensors"]
+    assert [p.name for p in directory.parent.iterdir()] == [directory.name], "a partial was left behind"
+
+
+def test_a_failed_save_publishes_nothing(tmp_path):
+    directory = tmp_path / "step_000000001"
+    with pytest.raises(RuntimeError), staged(directory) as tmp:
+        (tmp / "model.safetensors").write_bytes(b"weights")
+        raise RuntimeError("killed before the sidecar")
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_weights_without_a_sidecar_are_not_published(tmp_path):
+    directory = tmp_path / "step_000000001"
+    with pytest.raises(SidecarError, match="without its"), staged(directory) as tmp:
+        (tmp / "model.safetensors").write_bytes(b"weights")
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_an_existing_checkpoint_is_never_written_over(tmp_path):
+    directory = tmp_path / "step_000000001"
+    write(directory, a_checkpoint(step=1))
+    with pytest.raises(SidecarError, match="already exists"), staged(directory):
+        pass
+    assert read(directory).step == 1

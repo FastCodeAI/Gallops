@@ -22,13 +22,17 @@ That separation is the point — see [why](#why-two-repos).
 
 ## Status
 
-**The package is still a skeleton.** `src/gallops/` holds the site-config
-split, the checkpoint contract, and the conventions a training run has to
-respect in order for its numbers to mean anything. Those are cheap now and
-expensive to retrofit. There is no gallops-v0 trainer yet.
+**One trainer, and the loop proven end to end.** `gallops train-rerank` fits a
+selector over Drive-JEPA's 32 candidate trajectories and writes a checkpoint
+with its sidecar. Paddock's `drivejepa_rerank` adapter loads it and scores it
+like any other model. It is small on purpose: its job was to prove
+train → checkpoint → sidecar → paddock row, and it also closes a measured gap
+(see [docs/STRATEGY.md](docs/STRATEGY.md)). Beyond that there is the
+site-config split, the checkpoint contract, and the conventions a training run
+has to respect for its numbers to mean anything.
 
-**One experiment has been run and recorded**, outside the package: the released
-Drive-JEPA checkpoint, trained further on NVIDIA Physical AI AV. It is under
+**The Drive-JEPA retrain on NVIDIA Physical AI AV is recorded outside the
+package.** It is under
 [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) as the scripts
 that ran, in folders numbered in the order the work was done, and is described
 in the next section.
@@ -136,6 +140,9 @@ cp gallops.toml.example gallops.toml
 $EDITOR gallops.toml                        # point at YOUR weights, runs and data
 
 gallops config                              # what this machine resolved
+gallops show <checkpoint dir>               # what a checkpoint claims about itself
+gallops train-rerank <dataset.npz> --train-run <name>   # see gallops/train/rerank.py
+python -m gallops.data.rerank keyframes|dataset ...     # its training data; see gallops/data/rerank.py
 ```
 
 Point `[roots.weights]` at **the same directory as paddock's
@@ -181,6 +188,7 @@ Four reasons, in increasing order of importance:
 | [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
+| [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
 | [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
 
 ## Licence
