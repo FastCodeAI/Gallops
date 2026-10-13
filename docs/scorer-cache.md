@@ -82,11 +82,17 @@ pick hits, the hazard is in view, and the new pick is safe for 5 s.
 
 ## Open
 
-- **The vendor model mixes ticks within a batch.** At batch 1 the rebuilt plans
-  match the driven ones to 5e-5 m; at batch 4, by up to 1.0 m. The suspected cause
-  is a concatenation in the encoder; not verified. Every gallops training run so
-  far used batch 8, so their inputs may have mixed ticks. The cache was rebuilt at
-  batch 1; `scorer_cache --batch` still defaults to 8 and should be passed 1.
+- **The vendor model mixes ticks within a batch; the cause is known now.** At batch
+  1 the rebuilt plans match the driven ones to 5e-5 m; at batch 4, by up to 1.0 m.
+  The vendor's spatial cross-attention chooses which queries sample each camera from
+  `mask_per_img[0]`, batch element 0's mask, for every element of the batch (verified
+  by reading `bevformer/spatial_cross_attention.py`; reproduced on that module alone
+  in #8's review: a tick second in a batch behind one whose points miss the frame
+  takes no image features). Every gallops training run so far used batch 8, so each
+  tick after the first in a batch read the image along another tick's plans. v1 was
+  built at batch 4 and v2 at batch 1. Every pass is now one tick (`TICKS_PER_PASS` in
+  `swerve_data.py`): `scorer_cache`, the trainer, `reach` and the preflight refuse
+  `--batch` above 1 until the selection is made per element.
 - **More scenes, half of them Singapore**, if any closed-loop result holds up.
 - **An explicit motion cue** (a lead car against an oncoming one) for the scorer,
   argued, not built.

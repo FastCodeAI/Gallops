@@ -96,7 +96,7 @@ def guard(rows: list[dict]) -> dict:
     }
 
 
-def measure(model, dataset, ticks: list[dict], torch, drivable: Path | None, batch: int = 8) -> list[dict]:
+def measure(model, dataset, ticks: list[dict], torch, drivable: Path | None, batch: int = 1) -> list[dict]:
     """One row per rebuildable tick: what the model picked and what that pick does."""
     rows, contexts = [], {}
     model.eval()

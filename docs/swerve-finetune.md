@@ -14,6 +14,13 @@ standard [conventions.md](conventions.md) holds both repos to.
 > are what those runs measured; what they say about teaching Drive-JEPA to *see* a
 > hazard and evade does not stand. Fixed here (`camera_extrinsics`) and in paddock
 > #62, and `preflight.py` now refuses a model a blanked camera does not move.
+>
+> **And batched (2026-10-14).** Every run here trained at `--batch 8`. The vendor's
+> spatial cross-attention picks each camera's queries from batch element 0's mask
+> for the whole batch, so with the image reaching the model, every tick after the
+> first would read the image along its neighbour's plans. That did not matter while
+> the model was blind; it would from the first seeing run. Every forward pass is now
+> one tick (`TICKS_PER_PASS` in `swerve_data.py`), and `--batch` refuses anything else.
 
 **Status (2026-10-08): not finished; the capability is still absent.** Eleven
 runs. The only one not worse than the released model is s1, the scorer retrained

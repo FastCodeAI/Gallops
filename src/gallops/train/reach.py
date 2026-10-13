@@ -51,7 +51,7 @@ import numpy as np
 
 from gallops.config import SiteConfig
 from gallops.expert.grader import grade
-from gallops.train.swerve_data import episode_context
+from gallops.train.swerve_data import episode_context, one_tick_per_pass
 
 
 def sample(ticks: list[dict], limit: int) -> list[dict]:
@@ -61,7 +61,7 @@ def sample(ticks: list[dict], limit: int) -> list[dict]:
     return [ticks[i] for i in np.linspace(0, len(ticks) - 1, limit).round().astype(int)]
 
 
-def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8) -> dict:
+def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 1) -> dict:
     """Reach and escape rate over `ticks`, split by what the expert asked for."""
     rows = []
     model.eval()
@@ -131,7 +131,7 @@ def main() -> None:
     parser.add_argument("--run", type=Path, help="a run directory of step_* checkpoints")
     parser.add_argument("--held-out", default="0058")
     parser.add_argument("--limit", type=int, default=200)
-    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--batch", type=one_tick_per_pass, default=1)  # see TICKS_PER_PASS
     parser.add_argument("--drivable", type=Path)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--out", type=Path)

@@ -39,6 +39,7 @@ from pathlib import Path
 import numpy as np
 
 from gallops.config import SiteConfig
+from gallops.train.swerve_data import one_tick_per_pass
 
 SLOTS = 32
 
@@ -98,7 +99,9 @@ def main() -> None:
     parser.add_argument("--source", nargs=2, action="append", required=True, metavar=("LABELLED", "NAME"))
     parser.add_argument("--vocab", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--batch", type=int, default=8)
+    # One tick per pass (TICKS_PER_PASS in swerve_data): the identity and scorer guards
+    # below rerun inside the same pass, so they cannot see ticks mixed across a batch.
+    parser.add_argument("--batch", type=one_tick_per_pass, default=1)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--limit-episodes", type=int, default=0, help="smoke: first N episodes per source")
     args = parser.parse_args()

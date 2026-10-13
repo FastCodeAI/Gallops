@@ -228,3 +228,84 @@ def test_a_tick_whose_past_was_a_priming_frame_is_not_rebuilt():
     chosen = history_stamps(frames, now=frames[10])
     assert chosen is not None
     assert chosen[-1] == frames[10] and chosen[-2] == frames[5]
+
+
+class _Plan:
+    """What `model(features)["trajectory"]` returns, minus torch."""
+
+    def __init__(self, a):
+        self.a = np.asarray(a, dtype=np.float64)
+
+    def float(self):
+        return self
+
+    def cpu(self):
+        return self
+
+    def numpy(self):
+        return self.a
+
+
+class _NoTorch:
+    @staticmethod
+    def no_grad():
+        from contextlib import nullcontext
+
+        return nullcontext()
+
+
+class _Ticks:
+    """A dataset that batches like the old TickDataset did: one row per tick asked for."""
+
+    def __init__(self, ticks, device):
+        self.ticks = ticks
+
+    def batch(self, indices):
+        return {"tick": np.asarray(indices)}, None, [self.ticks[i] for i in indices]
+
+
+class _MixesTicks:
+    """Drive-JEPA's batch behaviour in miniature: every element reads element 0's image.
+
+    Alone, each tick drives exactly the recorded plan. Second or later in a batch, its
+    plan moves 0.5 m sideways per position, as a neighbour's mask would move it.
+    """
+
+    def __init__(self):
+        self.training = True
+
+    def eval(self):
+        self.training = False
+
+    def train(self, mode=True):
+        self.training = mode
+
+    def __call__(self, features):
+        ticks = features["tick"]
+        plans = np.stack([plan(2.0) for _ in ticks])
+        plans[:, :, 1] += 0.5 * (ticks - ticks[0])[:, None]
+        return {"trajectory": _Plan(plans)}
+
+
+def test_fidelity_runs_one_tick_per_pass(tmp_path):
+    """Batched, a correct loader fails fidelity on a model that mixes ticks (the
+    blocker on #8: 0.00% alone, 1.65% batched, against a 1% limit)."""
+    ticks, dumps = build_episode(tmp_path)
+    referee = Referee(anchors=np.zeros((1, 8, 3)))
+    model = _MixesTicks()
+    report, problems = preflight.fidelity_check(model, _Ticks, ticks, referee, dumps, _NoTorch, "cpu")
+    assert problems == [], problems
+    assert report["compared"] == len(ticks) and report["median_pick_diff_m"] == 0.0
+    assert model.training is True
+
+
+def test_every_pass_is_one_tick():
+    from gallops.train.swerve_data import TICKS_PER_PASS, TickDataset, one_tick_per_pass
+
+    assert TICKS_PER_PASS == 1 and one_tick_per_pass("1") == 1
+    with pytest.raises(SystemExit, match="mixes the ticks of a batch"):
+        one_tick_per_pass("8")
+    dataset = object.__new__(TickDataset)  # no torch here; the refusal comes first
+    dataset.ticks = [{}, {}]
+    with pytest.raises(ValueError, match="2 ticks in one pass"):
+        dataset.batch([0, 1])

@@ -66,7 +66,7 @@ from gallops.train.losses import (
     trajectory_loss,
     travelled,
 )
-from gallops.train.swerve_data import episode_context
+from gallops.train.swerve_data import episode_context, one_tick_per_pass
 
 #: Only these move. Everything else, the encoder above all, is frozen.
 #: `scorer` is the addition the first run's failure argued for: 4.70 M more, and
@@ -369,7 +369,9 @@ def main() -> None:
     )
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--batch", type=int, default=8)
+    # One tick per forward pass: see TICKS_PER_PASS in swerve_data. Every run before
+    # it trained at 8, each tick but the first on its batch-mate's image mask.
+    parser.add_argument("--batch", type=one_tick_per_pass, default=1)
     # 0058 was the first choice and a bad one: 54 swerve ticks in 1,673, exactly
     # one of them frontal, so its held-out loss was measuring ordinary driving.
     # 0053 has 444 swerve ticks (157 frontal) and the only balanced mix of all

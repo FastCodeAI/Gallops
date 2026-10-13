@@ -74,8 +74,32 @@ HISTORY_DT = 0.5
 #: drove, against 0.10 m once the frame exists (round 0, 506 ticks). Such a tick
 #: cannot be rebuilt, so it is not trained on.
 HISTORY_TOLERANCE_S = 0.05
+#: Ticks per forward pass of the vendor model, everywhere. Its spatial cross-attention
+#: chooses which queries sample each camera from `mask_per_img[0]` -- batch element
+#: 0's mask -- for every element of the batch (`bevformer/spatial_cross_attention.py`,
+#: where the per-camera `indexes` are built). BEVFormer's queries are one grid shared
+#: by every sample, so there that is harmless. Drive-JEPA's are each tick's own
+#: proposals, so a tick behind a batch-mate whose points miss the frame takes no image
+#: features at all: camera-blind, made blind by its neighbour. Measured on the real
+#: model with 8 fixed-camera ticks, batching moved the plans 0.16-3.65 m against the
+#: same ticks one at a time, and took the fidelity median from 0.00% to 1.65% of
+#: travel. Paddock drives one tick at a time, so a batch is an input the model never
+#: has at inference. Until that selection is per element, every pass is one tick.
+TICKS_PER_PASS = 1
+
 #: NeuroNCAP's Command enum -> NAVSIM's one-hot [left, straight, right, unknown].
 COMMAND_ONE_HOT = {0: [0, 0, 1, 0], 1: [1, 0, 0, 0], 2: [0, 1, 0, 0], 3: [0, 0, 0, 1]}
+
+
+def one_tick_per_pass(batch: int | str) -> int:
+    """`--batch`, refused unless it is `TICKS_PER_PASS`; usable as an argparse `type`."""
+    batch = int(batch)
+    if batch != TICKS_PER_PASS:
+        raise SystemExit(
+            f"--batch {batch}: Drive-JEPA mixes the ticks of a batch (one tick's image mask is "
+            f"used for all of them), so every pass is {TICKS_PER_PASS} tick; see TICKS_PER_PASS"
+        )
+    return batch
 
 
 def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
@@ -419,6 +443,10 @@ class TickDataset:
         and the referee has to grade the trajectories of the ticks that are
         actually in the batch.
         """
+        if len(indices) > TICKS_PER_PASS:
+            # Refused here, where every caller passes: a batch of ticks is not what the
+            # model sees at inference (see TICKS_PER_PASS).
+            raise ValueError(f"{len(indices)} ticks in one pass; Drive-JEPA takes {TICKS_PER_PASS}")
         torch = self.torch
         collected, targets, used = [], [], []
         for index in indices:
