@@ -145,3 +145,11 @@ def test_the_dump_holds_everything_the_recipe_reads(site: SiteConfig) -> None:
             rel = arg[len(dump) :]
             hit = any(fnmatch.fnmatch(f, rel) or f.startswith(rel.rstrip("/") + "/") for f in files)
             assert hit, f"{c.stage} reads {rel}, which no manifest lists"
+
+
+def test_provenance_finds_the_repo_root_config_does() -> None:
+    """provenance restates config.REPO_ROOT so it can run in a model's own interpreter, where config does not
+    import; a copy is only acceptable with a check that it still agrees."""
+    from gallops.drivejepa_b2d import provenance
+
+    assert provenance.REPO_ROOT == REPO_ROOT

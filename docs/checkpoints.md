@@ -31,32 +31,37 @@ site configuration on both sides, so neither repo contains a path.
 ## Writing one
 
 ```python
-from gallops.checkpoint import Checkpoint, TrainedOn, write
+from gallops.checkpoint import Checkpoint, TrainedOn, staged, write
 from gallops.config import SiteConfig
 
 cfg = SiteConfig.load()
 directory = cfg.checkpoint_dir(model="gallops-v0", train_run="nuscenes-base", step=90_000)
 
-save_weights(directory / "model.safetensors")
-write(directory, Checkpoint(
-    model="gallops-v0",
-    step=90_000,
-    train_git_sha=git_sha(),
-    train_run="nuscenes-base",
-    trained_on=(TrainedOn("nuscenes", "train"),),
-    selection_split="val",
-    params_m=71.4,
-    precision="fp32",
-))
+with staged(directory) as tmp:
+    save_weights(tmp / "model.safetensors")
+    write(tmp, Checkpoint(
+        model="gallops-v0",
+        step=90_000,
+        train_git_sha=git_sha(),
+        train_run="nuscenes-base",
+        trained_on=(TrainedOn("nuscenes", "train"),),
+        selection_split="val",
+        params_m=71.4,
+        precision="fp32",
+    ))
 ```
 
 **Write the sidecar in the same function that saves the weights.** A sidecar
 written later is one that gets skipped when a job is killed, and an unlabelled
 checkpoint is worth less than no checkpoint at all — because it looks usable.
 
-`write()` writes to a temporary file and renames, so a reader never sees a
-half-written sidecar. During a sweep there are readers running while a trainer
-is writing.
+`staged()` builds the step directory under a temporary name and renames it into
+place only once the sidecar is inside, so a reader sees a whole checkpoint or
+none. It refuses a directory that already exists: a step is written once, and
+rewriting one in place is how new weights end up beside an old sidecar.
+`write()` on its own also writes to a temporary file and renames, so a reader
+never sees a half-written sidecar. During a sweep there are readers running
+while a trainer is writing.
 
 ## The fields, and what each one disables when absent
 

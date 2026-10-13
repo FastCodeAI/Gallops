@@ -2,7 +2,7 @@
 # the Final (73.6).
 #
 #   gallops recipe drivejepa_b2d                       print every command for this machine
-#   gallops recipe drivejepa_b2d split-full --run      run one stage
+#   gallops recipe drivejepa_b2d split-full --run      run one stage (only the named ones: name check-data too)
 #
 # Lineage, data, and what was verified: docs/drivejepa_b2d.md. Every stage refuses to write into an
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
@@ -100,6 +100,13 @@ args = [
   "--head", "{out}/split-v4aug",
   "--model", "drivejepa_scorer_b2d",
   "--train-run", "split-v4",
+  # How Split-v4 is driven (paddock's drivejepa_scorer_b2d, as in the 30 Sep runs): the split pick, exponent
+  # selector, k = 4. Under the adapter's defaults the same weights are a different model.
+  "--policy-env", "DRIVEJEPA_PICK=split",
+  "--policy-env", "DRIVEJEPA_SPLIT_MODE=exponent",
+  "--policy-env", "DRIVEJEPA_SPLIT_K=4",
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
+  "--holdout-list", "{heldout}",
   "--note", "Split-v4: split head (col / lane / ttc / red) on v4 labels + augmented light frames",
 ]
 
@@ -180,5 +187,17 @@ args = [
   "--gen", "{out}/final-generator/gen_best.pt",
   "--model", "drivejepa_scorer_b2d",
   "--train-run", "final",
+  # How the Final is driven (tags/final-73.6's env, less logging and timeouts).
+  "--policy-env", "DRIVEJEPA_PICK=split",
+  "--policy-env", "DRIVEJEPA_SPLIT_MODE=exponent",
+  "--policy-env", "DRIVEJEPA_SPLIT_K=4",
+  "--policy-env", "DRIVEJEPA_SPLIT_TURN=20",
+  "--policy-env", "DRIVEJEPA_SPLIT_GUARD=1",
+  "--policy-env", "PADDOCK_CMD_LOOKAHEAD=1",
+  "--policy-env", "PADDOCK_INFER_HZ=2",
+  # The Final's split head starts from split-v4aug, so its inputs are both lists.
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_final.json",
+  "--holdout-list", "{heldout}",
   "--note", "The Final: MTD-H generator (batch-fixed) + split head on m05b labels; area head loaded separately",
 ]

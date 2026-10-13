@@ -1,17 +1,18 @@
 """Stages split-v4-checkpoint and final-checkpoint: write a deployable Drive-JEPA checkpoint and its sidecar.
 
 Copies --src, replaces the trained tensors, saves to
-{weights}/<model>/<train_run>/step_<n>/drive_jepa_vitl_v2.ckpt and writes checkpoint.json beside it in the
-same function (docs/checkpoints.md). Never overwrites: refuses if the step directory already holds a
-checkpoint. Tensors are matched under the Lightning prefix `agent._pad_model.`:
+{weights}/<model>/<train_run>/step_<n>/drive_jepa_vitl_v2.ckpt with checkpoint.json beside it
+(docs/checkpoints.md). The step directory is staged and renamed into place only once the probe passed and the
+sidecar is written (sidecar.publish), so {weights} never holds the weights without it. Refuses a train run
+that already holds a checkpoint. Tensors are matched under the Lightning prefix `agent._pad_model.`:
 
   --head  scorer.pred_score.mlp.{0,1,3,4,6}.{weight,bias} (10 tensors)
   --gen   init_feature.weight, hist_encoding.{weight,bias}, and the shared refiner `_trajectory_head.0.*`
           written into all four _trajectory_head.{0,1,2,3} copies (171 tensors from 45)
 
 Split-v4 = the released checkpoint + the split-v4aug head. The Final = the released checkpoint + the MTD-H
-generator + its own split head (the area head is loaded separately by the policy). The step is the head's
-kept epoch.
+generator + its own split head (the area head is loaded separately by the policy). The step is the head
+stage's optimizer steps up to its kept epoch.
 
 Probe: the written file is reloaded and its head must give exactly the column-5 scores the trained head gave
 on the 4 held-out probe rows saved at training time. The full-forward probe through paddock's policy is
@@ -21,24 +22,35 @@ Ported from paddock-ops scorer-retrain/write_scorer_checkpoint.py (Split-v4) and
 generator-ft/step4_write_ckpt.py (the Final), which wrote the same tensors with a hand-written sidecar beside
 the file.
 
+The sidecar also records how the checkpoint must be driven (--policy-env, paddock's adapter switches) and
+what pins its inputs (--data-manifest, --holdout-list): sidecar.parse_env and sidecar.input_notes.
+
     python -m gallops.drivejepa_b2d.write_checkpoint --src <ckpt> --head <dir> [--gen <gen_best.pt>]
-        --model drivejepa_scorer_b2d --train-run <name> [--note "..."]
+        --model drivejepa_scorer_b2d --train-run <name> --policy-env KEY=VALUE ...
+        --data-manifest <data_*.json> ... --holdout-list <json> [--note "..."]
 """
 
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 import torch
 
-from gallops.checkpoint import Checkpoint, TrainedOn, write
+from gallops.checkpoint import Checkpoint, TrainedOn
 from gallops.config import SiteConfig
 from gallops.drivejepa_b2d.head import HEAD_SUFFIXES, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
+from gallops.drivejepa_b2d.sidecar import (
+    input_notes,
+    optimizer_step,
+    parse_env,
+    publish,
+    refuse_existing_run,
+    sha256,
+)
 
 PREFIX = "agent._pad_model."
 WEIGHTS_NAME = "drive_jepa_vitl_v2.ckpt"
@@ -52,14 +64,6 @@ TRAINED_ON = (
     TrainedOn("bench2drive", "base-train"),
     TrainedOn("bench2drive", "base-heldout-150"),
 )
-
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 22), b""):
-            h.update(block)
-    return h.hexdigest()
 
 
 def replacements(head_sd: dict, gen_sd: dict) -> dict:
@@ -113,15 +117,26 @@ def main() -> None:
     ap.add_argument("--gen", type=Path, help="generator gen_best.pt; omit to keep --src's generator")
     ap.add_argument("--model", required=True, help="paddock adapter name, e.g. drivejepa_scorer_b2d")
     ap.add_argument("--train-run", required=True)
+    ap.add_argument(
+        "--policy-env",
+        action="append",
+        required=True,
+        help="KEY=VALUE the adapter is driven with; repeatable",
+    )
+    ap.add_argument(
+        "--data-manifest", type=Path, action="append", required=True, help="tracked data_*.json; repeatable"
+    )
+    ap.add_argument(
+        "--holdout-list", type=Path, required=True, help="the held-out clips every epoch was kept on"
+    )
     ap.add_argument("--note", default="")
     a = ap.parse_args()
+    policy_env = parse_env(a.policy_env)
 
     head_metrics = json.load(open(a.head / "metrics.json"))
-    step = int(head_metrics["best_epoch"])
+    step = optimizer_step(head_metrics)
     out_dir = SiteConfig.load().checkpoint_dir(a.model, a.train_run, step)
-    dst = out_dir / WEIGHTS_NAME
-    if dst.exists() or dst.resolve() == a.src.resolve():
-        raise SystemExit(f"refusing: {dst} exists or is the source")
+    refuse_existing_run(out_dir.parent)  # before reading 3 GB, not only at publish time
 
     head_sd = torch.load(a.head / "head_best.pt", map_location="cpu")
     gen_sd = torch.load(a.gen, map_location="cpu") if a.gen else {}
@@ -139,9 +154,6 @@ def main() -> None:
     if len(repl) != expected:
         raise SystemExit(f"replaced {len(repl)} tensors, expected {expected}")
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(ck, dst)
-    gap = probe(dst, head_sd, a.head / "probe.npz")
     dtypes = {v.dtype for v in sd.values() if torch.is_tensor(v) and v.is_floating_point()}
     record = Checkpoint(
         model=a.model,
@@ -151,7 +163,6 @@ def main() -> None:
         trained_on=TRAINED_ON,
         selection_split="bench2drive/base-heldout-150",
         precision="fp32" if dtypes == {torch.float32} else "mixed",
-        weights_sha256=sha256(dst),
         notes={
             "weights_file": WEIGHTS_NAME,
             "source_checkpoint": str(a.src),
@@ -160,15 +171,24 @@ def main() -> None:
             "head_git_sha": head_metrics.get("git_sha", "not recorded (trained before gallops)"),
             "generator": str(a.gen) if a.gen else "unchanged from source",
             "replaced_tensors": len(repl),
-            "probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})",
-            "step_is": "the split head's kept epoch",
+            "step_is": "optimizer steps of the --head stage up to its kept epoch; earlier stages not counted",
+            "kept_epoch": int(head_metrics["best_epoch"]),
             "variant_selection": "the variant (heads, selection rule, policy switches) was chosen by "
             "closed-loop driving score on the same 50 Bench2Drive routes its headline is reported on; only "
             "the kept epochs were chosen on held-out data",
+            "policy_env": policy_env,
+            **input_notes(a.data_manifest, a.holdout_list),
             "note": a.note,
         },
     )
-    write(out_dir, record)
+
+    def save(staging: Path) -> dict:
+        torch.save(ck, staging / WEIGHTS_NAME)
+        gap = probe(staging / WEIGHTS_NAME, head_sd, a.head / "probe.npz")
+        return {"probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})"}
+
+    record = publish(out_dir, record, WEIGHTS_NAME, save)
+    dst = out_dir / WEIGHTS_NAME
     print(
         f"wrote {dst} ({dst.stat().st_size / 1e9:.2f} GB), replaced {len(repl)} tensors, probe OK, sha256 "
         f"{record.weights_sha256[:16]}...",

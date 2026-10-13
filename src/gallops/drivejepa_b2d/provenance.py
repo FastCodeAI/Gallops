@@ -9,6 +9,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+#: config.REPO_ROOT, restated because config cannot be imported where this runs: Drive-JEPA's interpreter is
+#: Python 3.9, and config needs tomllib (3.11). tests/test_recipe.py checks the two agree.
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 

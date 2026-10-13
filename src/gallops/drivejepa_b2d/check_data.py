@@ -6,7 +6,8 @@ seconds; --hash also compares contents, which reads every byte (5 GB for Split-v
 checkpoint, 33 GB with the Final).
 
 A stage that silently trained on a regenerated or half-copied file would produce a plausible checkpoint that
-is not the recorded model, so this runs before anything trains. Stdlib only.
+is not the recorded model, so the recipe runs this first. Running named stages only (`gallops recipe
+drivejepa_b2d <stage> --run`) skips it unless it is named too. Stdlib only.
 
     python -m gallops.drivejepa_b2d.check_data --root <dump> --manifest <data_*.json> [--hash]
 """
