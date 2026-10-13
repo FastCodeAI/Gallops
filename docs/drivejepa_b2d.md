@@ -39,29 +39,38 @@ chosen on them. The list was recovered on 29 Sep from the feature cache after
 the re-ranker directory that first defined it was deleted; the bitwise rerun
 below confirms it is the same 150 clips.
 
-## What the stages read
+## The data
 
-Named in `gallops.toml`, never in a tracked file:
+The stages read one frozen dump, `[datasets.drivejepa_b2d]` in `gallops.toml`:
 
-| Template | What |
+| In the dump | What |
 |---|---|
-| `{python.train}` | Python >= 3.11 with torch |
-| `{data.navsim.exp}` | holds the released checkpoint, `Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt` |
-| `{data.bench2drive.rerank}` | the candidate tree: `_dataset/` (rows), `_feats/` (the (32, 256) head inputs), `_labels/` |
+| `release/` | the released Drive-JEPA checkpoint every stage starts from |
+| `rerank/_dataset/` | the rows: base 20,449 and route-start 3,000 frames, with each candidate's ADE and the clip |
+| `rerank/_feats/` | the (32, 256) features the scorer head sees, per row (base, start, augmented) |
+| `rerank/_labels/` | rule labels per candidate: iPad `final` (v2), col / lane / ttc (v3), red (v4) |
 
-**Not produced by this repo yet.** The rows, the head-input features and the
-labels were made by paddock-side tooling: the candidate and feature dump
+Its file list, sizes and sha256 are tracked in
+[`recipes/drivejepa_b2d/data_split_v4.json`](../recipes/drivejepa_b2d/data_split_v4.json);
+the `check-data` stage compares a site's copy against it (sizes in seconds,
+`--hash` for contents). This machine's copy is `drivejepa_b2d-v1`, made 13 Oct
+2026 by copying exactly these files out of the working directories they were
+trained from, each hashed as it was copied.
+
+**How the dump was made is not in this repo yet.** The rows, features and labels
+come from paddock-side tooling: the candidate and feature dump
 (`tools/models/drivejepa/b2d_candidates.py`, which runs the released model
 through paddock's own adapter so the features are exactly what the head sees in
 closed loop), the row builder (`rerank.py dataset`), the light-frame
-augmentation, and the label chain (v3 col / lane / ttc, v4 red). The stages here
-read their recorded output. Moving that tooling is a separate change.
+augmentation, and the label chain (v3 col / lane / ttc, v4 red). The dump is
+their recorded output; moving that tooling here is a separate change.
 
 ## Verified, and how
 
 | Claim | Strength | How |
 |---|---|---|
 | The three head stages reproduce the recorded heads | **verified** | 13 Oct: `ipad-base-start`, `split-full` and `split-v4aug` rerun from this code on the recorded data, each initialised from the previous rerun's output; every `head_best.pt` **bitwise identical** to the recorded one (same GPU and torch build) |
+| The dump holds the files they were trained on | **verified** for Split-v4 | the bitwise rerun read the same files the dump copied (sha256 recorded during the copy); each file is also older than the head trained from it |
 | The held-out list is the original one | **verified** | it follows from the above: different clips would give different training data and different weights |
 | The deployed Split-v4 checkpoint is the release + this head | **verified** | its 10 head tensors equal `split-v4aug/head_best.pt` and its other 495 equal the release, tensor by tensor |
 | `write_checkpoint` writes that checkpoint | **argued** | ported from the writer that produced it, same tensor replacement; not run from this repo |

@@ -59,9 +59,8 @@ runs = "/path/to/gallops-runs"
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
 
-# [datasets.bench2drive]
-# path     = "/path/to/Bench2Drive"
-# rerank   = "/path/to/rerank-b2d"            # candidates, features and labels the Drive-JEPA heads train on
+# [datasets.drivejepa_b2d]
+# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (docs/drivejepa_b2d.md)
 
 # ---------------------------------------------------------------------------
 # Interpreters, for stages that must run inside a particular environment. A

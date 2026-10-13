@@ -7,6 +7,7 @@ checks need no GPU, no torch and no data.
 
 from __future__ import annotations
 
+import fnmatch
 import json
 from pathlib import Path
 
@@ -19,8 +20,7 @@ SRC = REPO_ROOT / "src" / "gallops"
 
 
 def write_site(tmp: Path) -> SiteConfig:
-    for d in ("navsim", "b2d"):
-        (tmp / d).mkdir(exist_ok=True)
+    (tmp / "dump").mkdir(exist_ok=True)
     path = tmp / "gallops.toml"
     path.write_text(
         f"""
@@ -30,12 +30,8 @@ weights = "{tmp}/weights"
 runs = "{tmp}/runs"
 [python]
 train = "{tmp}/py/train"
-[datasets.navsim]
-path = "{tmp}/navsim"
-exp = "{tmp}/navsim-exp"
-[datasets.bench2drive]
-path = "{tmp}/b2d"
-rerank = "{tmp}/rerank"
+[datasets.drivejepa_b2d]
+path = "{tmp}/dump"
 """
     )
     return SiteConfig.load(path)
@@ -103,3 +99,19 @@ def test_the_held_out_split_is_tracked() -> None:
     site path."""
     clips = json.loads((REPO_ROOT / "recipes/drivejepa_b2d/heldout_150.json").read_text())["val"]
     assert len(clips) == len(set(clips)) == 150
+
+
+def test_the_dump_holds_everything_the_recipe_reads(site: SiteConfig) -> None:
+    """Every path a stage reads from the data dump matches a file in the tracked manifests: a stage reading
+    something the dump does not hold would only fail on a site that has nothing but the dump."""
+    dump = str(site.datasets["drivejepa_b2d"].path) + "/"
+    files: dict = {}
+    for m in sorted((REPO_ROOT / "recipes/drivejepa_b2d").glob("data_*.json")):
+        files.update(json.loads(m.read_text())["files"])
+    for c in recipes.commands(recipes.load("drivejepa_b2d"), site):
+        for arg in c.argv[3:]:
+            if not arg.startswith(dump):
+                continue
+            rel = arg[len(dump) :]
+            hit = any(fnmatch.fnmatch(f, rel) or f.startswith(rel.rstrip("/") + "/") for f in files)
+            assert hit, f"{c.stage} reads {rel}, which no manifest lists"

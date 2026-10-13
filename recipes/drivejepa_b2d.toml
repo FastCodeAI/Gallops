@@ -7,21 +7,29 @@
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
 #
 # Site config this needs (gallops.toml):
-#   [python] train      Python >= 3.11 with torch
-#   [datasets.navsim]   path + exp, as in paddock.toml (the released checkpoint is under exp)
-#   [datasets.bench2drive] rerank = the candidate / feature / label tree the heads train on
+#   [python] train              Python >= 3.11 with torch
+#   [datasets.drivejepa_b2d]    path = the frozen data dump: rerank/ (rows, head inputs, labels), release/ (the
+#                               released checkpoint). Its file list and sha256 are recipes/drivejepa_b2d/data_*.json;
+#                               the check-data stage compares a site's copy against them.
 
 description = "Drive-JEPA retrained on Bench2Drive base: Split-v4"
 
 [vars]
-rerank = "{data.bench2drive.rerank}"
-release = "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
+rerank = "{data.drivejepa_b2d}/rerank"
+release = "{data.drivejepa_b2d}/release/drive_jepa_perception_based_agent_vitl_v2.ckpt"
 heldout = "{repo}/recipes/drivejepa_b2d/heldout_150.json"
 out = "{runs}/drivejepa_b2d"
 
 # ---------------------------------------------------------------------------------------------
 # Split-v4: only the scorer head changes. Three head stages, each initialised from the one before.
 # ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "check-data"
+python = "train"
+module = "drivejepa_b2d.check_data"
+# Sizes only, in seconds; add "--hash" to compare contents.
+args = ["--root", "{data.drivejepa_b2d}", "--manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json"]
 
 [[stage]]
 name = "ipad-base-start"
