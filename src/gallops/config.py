@@ -27,7 +27,14 @@ from __future__ import annotations
 
 import os
 import re
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9, the model envs
+    # gallops itself is 3.11, but a trainer runs inside the model's own
+    # interpreter, and Drive-JEPA's is 3.9. tomli is the same parser under the
+    # name it had before it entered the standard library.
+    import tomli as tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 

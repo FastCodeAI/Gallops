@@ -45,11 +45,15 @@ from __future__ import annotations
 
 import json
 import shutil
+
+# `time.gmtime` rather than `datetime.UTC`: a trainer runs inside the model's
+# own interpreter, Drive-JEPA's is Python 3.9, and ruff's pyupgrade rewrites
+# any datetime spelling back to the 3.11-only one.
+import time
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -294,7 +298,7 @@ def read(directory: Path | str) -> Checkpoint:
 
 
 def _now() -> str:
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
 def _drop_none(d: dict[str, Any], keep: tuple[str, ...] = ()) -> dict[str, Any]:
