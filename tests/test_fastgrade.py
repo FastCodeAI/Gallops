@@ -102,3 +102,59 @@ def test_stopped_plan_has_no_ttc_violation_and_no_travel():
     fast = fastgrade.grade_many(stopped, ego2world, t0, actors, reference, area)
     assert np.isnan(fast["ttc_at"][0])
     assert fast["travel"][0] == 0
+
+
+def test_labels_count_a_car_still_far_away_at_the_tick(tmp_path):
+    """#6 review, finding 4: a car 80 m out closing at 21 m/s, and the ego stopped.
+
+    It reaches the ego at 3.8 s. Filtered to vehicles within 70 m at the tick, the
+    labels said no collision while `grader.grade` over every vehicle said 3.8 s.
+    """
+    import json
+
+    from gallops.expert import grader
+    from gallops.train import scorer_labels
+
+    ts = 1_000_000
+    episode = tmp_path / "collect" / "frontal-0099" / "run_0"
+    episode.mkdir(parents=True)
+    (episode / "ego_poses.json").write_text(json.dumps({str(ts): np.eye(4).tolist()}))
+
+    def car(x):
+        pose = np.eye(4)
+        pose[:2, :2] = [[-1.0, 0.0], [0.0, -1.0]]  # heading back down -x, towards us
+        pose[0, 3] = x
+        return pose.tolist()
+
+    oncoming = {"timestamps": [0, 10_000_000], "poses": [car(101.0), car(-109.0)], "dims": [1.9, 4.5, 1.6]}
+    (episode / "actors.json").write_text(json.dumps([{**oncoming, "is_target_actor": False}]))
+    (episode / "reference_trajectory.json").write_text(
+        json.dumps({str(ts + i * 500_000): [i, 0, 0] for i in range(20)})
+    )
+    drivable = tmp_path / "drivable"
+    drivable.mkdir()
+    np.savez(
+        drivable / "scene-0099.npz",
+        mask=np.ones((400, 400), dtype=bool),
+        origin=np.array([-200.0, -200.0]),
+        cell=1.0,
+        scene="scene-0099",
+        location="test",
+    )
+    cache = tmp_path / "cache" / "gt" / "frontal-0099__run_0.npz"
+    cache.parent.mkdir(parents=True)
+    np.savez(
+        cache,
+        natives=np.zeros((1, 32, 8, 3)),
+        vocab=np.zeros((1, 0, 8, 3)),
+        timestamp=np.array([ts]),
+        frame_dir=np.array(str(episode)),
+        cache_key=np.array("{}"),
+    )
+
+    truth = grader.grade(np.zeros((8, 3)), np.eye(4), ts, [oncoming], None, None).hit_at
+    assert truth is not None and 3.0 < truth < 4.0
+    scorer_labels.label_episode(cache, drivable, np.random.default_rng(0))
+    labels = np.load(cache.with_name("frontal-0099__run_0.labels.npz"))
+    assert abs(float(labels["hit_at"][0, 0]) - truth) < 1e-6
+    assert np.isfinite(labels["hit5_at"][0, 0])
