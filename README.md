@@ -92,7 +92,7 @@ Four reasons, in increasing order of importance:
 | [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
-| [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the five defects the measurements exposed |
+| [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
 
 ## Licence
 
