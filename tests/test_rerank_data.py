@@ -310,3 +310,22 @@ def test_a_dump_at_another_interval_is_refused(tmp_path, interval):
     """The label's 6 steps are 3 s only at 0.5 s; at 0.25 s they would silently be 1.5 s."""
     with pytest.raises(SystemExit, match="interval_s"):
         an_export(a_dump(tmp_path / "train.jsonl", interval_s=interval), tmp_path / "x.npz")
+
+
+def test_neither_command_writes_over_an_existing_output(tmp_path, monkeypatch):
+    """The shipped checkpoint's dataset_sha256 names one train.npz; a re-export must not replace it."""
+    a_scene(tmp_path / "fast", "a", 100)
+    a_config(tmp_path, monkeypatch, [tmp_path / "fast"])
+    (tmp_path / "scenes.txt").write_text("a\n")
+    for output, run in (
+        (
+            tmp_path / "rows.pkl",
+            lambda o: data.list_keyframes(argparse.Namespace(output=o, scenes=tmp_path / "scenes.txt")),
+        ),
+        (tmp_path / "train.npz", lambda o: an_export(a_dump(tmp_path / "train.jsonl"), o)),
+    ):
+        output.write_bytes(b"what the checkpoint was trained on")
+        with pytest.raises(SystemExit, match="exists"):
+            run(output)
+        assert output.read_bytes() == b"what the checkpoint was trained on"
+    assert sorted(p.name for p in tmp_path.iterdir() if p.name.startswith(".")) == []

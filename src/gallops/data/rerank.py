@@ -43,14 +43,41 @@ numpy only.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import pickle
+import uuid
 from pathlib import Path
 
 import numpy as np
 
 from gallops.config import ConfigError, SiteConfig
 from gallops.train.rerank import FEATURE_PROBE
+
+
+def refuse_existing(path: Path) -> None:
+    # A shipped checkpoint's `dataset_sha256` names one file: overwriting it,
+    # even with an export of the same rows, leaves a checkpoint whose recorded
+    # input exists nowhere. Checked before the work, not only at the write.
+    if path.exists():
+        raise SystemExit(f"{path} exists; an output is written once, so name a new one")
+
+
+def write_new(path: Path, payload: bytes) -> None:
+    """Write `payload` to `path`, which must not exist, so a reader sees all of it or nothing.
+
+    Staged under a dot-prefixed sibling and renamed into place, as
+    `checkpoint.staged()` does for a step directory: a job killed mid-write
+    leaves no truncated file under the name a later step would read.
+    """
+    refuse_existing(path)
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex[:8]}.partial")
+    try:
+        tmp.write_bytes(payload)
+        tmp.rename(path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
 
 # --- which keyframes -----------------------------------------------------------
 
@@ -88,6 +115,7 @@ def list_keyframes(args: argparse.Namespace) -> None:
         raise SystemExit(str(exc)) from exc
     except KeyError as exc:
         raise SystemExit("gallops.toml configures no [datasets.kitscenes]") from exc
+    refuse_existing(args.output)
 
     ids = read_scene_ids(args.scenes)
     rows, missing = [], []
@@ -105,7 +133,7 @@ def list_keyframes(args: argparse.Namespace) -> None:
             f"{len(missing)} of {len(ids)} listed scenes are under no kitscenes tier's train/: "
             f"{', '.join(missing[:5])} ..."
         )
-    args.output.write_bytes(pickle.dumps(rows))
+    write_new(args.output, pickle.dumps(rows))
     print(f"wrote {args.output}: {len(rows)} keyframes from {len(ids)} scenes")
 
 
@@ -258,6 +286,7 @@ def feature_probe(rows: list[dict], x: np.ndarray) -> dict[str, np.ndarray]:
 
 
 def export(args: argparse.Namespace) -> None:
+    refuse_existing(args.output)
     rows = load_rows(args.candidates)
     geometry = geometry_of(rows)
     dataset, split = source_of(rows)
@@ -270,8 +299,9 @@ def export(args: argparse.Namespace) -> None:
         if given is not None and given != found:
             raise SystemExit(f"{flag} {given!r}, but the dump's rows record {found!r}")
     x, ade, picks, scenes = features_and_labels(rows)
+    buffer = io.BytesIO()
     np.savez(
-        args.output,
+        buffer,
         x=x,
         ade=ade,
         model_pick=picks,
@@ -283,6 +313,7 @@ def export(args: argparse.Namespace) -> None:
         image_geometry=np.array(geometry),
         **feature_probe(rows, x),
     )
+    write_new(args.output, buffer.getvalue())
     n_scenes = len(set(scenes.tolist()))
     print(f"wrote {args.output}: {len(rows)} samples, {n_scenes} scenes, {x.shape[-1]} features")
 
