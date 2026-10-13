@@ -1,5 +1,6 @@
 """Teach Drive-JEPA to propose a sideways plan AND to rank it above driving into
-something -- both heads at once, because separating them did not work.
+something. Jointly by default; `--train-only scorer|refiner` trains one part at a
+time, which the later runs (s1-s3) did after joint training damaged the candidates.
 
 **What the first attempt measured.** Training the refiner alone, behind a frozen
 scorer, moved the proposals: the widest of the 32 went from 0.70 m to over 5 m
@@ -31,8 +32,9 @@ earlier probe showed obstacles on the ego's path are already legible in what it
 outputs, so it is frozen -- which also means it cannot quietly learn what a
 NeuRAD-inserted car looks like, the shortcut this whole setup most invites.
 
-**What this first run is and is not.** It trains on round-0 data only: 150
-episodes in which the released model drove and never swerved. No navtrain replay
+**What the first run was and was not.** It trained on round-0 data only: 150
+episodes in which the released model drove and never swerved. (`--source` now takes
+several labelled sets, GT-driven and DAgger rounds among them.) No navtrain replay
 yet, so the model WILL drift on ordinary driving, and that is expected rather than
 hidden -- the point of this run is to answer one question cheaply, whether the
 refiner can be moved to propose an evasion at all. If it can, navtrain mixing and
@@ -97,6 +99,31 @@ def oversampled(ticks: list[dict], factors: dict[str, int]) -> list[int]:
     from swerving everywhere.
     """
     return [i for i, tick in enumerate(ticks) for _ in range(factors.get(tick.get("expert_kind", ""), 1))]
+
+
+def parse_oversample(specs: list[str], ticks: list[dict]) -> dict[str, int]:
+    """`--oversample KIND=N` specs, refused unless KIND is a loaded expert kind and N >= 1.
+
+    `swerv=4` used to change nothing and `swerve=0` to drop every swerve tick, both
+    silently.
+    """
+    kinds = {t.get("expert_kind") for t in ticks}
+    factors = {}
+    for spec in specs:
+        kind, _, n = spec.partition("=")
+        if kind not in kinds:
+            raise SystemExit(f"--oversample {spec}: no loaded tick has expert kind {kind!r}")
+        if not n.isdigit() or int(n) < 1:
+            raise SystemExit(f"--oversample {spec}: N must be a whole number of at least 1")
+        factors[kind] = int(n)
+    return factors
+
+
+def epoch_means(losses: list[tuple]) -> tuple:
+    """Mean of each loss over an epoch, None for one the stage skips (never 0.0, a perfect fit)."""
+    # by index, not zip: this runs in the 3.9 training interpreter, and ruff wants strict=
+    columns = [[row[k] for row in losses] for k in range(2)]
+    return tuple(None if not c or c[0] is None else float(np.mean(c)) for c in columns)
 
 
 def excluded(ticks: list[dict], prefixes: list[str]) -> list[dict]:
@@ -552,6 +579,7 @@ def main() -> None:
         default=0.0,
         help="weight of the ranking loss over the 32 plans, added to the scorer's BCE (0 = BCE only)",
     )
+    parser.add_argument("--seed", type=int, default=0, help="seeds python, numpy and torch; recorded")
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
     # Validation during the epoch, not only after it: the held-out trajectory loss
@@ -646,13 +674,18 @@ def main() -> None:
     )
     scorer_only = args.train_only == "scorer"
     refiner_only = args.train_only == "refiner"
-    factors = {k: int(v) for k, v in (spec.split("=", 1) for spec in args.oversample)}
+    factors = parse_oversample(args.oversample, train)
     agent, model, torch = build_model(
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
         train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE_REFINER if refiner_only else TRAINABLE,
     )
+    # The anchor term draws from numpy's global RNG and the vendor's GridMask from it
+    # too; unseeded, no run could be rebuilt from its sidecar.
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
     loss_options = {
         "with_trajectory": not scorer_only,
         "rank_weight": args.rank_weight,
@@ -661,12 +694,15 @@ def main() -> None:
     # Held-out checks still grade the candidates when training skips it: how the frozen
     # scorer picks among the refiner's new plans is the thing to watch.
     eval_options = {**loss_options, "with_score": True}
+    # In train mode the frozen encoder still applies the vendor's GridMask(prob 0.7):
+    # its weights do not move, but the frames the trained parts learn from are masked.
+    gridmask = "; the frozen encoder runs in train mode, so the vendor's GridMask augmentation is on"
     if scorer_only:
-        stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen"
+        stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen and in eval mode"
     elif refiner_only:
-        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped"
+        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped" + gridmask
     else:
-        stage_note = "joint -- refiner and scorer train, encoder frozen"
+        stage_note = "joint -- refiner and scorer train, encoder frozen" + gridmask
     loss_note = "vendor trajectory_loss_anchors (winner + good anchors)" if not scorer_only else ""
     if not refiner_only:
         loss_note += (" + " if loss_note else "") + "scorer BCE against score_target"
@@ -691,6 +727,10 @@ def main() -> None:
     # `agent.anchors` is the vendor's own trajectory vocabulary: data/8192.npy,
     # subsampled to the 8 poses the model plans over.
     referee = Referee(agent.anchors, drivable=args.drivable)
+    # Its own RNG: on the shared one, an interim check at step 100 drew anchors for
+    # 400 held-out ticks and changed every later training tick's anchor set, so the
+    # weights depended on --val-every and --val-sample.
+    held_referee = Referee(agent.anchors, drivable=args.drivable, seed=1)
 
     # Before any step: the code is committed and its tests pass, the trainer's own
     # grading reproduces the labels exactly, and the starting weights reproduce
@@ -775,11 +815,16 @@ def main() -> None:
             timed("backward", loss.backward)
             torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             optimiser.step()
-            losses.append((float(trajectory.detach()), float(scored.detach())))
+            losses.append(
+                (
+                    None if scorer_only else float(trajectory.detach()),
+                    None if refiner_only else float(scored.detach()),
+                )
+            )
             recent_parts.append(parts)
             step += 1
             if step % 25 == 0:
-                recent = np.asarray(losses[-25:])
+                recent = np.asarray([[np.nan if v is None else v for v in row] for row in losses[-25:]])
                 record(
                     "train",
                     epoch=epoch,
@@ -795,7 +840,9 @@ def main() -> None:
                     flush=True,
                 )
             if interim and args.val_every and step % args.val_every == 0:
-                held_out = evaluate(model, validation, interim, referee, torch, args.batch, **eval_options)
+                held_out = evaluate(
+                    model, validation, interim, held_referee, torch, args.batch, **eval_options
+                )
                 record("val", epoch=epoch, step=step, ticks=len(interim), **held_out)
                 nan = float("nan")
                 print(
@@ -806,16 +853,22 @@ def main() -> None:
                     flush=True,
                 )
 
-        trained = np.asarray(losses)
+        mean_trajectory, mean_score = epoch_means(losses)
         entry = {
             "epoch": epoch,
-            "train_trajectory": float(trained[:, 0].mean()),
-            "train_score": float(trained[:, 1].mean()),
+            "train_trajectory": mean_trajectory,
+            "train_score": mean_score,
             "minutes": (time.time() - started) / 60,
         }
         if validation is not None:
             held_out = evaluate(
-                model, validation, list(range(len(validation))), referee, torch, args.batch, **eval_options
+                model,
+                validation,
+                list(range(len(validation))),
+                held_referee,
+                torch,
+                args.batch,
+                **eval_options,
             )
             if held_out:
                 record("val_full", epoch=epoch, step=step, ticks=len(validation), **held_out)
@@ -826,8 +879,8 @@ def main() -> None:
                 entry["val_score_above_floor"] = held_out["score_above_floor"]
         history.append(entry)
         print(
-            f"  epoch {epoch}: train traj {entry['train_trajectory']:.4f} "
-            f"score {entry['train_score']:.4f} | val traj {entry.get('val_trajectory')} "
+            f"  epoch {epoch}: train traj {entry['train_trajectory']} "
+            f"score {entry['train_score']} | val traj {entry.get('val_trajectory')} "
             f"score {entry.get('val_score')} pick is best {entry.get('val_pick_is_best')} "
             f"regret {entry.get('val_pick_regret')} in {entry['minutes']:.1f} min",
             flush=True,
@@ -878,6 +931,9 @@ def main() -> None:
                     "excluded_scenes": args.exclude_scene,
                     # dropped before training because their input cannot be rebuilt
                     "unrebuildable": unrebuildable,
+                    "seed": args.seed,
+                    "val_every": args.val_every,
+                    "val_sample": args.val_sample,
                     # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
                     "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
                     **moved,

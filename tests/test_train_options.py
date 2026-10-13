@@ -89,3 +89,21 @@ def test_the_label_digest_sees_a_rewrite(tmp_path):
     before = labelled_digest(tmp_path)
     (tmp_path / "a.jsonl").write_text('{"x": 2}\n')
     assert labelled_digest(tmp_path) != before
+
+
+def test_oversampling_refuses_an_unknown_kind_or_a_factor_below_one():
+    import pytest
+
+    from gallops.train.swerve import parse_oversample
+
+    assert parse_oversample(["swerve=4", "brake=2"], _ticks()) == {"swerve": 4, "brake": 2}
+    for spec in ("swerv=4", "swerve=0", "swerve=-1", "swerve=x"):
+        with pytest.raises(SystemExit):
+            parse_oversample([spec], _ticks())
+
+
+def test_a_loss_the_stage_skips_is_none_not_a_perfect_zero():
+    from gallops.train.swerve import epoch_means
+
+    assert epoch_means([(None, 0.5), (None, 1.5)]) == (None, 1.0)
+    assert epoch_means([(2.0, None)]) == (2.0, None)
