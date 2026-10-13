@@ -2,9 +2,11 @@
 
 Copies --src, replaces the 10 scorer-head tensors (scorer.pred_score.mlp.{0,1,3,4,6}.{weight,bias}, matched
 under the Lightning prefix `agent._pad_model.`), saves to
-{weights}/<model>/<train_run>/step_<n>/drive_jepa_vitl_v2.ckpt and writes checkpoint.json beside it in the
-same function (docs/checkpoints.md). Never overwrites: refuses if the step directory already holds a
-checkpoint. Split-v4 = the released checkpoint + the split-v4aug head; the step is the head's kept epoch.
+{weights}/<model>/<train_run>/step_<n>/drive_jepa_vitl_v2.ckpt with checkpoint.json beside it
+(docs/checkpoints.md). The step directory is staged and renamed into place only once the probe passed and the
+sidecar is written (sidecar.publish), so {weights} never holds the weights without it. Refuses a train run
+that already holds a checkpoint. Split-v4 = the released checkpoint + the split-v4aug head; the step is the
+head's kept epoch.
 
 Probe: the written file is reloaded and its head must give exactly the column-5 scores the trained head gave
 on the 4 held-out probe rows saved at training time. The full-forward probe through paddock's policy is
@@ -20,17 +22,17 @@ hand-written sidecar beside the file.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
 import numpy as np
 import torch
 
-from gallops.checkpoint import Checkpoint, TrainedOn, write
+from gallops.checkpoint import Checkpoint, TrainedOn
 from gallops.config import SiteConfig
 from gallops.drivejepa_b2d.head import HEAD_SUFFIXES, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
+from gallops.drivejepa_b2d.sidecar import publish, refuse_existing_run, sha256
 
 PREFIX = "agent._pad_model."
 WEIGHTS_NAME = "drive_jepa_vitl_v2.ckpt"
@@ -44,14 +46,6 @@ TRAINED_ON = (
     TrainedOn("bench2drive", "base-train"),
     TrainedOn("bench2drive", "base-heldout-150"),
 )
-
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 22), b""):
-            h.update(block)
-    return h.hexdigest()
 
 
 def replacements(head_sd: dict) -> dict:
@@ -103,9 +97,7 @@ def main() -> None:
     head_metrics = json.load(open(a.head / "metrics.json"))
     step = int(head_metrics["best_epoch"])
     out_dir = SiteConfig.load().checkpoint_dir(a.model, a.train_run, step)
-    dst = out_dir / WEIGHTS_NAME
-    if dst.exists() or dst.resolve() == a.src.resolve():
-        raise SystemExit(f"refusing: {dst} exists or is the source")
+    refuse_existing_run(out_dir.parent)  # before reading 3 GB, not only at publish time
 
     head_sd = torch.load(a.head / "head_best.pt", map_location="cpu")
     ck = torch.load(a.src, map_location="cpu", weights_only=False)
@@ -121,9 +113,6 @@ def main() -> None:
     if len(repl) != 10:
         raise SystemExit(f"replaced {len(repl)} tensors, expected 10")
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(ck, dst)
-    gap = probe(dst, head_sd, a.head / "probe.npz")
     dtypes = {v.dtype for v in sd.values() if torch.is_tensor(v) and v.is_floating_point()}
     record = Checkpoint(
         model=a.model,
@@ -133,7 +122,6 @@ def main() -> None:
         trained_on=TRAINED_ON,
         selection_split="bench2drive/base-heldout-150",
         precision="fp32" if dtypes == {torch.float32} else "mixed",
-        weights_sha256=sha256(dst),
         notes={
             "weights_file": WEIGHTS_NAME,
             "source_checkpoint": str(a.src),
@@ -141,7 +129,6 @@ def main() -> None:
             "head_run": str(a.head),
             "head_git_sha": head_metrics.get("git_sha", "not recorded (trained before gallops)"),
             "replaced_tensors": len(repl),
-            "probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})",
             "step_is": "the split head's kept epoch",
             "variant_selection": "the variant (heads, selection rule, policy switches) was chosen by "
             "closed-loop driving score on the same 50 Bench2Drive routes its headline is reported on; only "
@@ -149,7 +136,14 @@ def main() -> None:
             "note": a.note,
         },
     )
-    write(out_dir, record)
+
+    def save(staging: Path) -> dict:
+        torch.save(ck, staging / WEIGHTS_NAME)
+        gap = probe(staging / WEIGHTS_NAME, head_sd, a.head / "probe.npz")
+        return {"probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})"}
+
+    record = publish(out_dir, record, WEIGHTS_NAME, save)
+    dst = out_dir / WEIGHTS_NAME
     print(
         f"wrote {dst} ({dst.stat().st_size / 1e9:.2f} GB), replaced {len(repl)} tensors, probe OK, sha256 "
         f"{record.weights_sha256[:16]}...",
