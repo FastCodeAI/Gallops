@@ -58,15 +58,19 @@ def episode_dirs(collect: Path):
             yield directory
 
 
-def match_dump(directory: Path, dumps: Path) -> list[dict] | None:
+def match_dump(directory: Path, dumps: Path, candidates: list[Path] | None = None) -> list[dict] | None:
     """The dump whose ticks are this episode's.
 
     A dump holds the episode's ticks plus the engine's priming calls, and the
     impact tick when it collided -- the last is not in `trajectories.json`.
+
+    `candidates` narrows the search to files already known to hold one of the
+    episode's timestamps; the rule that decides the match is the same either way.
     """
     plans = json.loads((directory / "trajectories.json").read_text())
     stamps = {int(t) for t in plans}
-    for path in sorted(dumps.glob("*.jsonl"), key=lambda p: p.stat().st_mtime):
+    paths = candidates if candidates is not None else dumps.glob("*.jsonl")
+    for path in sorted(paths, key=lambda p: p.stat().st_mtime):
         rows = [json.loads(line) for line in path.read_text().splitlines()]
         if rows and stamps and stamps <= {r["timestamp"] for r in rows}:
             drift = max(

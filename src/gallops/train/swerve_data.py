@@ -5,11 +5,13 @@ second apart, a four-frame ego-status history, and calibration for four camera
 slots. All of it is recoverable from the episode directory the engine wrote --
 frames are keyed by timestamp, and so are the ego poses.
 
-Two things here are easy to get wrong, and both are checked by `verify`, which
-rebuilds a recorded tick and compares the model's 32 proposals against the ones
-the dump recorded at the time. If the reconstruction is faithful they agree to
-floating-point noise; if it is not, the number moves and training would be
-learning from inputs the model never actually saw.
+The training preflight (`preflight.py`) rebuilds sampled ticks, runs the starting
+weights on them, and compares the plan with the one the dump recorded at the time.
+They do NOT agree to floating-point noise, and that is measured, not assumed:
+over 506 round-0 ticks the rebuilt pick sits a median 0.29% of four seconds'
+travel from the driven one, most likely the JPEG round trip -- the logger saved
+the frames the model was sent, re-encoded. Where the input cannot be rebuilt at
+all the gap is metres; see `HISTORY_TOLERANCE_S`.
 
 **Only the front camera's pixels exist, and only the front camera's pixels are
 read.** `_get_camera_feature` uses `cam_f0` alone (the "stitch l0, f0, r0" comment
@@ -21,9 +23,11 @@ shifts the front camera's projection to another slot. They are supplied as blank
 images of the right shape for that reason alone: to hold the ordering. Nothing
 reads their contents.
 
-**The ego status is a history, not a state.** The model reads four frames at 0.5 s
-spacing; giving it four copies of the current one makes a parked car of a moving
-ego, which is the failure `min_input_hz` exists to prevent elsewhere.
+**The model looks back exactly once: the front frame 0.5 s ago.** The feature
+builder assembles a four-frame ego-status history, but `DriveJEPAModel.forward`
+reads only `ego_status[:, -1]`, the current one, so the speed and acceleration
+copied into the older slots are never read. The pixels it does read from the past
+are `camera_feature_2`, the frame nearest 0.5 s back.
 
 Transcribed from paddock's `adapters/models/drivejepa/policy.py`, which built the
 same AgentInput when these episodes were driven. The repos do not import each
@@ -47,6 +51,16 @@ NUSCENES_CAMERAS = {
 }
 HISTORY_FRAMES = 4
 HISTORY_DT = 0.5
+#: How far the frame chosen as "0.5 s ago" may sit from 0.5 s ago. Frames are
+#: exactly 0.1 s apart on disk (round 0, every gap), so a real one is at 0 s; at
+#: 0.1 s the tolerance would wave through tick 4, whose "past" is the first frame
+#: 0.4 s back. A tick in an episode's first half second
+#: needs one of the engine's priming frames there, which the logger never saves;
+#: nearest-stamp selection then hands the model the episode's first frame as its
+#: past, and the rebuilt pick lands a median 0.4-0.5 m (p90 2.4 m) from the one it
+#: drove, against 0.10 m once the frame exists (round 0, 506 ticks). Such a tick
+#: cannot be rebuilt, so it is not trained on.
+HISTORY_TOLERANCE_S = 0.05
 #: NeuroNCAP's Command enum -> NAVSIM's one-hot [left, straight, right, unknown].
 COMMAND_ONE_HOT = {0: [0, 0, 1, 0], 1: [1, 0, 0, 0], 2: [0, 1, 0, 0], 3: [0, 0, 0, 1]}
 
@@ -94,27 +108,55 @@ def _quat(q) -> np.ndarray:
     )
 
 
+def history_stamps(stamps: list[int], now: int) -> list[int] | None:
+    """The frames the four history slots take, oldest first -- or None.
+
+    None when the frame the model actually reads from the past, the one 0.5 s
+    back, is not on disk: nearest-stamp selection would quietly substitute a
+    different moment, and the model would be trained on a past it never had.
+    """
+    chosen = []
+    for back in range(HISTORY_FRAMES - 1, -1, -1):
+        target = now - int(back * HISTORY_DT * 1e6)
+        chosen.append(min(stamps, key=lambda s: abs(s - target)))
+    if abs(chosen[-2] - (now - int(HISTORY_DT * 1e6))) > HISTORY_TOLERANCE_S * 1e6:
+        return None
+    return chosen
+
+
 def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
     """The actors, pose and map a tick's trajectories are graded against.
 
     One definition, used by the trainer and by the reach measurement, so a change
     to how a proposal is judged cannot land in one and not the other.
+
+    **The pose belongs to the tick; only the rest belongs to the episode.** Both
+    callers used to cache this tuple per episode, so every tick was graded with
+    the ego wherever the FIRST tick looked up had it -- 14-16 m off on average.
+    Re-grading round 0's dumped proposals that way flipped the hit/clear verdict
+    on 19.5% of stationary and 36.6% of frontal candidates, and those verdicts are
+    the scorer's targets and the anchor term's filter. The per-episode part is
+    cached here instead, so callers call this per tick and cannot bring it back.
     """
+    directory = str(Path(tick["frame"]).parent.parent)
+    poses, targets, area = _episode_static(directory, str(drivable) if drivable else None)
+    return np.asarray(poses[str(int(tick["timestamp"]))]), targets, area
+
+
+@lru_cache(maxsize=512)
+def _episode_static(directory: str, drivable: str | None) -> tuple:
+    """What does not change within an episode: every pose, the target actors, the map."""
     from gallops.expert.drivable import DrivableArea
 
-    directory = Path(tick["frame"]).parent.parent
-    poses = json.loads((directory / "ego_poses.json").read_text())
-    actors = json.loads((directory / "actors.json").read_text())
+    root = Path(directory)
+    poses = json.loads((root / "ego_poses.json").read_text())
+    actors = json.loads((root / "actors.json").read_text())
     area = None
     if drivable:
-        path = Path(drivable) / f"scene-{directory.parent.name.rsplit('-', 1)[-1]}.npz"
+        path = Path(drivable) / f"scene-{root.parent.name.rsplit('-', 1)[-1]}.npz"
         if path.exists():
             area = DrivableArea.load(path)
-    return (
-        np.asarray(poses[str(int(tick["timestamp"]))]),
-        [a for a in actors if a["is_target_actor"]],
-        area,
-    )
+    return poses, [a for a in actors if a["is_target_actor"]], area
 
 
 class TickDataset:
@@ -159,12 +201,10 @@ class TickDataset:
         episode = self._episode(tick)
         stamps = sorted(episode["frames"])
         now = int(tick["timestamp"])
+        chosen = history_stamps(stamps, now)
+        if chosen is None:
+            return None  # its past was a priming frame; see HISTORY_TOLERANCE_S
         calibration = scene_calibration(self.nuscenes_root, episode["scene"])
-
-        chosen = []
-        for back in range(HISTORY_FRAMES - 1, -1, -1):
-            target = now - int(back * HISTORY_DT * 1e6)
-            chosen.append(min(stamps, key=lambda s: abs(s - target)))
 
         current_pose = episode["poses"].get(chosen[-1])
         if current_pose is None:

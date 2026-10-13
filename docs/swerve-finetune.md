@@ -1,7 +1,7 @@
 # Teaching Drive-JEPA to evade
 
 The record of the first end-to-end training experiment in this repo: what was
-built, what each run measured, and the five defects the measurements exposed.
+built, what each run measured, and the six defects the measurements exposed.
 Numbers here are measurements unless the text says they are an argument — the
 standard [conventions.md](conventions.md) holds both repos to.
 
@@ -11,6 +11,14 @@ harder rather than by evading — the capability this was built to add is still
 absent. The drawn targets have not yet convinced the person who has to trust
 them, and the iteration loop at six and a half hours a round is too slow to
 settle that. Both are open, and both are below.
+
+**And every scorer here trained on targets graded from the wrong place.** Found on
+2026-10-06, after the runs below: the trainer graded each tick as if the car were
+where the episode's first-looked-up tick had it, 14–16 m off, which flipped a
+fifth of the stationary verdicts and a third of the frontal ones. The rows below
+are true measurements of a trainer that was partly wrong. Defect 6 has the
+detail; the trainer now refuses to start until a preflight shows its grading
+reproduces the labels.
 
 ---
 
@@ -69,7 +77,14 @@ from 7.7 to about 2 m/s. On held-out swerve ticks it moves 0.07 m where the
 expert asks for 4.59. The frontal gain is lower impact speed, plus one seed of
 two avoided entirely — not an evasion.
 
-## The five defects, and what found each
+Two provenance notes on these rows. **The v4 checkpoint trained on
+`labelled_round0_v2`**, not on the label set later named `v4`: training ended
+2026-10-02 13:35 IST and the v3 and v4 labels were written at 23:04 that day and
+on 2026-10-06. Its sidecar recorded neither, and said "stage A — refiner only"
+for a joint run; it now records both, correctly. And **all four scorers carry
+defect 6.**
+
+## The six defects, and what found each
 
 The experiments were worth more for these than for the scores. Each was found by
 a different instrument, and three were invisible to every summary statistic.
@@ -123,6 +138,62 @@ The proposals were never the problem, which is worth recording because it was th
 first guess: a third of the 32 travel under 75% of free-running and the shortest
 is a near-dead stop. The brakes were always on offer; the scorer was declining
 them.
+
+**6. Every target graded from the wrong place.** *Found by a check that could not
+be true.* To train the scorer, the trainer grades all 32 proposals on every tick —
+does this plan hit the car, leave the road, leave the lane — and those verdicts are
+its soft targets, and the anchor term's filter. Grading needs the car's path, the
+map, and **where the ego is at that tick**. `episode_context` returned all three,
+and `Referee` cached the result once per episode, so every tick was graded with
+the ego wherever the first-looked-up tick had it. The cache came from `reach.py`
+on 2026-09-30 and moved into the trainer with the scorer a day later, so it is in
+every run that trained the scorer: v1 to v4.
+
+Re-grading round 0's dumped proposals both ways measured what it cost:
+
+| | mean pose error | hit/clear verdict wrong |
+|---|---|---|
+| stationary | 15.6 m | **19.5%** of 3,776 candidates |
+| frontal | 13.8 m | **36.6%** of 3,008 |
+| side | 15.6 m | 1.6% of 3,808 |
+
+The lane term was measured from the wrong place on nearly every tick. Progress is
+the one term that needs no pose, and it was the one part of the target that was
+right — which fits what v4 learned: to travel as far as the expert, and nothing
+about the car. On the 46 held-out stationary ticks where the released model is
+creeping into the parked car, v4 picks a plan that crashes on all 46, travels
+further than the released model (7.3 m against 5.8; the expert asks 2.5), and
+ranks the best clear stop 14th of 32 where the released model ranks it 11th — a
+clear stop is among the 32 on 96% of those ticks.
+
+Every check that existed passed, and that is the lesson. The grader reproduces
+paddock's 38,080 verdicts exactly; `label.py` grades at the right pose, and
+re-grading reproduces its labels exactly. Each tested a part that was right. What
+nothing did was compare **what the trainer computes** with **what the labeller
+recorded**, and a creep check that copied the same cache is what finally exposed
+it: it reported the released model's pick clear on ticks where it had crashed.
+
+`episode_context` now caches only what an episode shares and returns the tick's own
+pose, and [train/preflight.py](../src/gallops/train/preflight.py) runs before every
+training step: the tree is committed and its tests pass under the training
+interpreter; the trainer's own grading reproduces the labels exactly — expert
+verdict, driven hit time, all 32 candidate verdicts — on ticks sampled late-first
+across episodes; and the starting weights, fed the trainer's rebuilt inputs,
+reproduce what they drove. The test suite holds a referee with the old cache and
+asserts the preflight rejects it.
+
+Its first real run refused to train, and the refusal was right. The rebuilt
+inputs drift from what the model saw by an amount that depends on where in the
+episode a tick sits, measured over 506 round-0 ticks: the model's one look into
+the past is the front frame 0.5 s back, and for an episode's first half second
+that was one of the engine's priming frames, which the logger never saves.
+Nearest-stamp selection silently handed over the episode's first frame instead,
+and the rebuilt pick landed a median 0.4–0.5 m (p90 2.4 m) from the one driven,
+against 0.10 m once the real frame exists. About 7% of every round's ticks were
+trained on a past the model never had. They are now skipped as unrebuildable;
+saving the priming frames at collection would get them back. Past that, the
+remaining gap is a median 0.29% of four seconds' travel, most likely the JPEG
+round trip, which is what the fidelity limit is now set against.
 
 ## What is still wrong
 
@@ -259,21 +330,32 @@ Built because the obvious measurement was the wrong one more than once.
   how much the plan slows, both against the expert's own geometry. Comparing
   against `expert_offset_m` is wrong: it is 0 for `continue` by construction,
   while a correct `continue` plan on curving scene 0053 sweeps 1.93 m. That
-  baseline produced one wrong diagnosis before it was caught.
+  baseline produced one wrong diagnosis before it was caught. Its `escape`
+  column carried defect 6 until the fix; the reach and slowing columns are
+  ego-frame geometry and never depended on the pose.
+- [train/preflight.py](../src/gallops/train/preflight.py) — runs inside the
+  trainer before the first step and refuses to train on any failure: committed
+  tree and passing tests, the trainer's grading reproducing the labels exactly,
+  and the starting weights reproducing what they drove. Its report goes into the
+  checkpoint's sidecar.
 - [train/export.py](../src/gallops/train/export.py) — `model.pt` to the vendor's
   checkpoint shape, so paddock's adapter needs no change to evaluate a finetune.
 - `ops/dj_video/compare.py` — two runs side by side, each panel carrying its own
   score, which is the only form in which "it swerved the wrong way" is obvious.
 - `plot_expert_cases.py` — the camera the model read beside the same tick from
-  above. Three of the five defects above were found in a picture.
+  above. Three of the six defects above were found in a picture.
 
 ## Reproducing
 
 ```bash
-bash ops/dj_train/run_joint.sh                        # train, detached, resumable
+bash ops/dj_train/run_joint.sh                        # train, detached, resumable; passes --dumps
 bash ops/dj_train/evaluate.sh <run> <step>            # reach, smoke on 0103, videos
 python -m gallops.expert.rounds show --root <runs>    # which rounds exist
 ```
+
+The trainer requires `--dumps`: the candidate dumps the labels were made from,
+collected by the weights training starts from. The preflight re-grades them
+through the trainer and stops the run if they disagree with the labels.
 
 The held-out scene is **0053**, not 0058: 0058 has 54 swerve ticks of 1,673,
 exactly one of them frontal, so its validation loss measures ordinary driving.
@@ -282,6 +364,11 @@ exactly one of them frontal, so its validation loss measures ordinary driving.
 
 In the order the evidence supports, not the order of effort.
 
+0. **Retrain under the fix before judging anything above.** Every comparison in
+   this document between checkpoints, and every expert or loss change judged by
+   one, was made through scorers trained on partly wrong targets. v4's recipe with
+   only the fix changed says what defect 6 cost; the same with the current expert
+   says where the work actually stands.
 1. **A faster check.** Make the 35-minute smoke the first question after any
    expert or loss change, before a relabel. Everything below is cheaper to judge
    once this is the habit.

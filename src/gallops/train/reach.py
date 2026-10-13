@@ -64,25 +64,20 @@ def sample(ticks: list[dict], limit: int) -> list[dict]:
 def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 8) -> dict:
     """Reach and escape rate over `ticks`, split by what the expert asked for."""
     rows = []
-    contexts: dict[str, tuple] = {}
     model.eval()
     with torch.no_grad():
         for start in range(0, len(ticks), batch):
             chunk = list(range(start, min(start + batch, len(ticks))))
-            features, _, _ = dataset.batch(chunk)
+            features, _, used = dataset.batch(chunk)
             if features is None:
                 continue
             output = model(features)
             proposals = output["proposals"].float().cpu().numpy()
             selected = output["trajectory"].float().cpu().numpy()
-            for offset, index in enumerate(chunk):
-                if offset >= len(proposals):
-                    break
-                tick = ticks[index]
-                key = str(Path(tick["frame"]).parent.parent)
-                if key not in contexts:
-                    contexts[key] = episode_context(tick, drivable)
-                ego2world, targets, area = contexts[key]
+            # `used`, not `chunk`: batch skips a tick it cannot rebuild, and pairing
+            # by position would then grade one tick's plans against the next.
+            for offset, tick in enumerate(used):
+                ego2world, targets, area = episode_context(tick, drivable)
                 stamp = int(tick["timestamp"])
                 verdicts = [grade(p, ego2world, stamp, targets, None, area) for p in proposals[offset]]
                 # 0 means it holds its speed; 1 means it stops dead.
