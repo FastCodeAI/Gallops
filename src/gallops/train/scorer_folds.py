@@ -110,6 +110,29 @@ def load(cache: Path, labelled: dict[str, Path]) -> dict:
     return out
 
 
+def reduced_input(cache: Path, labelled: dict[str, Path], loader=None) -> dict:
+    """`load(cache, labelled)`, kept beside the cache and reused only for the same inputs.
+
+    It used to be reused whenever the file existed, whatever cache build or labels
+    it was reduced from.
+    """
+    from gallops.train.scorer_cache import require_key
+
+    inputs = {"cache": require_key(cache), "labelled": sorted((k, str(v)) for k, v in labelled.items())}
+    key = json.dumps(inputs, sort_keys=True)
+    reduced = cache / "folds_input.npz"
+    if reduced.exists():
+        with np.load(reduced) as stored:
+            if "input_key" in stored.files and str(stored["input_key"]) == key:
+                return {k: stored[k] for k in stored.files if k != "input_key"}
+        print(f"  {reduced.name} was reduced from other inputs; rebuilding it", flush=True)
+    d = (loader or load)(cache, labelled)
+    tmp = reduced.with_name("folds_input.tmp.npz")
+    np.savez(tmp, **d, input_key=np.array(key))
+    tmp.rename(reduced)
+    return d
+
+
 def subscore_targets(d: dict) -> np.ndarray:
     nc = np.isnan(d["hit"]).astype(np.float32)
     dac = np.isnan(d["off_road"]).astype(np.float32)
@@ -249,12 +272,7 @@ def main() -> None:
 
     started = time.time()
     # Reading 450 cache files from the NAS takes ~7 min; keep the reduced arrays beside them.
-    reduced = args.cache / "folds_input.npz"
-    if reduced.exists():
-        d = dict(np.load(reduced))
-    else:
-        d = load(args.cache, {name: Path(p) for name, p in args.labelled})
-        np.savez(reduced, **d)
+    d = reduced_input(args.cache, {name: Path(p) for name, p in args.labelled})
     print(
         f"  loaded {len(d['scene'])} ticks x {d['features'].shape[1]} plans in {time.time() - started:.0f} s",
         flush=True,

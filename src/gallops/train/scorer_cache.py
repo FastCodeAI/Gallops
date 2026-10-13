@@ -42,6 +42,78 @@ from gallops.config import SiteConfig
 from gallops.train.swerve_data import one_tick_per_pass
 
 SLOTS = 32
+#: Where the cameras sit in the inputs these tokens were computed from: on the ego
+#: frame, at `camera2ego` (`swerve_data.camera_extrinsics`; paddock #62's marker).
+#: Caches v1, v2 and v3_nusc predate it -- camera-blind, and nothing in them says so.
+CAMERA_FRAME = "ego"
+
+
+def cache_key(*, git_sha: str, batch: int, vocab: Path, checkpoint: str, calibration: str) -> dict:
+    """Everything a cached token depends on (§5): code, inputs, weights, vocabulary and batch.
+
+    The cache used to be keyed by file name alone, so a "rebuild" into an existing
+    directory kept every old file -- batch 4, camera-blind -- under a fresh manifest.
+    """
+    import hashlib
+
+    return {
+        "camera_frame": CAMERA_FRAME,
+        "git_sha": git_sha,
+        "batch": int(batch),
+        "vocab_sha256": hashlib.sha256(Path(vocab).read_bytes()).hexdigest(),
+        "checkpoint": str(checkpoint),
+        "calibration": calibration,
+    }
+
+
+def _differences(recorded, key: dict) -> str:
+    if not isinstance(recorded, dict):
+        return "it records no key"
+    return ", ".join(f"{k} {recorded.get(k)!r} -> {key[k]!r}" for k in key if recorded.get(k) != key[k])
+
+
+def open_cache(out_root: Path, key: dict, record: dict) -> None:
+    """Start or resume a cache at `out_root`, refusing one built under another key."""
+    manifest = out_root / "manifest.json"
+    if manifest.exists():
+        old = json.loads(manifest.read_text())
+        if old.get("key") != key:
+            raise SystemExit(
+                f"{out_root} was built under another key ({_differences(old.get('key'), key)}); "
+                "build into a new --out"
+            )
+        record = {
+            **record,
+            "sources": [s for s in old.get("sources", []) if s not in record["sources"]]
+            + list(record["sources"]),
+        }
+    elif any(out_root.glob("*/*.npz")):
+        raise SystemExit(f"{out_root} holds cache files with no manifest key; build into a new --out")
+    out_root.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({**record, "key": key}, indent=1))
+
+
+def is_current(target: Path, key: dict) -> bool:
+    """Whether `target` is already built under `key`; refuses one built under another."""
+    if not target.exists():
+        return False
+    with np.load(target) as data:
+        recorded = json.loads(str(data["cache_key"])) if "cache_key" in data.files else None
+    if recorded != key:
+        raise SystemExit(f"{target} was built under another key ({_differences(recorded, key)})")
+    return True
+
+
+def require_key(cache: Path) -> dict:
+    """The key of a cache built with the cameras on the ego frame, or refuse it."""
+    manifest = Path(cache) / "manifest.json"
+    key = json.loads(manifest.read_text()).get("key") if manifest.exists() else None
+    if not isinstance(key, dict) or key.get("camera_frame") != CAMERA_FRAME:
+        raise SystemExit(
+            f"{cache} does not record camera_frame {CAMERA_FRAME!r}: it predates the camera fix "
+            "(camera-blind) or the cache key; rebuild it"
+        )
+    return key
 
 
 def load_vocab(path: Path):
@@ -143,13 +215,28 @@ def main() -> None:
     )
     model.eval()
     stage = LastStage(model)
-    (out_root).mkdir(parents=True, exist_ok=True)
-    (out_root / "manifest.json").write_text(
-        json.dumps(
-            {"sources": args.source, "vocab": str(args.vocab), "checkpoint": checkpoint, "slots": SLOTS},
-            indent=1,
-        )
+    from gallops.config import REPO_ROOT
+    from gallops.train.swerve import git_sha
+
+    key = cache_key(
+        git_sha=git_sha(REPO_ROOT),
+        batch=args.batch,
+        vocab=args.vocab,
+        checkpoint=checkpoint,
+        # GALLOPS_SCENE_CALIB replaces nuScenes' calibration tables when it is set
+        calibration=os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
     )
+    open_cache(
+        out_root,
+        key,
+        {
+            "sources": [list(s) for s in args.source],
+            "vocab": str(args.vocab),
+            "checkpoint": checkpoint,
+            "slots": SLOTS,
+        },
+    )
+    stamped = np.array(json.dumps(key, sort_keys=True))
 
     # One dataset for every tick: it caches each scene's map features and decoded
     # frames, and rebuilding it per episode recomputed them every time.
@@ -164,7 +251,7 @@ def main() -> None:
     started, done = time.time(), 0
     for name, episode in order:
         target = out_root / name / (episode.replace("/", "__") + ".npz")
-        if target.exists():
+        if is_current(target, key):
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
         first, last = offsets[(name, episode)]
@@ -241,6 +328,7 @@ def main() -> None:
             frame_dir=np.array(str(Path(ticks[0]["frame"]).parent.parent)),
             identity_drift=np.float32(identity_drift),
             scorer_drift=np.float32(scorer_drift),
+            cache_key=stamped,
         )
         tmp.rename(target)
         done += 1

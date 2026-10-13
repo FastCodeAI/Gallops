@@ -12,7 +12,11 @@ unless marked as an argument, as [conventions.md](conventions.md) asks.
 > across runs whose images differ by up to 23% of pixels. So the scorer learned from
 > plan geometry and ego motion only — the "place, not the car" result below. Caches
 > v1, v2 and v3_nusc must be rebuilt; the grader, labels' geometry, vocabulary and
-> the real-nuScenes conversion are unaffected.
+> the real-nuScenes conversion are unaffected. A cache now records a key (camera
+> frame, code sha, `--batch`, vocabulary sha256, checkpoint, calibration source) in
+> its manifest and in every file: `scorer_cache` refuses to resume under another
+> key, `scorer_labels` and `scorer_folds` refuse a cache without `camera_frame:
+> ego`, and labels and `folds_input.npz` are reused only for the build they came from.
 
 **Status (2026-10-12): not yet.** Open loop, a scorer trained on cached features
 ranks a held-out scene's plans far better than chance for the first time, and

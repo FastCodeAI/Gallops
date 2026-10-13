@@ -869,6 +869,8 @@ def main() -> None:
                     "excluded_scenes": args.exclude_scene,
                     # dropped before training because their input cannot be rebuilt
                     "unrebuildable": unrebuildable,
+                    # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
+                    "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
                     **moved,
                 },
             ),

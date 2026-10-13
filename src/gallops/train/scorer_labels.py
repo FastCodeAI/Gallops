@@ -111,9 +111,27 @@ def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator
                 checked += 1
     target = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
     tmp = target.with_name(target.name + ".tmp.npz")
-    np.savez(tmp, **out, timestamp=data["timestamp"], n_vehicles=np.int32(len(vehicles)))
+    # the key of the cache file graded, so labels are never read against another build of it
+    stamp = {
+        "timestamp": data["timestamp"],
+        "n_vehicles": np.int32(len(vehicles)),
+        "cache_key": data["cache_key"],
+    }
+    np.savez(tmp, **out, **stamp)
     tmp.rename(target)
     return {"ticks": len(plans_all), "checked": checked}
+
+
+def labels_current(cache_file: Path) -> bool:
+    """Whether `cache_file`'s labels exist and graded this build of it; refuses stale ones."""
+    labels = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
+    if not labels.exists():
+        return False
+    with np.load(cache_file) as data, np.load(labels) as graded:
+        built = str(data["cache_key"])
+        if "cache_key" not in graded.files or str(graded["cache_key"]) != built:
+            raise SystemExit(f"{labels} graded another build of {cache_file.name}; remove it to relabel")
+    return True
 
 
 def main() -> None:
@@ -127,6 +145,9 @@ def main() -> None:
         "--only", nargs="*", default=None, help="source directory names to label (to run shards in parallel)"
     )
     args = parser.parse_args()
+    from gallops.train.scorer_cache import require_key
+
+    require_key(args.cache)
     rng = np.random.default_rng(args.seed)
     files = sorted(
         p for p in args.cache.glob("*/*.npz") if not p.name.endswith(".labels.npz") and ".tmp" not in p.name
@@ -135,7 +156,7 @@ def main() -> None:
         files = [f for f in files if f.parent.name in args.only]
     started, done, checked = time.time(), 0, 0
     for f in files:
-        if f.with_name(f.name.replace(".npz", ".labels.npz")).exists():
+        if labels_current(f):
             continue
         result = label_episode(f, args.drivable, rng)
         done += 1
