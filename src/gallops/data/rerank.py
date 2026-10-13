@@ -13,7 +13,11 @@ input takes three steps, and two of them are here:
    candidate's features, and its ADE to the logged future, which is the label.
 
     python -m gallops.data.rerank keyframes -o train_samples.pkl
-    python -m gallops.data.rerank dataset train.jsonl --dataset kitscenes --split train -o train.npz
+    python -m gallops.data.rerank dataset train.jsonl --split train -o train.npz
+
+`dataset` records the dataset and split each row names (paddock writes them as
+`tier` and `split`), and refuses a dump that mixes them; `--dataset`/`--split`
+only check that record.
 
 **The features are paddock's.** The selector runs inside paddock's
 `drivejepa_rerank` adapter, which computes them with `candidate_features` in
@@ -195,6 +199,25 @@ def geometry_of(rows: list[dict]) -> str:
     return found.pop()
 
 
+def source_of(rows: list[dict]) -> tuple[str, str]:
+    """The one (dataset, split) a dump's rows come from; refuses mixed or unrecorded.
+
+    This becomes the checkpoint's `trained_on`, the contamination declaration
+    paddock's report guard checks a dump's own `(tier, split)` against. Taken
+    from the rows rather than typed in: a label that understates what the
+    model saw lets the guard pass a report on its training data. KITScenes'
+    benchmark dump mixes `val` and `overlap_train_val`, so no single split
+    describes it, and it is refused rather than half-declared.
+    """
+    found = {(r.get("tier"), r.get("split")) for r in rows}
+    if len(found) != 1 or None in next(iter(found)):
+        raise SystemExit(
+            f"dump records (tier, split) {sorted(map(str, found))}; expected exactly one, "
+            "since it becomes the checkpoint's trained_on. Export each split on its own."
+        )
+    return found.pop()
+
+
 def features_and_labels(rows: list[dict]):
     """(N, K, F) features, (N, K) ADE@3s, (N,) model pick, (N,) scene id."""
     x, ade, picks, scenes = [], [], [], []
@@ -211,6 +234,10 @@ def features_and_labels(rows: list[dict]):
 def export(args: argparse.Namespace) -> None:
     rows = load_rows(args.candidates)
     geometry = geometry_of(rows)
+    dataset, split = source_of(rows)
+    for flag, given, found in (("--dataset", args.dataset, dataset), ("--split", args.split, split)):
+        if given is not None and given != found:
+            raise SystemExit(f"{flag} {given!r}, but the dump's rows record {found!r}")
     x, ade, picks, scenes = features_and_labels(rows)
     np.savez(
         args.output,
@@ -220,8 +247,8 @@ def export(args: argparse.Namespace) -> None:
         scene=scenes,
         sample_id=np.array([r.get("sample_id") or f"{r['scene_id']}/{r['keyframe_index']}" for r in rows]),
         feature_names=np.array(FEATURE_NAMES),
-        dataset=np.array(args.dataset),
-        split=np.array(args.split),
+        dataset=np.array(dataset),
+        split=np.array(split),
         image_geometry=np.array(geometry),
     )
     n_scenes = len(set(scenes.tolist()))
@@ -241,8 +268,9 @@ def main() -> None:
 
     ds = sub.add_parser("dataset", help="turn a paddock candidate dump into a `train-rerank` dataset")
     ds.add_argument("candidates", type=Path, nargs="+")
-    ds.add_argument("--dataset", required=True, help="the dataset the samples come from, for `trained_on`")
-    ds.add_argument("--split", required=True)
+    # `trained_on` comes from the rows' own tier and split. These only check it.
+    ds.add_argument("--dataset", help="refuse the dump unless its rows come from this dataset")
+    ds.add_argument("--split", help="refuse the dump unless its rows come from this split")
     ds.add_argument("-o", "--output", type=Path, required=True)
     ds.set_defaults(func=export)
 

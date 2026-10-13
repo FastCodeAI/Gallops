@@ -212,3 +212,42 @@ def test_dataset_refuses_mixed_geometry(tmp_path):
                 candidates=[native, openscene], dataset="kitscenes", split="train", output=tmp_path / "x.npz"
             )
         )
+
+
+def an_export_of(dumps, out, **flags):
+    data.export(argparse.Namespace(candidates=dumps, output=out, **{"dataset": None, "split": None, **flags}))
+    return out
+
+
+def test_trained_on_comes_from_the_rows_not_the_flags(tmp_path):
+    """A dump that mixes splits must not become a checkpoint declaring one of them.
+
+    The real benchmark dump mixes `val` and `overlap_train_val`; exported with
+    `--split train`, it used to fit into a checkpoint declaring kitscenes/train,
+    and paddock's report guard then passed a report on those very scenes.
+    """
+    train = a_dump(tmp_path / "train.jsonl")
+    val = a_dump(tmp_path / "val.jsonl", split="val")
+    with pytest.raises(SystemExit, match="trained_on"):
+        an_export_of([train, val], tmp_path / "mixed.npz", dataset="kitscenes", split="train")
+    assert not (tmp_path / "mixed.npz").exists()
+
+    out = an_export_of([val], tmp_path / "val.npz")
+    site = SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+    result = rerank.train(out, site, "m", "r", rerank.Settings(hidden=4, epochs=5), "abc1234")
+    assert [(t.dataset, t.split) for t in read(result.directory).trained_on] == [("kitscenes", "val")]
+
+
+@pytest.mark.parametrize(
+    "flags, refusal",
+    [(dict(split="train"), "--split 'train'"), (dict(dataset="nuscenes"), "--dataset 'nuscenes'")],
+)
+def test_a_flag_that_disagrees_with_the_rows_is_refused(tmp_path, flags, refusal):
+    with pytest.raises(SystemExit, match=refusal):
+        an_export_of([a_dump(tmp_path / "val.jsonl", split="val")], tmp_path / "x.npz", **flags)
+
+
+@pytest.mark.parametrize("override", [dict(split=None), dict(tier=None)])
+def test_a_dump_that_does_not_say_its_split_is_refused(tmp_path, override):
+    with pytest.raises(SystemExit, match="tier, split"):
+        an_export_of([a_dump(tmp_path / "train.jsonl", **override)], tmp_path / "x.npz")
