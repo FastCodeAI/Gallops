@@ -88,7 +88,8 @@ SCENES = Path(__file__).with_name("rerank_train_scenes.txt")
 # The Drive-JEPA devkit KITScenes loader's valid_keyframes(num_future_frames=8,
 # stride=10), restated, because that loader imports navsim:
 # HISTORY_STRIDE * (NUM_HISTORY_FRAMES - 1) frames of history, then
-# NUM_FUTURE_FRAMES poses of future, HISTORY_STRIDE frames apart.
+# NUM_FUTURE_FRAMES poses of future, HISTORY_STRIDE frames apart. The constants
+# are the devkit's; the frame count is not (see `list_keyframes`).
 HISTORY_STRIDE = 5
 NUM_HISTORY_FRAMES = 4
 NUM_FUTURE_FRAMES = 8
@@ -125,7 +126,11 @@ def list_keyframes(args: argparse.Namespace) -> None:
         if scene is None:
             missing.append(scene_id)
             continue
-        # One pose per 10 Hz frame; paddock's loader reads the same file the same way.
+        # Frames counted from poses.txt, one row per 10 Hz frame. The devkit counts
+        # timestamp.reference.txt instead; paddock's harness builds each sample's
+        # history and ground truth from the poses, so they are what a keyframe
+        # needs. The two counts were measured equal on all 373 scenes of the
+        # tracked list; a different --scenes list is not checked.
         num_frames = len(np.loadtxt(scene / "poses.txt", ndmin=2))
         rows += [{"scene_id": scene_id, "split": "train", "keyframe_index": k} for k in keyframes(num_frames)]
     if missing:
