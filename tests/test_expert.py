@@ -673,3 +673,52 @@ def test_a_gt_row_without_the_models_pick_is_refused():
     assert model_pick({"timestamp": 1, "drive": "gt", "model_trajectory": [[2, 0, 0]]}) == [[2, 0, 0]]
     with pytest.raises(SystemExit, match="no model_trajectory"):
         model_pick({"timestamp": 1, "drive": "gt", "trajectory": [[1, 0, 0]]})
+
+
+def _peak_lateral_accel(waypoints) -> float:
+    """v^2 kappa, chord by chord, from the car's own pose: what a passenger would feel."""
+    points = np.vstack([[0.0, 0.0], np.asarray(waypoints)[:, :2]])
+    heading = step = worst = 0.0
+    for i in range(1, len(points)):
+        delta = points[i] - points[i - 1]
+        length = float(np.hypot(*delta))
+        if length <= draw.STILL_M:
+            continue
+        new = float(np.arctan2(delta[1], delta[0]))
+        turn = abs((new - heading + np.pi) % (2 * np.pi) - np.pi)
+        worst = max(worst, (length / draw.WAYPOINT_DT) ** 2 * turn / ((step + length) / 2))
+        heading, step = new, length
+    return worst
+
+
+def test_a_recovery_stays_within_the_lateral_acceleration_limit():
+    """#2 review 7b: a 3 m return over RETURN_S alone peaked at 4.7 m/s^2 (limit 4)."""
+    from gallops.expert.draw import LATERAL_ACCEL_MAX, _plan_from, min_ramp_for, undrivable
+
+    reference = np.column_stack([np.arange(-20.0, 300.0, 1.0), np.zeros(320)])
+    for speed in (9.0, 12.0, 15.0):
+        plan = _plan_from(reference, speed, 1.0, 3.0, min_ramp_for(3.0, speed), 0.0, 1.5)
+        assert _peak_lateral_accel(plan) <= LATERAL_ACCEL_MAX * 1.01, speed
+        assert undrivable(plan) is None
+
+
+def test_chasing_a_lane_off_the_cars_heading_stays_within_the_limit():
+    """#4 review 3: pursuit clamped curvature only; 15 deg off at 12 m/s took 8.7 m/s^2."""
+    from gallops.expert.draw import LATERAL_ACCEL_MAX, _plan_from, undrivable
+
+    angle = np.radians(15.0)
+    along = np.arange(-10.0, 200.0)
+    reference = np.column_stack([along * np.cos(angle), along * np.sin(angle)])
+    plan = _plan_from(reference, 12.0, 1.0, 0.0, 1.0)
+    assert _peak_lateral_accel(plan) <= LATERAL_ACCEL_MAX * 1.01
+    assert undrivable(plan) is None
+
+
+def test_undrivable_refuses_a_turn_wide_enough_but_too_fast():
+    from gallops.expert.draw import undrivable
+
+    # a 20 m radius arc at 15 m/s: 11 m/s^2 sideways, though wider than MIN_TURN_RADIUS_M
+    s = 15.0 * 0.5 * np.arange(1, 9)
+    arc = np.column_stack([20 * np.sin(s / 20), 20 * (1 - np.cos(s / 20)), s / 20])
+    reason = undrivable(arc)
+    assert reason is not None and "m/s^2" in reason
