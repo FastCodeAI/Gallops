@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import json
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
@@ -35,6 +36,32 @@ def optimizer_step(head_metrics: dict[str, Any]) -> int:
             "it, so its optimizer step is not known -- retrain it with this repo's train_split_head"
         )
     return int(head_metrics["best_epoch"]) * int(head_metrics["steps_per_epoch"])
+
+
+def parse_env(pairs: list[str]) -> dict[str, str]:
+    """`KEY=VALUE` arguments as a dict. A split-head checkpoint is its weights *plus* the switches paddock's
+    adapter is driven with: under the adapter's defaults it picks by column 5, whose values moved when the
+    hidden layers were retrained, which is a different model. So the switches belong in its sidecar."""
+    env: dict[str, str] = {}
+    for pair in pairs:
+        key, sep, value = pair.partition("=")
+        if not sep or not key:
+            raise SystemExit(f"--policy-env wants KEY=VALUE, got {pair!r}")
+        if key in env:
+            raise SystemExit(f"--policy-env {key} given twice")
+        env[key] = value
+    return env
+
+
+def input_notes(manifests: list[Path], heldout: Path) -> dict[str, Any]:
+    """What pins a checkpoint's inputs. Each tracked data manifest lists every file with its sha256, so the
+    manifest's own sha256 identifies the dataset; the held-out clips are recorded by name, as read, with the
+    list's sha256. Without them a checkpoint trained on a regenerated dump looks identical."""
+    return {
+        "dataset_manifests": {m.name: sha256(m) for m in manifests},
+        "holdout_scenes": json.loads(heldout.read_text())["val"],
+        "holdout_sha256": sha256(heldout),
+    }
 
 
 def refuse_existing_run(run_dir: Path) -> None:

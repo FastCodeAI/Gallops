@@ -6,10 +6,12 @@ in `drivejepa_b2d.sidecar`, which needs neither, so they are tested here on synt
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
+from gallops import recipe as recipes
 from gallops.checkpoint import Checkpoint, read
 from gallops.drivejepa_b2d import sidecar
 
@@ -79,3 +81,40 @@ def test_step_is_the_optimizer_step_not_the_epoch() -> None:
 def test_a_head_without_its_step_count_is_refused() -> None:
     with pytest.raises(SystemExit, match="steps_per_epoch"):
         sidecar.optimizer_step({"best_epoch": 20, "n_train": 28_266})
+
+
+def test_the_sidecar_pins_the_inputs(tmp_path: Path) -> None:
+    manifest = tmp_path / "data_x.json"
+    manifest.write_text('{"files": {"a.npz": {"bytes": 1, "sha256": "00"}}}')
+    heldout = tmp_path / "heldout.json"
+    heldout.write_text(json.dumps({"val": ["clip_a", "clip_b"], "source": "test"}))
+    notes = sidecar.input_notes([manifest], heldout)
+    assert notes["dataset_manifests"] == {"data_x.json": sidecar.sha256(manifest)}
+    assert notes["holdout_scenes"] == ["clip_a", "clip_b"]
+    assert notes["holdout_sha256"] == sidecar.sha256(heldout)
+
+
+def test_policy_env_is_parsed_strictly() -> None:
+    assert sidecar.parse_env(["DRIVEJEPA_PICK=split", "DRIVEJEPA_SPLIT_K=4"]) == {
+        "DRIVEJEPA_PICK": "split",
+        "DRIVEJEPA_SPLIT_K": "4",
+    }
+    with pytest.raises(SystemExit, match="KEY=VALUE"):
+        sidecar.parse_env(["DRIVEJEPA_PICK"])
+    with pytest.raises(SystemExit, match="twice"):
+        sidecar.parse_env(["A=1", "A=2"])
+
+
+def test_every_checkpoint_stage_records_how_to_drive_it_and_what_it_read() -> None:
+    """A split-head checkpoint scored under the adapter's defaults is a different model; one with no manifest
+    cannot be told apart from one trained on a regenerated dump."""
+    stages = [s for s in recipes.load("drivejepa_b2d").stages if s.module.endswith(".write_checkpoint")]
+    assert stages
+    for s in stages:
+        args = list(s.args)
+        flags = {a for a in args[::2] if a.startswith("--")}
+        values = {flag: [args[i + 1] for i, a in enumerate(args[:-1]) if a == flag] for flag in flags}
+        assert sidecar.parse_env(values["--policy-env"])["DRIVEJEPA_PICK"] == "split", s.name
+        assert values["--data-manifest"] and values["--holdout-list"], s.name
+        for m in values["--data-manifest"]:
+            assert m.startswith("{repo}/recipes/drivejepa_b2d/data_"), m

@@ -95,5 +95,12 @@ args = [
   "--head", "{out}/split-v4aug",
   "--model", "drivejepa_scorer_b2d",
   "--train-run", "split-v4",
+  # How Split-v4 is driven (paddock's drivejepa_scorer_b2d, as in the 30 Sep runs): the split pick, exponent
+  # selector, k = 4. Under the adapter's defaults the same weights are a different model.
+  "--policy-env", "DRIVEJEPA_PICK=split",
+  "--policy-env", "DRIVEJEPA_SPLIT_MODE=exponent",
+  "--policy-env", "DRIVEJEPA_SPLIT_K=4",
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
+  "--holdout-list", "{heldout}",
   "--note", "Split-v4: split head (col / lane / ttc / red) on v4 labels + augmented light frames",
 ]

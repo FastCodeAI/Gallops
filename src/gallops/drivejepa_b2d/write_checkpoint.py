@@ -15,8 +15,12 @@ paddock's job.
 Ported from paddock-ops scorer-retrain/write_scorer_checkpoint.py, which wrote the same tensors with a
 hand-written sidecar beside the file.
 
+The sidecar also records how the checkpoint must be driven (--policy-env, paddock's adapter switches) and
+what pins its inputs (--data-manifest, --holdout-list): sidecar.parse_env and sidecar.input_notes.
+
     python -m gallops.drivejepa_b2d.write_checkpoint --src <ckpt> --head <dir> --model drivejepa_scorer_b2d
-        --train-run <name> [--note "..."]
+        --train-run <name> --policy-env KEY=VALUE ... --data-manifest <data_*.json> --holdout-list <json>
+        [--note "..."]
 """
 
 from __future__ import annotations
@@ -32,7 +36,14 @@ from gallops.checkpoint import Checkpoint, TrainedOn
 from gallops.config import SiteConfig
 from gallops.drivejepa_b2d.head import HEAD_SUFFIXES, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
-from gallops.drivejepa_b2d.sidecar import optimizer_step, publish, refuse_existing_run, sha256
+from gallops.drivejepa_b2d.sidecar import (
+    input_notes,
+    optimizer_step,
+    parse_env,
+    publish,
+    refuse_existing_run,
+    sha256,
+)
 
 PREFIX = "agent._pad_model."
 WEIGHTS_NAME = "drive_jepa_vitl_v2.ckpt"
@@ -91,8 +102,21 @@ def main() -> None:
     )
     ap.add_argument("--model", required=True, help="paddock adapter name, e.g. drivejepa_scorer_b2d")
     ap.add_argument("--train-run", required=True)
+    ap.add_argument(
+        "--policy-env",
+        action="append",
+        required=True,
+        help="KEY=VALUE the adapter is driven with; repeatable",
+    )
+    ap.add_argument(
+        "--data-manifest", type=Path, action="append", required=True, help="tracked data_*.json; repeatable"
+    )
+    ap.add_argument(
+        "--holdout-list", type=Path, required=True, help="the held-out clips every epoch was kept on"
+    )
     ap.add_argument("--note", default="")
     a = ap.parse_args()
+    policy_env = parse_env(a.policy_env)
 
     head_metrics = json.load(open(a.head / "metrics.json"))
     step = optimizer_step(head_metrics)
@@ -134,6 +158,8 @@ def main() -> None:
             "variant_selection": "the variant (heads, selection rule, policy switches) was chosen by "
             "closed-loop driving score on the same 50 Bench2Drive routes its headline is reported on; only "
             "the kept epochs were chosen on held-out data",
+            "policy_env": policy_env,
+            **input_notes(a.data_manifest, a.holdout_list),
             "note": a.note,
         },
     )
