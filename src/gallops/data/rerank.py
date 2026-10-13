@@ -170,7 +170,11 @@ def candidate_features(proposals: np.ndarray, logits: np.ndarray, speed: float) 
 # --- the label and the dataset -------------------------------------------------
 
 #: The label is ADE over 3 s at 0.5 s, the horizon paddock's KITScenes metric
-#: scores (`displacement_errors(pred, gt, 0.5, 3.0)`).
+#: scores. `ade3` restates `paddock.metrics.trajectory.displacement_errors(pred,
+#: gt, 0.5, 3.0)["ade"]`, which paddock's report also uses; that function is the
+#: definition. Its 6 steps are 3 s only at 0.5 s, so `export` refuses any other
+#: `interval_s` rather than label a different horizon.
+INTERVAL_S = 0.5
 ADE_STEPS = 6
 
 
@@ -257,6 +261,11 @@ def export(args: argparse.Namespace) -> None:
     rows = load_rows(args.candidates)
     geometry = geometry_of(rows)
     dataset, split = source_of(rows)
+    intervals = {r.get("interval_s") for r in rows}
+    if intervals != {INTERVAL_S}:
+        raise SystemExit(
+            f"dump records interval_s {sorted(map(str, intervals))}; the ADE label needs {INTERVAL_S}"
+        )
     for flag, given, found in (("--dataset", args.dataset, dataset), ("--split", args.split, split)):
         if given is not None and given != found:
             raise SystemExit(f"{flag} {given!r}, but the dump's rows record {found!r}")

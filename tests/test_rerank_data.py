@@ -151,6 +151,7 @@ def a_dump(path, scenes=6, per_scene=3, geometry="openscene", **override):
                     "sample_id": f"kitscenes/train/scene{s}/{15 + 10 * k}",
                     "variant": {"input_path": "paddock", "image_geometry": geometry},
                     "ego_velocity": [speed, 0.0],
+                    "interval_s": 0.5,
                     "human_poses": (proposals[1] + 0.1 * (s + k)).tolist(),
                     "picked": 0,
                     "logits": logits.tolist(),
@@ -302,3 +303,10 @@ def test_a_feature_probe_that_cannot_be_replayed_writes_nothing(tmp_path, probe,
     with pytest.raises(ValueError, match=refusal):
         rerank.train(tmp_path / "broken.npz", site, "m", "r", rerank.Settings(hidden=4, epochs=5), "abc1234")
     assert not (tmp_path / "weights").exists() or not any((tmp_path / "weights").rglob("*.npz"))
+
+
+@pytest.mark.parametrize("interval", [0.25, None])
+def test_a_dump_at_another_interval_is_refused(tmp_path, interval):
+    """The label's 6 steps are 3 s only at 0.5 s; at 0.25 s they would silently be 1.5 s."""
+    with pytest.raises(SystemExit, match="interval_s"):
+        an_export(a_dump(tmp_path / "train.jsonl", interval_s=interval), tmp_path / "x.npz")
