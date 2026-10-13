@@ -10,7 +10,8 @@ frames, 40 epochs, seed 0. Same split as the split head: 150 held-out clips, bas
 the augmented light copies training-only. Per candidate, off-road / oncoming = max over steps. Kept epoch =
 best mean held-out within-frame AUC of the two outputs.
 
-The deployed policy loads this head separately (DRIVEJEPA_SPLIT_AREA); it is not written into the checkpoint.
+The deployed policy loads this head from its own file (DRIVEJEPA_SPLIT_AREA), not from the weights file:
+final-checkpoint copies head_best.pt into the step directory as area_head.pt and names it in the sidecar.
 
 Ported from paddock-ops mtd/stage4/train_area_mtd.py (run of 5 Oct, `--head area`); the trainer's `--head col`
 branch (pred_col_agent) produced nothing deployed and is left out. Arithmetic unchanged.

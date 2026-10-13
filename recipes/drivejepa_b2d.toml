@@ -178,13 +178,15 @@ args = [
 name = "final-checkpoint"
 python = "train"
 module = "drivejepa_b2d.write_checkpoint"
-after = ["final-generator", "final-split-head"]
+after = ["final-generator", "final-split-head", "final-area-head"]
 # The Final was written over Split-v4's checkpoint; its split head replaces the same 10 tensors, so writing over
 # the release gives the same tensors (checked against the deployed file, docs/drivejepa_b2d.md).
 args = [
   "--src", "{release}",
   "--head", "{out}/final-split-head",
   "--gen", "{out}/final-generator/gen_best.pt",
+  # Shipped beside the weights as area_head.pt; the policy env names it (DRIVEJEPA_SPLIT_AREA).
+  "--area", "{out}/final-area-head",
   "--model", "drivejepa_scorer_b2d",
   "--train-run", "final",
   # How the Final is driven (tags/final-73.6's env, less logging and timeouts).
@@ -199,5 +201,5 @@ args = [
   "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
   "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_final.json",
   "--holdout-list", "{heldout}",
-  "--note", "The Final: MTD-H generator (batch-fixed) + split head on m05b labels; area head loaded separately",
+  "--note", "The Final: MTD-H generator (batch-fixed) + split head on m05b labels + area head (area_head.pt)",
 ]

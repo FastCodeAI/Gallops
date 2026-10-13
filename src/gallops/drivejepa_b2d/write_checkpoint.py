@@ -10,9 +10,13 @@ that already holds a checkpoint. Tensors are matched under the Lightning prefix 
   --gen   init_feature.weight, hist_encoding.{weight,bias}, and the shared refiner `_trajectory_head.0.*`
           written into all four _trajectory_head.{0,1,2,3} copies (171 tensors from 45)
 
+  --area  not a tensor in the weights file: the policy loads the area head from its own file, so its
+          head_best.pt is copied beside the weights as area_head.pt and the policy env names it
+          (DRIVEJEPA_SPLIT_AREA)
+
 Split-v4 = the released checkpoint + the split-v4aug head. The Final = the released checkpoint + the MTD-H
-generator + its own split head (the area head is loaded separately by the policy). The step is the head
-stage's optimizer steps up to its kept epoch.
+generator + its own split head, with its area head beside them. The step is the head stage's optimizer steps
+up to its kept epoch.
 
 Probe: the written file is reloaded and its head must give exactly the column-5 scores the trained head gave
 on the 4 held-out probe rows saved at training time. The full-forward probe through paddock's policy is
@@ -25,15 +29,16 @@ the file.
 The sidecar also records how the checkpoint must be driven (--policy-env, paddock's adapter switches) and
 what pins its inputs (--data-manifest, --holdout-list): sidecar.parse_env and sidecar.input_notes.
 
-    python -m gallops.drivejepa_b2d.write_checkpoint --src <ckpt> --head <dir> [--gen <gen_best.pt>]
-        --model drivejepa_scorer_b2d --train-run <name> --policy-env KEY=VALUE ...
-        --data-manifest <data_*.json> ... --holdout-list <json> [--note "..."]
+    python -m gallops.drivejepa_b2d.write_checkpoint --src <ckpt> --head <dir>
+        [--gen <gen_best.pt> --area <dir>] --model drivejepa_scorer_b2d --train-run <name>
+        --policy-env KEY=VALUE ... --data-manifest <data_*.json> ... --holdout-list <json> [--note "..."]
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -44,12 +49,14 @@ from gallops.config import SiteConfig
 from gallops.drivejepa_b2d.head import HEAD_SUFFIXES, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
 from gallops.drivejepa_b2d.sidecar import (
+    AREA_HEAD_FILE,
     input_notes,
     optimizer_step,
     parse_env,
     publish,
     refuse_existing_run,
     sha256,
+    with_area_head,
 )
 
 PREFIX = "agent._pad_model."
@@ -115,6 +122,9 @@ def main() -> None:
         "--head", type=Path, required=True, help="split-head run dir (head_best.pt, probe.npz, metrics.json)"
     )
     ap.add_argument("--gen", type=Path, help="generator gen_best.pt; omit to keep --src's generator")
+    ap.add_argument(
+        "--area", type=Path, help="area-head run dir (head_best.pt, metrics.json), shipped beside"
+    )
     ap.add_argument("--model", required=True, help="paddock adapter name, e.g. drivejepa_scorer_b2d")
     ap.add_argument("--train-run", required=True)
     ap.add_argument(
@@ -132,6 +142,9 @@ def main() -> None:
     ap.add_argument("--note", default="")
     a = ap.parse_args()
     policy_env = parse_env(a.policy_env)
+    if a.area:
+        policy_env = with_area_head(policy_env)
+        area_epoch = int(json.load(open(a.area / "metrics.json"))["best_epoch"])
 
     head_metrics = json.load(open(a.head / "metrics.json"))
     step = optimizer_step(head_metrics)
@@ -177,6 +190,7 @@ def main() -> None:
             "closed-loop driving score on the same 50 Bench2Drive routes its headline is reported on; only "
             "the kept epochs were chosen on held-out data",
             "policy_env": policy_env,
+            **({"policy_env_files": ["DRIVEJEPA_SPLIT_AREA"]} if a.area else {}),
             **input_notes(a.data_manifest, a.holdout_list),
             "note": a.note,
         },
@@ -185,7 +199,19 @@ def main() -> None:
     def save(staging: Path) -> dict:
         torch.save(ck, staging / WEIGHTS_NAME)
         gap = probe(staging / WEIGHTS_NAME, head_sd, a.head / "probe.npz")
-        return {"probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})"}
+        notes: dict = {"probe": f"reloaded head == trained head on 4 held-out rows (max |diff| {gap:.1e})"}
+        if a.area:
+            shutil.copyfile(a.area / "head_best.pt", staging / AREA_HEAD_FILE)
+            copied = sha256(staging / AREA_HEAD_FILE)
+            if copied != sha256(a.area / "head_best.pt"):
+                raise SystemExit(f"{AREA_HEAD_FILE}: the copy differs from {a.area / 'head_best.pt'}")
+            notes["area_head"] = {
+                "file": AREA_HEAD_FILE,
+                "sha256": copied,
+                "run": str(a.area),
+                "kept_epoch": area_epoch,
+            }
+        return notes
 
     record = publish(out_dir, record, WEIGHTS_NAME, save)
     dst = out_dir / WEIGHTS_NAME

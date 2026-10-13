@@ -118,3 +118,20 @@ def test_every_checkpoint_stage_records_how_to_drive_it_and_what_it_read() -> No
         assert values["--data-manifest"] and values["--holdout-list"], s.name
         for m in values["--data-manifest"]:
             assert m.startswith("{repo}/recipes/drivejepa_b2d/data_"), m
+
+
+def test_the_area_head_switch_names_the_shipped_file() -> None:
+    env = sidecar.with_area_head({"DRIVEJEPA_PICK": "split"})
+    assert env == {"DRIVEJEPA_PICK": "split", "DRIVEJEPA_SPLIT_AREA": sidecar.AREA_HEAD_FILE}
+    with pytest.raises(SystemExit, match="--area"):
+        sidecar.with_area_head({"DRIVEJEPA_SPLIT_AREA": "/some/site/path.pt"})
+
+
+def test_the_final_ships_its_area_head() -> None:
+    """The bug this replaced: final-area-head's output stayed in {runs}, so a site taking the Final from
+    {weights} drove it with the area factor off -- not the Final."""
+    rec = recipes.load("drivejepa_b2d")
+    stage = rec.stage("final-checkpoint")
+    args = list(stage.args)
+    assert args[args.index("--area") + 1] == "{out}/final-area-head"
+    assert "final-area-head" in stage.after

@@ -53,6 +53,20 @@ def parse_env(pairs: list[str]) -> dict[str, str]:
     return env
 
 
+#: The Final's area head, copied into the step directory beside the weights. The policy loads it from the
+#: path in DRIVEJEPA_SPLIT_AREA; the sidecar names the file, which a site resolves against the checkpoint
+#: directory.
+AREA_HEAD_FILE = "area_head.pt"
+
+
+def with_area_head(env: dict[str, str]) -> dict[str, str]:
+    """`env` plus the switch that turns the area factor on, naming the copy in the checkpoint directory.
+    Without it the same weights drive with the area factor off, which is not the Final."""
+    if "DRIVEJEPA_SPLIT_AREA" in env:
+        raise SystemExit("DRIVEJEPA_SPLIT_AREA comes from --area, which ships the head with the checkpoint")
+    return {**env, "DRIVEJEPA_SPLIT_AREA": AREA_HEAD_FILE}
+
+
 def input_notes(manifests: list[Path], heldout: Path) -> dict[str, Any]:
     """What pins a checkpoint's inputs. Each tracked data manifest lists every file with its sha256, so the
     manifest's own sha256 identifies the dataset; the held-out clips are recorded by name, as read, with the

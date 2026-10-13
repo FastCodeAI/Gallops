@@ -71,15 +71,20 @@ Three trained parts and one policy switch:
    margin on moving actors, expert-masked). Kept epoch 25.
 3. **Area head** (`final-area-head`). Drive-JEPA's own `scorer.pred_area`
    (off-road, oncoming per pose) fine-tuned from the release on v6 step labels.
-   Kept epoch 40. The policy loads it separately (`DRIVEJEPA_SPLIT_AREA`); it is
-   not in the checkpoint.
+   Kept epoch 40. The policy loads it from its own file (`DRIVEJEPA_SPLIT_AREA`),
+   not from the weights file, so `final-checkpoint` ships it beside the weights
+   as `area_head.pt`.
 4. **Progress guard**, policy only: if no candidate that moves passes every
    gate, drop lane, then ttc, then red -- never collision
    (`DRIVEJEPA_SPLIT_GUARD=1`).
 
 `final-checkpoint` writes the generator and split head into a copy of the
-release. The Final was originally written over Split-v4's checkpoint; the split
-head replaces the same 10 tensors, so the result is the same tensors.
+release and copies the area head beside it. The Final was originally written
+over Split-v4's checkpoint; the split head replaces the same 10 tensors, so the
+result is the same tensors. Its `notes.policy_env` is the Final's switches from
+`tags/final-73.6` with `DRIVEJEPA_SPLIT_AREA=area_head.pt`; `notes.policy_env_files`
+says that value is a file in the checkpoint directory, so a site sets the
+variable to `<checkpoint dir>/area_head.pt`.
 
 **The batch fix.** Upstream, the refiner mixes batch elements in three places
 (`batch_fix.py`): a dump at batch 64 was a median 1.49 m off the same frames at
