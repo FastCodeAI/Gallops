@@ -86,3 +86,30 @@ def test_the_folds_input_is_rebuilt_when_its_inputs_change(tmp_path):
     assert len(calls) == 1, "same inputs: reused"
     scorer_folds.reduced_input(out, {"gt": tmp_path, "r1": tmp_path}, loader)
     assert len(calls) == 2, "another label set: rebuilt"
+
+
+def test_real_nuscenes_takes_the_command_rule_and_scene_set_from_paddock(monkeypatch):
+    """#6 review, finding 7: both were restated; they now follow paddock's own."""
+    import sys
+    import types
+
+    from gallops.data import nuscenes_real
+
+    seen = {}
+
+    def command_from_future(future):
+        seen["points"] = len(future)
+        return 7, None, None
+
+    loader = types.ModuleType("loader")
+    loader.command_from_future = command_from_future
+    harness = types.ModuleType("harness")
+    harness.OFFICIAL_SET = {"frontal": ("0103",), "side": ("0921",)}
+    monkeypatch.setitem(sys.modules, "paddock.adapters.benchmarks.nuscenes.loader", loader)
+    monkeypatch.setitem(sys.modules, "paddock.adapters.benchmarks.neuroncap.harness", harness)
+    assert nuscenes_real.command(np.zeros((8, 2))) == 7 and seen["points"] == 6  # the 3 s point
+    assert nuscenes_real.neuroncap_scenes() == {"0103", "0921", "0061"}
+
+    monkeypatch.setitem(sys.modules, "paddock.adapters.benchmarks.nuscenes.loader", None)
+    with pytest.raises(SystemExit, match="PYTHONPATH"):
+        nuscenes_real.command(np.zeros((8, 2)))
