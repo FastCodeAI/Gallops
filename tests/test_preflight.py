@@ -461,9 +461,21 @@ def test_fidelity_samples_each_episodes_earliest_tick(tmp_path, monkeypatch):
 
     monkeypatch.setattr(preflight, "code_checks", lambda repo: ({"sha": "x"}, []))
     monkeypatch.setattr(preflight, "grading_checks", lambda *a: ({}, []))
+    monkeypatch.setattr(preflight, "drivable_checks", lambda *a: ({}, []))
     monkeypatch.setattr(preflight, "fidelity_check", fidelity)
     monkeypatch.setattr(preflight, "sight_check", lambda *a: ({}, []))
     sources = [preflight.Source("r0", "d0", preflight.START)]
     preflight.run(tmp_path, ticks, None, sources, object(), None, None, "cpu")
     assert seen["stamps"][0] == 5, seen
     assert preflight.earliest_per_episode(ticks, {"e1"}) == [ticks[35]]
+
+
+def test_every_target_is_checked_drivable_not_a_sample():
+    """#4 review, finding 11: one undrivable target in 200 escaped a 48-tick sample."""
+    straight = plan(2.0).tolist()
+    slide = [[0.0, 0.5 * (k + 1), 0.0] for k in range(8)]  # sideways, going nowhere
+    ticks = [{"episode": "e", "timestamp": i, "expert": straight} for i in range(200)]
+    ticks[137] = {**ticks[137], "expert": slide}
+    report, problems = preflight.drivable_checks(ticks)
+    assert report["undrivable"] == "1/200" and problems and "@ 137" in problems[0]
+    assert preflight.drivable_checks(ticks[:137])[1] == []

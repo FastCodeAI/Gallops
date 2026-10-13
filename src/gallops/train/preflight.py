@@ -233,22 +233,10 @@ def _dump_index(dumps: str) -> dict[int, list[Path]]:
 
 def grading_checks(sample: list[dict], referee, dumps) -> tuple[dict, list[str]]:
     """The trainer's grading path against what labelling recorded, exactly."""
-    from gallops.expert.draw import undrivable
     from gallops.expert.grader import first_hit, grade
 
     problems, cache = [], {}
     agree = Counter()
-    # Every target trained on must be one a car could follow. 934 of 9,495 round-0
-    # targets were not -- stops that slid up to 2 m sideways -- and nothing noticed.
-    sliding = [
-        t for t in sample if t.get("usable_for_imitation", True) and undrivable(np.asarray(t["expert"]))
-    ]
-    if sliding:
-        problems.append(
-            f"{len(sliding)} of {len(sample)} sampled targets are undrivable "
-            f"({undrivable(np.asarray(sliding[0]['expert']))}, {sliding[0]['episode']}): "
-            "relabel with the current expert"
-        )
     clear_scores, hit_scores = [], []
     missing = 0
     for tick in sample:
@@ -299,6 +287,28 @@ def grading_checks(sample: list[dict], referee, dumps) -> tuple[dict, list[str]]
                 f"scorer targets rate crashing plans at least as high as clear ones (gap {gap:+.3f})"
             )
     return report, problems
+
+
+def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
+    """Every target trained on is one a car could follow -- all of them, not a sample.
+
+    4,347 of round 0's 9,495 targets were not, by `undrivable` (the 934 stops that
+    slid 2 m sideways among them), and nothing noticed. Checking all of them costs a
+    fraction of a second; a 48-tick sample misses a 1% regression 62% of the time.
+    """
+    from gallops.expert.draw import undrivable
+
+    usable = [t for t in ticks if t.get("usable_for_imitation", True)]
+    bad = [t for t in usable if undrivable(np.asarray(t["expert"]))]
+    report = {"undrivable": f"{len(bad)}/{len(usable)}"}
+    if not bad:
+        return report, []
+    first = bad[0]
+    return report, [
+        f"{len(bad)} of {len(usable)} targets are undrivable "
+        f"({undrivable(np.asarray(first['expert']))}, {first['episode']} @ {first['timestamp']}): "
+        "relabel with the current expert"
+    ]
 
 
 def fidelity_check(
@@ -504,6 +514,8 @@ def run(
     per = max(3, sample_size // 4 // max(1, len(groups)))
     sample = [t for g in groups for t in sample_ticks(g, episodes=per, per_episode=4)]
     report["grading"], found = grading_checks(sample, referee, sources)
+    problems += found
+    report["targets"], found = drivable_checks(train)
     problems += found
     own = [t for t in sample if sources[t.get("source", 0)].drove == START]
     if own:

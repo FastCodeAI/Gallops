@@ -164,21 +164,6 @@ def follow(reference_ego: np.ndarray, distances: np.ndarray) -> np.ndarray:
     )
 
 
-def _trajectory(points: np.ndarray) -> np.ndarray:
-    """Waypoints with headings. A step too short to have a direction keeps the last one.
-
-    arctan2 of a 2 cm step is noise, and a stopping plan is made of such steps:
-    round-0 targets had stopped cars pointing 90 deg off the road.
-    """
-    steps = np.diff(np.vstack([[0.0, 0.0], points]), axis=0)
-    headings, last = np.zeros(len(points)), 0.0
-    for i, (dx, dy) in enumerate(steps):
-        if np.hypot(dx, dy) > STILL_M:
-            last = float(np.arctan2(dy, dx))
-        headings[i] = last
-    return np.column_stack([points, headings])
-
-
 def min_length_for(offset: float, min_radius: float = MIN_TURN_RADIUS_M) -> float:
     """Shortest distance over which a cosine S-curve moves `offset` sideways
     without turning tighter than `min_radius`: peak curvature is pi^2 |offset| / (2 L^2)."""
@@ -350,7 +335,9 @@ def rejoin(reference_ego: np.ndarray, speed: float, distances: np.ndarray) -> np
 
     The ramp is laid out over DISTANCE travelled, not time. Over time, a plan
     that braked to a stop still covered the whole correction: 934 of 9,495
-    round-0 targets slid up to 2 m sideways over 2.8 m of travel. Over distance
+    round-0 targets slid up to 2 m sideways over 2.8 m of travel. (Those are the
+    stop-and-slide plans only; by `undrivable`, 4,347 of the 9,495 could not be
+    followed, 4,320 of them turning off the car's heading at the first waypoint.) Over distance
     the turning radius holds whatever the brake does, and a car that stops early
     stops part of the way back.
     """
@@ -404,8 +391,9 @@ def pursue(desired, distances: np.ndarray, speed: float, min_radius: float = MIN
     A drawn path is a wish; this is what a car starting HERE, pointing THIS way,
     can actually do with it. The plan used to be the drawn points themselves, and
     a drawing that ignored the car's heading or ran out of travel produced plans
-    no car could follow -- 934 of 9,495 round-0 targets, stops that slid 2 m
-    sideways onto the logged path. Driven, a plan that stops early stops where it
+    no car could follow -- 4,347 of 9,495 round-0 targets by `undrivable`, most
+    turning off the car's own heading at the first waypoint, and among them 934
+    stops that slid 2 m sideways onto the logged path. Driven, a plan that stops early stops where it
     got to, still pointing down the road, and no plan ever turns tighter than
     `min_radius`. The grader then judges the path driven, not the path wished for.
     """
@@ -441,8 +429,10 @@ def teach(
     """The trajectory the model should have produced at this tick.
 
     Drawn against a constant-velocity prediction of each target, then graded
-    against their real futures. Widening and braking are tried, in that order,
-    only when the grader rejects what was drawn.
+    against their real futures. Widening and braking are tried only when the
+    grader rejects what was drawn: braking first when nothing is closing on the
+    ego faster than APPROACHING_MPS (a parked or crossing car), widening first
+    when something is (an oncoming one).
     """
     reference = np.asarray(reference_world)[:, :2]
     reference_ego = to_ego(reference, ego2world)
