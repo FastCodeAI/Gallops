@@ -5,20 +5,20 @@ built, what each run measured, and the six defects the measurements exposed.
 Numbers here are measurements unless the text says they are an argument — the
 standard [conventions.md](conventions.md) holds both repos to.
 
-**Status: not finished, and the expert is not agreed.** The best checkpoint beats
-the released model on a three-pair subset of neuroNCAP, and it does so by braking
-harder rather than by evading — the capability this was built to add is still
-absent. The drawn targets have not yet convinced the person who has to trust
-them, and the iteration loop at six and a half hours a round is too slow to
-settle that. Both are open, and both are below.
+**Status (2026-10-08): not finished; the capability is still absent.** Eleven
+runs. The only one not worse than the released model is s1, the scorer retrained
+alone: 3.671 against 3.568 over the full neuroNCAP set, +0.10 with a pair-level
+standard error of 0.08, so not a proven win. Every run that retrains the plan
+generator drives faster and loses the braking that earns the released model its
+5.0 on stationary and side. [After the fix](#after-the-fix-l4fix-to-s3) has the
+runs since the pose bug and what they taught.
 
-**And every scorer here trained on targets graded from the wrong place.** Found on
-2026-10-06, after the runs below: the trainer graded each tick as if the car were
-where the episode's first-looked-up tick had it, 14–16 m off, which flipped a
-fifth of the stationary verdicts and a third of the frontal ones. The rows below
-are true measurements of a trainer that was partly wrong. Defect 6 has the
-detail; the trainer now refuses to start until a preflight shows its grading
-reproduces the labels.
+**v1 to v4 trained their scorers on targets graded from the wrong place.** Found
+on 2026-10-06: the trainer graded each tick as if the car were where the
+episode's first-looked-up tick had it, 14–16 m off, which flipped a fifth of the
+stationary verdicts and a third of the frontal ones. Defect 6 has the detail; the
+trainer now refuses to start until a preflight shows its grading reproduces the
+labels.
 
 ---
 
@@ -56,7 +56,14 @@ drawn target honest.
 - **Everything goes through the same grader as the model's own 32.** It
   reproduces paddock's `check.json` exactly: 38,080 of 38,080 candidate verdicts.
 
-Round 0: 150 episodes, 9,495 labelled ticks.
+Three data sets, each 150 episodes over the same 15 situations (5 scenes × 3
+hazard types × 10 seeds):
+
+| data set | who drove | ticks | car out of the camera's view |
+|---|---|---|---|
+| round 0 | the released model | 9,495 | 5% |
+| GT | the human's logged path; the model's plans saved, not driven | 5,426 | 25% |
+| DAgger round 1 | s2 | 9,263 | 40% |
 
 ## What each run measured
 
@@ -64,12 +71,30 @@ neuroNCAP scene 0103, two runs per scenario. Every one is recorded
 `valid: false` — three of twenty pairs under a checkpoint override is not a
 neuroNCAP score, and `paddock report` excludes it.
 
+Seeds 0 / 1. Every override run was matched to its checkpoint through the path
+digest in its `run.json`.
+
 | | frontal | stationary | side | mean |
 |---|---|---|---|---|
 | released (n=10) | 2.05–2.26, hits 10/10 | 5.0 ×10 | 5.0 ×10 | 4.05 |
-| v1 — refiner only | **5.00, 5.00** | 0.00 | 0.00 / 5.00 | 2.56 |
-| v2/v3 — brake-first expert | 1.602 | 5.00 | 2.537 | 3.05 |
-| v4 — scorer scored against the expert | 2.153 / 5.000 | 5.0, 5.0 | 5.0, 5.0 | **4.53** |
+| Stage A — refiner only | 1.90 / 1.90 | 1.30 / 0.89 | 0.81 / 0.56 | 1.22 |
+| v1 — refiner and scorer | **5.00 / 5.00** | 0.00 / 0.00 | 0.00 / 5.00 | 2.50 |
+| v2 — brake-first expert | 1.60 / 1.60 | 5.00 / 5.00 | 5.00 / 0.07 | 3.05 |
+| v3 — progress capped at the expert's | not run | | | |
+| v4 — progress peaks at the expert's | 2.15 / 5.00 | 5.00 / 5.00 | 5.00 / 5.00 | **4.53** |
+| v4fix — v4, pose fixed | 2.07 / 5.00 | 5.00 / 5.00 | 5.00 / 5.00 | 4.51 |
+| l4fix — + brake-to-stop expert | 1.41 / 5.00 | 5.00 / 5.00 | 5.00 / 5.00 | 4.40 |
+| l5 — + lane-centre, drivable expert | 3.05 / 3.05 | 2.51 / 2.44 | 2.40 / 2.45 | 2.65 |
+| s1 — scorer only, ranking loss, + GT | 2.02 / 2.23 | 5.00 / 5.00 | 5.00 / 5.00 | 4.04 |
+| s2 — refiner only (swerves ×4), then scorer | 2.19 / 2.19 | 5.00 / 1.15 | 1.07 / 1.04 | 2.11 |
+| s3 — DAgger round 1, from s2 | 0.56 / 0.80 | 1.04 / 0.83 | 0.73 / 0.86 | **0.80** |
+
+Two corrections to earlier versions of this table. **v1 trained its scorer**: its
+scorer weights differ from Stage A's (frozen) by up to 0.032, so the "refiner
+only" in its sidecar was the stale note, and its mean is 2.50, not 2.56. **v3 was
+never run on 0103**: no override run's digest matches its checkpoint. Measured
+offline, its capped target tied braking with full speed and the model sped up 26%
+where the expert braked 38%; v4 replaced it the same day.
 
 **v4 is the best result and it is not the capability we wanted.** It drives like
 the released model with harder braking: 0.11–0.21 m of lateral motion, slowing
@@ -77,7 +102,7 @@ from 7.7 to about 2 m/s. On held-out swerve ticks it moves 0.07 m where the
 expert asks for 4.59. The frontal gain is lower impact speed, plus one seed of
 two avoided entirely — not an evasion.
 
-Two provenance notes on these rows. **The v4 checkpoint trained on
+Two provenance notes on the v4 row. **The v4 checkpoint trained on
 `labelled_round0_v2`**, not on the label set later named `v4`: training ended
 2026-10-02 13:35 IST and the v3 and v4 labels were written at 23:04 that day and
 on 2026-10-06. Its sidecar recorded neither, and said "stage A — refiner only"
@@ -194,6 +219,49 @@ trained on a past the model never had. They are now skipped as unrebuildable;
 saving the priming frames at collection would get them back. Past that, the
 remaining gap is a median 0.29% of four seconds' travel, most likely the JPEG
 round trip, which is what the fidelity limit is now set against.
+
+## After the fix: l4fix to s3
+
+Each row changes one thing from the one above, for the reason given. "Held out"
+is [train/safety_check.py](../src/gallops/train/safety_check.py) on scene 0053,
+never trained on: the share of approach ticks (stationary, expert brakes) where
+the model's pick is safe. The released model scores 89%.
+
+| run | what changed, and why | on 0103 | held out |
+|---|---|---|---|
+| v4fix | v4's recipe on correctly graded targets | same as v4: slows to ~2 m/s, no swerve | 88% |
+| l4fix | expert holds speed, then brakes firmly to a stop; ticks with no recorded past skipped | like v4, ends 2–3.4 m/s | 55% |
+| l5 | expert follows the lane centre (it copied the human's path) and every plan is drivable | never below ~3 m/s; hits all 6 | 32% |
+| s1 | scorer alone, refiner frozen, + ranking loss + 150 GT drives: l5 had safe candidates and picked wrong, and joint training damaged the candidates | same as released: slows to ~1.7 m/s | 8% |
+| s2 | refiner alone (scorer frozen, swerve ticks ×4), then the scorer on its candidates: frontal needs swerves the released candidates never contain | holds ~5.8 m/s, swerves 2–3 m; passes the parked car once, otherwise hits | 40% |
+| s3 | DAgger round 1: s2 drove 150 episodes, the expert labelled them; both stages retrained from s2 on all three data sets: s2 never came back after a swerve | stays on its route, holds ~6.4 m/s, neither swerves nor brakes; hits all 6 | 29% |
+
+**s1 over the full set**, paired seed for seed with the released sweep of 5
+September: 3.671 against 3.568, 83 collisions against 91 (10 avoided, 2 new);
+stationary +0.16, side +0.17, frontal −0.08 per pair. +0.103 with a pair-level
+standard error of 0.079. Most of the side gain is side-0108 seeds 1 and 8, the
+same two episodes the momentum variant flipped: the crossing car misses by a
+hair. The released sweep ran on older harness code and was not re-run.
+
+What the runs show, measured unless marked:
+
+- The released model's stationary and side crashes are choices: a safe stop is
+  among its own 32 plans on 93–96% of the moments before it creeps into the car.
+- Every run that retrains the refiner (l5, s2, s3) drives faster than the expert
+  and the released model, and loses the braking that scores 5.0 on 0103.
+- The refiner can learn to propose swerves (on frontal 0075 a safe candidate
+  exists on 87% of approach ticks after s3a, 68% before), and round 1 taught it to
+  stay near its route. The scorer cannot then pick among them on an unseen scene:
+  held-out top-choice accuracy 23% for s1 on the released candidates, 7% for s2b
+  and 4% for s3b on the retrained ones. Retraining the scorer on s3a's candidates
+  made that worse than keeping s2's (5.8%).
+- The expert and the grader see only the inserted car. Measured on 1,200 sampled
+  ticks it rarely matters to the labels (expert plans hit a parked car on 0–3.5%,
+  all least-impact; 0–0.3% of safe-labelled candidates), so the labels were not
+  redone; the safety check's any-car column watches for it.
+- *Argued:* the expert holds speed and brakes late, so a model that cannot judge
+  "late" learns the first half. The scorer cannot see the car on a new scene, so
+  it has no reason to switch to braking.
 
 ## What is still wrong
 
@@ -338,6 +406,12 @@ Built because the obvious measurement was the wrong one more than once.
   tree and passing tests, the trainer's grading reproducing the labels exactly,
   and the starting weights reproducing what they drove. Its report goes into the
   checkpoint's sidecar.
+- [train/safety_check.py](../src/gallops/train/safety_check.py) — replays the
+  creep and approach ticks of one scene through the released model and any
+  finetunes, and says whether each pick is safe and why not, including hits on
+  any other car in the scene. Its guard refuses to report below 99.5% agreement
+  with the labels: an earlier copy graded against the logged human path while the
+  labels used the lane centre, and only a training scene exposed it.
 - [train/export.py](../src/gallops/train/export.py) — `model.pt` to the vendor's
   checkpoint shape, so paddock's adapter needs no change to evaluate a finetune.
 - `ops/dj_video/compare.py` — two runs side by side, each panel carrying its own
@@ -357,10 +431,48 @@ The trainer requires `--dumps`: the candidate dumps the labels were made from,
 collected by the weights training starts from. The preflight re-grades them
 through the trainer and stops the run if they disagree with the labels.
 
+DAgger trains on every round at once, and each round was driven by a different
+checkpoint, so each data set comes as its own `--source LABELLED DUMPS DROVE`:
+
+    --source labelled_round0_v5 collect_dumps            start   # the released model drove
+    --source labelled_gt        collect_dumps_gt         start   # the human's path; the released model's plans
+    --source labelled_round1_s2 collect_dumps_round1-s2  s2b     # s2 drove
+
+Every source is re-graded against its own dumps. Fidelity -- the starting weights
+reproduce what they drove -- runs only on `start` sources; a round 1 dump was made
+by s2, and comparing the released weights with it would fail for the right reason.
+
+The stages since s1 train one part at a time:
+
+    --train-only scorer --rank-weight 1.0                    # s1, and the second stage of s2, s3
+    --train-only refiner --oversample swerve=4               # the first stage of s2, s3
+    --init <checkpoint>/model.pt                             # start from a previous run, after the preflight
+    --exclude-episodes frontal-0064                          # its inserted car never renders
+
+    python -m gallops.train.safety_check --labelled <dir> --drivable <dir> \
+        --scene 0053 [--shape frontal --kind swerve] --checkpoint NAME=<model.pt> --out check.json
+Episodes are keyed by their directory, not their name: round 1 replays round 0's
+scenarios and seeds, so `stationary-0070/run_3` and its timestamps exist once per round.
+
 The held-out scene is **0053**, not 0058: 0058 has 54 swerve ticks of 1,673,
 exactly one of them frontal, so its validation loss measures ordinary driving.
 
 ## What would come next
+
+0. **Retrain under the fix** — done: v4fix, l4fix and every run after.
+1. **Round 1 of the on-policy loop** — done, under s2 (s3). It taught recovery and
+   cost the swerve and the braking.
+2. **Can the model see the car?** Drive-JEPA's scorer has a collision head that
+   inference never computes; the scorer-cache work tests it and sub-score heads
+   held out scene by scene; it is written up in docs/scorer-cache.md in the PR after this one.
+3. **Teach earlier, gentler braking**, the way the released model already drives,
+   so the refiner stops learning "hold speed".
+4. **Occlusion-aware visibility** and **the lane term**, both still open from the
+   list below.
+5. **Before any claim:** a NAVSIM check on any checkpoint kept, and the released
+   baseline re-run on today's harness.
+
+The earlier list, kept for the record:
 
 In the order the evidence supports, not the order of effort.
 

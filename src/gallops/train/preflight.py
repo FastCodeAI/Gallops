@@ -54,8 +54,26 @@ import sys
 from collections import Counter
 from functools import lru_cache
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
+
+#: `Source.drove` for dumps the weights a run starts from collected.
+START = "start"
+
+
+class Source(NamedTuple):
+    """One labelled directory, the dumps it was labelled from, and who drove.
+
+    `drove` is START when the weights training starts from drove the collection
+    (round 0, GT-shadow), else a name for the checkpoint that did (a DAgger
+    round's). Only START sources can be fidelity-checked.
+    """
+
+    labelled: str
+    dumps: str
+    drove: str
+
 
 #: Pick verdicts may differ on this fraction of sampled ticks before fidelity
 #: fails. The measured baseline is zero; this leaves room for a tick whose plan
@@ -107,6 +125,21 @@ def code_checks(repo: Path) -> tuple[dict, list[str]]:
     return report, problems
 
 
+def episode_key(tick: dict) -> str:
+    """The episode's directory on disk, which names it uniquely.
+
+    `tick["episode"]` does not: a DAgger round replays round 0's scenarios and
+    seeds, so `stationary-0070/run_3` exists once per round, with the same log
+    timestamps. Keyed by that name, two rounds' ticks would merge into one episode.
+    """
+    return str(Path(tick["frame"]).parent.parent) if tick.get("frame") else tick["episode"]
+
+
+def dumps_for(tick: dict, dumps) -> Path:
+    """`dumps` is one directory for every tick, or a list of `Source`s indexed by `tick["source"]`."""
+    return dumps if isinstance(dumps, Path) else Path(dumps[tick.get("source", 0)].dumps)
+
+
 def sample_ticks(ticks: list[dict], episodes: int = 12, per_episode: int = 4, seed: int = 0) -> list[dict]:
     """Ticks spread across episodes and across each episode, LATE FIRST.
 
@@ -116,7 +149,7 @@ def sample_ticks(ticks: list[dict], episodes: int = 12, per_episode: int = 4, se
     """
     by_episode: dict[str, list[dict]] = {}
     for tick in ticks:
-        by_episode.setdefault(tick["episode"], []).append(tick)
+        by_episode.setdefault(episode_key(tick), []).append(tick)
     names = sorted(by_episode)
     random.Random(seed).shuffle(names)
     chosen = []
@@ -129,9 +162,10 @@ def sample_ticks(ticks: list[dict], episodes: int = 12, per_episode: int = 4, se
     return chosen
 
 
-def _dumped(tick: dict, dumps: Path, cache: dict) -> dict | None:
+def _dumped(tick: dict, dumps, cache: dict) -> dict | None:
     from gallops.expert.label import match_dump
 
+    dumps = dumps_for(tick, dumps)
     directory = Path(tick["frame"]).parent.parent
     key = str(directory)
     if key not in cache:
@@ -157,7 +191,7 @@ def _dump_index(dumps: str) -> dict[int, list[Path]]:
     return index
 
 
-def grading_checks(sample: list[dict], referee, dumps: Path) -> tuple[dict, list[str]]:
+def grading_checks(sample: list[dict], referee, dumps) -> tuple[dict, list[str]]:
     """The trainer's grading path against what labelling recorded, exactly."""
     from gallops.expert.draw import undrivable
     from gallops.expert.grader import first_hit, grade
@@ -205,7 +239,8 @@ def grading_checks(sample: list[dict], referee, dumps: Path) -> tuple[dict, list
     n = agree["n"]
     report = {"sampled_ticks": len(sample), "graded": n, "no_dump": missing}
     if missing:
-        problems.append(f"{missing} of {len(sample)} sampled ticks have no dump under {dumps}")
+        where = dumps if isinstance(dumps, Path) else ", ".join(str(d.dumps) for d in dumps)
+        problems.append(f"{missing} of {len(sample)} sampled ticks have no dump under {where}")
     if n == 0:
         problems.append("no sampled tick could be graded; nothing about the targets was checked")
         return report, problems
@@ -227,7 +262,7 @@ def grading_checks(sample: list[dict], referee, dumps: Path) -> tuple[dict, list
 
 
 def fidelity_check(
-    model, dataset_cls, sample: list[dict], referee, dumps: Path, torch, device: str
+    model, dataset_cls, sample: list[dict], referee, dumps, torch, device: str
 ) -> tuple[dict, list[str]]:
     """The starting weights, on rebuilt inputs, against the plan they drove."""
     from gallops.expert.grader import first_hit
@@ -238,7 +273,7 @@ def fidelity_check(
     if not rows:
         return {}, ["fidelity: no sampled tick has a dump to compare with"]
     ticks = [t for t, _ in rows]
-    driven = {(t["episode"], int(t["timestamp"])): r for t, r in rows}
+    driven = {(episode_key(t), int(t["timestamp"])): r for t, r in rows}
     dataset = dataset_cls(ticks, device)
     diffs, fractions, same = [], [], 0
     was_training = model.training
@@ -252,7 +287,7 @@ def fidelity_check(
             # `used`, not the indices asked for: batch skips a tick it cannot rebuild.
             for k, tick in enumerate(used):
                 plan = picked[k]
-                row = driven[(tick["episode"], int(tick["timestamp"]))]
+                row = driven[(episode_key(tick), int(tick["timestamp"]))]
                 ego2world, targets, _ = referee.context(tick)
                 hit = first_hit(plan, ego2world, int(tick["timestamp"]), targets)
                 # The model's own pick at collection. In GT-driven collection the engine
@@ -298,7 +333,7 @@ def describe(ticks: list[dict]) -> dict:
     creep = sum(1 for t in ticks if t["speed"] < 3.0 and t["driven_hits"] is not None)
     return {
         "ticks": len(ticks),
-        "episodes": len({t["episode"] for t in ticks}),
+        "episodes": len({episode_key(t) for t in ticks}),
         "by_shape": dict(shapes),
         "by_expert_kind": dict(kinds),
         "creep_ticks": creep,
@@ -309,23 +344,51 @@ def run(
     repo: Path,
     train: list[dict],
     referee,
-    dumps: Path,
+    sources,
     model,
     dataset_cls,
     torch,
     device: str,
     sample_size: int = 48,
 ) -> dict:
-    """Every check; raises PreflightFailed listing all problems, or returns the report."""
+    """Every check; raises PreflightFailed listing all problems, or returns the report.
+
+    `sources` is a list of `Source`s, indexed by each tick's `source` (a bare
+    dumps directory still works, for one source). Grading is checked on every
+    source against its own dumps. Fidelity only on sources the starting weights
+    drove: a DAgger round's dumps were made by a later checkpoint, and comparing
+    the starting weights with them would fail for the right reason.
+    """
+    if isinstance(sources, Path):
+        sources = [Source("", str(sources), START)]
     report = {"data": describe(train)}
     problems = []
     report["code"], found = code_checks(repo)
     problems += found
-    sample = sample_ticks(train, episodes=max(1, sample_size // 4), per_episode=4)
-    report["grading"], found = grading_checks(sample, referee, dumps)
+    groups = [[t for t in train if t.get("source", 0) == i] for i in range(len(sources))]
+    groups = [g for g in groups if g]
+    per = max(3, sample_size // 4 // max(1, len(groups)))
+    sample = [t for g in groups for t in sample_ticks(g, episodes=per, per_episode=4)]
+    report["grading"], found = grading_checks(sample, referee, sources)
     problems += found
-    report["fidelity"], found = fidelity_check(model, dataset_cls, sample, referee, dumps, torch, device)
-    problems += found
+    own = [t for t in sample if sources[t.get("source", 0)].drove == START]
+    if own:
+        report["fidelity"], found = fidelity_check(model, dataset_cls, own, referee, sources, torch, device)
+        problems += found
+    else:
+        problems.append(
+            "fidelity: no source was driven by the starting weights, so nothing checks that the "
+            "trainer rebuilds the inputs the model saw; add one (round 0 always qualifies)"
+        )
+    report["sources"] = [
+        {
+            "labelled": s.labelled,
+            "dumps": s.dumps,
+            "drove": s.drove,
+            "ticks": sum(1 for t in train if t.get("source", 0) == i),
+        }
+        for i, s in enumerate(sources)
+    ]
     print("  preflight: " + json.dumps(report), flush=True)
     if problems:
         raise PreflightFailed(problems)
