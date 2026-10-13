@@ -247,3 +247,19 @@ def test_the_cli_names_the_selection_split_and_keeps_a_zero(tmp_path, monkeypatc
     assert out.exit_code == 0, out.output
     assert "selection " in out.output and "held-out" not in out.output
     assert "model's own pick 0.000" in out.output
+
+
+def test_a_failed_write_does_not_block_the_retry(tmp_path, monkeypatch):
+    """`staged()` leaves the run directory it created; that is not a fit."""
+    data = a_dataset(tmp_path / "data.npz")
+
+    def disk_full(*args, **kwargs):
+        raise OSError("disk full")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(rerank, "write", disk_full)
+        with pytest.raises(OSError, match="disk full"):
+            rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=10), "abc1234")
+    assert files_under(tmp_path / "weights") == []
+    result = rerank.train(data, a_site(tmp_path), "m", "r", rerank.Settings(hidden=4, epochs=10), "abc1234")
+    assert read(result.directory).train_run == "r"

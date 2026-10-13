@@ -248,8 +248,11 @@ def train(
     beside the first would read as part of it.
     """
     run_dir = cfg.run_dir(model, train_run)
-    if run_dir.exists():
-        raise ValueError(f"{run_dir} already exists; one fit is one run, so name a new --train-run")
+    # A run exists once it has a published step. An empty directory is what a
+    # write that failed inside `staged()` leaves, and refusing it would block the
+    # retry of a fit that never happened.
+    if any(run_dir.glob("step_*")):
+        raise ValueError(f"{run_dir} holds a checkpoint already; one fit is one run, name a new --train-run")
     # Read once, and hash what is read: hashing the file again when the sidecar
     # is written would record whatever is on disk by then, not what was fitted.
     raw = dataset.read_bytes()
