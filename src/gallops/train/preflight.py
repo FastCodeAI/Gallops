@@ -293,8 +293,11 @@ def fidelity_check(
     was_training = model.training
     model.eval()
     with torch.no_grad():
-        for start in range(0, len(ticks), 8):
-            features, _, used = dataset.batch(list(range(start, min(start + 8, len(ticks)))))
+        # One tick per pass: the vendor model mixes ticks within a batch (batch 1 reproduces a
+        # driven plan to 5e-5 m, batch 4 drifted up to 1.0 m), and with the image now reaching it
+        # that mixing could fail a faithful rebuild.
+        for start in range(len(ticks)):
+            features, _, used = dataset.batch([start])
             if features is None:
                 continue
             picked = model(features)["trajectory"].float().cpu().numpy()

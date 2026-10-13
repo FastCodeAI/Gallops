@@ -44,6 +44,21 @@ def human_travel(logged_times: np.ndarray, logged_xy: np.ndarray, t0: int, horiz
 
 
 def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator) -> dict:
+    out, data, checked = compute_labels(cache_file, drivable_dir, rng)
+    target = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
+    tmp = target.with_name(target.name + ".tmp.npz")
+    np.savez(tmp, **out)
+    tmp.rename(target)
+    return {"ticks": len(data["timestamp"]), "checked": checked}
+
+
+def compute_labels(cache_file: Path, drivable_dir: Path, rng: np.random.Generator) -> tuple[dict, dict, int]:
+    """Every plan's labels for one cache file, re-checked against `grader.grade` on a sample.
+
+    Returns (labels as written to `.labels.npz`, the cache arrays, plans re-checked). Writing is
+    the caller's: the training preflight recomputes a few episodes and compares them with what is
+    on disk, so a label file written by older code cannot train a scorer unnoticed.
+    """
     data = np.load(cache_file)
     episode = Path(str(data["frame_dir"]))
     scene = "scene-" + episode.parent.name.rsplit("-", 1)[-1]
@@ -109,11 +124,9 @@ def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator
                 if abs(slow.max_deviation - graded["max_deviation"][j]) > 1e-6:
                     raise SystemExit(f"max_deviation disagrees on {cache_file.name} tick {ts} plan {j}")
                 checked += 1
-    target = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
-    tmp = target.with_name(target.name + ".tmp.npz")
-    np.savez(tmp, **out, timestamp=data["timestamp"], n_vehicles=np.int32(len(vehicles)))
-    tmp.rename(target)
-    return {"ticks": len(plans_all), "checked": checked}
+    out["timestamp"] = data["timestamp"]
+    out["n_vehicles"] = np.int32(len(vehicles))
+    return out, data, checked
 
 
 def main() -> None:
