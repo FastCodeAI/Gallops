@@ -1,0 +1,12 @@
+scene,start_s,end_s,duration_s,post_handover_duration_s,runs_to_end_of_clip,car_path_m,human_path_m,human_speed_at_start_mps,human_starts_moving_after_s,human_share_below_0p5,human_max_speed_mps,n_replans,n_replans_chosen_stay,ahead_gap_at_start_m,ahead_label_at_start,ahead_gap_mid_m,ahead_label_mid,nearest_box_mid_m,nearest_label_mid,episode_class
+04749bb9,13.2,16.75,3.55,3.55,True,0.2652,77.48,21.98,0.0934,0,22.18,7,6,,,,,73.81,automobile,human drives off (human path >= car path + 2 m)
+5f064b02,-3,1.05,4.05,1.05,False,0.2115,0.005473,0.005318,3.375,1,0.005599,3,0,11.94,automobile,12.14,automobile,1.538,automobile,human also standing (human path < 2 m)
+8023dce5,12.6,16.8,4.2,4.2,True,0.1642,0.05213,0.008108,,1,0.1139,8,8,0,heavy_truck,3.906,automobile,1.049,automobile,human also standing (human path < 2 m)
+acd22430,12.8,16.75,3.95,3.95,True,1.262,92.67,22.77,0.07823,0,24.1,8,2,,,,,215.5,automobile,human drives off (human path >= car path + 2 m)
+b44a4a44,-3,16.75,19.75,16.75,True,0.06709,99.49,0.0007622,2.981,0.1726,15.62,34,34,2.376,automobile,0,person,0,person,human drives off (human path >= car path + 2 m)
+bae463d3,11.75,16.8,5.05,5.05,True,0.6641,39.42,8.899,0.03797,0,9.083,10,6,,,,,19.79,automobile,human drives off (human path >= car path + 2 m)
+bd07fb91,14,16.75,2.75,2.75,True,0.8008,8.767,1.2,0.09974,0,5.097,6,0,,,,,5.36,automobile,human drives off (human path >= car path + 2 m)
+d2715023,-3,16.75,19.75,16.75,True,1.221,44.14,0.0725,0.9858,0.1369,5.367,34,34,2.263,automobile,1.598,automobile,1.61,automobile,human drives off (human path >= car path + 2 m)
+e3ed554f,-3,0.55,3.55,0.55,False,0.2204,0.2144,0.2952,0.6701,1,0.4895,2,0,3.876,automobile,4.155,automobile,1.333,automobile,human also standing (human path < 2 m)
+e3ed554f,7.25,8.4,1.15,1.15,False,0.4011,1.735,1.552,0.02004,0,1.552,2,0,4.362,automobile,4.42,automobile,0.919,automobile,human also standing (human path < 2 m)
+e3ed554f,9.45,15.1,5.65,5.65,False,0.813,1.116,0.942,0.02002,0.8246,0.942,12,6,3.822,automobile,3.38,automobile,1.11,automobile,human also standing (human path < 2 m)

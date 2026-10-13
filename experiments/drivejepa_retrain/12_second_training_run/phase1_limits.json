@@ -1,0 +1,23 @@
+{
+ "written": "2026-10-09T16:56:02+05:30",
+ "source": "pass 9 at batch 1 on UNSEEN graded (NAS/12_second_training_run/base_b1, 11,842 instants), tables by S10/s10_base_tables.py",
+ "definition": "PREDICTIONS_phase1.md: W1 good-plan rate on ordinary and close-pass not more than 2 points under the batch-1 pass-9 value; W2 human-path error on highway, close-pass, ordinary at most 1.05 x the batch-1 pass-9 value",
+ "W1_good_plan_share_min_pct": {
+  "ordinary": 71.62148190695002,
+  "close-pass": 47.584133077415224
+ },
+ "W1_base_pct": {
+  "ordinary": 73.62148190695002,
+  "close-pass": 49.584133077415224
+ },
+ "W2_human_path_term_max": {
+  "highway": 1.7482236976847947,
+  "close-pass": 0.49756183121566133,
+  "ordinary": 0.40062631163395757
+ },
+ "W2_base": {
+  "highway": 1.664974950175995,
+  "close-pass": 0.4738684106815822,
+  "ordinary": 0.3815488682228167
+ }
+}

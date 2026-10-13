@@ -1,0 +1,6 @@
+scene,n_replans,n_stationary_stay_human_going,of_which_usable_escape,of_which_usable_margin0p3,of_which_usable_human_like,first_t_s,last_t_s,median_best_usable_rank_final,best_usable_rank_final,median_best_usable_rank_plain,median_gap_chosen_minus_best_usable_final,median_n_stay_above_best_usable_final,median_n_stay,max_car_speed_before_first_such_replan_mps,n_with_full_4s_box_horizon,usable_with_full_4s_box_horizon
+04749bb9,34,6,6,6,0,13.5,16.5,13.5,10,13.5,0.24146,2,2,23.563,0,0
+acd22430,34,2,2,2,0,15.5,16.5,6,5,7.5,0.092197,2.5,4.5,23.429,0,0
+b44a4a44,34,27,19,14,19,3.5,16.5,16,11,17,0.21472,8,8,0.01779,19,11
+bae463d3,34,6,6,6,0,12.5,15,12,9,12,0.22742,5,5,3.5917,1,1
+d2715023,34,22,9,0,8,4.5,15,27,22,27,0.89347,11,11,0.32807,17,8

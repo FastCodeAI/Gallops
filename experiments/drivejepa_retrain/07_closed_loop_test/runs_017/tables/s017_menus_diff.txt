@@ -1,0 +1,34 @@
+2c2
+< """S5 TRIAL copy of baseline_014b/b014b_menus.py for the 0.1.6 runs (diff: tables/s5_menus_diff.txt -- package drivejepa016, i.e. the S4
+---
+> """GENERATOR-ONLY TRIAL copy of 07_closed_loop_test/s5_menus.py for the 0.1.7 runs (diff: tables/s017_menus_diff.txt -- package runs_017/adapters/drivejepa017, i.e. the S10 generator with the batch fix on as deployed; menus and the worker log on the NAS). Original docstring: S5 TRIAL copy of baseline_014b/b014b_menus.py for the 0.1.6 runs (diff: tables/s5_menus_diff.txt -- package drivejepa017, i.e. the S4
+15c15
+< HERE = pathlib.Path(__file__).resolve().parent; ALP = HERE.parents[2]; (HERE / "logs").mkdir(exist_ok=True)
+---
+> HERE = pathlib.Path(__file__).resolve().parent; ALP = HERE.parents[3]; OUTR = pathlib.Path("{runs}/drivejepa_retrain/07_closed_loop_test_017"); (OUTR / "menus").mkdir(exist_ok=True)
+18,22c18,22
+< sys.path.append(str(ALP / "adapters"))
+< import drivejepa016.planner as P14B  # noqa: E402   (name kept from the original; this is the 0.1.6 planner)
+< import drivejepa016.constants as K  # noqa: E402
+< from drivejepa016.bridge import BridgedDriveJEPA  # noqa: E402
+< assert (K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION) == ("0.1.6", 37, True, True)
+---
+> sys.path.insert(0, str(HERE / "adapters")); sys.path.append(str(ALP / "adapters"))   # drivejepa017 from runs_017/adapters, scaffold from Alpasim/adapters
+> import drivejepa017.planner as P14B  # noqa: E402   (name kept from the original; this is the 0.1.6 planner)
+> import drivejepa017.constants as K  # noqa: E402
+> from drivejepa017.bridge import BridgedDriveJEPA  # noqa: E402
+> assert (K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION) == ("0.1.7", 37, True, True) and K.BATCH_FIX and K.CHECKPOINT_SHA256.startswith("29d5f951")
+26c26
+<     t0 = time.time(); model = BridgedDriveJEPA(device="cpu", stderr_log=HERE / "logs" / "menus_worker.log"); print(f"model up {time.time() - t0:.0f}s", flush=True)
+---
+>     t0 = time.time(); model = BridgedDriveJEPA(device="cpu", stderr_log=OUTR / "menus" / "menus_worker.log"); print(f"model up {time.time() - t0:.0f}s", flush=True)
+33,34c33,34
+<         label, run = spec.split("="); run = pathlib.Path(run); out = HERE / "menus" / label
+<         if (HERE / "menus" / f"{label}.json").is_file(): print(f"{label}: done already, skip", flush=True); continue
+---
+>         label, run = spec.split("="); run = pathlib.Path(run); out = OUTR / "menus" / label
+>         if (OUTR / "menus" / f"{label}.json").is_file(): print(f"{label}: done already, skip", flush=True); continue
+54c54
+<         json.dump(js, open(HERE / "menus" / f"{label}.json", "w"), indent=1, default=float)
+---
+>         json.dump(js, open(OUTR / "menus" / f"{label}.json", "w"), indent=1, default=float)

@@ -1,0 +1,27 @@
+=== wizard-config.yaml, 0.1.4b vs 0.1.6: 0 differing keys (run-dir paths normalised)
+=== wizard-config.yaml, 0.1.4 vs 0.1.6: 0 differing keys (run-dir paths normalised)
+=== wizard-config.yaml, 0.1.4 vs 0.1.4b: 0 differing keys (run-dir paths normalised)
+=== wizard-config.yaml, cv_0.2.3 vs 0.1.6: 23 differing keys (run-dir paths normalised)
+  defines.drivers: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/drivers' -> '{runs}/paddock_sid/Alpasim/alpasim/data/drivers'
+  defines.filesystem: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data' -> '{runs}/paddock_sid/Alpasim/alpasim/data'
+  defines.hf_cache: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_alpasim_bulk/hf-cache' -> '{runs}/alpasim_bulk/hf-cache'
+  defines.sensordata: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/nre-artifacts' -> '{runs}/paddock_sid/Alpasim/alpasim/data/nre-artifacts'
+  defines.trafficsim_models: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/trafficsim-models' -> '{runs}/paddock_sid/Alpasim/alpasim/data/trafficsim-models'
+  runtime.simulation_config.skip_driver_during_force_gt: 30 scene-entries; e.g. 01d503d4: 'True' -> 'False'
+  scenes.limit_to_first_n: 10 scene-entries; e.g. 01d503d4: '10' -> '0'
+  scenes.scene_cache: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_alpasim_bulk/nre-artifacts' -> '{runs}/alpasim_bulk/nre-artifacts'
+  scenes.scene_ids: 10 scene-entries; e.g. 01d503d4: 'None' -> 'None'
+  scenes.scene_ids[]: 10 scene-entries; e.g. 01d503d4: 'None' -> 'clipgt-01d503d4-449b-46fc-8d78-9085e70d3554'
+  scenes.scenes_csv[]: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/scenes/sim_scenes.csv' -> '{runs}/paddock_sid/Alpasim/drafts/drivejepa-0.1.4/smoke_01d503d4/sim_scenes_pilot10'
+  scenes.sceneset_path: 10 scene-entries; e.g. 01d503d4: 'scenesets/35c58e71cf132a856bf991e99be1f6f7' -> 'scenesets/58747c33fd25a4c1b3ab10ed92536a1a'
+  scenes.suites_csv[]: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/scenes/sim_suites.csv' -> '{runs}/paddock_sid/Alpasim/alpasim/data/scenes/sim_suites.csv'
+  scenes.test_suite_id: 10 scene-entries; e.g. 01d503d4: 'public_2601' -> 'None'
+  services.controller.volumes[]: 20 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/src:/repo/src' -> '{runs}/paddock_sid/Alpasim/alpasim/src:/repo/src'
+  services.driver.volumes[]: 40 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/src:/repo/src' -> '{runs}/paddock_sid/Alpasim/alpasim/src:/repo/src'
+  services.physics.volumes[]: 30 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/plugins:/repo/plugins' -> '{runs}/paddock_sid/Alpasim/alpasim/plugins:/repo/plugins'
+  services.prometheus.volumes[]: 20 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/src:/repo/src' -> '{runs}/paddock_sid/Alpasim/alpasim/src:/repo/src'
+  services.renderer.volumes[]: 20 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/nre-artifacts/ego-hoods:{runs}/ego-hoods' -> '{runs}/paddock_sid/Alpasim/alpasim/data/nre-artifacts/ego-hoods:{runs}/ego-hoods'
+  services.runtime.volumes[]: 30 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/src:/repo/src' -> '{runs}/paddock_sid/Alpasim/alpasim/src:/repo/src'
+  wizard.external_services.driver[]: 30 scene-entries; e.g. 01d503d4: 'localhost:9155' -> 'localhost:9147'
+  wizard.prometheus.file_sd_dir: 10 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/prometheus/file-sd' -> '{runs}/paddock_sid/Alpasim/alpasim/data/prometheus/file-sd'
+  wizard.sqshcaches[]: 20 scene-entries; e.g. 01d503d4: '{runs}/vm_paddock_sid/Alpasim/alpasim/data/sqsh' -> '{runs}/paddock_sid/Alpasim/alpasim/data/sqsh'

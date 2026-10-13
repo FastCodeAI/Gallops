@@ -1,0 +1,11 @@
+{
+ "frame": {
+  "logical_id": "camera_front_wide_120fov",
+  "frame_end_minus_handover_s": 6.0,
+  "size": [
+   1920,
+   1080
+  ]
+ },
+ "secs": 90.43925476074219
+}

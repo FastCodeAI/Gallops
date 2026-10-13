@@ -1,0 +1,276 @@
+--- upstream_ref/drive_jepa_agent.py	2026-10-06 05:55:32.608402930 +0530
++++ drive_jepa_agent_s35.py	2026-10-07 03:40:08.188524531 +0530
+@@ -14,10 +14,53 @@
+ from navsim.agents.drive_jepa_perception_based.drive_jepa_model import DriveJEPAModel
+ from navsim.agents.transfuser.transfuser_loss import _agent_loss
+ from navsim.common.dataclasses import SensorConfig
+-from navsim.common.dataloader import MetricCacheLoader
+ from navsim.common.utils import mean_time_every_5_calls
+ 
+-from .score_module.compute_navsim_score import get_scores, get_sub_score
++from navsim.agents.drive_jepa_perception_based.score_module import compute_navsim_score as CNS
++
++# S3.5 PATCHED COPY of navsim/agents/drive_jepa_perception_based/drive_jepa_agent.py (vendored file untouched; see
++# drive_jepa_agent.diff). Every change is tagged [S35-1a] has_label2 wiring, [S35-1b] vocabulary flag, [S35-1d] init / freeze.
++VOCAB_PATHS = {"orig": "./data/8192.npy"}  # "ext" is passed in by the caller (s3_assembly/vocab_10240.npy)
++ORIG_VOCAB_ROWS = 8192
++
++
++def get_sub_score_s35(metric_cache_path, poses, test, index_path, scorer_impl):
++    """[S35-1a] Replaces compute_navsim_score.get_sub_score (:52-76). Same simulation / scoring / breakdown calls; the anchor index is
++    read from an explicit path (upstream derives it by string-replacing the metric-cache path, :54-55), and scorer_impl="s3" grades
++    with s3_assembly/s3_scorer.score (real vehicle box D2 + direction exemption D3), i.e. the grader that produced label 2 and the
++    anchor index. scorer_impl="upstream" is get_sub_score verbatim (Pacifica box, no exemption)."""
++    metric_cache = CNS.load_metric_cache(metric_cache_path)
++    scores_index = np.load(index_path) if index_path else np.zeros(0, dtype=np.int64)
++    if scorer_impl == "upstream":
++        simulated_states = CNS.before_score_proposals(metric_cache, poses, metric_cache.ego_state)
++        final_scores = CNS.scorer.score_proposals(
++            simulated_states,
++            metric_cache.observation,
++            metric_cache.centerline,
++            metric_cache.route_lane_ids,
++            metric_cache.drivable_area_map,
++            metric_cache.map_parameters,
++            None,
++            metric_cache.past_human_trajectory,
++        )
++        scores, key_agent_corners, key_agent_labels, ego_areas = CNS.after_score_proposals(
++            CNS.scorer, final_scores, metric_cache.ego_state, test
++        )
++    else:
++        import s3_scorer as SS  # s3_assembly must be on sys.path (train_patch/s35_common.py puts it there)
++
++        s3_scores, _ = SS.score(metric_cache, poses)
++        sc = SS.scorer_for(metric_cache.ego_state.car_footprint.vehicle_parameters)  # still holds the state of the call above
++        final_scores = np.concatenate([[np.nan], s3_scores[:, -1]])  # row 0 = reference plan, dropped by after_score_proposals
++        scores, key_agent_corners, key_agent_labels, ego_areas = CNS.after_score_proposals(
++            sc, final_scores, metric_cache.ego_state, test
++        )
++        assert np.array_equal(scores, s3_scores)
++    return scores, key_agent_corners, key_agent_labels, ego_areas, scores_index
++
++
++def get_scores_s35(args):
++    return [get_sub_score_s35(a["token"], a["poses"], a["test"], a["index"], a["scorer_impl"]) for a in args]
+ 
+ 
+ class DriveJEPAAgent(AbstractAgent):
+@@ -26,11 +69,26 @@
+         config: DriveJEPAConfig,
+         lr: float,
+         checkpoint_path: str = None,
++        vocab_path: str = VOCAB_PATHS["orig"],  # [S35-1b] 8192.npy or s3_assembly/vocab_10240.npy
++        index_kind: str = "orig",  # [S35-1b] anchors_scores_index_{orig|ext}.npy next to each metric cache
++        init_checkpoint: str = None,  # [S35-1d] weights to start training from (checkpoint_path must stay "" to train)
++        freeze_encoder: bool = True,  # [S35-1d]
++        scorer_impl: str = "s3",  # [S35-1a] "s3" | "upstream"
++        index_dir: str = None,  # [S35-1a] TEST ONLY: read <index_dir>/<token>.npy instead of the file next to the metric cache
++        pool_workers: int = 16,  # upstream value (:43); 0 = score in-process
++        score_chunk: int = 2,  # [S4] rows per scoring task; upstream value (:93). 1 spreads a batch's graded rows over more workers
+     ):
+         super().__init__(config.trajectory_sampling)
+         self._config = config
+         self._lr = lr
+         self._checkpoint_path = checkpoint_path
++        self._init_checkpoint = init_checkpoint
++        self._freeze_encoder = freeze_encoder
++        self._scorer_impl = scorer_impl
++        self._index_kind = index_kind
++        self._index_dir = index_dir
++        self._score_chunk = int(score_chunk)
++        assert scorer_impl in ("s3", "upstream") and index_kind in ("orig", "ext")
+ 
+         cache_data = False
+ 
+@@ -40,15 +98,22 @@
+         if not cache_data and self._checkpoint_path == "":  # only for training
+             self.bce_logit_loss = nn.BCEWithLogitsLoss()
+ 
+-            self.persistent_pool = ProcessPoolExecutor(max_workers=16)
++            self.persistent_pool = ProcessPoolExecutor(max_workers=pool_workers) if pool_workers else None
+ 
+-            metric_cache = MetricCacheLoader(Path(os.getenv("NAVSIM_EXP_ROOT") + "/Drive-JEPA-cache/train_metric_cache_v2_pruned"))
+-            self.train_metric_cache_paths = metric_cache.metric_cache_paths
+-            self.test_metric_cache_paths = metric_cache.metric_cache_paths
+-        
+-        poses = np.load("./data/8192.npy")
++            # [S35-1a] edit 1: no global MetricCacheLoader (upstream :45-47 needs a metric cache for EVERY token). The path of each
++            # labelled sample's metric cache arrives with the batch (targets["metric_cache_path"], dataset_s35.py); raw-only
++            # samples carry "" and are never looked up.
++
++        # [S35-1b] vocabulary selectable by path. Only self.anchors depends on its size (used at trajectory_loss_anchors).
++        poses = np.load(vocab_path)
++        assert poses.ndim == 3 and poses.shape[1:] == (40, 3) and poses.dtype == np.float32, (poses.shape, poses.dtype)
++        assert (index_kind == "ext") == (len(poses) > ORIG_VOCAB_ROWS), "index_kind must match the vocabulary"
+         self.anchors = poses[:, 4::5]
+ 
++        if not cache_data and self._freeze_encoder:  # [S35-1d] upstream trains the encoder at 0.1 x lr (get_optimizers)
++            for p in self._pad_model._backbone.parameters():
++                p.requires_grad_(False)
++
+     def name(self) -> str:
+         """Inherited, see superclass."""
+         return 'drive_jepa_perception_based_agent' 
+@@ -65,6 +130,10 @@
+                 ]
+             self.load_state_dict({k.replace("agent._pad_model", "_pad_model"): v for k, v in state_dict.items()})
+ 
++        if self._init_checkpoint:  # [S35-1d] same key mapping as above, strict
++            state_dict = torch.load(self._init_checkpoint, map_location=torch.device("cpu"))["state_dict"]
++            self.load_state_dict({k.replace("agent._pad_model", "_pad_model"): v for k, v in state_dict.items()}, strict=True)
++
+     def get_sensor_config(self):
+         """Inherited, see superclass."""
+         return SensorConfig(
+@@ -90,28 +159,44 @@
+ 
+     def worker_map(self, data_points):
+         # Split data_points into chunks of size 2
+-        chunks = [data_points[i : i + 2] for i in range(0, len(data_points), 2)]
++        chunks = [data_points[i : i + self._score_chunk] for i in range(0, len(data_points), self._score_chunk)]
+ 
+         # Submit all tasks at once and collect results more efficiently
+-        futures = [self.persistent_pool.submit(get_scores, chunk) for chunk in chunks]
++        if self.persistent_pool is None:
++            return [item for chunk in chunks for item in get_scores_s35(chunk)]
++        futures = [self.persistent_pool.submit(get_scores_s35, chunk) for chunk in chunks]
+ 
+         # Use list comprehension with extend for faster flattening
+         all_res = [item for future in futures for item in future.result()]
+ 
+         return all_res
+ 
++    def _index_path(self, token, metric_cache_path):
++        if self._index_dir is not None:
++            return str(Path(self._index_dir) / f"{token}.npy")
++        return str(Path(metric_cache_path).parent / f"anchors_scores_index_{self._index_kind}.npy")
++
+     def compute_score(self, targets, proposals, test=True):
+-        if self.training:
+-            metric_cache_paths = self.train_metric_cache_paths
+-        else:
+-            metric_cache_paths = self.test_metric_cache_paths
++        """[S35-1a] edit 1: scores ONLY the rows with has_label2 (upstream :112-115 looks up every token). Every returned tensor
++        has the labelled rows as its first dimension, in batch order."""
++        rows = torch.nonzero(targets["has_label2"].bool().cpu()).flatten().tolist()
++        assert len(rows), "compute_score called on a batch without label 2"
++        mc_paths = [targets["metric_cache_path"][i] for i in rows]
++        assert all(mc_paths), "has_label2 sample without a metric cache path"
++        tokens = [targets["token"][i] for i in rows]
+ 
+-        target_trajectory = targets["trajectory"]
+-        proposals = proposals.detach()
++        target_trajectory = targets["trajectory"][rows]
++        proposals = proposals.detach()[rows]
+ 
+         data_points = [
+-            {"token": metric_cache_paths[token], "poses": poses, "test": test}
+-            for token, poses in zip(targets["token"], proposals.float().cpu().numpy())
++            {
++                "token": mc,
++                "poses": poses,
++                "test": test,
++                "index": None if test else self._index_path(token, mc),
++                "scorer_impl": self._scorer_impl,
++            }
++            for token, mc, poses in zip(tokens, mc_paths, proposals.float().cpu().numpy())
+         ]
+ 
+         all_res = self.worker_map(data_points)
+@@ -273,10 +358,20 @@
+         proposal_list = pred["proposal_list"]
+         target_trajectory = targets["trajectory"]
+ 
+-        final_scores, best_scores, target_scores, gt_states, gt_valid, gt_ego_areas, scores_index = self.compute_score(
+-            targets, proposals.detach(), test=False
+-        )
+-        
++        # [S35-1a] has_label2 (B,) bool comes from the dataloader. Labelled rows are scored exactly as upstream :276-278;
++        # raw-only rows are not scored and get an EMPTY anchor index, which upstream's own `if idx_arr.shape[0] == 0: continue`
++        # (:237-238) turns into "no vocabulary pseudo-target for this sample" (edit 2).
++        has_label2 = targets["has_label2"].bool()
++        n_label2 = int(has_label2.sum())
++        scores_index = [np.zeros(0, dtype=np.int64) for _ in range(len(has_label2))]
++        if n_label2:
++            final_scores, best_scores, target_scores, gt_states, gt_valid, gt_ego_areas, lab_index = self.compute_score(
++                targets, proposals.detach(), test=False
++            )
++            for row, idx_arr in zip(torch.nonzero(has_label2).flatten().tolist(), lab_index):
++                assert idx_arr.size == 0 or idx_arr.max() < len(self.anchors), "anchor index beyond the vocabulary"  # [S35-1b]
++                scores_index[row] = idx_arr
++
+         proposals = proposals.detach()
+         
+         trajectory_loss, min_loss, inter_loss, min_loss_list, inter_loss_list = self.trajectory_loss_anchors(proposal_list, target_trajectory, config, scores_index)
+@@ -286,11 +381,15 @@
+         # min_loss1 = min_loss_list[1]
+         # inter_loss1 = inter_loss_list[1]
+ 
+-        if "pred_logit" in pred.keys():
++        # [S35-1a] edit 3: every scorer-head loss (sub-score, final score, key-agent CE / L1, ego-area) is computed on the labelled
++        # rows only, with the same mean reductions as upstream :289-298; a batch with no labelled row contributes 0 (no graph), so
++        # nothing reaches the scorer heads.
++        sel = lambda t: None if t is None else t[has_label2]
++        if "pred_logit" in pred.keys() and n_label2:
+             sub_score_loss, final_score_loss, pred_ce_loss, pred_l1_loss, pred_area_loss = self.score_loss(
+-                pred["pred_logit"],
+-                pred["pred_agents_states"],
+-                pred["pred_area_logit"],
++                sel(pred["pred_logit"]),
++                sel(pred["pred_agents_states"]),
++                sel(pred["pred_area_logit"]),
+                 target_scores,
+                 gt_states,
+                 gt_valid,
+@@ -299,6 +398,9 @@
+         else:
+             sub_score_loss = final_score_loss = pred_ce_loss = pred_l1_loss = pred_area_loss = 0
+ 
++        # [S35-1a] the two auxiliary BEV heads are off in DriveJEPAConfig (bev_agent / bev_map False) and our caches carry no targets
++        # for them; fail loudly rather than train them on missing labels.
++        assert pred["agent_states"] is None and pred["bev_semantic_map"] is None, "BEV auxiliary heads are not wired for S3.5"
+         if pred["agent_states"] is not None:
+             agent_class_loss, agent_box_loss = _agent_loss(targets, pred, config)
+         else:
+@@ -324,8 +426,11 @@
+ 
+         pdm_score = pred["pdm_score"].detach()
+         top_proposals = torch.argmax(pdm_score, dim=1)
+-        score = final_scores[np.arange(len(final_scores)), top_proposals].mean()
+-        best_score = best_scores.mean()
++        if n_label2:  # [S35-1a] logged on the labelled rows only
++            score = final_scores[np.arange(len(final_scores)), top_proposals[has_label2]].mean()
++            best_score = best_scores.mean()
++        else:
++            score = best_score = torch.tensor(float("nan"))
+ 
+         loss_dict = {
+             "loss": loss,
+@@ -341,6 +446,7 @@
+             "min_loss": min_loss,
+             "score": score,
+             "best_score": best_score,
++            "n_label2": n_label2,
+         }
+ 
+         return loss_dict
+@@ -354,6 +460,11 @@
+         return self.pad_loss(targets, pred, self._config)
+ 
+     def get_optimizers(self):
++        if self._freeze_encoder:  # [S35-1d] encoder group dropped; the other group is upstream's, unchanged
++            return torch.optim.Adam(
++                [{"params": [p for n, p in self._pad_model.named_parameters() if "backbone" not in n], "lr": self._lr}],
++                lr=self._lr,
++            )
+         # Smaller lr for vjepa encoder
+         return torch.optim.Adam(
+             [
+@@ -368,5 +479,5 @@
+ 
+     def __del__(self):
+         """Cleanup persistent pool on deletion."""
+-        if hasattr(self, "persistent_pool"):
++        if getattr(self, "persistent_pool", None) is not None:
+             self.persistent_pool.shutdown(wait=True)

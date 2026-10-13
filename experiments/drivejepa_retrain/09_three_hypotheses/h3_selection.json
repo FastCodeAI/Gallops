@@ -1,0 +1,29 @@
+{
+ "written": "2026-10-08T23:22:52+05:30",
+ "note": "written before UNSEEN is opened",
+ "seed": 20261008,
+ "seen_instants": 11842,
+ "train_instants": 9476,
+ "val_instants": 2366,
+ "train_clips": 582,
+ "val_clips": 145,
+ "training_pairs": 2289175,
+ "weight_decay_by_head": {
+  "rank-linear": 0.0,
+  "rank-mlp64": 0.01
+ },
+ "val_regret_by_head": {
+  "rank-linear": 0.09761448204517365,
+  "rank-mlp64": 0.07915081828832626
+ },
+ "the_ranking_head": "rank-mlp64",
+ "other_ranking_head": "rank-linear",
+ "bce_head": "bce-mlp64",
+ "bce_weight_decay": 0.001,
+ "bce_val_regret": 0.07712797075510025,
+ "ridge_alpha": 100.0,
+ "ridge_val_regret": 0.09488170593976974,
+ "scorer_val_regret": 0.07214703410863876,
+ "scorer_val_rank_agreement_median": 0.5353604797966254,
+ "random_val_regret": 0.20775717496871948
+}

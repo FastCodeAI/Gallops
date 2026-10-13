@@ -1,0 +1,38 @@
+{
+ "job": "pass-9 UNSEEN dump at batch 1, batch corrections off, CPU float32 eval",
+ "pid": 481143,
+ "launcher_pid_group": 481135,
+ "host_cwd": "experiments/drivejepa_retrain/12_second_training_run",
+ "command": "setsid nohup ./run_s10_dump_b1.sh --bs 1 --out base_b1 --threads 6 --pool 2 --loaders 1 >> {runs}/drivejepa_retrain/12_second_training_run/base_b1/dump.log 2>&1 &",
+ "log": "{runs}/drivejepa_retrain/12_second_training_run/base_b1/dump.log",
+ "load_log": "{runs}/drivejepa_retrain/12_second_training_run/base_b1/load_log.csv",
+ "out_dir": "{runs}/drivejepa_retrain/12_second_training_run/base_b1",
+ "launched_at": "2026-10-09T10:04:32+05:30",
+ "first_example_at": "2026-10-09T10:06:33+05:30",
+ "load_5min_at_launch": 9.3,
+ "threads": 6,
+ "grading_workers": 2,
+ "loaders": 1,
+ "timed": {
+  "examples": 100,
+  "wall_s": 100.5,
+  "s_per_example": 1.005,
+  "encoder": 0.587,
+  "trunk": 0.019,
+  "grade": 0.199,
+  "load": 0.005,
+  "note": "first 100 examples of the run, includes grading-worker start-up"
+ },
+ "examples": 11842,
+ "shards": 47,
+ "projected_wall_h": 3.31,
+ "projected_finish": "2026-10-09T13:25+05:30",
+ "completion_check": [
+  "{runs}/drivejepa_retrain/12_second_training_run/base_b1/DONE.json exists with examples == 11842 and shards == 47",
+  "47 files shard_0000..0046.npz and no *.tmp.npz in {runs}/drivejepa_retrain/12_second_training_run/base_b1",
+  "last line of dump.log starts with DONE",
+  "pgrep -f 's10_dump_b1.py --bs 1' prints nothing"
+ ],
+ "resume": "same command; finished shards are skipped (a shard in progress is redone from its first row)",
+ "then": "./s10_base_tables.py {runs}/drivejepa_retrain/12_second_training_run/base_b1 OUT_DIR --tag base_b1   (conda drive-jepa python, CUDA_VISIBLE_DEVICES='')"
+}

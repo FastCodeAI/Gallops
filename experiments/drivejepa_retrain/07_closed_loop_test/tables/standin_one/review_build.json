@@ -1,0 +1,21 @@
+{
+ "out": "experiments/drivejepa_retrain/07_closed_loop_test/review_standin_one",
+ "n": 1,
+ "missing": [],
+ "key": [
+  "Mean score over the 1 scenes: 1.000 (0.1.4b) \u2192 1.000 (0.1.6).",
+  "Score up on 0, down on 0, unchanged on 1 of the 1 scenes.",
+  "At-fault collisions: 0 (0.1.4b) \u2192 0 (0.1.6); any collision 0 \u2192 0.",
+  "Off-road exits: 0 \u2192 0; scenes with minimum headway under 0.8 s: 0 \u2192 0.",
+  "\u00a73.5 changed the pick on 10 of 39 replans (26 %) under 0.1.4b and on 14 of 39 (36 %) under 0.1.6."
+ ],
+ "groups": {
+  "improved": [],
+  "decreased": [],
+  "same": [
+   "01d503d4"
+  ]
+ },
+ "disagree": [],
+ "bytes": 1728633
+}

@@ -1,0 +1,100 @@
+2c2,3
+< """S5 TRIAL review page: recorded 0.1.4b (left) vs 0.1.6 (right), the same page as the 0.1.4 vs 0.1.4b review
+---
+> """GENERATOR-ONLY TRIAL review page: recorded 0.1.6 (left) vs 0.1.7 (right), 0.1.4b as a third value in the tables, two highway columns added. Copy of 07_closed_loop_test/s5_build_review.py (diff: tables/s017_build_review_diff.txt); page folder on the NAS.
+> Original docstring: S5 TRIAL review page: recorded 0.1.4b (left) vs 0.1.6 (right), the same page as the 0.1.4 vs 0.1.4b review
+21c22
+< HERE = pathlib.Path(__file__).resolve().parent; T = HERE / "tables"; B14 = HERE.parents[1] / "Re-ranker" / "baseline_014b"; ALP = HERE.parents[2]
+---
+> HERE = pathlib.Path(__file__).resolve().parent; S5T = HERE.parent; T = HERE / "tables"; B14 = HERE.parents[2] / "Re-ranker" / "baseline_014b"; ALP = HERE.parents[3]; NAS = pathlib.Path("{runs}/drivejepa_retrain/07_closed_loop_test_017")
+26,28c27,29
+< OUT = pathlib.Path(a.out) if a.out else HERE / ("review_standin" if a.standin else "review"); (OUT / "videos").mkdir(parents=True, exist_ok=True)
+< RUN16 = lambda s: ALP / "runs" / "drivejepa" / f"drivejepa_016_{s}"
+< rep14 = pd.read_csv(B14 / "tables" / "replans_014b.csv")
+---
+> assert not a.standin; OUT = pathlib.Path(a.out) if a.out else NAS / "review"; (OUT / "videos").mkdir(parents=True, exist_ok=True)
+> RUN16 = lambda s: ALP / "runs" / "drivejepa" / f"drivejepa_016_{s}"; RUN17 = lambda s: NAS / "runs" / f"drivejepa_017_{s}"
+> rep14 = pd.read_csv(S5T / "tables" / "replans_016.csv")   # LEFT arm = 0.1.6 (names of the original kept: "old"/rep14 = left, "new"/rep16 = right)
+37c38
+<     per = pd.read_csv(T / "per_scene.csv").set_index("scene"); rep16 = pd.read_csv(T / "replans_016.csv"); G = json.load(open(T / "review_groups.json"))
+---
+>     per = pd.read_csv(T / "per_scene.csv").set_index("scene"); rep16 = pd.read_csv(T / "replans_017.csv"); G = json.load(open(T / "review_groups.json"))
+41,43c42,44
+<     if arm == "014b" or a.standin: return BR.RUNS / f"b014b_{s}_on", B14 / "menus" / f"b014b_{s}", B14 / "videos" / f"b014b_{s}.mp4"
+<     return RUN16(s), HERE / "menus" / f"d016_{s}", HERE / "videos" / f"d016_{s}.mp4"
+< def ready(s): r, m, v = src(s, "016"); return (r / "aggregate" / "metrics_results.parquet").is_file() and (pathlib.Path(str(m) + ".json")).is_file() and v.is_file() and s in per.index and np.isfinite(per.loc[s].get("016_scene_score", np.nan))
+---
+>     if arm == "016": return RUN16(s), S5T / "menus" / f"d016_{s}", S5T / "videos" / f"d016_{s}.mp4"
+>     return RUN17(s), NAS / "menus" / f"d017_{s}", NAS / "videos" / f"d017_{s}.mp4"
+> def ready(s): r, m, v = src(s, "017"); return (r / "aggregate" / "metrics_results.parquet").is_file() and (pathlib.Path(str(m) + ".json")).is_file() and v.is_file() and s in per.index and np.isfinite(per.loc[s].get("017_scene_score", np.nan))
+48c49
+<     r = per.loc[s]; ra, ma, va = src(s, "014b"); rb, mb, vb = src(s, "016"); A, pa = BS.arm_series(ra, ma, "014b"); Bs, pb = BS.arm_series(rb, mb, "016")
+---
+>     r = per.loc[s]; ra, ma, va = src(s, "016"); rb, mb, vb = src(s, "017"); A, pa = BS.arm_series(ra, ma, "016"); Bs, pb = BS.arm_series(rb, mb, "017")
+54,55c55,57
+<                     changed_n=int(q.changed.sum()), replans=int(len(q)), changed_share=f(100 * float(q.changed.mean()) if len(q) else np.nan, 1))
+<     o, n = arm("014b", pa, rep14), arm("016", pb, rep16); delta = f(n["score"] - o["score"], 3); by = "improved" if delta >= 0.02 else ("decreased" if delta <= -0.02 else "same"); out = GROUP_OF.get(s, by)
+---
+>                     changed_n=int(q.changed.sum()), replans=int(len(q)), changed_share=f(100 * float(q.changed.mean()) if len(q) else np.nan, 1), hstep=f(r[f"{pre}_handover_speed_step"], 1), hbrake=f(r[f"{pre}_max_brake_first_1s"], 1))
+>     o, n = arm("016", pa, rep14), arm("017", pb, rep16); hw = bool(r["016_a1"] >= 20.0) if "016_a1" in r else False
+>     b3 = dict(score=f(r["014b_scene_score"], 3), progress=f(r["014b_progress_clipped_rel"], 3), at_fault=int(r["014b_collision_at_fault"] > 0), coll_any=int(r["014b_collision_any"] > 0), offroad=int(r["014b_offroad"] > 0), peak_steer=f(r["014b_peak_steer"], 3), changed_n=int(r["014b_momentum_changed_n"]), hstep=f(r["014b_handover_speed_step"], 1), hbrake=f(r["014b_max_brake_first_1s"], 1)); delta = f(n["score"] - o["score"], 3); by = "improved" if delta >= 0.02 else ("decreased" if delta <= -0.02 else "same"); out = GROUP_OF.get(s, by)
+57c59
+<     rows.append(dict(scene=s, lane=r.get("lane", ""), old=o, new=n, delta=delta, a=A, b=Bs, video_old=f"videos/b014b_{s}.mp4", video_new=f"videos/d016_{s}.mp4", score_old=o["score"], score_new=n["score"], changed_share=n["changed_share"], changed_old=o["changed_share"],
+---
+>     rows.append(dict(scene=s, lane=r.get("lane", ""), old=o, new=n, b3=b3, b3s=b3["score"], hw=hw, hstep_new=(n["hstep"] if hw else None), hbrake_new=(n["hbrake"] if hw else None), delta=delta, a=A, b=Bs, video_old=f"videos/d016_{s}.mp4", video_new=f"videos/d017_{s}.mp4", score_old=o["score"], score_new=n["score"], changed_share=n["changed_share"], changed_old=o["changed_share"],
+60c62
+<     for v, name in ((va, f"b014b_{s}.mp4"), (vb, f"d016_{s}.mp4")):
+---
+>     for v, name in ((va, f"d016_{s}.mp4"), (vb, f"d017_{s}.mp4")):
+66c68
+< key = G.get("key") or [f"Mean score over the {N} scenes: {sum(so) / N:.3f} (0.1.4b) → {sum(sn) / N:.3f} (0.1.6).",
+---
+> key = G.get("key") or [f"Mean score over the {N} scenes: {sum(so) / N:.3f} (0.1.6) → {sum(sn) / N:.3f} (0.1.7); 0.1.4b {sum(x['b3']['score'] for x in rows) / N:.3f}.",
+68,70c70,72
+<        f"At-fault collisions: {sum(x['old']['at_fault'] for x in rows)} (0.1.4b) → {sum(x['new']['at_fault'] for x in rows)} (0.1.6); any collision {sum(x['old']['coll_any'] for x in rows)} → {sum(x['new']['coll_any'] for x in rows)}.",
+<        f"Off-road exits: {sum(x['old']['offroad'] for x in rows)} → {sum(x['new']['offroad'] for x in rows)}; scenes with minimum headway under 0.8 s: {sum((x['hw_old'] or 9) < 0.8 for x in rows)} → {sum((x['hw_new'] or 9) < 0.8 for x in rows)}.",
+<        f"§3.5 changed the pick on {co} of {ro} replans ({100 * co / max(ro, 1):.0f} %) under 0.1.4b and on {cn} of {rn} ({100 * cn / max(rn, 1):.0f} %) under 0.1.6."]
+---
+>        f"At-fault collisions: {sum(x['old']['at_fault'] for x in rows)} (0.1.6) → {sum(x['new']['at_fault'] for x in rows)} (0.1.7), 0.1.4b {sum(x['b3']['at_fault'] for x in rows)}; any collision {sum(x['old']['coll_any'] for x in rows)} → {sum(x['new']['coll_any'] for x in rows)}, 0.1.4b {sum(x['b3']['coll_any'] for x in rows)}.",
+>        f"Off-road exits: {sum(x['old']['offroad'] for x in rows)} → {sum(x['new']['offroad'] for x in rows)}, 0.1.4b {sum(x['b3']['offroad'] for x in rows)}.",
+>        f"The nudge (§3.5) changed the pick on {co} of {ro} replans ({100 * co / max(ro, 1):.0f} %) under 0.1.6 and on {cn} of {rn} ({100 * cn / max(rn, 1):.0f} %) under 0.1.7."]
+72c74
+<           " 0.1.4b is the recorded baseline (shipped weights + §3.5 momentum); 0.1.6 = 0.1.4b + the S4 pass-9 weights + bonnet mask + zeroed acceleration. Scenes are grouped by score change.")
+---
+>           " Generator only: 0.1.7 = 0.1.6 + the S10 generator weights + the batch fix on; the scorer is the pass-9 scorer of 0.1.6, unchanged. Scenes are grouped by score change, 0.1.6 → 0.1.7; 0.1.4b is shown in brackets.")
+80c82
+< rep('<title>Drive-JEPA 0.1.4 vs 0.1.4b (paper §3.5) — 5 scenes</title>', '<title>Drive-JEPA 0.1.4 vs 0.1.4b — S5 trial</title>')
+---
+> rep('<title>Drive-JEPA 0.1.4 vs 0.1.4b (paper §3.5) — 5 scenes</title>', '<title>generator only: scorer unchanged — Drive-JEPA 0.1.4 vs 0.1.4b</title>')
+82c84
+< rep('<h1>Drive-JEPA adapter 0.1.4 (recorded) vs 0.1.4b (paper §3.5 momentum-aware selection) · 5 scenes · 20 Hz referee</h1>', f'<h1>Drive-JEPA adapter 0.1.4 (recorded) vs 0.1.4b (S4 pass-9 weights, bonnet mask, zeroed acceleration; §3.5 momentum on in both) · {N} scenes · 20 Hz referee</h1>')
+---
+> rep('<h1>Drive-JEPA adapter 0.1.4 (recorded) vs 0.1.4b (paper §3.5 momentum-aware selection) · 5 scenes · 20 Hz referee</h1>', f'<h1>generator only: scorer unchanged · Drive-JEPA adapter 0.1.4 (recorded) vs 0.1.4b (S10 generator + batch fix; same pass-9 scorer, bonnet mask, zeroed acceleration, §3.5 momentum) · {N} scenes · 20 Hz referee</h1>')
+87c89
+< rep(".up{color:var(--good)}", ".sec{margin:22px 0 30px}.sec>h2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.sub2{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;justify-content:flex-end}.sub2 button{background:#161616;color:var(--mut);border:1px solid var(--line);border-radius:14px;padding:4px 14px;font-size:13px;cursor:pointer}.sub2 button.on{background:#2b3a4d;color:var(--fg);border-color:#4a6a8f}.sub2 button:focus-visible{outline:2px solid var(--acc)}.ins{max-width:980px}.ins .lead{font-size:15px;color:var(--fg);margin:6px 0 10px}.ins ul{margin:0 0 14px 18px;padding:0;font-size:14px}.ins li{margin:5px 0}.ins table td{white-space:normal;text-align:left;vertical-align:top}.ins table td.k{white-space:nowrap}.ins table td.sc{white-space:nowrap;font-family:ui-monospace,Menlo,monospace}.bkt{margin:18px 0 26px;padding-top:4px;border-top:1px solid var(--line)}.bkt h3{margin:10px 0 2px;font-size:14px;color:var(--fg)}tr.bh td{background:#161616;color:var(--acc);font-weight:600;text-align:left}.why1{font-size:13px;color:#cfcfcf;margin-top:10px}.up{color:var(--good)}")
+---
+> rep(".up{color:var(--good)}", ".sec{margin:22px 0 30px}.sec>h2{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.sub2{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;justify-content:flex-end}.sub2 button{background:#161616;color:var(--mut);border:1px solid var(--line);border-radius:14px;padding:4px 14px;font-size:13px;cursor:pointer}.sub2 button.on{background:#2b3a4d;color:var(--fg);border-color:#4a6a8f}.sub2 button:focus-visible{outline:2px solid var(--acc)}.ins{max-width:980px}.ins .lead{font-size:15px;color:var(--fg);margin:6px 0 10px}.ins ul{margin:0 0 14px 18px;padding:0;font-size:14px}.ins li{margin:5px 0}.ins table td{white-space:normal;text-align:left;vertical-align:top}.ins table td.k{white-space:nowrap}.ins table td.sc{white-space:nowrap;font-family:ui-monospace,Menlo,monospace}.bkt{margin:18px 0 26px;padding-top:4px;border-top:1px solid var(--line)}.bkt h3{margin:10px 0 2px;font-size:14px;color:var(--fg)}tr.bh td{background:#161616;color:var(--acc);font-weight:600;text-align:left}.why1{font-size:13px;color:#cfcfcf;margin-top:10px}.b3{color:var(--mut);font-size:12px}.up{color:var(--good)}")
+93c95
+<  <div class="ins"><p class="lead">${esc(G.lead)}</p><ul>${G.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="tw"><table class="gt" data-g="${o}"><thead><tr><th>scene</th><th>score 0.1.4 → 0.1.4b</th><th>progress</th><th>at-fault</th><th>any collision</th><th>off-road</th><th>peak steer (rad)</th><th>§3.5 changed picks</th><th style="text-align:left">what the runs show</th></tr></thead><tbody>${rows.map((r,j)=>`${(r.bucket>=0&&(j===0||rows[j-1].bucket!==r.bucket))?`<tr class="bh"><td colspan="9">${esc(D.buckets[r.bucket].title)} · ${rows.filter(q=>q.bucket===r.bucket).length}</td></tr>`:''}<tr><td class="k"><a href="#card-${r.scene}" style="color:#8cc8ff" onclick="showSub('${o}','vids')">${r.scene}</a></td><td class="sc">${fmt(r.score_old)} → ${fmt(r.score_new)}</td><td class="sc">${fmt(r.prog_old)} → ${fmt(r.prog_new)}</td><td class="sc">${r.old.at_fault} → ${r.new.at_fault}</td><td class="sc">${r.old.coll_any} → ${r.new.coll_any}</td><td class="sc">${r.old.offroad} → ${r.new.offroad}</td><td class="sc">${fmt(r.peak_old,3)} → ${fmt(r.peak_new,3)}</td><td class="sc">${r.old.changed_n} → ${r.new.changed_n}</td><td>${esc(r.why)}</td></tr>`).join('')}</tbody></table></div></div><div class="vids" hidden></div>`;
+---
+>  <div class="ins"><p class="lead">${esc(G.lead)}</p><ul>${G.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="tw"><table class="gt" data-g="${o}"><thead><tr><th>scene</th><th>score 0.1.4 → 0.1.4b <span class="b3">(@@B3@@)</span></th><th>progress</th><th>at-fault</th><th>any collision</th><th>off-road</th><th>peak steer (rad)</th><th>nudge-changed picks (§3.5)</th><th title="highway scenes only (car at 20 m/s or more at handover): the chosen plan's start speed minus the car's speed, at the handover replan">speed step at handover (m/s), highway</th><th title="highway scenes only: largest braking a driven plan asks for in its first half second, on the replans of the first second after handover">max braking demanded, first second (m/s²), highway</th><th style="text-align:left">what the runs show</th></tr></thead><tbody>${rows.map((r,j)=>`${(r.bucket>=0&&(j===0||rows[j-1].bucket!==r.bucket))?`<tr class="bh"><td colspan="11">${esc(D.buckets[r.bucket].title)} · ${rows.filter(q=>q.bucket===r.bucket).length}</td></tr>`:''}<tr><td class="k"><a href="#card-${r.scene}" style="color:#8cc8ff" onclick="showSub('${o}','vids')">${r.scene}</a></td><td class="sc">${fmt(r.score_old)} → ${fmt(r.score_new)} <span class="b3">(${fmt(r.b3.score)})</span></td><td class="sc">${fmt(r.prog_old)} → ${fmt(r.prog_new)} <span class="b3">(${fmt(r.b3.progress)})</span></td><td class="sc">${r.old.at_fault} → ${r.new.at_fault} <span class="b3">(${r.b3.at_fault})</span></td><td class="sc">${r.old.coll_any} → ${r.new.coll_any} <span class="b3">(${r.b3.coll_any})</span></td><td class="sc">${r.old.offroad} → ${r.new.offroad} <span class="b3">(${r.b3.offroad})</span></td><td class="sc">${fmt(r.peak_old,3)} → ${fmt(r.peak_new,3)} <span class="b3">(${fmt(r.b3.peak_steer,3)})</span></td><td class="sc">${r.old.changed_n} → ${r.new.changed_n} <span class="b3">(${r.b3.changed_n})</span></td><td class="sc">${r.hw?`${fmt(r.old.hstep,1)} → ${fmt(r.new.hstep,1)} <span class="b3">(${fmt(r.b3.hstep,1)})</span>`:'–'}</td><td class="sc">${r.hw?`${fmt(r.old.hbrake,1)} → ${fmt(r.new.hbrake,1)} <span class="b3">(${fmt(r.b3.hbrake,1)})</span>`:'–'}</td><td>${esc(r.why)}</td></tr>`).join('')}</tbody></table></div></div><div class="vids" hidden></div>`;
+100,101c102,103
+< rep("['changed_share','§3.5 changed pick (% of replans)'],", "['prog','progress'],['coll','any collision'],['off','off-road'],['dist','distance travelled (m)'],['slow','longest < 1 m/s (s)'],['hw','min headway (s)'],['changed_old','§3.5 changed pick, 0.1.4 (% of replans)'],['changed_share','§3.5 changed pick, 0.1.4b (% of replans)'],")
+< rep(" default:return `<td>${r[k]==null?'–':esc(r[k])}</td>`;}}", " case 'prog':return `<td>${fmt(r.prog_old)} → ${fmt(r.prog_new)}</td>`;case 'coll':return `<td>${r.old.coll_any} → ${r.new.coll_any}</td>`;case 'off':return `<td>${r.old.offroad} → ${r.new.offroad}</td>`;case 'dist':return `<td>${fmt(r.dist_old,1)} → ${fmt(r.dist_new,1)}</td>`;case 'slow':return `<td>${fmt(r.slow_old,1)} → ${fmt(r.slow_new,1)}</td>`;case 'hw':return `<td>${fmt(r.hw_old)} → ${fmt(r.hw_new)}</td>`;case 'changed_old':return `<td>${fmt(r.changed_old,1)}</td>`;\n default:return `<td>${r[k]==null?'–':esc(r[k])}</td>`;}}")
+---
+> rep("['changed_share','§3.5 changed pick (% of replans)'],", "['b3s','score, @@B3@@'],['prog','progress'],['hstep_new','speed step at handover, highway (m/s)'],['hbrake_new','max braking demanded, first second, highway (m/s²)'],['coll','any collision'],['off','off-road'],['dist','distance travelled (m)'],['slow','longest < 1 m/s (s)'],['hw','min headway (s)'],['changed_old','§3.5 changed pick, 0.1.4 (% of replans)'],['changed_share','§3.5 changed pick, 0.1.4b (% of replans)'],")
+> rep(" default:return `<td>${r[k]==null?'–':esc(r[k])}</td>`;}}", " case 'b3s':return `<td>${fmt(r.b3.score)}</td>`;case 'hstep_new':return `<td>${r.hw?fmt(r.old.hstep,1)+' → '+fmt(r.new.hstep,1):'–'}</td>`;case 'hbrake_new':return `<td>${r.hw?fmt(r.old.hbrake,1)+' → '+fmt(r.new.hbrake,1):'–'}</td>`;case 'prog':return `<td>${fmt(r.prog_old)} → ${fmt(r.prog_new)}</td>`;case 'coll':return `<td>${r.old.coll_any} → ${r.new.coll_any}</td>`;case 'off':return `<td>${r.old.offroad} → ${r.new.offroad}</td>`;case 'dist':return `<td>${fmt(r.dist_old,1)} → ${fmt(r.dist_new,1)}</td>`;case 'slow':return `<td>${fmt(r.slow_old,1)} → ${fmt(r.slow_new,1)}</td>`;case 'hw':return `<td>${fmt(r.hw_old)} → ${fmt(r.hw_new)}</td>`;case 'changed_old':return `<td>${fmt(r.changed_old,1)}</td>`;\n default:return `<td>${r[k]==null?'–':esc(r[k])}</td>`;}}")
+114c116
+< rep('<div class="lbl">0.1.4b — momentum on</div>', '<div class="lbl">0.1.4b — S4 pass-9 weights, bonnet mask, zeroed acceleration</div>')
+---
+> rep('<div class="lbl">0.1.4b — momentum on</div>', '<div class="lbl">0.1.4b — S10 generator + batch fix, same scorer</div>')
+123,124c125,126
+< t = t.replace("0.1.4b", "@@NEW@@").replace("0.1.4", "0.1.4b").replace("@@NEW@@", "0.1.6")
+< if missing: t = t.replace('<div class="note" id="note"></div>', '<div class="note" id="note"></div><div class="note">Not shown yet (no finished 0.1.6 run, menus or video): ' + ", ".join(missing) + "</div>", 1)
+---
+> t = t.replace("0.1.4b", "@@NEW@@").replace("0.1.4", "0.1.6").replace("@@NEW@@", "0.1.7").replace("@@B3@@", "0.1.4b")
+> if missing: t = t.replace('<div class="note" id="note"></div>', '<div class="note" id="note"></div><div class="note">Not shown yet (no finished 0.1.7 run, menus or video): ' + ", ".join(missing) + "</div>", 1)
+128c130
+< json.dump(dict(out=str(OUT), n=N, missing=missing, key=key, groups={g: [x["scene"] for x in rows if x["outcome"] == g] for g in ("improved", "decreased", "same")}, disagree=disagree, bytes=tot), open(T / ("review_build_standin.json" if a.standin else "review_build.json"), "w") if not a.tables else open(T / "review_build.json", "w"), indent=1)
+---
+> json.dump(dict(out=str(OUT), n=N, missing=missing, key=key, groups={g: [x["scene"] for x in rows if x["outcome"] == g] for g in ("improved", "decreased", "same")}, disagree=disagree, bytes=tot), open(T / "review_build.json", "w"), indent=1)

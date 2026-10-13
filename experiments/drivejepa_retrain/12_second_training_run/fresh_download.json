@@ -1,0 +1,119 @@
+{
+ "job": "download the first 8 of fresh20.csv into the trial's scene cache",
+ "pid": 422923,
+ "launcher_pid_group": 422919,
+ "command": "setsid nohup ./run_fresh_fetch.sh >> {runs}/drivejepa_retrain/12_second_training_run/fresh/fetch.log 2>&1 &   (run_fresh_fetch.sh: source Alpasim/alpasim_env.sh; alpasim/.venv/bin/python -B s10_fresh_fetch.py fresh20.csv 8 fresh_scene_hashes.csv)",
+ "log": "{runs}/drivejepa_retrain/12_second_training_run/fresh/fetch.log",
+ "launched_at": "2026-10-09T09:59:11+05:30",
+ "mechanism": "huggingface_hub 0.36.2 hf_hub_download, dataset nvidia/PhysicalAI-Autonomous-Vehicles-NuRec, revision 26.01, path from sim_scenes.csv row with nre_version_string 26.1.112-59673f88 (as alpasim_wizard/scenes/sceneset.py:459); HF_TOKEN from ~/.cache/huggingface/token via alpasim_env.sh; xet and hf_transfer off, one file at a time",
+ "scene_cache": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs",
+ "staging": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/.s10_fresh_staging",
+ "free_space_floor_gb": 40,
+ "bulk_free_gb_at_start": 72.1,
+ "total_expected_bytes": 15586447358,
+ "scenes": [
+  {
+   "order": 1,
+   "scene_id": "clipgt-49e0ea24-2925-4fae-b590-3f725c1063d5",
+   "uuid": "768e6503-cfdf-4d27-a9b7-ef947ac5bf0e",
+   "hf_path": "sample_set/26.01_release/49e0ea24-2925-4fae-b590-3f725c1063d5/49e0ea24-2925-4fae-b590-3f725c1063d5.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/768e6503-cfdf-4d27-a9b7-ef947ac5bf0e.usdz",
+   "expected_bytes": 1871567274,
+   "expected_sha256": "dd33e16f1b7ad2b862b2acf4b1a98695f375696b3025b9357fedee8e4ad9ef27"
+  },
+  {
+   "order": 2,
+   "scene_id": "clipgt-a32549eb-9106-4357-b6a7-b4fa4b025c78",
+   "uuid": "047690b5-f19e-469e-9c1c-5bf91562567c",
+   "hf_path": "sample_set/26.01_release/a32549eb-9106-4357-b6a7-b4fa4b025c78/a32549eb-9106-4357-b6a7-b4fa4b025c78.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/047690b5-f19e-469e-9c1c-5bf91562567c.usdz",
+   "expected_bytes": 2264767331,
+   "expected_sha256": "1931151699b3b4cd08aedaa92e93e72b787e797fb47a9628c0a1f7cbbd8d0cce"
+  },
+  {
+   "order": 3,
+   "scene_id": "clipgt-68e53160-f9d1-4070-9434-bf50c55652d3",
+   "uuid": "fe978366-4511-44a3-9959-9c43f07e2ce7",
+   "hf_path": "sample_set/26.01_release/68e53160-f9d1-4070-9434-bf50c55652d3/68e53160-f9d1-4070-9434-bf50c55652d3.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/fe978366-4511-44a3-9959-9c43f07e2ce7.usdz",
+   "expected_bytes": 1767229497,
+   "expected_sha256": "ba53af5de2ea1411b4f229977c86684a35bb28343717222402f80612856bbc26"
+  },
+  {
+   "order": 4,
+   "scene_id": "clipgt-320c11f3-42e6-4179-b4d1-23fd4be62feb",
+   "uuid": "a95d5bed-cf48-40f0-868e-8531481fd388",
+   "hf_path": "sample_set/26.01_release/320c11f3-42e6-4179-b4d1-23fd4be62feb/320c11f3-42e6-4179-b4d1-23fd4be62feb.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/a95d5bed-cf48-40f0-868e-8531481fd388.usdz",
+   "expected_bytes": 2037803134,
+   "expected_sha256": "49e487bd9e40acc4429ba7bbdf480e0f5def8da6a496d853741ffffd0b2c2d57"
+  },
+  {
+   "order": 5,
+   "scene_id": "clipgt-f3a87e7a-e663-446d-bc27-1cab0c7789d9",
+   "uuid": "cce7f030-87bb-421c-b2cf-7ff9fe33df05",
+   "hf_path": "sample_set/26.01_release/f3a87e7a-e663-446d-bc27-1cab0c7789d9/f3a87e7a-e663-446d-bc27-1cab0c7789d9.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/cce7f030-87bb-421c-b2cf-7ff9fe33df05.usdz",
+   "expected_bytes": 1911018491,
+   "expected_sha256": "af8201682c067766b4b6b27e1fbb654ee7382672f281a1d112b7c29b0eb873eb"
+  },
+  {
+   "order": 6,
+   "scene_id": "clipgt-4a495c2d-2bec-4591-a304-09ab964538ef",
+   "uuid": "4c897848-337d-4fb1-932b-cb5b1d7f3352",
+   "hf_path": "sample_set/26.01_release/4a495c2d-2bec-4591-a304-09ab964538ef/4a495c2d-2bec-4591-a304-09ab964538ef.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/4c897848-337d-4fb1-932b-cb5b1d7f3352.usdz",
+   "expected_bytes": 1744005391,
+   "expected_sha256": "b787fdb5a0c57b70a6fb248b616682d382259b4106e2aaa39e4c8eeb3c16db49"
+  },
+  {
+   "order": 7,
+   "scene_id": "clipgt-9d8fca3b-10c0-408f-9c3a-486ae4ea6b98",
+   "uuid": "d60b9120-dcf1-4419-b5d4-8a8fead4dff9",
+   "hf_path": "sample_set/26.01_release/9d8fca3b-10c0-408f-9c3a-486ae4ea6b98/9d8fca3b-10c0-408f-9c3a-486ae4ea6b98.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/d60b9120-dcf1-4419-b5d4-8a8fead4dff9.usdz",
+   "expected_bytes": 2152694635,
+   "expected_sha256": "d666876ec827c97920fa22c43b1bda08f5ad1f77ff5b4b3889d7766969f4f870"
+  },
+  {
+   "order": 8,
+   "scene_id": "clipgt-8578f2c7-70a0-4877-980a-7ba65bcded30",
+   "uuid": "536a2c0c-b182-4eb9-8a80-b4229557460c",
+   "hf_path": "sample_set/26.01_release/8578f2c7-70a0-4877-980a-7ba65bcded30/8578f2c7-70a0-4877-980a-7ba65bcded30.usdz",
+   "hf_revision": "26.01",
+   "target": "{runs}/alpasim_bulk/nre-artifacts/all-usdzs/536a2c0c-b182-4eb9-8a80-b4229557460c.usdz",
+   "expected_bytes": 1837361605,
+   "expected_sha256": "2495fb9f539442698d521e22f56ad704db6be1602c6894b525b1513b251fd5ea"
+  }
+ ],
+ "hashes_csv": "experiments/drivejepa_retrain/12_second_training_run/fresh_scene_hashes.csv",
+ "completion_check": [
+  "fresh_scene_hashes.csv has 8 data rows, each sha256_matches_repository True",
+  "each target path exists with expected_bytes",
+  "last line of fetch.log ends with ALL DONE",
+  "pgrep -f s10_fresh_fetch.py prints nothing"
+ ],
+ "resume": "same command; recorded files are skipped, a partial file resumes from the staging folder",
+ "exit_codes": {
+  "4": "free space floor",
+  "5": "credential / gated",
+  "6": "30 failed attempts",
+  "7": "sha256 mismatch"
+ },
+ "state_when_worker_left": {
+  "at": "2026-10-09T10:20:38+05:30",
+  "finished_at": "2026-10-09T10:19:43+05:30",
+  "files_complete": 8,
+  "all_sha256_match_repository": true,
+  "process_exited": true,
+  "read_timeouts_logged": 7,
+  "bulk_free_gb": 53
+ }
+}

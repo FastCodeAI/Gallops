@@ -1,0 +1,33 @@
+{
+ "d2715023": {
+  "replans": 39,
+  "G1_menu_max_abs_dev_m": 4.999973773956237e-05,
+  "G2_scorer_pick_mismatches": 0,
+  "G3_handback_mismatches": 0,
+  "G4_car_pose_max_dev": 4.2669643714797436e-05,
+  "G5_box_check_agreement": 0.813301282051282,
+  "G5_plans": 1248,
+  "G6_oracle_ms_median": 144.23361397348344,
+  "G6_oracle_ms_max": 268.36331095546484,
+  "fallbacks": 0,
+  "secs": 54.7,
+  "ok": true
+ },
+ "b44a4a44": {
+  "replans": 39,
+  "G1_menu_max_abs_dev_m": 4.99967813491764e-05,
+  "G2_scorer_pick_mismatches": 0,
+  "G3_handback_mismatches": 0,
+  "G4_car_pose_max_dev": 7.4881300345580065e-06,
+  "G5_box_check_agreement": 0.7227564102564102,
+  "G5_plans": 1248,
+  "G6_oracle_ms_median": 275.6141449790448,
+  "G6_oracle_ms_max": 426.50078888982534,
+  "fallbacks": 0,
+  "secs": 57.9,
+  "ok": true
+ },
+ "ok": true,
+ "planner": "experiments/drivejepa_retrain/07_closed_loop_test/runs_017/adapters/drivejepa017/planner.py",
+ "version_id": "drivejepa-v2-driver-0.1.7-oracle"
+}

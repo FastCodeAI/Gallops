@@ -1,0 +1,17 @@
+set,slice,type,examples,clips,exam_clips_dropped
+UNSEEN,highway,A,3315,110,0
+UNSEEN,close-pass,B_pass,1563,57,0
+UNSEEN,ordinary,ordinary,6964,234,0
+UNSEEN,all,all,11842,401,0
+SEEN,highway,A,3475,205,0
+SEEN,close-pass,B_pass,1347,88,0
+SEEN,ordinary,ordinary,7020,434,0
+SEEN,all,all,11842,727,0
+SEEN pool (all graded training examples),highway,A,6406,205,0
+SEEN pool (all graded training examples),close-pass,B_pass,2471,88,0
+SEEN pool (all graded training examples),ordinary,ordinary,12929,434,0
+SEEN pool (all graded training examples),all,all,21806,727,0
+val small (graded),highway,A,64,2,0
+val small (graded),close-pass,B_pass,65,3,0
+val small (graded),ordinary,ordinary,96,3,0
+val small (graded),all,all,225,8,0

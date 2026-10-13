@@ -1,0 +1,134 @@
+{
+ "header": "Generator only: scorer unchanged. 0.1.7 = 0.1.6 + the retrained generator (S10, pass +2) + the batch fix on; same pass-9 scorer, bonnet mask, zeroed acceleration and momentum re-score. All 30 trial scenes, one run each, same referee and settings as the 0.1.6 run. Mean score 0.703 (0.1.6) to 0.770 (0.1.7); 0.1.4b 0.543. 9 improved, 3 decreased, 18 unchanged. At-fault collisions 2 to 3 (one gone, two new). Off-road exits 3 to 2. 0.1.4b values are in brackets in the tables.",
+ "improved": {
+  "title": "Score improved",
+  "scenes": [
+   "8023dce5",
+   "04749bb9",
+   "98dd56b2",
+   "e121e37d",
+   "5f064b02",
+   "0245ff75",
+   "1acf2f5d",
+   "89f2eeb8",
+   "cdd9448c"
+  ],
+  "lead": "Nine scenes. In eight the event that ended scoring early under 0.1.6 does not happen under 0.1.7, and the car drives faster in all nine (mean speed up on every one except 8023dce5). Eight of the nine reach full score; the ninth is the highway scene 04749bb9 at 0.96.",
+  "points": [
+   "8023dce5: the at-fault collision at +7.2 s is gone. The car runs to the end of the clip (score 0.00 → 1.00, progress 0.94 → 1.00). It is slower than before (mean 1.7 → 1.1 m/s) and still counts as a stall by the S5 rule.",
+   "Highway, 04749bb9: stays on the road for the whole scored window. Off-road exit at +2.7 s → none; peak steer inside the scored window 0.78 → 0.009 rad; car speed at +1 / +2 / +3 s is 24.0 / 24.5 / 25.0 m/s (0.1.6: 18.4 / 20.0 / 21.9; human 23.7). The handover plan starts 0.1 m/s below the car's speed (0.1.6: 3.3 below) and the most braking any driven plan asks for in the first second is 0.2 m/s² (0.1.6: 12.3).",
+   "04749bb9 does NOT pass the 'peak steer under 0.2 rad' test over the whole clip: the peak is still 0.78 rad, at +14.3 s. The car keeps accelerating (30.5 m/s at +10.5 s; the human is at 22.7), drifts 3.9 m off the human path, scoring closes at +10.5 s for that reason, a collision follows at +10.6 s, steering first exceeds 0.2 rad at +11.7 s and the car is off the road at +11.8 s. The score (0.96) sees none of this.",
+   "Four collisions that were not the car's fault no longer happen, and scoring runs longer: 98dd56b2 (0.34 → 1.00; ended at +7.8 s, now the whole clip), 5f064b02 (0.69 → 1.00), 0245ff75 (0.70 → 1.00; mean speed 7.5 → 10.6 m/s), 89f2eeb8 (0.90 → 1.00).",
+   "Two that left the human path under 0.1.6 now stay on it to the end of the clip: e121e37d (0.68 → 1.00; scoring ended at +9.7 s before) and cdd9448c (0.93 → 1.00). 1acf2f5d (0.86 → 1.00) simply drives faster: 4.0 → 6.2 m/s, progress 0.69 → 0.99.",
+   "The menu no longer contains absurd plans on the highway: the fastest of the 32 averages 32–35 m/s in the first three seconds of 04749bb9 (0.1.6: up to 68 m/s; human 23.7)."
+  ]
+ },
+ "decreased": {
+  "title": "Score decreased",
+  "scenes": [
+   "bd07fb91",
+   "d1a25a99",
+   "b1b170d0"
+  ],
+  "lead": "Three scenes, all of which had scored well under 0.1.6 (1.00, 1.00, 0.67). One is the same crash now counted, one runs about 1.7 m wider through a turn and is flagged off the road for two seconds, one loses its scoring window by 0.15 m.",
+  "points": [
+   "How a score can drop when both runs show a collision: an at-fault collision or a road exit inside the scored window sets the score to 0. A collision that is not the car's fault, or drifting about 4 m off the human path, only closes the window, and the score is then the progress made up to that point. Anything after the window has closed is not counted, though the video still shows it.",
+   "bd07fb91 (1.00 → 0.00): it still crashes, at the same moment. 0.1.6 hit at +7.15 s, but its scoring had closed at +6.45 s, so it scored 1.00. 0.1.7 hits at +7.1 s (front, at fault) with scoring still open, so it scores 0.00. Why scoring stayed open: 0.1.7 is 2.7 m from the human path at that point, 0.1.6 was 3.6–3.7 m (the window closes near 4 m). The steering swing is gone (peak 0.78 → 0.18 rad) and the car brakes earlier (12.1 m/s at +6 s against 14.3), but not enough: the human is already down to 11.3 m/s there and the chosen plans keep ending 2–9 m to the side.",
+   "d1a25a99 (0.67 → 0.00): a small difference with a large effect on the score. Both runs take nearly the same line at the same speed (4–5 m/s; the two cars are never more than 2.0 m apart). In the turn between +5 s and +7 s the 0.1.7 car runs about 1.7 m wider (2.9 m from the human path against 1.2 m) and is flagged off the road from +6.25 s to +8.4 s, then returns. 0.1.6 came within 0.65 m of the lane edge at the same spot without crossing. The plans 0.1.7 picked from +3.5 s end 6–9 m to the left. The collision at about +10.5 s is in both runs and is not the car's fault in 0.1.6.",
+   "b1b170d0 (1.00 → 0.78): no collision, no road exit, peak steer 0.03 rad. The car now holds the human's speed (17.3 m/s at +9 s; 0.1.6 had dropped to 13.2) and drifts the same way as before, slightly further: 4.0 m off the human path at +9.05 s, which closes scoring. 0.1.6 reached 3.85 m and stayed just inside. Progress 0.86 → 0.63 because of the shorter window.",
+   "In all three the generator's plans are driven as chosen by the unchanged scorer; in bd07fb91 and d1a25a99 slower plans were on the menu at every replan (slowest of 32 averaging 3–10 m/s and 1.6–1.8 m/s) and were not picked."
+  ]
+ },
+ "same": {
+  "title": "No change in score",
+  "lead": "Eighteen scenes. Thirteen are at full score under both. Four score zero under both, but one of them (the highway scene acd22430) for a different reason than before. One keeps the same partial score.",
+  "points": [
+   "Highway, acd22430: stays on the road for the whole clip. Peak steer 0.78 → 0.008 rad, off-road exit at +0.25 s → none, progress 0.17 → 0.99, car speed at +1 / +2 / +3 s 22.3 / 22.8 / 23.3 m/s (0.1.6: 19.4 / 16.3 / 9.1). Handover plan starts 1.2 m/s below the car's speed (0.1.6: 2.7 below); most braking demanded in the first second 2.4 m/s² (0.1.6: 12.0). It passes the 'under 0.2 rad' test.",
+   "acd22430 still scores 0.00: a new at-fault front collision at +15.4 s, 1.4 s before the end of the clip. The car has crept up to 26.6 m/s (human 23.8) and is in its lane (0.9 m from the human path). The chosen plans average 26–27 m/s while plans averaging 21–22 m/s are on the menu at every replan. 0.1.6 never got this far.",
+   "Pull-outs, d2715023 and b44a4a44: as before, neither pulls out. b44a4a44 does not move and is struck at +6.6 s in all three versions; a leaving plan is never picked (0 of 34 replans; best rank 6 of 32). d2715023 creeps at 0.1 m/s (score 0.03 → 0.04); one difference: a leaving plan was ranked first and picked on 1 of 34 replans (0.1.6: 0 of 34, best rank 10), without the car getting away.",
+   "791d68ce is not a driving failure: the referee flags the car as off the road from the first tick of the clip, during the 3 s in which the recorded human drive is replayed (61 of 61 ticks, the car exactly on the human path). The flag is still on at handover, so the score is 0 at +0.0 s under every version, whatever the model does next; the flag clears at +2.9 s / +3.6 s / +4.7 s (0.1.4b / 0.1.6 / 0.1.7). This scene cannot score above 0 and pulls every mean down by 1/30. What did change: the late steering (0.45 rad) and the late collision at +12.5 s of 0.1.6 are gone (peak 0.03 rad).",
+   "bae463d3: same slow crawl, 0.30 → 0.31 (mean speed 1.4 → 1.6 m/s; 0.1.4b 0.46). Peak steer 0.62 → 0.30 rad.",
+   "Full score under both (13): all drive at least as fast and four of them cover more ground than the score can show (032b6f21 progress 0.94 → 1.00, 04394343 0.89 → 1.00, 71d7d03b 0.98 → 1.00, 2e1ce314 0.99 → 1.00). One of the thirteen needs a look: 026d6a39 has a collision at +10.75 s and leaves the road at +14.8 s, both after its scoring closed at +7.8 s (peak steer 0.03 → 0.24 rad, at +14 s). 0.1.6 had neither."
+  ],
+  "buckets": [
+   {
+    "title": "Full score under both",
+    "scenes": [
+     "01d503d4",
+     "023b7fcc",
+     "026d6a39",
+     "02e075b9",
+     "02eadd92",
+     "032b6f21",
+     "04394343",
+     "048b974e",
+     "16b83346",
+     "2e1ce314",
+     "6725df2d",
+     "71d7d03b",
+     "e3ed554f"
+    ],
+    "note": "026d6a39 has a collision and a road exit after scoring closed under 0.1.7."
+   },
+   {
+    "title": "Scores zero (or nearly) under both",
+    "scenes": [
+     "791d68ce",
+     "acd22430",
+     "b44a4a44",
+     "d2715023"
+    ],
+    "note": "acd22430 fails differently: off the road at +0.25 s before, at-fault collision at +15.4 s now. 791d68ce is flagged off the road during the human replay and scores 0 for any driver. The two pull-outs are unchanged."
+   },
+   {
+    "title": "Same partial score",
+    "scenes": [
+     "bae463d3"
+    ],
+    "note": ""
+   }
+  ]
+ },
+ "why": {
+  "01d503d4": "0.1.6: scoring ends at +14.9 s. 0.1.7: scoring ends at +13.9 s. Mean speed 4.9 → 5.2 m/s.",
+  "023b7fcc": "0.1.6: scoring ends at +16.6 s. 0.1.7: scoring ends at +16.4 s. Mean speed 5.7 → 5.8 m/s.",
+  "0245ff75": "0.1.6: scoring ends at +11.0 s (collision, not at fault, at +11.0 s). 0.1.7: scoring ends at +15.7 s. Mean speed 7.5 → 10.6 m/s.",
+  "026d6a39": "Full score both; under 0.1.7 a collision at +10.75 s and a road exit at +14.8 s follow after scoring closed at +7.8 s.",
+  "02e075b9": "0.1.6: scoring ends at +16.5 s. 0.1.7: scoring ends at +14.8 s. Mean speed 8.5 → 9.8 m/s.",
+  "02eadd92": "0.1.6: scoring ends at +12.3 s. 0.1.7: scoring ends at +8.8 s. Mean speed 5.1 → 9.5 m/s.",
+  "032b6f21": "0.1.6: runs to the end of the clip. 0.1.7: scoring ends at +14.6 s. Mean speed 9.9 → 12.7 m/s.",
+  "04394343": "0.1.6: runs to the end of the clip. 0.1.7: scoring ends at +16.6 s. Mean speed 13.1 → 15.4 m/s.",
+  "04749bb9": "Stays on the road while scored (peak steer 0.009 rad to +10.5 s); after scoring closes: collision at +10.6 s, steering swing from +11.7 s, off the road at +11.8 s, at 30 m/s.",
+  "048b974e": "0.1.6: scoring ends at +13.3 s. 0.1.7: scoring ends at +13.6 s. Mean speed 8.4 → 8.4 m/s.",
+  "16b83346": "0.1.6: scoring ends at +11.5 s. 0.1.7: scoring ends at +9.6 s. Mean speed 4.9 → 5.4 m/s.",
+  "1acf2f5d": "0.1.6: runs to the end of the clip. 0.1.7: runs to the end of the clip. Mean speed 4.0 → 6.2 m/s.",
+  "2e1ce314": "0.1.6: runs to the end of the clip. 0.1.7: scoring ends at +16.0 s. Mean speed 14.3 → 15.6 m/s.",
+  "5f064b02": "0.1.6: scoring ends at +14.6 s (collision, not at fault, at +14.6 s). 0.1.7: runs to the end of the clip. Mean speed 4.9 → 6.0 m/s.",
+  "6725df2d": "0.1.6: scoring ends at +13.9 s. 0.1.7: scoring ends at +11.6 s. Mean speed 6.7 → 8.9 m/s.",
+  "71d7d03b": "0.1.6: runs to the end of the clip. 0.1.7: scoring ends at +15.4 s. Mean speed 14.3 → 16.0 m/s.",
+  "791d68ce": "Scores 0 for any driver: the referee flags the car as off the road from the first tick of the clip, while the recorded human drive is still being replayed (61 of 61 ticks before handover, 0.0 m from the human path). The flag is already on when the model takes over, so the score is 0 at +0.0 s whatever it does.",
+  "8023dce5": "At-fault collision at +7.2 s is gone; runs to the end of the clip.",
+  "89f2eeb8": "0.1.6: scoring ends at +14.8 s (collision, not at fault, at +14.8 s). 0.1.7: runs to the end of the clip. Mean speed 11.4 → 15.4 m/s.",
+  "98dd56b2": "0.1.6: scoring ends at +7.8 s (collision, not at fault, at +7.8 s). 0.1.7: runs to the end of the clip. Mean speed 6.9 → 10.4 m/s.",
+  "acd22430": "No longer leaves the road (peak steer 0.78 → 0.008 rad); new at-fault front collision at +15.4 s at 26.6 m/s.",
+  "b1b170d0": "No collision or road exit; 4.0 m off the human path at +9.05 s closes scoring (0.1.6 stayed at 3.85 m).",
+  "b44a4a44": "Does not move; struck at +6.6 s, as before.",
+  "bae463d3": "0.1.6: runs to the end of the clip. 0.1.7: scoring ends at +15.6 s. Mean speed 1.4 → 1.6 m/s.",
+  "bd07fb91": "Both runs crash at about +7.1 s. Under 0.1.6 scoring had already closed at +6.45 s (the car was about 4 m off the human path), so the crash was not counted and the score was 1.00. Under 0.1.7 scoring is still open (2.7 m off the path) and the crash is at fault, which sets the score to 0.",
+  "cdd9448c": "0.1.6: scoring ends at +13.4 s. 0.1.7: runs to the end of the clip. Mean speed 4.1 → 5.1 m/s.",
+  "d1a25a99": "The two runs drive almost the same line at the same speed: the cars are never more than 2.0 m apart. Between +5 s and +7 s the 0.1.7 car is about 1.7 m further to the side (2.9 m from the human path against 1.2 m), and the referee flags it as off the road from +6.25 s to +8.4 s; then it is back. That flag sets the score to 0. 0.1.6 stayed inside (0.65 m from the lane edge at its closest) and scored on its progress up to the collision at +10.45 s, which was not its fault.",
+  "d2715023": "Does not pull out; a leaving plan picked on 1 of 34 replans (0 before).",
+  "e121e37d": "0.1.6: scoring ends at +9.7 s. 0.1.7: runs to the end of the clip. Mean speed 11.1 → 12.9 m/s.",
+  "e3ed554f": "0.1.6: runs to the end of the clip. 0.1.7: runs to the end of the clip. Mean speed 0.8 → 0.8 m/s."
+ },
+ "key": [
+  "Mean score over the 30 scenes: 0.703 (0.1.6) → 0.770 (0.1.7); 0.1.4b 0.543. Mean progress 0.698 → 0.828 (0.1.4b 0.537); mean distance driven 115 m → 152 m (0.1.4b 76 m).",
+  "Score up on 9, down on 3, unchanged on 18. Scenes at full score: 15 → 21 (0.1.4b 10).",
+  "At-fault collisions: 2 (8023dce5, b44a4a44) → 3 (acd22430, b44a4a44, bd07fb91); 0.1.4b 4. 8023dce5's is gone; acd22430's and bd07fb91's are new in the score. Any collision inside the scored window: 7 → 3 (0.1.4b 10).",
+  "Off-road exits: 3 (04749bb9, 791d68ce, acd22430) → 2 (791d68ce, d1a25a99); 0.1.4b 4. Both highway scenes no longer leave the road inside the scored window; d1a25a99 is new (about 1.7 m wider through a turn, flagged for 2.15 s).",
+  "Steering: scenes with a peak above 0.3 rad anywhere in the clip 7 → 1 (04749bb9, after scoring has ended); above 0.2 rad 9 → 6. 0.1.4b: 10 and 10.",
+  "Braking asked by the driven plan (largest first-half-second demand, median over scenes): 1.4 → 0.8 m/s² (0.1.4b 7.5).",
+  "The nudge (§3.5 momentum re-score) changed the pick on 479 of 1,170 replans (41 %) under 0.1.6 and 512 of 1,170 (44 %) under 0.1.7; 0.1.4b 366 (31 %).",
+  "Not visible in the score: under 0.1.7 three scenes have a collision or road exit after their scoring window has closed (04749bb9: collision at +10.6 s, off the road at +11.8 s; 026d6a39: collision at +10.75 s, off the road at +14.8 s; d1a25a99: collision at +10.5 s, after its road exit). Under 0.1.6 two scenes did (bd07fb91, collision at +7.15 s; 791d68ce, collision at +12.5 s)."
+ ]
+}

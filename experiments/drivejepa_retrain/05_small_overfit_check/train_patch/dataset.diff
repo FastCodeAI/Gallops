@@ -1,0 +1,192 @@
+--- upstream_ref/dataset.py	2026-10-06 05:55:32.609496552 +0530
++++ dataset_s35.py	2026-10-07 00:57:13.652788043 +0530
+@@ -37,6 +37,12 @@
+         feature_builders: List[AbstractFeatureBuilder],
+         target_builders: List[AbstractTargetBuilder],
+         log_names: Optional[List[str]] = None,
++        zero_accel: bool = True,
++        has_label2: Optional[Dict[str, bool]] = None,
++        tokens: Optional[List[str]] = None,
++        split_guard=None,
++        token_clips: Optional[Dict[str, str]] = None,
++        slim_root: Optional[str] = None,
+     ):
+         """
+         Initializes the dataset module.
+@@ -44,25 +50,50 @@
+         :param feature_builders: list of feature builders
+         :param target_builders: list of target builders
+         :param log_names: optional list of log folder to consider, defaults to None
++        [S35] patched copy of navsim/planning/training/dataset.py (vendored file untouched; see dataset.diff):
++        :param zero_accel: [S35-1c] zero the two acceleration slots of ego_status at load time
++        :param has_label2: [S35-1a] token -> bool from the S3 manifest; None = decide by the files next to the sample
++        :param tokens: optional allow-list of tokens (the Step 2 slice); None = every valid token
++        :param split_guard: callable(list of log names = clip uuids), must raise on any exam / test / val clip
++        :param token_clips: [S4] token -> clip uuid from the manifest; when given the cache folder is not scanned (250k stat calls on the
++                            NAS for the full set) and every manifest token is taken as valid (a missing file fails at load)
++        :param slim_root: [S4] write-through copy of exactly the tensors this loader returns (see _slim_load); None = off
+         """
+         super().__init__()
+         assert Path(cache_path).is_dir(), f"Cache path {cache_path} does not exist!"
+         self._cache_path = Path(cache_path)
+-
+-        if log_names is not None:
++        self._zero_accel = zero_accel
++        self._has_label2 = has_label2
++        self._slim_root = Path(slim_root) if slim_root else None
++        self._trust_manifest = token_clips is not None
++        assert not self._trust_manifest or has_label2 is not None, "token_clips needs the manifest has_label2 map"
++
++        if self._trust_manifest:
++            self.log_names = sorted({Path(c) for c in token_clips.values()})
++        elif log_names is not None:
+             self.log_names = [Path(log_name) for log_name in log_names if (self._cache_path / log_name).is_dir()]
+         else:
+             self.log_names = [log_name for log_name in self._cache_path.iterdir()]
+ 
+         self._feature_builders = feature_builders
+         self._target_builders = target_builders
+-        self._valid_cache_paths: Dict[str, Path] = self._load_valid_caches(
+-            cache_path=self._cache_path,
+-            feature_builders=self._feature_builders,
+-            target_builders=self._target_builders,
+-            log_names=self.log_names,
++        self._valid_cache_paths: Dict[str, Path] = (
++            {t: self._cache_path / c / t for t, c in token_clips.items()}
++            if self._trust_manifest
++            else self._load_valid_caches(
++                cache_path=self._cache_path,
++                feature_builders=self._feature_builders,
++                target_builders=self._target_builders,
++                log_names=self.log_names,
++            )
+         )
+         self.tokens = list(self._valid_cache_paths.keys())
++        if tokens is not None:
++            missing = [t for t in tokens if t not in self._valid_cache_paths]
++            assert not missing, f"{len(missing)} requested tokens have no cache, e.g. {missing[:3]}"
++            self.tokens = list(tokens)
++        assert split_guard is not None, "a split guard is mandatory (exam / test assertion on every data file touched)"
++        split_guard(sorted({self._valid_cache_paths[t].parent.name for t in self.tokens}))
+ 
+     def __len__(self) -> int:
+         """
+@@ -78,6 +109,18 @@
+         """
+         return self._load_scene_with_token(self.tokens[idx])
+ 
++    def label2_flag(self, token: str) -> bool:
++        """[S35-1a] True when the sample has label 2. Manifest value when given (and then the files must exist), else file presence."""
++        token_path = self._valid_cache_paths[token]
++        if self._trust_manifest:  # [S4] no per-sample stat calls; a missing metric cache fails loudly in the scorer worker
++            return bool(self._has_label2[token])
++        on_disk = (token_path / "metric_cache.pkl").is_file() and (token_path / "pad_label2.gz").is_file()
++        if self._has_label2 is None:
++            return on_disk
++        flag = bool(self._has_label2[token])
++        assert on_disk or not flag, f"manifest says has_label2 for {token} but its metric cache / pad_label2 is missing"
++        return flag
++
+     @staticmethod
+     def _load_valid_caches(
+         cache_path: Path,
+@@ -117,6 +160,11 @@
+ 
+         token_path = self._valid_cache_paths[token]
+ 
++        if self._slim_root is not None:
++            got = self._slim_load(token, token_path)
++            if got is not None:
++                return self._finish(token, token_path, *got)
++
+         features: Dict[str, torch.Tensor] = {}
+         for builder in self._feature_builders:
+             data_dict_path = token_path / (builder.get_unique_name() + ".gz")
+@@ -129,6 +177,87 @@
+             data_dict = load_feature_target_from_pickle(data_dict_path)
+             targets.update(data_dict)
+ 
++        if self._slim_root is not None:
++            self._slim_write(token, token_path, features, targets)
++            features.pop("camera_feature", None)  # same key set whether the sample came from the slim copy or the original
++        return self._finish(token, token_path, features, targets)
++
++    # ---- [S4] slim write-through copy -----------------------------------------------------------------------------------------
++    # One pad_feature.gz is 1.8-2.5 MB and the NAS delivers ~25 samples/s (bandwidth-bound), i.e. 1.7 h per pass over 149k draws.
++    # The model reads camera_feature_1/2 (drive_jepa_model.py:53-54), lidar2img, img_shape (bevformer/encoder.py:123-142) and
++    # ego_status; the 2x3x448x768 `camera_feature` is never read. The two 512x256 inputs are exactly uint8/255, so they are kept
++    # as lossless PNG (~0.3 MB per sample) and every write is verified bit-identical against the original tensors before it lands.
++    SLIM_KEYS = ("lidar2img", "img_shape", "ego_status")
++
++    def _slim_path(self, token: str, token_path: Path) -> Path:
++        return self._slim_root / token_path.parent.name / f"{token}.npz"
++
++    def _slim_decode(self, z):
++        import cv2
++        import numpy as np
++
++        feats = {
++            k: torch.from_numpy(np.ascontiguousarray(cv2.imdecode(z[p], cv2.IMREAD_UNCHANGED))).permute(2, 0, 1).to(torch.float32).div(255.0)
++            for k, p in (("camera_feature_1", "png1"), ("camera_feature_2", "png2"))
++        }
++        feats.update({k: torch.from_numpy(z[k]) for k in self.SLIM_KEYS})
++        return feats, {"trajectory": torch.from_numpy(z["trajectory"]), "token": str(z["token"])}
++
++    def _slim_load(self, token: str, token_path: Path):
++        import numpy as np
++
++        p = self._slim_path(token, token_path)
++        try:
++            with np.load(p) as z:
++                return self._slim_decode(z)
++        except FileNotFoundError:
++            return None
++
++    def _slim_write(self, token: str, token_path: Path, features, targets) -> None:
++        import io
++        import os
++        import cv2
++        import numpy as np
++
++        arrs = {}
++        for k, p in (("camera_feature_1", "png1"), ("camera_feature_2", "png2")):
++            u8 = (features[k] * 255.0).round().to(torch.uint8).permute(1, 2, 0).contiguous().numpy()
++            ok, enc = cv2.imencode(".png", u8, [cv2.IMWRITE_PNG_COMPRESSION, 1])
++            assert ok
++            arrs[p] = enc
++        arrs.update({k: features[k].numpy() for k in self.SLIM_KEYS})
++        arrs["trajectory"] = targets["trajectory"].numpy()
++        arrs["token"] = np.array(targets["token"])
++        buf = io.BytesIO()
++        np.savez(buf, **arrs)
++        buf.seek(0)
++        with np.load(buf) as z:  # verify the round trip before anything is written
++            f2, t2 = self._slim_decode(z)
++        for k in ("camera_feature_1", "camera_feature_2") + self.SLIM_KEYS:
++            assert torch.equal(f2[k], features[k]) and f2[k].dtype == features[k].dtype, f"slim copy of {token}:{k} is not bit-identical"
++        assert torch.equal(t2["trajectory"], targets["trajectory"]) and t2["trajectory"].dtype == targets["trajectory"].dtype and t2["token"] == targets["token"]
++        p = self._slim_path(token, token_path)
++        p.parent.mkdir(parents=True, exist_ok=True)
++        tmp = p.with_name(f".{p.name}.{os.getpid()}.tmp")
++        tmp.write_bytes(buf.getvalue())
++        os.replace(tmp, p)
++
++    def _finish(self, token: str, token_path: Path, features, targets):
++        # [S35-1a] upstream returns here (:132). has_label2 and the metric-cache path travel with the sample, so the agent never
++        # needs a metric cache for a raw-only token.
++        assert targets["token"] == token, (targets["token"], token)
++        flag = self.label2_flag(token)
++        targets["has_label2"] = torch.tensor(flag)
++        targets["metric_cache_path"] = str(token_path / "metric_cache.pkl") if flag else ""
++
++        # [S35-1c] ego_status rows are [x, y, heading, vx, vy, ax, ay, command(4)] (drive_jepa_features.py:79-84): slots 5:7.
++        assert features["ego_status"].ndim == 2 and features["ego_status"].shape[-1] == 11, features["ego_status"].shape
++        # [S35-1a] our converter writes 2-4 ego_status rows per sample (history available at the anchor; navtrain always has 4), which
++        # the default collate cannot stack. The model reads only the newest row (drive_jepa_model.py:51 `[:, -1]`), so keep that one.
++        features["ego_status"] = features["ego_status"][-1:].clone()
++        if self._zero_accel:
++            features["ego_status"][..., 5:7] = 0.0
++
+         return (features, targets)
+ 
+ 

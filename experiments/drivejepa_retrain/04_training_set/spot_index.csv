@@ -1,0 +1,21 @@
+type,source,sample_id,speed,has_label2,direction_exempt,png,note
+A,nurec,b2591a17_11500,22.1,True,False,spot_png/A_b2591a17_11500.png,"best 0.50 (rows 9894, 9886, 9885) worst 0.00; scored 2301"
+A,nurec,19073df6_05500,21.6,True,False,spot_png/A_19073df6_05500.png,"best 1.00 (rows 9581, 9382, 9331) worst 0.00; scored 2725"
+A,nurec,6e45ad8a_15000,20.8,True,False,spot_png/A_6e45ad8a_15000.png,"best 1.00 (rows 9784, 9767, 9765) worst 0.00; scored 2425"
+A,nurec,6eb099c6_07500,31.7,True,False,spot_png/A_6eb099c6_07500.png,"best 1.00 (rows 10169, 10168, 10164) worst 0.00; scored 937"
+A,nurec,ba2cfeb5_10000,24.4,True,False,spot_png/A_ba2cfeb5_10000.png,"best 1.00 (rows 9977, 9976, 9974) worst 0.00; scored 1775"
+B_raw,raw,659a031d_15000,0.2,False,False,spot_png/B_raw_659a031d_15000.png,label 1 only
+B_raw,raw,75bcdc30_06000,0.2,False,False,spot_png/B_raw_75bcdc30_06000.png,label 1 only
+B_raw,raw,f3f2b202_07500,0.1,False,False,spot_png/B_raw_f3f2b202_07500.png,label 1 only
+B_raw,raw,fcd6f641_05500,0.2,False,False,spot_png/B_raw_fcd6f641_05500.png,label 1 only
+B_raw,raw,127dfacb_08000,0.6,False,False,spot_png/B_raw_127dfacb_08000.png,label 1 only
+B_pass,nurec,1e883544_01000,3.5,True,False,spot_png/B_pass_1e883544_01000.png,"best 1.00 (rows 8188, 8161, 8151) worst 0.00; scored 8048"
+B_pass,nurec,00169207_11000,3.2,True,False,spot_png/B_pass_00169207_11000.png,"best 0.43 (rows 7725, 6127, 5082) worst 0.00; scored 7256"
+B_pass,nurec,546804fb_12500,7.8,True,False,spot_png/B_pass_546804fb_12500.png,"best 1.00 (rows 7866, 7863, 7826) worst 0.00; scored 7170"
+B_pass,nurec,232d240e_07500,8.9,True,False,spot_png/B_pass_232d240e_07500.png,"best 0.00 (rows 10239, 10238, 10237) worst 0.00; scored 5928"
+B_pass,nurec,14850e11_03000,5.1,True,False,spot_png/B_pass_14850e11_03000.png,"best 1.00 (rows 8151, 8135, 8131) worst 0.00; scored 7724"
+ordinary,nurec,72ac5d7c_06500,7.6,True,False,spot_png/ordinary_72ac5d7c_06500.png,"best 1.00 (rows 8129, 7428, 7227) worst 0.00; scored 7581"
+ordinary,nurec,d973bef0_13500,5.1,True,False,spot_png/ordinary_d973bef0_13500.png,"best 1.00 (rows 8078, 8044, 7862) worst 0.00; scored 8236"
+ordinary,nurec,c71afeca_16000,12.9,True,False,spot_png/ordinary_c71afeca_16000.png,"best 1.00 (rows 9072, 9013, 9001) worst 0.00; scored 4624"
+ordinary,raw,92a2b89d_08000,13.4,False,False,spot_png/ordinary_92a2b89d_08000.png,label 1 only
+ordinary,raw,56080de1_10000,6.0,False,False,spot_png/ordinary_56080de1_10000.png,label 1 only

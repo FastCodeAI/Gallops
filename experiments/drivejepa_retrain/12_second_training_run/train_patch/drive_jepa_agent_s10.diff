@@ -1,0 +1,94 @@
+--- ../../s3_5_smoke/train_patch/drive_jepa_agent_s35.py	2026-10-07 03:40:08.188524531 +0530
++++ drive_jepa_agent_s10.py	2026-10-09 06:15:44.770495683 +0530
+@@ -18,6 +18,8 @@
+ 
+ from navsim.agents.drive_jepa_perception_based.score_module import compute_navsim_score as CNS
+ 
++# [S10] copy of s3_5_smoke/train_patch/drive_jepa_agent_s35.py with ADDED methods only (read_scores_index, spacing_rows,
++# generator_loss_s10, get_generator_optimizer); nothing existing is changed. See drive_jepa_agent_s10.diff.
+ # S3.5 PATCHED COPY of navsim/agents/drive_jepa_perception_based/drive_jepa_agent.py (vendored file untouched; see
+ # drive_jepa_agent.diff). Every change is tagged [S35-1a] has_label2 wiring, [S35-1b] vocabulary flag, [S35-1d] init / freeze.
+ VOCAB_PATHS = {"orig": "./data/8192.npy"}  # "ext" is passed in by the caller (s3_assembly/vocab_10240.npy)
+@@ -352,7 +354,81 @@
+             inter_loss_list.append(inter_loss)
+ 
+         return trajectory_loss, min_loss, inter_loss, min_loss_list, inter_loss_list
+-    
++
++    # ---------------------------------------------------------------------------------------------------------------- [S10]
++    def read_scores_index(self, targets):
++        """[S10] The catalogue indices pad_loss feeds to trajectory_loss_anchors (:366-373), read straight from
++        anchors_scores_index_{kind}.npy next to each graded row's metric cache (_index_path, the file get_sub_score_s35 loads at :33).
++        No call to compute_score, so nothing is graded. Rows without label 2 get the same empty index as in pad_loss."""
++        has_label2 = targets["has_label2"].bool().cpu()
++        scores_index = [np.zeros(0, dtype=np.int64) for _ in range(len(has_label2))]
++        for row in torch.nonzero(has_label2).flatten().tolist():
++            mc = targets["metric_cache_path"][row]
++            assert mc, "has_label2 sample without a metric cache path"
++            idx_arr = np.load(self._index_path(targets["token"][row], mc))
++            assert idx_arr.size == 0 or idx_arr.max() < len(self.anchors), "anchor index beyond the vocabulary"
++            scores_index[row] = idx_arr
++        return scores_index
++
++    @staticmethod
++    def spacing_rows(proposals):
++        """[S10] Spacing term per batch row. proposals (B, P, 8, >=2) as emitted (metres, car frame); p(0) = (0, 0);
++        d(k) = |p(k) - p(k-1)|, k = 1..8; s(k) = d(k+1) - 2 d(k) + d(k-1), k = 2..7; returns mean over the P plans and the 6 values
++        of s(k)^2, float32, shape (B,). Its batch mean is the mean over batch, plans and the 6 values."""
++        xy = proposals[..., :2].float()
++        prev = torch.cat([torch.zeros_like(xy[..., :1, :]), xy[..., :-1, :]], dim=-2)
++        d = torch.linalg.norm(xy - prev, dim=-1)  # (B, P, 8)
++        s = d[..., 2:] - 2 * d[..., 1:-1] + d[..., :-2]  # (B, P, 6)
++        return (s * s).mean(dim=(-1, -2))
++
++    def generator_loss_s10(self, proposal_list, target_trajectory, config, scores_index, spacing_weight):
++        """[S10] trajectory_loss_anchors (:306-354) with its two parts kept apart, plus spacing_weight x spacing term in every
++        stage. Same operations, same order of np.random.choice calls, same zip of stages with batch rows, same stage combination
++        (prev_weight x running total + this stage). inter_weight must be 0 (the diversity term is not computed here).
++        Returns the loss and a dict of detached parts: stage-combined and last-stage scalars, and last-stage per-row tensors
++        (human_rows.mean() = human part; cat_rows.sum() / B = catalogue part as it enters min_loss; spacing_rows.mean() = raw term)."""
++        assert config.inter_weight == 0, "generator_loss_s10 leaves out the diversity term; it is only valid at inter_weight 0"
++        B = len(scores_index)
++        total = human_c = cat_c = spacing_c = 0
++        for proposals_i, _ in zip(proposal_list, scores_index):
++            human_rows = torch.linalg.norm(proposals_i - target_trajectory[:, None], dim=-1, ord=1).mean(-1).amin(1)
++            human = human_rows.mean()
++            cat_rows = torch.zeros(B, device=proposals_i.device, dtype=proposals_i.dtype)
++            pseudo_min_loss = 0
++            for i, idx_arr in enumerate(scores_index):
++                if idx_arr.shape[0] == 0:
++                    continue
++                if idx_arr.shape[0] > 4:
++                    sampled_idx = np.random.choice(idx_arr, size=4, replace=False)
++                else:
++                    sampled_idx = idx_arr
++                pseudo_targets = torch.from_numpy(self.anchors[sampled_idx]).to(device=proposals_i.device, dtype=proposals_i.dtype)
++                diff = proposals_i[i, None] - pseudo_targets[:, None]
++                row = torch.linalg.norm(diff, dim=-1, ord=1).mean(-1).amin(-1).mean()
++                pseudo_min_loss += row
++                cat_rows[i] = 0.5 * row.detach()
++            cat = 0.5 * pseudo_min_loss / B
++            sp_rows = self.spacing_rows(proposals_i)
++            spacing = sp_rows.mean()
++            min_loss = human + cat
++            total = config.prev_weight * total + min_loss + spacing_weight * spacing
++            human_c = config.prev_weight * human_c + human.detach()
++            cat_c = config.prev_weight * cat_c + (cat.detach() if torch.is_tensor(cat) else cat)
++            spacing_c = config.prev_weight * spacing_c + spacing.detach()
++        parts = dict(
++            human=human_c, catalogue=cat_c, spacing=spacing_c,
++            human_last=human.detach(), catalogue_last=cat.detach() if torch.is_tensor(cat) else cat, spacing_last=spacing.detach(),
++            min_loss_last=min_loss.detach(),
++            human_rows=human_rows.detach(), cat_rows=cat_rows, spacing_rows=sp_rows.detach(),
++        )
++        return total, parts
++
++    def get_generator_optimizer(self, lr):
++        """[S10] Fresh Adam over the generator only: hist_encoding, init_feature and the one shared refiner (listed 4 times in
++        _trajectory_head; named_parameters yields it once). Encoder and scorer are not in it."""
++        params = [p for n, p in self._pad_model.named_parameters() if n.startswith(("hist_encoding.", "init_feature.", "_trajectory_head.")) and p.requires_grad]
++        return torch.optim.Adam([{"params": params, "lr": lr}], lr=lr)
++
+     def pad_loss(self, targets: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor], config: DriveJEPAConfig):
+         proposals = pred["proposals"]
+         proposal_list = pred["proposal_list"]

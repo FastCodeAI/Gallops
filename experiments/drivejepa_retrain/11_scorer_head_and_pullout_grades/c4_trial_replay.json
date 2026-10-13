@@ -1,0 +1,14 @@
+[
+ {
+  "scene": "d2715023",
+  "replans": 39,
+  "pick_mismatches": 0,
+  "worst_plan_dev_vs_trial_m": 0.0
+ },
+ {
+  "scene": "b44a4a44",
+  "replans": 39,
+  "pick_mismatches": 0,
+  "worst_plan_dev_vs_trial_m": 0.0
+ }
+]
