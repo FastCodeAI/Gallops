@@ -22,10 +22,14 @@ That separation is the point — see [why](#why-two-repos).
 
 ## Status
 
-**Skeleton only.** There is no training code yet, deliberately. What exists is
-the site-config split, the checkpoint contract, and the conventions a training
-run has to respect in order for its numbers to mean anything. Those are cheap
-now and expensive to retrofit.
+**Skeleton, plus one recipe.** gallops-v0 has no training code yet,
+deliberately. What exists is the site-config split, the checkpoint contract, and
+the conventions a training run has to respect in order for its numbers to mean
+anything. Those are cheap now and expensive to retrofit.
+
+The first recipe is not gallops-v0: it is the training behind Drive-JEPA's
+Bench2Drive results, moved here so it is tracked and portable — see
+[docs/drivejepa_b2d.md](docs/drivejepa_b2d.md).
 
 Read [docs/STRATEGY.md](docs/STRATEGY.md) first. It carries what paddock's
 results already established about what to build, and what this machine can and
@@ -86,6 +90,7 @@ Four reasons, in increasing order of importance:
 | [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
+| [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
 
 ## Licence
 

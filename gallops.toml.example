@@ -58,3 +58,15 @@ runs = "/path/to/gallops-runs"
 # [datasets.navsim]
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
+
+# [datasets.bench2drive]
+# path     = "/path/to/Bench2Drive"
+# rerank   = "/path/to/rerank-b2d"            # candidates, features and labels the Drive-JEPA heads train on
+
+# ---------------------------------------------------------------------------
+# Interpreters, for stages that must run inside a particular environment. A
+# recipe names them as {python.NAME}; see recipes/ and `gallops recipe <name>`.
+# ---------------------------------------------------------------------------
+
+# [python]
+# train = "/path/to/env-with-torch/bin/python"     # Python >= 3.11 with torch

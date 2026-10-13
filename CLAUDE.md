@@ -34,6 +34,7 @@ CLI (after `source .venv/bin/activate`, or as `.venv/bin/gallops`):
 ```bash
 gallops config              # what this machine resolved — run this first
 gallops show <ckpt-dir>     # what a checkpoint claims about itself
+gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.

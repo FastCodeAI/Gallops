@@ -1,0 +1,105 @@
+"""Recipes resolve on any site that configures what they name, and their stages exist.
+
+A recipe is the record of how a checkpoint was made, so a broken one fails late and expensively: a stage
+that names a module that is not there, or a template no site can expand, surfaces hours into a run. These
+checks need no GPU, no torch and no data.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from gallops import recipe as recipes
+from gallops.config import REPO_ROOT, ConfigError, SiteConfig
+
+SRC = REPO_ROOT / "src" / "gallops"
+
+
+def write_site(tmp: Path) -> SiteConfig:
+    for d in ("navsim", "b2d"):
+        (tmp / d).mkdir(exist_ok=True)
+    path = tmp / "gallops.toml"
+    path.write_text(
+        f"""
+site = "test"
+[roots]
+weights = "{tmp}/weights"
+runs = "{tmp}/runs"
+[python]
+train = "{tmp}/py/train"
+[datasets.navsim]
+path = "{tmp}/navsim"
+exp = "{tmp}/navsim-exp"
+[datasets.bench2drive]
+path = "{tmp}/b2d"
+rerank = "{tmp}/rerank"
+"""
+    )
+    return SiteConfig.load(path)
+
+
+@pytest.fixture
+def site(tmp_path: Path) -> SiteConfig:
+    return write_site(tmp_path)
+
+
+def test_every_stage_resolves(site: SiteConfig) -> None:
+    rec = recipes.load("drivejepa_b2d")
+    cmds = recipes.commands(rec, site)
+    assert [c.stage for c in cmds] == rec.names()
+    for c in cmds:
+        text = " ".join([*c.argv, c.cwd or "", *c.env.values()])
+        assert "{" not in text, f"{c.stage}: unexpanded template in {text}"
+        assert c.argv[1] == "-m" and c.argv[2].startswith("gallops.")
+
+
+def test_every_stage_module_exists() -> None:
+    for s in recipes.load("drivejepa_b2d").stages:
+        path = SRC / (s.module.replace(".", "/") + ".py")
+        assert path.exists(), f"stage {s.name} runs {s.module}, which is not at {path}"
+
+
+def test_stages_run_in_the_interpreter_they_name(site: SiteConfig) -> None:
+    for c in recipes.commands(recipes.load("drivejepa_b2d"), site):
+        assert c.argv[0] in {str(p) for p in site.python.values()}
+
+
+def test_only_named_stages_and_unknown_names_fail(site: SiteConfig) -> None:
+    rec = recipes.load("drivejepa_b2d")
+    assert [c.stage for c in recipes.commands(rec, site, ["split-full"])] == ["split-full"]
+    with pytest.raises(ConfigError, match="no stage"):
+        recipes.commands(rec, site, ["split-v5"])
+
+
+def test_a_stage_must_follow_what_it_reads(tmp_path: Path) -> None:
+    (tmp_path / "bad.toml").write_text(
+        '[[stage]]\nname = "a"\nmodule = "m"\npython = "train"\nafter = ["b"]\n'
+        '[[stage]]\nname = "b"\nmodule = "m"\npython = "train"\n'
+    )
+    with pytest.raises(ConfigError, match="not earlier stages"):
+        recipes.load("bad", root=tmp_path)
+
+
+def test_python_table(site: SiteConfig) -> None:
+    assert site.resolve("{python.train}") == str(site.python["train"])
+    with pytest.raises(ConfigError, match=r"no \[python\] entry 'missing'"):
+        site.resolve("{python.missing}")
+
+
+def test_a_site_without_the_interpreter_cannot_resolve(tmp_path: Path) -> None:
+    site = write_site(tmp_path)
+    bare = SiteConfig(
+        site=site.site, weights=site.weights, runs=site.runs, datasets=site.datasets, source=site.source
+    )
+    with pytest.raises(ConfigError, match="python"):
+        recipes.commands(recipes.load("drivejepa_b2d"), bare)
+
+
+def test_the_held_out_split_is_tracked() -> None:
+    """Every head stage selects its epoch on these 150 clips; the recipe reads them from the repo, not from a
+    site path."""
+    clips = json.loads((REPO_ROOT / "recipes/drivejepa_b2d/heldout_150.json").read_text())["val"]
+    assert len(clips) == len(set(clips)) == 150

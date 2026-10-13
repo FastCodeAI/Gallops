@@ -10,10 +10,12 @@ green first, so that when something moves you know it was the model.
 from __future__ import annotations
 
 import json
+from typing import Annotated
 
 import typer
 
 from gallops import checkpoint as ckpt
+from gallops import recipe as recipes
 from gallops.config import ConfigError, SiteConfig
 
 app = typer.Typer(add_completion=False, help="Training for driving policies.")
@@ -36,6 +38,8 @@ def config() -> None:
     typer.echo(f"source   {cfg.source}")
     typer.echo(f"weights  {cfg.weights}{'' if cfg.weights.exists() else '   (MISSING)'}")
     typer.echo(f"runs     {cfg.runs}{'' if cfg.runs.exists() else '   (MISSING)'}")
+    for name, path in sorted(cfg.python.items()):
+        typer.echo(f"python   {name:<12} {path}{'' if path.exists() else '   (MISSING)'}")
     if not cfg.datasets:
         typer.echo("datasets none configured")
         return
@@ -60,6 +64,35 @@ def show(directory: str) -> None:
         typer.secho(str(exc), fg=typer.colors.RED, err=True)
         raise typer.Exit(2) from exc
     typer.echo(json.dumps(record.to_dict(), indent=2, sort_keys=True))
+
+
+@app.command()
+def recipe(
+    name: str,
+    stages: Annotated[
+        list[str] | None, typer.Argument(help="stages to show or run; all when omitted")
+    ] = None,
+    run: Annotated[bool, typer.Option("--run", help="run the stages in order; otherwise only print")] = False,
+) -> None:
+    """Print, or run, the commands of a recipe (recipes/<name>.toml) on this machine.
+
+    Printing is the default: read what would run, with this site's paths filled
+    in, before spending GPU hours on it.
+    """
+    try:
+        cfg = SiteConfig.load()
+        rec = recipes.load(name)
+        cmds = recipes.commands(rec, cfg, stages or None)
+    except ConfigError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+    for cmd in cmds:
+        typer.echo(f"# {cmd.stage}\n{cmd.shell()}\n")
+        if run:
+            code = recipes.run(cmd)
+            if code:
+                typer.secho(f"stage {cmd.stage} exited {code}; stopping", fg=typer.colors.RED, err=True)
+                raise typer.Exit(code)
 
 
 if __name__ == "__main__":

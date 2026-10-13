@@ -1,0 +1,91 @@
+# Drive-JEPA retrained on Bench2Drive: the stages behind Split-v4 (Bench2Drive 50 routes, mean DS 68.1).
+#
+#   gallops recipe drivejepa_b2d                       print every command for this machine
+#   gallops recipe drivejepa_b2d split-full --run      run one stage
+#
+# Lineage, data, and what was verified: docs/drivejepa_b2d.md. Every stage refuses to write into an
+# output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
+#
+# Site config this needs (gallops.toml):
+#   [python] train      Python >= 3.11 with torch
+#   [datasets.navsim]   path + exp, as in paddock.toml (the released checkpoint is under exp)
+#   [datasets.bench2drive] rerank = the candidate / feature / label tree the heads train on
+
+description = "Drive-JEPA retrained on Bench2Drive base: Split-v4"
+
+[vars]
+rerank = "{data.bench2drive.rerank}"
+release = "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
+heldout = "{repo}/recipes/drivejepa_b2d/heldout_150.json"
+out = "{runs}/drivejepa_b2d"
+
+# ---------------------------------------------------------------------------------------------
+# Split-v4: only the scorer head changes. Three head stages, each initialised from the one before.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "ipad-base-start"
+python = "train"
+module = "drivejepa_b2d.train_ipad_head"
+args = [
+  "--feats", "{rerank}/_feats/pass*/feats_*.npz",
+  "--dataset", "{rerank}/_dataset/b2d_base_v2.npz",
+  "--labels", "{rerank}/_labels/b2d_base_v2_labels.npz",
+  "--extra-dataset", "{rerank}/_dataset/b2d_start.npz",
+  "--extra-feats", "{rerank}/_feats/start/feats_*.npz",
+  "--extra-labels", "{rerank}/_labels/b2d_start_labels.npz",
+  "--holdout-list", "{heldout}",
+  "--init-ckpt", "{release}",
+  "--out", "{out}/ipad-base-start",
+]
+
+[[stage]]
+name = "split-full"
+python = "train"
+module = "drivejepa_b2d.train_split_head"
+after = ["ipad-base-start"]
+args = [
+  "--dataset-base", "{rerank}/_dataset/b2d_base_v2.npz",
+  "--dataset-start", "{rerank}/_dataset/b2d_start.npz",
+  "--feats-base", "{rerank}/_feats/pass*/feats_*.npz",
+  "--feats-start", "{rerank}/_feats/start/feats_*.npz",
+  "--labels-base", "{rerank}/_labels/b2d_base_v3_labels.npz",
+  "--labels-start", "{rerank}/_labels/b2d_start_v3_labels.npz",
+  "--holdout-list", "{heldout}",
+  "--init", "{out}/ipad-base-start/head_best.pt",
+  "--labels-name", "v3",
+  "--out", "{out}/split-full",
+]
+
+[[stage]]
+name = "split-v4aug"
+python = "train"
+module = "drivejepa_b2d.train_split_head"
+after = ["split-full"]
+args = [
+  "--dataset-base", "{rerank}/_dataset/b2d_base_v2.npz",
+  "--dataset-start", "{rerank}/_dataset/b2d_start.npz",
+  "--feats-base", "{rerank}/_feats/pass*/feats_*.npz",
+  "--feats-start", "{rerank}/_feats/start/feats_*.npz",
+  "--feats-aug", "{rerank}/_feats/aug/feats_*.npz",
+  "--labels-base", "{rerank}/_labels/b2d_base_v4_labels.npz",
+  "--labels-start", "{rerank}/_labels/b2d_start_v4_labels.npz",
+  "--labels-aug", "{rerank}/_labels/b2d_aug_v4_labels.npz",
+  "--holdout-list", "{heldout}",
+  "--init", "{out}/split-full/head_best.pt",
+  "--labels-name", "v4",
+  "--out", "{out}/split-v4aug",
+]
+
+[[stage]]
+name = "split-v4-checkpoint"
+python = "train"
+module = "drivejepa_b2d.write_checkpoint"
+after = ["split-v4aug"]
+args = [
+  "--src", "{release}",
+  "--head", "{out}/split-v4aug",
+  "--model", "drivejepa_scorer_b2d",
+  "--train-run", "split-v4",
+  "--note", "Split-v4: split head (col / lane / ttc / red) on v4 labels + augmented light frames",
+]
