@@ -7,6 +7,7 @@ checks need no GPU, no torch and no data.
 
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
@@ -16,6 +17,15 @@ from gallops import recipe as recipes
 from gallops.config import REPO_ROOT, ConfigError, SiteConfig
 
 SRC = REPO_ROOT / "src" / "gallops"
+
+#: Modules that run inside Drive-JEPA's own interpreter (Python 3.9), and what they import from gallops.
+PY39 = (
+    "__init__.py",
+    "drivejepa_b2d/__init__.py",
+    "drivejepa_b2d/provenance.py",
+    "drivejepa_b2d/batch_fix.py",
+    "drivejepa_b2d/train_generator.py",
+)
 
 
 def write_site(tmp: Path) -> SiteConfig:
@@ -30,12 +40,16 @@ weights = "{tmp}/weights"
 runs = "{tmp}/runs"
 [python]
 train = "{tmp}/py/train"
+drivejepa = "{tmp}/py/drivejepa"
+[code]
+drivejepa = "{tmp}/Drive-JEPA"
 [datasets.navsim]
 path = "{tmp}/navsim"
 exp = "{tmp}/navsim-exp"
 [datasets.bench2drive]
 path = "{tmp}/b2d"
 rerank = "{tmp}/rerank"
+teachers = "{tmp}/teachers"
 """
     )
     return SiteConfig.load(path)
@@ -65,6 +79,17 @@ def test_every_stage_module_exists() -> None:
 def test_stages_run_in_the_interpreter_they_name(site: SiteConfig) -> None:
     for c in recipes.commands(recipes.load("drivejepa_b2d"), site):
         assert c.argv[0] in {str(p) for p in site.python.values()}
+    gen = recipes.commands(recipes.load("drivejepa_b2d"), site, ["final-generator"])[0]
+    assert gen.argv[0] == str(site.python["drivejepa"])
+    assert gen.cwd == f"{site.code['drivejepa']}/navsim_v2", (
+        "the agent loads ./data/8192.npy relative to the cwd"
+    )
+
+
+@pytest.mark.parametrize("rel", PY39)
+def test_drivejepa_side_is_python39(rel: str) -> None:
+    """These run in Drive-JEPA's Python 3.9 env; 3.10+ syntax would fail only there, hours into a run."""
+    ast.parse((SRC / rel).read_text(), filename=rel, feature_version=(3, 9))
 
 
 def test_only_named_stages_and_unknown_names_fail(site: SiteConfig) -> None:
@@ -83,8 +108,10 @@ def test_a_stage_must_follow_what_it_reads(tmp_path: Path) -> None:
         recipes.load("bad", root=tmp_path)
 
 
-def test_python_table(site: SiteConfig) -> None:
-    assert site.resolve("{python.train}") == str(site.python["train"])
+def test_python_and_code_tables(site: SiteConfig) -> None:
+    assert (
+        site.resolve("{python.train} {code.drivejepa}") == f"{site.python['train']} {site.code['drivejepa']}"
+    )
     with pytest.raises(ConfigError, match=r"no \[python\] entry 'missing'"):
         site.resolve("{python.missing}")
 

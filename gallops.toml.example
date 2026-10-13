@@ -62,11 +62,17 @@ runs = "/path/to/gallops-runs"
 # [datasets.bench2drive]
 # path     = "/path/to/Bench2Drive"
 # rerank   = "/path/to/rerank-b2d"            # candidates, features and labels the Drive-JEPA heads train on
+# teachers = "/path/to/mtd/teachers_h/b2d"    # MTD-H pseudo-teachers for the Drive-JEPA generator
 
 # ---------------------------------------------------------------------------
-# Interpreters, for stages that must run inside a particular environment. A
-# recipe names them as {python.NAME}; see recipes/ and `gallops recipe <name>`.
+# Interpreters and upstream code, for stages that must run inside a model's own
+# environment. A recipe names them as {python.NAME} and {code.NAME}; see
+# recipes/ and `gallops recipe <name>`.
 # ---------------------------------------------------------------------------
 
 # [python]
-# train = "/path/to/env-with-torch/bin/python"     # Python >= 3.11 with torch
+# train     = "/path/to/env-with-torch/bin/python"     # Python >= 3.11 with torch
+# drivejepa = "/path/to/drive-jepa-env/bin/python"     # Drive-JEPA's own env (Python 3.9, navsim installed)
+
+# [code]
+# drivejepa = "/path/to/Drive-JEPA"
