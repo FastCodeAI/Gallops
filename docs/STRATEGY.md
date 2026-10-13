@@ -90,6 +90,11 @@ Drive-JEPA is not a bad model with a bad ADE. It is an **excellent path
 predictor with a broken speed head**, and a joint waypoint regression averaged
 an 11× asymmetry into one meaningless number.
 
+> **Superseded for Drive-JEPA, by a later measurement:** its deficit is not a
+> speed head. One of the 32 candidates it proposes is within 0.37 m ADE of the
+> human; its scorer picks one 2.36 m away. See
+> [First target](#first-target--taken-drive-jepas-selection-not-its-head).
+
 ### 4. Separate the lateral and longitudinal heads
 
 Three independent signals, all from measurements we hold:
@@ -184,7 +189,7 @@ prerequisite, not a detail, and it has a long lead time.
 | dataset | what we hold | usable for training? |
 |---|---|---|
 | **nuScenes** | full 850 scenes, 34,149 keyframes | **Yes** — the one real corpus. Camera-only: no `sweeps/`, zero radar files, lidar 7,044 keyframes short of the keyframe count. |
-| **KITScenes** | 127 of 1,006 sequences, all from `val` / `overlap_train_val` | **No.** Roughly 40 minutes of front-camera driving. The 533-sequence, 2.38 TB `train` split is not downloaded. |
+| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly.** The re-ranker ([First target](#first-target--taken-drive-jepas-selection-not-its-head)) trained on 5,711 keyframes from those 373. Whether the rest of the 2.38 TB `train` split has arrived since has not been re-measured. |
 | **NAVSIM / OpenScene** | `navtest` only (136 logs, 12,146 scenes) | **No.** `navtrain` and `trainval_sensor` are absent, as is `synthetic_scenes/`. |
 
 Two long-lead items follow directly: a KITScenes `train` pull is 2.38 TB and
@@ -215,7 +220,7 @@ encoder, selected on closed-loop, and exported to the target from day one.**
 |---|---|
 | Small (≲100 M) | §1 — a 60.9 MB CPU model ties a 10 B VLM on collision avoidance, and silicon is the destination |
 | Camera-only | Every model in the matrix is camera-only, and our nuScenes copy has no sweeps and empty radar, so fusion is not even evaluable here |
-| Separate lateral / longitudinal heads | §3, §4 |
+| Separate lateral / longitudinal heads | §3, §4 — though §3's reading of Drive-JEPA is superseded; see [First target](#first-target--taken-drive-jepas-selection-not-its-head) |
 | Self-supervised video pretraining | §3 — Drive-JEPA's best-measured lateral accuracy comes from a representation learned without labels. That is the part of it that works. |
 | Selected on closed-loop | §2 |
 | Exported to target continuously | §5 |
@@ -227,7 +232,28 @@ scenario (paddock notes ~200 runs would be needed just to place it), and tied
 with a CPU model on safety. It is a research direction, and it is NVIDIA's
 already.
 
-### Candidate first targets — open
+### First target — taken: Drive-JEPA's selection, not its head
+
+Measured in paddock (2026-09-16 to 09-19):
+- Drive-JEPA's KITScenes deficit is not a speed head. The 32 candidates it
+  proposes include one within 0.37 m ADE of the human on average.
+- The deficit is its scorer's choice among them. That scorer was trained only
+  on NAVSIM's PDM score, and off NAVSIM it ranks close to random: the pick is
+  2.36 m, on average the 15th of 32.
+- Its inputs were checked first (acceleration, route command, ego origin, lens
+  distortion). None moved the pick beyond noise.
+
+So the first target became a **re-ranker**: a small MLP over the frozen model's
+candidates, trained on KITScenes train, in `gallops/train/rerank.py`. It proves
+the loop, train → checkpoint → sidecar → `drivejepa_rerank` in paddock → a row,
+and closes a measured gap on the way. Paddock's `docs/models/drivejepa_rerank.md`
+has the numbers and the limits. The main limit: it is open-loop only until it
+has been through neuroNCAP.
+
+The longitudinal-head idea below is superseded by that finding. It stays as
+written, because the reasoning that led to it is worth keeping.
+
+### Candidate first targets — as first written
 
 The point of a first target is to **prove the loop**: train → checkpoint →
 sidecar → paddock adapter → a row in the table. Do that with a model whose
@@ -278,4 +304,4 @@ nothing else is moving").
    what VisionPilot's ONNX export did not (§5).
 3. **Which benchmarks can resolve what.** See §6. Answer before selecting a
    checkpoint on any of them.
-4. **First target.** See above; open.
+4. **First target.** Taken: the Drive-JEPA re-ranker (see above).

@@ -22,10 +22,14 @@ That separation is the point — see [why](#why-two-repos).
 
 ## Status
 
-**Skeleton only.** There is no training code yet, deliberately. What exists is
-the site-config split, the checkpoint contract, and the conventions a training
-run has to respect in order for its numbers to mean anything. Those are cheap
-now and expensive to retrofit.
+**One trainer, and the loop proven end to end.** `gallops train-rerank` fits a
+selector over Drive-JEPA's 32 candidate trajectories and writes a checkpoint
+with its sidecar. Paddock's `drivejepa_rerank` adapter loads it and scores it
+like any other model. It is small on purpose: its job was to prove
+train → checkpoint → sidecar → paddock row, and it also closes a measured gap
+(see [docs/STRATEGY.md](docs/STRATEGY.md)). Beyond that there is the
+site-config split, the checkpoint contract, and the conventions a training run
+has to respect for its numbers to mean anything.
 
 Read [docs/STRATEGY.md](docs/STRATEGY.md) first. It carries what paddock's
 results already established about what to build, and what this machine can and
@@ -41,6 +45,8 @@ cp gallops.toml.example gallops.toml
 $EDITOR gallops.toml                        # point at YOUR weights, runs and data
 
 gallops config                              # what this machine resolved
+gallops show <checkpoint dir>               # what a checkpoint claims about itself
+gallops train-rerank <dataset.npz> --train-run <name>   # see gallops/train/rerank.py
 ```
 
 Point `[roots.weights]` at **the same directory as paddock's
