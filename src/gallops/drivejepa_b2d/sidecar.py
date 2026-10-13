@@ -25,6 +25,18 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def optimizer_step(head_metrics: dict[str, Any]) -> int:
+    """The `step` of a checkpoint built from a split head: optimizer steps of that head's stage up to its kept
+    epoch. Not the epoch -- `Checkpoint.step` is the optimizer step, and anything that orders or compares
+    checkpoints by it would read an epoch as a step count 442 times too small (Split-v4's head)."""
+    if "steps_per_epoch" not in head_metrics:
+        raise SystemExit(
+            "the head's metrics.json has no steps_per_epoch: it was trained before train_split_head recorded "
+            "it, so its optimizer step is not known -- retrain it with this repo's train_split_head"
+        )
+    return int(head_metrics["best_epoch"]) * int(head_metrics["steps_per_epoch"])
+
+
 def refuse_existing_run(run_dir: Path) -> None:
     """One fit is one train run. A rerun that kept a different epoch would otherwise sit beside the first
     under the same name, and paddock groups a train run as one sweep. An empty directory is not a run."""

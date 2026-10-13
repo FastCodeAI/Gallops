@@ -68,3 +68,14 @@ def test_one_fit_is_one_train_run(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="already holds a checkpoint"):
         sidecar.publish(tmp_path / "m" / "r" / "step_000000005", a_record(step=5), WEIGHTS, save_ok)
     assert [p.name for p in (tmp_path / "m" / "r").iterdir()] == ["step_000000003"]
+
+
+def test_step_is_the_optimizer_step_not_the_epoch() -> None:
+    """Split-v4's head: kept epoch 20 of a stage with 28,266 training rows in batches of 64."""
+    metrics = {"best_epoch": 20, "n_train": 28_266, "batch": 64, "steps_per_epoch": 442}
+    assert sidecar.optimizer_step(metrics) == 8_840
+
+
+def test_a_head_without_its_step_count_is_refused() -> None:
+    with pytest.raises(SystemExit, match="steps_per_epoch"):
+        sidecar.optimizer_step({"best_epoch": 20, "n_train": 28_266})

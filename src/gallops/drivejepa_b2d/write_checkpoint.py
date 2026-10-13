@@ -6,7 +6,7 @@ under the Lightning prefix `agent._pad_model.`), saves to
 (docs/checkpoints.md). The step directory is staged and renamed into place only once the probe passed and the
 sidecar is written (sidecar.publish), so {weights} never holds the weights without it. Refuses a train run
 that already holds a checkpoint. Split-v4 = the released checkpoint + the split-v4aug head; the step is the
-head's kept epoch.
+head stage's optimizer steps up to its kept epoch.
 
 Probe: the written file is reloaded and its head must give exactly the column-5 scores the trained head gave
 on the 4 held-out probe rows saved at training time. The full-forward probe through paddock's policy is
@@ -32,7 +32,7 @@ from gallops.checkpoint import Checkpoint, TrainedOn
 from gallops.config import SiteConfig
 from gallops.drivejepa_b2d.head import HEAD_SUFFIXES, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
-from gallops.drivejepa_b2d.sidecar import publish, refuse_existing_run, sha256
+from gallops.drivejepa_b2d.sidecar import optimizer_step, publish, refuse_existing_run, sha256
 
 PREFIX = "agent._pad_model."
 WEIGHTS_NAME = "drive_jepa_vitl_v2.ckpt"
@@ -95,7 +95,7 @@ def main() -> None:
     a = ap.parse_args()
 
     head_metrics = json.load(open(a.head / "metrics.json"))
-    step = int(head_metrics["best_epoch"])
+    step = optimizer_step(head_metrics)
     out_dir = SiteConfig.load().checkpoint_dir(a.model, a.train_run, step)
     refuse_existing_run(out_dir.parent)  # before reading 3 GB, not only at publish time
 
@@ -129,7 +129,8 @@ def main() -> None:
             "head_run": str(a.head),
             "head_git_sha": head_metrics.get("git_sha", "not recorded (trained before gallops)"),
             "replaced_tensors": len(repl),
-            "step_is": "the split head's kept epoch",
+            "step_is": "optimizer steps of the --head stage up to its kept epoch; earlier stages not counted",
+            "kept_epoch": int(head_metrics["best_epoch"]),
             "variant_selection": "the variant (heads, selection rule, policy switches) was chosen by "
             "closed-loop driving score on the same 50 Bench2Drive routes its headline is reported on; only "
             "the kept epochs were chosen on held-out data",

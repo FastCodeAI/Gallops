@@ -39,6 +39,9 @@ from gallops.drivejepa_b2d.head import auc, head_module
 from gallops.drivejepa_b2d.provenance import git_sha
 
 COLS = ("col", "lane", "ttc", "red")
+#: One optimizer step per batch, the last one short: metrics.json records ceil(n_train / BATCH) steps per
+#: epoch, which is what a checkpoint's `step` counts (write_checkpoint).
+BATCH = 64
 
 
 def labels(lp, sids):
@@ -161,8 +164,8 @@ def main() -> None:
         head.train()
         perm = torch.from_numpy(np.random.permutation(tr)).cuda()
         tot = 0.0
-        for i in range(0, len(perm), 64):
-            b = perm[i : i + 64]
+        for i in range(0, len(perm), BATCH):
+            b = perm[i : i + BATCH]
             z = head(X[b])[..., :4]
             loss = bce(z, Yt[b]).mean((0, 1)).sum()
             opt.zero_grad(set_to_none=True)
@@ -215,6 +218,8 @@ def main() -> None:
         curve=curve,
         init=str(a.init),
         n_train=int(len(tr)),
+        batch=BATCH,
+        steps_per_epoch=-(-len(tr) // BATCH),
         n_aug=int(aug[tr].sum()),
         labels=a.labels_name,
         settings={k: (str(v) if isinstance(v, Path) else v) for k, v in vars(a).items()},
