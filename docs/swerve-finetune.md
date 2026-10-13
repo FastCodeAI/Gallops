@@ -224,18 +224,33 @@ across episodes; and the starting weights, fed the trainer's rebuilt inputs,
 reproduce what they drove. The test suite holds a referee with the old cache and
 asserts the preflight rejects it.
 
-Its first real run refused to train, and the refusal was right. The rebuilt
-inputs drift from what the model saw by an amount that depends on where in the
-episode a tick sits, measured over 506 round-0 ticks: the model's one look into
-the past is the front frame 0.5 s back, and for an episode's first half second
-that was one of the engine's priming frames, which the logger never saves.
-Nearest-stamp selection silently handed over the episode's first frame instead,
-and the rebuilt pick landed a median 0.4–0.5 m (p90 2.4 m) from the one driven,
-against 0.10 m once the real frame exists. About 7% of every round's ticks were
-trained on a past the model never had. They are now skipped as unrebuildable;
-saving the priming frames at collection would get them back. Past that, the
-remaining gap is a median 0.29% of four seconds' travel, most likely the JPEG
-round trip, which is what the fidelity limit is now set against.
+Its first real run refused to train. The refusal came from how the limit was
+set, an absolute 5 cm from one scene's late ticks, where the gap scales with
+speed: the refused smoke and the one that passed compared the same 12 ticks at
+the same 0.1395 m median, and the second passed at 0.89% once the limit became a
+share of travel. What the refusal prompted is what found a real defect. Measured
+over 506 round-0 ticks, the rebuilt inputs drift from what the model saw by an
+amount that depends on where in the episode a tick sits: the model's one look
+into the past is the front frame 0.5 s back, and for an episode's first half
+second that was one of the engine's priming frames, which the logger never
+saves. Nearest-stamp selection silently handed over the episode's first frame
+instead, and the rebuilt pick landed a median 0.4–0.5 m (p90 2.4 m) from the one
+driven, against 0.10 m once the real frame exists. The gate as it then stood could
+not have seen it: it was a median, and its sample started a tenth of the way into
+each episode (1 of l4fix's 48 sampled ticks sat in positions 0–4).
+
+About 7% of every round's ticks were trained on a past the model never had, and
+the loss falls mostly on brake targets: on l4fix's train ticks, 269 of 1,423
+brake (18.9%), 115 of 932 swerve (12.3%) and 74 of 4,119 continue (1.8%); on
+held-out 0053, 147 of 560 brake (26%). They are now dropped before anything
+counts them, recorded by kind in `notes.unrebuildable`, and a set with more than
+10% of them is refused. Until then the dataset skipped them silently, so l4fix's
+sidecar claims 1,423 brake ticks where about 1,154 trained, and validation losses
+before and after 38690b9 are over different held-out sets. Saving the priming
+frames at collection would get them back. Past that, the remaining gap is a
+median 0.29% of four seconds' travel, most likely the JPEG round trip. The
+fidelity check now gates the median against that and the p90 at 10%, bounds the
+ticks it cannot rebuild, and samples each episode's earliest tick.
 
 ## After the fix: l4fix to s3
 

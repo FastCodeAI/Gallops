@@ -66,7 +66,8 @@ from gallops.train.losses import (
     trajectory_loss,
     travelled,
 )
-from gallops.train.swerve_data import episode_context, one_tick_per_pass
+from gallops.train.preflight import keep_rebuildable
+from gallops.train.swerve_data import episode_context, one_tick_per_pass, rebuildable
 
 #: Only these move. Everything else, the encoder above all, is frozen.
 #: `scorer` is the addition the first run's failure argued for: 4.70 M more, and
@@ -532,6 +533,10 @@ def main() -> None:
             f"  excluded episodes {', '.join(args.exclude_episodes)}: {len(ticks) - len(kept)} ticks dropped"
         )
         ticks = kept
+    # Dropped here, before anything counts them, rather than skipped by the dataset:
+    # skipped there, the sidecar described ticks the model never saw.
+    ticks, unrebuildable = keep_rebuildable(ticks, rebuildable)
+    print(f"  dropped {unrebuildable['dropped']} unrebuildable ticks: {unrebuildable['by_expert_kind']}")
     if args.limit:
         # Evenly spaced, not the first N: the files are sorted by scenario-scene,
         # so a head slice is one scene and a smoke run over it holds out its own
@@ -776,6 +781,8 @@ def main() -> None:
                     "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
                     "excluded_scenes": args.exclude_scene,
+                    # dropped before training because their input cannot be rebuilt
+                    "unrebuildable": unrebuildable,
                     **moved,
                 },
             ),

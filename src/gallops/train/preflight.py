@@ -33,12 +33,17 @@ Three groups, cheapest first:
                between two close candidates). This is only meaningful when
                `--dumps` were collected by those same weights.
 
+               Gated on the median AND the p90, with a bound on ticks it could
+               not rebuild, and the sample gains each episode's earliest tick.
                It was an absolute 5 cm at first, set from one scene's late
-               ticks, and it refused its first real run: the error scales with
-               speed, and an episode's first half second has no real past at
-               all (see `HISTORY_TOLERANCE_S` in swerve_data.py). Both were
-               measured before the limit moved, and the second was a defect the
-               trainer now skips rather than a reason to loosen anything.
+               ticks, and it refused its first real run because of that design:
+               the error scales with speed, and the run passed once the limit
+               became a share of travel. The 506-tick measurement the refusal
+               prompted is what found an episode's first half second has no
+               real past (see `HISTORY_TOLERANCE_S` in swerve_data.py); the
+               median gate itself could not see that, since 1 of its 48
+               sampled ticks sat there. Such ticks are now dropped before
+               anything is counted.
     sight      the starting weights' plan changes when the front camera is
                blanked. Fidelity compares the trainer with a recording, and a
                recording can carry the same mistake: before paddock #62 both
@@ -93,6 +98,18 @@ FIDELITY_VERDICT_TOLERANCE = 0.05
 #: seconds' travel at the tick's speed. Measured 0.29%; a gap this size is three
 #: times what the JPEG round trip explains.
 FIDELITY_MEDIAN_PICK_FRACTION = 0.01
+#: The same gap's 90th percentile. A median cannot see a defect confined to a
+#: minority of ticks: 22 of 48 sampled ticks 10 m off still pass it. Twice the p90
+#: measured over 446 round-0 ticks with a real past (4.9%), as the median limit is
+#: about three times its own baseline.
+FIDELITY_P90_PICK_FRACTION = 0.10
+#: Sampled ticks fidelity may fail to rebuild. The trainer drops unrebuildable ticks
+#: before the preflight (`swerve_data.rebuildable`), so a skip here means the filter
+#: and the dataset disagree; unbounded, 42 of 48 skipped still passed on 6.
+FIDELITY_MAX_SKIPPED = 0.10
+#: Unrebuildable ticks the trainer may drop before it refuses the data. Measured
+#: 6.2-6.7% of round 0 (positions 0-4 of each episode), most of them brake targets.
+MAX_UNREBUILDABLE = 0.10
 #: Blanking the front camera must move the starting weights' plan by more than
 #: this somewhere in the sample. Camera-blind it moved 0.000 m on every tick;
 #: with the cameras on the ego frame, 9.6 m on a frontal tick near impact.
@@ -331,13 +348,26 @@ def fidelity_check(
         return {}, ["fidelity: the dataset rebuilt none of the sampled ticks"]
     agreement = same / len(diffs)
     median = float(np.median(fractions))
+    tail = float(np.percentile(fractions, 90))
+    skipped = len(ticks) - len(diffs)
     report = {
         "compared": len(diffs),
-        "skipped_unrebuildable": len(ticks) - len(diffs),
+        "skipped_unrebuildable": skipped,
         "pick_verdict_agrees": f"{same}/{len(diffs)}",
         "median_pick_diff_m": round(float(np.median(diffs)), 4),
         "median_pick_diff_of_travel": round(median, 4),
+        "p90_pick_diff_of_travel": round(tail, 4),
     }
+    if skipped > FIDELITY_MAX_SKIPPED * len(ticks):
+        problems.append(
+            f"fidelity: {skipped} of {len(ticks)} sampled ticks could not be rebuilt "
+            f"(limit {FIDELITY_MAX_SKIPPED:.0%}); what was compared is not the sample"
+        )
+    if tail > FIDELITY_P90_PICK_FRACTION:
+        problems.append(
+            f"fidelity: the rebuilt pick's p90 gap is {tail:.2%} of four seconds' travel "
+            f"(limit {FIDELITY_P90_PICK_FRACTION:.0%}): some ticks are rebuilt unlike what the model saw"
+        )
     if agreement < 1 - FIDELITY_VERDICT_TOLERANCE:
         problems.append(
             f"fidelity: the starting weights' pick hits/clears differently from the driven plan on "
@@ -391,6 +421,45 @@ def sight_check(model, dataset_cls, sample: list[dict], torch, device: str) -> t
     return report, []
 
 
+def keep_rebuildable(ticks: list[dict], rebuildable) -> tuple[list[dict], dict]:
+    """The ticks `rebuildable` accepts, and what was dropped, by expert kind.
+
+    Refuses when more than MAX_UNREBUILDABLE of them are dropped: the drop falls on
+    an episode's first half second, where most brake targets sit (18.9% of l4fix's
+    brake ticks against 1.8% of `continue`), so a bigger one changes what is taught.
+    """
+    kept = [t for t in ticks if rebuildable(t)]
+    dropped = Counter(t.get("expert_kind", "?") for t in ticks if not rebuildable(t))
+    report = {
+        "dropped": sum(dropped.values()),
+        "of": len(ticks),
+        "by_expert_kind": {
+            k: f"{n}/{sum(1 for t in ticks if t.get('expert_kind', '?') == k)}"
+            for k, n in sorted(dropped.items())
+        },
+    }
+    if ticks and report["dropped"] > MAX_UNREBUILDABLE * len(ticks):
+        raise SystemExit(
+            f"{report['dropped']} of {len(ticks)} ticks cannot be rebuilt (limit {MAX_UNREBUILDABLE:.0%}): "
+            f"{report['by_expert_kind']}"
+        )
+    return kept, report
+
+
+def earliest_per_episode(ticks: list[dict], episodes: set[str]) -> list[dict]:
+    """Each named episode's first tick in `ticks`.
+
+    The sample starts a tenth of the way in, so it almost never holds the ticks
+    nearest an episode's start -- exactly where the priming-frame defect lived.
+    """
+    first: dict[str, dict] = {}
+    for tick in ticks:
+        key = episode_key(tick)
+        if key in episodes and (key not in first or int(tick["timestamp"]) < int(first[key]["timestamp"])):
+            first[key] = tick
+    return [first[k] for k in sorted(first)]
+
+
 def describe(ticks: list[dict]) -> dict:
     """What is about to be trained on, for the log and the sidecar."""
     shapes = Counter(t["episode"].split("-", 1)[0] for t in ticks)
@@ -438,6 +507,15 @@ def run(
     problems += found
     own = [t for t in sample if sources[t.get("source", 0)].drove == START]
     if own:
+        chosen = {(episode_key(t), int(t["timestamp"])) for t in own}
+        own += [
+            t
+            for t in earliest_per_episode(
+                [t for t in train if sources[t.get("source", 0)].drove == START],
+                {episode_key(t) for t in own},
+            )
+            if (episode_key(t), int(t["timestamp"])) not in chosen
+        ]
         report["fidelity"], found = fidelity_check(model, dataset_cls, own, referee, sources, torch, device)
         problems += found
     else:

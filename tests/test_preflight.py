@@ -346,3 +346,124 @@ def test_every_pass_is_one_tick():
     dataset.ticks = [{}, {}]
     with pytest.raises(ValueError, match="2 ticks in one pass"):
         dataset.batch([0, 1])
+
+
+class _ByStamp:
+    """One tick per pass, keyed by timestamp; `missing` stamps cannot be rebuilt."""
+
+    missing: set = set()
+
+    def __init__(self, ticks, device):
+        self.ticks = ticks
+
+    def batch(self, indices):
+        used = [self.ticks[i] for i in indices if self.ticks[i]["timestamp"] not in self.missing]
+        if not used:
+            return None, None, []
+        return {"stamp": np.asarray([t["timestamp"] for t in used])}, None, used
+
+
+class _OffOn:
+    """Drives the recorded plan, except 10 m sideways on the ticks in `off`."""
+
+    def __init__(self, off):
+        self.off, self.training = set(off), True
+
+    def eval(self):
+        self.training = False
+
+    def train(self, mode=True):
+        self.training = mode
+
+    def __call__(self, features):
+        plans = np.stack([plan(2.0) for _ in features["stamp"]])
+        for k, stamp in enumerate(features["stamp"]):
+            if int(stamp) in self.off:
+                plans[k, :, 1] += 10.0
+        return {"trajectory": _Plan(plans)}
+
+
+def test_fidelity_sees_a_minority_of_ticks_rebuilt_wrong(tmp_path):
+    """A median cannot: 1 of 4 ticks 10 m off leaves the median at 0."""
+    ticks, dumps = build_episode(tmp_path)
+    referee = Referee(anchors=np.zeros((1, 8, 3)))
+    # the earliest tick: clear either way, so only the gap can flag it
+    report, problems = preflight.fidelity_check(
+        _OffOn({STAMPS[0]}), _ByStamp, ticks, referee, dumps, _NoTorch, "cpu"
+    )
+    assert report["median_pick_diff_of_travel"] == 0.0
+    assert any("p90" in p for p in problems), problems
+
+
+def test_fidelity_refuses_a_sample_it_mostly_could_not_rebuild(tmp_path, monkeypatch):
+    ticks, dumps = build_episode(tmp_path)
+    monkeypatch.setattr(_ByStamp, "missing", set(STAMPS[:2]))
+    report, problems = preflight.fidelity_check(
+        _OffOn(()), _ByStamp, ticks, Referee(anchors=np.zeros((1, 8, 3))), dumps, _NoTorch, "cpu"
+    )
+    assert report["skipped_unrebuildable"] == 2
+    assert any("could not be rebuilt" in p for p in problems), problems
+
+
+def _frames_episode(root, n=30):
+    """An episode directory with 10 Hz front frames and a pose for every one but the last."""
+    episode = root / "stationary-0099" / "run_0"
+    (episode / "CAM_FRONT").mkdir(parents=True)
+    stamps = [1_000_000 + 100_000 * i for i in range(n)]
+    for stamp in stamps:
+        (episode / "CAM_FRONT" / f"{stamp}.jpg").write_bytes(b"")
+    (episode / "ego_poses.json").write_text(json.dumps({str(s): np.eye(4).tolist() for s in stamps[:-1]}))
+    return episode, stamps
+
+
+def test_rebuildable_makes_the_tests_the_dataset_makes(tmp_path):
+    from gallops.train.swerve_data import rebuildable
+
+    episode, stamps = _frames_episode(tmp_path)
+
+    def tick(i):
+        return {"frame": str(episode / "CAM_FRONT" / f"{stamps[i]}.jpg"), "timestamp": stamps[i]}
+
+    assert not rebuildable(tick(4))  # its 0.5 s past would be the first frame, 0.1 s off
+    assert rebuildable(tick(5)) and rebuildable(tick(20))
+    assert not rebuildable(tick(len(stamps) - 1))  # no pose logged
+    assert not rebuildable({"frame": None, "timestamp": stamps[10]})
+
+
+def test_unrebuildable_ticks_are_counted_by_kind_and_bounded():
+    ticks = [{"expert_kind": "brake", "ok": i > 0} for i in range(5)] + [
+        {"expert_kind": "continue", "ok": True} for _ in range(15)
+    ]
+    kept, report = preflight.keep_rebuildable(ticks, lambda t: t["ok"])
+    assert len(kept) == 19 and report["dropped"] == 1 and report["by_expert_kind"] == {"brake": "1/5"}
+    with pytest.raises(SystemExit, match="cannot be rebuilt"):
+        preflight.keep_rebuildable(ticks, lambda t: t["expert_kind"] == "continue")
+
+
+def test_fidelity_samples_each_episodes_earliest_tick(tmp_path, monkeypatch):
+    ticks = [
+        {
+            "episode": f"e{e}",
+            "timestamp": t,
+            "source": 0,
+            "speed": 2.0,
+            "expert_kind": "brake",
+            "driven_hits": None,
+        }
+        for e in range(3)
+        for t in range(5, 40)
+    ]
+    seen = {}
+
+    def fidelity(model, dataset_cls, own, *args):
+        seen["stamps"] = sorted(t["timestamp"] for t in own if t["episode"] == "e0")
+        return {}, []
+
+    monkeypatch.setattr(preflight, "code_checks", lambda repo: ({"sha": "x"}, []))
+    monkeypatch.setattr(preflight, "grading_checks", lambda *a: ({}, []))
+    monkeypatch.setattr(preflight, "fidelity_check", fidelity)
+    monkeypatch.setattr(preflight, "sight_check", lambda *a: ({}, []))
+    sources = [preflight.Source("r0", "d0", preflight.START)]
+    preflight.run(tmp_path, ticks, None, sources, object(), None, None, "cpu")
+    assert seen["stamps"][0] == 5, seen
+    assert preflight.earliest_per_episode(ticks, {"e1"}) == [ticks[35]]

@@ -190,6 +190,32 @@ def history_stamps(stamps: list[int], now: int) -> list[int] | None:
     return chosen
 
 
+@lru_cache(maxsize=4096)
+def _episode_stamps(directory: str) -> tuple[list[int], frozenset]:
+    """An episode's saved front frames, sorted, and the stamps it logged a pose for."""
+    root = Path(directory)
+    frames = sorted(int(p.stem) for p in (root / "CAM_FRONT").glob("*.jpg"))
+    poses = frozenset(int(k) for k in json.loads((root / "ego_poses.json").read_text()))
+    return frames, poses
+
+
+def rebuildable(tick: dict) -> bool:
+    """Whether `TickDataset` can rebuild this tick's input: the same two tests it makes.
+
+    The past it reads (0.5 s back) must be on disk, and the current frame needs a
+    logged pose. Without torch, so the trainer can drop such ticks BEFORE it counts
+    and records what it trains on -- `TickDataset.batch` skipping them silently left
+    the sidecar claiming ticks the model never saw (on l4fix, 269 of 1,423 brake).
+    """
+    if not tick.get("frame"):
+        return False
+    frames, poses = _episode_stamps(str(Path(tick["frame"]).parent.parent))
+    if not frames:
+        return False
+    chosen = history_stamps(frames, int(tick["timestamp"]))
+    return chosen is not None and chosen[-1] in poses
+
+
 def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
     """The actors, pose and map a tick's trajectories are graded against.
 
