@@ -15,6 +15,8 @@ template variables which this module expands:
     {data.NAME.tiers}  every tier, colon-joined
     {python.NAME}      an interpreter from [python] -- training code often has to run
                        inside the environment a model was built for, not this repo's
+    {code.NAME}        a source tree from [code] -- an upstream repo a stage imports or
+                       reads relative files from
 
 `tests/test_portability.py` enforces the split by failing the build if a tracked
 file names a real machine root. When it fails, the fix is nearly always a
@@ -109,6 +111,9 @@ class SiteConfig:
     #: [python]: name -> interpreter. Training code often has to run inside the
     #: environment a model was built for, which is not this repo's.
     python: dict[str, Path] = field(default_factory=dict)
+    #: [code]: name -> source tree, for upstream repos a stage imports or reads
+    #: relative files from.
+    code: dict[str, Path] = field(default_factory=dict)
     source: Path | None = None
 
     @classmethod
@@ -141,6 +146,7 @@ class SiteConfig:
             runs=_abs(roots["runs"]),
             datasets=datasets,
             python={k: _abs(v) for k, v in (raw.get("python") or {}).items()},
+            code={k: _abs(v) for k, v in (raw.get("code") or {}).items()},
             source=path,
         )
 
@@ -161,12 +167,12 @@ class SiteConfig:
                 return str(getattr(self, key))
             if key.startswith("data."):
                 return self._resolve_data(key)
-            if key.startswith("python."):
+            if key.startswith(("python.", "code.")):
                 return self._resolve_table(key)
             raise ConfigError(
                 f"unknown template variable {{{key}}} in {template!r}; "
                 f"known: weights, runs, site, data.<name>, data.<name>.tiers, python.<name>, "
-                f"plus context {sorted(context)}"
+                f"code.<name>, plus context {sorted(context)}"
             )
 
         return _TEMPLATE.sub(substitute, template)

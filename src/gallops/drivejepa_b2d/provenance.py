@@ -1,7 +1,7 @@
 """Which commit of this repo produced an output.
 
-Stdlib only, so a stage can record it from inside a model's own interpreter,
-where gallops is not installed.
+Stdlib only and valid Python 3.9: the generator stage records it from inside
+Drive-JEPA's interpreter, where gallops is not installed.
 """
 
 from __future__ import annotations

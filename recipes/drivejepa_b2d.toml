@@ -1,4 +1,5 @@
-# Drive-JEPA retrained on Bench2Drive: the stages behind Split-v4 (Bench2Drive 50 routes, mean DS 68.1).
+# Drive-JEPA retrained on Bench2Drive: the stages behind Split-v4 (Bench2Drive 50 routes, mean DS 68.1) and
+# the Final (73.6).
 #
 #   gallops recipe drivejepa_b2d                       print every command for this machine
 #   gallops recipe drivejepa_b2d split-full --run      run one stage (only the named ones: name check-data too)
@@ -7,12 +8,16 @@
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
 #
 # Site config this needs (gallops.toml):
-#   [python] train              Python >= 3.11 with torch
-#   [datasets.drivejepa_b2d]    path = the frozen data dump: rerank/ (rows, head inputs, labels), release/ (the
-#                               released checkpoint). Its file list and sha256 are recipes/drivejepa_b2d/data_*.json;
-#                               the check-data stage compares a site's copy against them.
+#   [python] train              Python >= 3.11 with torch (the head stages and the checkpoint writer)
+#   [python] drivejepa          Drive-JEPA's own interpreter (Python 3.9, navsim installed) for the generator
+#   [code]   drivejepa          the Drive-JEPA checkout (its navsim_v2/ is the generator stage's cwd)
+#   [datasets.navsim]           path + exp, as in paddock.toml: the generator stage's environment
+#   [datasets.drivejepa_b2d]    path = the frozen data dump: rerank/ (rows, head inputs, labels, the feature
+#                               cache, the new generator's candidates), release/ (the released checkpoint),
+#                               teachers/ (MTD-H). Its file list and sha256 are recipes/drivejepa_b2d/data_*.json;
+#                               the check-data stages compare a site's copy against them.
 
-description = "Drive-JEPA retrained on Bench2Drive base: Split-v4"
+description = "Drive-JEPA retrained on Bench2Drive base: Split-v4 and the Final"
 
 [vars]
 rerank = "{data.drivejepa_b2d}/rerank"
@@ -103,4 +108,98 @@ args = [
   "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
   "--holdout-list", "{heldout}",
   "--note", "Split-v4: split head (col / lane / ttc / red) on v4 labels + augmented light frames",
+]
+
+# ---------------------------------------------------------------------------------------------
+# The Final: a fine-tuned generator, a split head and an area head on the new generator's candidates.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "check-data-final"
+python = "train"
+module = "drivejepa_b2d.check_data"
+args = ["--root", "{data.drivejepa_b2d}", "--manifest", "{repo}/recipes/drivejepa_b2d/data_final.json"]
+
+[[stage]]
+name = "final-generator"
+python = "drivejepa"
+module = "drivejepa_b2d.train_generator"
+# Load-bearing: the agent loads ./data/8192.npy relative to the cwd. Same cwd and env as paddock's
+# drivejepa model.yaml gives its node.
+cwd = "{code.drivejepa}/navsim_v2"
+env = { NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim}/maps", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", DRIVE_JEPA_MSDA = "auto" }
+args = [
+  "--cache", "{rerank}/_genft_cache",
+  "--teachers", "{data.drivejepa_b2d}/teachers",
+  "--checkpoint", "{release}",
+  "--out", "{out}/final-generator",
+]
+
+# Between final-generator and the two heads below, the candidates are re-dumped with the new generator
+# ({rerank}/_mtdh/head_<set>_*.npz) and relabelled ({rerank}/_mtdh/labels, labels_m05b). Those data-preparation
+# steps are not in this repo yet; the heads read their recorded output. See docs/drivejepa_b2d.md.
+
+[[stage]]
+name = "final-split-head"
+python = "train"
+module = "drivejepa_b2d.train_split_head"
+after = ["split-v4aug", "final-generator"]
+args = [
+  "--dataset-base", "{rerank}/_dataset/b2d_base_v2.npz",
+  "--dataset-start", "{rerank}/_dataset/b2d_start.npz",
+  "--feats-base", "{rerank}/_mtdh/head_base_*.npz",
+  "--feats-start", "{rerank}/_mtdh/head_start_*.npz",
+  "--feats-aug", "{rerank}/_mtdh/head_aug_*.npz",
+  "--labels-base", "{rerank}/_mtdh/labels_m05b/b2d_base_v4_labels.npz",
+  "--labels-start", "{rerank}/_mtdh/labels_m05b/b2d_start_v4_labels.npz",
+  "--labels-aug", "{rerank}/_mtdh/labels_m05b/b2d_aug_v4_labels.npz",
+  "--holdout-list", "{heldout}",
+  "--init", "{out}/split-v4aug/head_best.pt",
+  "--labels-name", "v4-m05b",
+  "--out", "{out}/final-split-head",
+]
+
+[[stage]]
+name = "final-area-head"
+python = "train"
+module = "drivejepa_b2d.train_area_head"
+after = ["final-generator"]
+args = [
+  "--rows-base", "{rerank}/_dataset/b2d_base_v2.npz",
+  "--rows-start", "{rerank}/_dataset/b2d_start.npz",
+  "--dump", "{rerank}/_mtdh",
+  "--labels", "{rerank}/_mtdh/labels",
+  "--holdout-list", "{heldout}",
+  "--init-ckpt", "{release}",
+  "--out", "{out}/final-area-head",
+]
+
+[[stage]]
+name = "final-checkpoint"
+python = "train"
+module = "drivejepa_b2d.write_checkpoint"
+after = ["final-generator", "final-split-head", "final-area-head"]
+# The Final was written over Split-v4's checkpoint; its split head replaces the same 10 tensors, so writing over
+# the release gives the same tensors (checked against the deployed file, docs/drivejepa_b2d.md).
+args = [
+  "--src", "{release}",
+  "--head", "{out}/final-split-head",
+  "--gen", "{out}/final-generator/gen_best.pt",
+  # Shipped beside the weights as area_head.pt; the policy env names it (DRIVEJEPA_SPLIT_AREA).
+  "--area", "{out}/final-area-head",
+  "--model", "drivejepa_scorer_b2d",
+  "--train-run", "final",
+  # How the Final is driven (tags/final-73.6's env, less logging and timeouts).
+  "--policy-env", "DRIVEJEPA_PICK=split",
+  "--policy-env", "DRIVEJEPA_SPLIT_MODE=exponent",
+  "--policy-env", "DRIVEJEPA_SPLIT_K=4",
+  "--policy-env", "DRIVEJEPA_SPLIT_TURN=20",
+  "--policy-env", "DRIVEJEPA_SPLIT_GUARD=1",
+  "--policy-env", "PADDOCK_CMD_LOOKAHEAD=1",
+  "--policy-env", "PADDOCK_INFER_HZ=2",
+  # The Final's split head starts from split-v4aug, so its inputs are both lists.
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_split_v4.json",
+  "--data-manifest", "{repo}/recipes/drivejepa_b2d/data_final.json",
+  "--holdout-list", "{heldout}",
+  "--note", "The Final: MTD-H generator (batch-fixed) + split head on m05b labels + area head (area_head.pt)",
 ]

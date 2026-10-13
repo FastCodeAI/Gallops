@@ -38,8 +38,9 @@ def config() -> None:
     typer.echo(f"source   {cfg.source}")
     typer.echo(f"weights  {cfg.weights}{'' if cfg.weights.exists() else '   (MISSING)'}")
     typer.echo(f"runs     {cfg.runs}{'' if cfg.runs.exists() else '   (MISSING)'}")
-    for name, path in sorted(cfg.python.items()):
-        typer.echo(f"python   {name:<12} {path}{'' if path.exists() else '   (MISSING)'}")
+    for table in ("python", "code"):
+        for name, path in sorted(getattr(cfg, table).items()):
+            typer.echo(f"{table:<8} {name:<12} {path}{'' if path.exists() else '   (MISSING)'}")
     if not cfg.datasets:
         typer.echo("datasets none configured")
         return

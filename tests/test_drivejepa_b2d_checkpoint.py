@@ -118,3 +118,37 @@ def test_every_checkpoint_stage_records_how_to_drive_it_and_what_it_read() -> No
         assert values["--data-manifest"] and values["--holdout-list"], s.name
         for m in values["--data-manifest"]:
             assert m.startswith("{repo}/recipes/drivejepa_b2d/data_"), m
+
+
+def test_the_area_head_switch_names_the_shipped_file() -> None:
+    env = sidecar.with_area_head({"DRIVEJEPA_PICK": "split"})
+    assert env == {"DRIVEJEPA_PICK": "split", "DRIVEJEPA_SPLIT_AREA": sidecar.AREA_HEAD_FILE}
+    with pytest.raises(SystemExit, match="--area"):
+        sidecar.with_area_head({"DRIVEJEPA_SPLIT_AREA": "/some/site/path.pt"})
+
+
+def test_the_final_ships_its_area_head() -> None:
+    """The bug this replaced: final-area-head's output stayed in {runs}, so a site taking the Final from
+    {weights} drove it with the area factor off -- not the Final."""
+    rec = recipes.load("drivejepa_b2d")
+    stage = rec.stage("final-checkpoint")
+    args = list(stage.args)
+    assert args[args.index("--area") + 1] == "{out}/final-area-head"
+    assert "final-area-head" in stage.after
+
+
+def test_the_generator_refuses_to_start_without_room_for_its_cache(tmp_path: Path) -> None:
+    from gallops.drivejepa_b2d import host
+
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / "feat_train_0_0000.npy").write_bytes(b"x" * 3000)
+    (cache / "feat_held_0_0000.npy").write_bytes(b"x" * 1000)
+    (cache / "meta_train_0_0000.npz").write_bytes(b"x" * 500)
+    assert host.cache_bytes(cache) == 4000
+    meminfo = tmp_path / "meminfo"
+    meminfo.write_text("MemTotal: 100 kB\nMemAvailable:       3 kB\n")
+    with pytest.raises(SystemExit, match="refusing"):
+        host.require_free_ram(host.cache_bytes(cache), "test", meminfo=str(meminfo))
+    meminfo.write_text("MemAvailable:       5 kB\n")
+    host.require_free_ram(host.cache_bytes(cache), "test", meminfo=str(meminfo))
