@@ -1,0 +1,52 @@
+{
+ "out": "experiments/drivejepa_retrain/07_closed_loop_test/review",
+ "n": 30,
+ "missing": [],
+ "key": [
+  "Mean score over the 30 scenes: 0.543 (0.1.4b) \u2192 0.703 (0.1.6).",
+  "Score up on 10, down on 5, unchanged on 15 of the 30 scenes.",
+  "At-fault collisions: 4 (0.1.4b) \u2192 2 (0.1.6); any collision 10 \u2192 7.",
+  "Off-road exits: 4 \u2192 3; scenes with minimum headway under 0.8 s: 8 \u2192 5.",
+  "\u00a73.5 changed the pick on 366 of 1170 replans (31 %) under 0.1.4b and on 479 of 1170 (41 %) under 0.1.6."
+ ],
+ "groups": {
+  "improved": [
+   "04394343",
+   "b1b170d0",
+   "bd07fb91",
+   "032b6f21",
+   "89f2eeb8",
+   "71d7d03b",
+   "2e1ce314",
+   "d1a25a99",
+   "98dd56b2",
+   "5f064b02"
+  ],
+  "decreased": [
+   "cdd9448c",
+   "1acf2f5d",
+   "bae463d3",
+   "0245ff75",
+   "e121e37d"
+  ],
+  "same": [
+   "01d503d4",
+   "023b7fcc",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "048b974e",
+   "16b83346",
+   "6725df2d",
+   "e3ed554f",
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "8023dce5",
+   "b44a4a44",
+   "d2715023"
+  ]
+ },
+ "disagree": [],
+ "bytes": 90618441
+}

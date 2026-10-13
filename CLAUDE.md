@@ -34,6 +34,9 @@ CLI (after `source .venv/bin/activate`, or as `.venv/bin/gallops`):
 ```bash
 gallops config              # what this machine resolved — run this first
 gallops show <ckpt-dir>     # what a checkpoint claims about itself
+gallops train-rerank <dataset.npz> --train-run <name>   # re-ranker over a frozen model's candidates
+python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, for paddock to dump candidates for
+python -m gallops.data.rerank dataset <dump.jsonl> --split train -o <dataset.npz>
 gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
 ```
 
@@ -100,6 +103,44 @@ silently disagree about which way `y` points.
 - Comments explain **why**, especially where the reason is expensive to
   rediscover.
 - Match the surrounding file's voice over any global preference.
+
+## Before any training run
+
+**No run trains until the preflight passes.** `gallops.train.swerve` runs
+[train/preflight.py](src/gallops/train/preflight.py) after building the model and
+before its first step, and stops with every reason listed if any check fails:
+
+- **code** — `src/` and `tests/` are committed, so the sidecar's `train_git_sha`
+  names the code that ran, and the test suite passes under the interpreter that
+  trains (the drive-jepa env is Python 3.9 — no `zip(strict=)`, no `match`).
+- **grading** — on 48 ticks sampled across episodes and visited late tick first,
+  the trainer's own `Referee` reproduces the labels *exactly*: the expert's
+  verdict, the driven plan's hit time, all 32 candidate verdicts. This is the
+  check that would have caught defect 6 in
+  [docs/swerve-finetune.md](docs/swerve-finetune.md): v1–v4 graded every tick from
+  the first tick's pose, and on round 0 the preflight rejects that referee on
+  28 of 48 ticks.
+- **fidelity** — the starting weights, fed the trainer's rebuilt inputs one tick
+  per pass, reproduce the plan they drove at collection: the pick's verdict on
+  ≥95% of ticks, a median gap under 1% of four seconds' travel (measured 0.29%)
+  and a p90 under 10%, with at most 10% of the sample unrebuildable and each
+  episode's earliest tick included. Its first real run was refused by how the
+  limit was first set (an absolute 5 cm, where the gap scales with speed); the
+  506-tick measurement that refusal prompted found that an episode's first half
+  second needs a priming frame the logger never saved. Those ticks are dropped
+  before training and counted by kind in the sidecar (`notes.unrebuildable`).
+
+Do not add a way to skip it. A check that can be skipped is skipped the one time
+it matters. If it fails on data you believe is right, the disagreement is the
+finding: find which side is wrong before training on either. Pass `--dumps` (the
+candidate dumps the labels were made from), or one `--source LABELLED DUMPS DROVE`
+per data set when training on several (DAgger rounds, GT-shadow); the report lands
+in the checkpoint sidecar beside `sources`. Fidelity runs only on sources the
+starting weights drove (`DROVE` = `start`), and a run with none is refused.
+
+**Any new code that grades, labels or builds inputs gets a check here**, in the
+form "what the trainer computes equals what was recorded". Testing the parts
+separately is not enough: in defect 6 every part was right on its own.
 
 ## Before opening a PR
 

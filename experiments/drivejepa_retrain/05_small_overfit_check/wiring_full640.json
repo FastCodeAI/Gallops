@@ -1,0 +1,13 @@
+{
+ "W1a_full640": {
+  "ok": true,
+  "samples": 640,
+  "batches": 80,
+  "loss_min": 0.06210810173014191,
+  "loss_mean": 8.36902113890952,
+  "loss_max": 57.28409606228602,
+  "scorer_grad": "None on every batch",
+  "metric_cache_lookups": 0,
+  "cpu_s_per_batch8": 8.124597668647766
+ }
+}

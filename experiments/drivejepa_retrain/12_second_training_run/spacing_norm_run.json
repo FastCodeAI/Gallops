@@ -1,0 +1,97 @@
+{
+ "definition": "last refinement stage (the menu), per batch, mean over the probe batches; w(lambda) = lambda x C0 / S0, constant for the run",
+ "probe": "first 300 batches of the pass-1 sampler (seed 20261008+1) on the reduced training manifest, batch 32, eval mode (jitter off), no grad, pass 9; numpy seed 1234 for the draw of 4 catalogue curves",
+ "batches": 300,
+ "draws": 9600,
+ "C0": 0.13949125716462732,
+ "H0": 0.5350952116648356,
+ "S0": 44.69674119710922,
+ "S0_median_per_batch": 22.98420810699463,
+ "S0_p99_per_batch": 197.04473739623984,
+ "S0_max_per_batch": 274.6213684082031,
+ "S0_min_per_batch": 0.23497891426086426,
+ "stage_combined": {
+  "C": 0.15603002143713335,
+  "H": 0.603546005487442,
+  "S": 49.568857279618584,
+  "C_over_S": 0.003147742957981983
+ },
+ "C0_over_S0": 0.003120837301079323,
+ "w": {
+  "0.1": 0.0003120837301079323,
+  "1.0": 0.003120837301079323,
+  "10.0": 0.03120837301079323
+ },
+ "w_times_S0": {
+  "0.1": 0.013949125716462733,
+  "1.0": 0.13949125716462732,
+  "10.0": 1.3949125716462731
+ },
+ "by_slice": {
+  "highway": {
+   "draws": 743,
+   "share_of_draws": 0.07739583333333333,
+   "graded_share": 0.9973082099596231,
+   "human_part": 1.593440301971101,
+   "catalogue_part": 0.8903068154724377,
+   "spacing_sq_mean_m2": 573.6177041883484,
+   "spacing_sq_median_m2": 30.0847225189209,
+   "share_of_total_spacing": 0.9932630182981442
+  },
+  "close-pass": {
+   "draws": 261,
+   "share_of_draws": 0.0271875,
+   "graded_share": 1.0,
+   "human_part": 0.4419644105121453,
+   "catalogue_part": 0.35128404917302486,
+   "spacing_sq_mean_m2": 0.2812328710866614,
+   "spacing_sq_median_m2": 0.21446144580841064,
+   "share_of_total_spacing": 0.00017106434272787187
+  },
+  "ordinary": {
+   "draws": 8001,
+   "share_of_draws": 0.8334375,
+   "graded_share": 0.1779777527809024,
+   "human_part": 0.44957913601253513,
+   "catalogue_part": 0.07323246648021339,
+   "spacing_sq_mean_m2": 0.32303501927074885,
+   "spacing_sq_median_m2": 0.23032423853874207,
+   "share_of_total_spacing": 0.006023470407172652
+  },
+  "pull-out (ungraded)": {
+   "draws": 595,
+   "share_of_draws": 0.06197916666666667,
+   "graded_share": 0.0,
+   "human_part": 0.40428994722698536,
+   "catalogue_part": 0.0,
+   "spacing_sq_mean_m2": 0.3911896919002052,
+   "spacing_sq_median_m2": 0.3410916328430176,
+   "share_of_total_spacing": 0.0005424469519552503
+  },
+  "all": {
+   "draws": 9600,
+   "share_of_draws": 1.0,
+   "graded_share": 0.2527083333333333,
+   "human_part": 0.5350952126400571,
+   "catalogue_part": 0.13949125677483,
+   "spacing_sq_mean_m2": 44.69674135907941,
+   "spacing_sq_median_m2": 0.25472360849380493,
+   "share_of_total_spacing": 1.0
+  },
+  "highway, car >= 20 m/s": {
+   "draws": 459,
+   "share_of_draws": 0.0478125,
+   "graded_share": 1.0,
+   "human_part": 2.186965762062477,
+   "catalogue_part": 1.119769531137803,
+   "spacing_sq_mean_m2": 927.5316438155496,
+   "spacing_sq_median_m2": 579.9398193359375,
+   "share_of_total_spacing": 0.9921888122370351
+  }
+ },
+ "pass_09_sha256": "b3130f1f2155f5a9a5c06191831dfba0e0c07a9841689b39d386c12061328a5a",
+ "batch_fix": "on",
+ "ref_range": "std",
+ "precision": "16-bit autocast forward, float32 loss",
+ "device": "cuda"
+}

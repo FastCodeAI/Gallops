@@ -1,0 +1,93 @@
+{
+ "definition": "last refinement stage (the menu), per batch, mean over the probe batches; w(lambda) = lambda x C0 / S0, constant for the run",
+ "probe": "first 300 batches of the pass-1 sampler (seed 20261008+1) on the reduced training manifest, batch 32, eval mode (jitter off), no grad, pass 9; numpy seed 1234 for the draw of 4 catalogue curves",
+ "batches": 300,
+ "draws": 9600,
+ "C0": 0.11229517637751997,
+ "H0": 0.4743062769373258,
+ "S0": 0.45790014227231346,
+ "S0_median_per_batch": 0.40881651639938354,
+ "S0_p99_per_batch": 1.076780159473419,
+ "S0_max_per_batch": 1.7887904644012451,
+ "S0_min_per_batch": 0.1929771900177002,
+ "stage_combined": {
+  "C": 0.12583996613820395,
+  "H": 0.5364865280191103,
+  "S": 0.8818065212170283,
+  "C_over_S": 0.14270700330558395
+ },
+ "C0_over_S0": 0.24523944417282573,
+ "w": {
+  "0.1": 0.024523944417282575,
+  "1.0": 0.24523944417282573,
+  "10.0": 2.4523944417282575
+ },
+ "w_times_S0": {
+  "0.1": 0.011229517637751998,
+  "1.0": 0.11229517637751997,
+  "10.0": 1.1229517637751998
+ },
+ "by_slice": {
+  "highway": {
+   "draws": 743,
+   "share_of_draws": 0.07739583333333333,
+   "graded_share": 0.9973082099596231,
+   "human_part": 0.7381708685229491,
+   "catalogue_part": 0.5347479735582585,
+   "spacing_sq_mean_m2": 1.3019178510414158,
+   "spacing_sq_median_m2": 0.8067640066146851,
+   "share_of_total_spacing": 0.22005456658724712
+  },
+  "close-pass": {
+   "draws": 261,
+   "share_of_draws": 0.0271875,
+   "graded_share": 1.0,
+   "human_part": 0.4616328518700361,
+   "catalogue_part": 0.3514637723065542,
+   "spacing_sq_mean_m2": 0.400486305384572,
+   "spacing_sq_median_m2": 0.2796689569950104,
+   "share_of_total_spacing": 0.023778593755875665
+  },
+  "ordinary": {
+   "draws": 8001,
+   "share_of_draws": 0.8334375,
+   "graded_share": 0.1779777527809024,
+   "human_part": 0.4548713675117058,
+   "catalogue_part": 0.0736137861461602,
+   "spacing_sq_mean_m2": 0.381800913274169,
+   "spacing_sq_median_m2": 0.2682421803474426,
+   "share_of_total_spacing": 0.6949270601577501
+  },
+  "pull-out (ungraded)": {
+   "draws": 595,
+   "share_of_draws": 0.06197916666666667,
+   "graded_share": 0.0,
+   "human_part": 0.41170977717157725,
+   "catalogue_part": 0.0,
+   "spacing_sq_mean_m2": 0.45243757153008163,
+   "spacing_sq_median_m2": 0.3351597487926483,
+   "share_of_total_spacing": 0.061239779499127144
+  },
+  "all": {
+   "draws": 9600,
+   "share_of_draws": 1.0,
+   "graded_share": 0.2527083333333333,
+   "human_part": 0.4743062769300914,
+   "catalogue_part": 0.11229517623762755,
+   "spacing_sq_mean_m2": 0.457900140749601,
+   "spacing_sq_median_m2": 0.28625084459781647,
+   "share_of_total_spacing": 1.0
+  },
+  "highway, car >= 20 m/s": {
+   "draws": 459,
+   "share_of_draws": 0.0478125,
+   "graded_share": 1.0,
+   "human_part": 0.8305196123822676,
+   "catalogue_part": 0.5568025663722315,
+   "spacing_sq_mean_m2": 1.7408559391181713,
+   "spacing_sq_median_m2": 1.1383843421936035,
+   "share_of_total_spacing": 0.181774730299993
+  }
+ },
+ "pass_09_sha256": "b3130f1f2155f5a9a5c06191831dfba0e0c07a9841689b39d386c12061328a5a"
+}

@@ -1,0 +1,311 @@
+{
+ "definition": "as spacing_norm.json (last refinement stage, per batch, mean over the probe batches), re-measured on CPU in float32 with the encoder output of each example computed once at batch 16",
+ "probe": "first 150 batches of the pass-1 sampler (seed 20261008+1) on the reduced training manifest, batch 32, eval mode, no grad, pass 9, numpy seed 1234",
+ "pass_09_sha256": "b3130f1f2155f5a9a5c06191831dfba0e0c07a9841689b39d386c12061328a5a",
+ "fixed_fix1_fix2": {
+  "batches": 150,
+  "draws": 4800,
+  "C0": 0.14705480359494685,
+  "H0": 0.534546650449435,
+  "S0": 49.4946154799064,
+  "S0_median_per_batch": 29.598774909973145,
+  "S0_max_per_batch": 273.7704772949219,
+  "stage_combined": {
+   "C": 0.16427131653452912,
+   "H": 0.6026595759391785,
+   "S": 54.56119307518006
+  },
+  "by_slice": {
+   "highway": {
+    "draws": 388,
+    "share_of_draws": 0.08083333333333333,
+    "human_part": 1.5431330465643185,
+    "catalogue_part": 0.8988186288240951,
+    "spacing_sq_mean_m2": 608.328446584168,
+    "spacing_sq_median_m2": 70.523193359375,
+    "spacing_sq_max_m2": 3678.162353515625
+   },
+   "close-pass": {
+    "draws": 133,
+    "share_of_draws": 0.027708333333333335,
+    "human_part": 0.4943373269559525,
+    "catalogue_part": 0.38279414479445695,
+    "spacing_sq_mean_m2": 0.289465392554613,
+    "spacing_sq_median_m2": 0.24004517495632172,
+    "spacing_sq_max_m2": 1.2631025314331055
+   },
+   "ordinary": {
+    "draws": 3983,
+    "share_of_draws": 0.8297916666666667,
+    "human_part": 0.44595771981633847,
+    "catalogue_part": 0.07687918888603716,
+    "spacing_sq_mean_m2": 0.3485182248394513,
+    "spacing_sq_median_m2": 0.2454553246498108,
+    "spacing_sq_max_m2": 15.918502807617188
+   },
+   "pull-out (ungraded)": {
+    "draws": 296,
+    "share_of_draws": 0.06166666666666667,
+    "human_part": 0.4226075737498915,
+    "catalogue_part": 0.0,
+    "spacing_sq_mean_m2": 0.39213175399581324,
+    "spacing_sq_median_m2": 0.3181687742471695,
+    "spacing_sq_max_m2": 2.9962244033813477
+   },
+   "all": {
+    "draws": 4800,
+    "share_of_draws": 1.0,
+    "human_part": 0.5345466513355295,
+    "catalogue_part": 0.14705480386968703,
+    "spacing_sq_mean_m2": 49.49461567928859,
+    "spacing_sq_median_m2": 0.26853078603744507,
+    "spacing_sq_max_m2": 3678.162353515625
+   },
+   "highway, car >= 20 m/s": {
+    "draws": 243,
+    "share_of_draws": 0.050625,
+    "human_part": 2.1052768067810077,
+    "catalogue_part": 1.10795795880718,
+    "spacing_sq_mean_m2": 969.9431776804198,
+    "spacing_sq_median_m2": 638.25244140625,
+    "spacing_sq_max_m2": 3678.162353515625
+   }
+  },
+  "secs": 181.97810196876526
+ },
+ "fixed_fix1_fix2_fix3": {
+  "batches": 150,
+  "draws": 4800,
+  "C0": 0.14600339015945793,
+  "H0": 0.5349233210086822,
+  "S0": 45.90867258518934,
+  "S0_median_per_batch": 21.099534034729004,
+  "S0_max_per_batch": 275.3425598144531,
+  "stage_combined": {
+   "C": 0.16328735070923964,
+   "H": 0.6034980752070744,
+   "S": 50.91249141474565
+  },
+  "by_slice": {
+   "highway": {
+    "draws": 388,
+    "share_of_draws": 0.08083333333333333,
+    "human_part": 1.5678581767585758,
+    "catalogue_part": 0.8871869865766505,
+    "spacing_sq_mean_m2": 564.1858012914927,
+    "spacing_sq_median_m2": 24.456698417663574,
+    "spacing_sq_max_m2": 3319.458984375
+   },
+   "close-pass": {
+    "draws": 133,
+    "share_of_draws": 0.027708333333333335,
+    "human_part": 0.4911612503636066,
+    "catalogue_part": 0.38443736737608014,
+    "spacing_sq_mean_m2": 0.28407948951524004,
+    "spacing_sq_median_m2": 0.22585304081439972,
+    "spacing_sq_max_m2": 1.1340925693511963
+   },
+   "ordinary": {
+    "draws": 3983,
+    "share_of_draws": 0.8297916666666667,
+    "human_part": 0.44423842145636416,
+    "catalogue_part": 0.07669032127915608,
+    "spacing_sq_mean_m2": 0.3279451696590775,
+    "spacing_sq_median_m2": 0.23375900089740753,
+    "spacing_sq_max_m2": 15.783085823059082
+   },
+   "pull-out (ungraded)": {
+    "draws": 296,
+    "share_of_draws": 0.06166666666666667,
+    "human_part": 0.42086788166709516,
+    "catalogue_part": 0.0,
+    "spacing_sq_mean_m2": 0.38361523559669386,
+    "spacing_sq_median_m2": 0.32795099914073944,
+    "spacing_sq_max_m2": 3.101015329360962
+   },
+   "all": {
+    "draws": 4800,
+    "share_of_draws": 1.0,
+    "human_part": 0.5349233217739262,
+    "catalogue_part": 0.14600338964742454,
+    "spacing_sq_mean_m2": 45.90867274868612,
+    "spacing_sq_median_m2": 0.2572188228368759,
+    "spacing_sq_max_m2": 3319.458984375
+   },
+   "highway, car >= 20 m/s": {
+    "draws": 243,
+    "share_of_draws": 0.050625,
+    "human_part": 2.1345794789756587,
+    "catalogue_part": 1.0955862466690471,
+    "spacing_sq_mean_m2": 899.7713655385461,
+    "spacing_sq_median_m2": 501.3389587402344,
+    "spacing_sq_max_m2": 3319.458984375
+   }
+  },
+  "secs": 201.34144258499146
+ },
+ "nofix_same_batches_cpu_float32": {
+  "batches": 150,
+  "draws": 4800,
+  "C0": 0.11854761118069292,
+  "H0": 0.47508273502190906,
+  "S0": 0.4609044309457143,
+  "S0_median_per_batch": 0.42139557003974915,
+  "S0_max_per_batch": 1.118039846420288,
+  "stage_combined": {
+   "C": 0.13283658903713028,
+   "H": 0.5374922722578048,
+   "S": 0.8865830079714457
+  },
+  "by_slice": {
+   "highway": {
+    "draws": 388,
+    "share_of_draws": 0.08083333333333333,
+    "human_part": 0.7369509980538869,
+    "catalogue_part": 0.5437442236147898,
+    "spacing_sq_mean_m2": 1.2817273878482813,
+    "spacing_sq_median_m2": 0.80351921916008,
+    "spacing_sq_max_m2": 13.731974601745605
+   },
+   "close-pass": {
+    "draws": 133,
+    "share_of_draws": 0.027708333333333335,
+    "human_part": 0.5139866959516535,
+    "catalogue_part": 0.3853166634426977,
+    "spacing_sq_mean_m2": 0.4366428350147448,
+    "spacing_sq_median_m2": 0.33093467354774475,
+    "spacing_sq_max_m2": 3.0871200561523438
+   },
+   "ordinary": {
+    "draws": 3983,
+    "share_of_draws": 0.8297916666666667,
+    "human_part": 0.45152652327612114,
+    "catalogue_part": 0.07702954023577949,
+    "spacing_sq_mean_m2": 0.3831831801859482,
+    "spacing_sq_median_m2": 0.272417277097702,
+    "spacing_sq_max_m2": 19.303564071655273
+   },
+   "pull-out (ungraded)": {
+    "draws": 296,
+    "share_of_draws": 0.06166666666666667,
+    "human_part": 0.4313167669768164,
+    "catalogue_part": 0.0,
+    "spacing_sq_mean_m2": 0.44168563997624694,
+    "spacing_sq_median_m2": 0.33968667685985565,
+    "spacing_sq_max_m2": 3.526667594909668
+   },
+   "all": {
+    "draws": 4800,
+    "share_of_draws": 1.0,
+    "human_part": 0.4750827339667512,
+    "catalogue_part": 0.11854761119990144,
+    "spacing_sq_mean_m2": 0.46090443326160313,
+    "spacing_sq_median_m2": 0.2920117676258087,
+    "spacing_sq_max_m2": 19.303564071655273
+   },
+   "highway, car >= 20 m/s": {
+    "draws": 243,
+    "share_of_draws": 0.050625,
+    "human_part": 0.829660446495152,
+    "catalogue_part": 0.5610023207747887,
+    "spacing_sq_mean_m2": 1.6450125869409538,
+    "spacing_sq_median_m2": 1.0827854871749878,
+    "spacing_sq_max_m2": 13.731974601745605
+   }
+  },
+  "secs": 192.2005021572113
+ },
+ "nofix_task2_gpu_16bit_300_batches": {
+  "definition": "last refinement stage (the menu), per batch, mean over the probe batches; w(lambda) = lambda x C0 / S0, constant for the run",
+  "probe": "first 300 batches of the pass-1 sampler (seed 20261008+1) on the reduced training manifest, batch 32, eval mode (jitter off), no grad, pass 9; numpy seed 1234 for the draw of 4 catalogue curves",
+  "batches": 300,
+  "draws": 9600,
+  "C0": 0.11229517637751997,
+  "H0": 0.4743062769373258,
+  "S0": 0.45790014227231346,
+  "S0_median_per_batch": 0.40881651639938354,
+  "S0_p99_per_batch": 1.076780159473419,
+  "S0_max_per_batch": 1.7887904644012451,
+  "S0_min_per_batch": 0.1929771900177002,
+  "stage_combined": {
+   "C": 0.12583996613820395,
+   "H": 0.5364865280191103,
+   "S": 0.8818065212170283,
+   "C_over_S": 0.14270700330558395
+  },
+  "C0_over_S0": 0.24523944417282573,
+  "w": {
+   "0.1": 0.024523944417282575,
+   "1.0": 0.24523944417282573,
+   "10.0": 2.4523944417282575
+  },
+  "w_times_S0": {
+   "0.1": 0.011229517637751998,
+   "1.0": 0.11229517637751997,
+   "10.0": 1.1229517637751998
+  },
+  "by_slice": {
+   "highway": {
+    "draws": 743,
+    "share_of_draws": 0.07739583333333333,
+    "graded_share": 0.9973082099596231,
+    "human_part": 0.7381708685229491,
+    "catalogue_part": 0.5347479735582585,
+    "spacing_sq_mean_m2": 1.3019178510414158,
+    "spacing_sq_median_m2": 0.8067640066146851,
+    "share_of_total_spacing": 0.22005456658724712
+   },
+   "close-pass": {
+    "draws": 261,
+    "share_of_draws": 0.0271875,
+    "graded_share": 1.0,
+    "human_part": 0.4616328518700361,
+    "catalogue_part": 0.3514637723065542,
+    "spacing_sq_mean_m2": 0.400486305384572,
+    "spacing_sq_median_m2": 0.2796689569950104,
+    "share_of_total_spacing": 0.023778593755875665
+   },
+   "ordinary": {
+    "draws": 8001,
+    "share_of_draws": 0.8334375,
+    "graded_share": 0.1779777527809024,
+    "human_part": 0.4548713675117058,
+    "catalogue_part": 0.0736137861461602,
+    "spacing_sq_mean_m2": 0.381800913274169,
+    "spacing_sq_median_m2": 0.2682421803474426,
+    "share_of_total_spacing": 0.6949270601577501
+   },
+   "pull-out (ungraded)": {
+    "draws": 595,
+    "share_of_draws": 0.06197916666666667,
+    "graded_share": 0.0,
+    "human_part": 0.41170977717157725,
+    "catalogue_part": 0.0,
+    "spacing_sq_mean_m2": 0.45243757153008163,
+    "spacing_sq_median_m2": 0.3351597487926483,
+    "share_of_total_spacing": 0.061239779499127144
+   },
+   "all": {
+    "draws": 9600,
+    "share_of_draws": 1.0,
+    "graded_share": 0.2527083333333333,
+    "human_part": 0.4743062769300914,
+    "catalogue_part": 0.11229517623762755,
+    "spacing_sq_mean_m2": 0.457900140749601,
+    "spacing_sq_median_m2": 0.28625084459781647,
+    "share_of_total_spacing": 1.0
+   },
+   "highway, car >= 20 m/s": {
+    "draws": 459,
+    "share_of_draws": 0.0478125,
+    "graded_share": 1.0,
+    "human_part": 0.8305196123822676,
+    "catalogue_part": 0.5568025663722315,
+    "spacing_sq_mean_m2": 1.7408559391181713,
+    "spacing_sq_median_m2": 1.1383843421936035,
+    "share_of_total_spacing": 0.181774730299993
+   }
+  },
+  "pass_09_sha256": "b3130f1f2155f5a9a5c06191831dfba0e0c07a9841689b39d386c12061328a5a"
+ }
+}

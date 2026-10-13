@@ -1,0 +1,188 @@
+diff -u -r '--exclude=__pycache__' adapters/drivejepa014b/bridge.py adapters/drivejepa016/bridge.py
+--- adapters/drivejepa014b/bridge.py	2026-10-01 21:22:48.392759499 +0530
++++ adapters/drivejepa016/bridge.py	2026-10-07 22:00:31.124657758 +0530
+@@ -118,6 +118,21 @@
+ # ---------------------------------------------------------------------------
+ 
+ 
++def _verify_checkpoint(path: str, n_bytes: int, sha256: str) -> None:
++    """Refuse to serve 0.1.6 on anything but the S4 candidate file."""
++    import hashlib
++
++    actual = os.path.getsize(path)
++    if actual != n_bytes:
++        raise BridgeError(f"{path}: size {actual} != expected {n_bytes}")
++    digest = hashlib.sha256()
++    with open(path, "rb") as handle:
++        for block in iter(lambda: handle.read(1 << 20), b""):
++            digest.update(block)
++    if digest.hexdigest() != sha256:
++        raise BridgeError(f"{path}: sha256 {digest.hexdigest()} != expected {sha256}")
++
++
+ class BridgedDriveJEPA:
+     """``ModelFn`` that forwards to the real model in a 3.9 subprocess."""
+ 
+@@ -299,7 +314,7 @@
+     elif canned:
+         # 0.1.4b test seam: the momentum bookkeeping on caller-supplied model
+         # outputs, with no checkpoint (momentum.CannedMomentumDriveJEPA).
+-        from drivejepa014b.momentum import CannedMomentumDriveJEPA
++        from drivejepa016.momentum import CannedMomentumDriveJEPA
+ 
+         model = CannedMomentumDriveJEPA(device=device)
+     else:
+@@ -308,9 +323,13 @@
+         # the previous-plan keys upstream's evaluation loop feeds (momentum.py).
+         # A request without the "momentum" key takes RealDriveJEPA.forward
+         # unchanged, which is how DRIVEJEPA_MOMENTUM=off is 0.1.4.
+-        from drivejepa014b.momentum import MomentumDriveJEPA
++        from drivejepa016 import constants as K016
++        from drivejepa016.momentum import MomentumDriveJEPA
+ 
+-        model = MomentumDriveJEPA(device=device)
++        # 0.1.6: the retrained weights. real_model._check_weights only knows the
++        # shipped file, so the candidate is verified here, before the 90 s load.
++        _verify_checkpoint(K016.CHECKPOINT_PATH, K016.CHECKPOINT_BYTES, K016.CHECKPOINT_SHA256)
++        model = MomentumDriveJEPA(checkpoint_path=K016.CHECKPOINT_PATH, device=device)
+     _send(out, READY)
+ 
+     while True:
+diff -u -r '--exclude=__pycache__' adapters/drivejepa014b/constants.py adapters/drivejepa016/constants.py
+--- adapters/drivejepa014b/constants.py	2026-10-01 21:20:40.721939882 +0530
++++ adapters/drivejepa016/constants.py	2026-10-07 22:01:12.271422291 +0530
+@@ -21,7 +21,7 @@
+ # a real planner.py whose version_id was the only thing saying which file the
+ # runtime had actually loaded.
+ 
+-#: Version of the adapter in adapters/drivejepa014b/. Bump when planner
++#: Version of the adapter in adapters/drivejepa016/. Bump when planner
+ #: behaviour changes; drafts that symlink this file follow automatically.
+ #:
+ #: 0.1.4 lives in a SIBLING package rather than evolving adapters/drivejepa/
+@@ -31,7 +31,36 @@
+ #: Everything 0.1.4 does not change is a symlink back to adapters/drivejepa/,
+ #: so there is still exactly ONE copy of bridge.py, real_model.py, fake_model.py
+ #: and src/ in existence -- the 0.1.3 invariant, extended across versions.
+-ADAPTER_VERSION = "0.1.4b"
++ADAPTER_VERSION = "0.1.6"
++
++# --- 0.1.6: the retrained checkpoint (analysis_3.0/Retrain-data/06_first_training_run) -----
++#: 0.1.6 = 0.1.4b + the S4 weights + the two input changes those weights were
++#: trained with. The three belong together: the S4 weights never saw a bonnet
++#: row or a non-zero acceleration slot, and the shipped weights never saw a
++#: masked or zeroed one. Do not mix.
++#:
++#: Full state dict in upstream's layout (keys "agent._pad_model.*"), encoder
++#: tensors copied bit-for-bit from the shipped checkpoint, generator + scorer
++#: from the S4 candidate pass. Verified at load by size and sha256.
++CHECKPOINT_PATH = "{runs}/drivejepa_retrain/06_first_training_run/candidate/drive_jepa_s4_pass09.ckpt"
++CHECKPOINT_SHA256 = "8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2"
++CHECKPOINT_BYTES = 1273002795
++
++#: Rows blacked out at the bottom of each Pipeline-A frame, AFTER crop and
++#: resize (the 256-row model input), in [0, 1] space. Training masks the same
++#: rows (02_build_samples/s1_convert.py BONNET_MASK_ROWS; 37 = highest measured
++#: bonnet edge 35 + 2, 03_grade_candidates/s21_bonnet.csv). 0 restores 0.1.4b.
++BONNET_MASK_ROWS = 37
++
++#: The two acceleration slots of ego_status (indices 5:7) are fed as zeros,
++#: as in training (05_small_overfit_check/train_patch/dataset_s35.py, zero_accel).
++ZERO_ACCELERATION = True
++EGO_ACCEL_SLOTS = (5, 7)
++
++#: Decided by Sid for the S5 trial: the §3.5 momentum re-score also runs from
++#: zero acceleration (planner._momentum_request -> momentum.py ego_state). Off
++#: gives the re-score the reported acceleration, as in 0.1.4b.
++ZERO_MOMENTUM_ACCELERATION = True
+ 
+ # --- Pipeline A: the V-JEPA branch (INTERFACE_DRIVEJEPA.md §3.1) ------------
+ # The branch whose output the network actually consumes.
+@@ -206,7 +235,8 @@
+ 
+ #: The second provenance line the launcher prints.
+ MOMENTUM_PROVENANCE = (
+-    "drivejepa-0.1.4b | paper §3.5 momentum-aware selection (upstream calibrate_score)"
++    "drivejepa-0.1.6 | S4 pass-9 weights, bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score"
++    " | paper §3.5 momentum-aware selection (upstream calibrate_score)"
+ )
+ 
+ #: Per-replan outcome codes written to the debug payload.
+diff -u -r '--exclude=__pycache__' adapters/drivejepa014b/planner.py adapters/drivejepa016/planner.py
+--- adapters/drivejepa014b/planner.py	2026-10-01 21:23:36.196546169 +0530
++++ adapters/drivejepa016/planner.py	2026-10-07 22:01:12.271087891 +0530
+@@ -273,6 +273,11 @@
+     cropped = image_rgb[K.CROP_ROWS : -K.CROP_ROWS]
+     # cv2.resize takes (width, height) -- the opposite of numpy's (H, W).
+     resized = cv2.resize(cropped, K.RESIZE_WH, interpolation=cv2.INTER_LINEAR)
++    if K.BONNET_MASK_ROWS > 0:
++        # 0.1.6: same mask as the retraining converter. Zero in [0, 1] space is
++        # zero in uint8, so masking before ToTensor gives the identical tensor.
++        resized = resized.copy()
++        resized[-K.BONNET_MASK_ROWS :, :, :] = 0
+     # ToTensor: HWC uint8 -> CHW float32 in [0, 1].
+     return (resized.astype(np.float32) / 255.0).transpose(2, 0, 1)
+ 
+@@ -719,9 +724,25 @@
+             "camera_feature": np.stack(bev_tensors)[None].astype(np.float32),
+             "lidar2img": np.stack(lidar2imgs)[None].astype(np.float32),
+             "img_shape": np.array(img_shapes, dtype=np.float32)[None],
+-            "ego_status": self._build_ego_status(observations)[None],
++            "ego_status": self._model_ego_status(
++                self._build_ego_status(observations)
++            )[None],
+         }
+ 
++    @staticmethod
++    def _model_ego_status(ego_status: np.ndarray) -> np.ndarray:
++        """0.1.6: the ego_status the MODEL reads -- acceleration slots zeroed.
++
++        The S4 weights were trained with these two slots at zero on every
++        sample; feeding the reported acceleration would be an input they have
++        never seen. Everything else in the row is untouched.
++        """
++        if not K.ZERO_ACCELERATION:
++            return ego_status
++        out = ego_status.copy()
++        out[..., K.EGO_ACCEL_SLOTS[0] : K.EGO_ACCEL_SLOTS[1]] = 0.0
++        return out
++
+     def _newest_velocity(
+         self, observations: ObservationView, current: np.ndarray
+     ) -> tuple[float, float]:
+@@ -912,6 +933,17 @@
+         )
+         matrix = _pose_to_matrix(anchor.pose)
+         newest = np.asarray(features["ego_status"])[0, -1]
++        # 0.1.6 (decided by Sid, S5): acceleration is zero in BOTH places -- the
++        # model's ego_status row (_model_ego_status) and the ego state the §3.5
++        # re-score simulates from (momentum.py ego_state reads
++        # request["ego_acceleration"]). With ZERO_MOMENTUM_ACCELERATION off the
++        # re-score gets the reported acceleration, the value 0.1.4b's row held.
++        reported = observations.dynamic_states[-1][1].linear_acceleration
++        acceleration = (
++            np.zeros(2, dtype=np.float32)
++            if K.ZERO_MOMENTUM_ACCELERATION
++            else np.array([reported.x, reported.y], dtype=np.float32)
++        )
+         with self._momentum_lock:
+             previous = self._momentum_prev.get(observations.session_uuid)
+         return {
+@@ -921,7 +953,7 @@
+                 [matrix[0, 3], matrix[1, 3], _yaw_of(matrix)], dtype=np.float64
+             ),
+             "ego_velocity": np.array(newest[3:5], dtype=np.float32),
+-            "ego_acceleration": np.array(newest[5:7], dtype=np.float32),
++            "ego_acceleration": acceleration,
+             "past_time_us": None if previous is None else int(previous[0]),
+             "past_states": None if previous is None else previous[1],
+         }
+@@ -936,7 +968,7 @@
+         if missing:
+             raise RuntimeError(
+                 f"momentum is on but the model returned no {missing}. The worker "
+-                "behind model_fn is not 0.1.4b's (drivejepa014b/momentum.py); "
++                "behind model_fn is not 0.1.6's (drivejepa016/momentum.py); "
+                 "refusing to drive on plain S while claiming §3.5."
+             )
+         meta = output["momentum_meta"]

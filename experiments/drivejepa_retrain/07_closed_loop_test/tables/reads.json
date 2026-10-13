@@ -1,0 +1,842 @@
+{
+ "04749bb9": {
+  "014b": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.7,
+     "human_speed": 23.6,
+     "chosen_first_half_s": 16.4,
+     "chosen_mean_4s": 13.0,
+     "chosen_end": 10.6,
+     "fastest_of_32_mean_4s": 28.1,
+     "fastest_of_32_end": 15.2,
+     "slowest_mean_4s": 10.4,
+     "demanded_accel_first_half_s": -14.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 20.2,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.8,
+     "chosen_mean_4s": 3.2,
+     "chosen_end": 2.3,
+     "fastest_of_32_mean_4s": 8.8,
+     "fastest_of_32_end": 13.7,
+     "slowest_mean_4s": 3.2,
+     "demanded_accel_first_half_s": -30.9,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 15.7,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.6,
+     "chosen_mean_4s": 3.1,
+     "chosen_end": 2.8,
+     "fastest_of_32_mean_4s": 8.6,
+     "fastest_of_32_end": 16.6,
+     "slowest_mean_4s": 3.1,
+     "demanded_accel_first_half_s": -22.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 11.1,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 3.4,
+     "chosen_mean_4s": 1.9,
+     "chosen_end": 3.3,
+     "fastest_of_32_mean_4s": 8.3,
+     "fastest_of_32_end": 14.3,
+     "slowest_mean_4s": 1.9,
+     "demanded_accel_first_half_s": -15.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 6.6,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 4.7,
+     "chosen_mean_4s": 2.6,
+     "chosen_end": 2.1,
+     "fastest_of_32_mean_4s": 6.7,
+     "fastest_of_32_end": 10.1,
+     "slowest_mean_4s": 0.4,
+     "demanded_accel_first_half_s": -3.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 3.5,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 2.2,
+     "chosen_mean_4s": 0.5,
+     "chosen_end": 0.2,
+     "fastest_of_32_mean_4s": 5.2,
+     "fastest_of_32_end": 11.3,
+     "slowest_mean_4s": 0.0,
+     "demanded_accel_first_half_s": -2.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 1.5,
+     "human_speed": 23.9,
+     "chosen_first_half_s": 0.4,
+     "chosen_mean_4s": 0.1,
+     "chosen_end": 0.1,
+     "fastest_of_32_mean_4s": 3.0,
+     "fastest_of_32_end": 8.6,
+     "slowest_mean_4s": 0.1,
+     "demanded_accel_first_half_s": -2.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    15.9,
+    6.8,
+    1.6
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "016": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.7,
+     "human_speed": 23.6,
+     "chosen_first_half_s": 20.3,
+     "chosen_mean_4s": 18.9,
+     "chosen_end": 9.1,
+     "fastest_of_32_mean_4s": 67.8,
+     "fastest_of_32_end": 40.4,
+     "slowest_mean_4s": 14.6,
+     "demanded_accel_first_half_s": -6.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 22.1,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 15.9,
+     "chosen_mean_4s": 12.8,
+     "chosen_end": 18.4,
+     "fastest_of_32_mean_4s": 25.9,
+     "fastest_of_32_end": 38.0,
+     "slowest_mean_4s": 9.8,
+     "demanded_accel_first_half_s": -12.3,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 18.2,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 17.6,
+     "chosen_mean_4s": 22.1,
+     "chosen_end": 28.7,
+     "fastest_of_32_mean_4s": 28.2,
+     "fastest_of_32_end": 28.9,
+     "slowest_mean_4s": 11.7,
+     "demanded_accel_first_half_s": -1.3,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 18.8,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 17.8,
+     "chosen_mean_4s": 18.1,
+     "chosen_end": 15.9,
+     "fastest_of_32_mean_4s": 27.4,
+     "fastest_of_32_end": 40.5,
+     "slowest_mean_4s": 13.0,
+     "demanded_accel_first_half_s": -2.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 20.0,
+     "human_speed": 23.7,
+     "chosen_first_half_s": 19.5,
+     "chosen_mean_4s": 21.1,
+     "chosen_end": 13.5,
+     "fastest_of_32_mean_4s": 28.0,
+     "fastest_of_32_end": 28.8,
+     "slowest_mean_4s": 11.7,
+     "demanded_accel_first_half_s": -0.9,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 21.4,
+     "human_speed": 23.8,
+     "chosen_first_half_s": 18.7,
+     "chosen_mean_4s": 19.0,
+     "chosen_end": 13.1,
+     "fastest_of_32_mean_4s": 61.4,
+     "fastest_of_32_end": 32.0,
+     "slowest_mean_4s": 15.6,
+     "demanded_accel_first_half_s": -5.3,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 21.9,
+     "human_speed": 23.9,
+     "chosen_first_half_s": 14.8,
+     "chosen_mean_4s": 8.8,
+     "chosen_end": 5.8,
+     "fastest_of_32_mean_4s": 23.2,
+     "fastest_of_32_end": 44.5,
+     "slowest_mean_4s": 8.8,
+     "demanded_accel_first_half_s": -14.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    18.4,
+    20.0,
+    21.9
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  }
+ },
+ "acd22430": {
+  "014b": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 14.8,
+     "chosen_mean_4s": 13.0,
+     "chosen_end": 12.2,
+     "fastest_of_32_mean_4s": 29.3,
+     "fastest_of_32_end": 17.4,
+     "slowest_mean_4s": 10.4,
+     "demanded_accel_first_half_s": -17.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 20.2,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 6.0,
+     "chosen_mean_4s": 3.0,
+     "chosen_end": 1.1,
+     "fastest_of_32_mean_4s": 8.4,
+     "fastest_of_32_end": 12.1,
+     "slowest_mean_4s": 3.0,
+     "demanded_accel_first_half_s": -28.4,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 15.7,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 4.6,
+     "chosen_mean_4s": 2.5,
+     "chosen_end": 0.7,
+     "fastest_of_32_mean_4s": 9.0,
+     "fastest_of_32_end": 15.1,
+     "slowest_mean_4s": 2.5,
+     "demanded_accel_first_half_s": -22.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 11.1,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 3.6,
+     "chosen_mean_4s": 2.0,
+     "chosen_end": 3.1,
+     "fastest_of_32_mean_4s": 7.9,
+     "fastest_of_32_end": 14.3,
+     "slowest_mean_4s": 2.0,
+     "demanded_accel_first_half_s": -15.0,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 6.6,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 4.8,
+     "chosen_mean_4s": 2.1,
+     "chosen_end": 1.6,
+     "fastest_of_32_mean_4s": 6.5,
+     "fastest_of_32_end": 9.9,
+     "slowest_mean_4s": 0.4,
+     "demanded_accel_first_half_s": -3.5,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 3.5,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 2.1,
+     "chosen_mean_4s": 0.5,
+     "chosen_end": 0.5,
+     "fastest_of_32_mean_4s": 4.9,
+     "fastest_of_32_end": 10.4,
+     "slowest_mean_4s": 0.0,
+     "demanded_accel_first_half_s": -2.7,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 1.3,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 0.2,
+     "chosen_mean_4s": 0.1,
+     "chosen_end": 0.0,
+     "fastest_of_32_mean_4s": 2.3,
+     "fastest_of_32_end": 9.6,
+     "slowest_mean_4s": 0.1,
+     "demanded_accel_first_half_s": -2.1,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    15.9,
+    6.8,
+    1.4
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  },
+  "016": {
+   "ticks": [
+    {
+     "t": 0.0,
+     "car_speed": 23.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 20.7,
+     "chosen_mean_4s": 20.4,
+     "chosen_end": 17.5,
+     "fastest_of_32_mean_4s": 67.1,
+     "fastest_of_32_end": 34.8,
+     "slowest_mean_4s": 14.7,
+     "demanded_accel_first_half_s": -5.4,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 0.5,
+     "car_speed": 22.4,
+     "human_speed": 23.3,
+     "chosen_first_half_s": 16.4,
+     "chosen_mean_4s": 15.1,
+     "chosen_end": 2.6,
+     "fastest_of_32_mean_4s": 62.8,
+     "fastest_of_32_end": 48.5,
+     "slowest_mean_4s": 10.7,
+     "demanded_accel_first_half_s": -12.0,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.0,
+     "car_speed": 19.2,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 18.4,
+     "chosen_mean_4s": 20.6,
+     "chosen_end": 19.7,
+     "fastest_of_32_mean_4s": 26.8,
+     "fastest_of_32_end": 48.8,
+     "slowest_mean_4s": 12.3,
+     "demanded_accel_first_half_s": -1.6,
+     "chosen_ge_0p8_human": true,
+     "changed_by_35": false
+    },
+    {
+     "t": 1.5,
+     "car_speed": 18.1,
+     "human_speed": 23.2,
+     "chosen_first_half_s": 14.0,
+     "chosen_mean_4s": 12.2,
+     "chosen_end": 10.7,
+     "fastest_of_32_mean_4s": 27.4,
+     "fastest_of_32_end": 34.3,
+     "slowest_mean_4s": 12.2,
+     "demanded_accel_first_half_s": -8.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.0,
+     "car_speed": 16.1,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 12.7,
+     "chosen_mean_4s": 9.8,
+     "chosen_end": 5.1,
+     "fastest_of_32_mean_4s": 27.0,
+     "fastest_of_32_end": 34.7,
+     "slowest_mean_4s": 9.8,
+     "demanded_accel_first_half_s": -6.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 2.5,
+     "car_speed": 12.3,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 10.4,
+     "chosen_mean_4s": 6.6,
+     "chosen_end": 8.9,
+     "fastest_of_32_mean_4s": 15.5,
+     "fastest_of_32_end": 21.7,
+     "slowest_mean_4s": 6.6,
+     "demanded_accel_first_half_s": -3.8,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    },
+    {
+     "t": 3.0,
+     "car_speed": 8.9,
+     "human_speed": 23.4,
+     "chosen_first_half_s": 7.8,
+     "chosen_mean_4s": 4.8,
+     "chosen_end": 5.0,
+     "fastest_of_32_mean_4s": 14.8,
+     "fastest_of_32_end": 26.1,
+     "slowest_mean_4s": 4.8,
+     "demanded_accel_first_half_s": -2.2,
+     "chosen_ge_0p8_human": false,
+     "changed_by_35": false
+    }
+   ],
+   "car_speed_at_1_2_3s": [
+    19.4,
+    16.3,
+    9.1
+   ],
+   "holds_23p5": false,
+   "all_chosen_ge_0p8_human_first_3s": false
+  }
+ },
+ "d2715023": {
+  "014b": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 19.0,
+   "best_rank_median": 11.5,
+   "best_rank_min": 10,
+   "departing_picked": 0,
+   "median_score_chosen": 0.92,
+   "median_best_score_departing": 0.361,
+   "max_disp_any_plan_m": 9.7
+  },
+  "016": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 21.0,
+   "best_rank_median": 12.0,
+   "best_rank_min": 10,
+   "departing_picked": 0,
+   "median_score_chosen": 0.952,
+   "median_best_score_departing": 0.3825,
+   "max_disp_any_plan_m": 11.3
+  }
+ },
+ "b44a4a44": {
+  "014b": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 25.0,
+   "best_rank_median": 8.0,
+   "best_rank_min": 4,
+   "departing_picked": 0,
+   "median_score_chosen": 0.716,
+   "median_best_score_departing": 0.487,
+   "max_disp_any_plan_m": 14.1
+  },
+  "016": {
+   "replans": 34,
+   "replans_with_a_departing_plan": 34,
+   "median_n_departing": 24.0,
+   "best_rank_median": 9.0,
+   "best_rank_min": 7,
+   "departing_picked": 0,
+   "median_score_chosen": 0.9285000000000001,
+   "median_best_score_departing": 0.853,
+   "max_disp_any_plan_m": 17.6
+  }
+ },
+ "89f2eeb8": {
+  "014b": {
+   "min_speed": 0.0,
+   "ticks": [
+    {
+     "t": 0.0,
+     "car": 14.6,
+     "human": 14.7,
+     "chosen_mean_4s": 12.1,
+     "demanded_accel": -3.5,
+     "fastest_mean_4s": 13.8
+    },
+    {
+     "t": 0.5,
+     "car": 13.4,
+     "human": 14.7,
+     "chosen_mean_4s": 7.1,
+     "demanded_accel": -6.0,
+     "fastest_mean_4s": 12.2
+    },
+    {
+     "t": 1.0,
+     "car": 10.5,
+     "human": 14.7,
+     "chosen_mean_4s": 3.6,
+     "demanded_accel": -7.5,
+     "fastest_mean_4s": 8.9
+    },
+    {
+     "t": 1.5,
+     "car": 6.4,
+     "human": 14.8,
+     "chosen_mean_4s": 0.5,
+     "demanded_accel": -9.5,
+     "fastest_mean_4s": 5.2
+    },
+    {
+     "t": 2.0,
+     "car": 2.1,
+     "human": 14.8,
+     "chosen_mean_4s": 0.4,
+     "demanded_accel": -2.5,
+     "fastest_mean_4s": 3.2
+    },
+    {
+     "t": 2.5,
+     "car": 0.1,
+     "human": 14.8,
+     "chosen_mean_4s": 1.3,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.8
+    },
+    {
+     "t": 3.0,
+     "car": 0.0,
+     "human": 14.9,
+     "chosen_mean_4s": 2.2,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.8
+    },
+    {
+     "t": 3.5,
+     "car": 0.2,
+     "human": 14.9,
+     "chosen_mean_4s": 2.8,
+     "demanded_accel": 0.1,
+     "fastest_mean_4s": 3.9
+    },
+    {
+     "t": 4.0,
+     "car": 0.6,
+     "human": 14.9,
+     "chosen_mean_4s": 3.2,
+     "demanded_accel": 0.6,
+     "fastest_mean_4s": 4.4
+    },
+    {
+     "t": 4.5,
+     "car": 1.3,
+     "human": 14.9,
+     "chosen_mean_4s": 3.5,
+     "demanded_accel": 0.7,
+     "fastest_mean_4s": 5.0
+    },
+    {
+     "t": 5.0,
+     "car": 2.1,
+     "human": 15.0,
+     "chosen_mean_4s": 4.9,
+     "demanded_accel": 1.0,
+     "fastest_mean_4s": 5.9
+    },
+    {
+     "t": 5.5,
+     "car": 3.0,
+     "human": 15.0,
+     "chosen_mean_4s": 6.6,
+     "demanded_accel": 0.9,
+     "fastest_mean_4s": 7.1
+    },
+    {
+     "t": 6.0,
+     "car": 4.1,
+     "human": 15.1,
+     "chosen_mean_4s": 7.8,
+     "demanded_accel": 1.1,
+     "fastest_mean_4s": 8.3
+    }
+   ]
+  },
+  "016": {
+   "min_speed": 9.7,
+   "ticks": [
+    {
+     "t": 0.0,
+     "car": 14.6,
+     "human": 14.7,
+     "chosen_mean_4s": 12.9,
+     "demanded_accel": -1.6,
+     "fastest_mean_4s": 18.3
+    },
+    {
+     "t": 0.5,
+     "car": 14.0,
+     "human": 14.7,
+     "chosen_mean_4s": 14.1,
+     "demanded_accel": -0.5,
+     "fastest_mean_4s": 18.5
+    },
+    {
+     "t": 1.0,
+     "car": 13.7,
+     "human": 14.7,
+     "chosen_mean_4s": 12.5,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 17.9
+    },
+    {
+     "t": 1.5,
+     "car": 13.3,
+     "human": 14.8,
+     "chosen_mean_4s": 12.4,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 17.8
+    },
+    {
+     "t": 2.0,
+     "car": 12.7,
+     "human": 14.8,
+     "chosen_mean_4s": 11.8,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 16.8
+    },
+    {
+     "t": 2.5,
+     "car": 12.2,
+     "human": 14.8,
+     "chosen_mean_4s": 11.3,
+     "demanded_accel": -1.2,
+     "fastest_mean_4s": 16.3
+    },
+    {
+     "t": 3.0,
+     "car": 11.7,
+     "human": 14.9,
+     "chosen_mean_4s": 11.7,
+     "demanded_accel": -0.9,
+     "fastest_mean_4s": 15.8
+    },
+    {
+     "t": 3.5,
+     "car": 11.4,
+     "human": 14.9,
+     "chosen_mean_4s": 11.5,
+     "demanded_accel": -1.0,
+     "fastest_mean_4s": 15.6
+    },
+    {
+     "t": 4.0,
+     "car": 11.3,
+     "human": 14.9,
+     "chosen_mean_4s": 11.4,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 4.5,
+     "car": 11.1,
+     "human": 14.9,
+     "chosen_mean_4s": 11.4,
+     "demanded_accel": -0.6,
+     "fastest_mean_4s": 15.5
+    },
+    {
+     "t": 5.0,
+     "car": 11.0,
+     "human": 15.0,
+     "chosen_mean_4s": 11.3,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 5.5,
+     "car": 11.0,
+     "human": 15.0,
+     "chosen_mean_4s": 11.2,
+     "demanded_accel": -0.8,
+     "fastest_mean_4s": 15.4
+    },
+    {
+     "t": 6.0,
+     "car": 10.9,
+     "human": 15.1,
+     "chosen_mean_4s": 11.1,
+     "demanded_accel": -0.7,
+     "fastest_mean_4s": 15.2
+    }
+   ]
+  }
+ },
+ "worse": {
+  "0245ff75": {
+   "014b": {
+    "exit": "early_stop_pass",
+    "exit_s": 12.9,
+    "first_collision_any_s": 12.9,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 0.3,
+    "mean_speed_to_exit": 8.05,
+    "mean_speed_whole_clip": 7.88,
+    "dist_at_exit_m": 103.9,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 114.4
+   },
+   "016": {
+    "exit": "early_stop_pass",
+    "exit_s": 11.0,
+    "first_collision_any_s": 11.0,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 0.41,
+    "mean_speed_to_exit": 7.46,
+    "mean_speed_whole_clip": 7.47,
+    "dist_at_exit_m": 82.2,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 94.0
+   }
+  },
+  "1acf2f5d": {
+   "014b": {
+    "exit": "end_of_clip",
+    "exit_s": 16.8,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 0.9,
+    "mean_speed_to_exit": 4.74,
+    "mean_speed_whole_clip": 4.74,
+    "dist_at_exit_m": 79.3,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 105.0
+   },
+   "016": {
+    "exit": "end_of_clip",
+    "exit_s": 16.8,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 0.13,
+    "mean_speed_to_exit": 3.96,
+    "mean_speed_whole_clip": 3.96,
+    "dist_at_exit_m": 66.3,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 105.0
+   }
+  },
+  "bae463d3": {
+   "014b": {
+    "exit": "end_of_clip",
+    "exit_s": 16.85,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 1.14,
+    "mean_speed_to_exit": 2.18,
+    "mean_speed_whole_clip": 2.18,
+    "dist_at_exit_m": 36.6,
+    "longest_below_1ms": 3.2,
+    "human_dist_to_exit_m": 96.9
+   },
+   "016": {
+    "exit": "end_of_clip",
+    "exit_s": 16.85,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 1.68,
+    "mean_speed_to_exit": 1.44,
+    "mean_speed_whole_clip": 1.44,
+    "dist_at_exit_m": 24.1,
+    "longest_below_1ms": 7.15,
+    "human_dist_to_exit_m": 96.9
+   }
+  },
+  "cdd9448c": {
+   "014b": {
+    "exit": "end_of_clip",
+    "exit_s": 16.85,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 2.0,
+    "mean_speed_to_exit": 4.2,
+    "mean_speed_whole_clip": 4.2,
+    "dist_at_exit_m": 70.7,
+    "longest_below_1ms": 1.5,
+    "human_dist_to_exit_m": 91.9
+   },
+   "016": {
+    "exit": "early_stop_pass",
+    "exit_s": 13.4,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": 14.35,
+    "abs_lat_at_exit": 3.62,
+    "mean_speed_to_exit": 4.91,
+    "mean_speed_whole_clip": 4.13,
+    "dist_at_exit_m": 65.9,
+    "longest_below_1ms": 1.65,
+    "human_dist_to_exit_m": 75.0
+   }
+  },
+  "e121e37d": {
+   "014b": {
+    "exit": "end_of_clip",
+    "exit_s": 16.8,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": null,
+    "abs_lat_at_exit": 2.54,
+    "mean_speed_to_exit": 9.44,
+    "mean_speed_whole_clip": 9.44,
+    "dist_at_exit_m": 158.0,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 232.0
+   },
+   "016": {
+    "exit": "early_stop_pass",
+    "exit_s": 9.65,
+    "first_collision_any_s": null,
+    "first_time_4m_off_path_s": 9.75,
+    "abs_lat_at_exit": 3.97,
+    "mean_speed_to_exit": 11.13,
+    "mean_speed_whole_clip": 11.12,
+    "dist_at_exit_m": 107.3,
+    "longest_below_1ms": 0.0,
+    "human_dist_to_exit_m": 128.3
+   }
+  }
+ }
+}

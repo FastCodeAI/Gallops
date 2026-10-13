@@ -26,6 +26,8 @@ train = [
 ]
 dev = [
     "pytest>=8.0",
+    # The re-ranker trainer is numpy only, and its tests run in `make check`.
+    "numpy>=1.24",
     "ruff>=0.5",
     # Advisory only, matching paddock: `make typecheck` runs it, `make check`
     # does not. A check that reddens unrelated work is one people learn to
