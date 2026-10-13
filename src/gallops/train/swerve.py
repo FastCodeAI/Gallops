@@ -44,6 +44,7 @@ stage B follow. If it cannot, nothing further is worth building.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -133,6 +134,75 @@ def head_moved(started: str, repo: Path) -> dict:
     """
     now = git_sha(repo)
     return {} if now == started else {"git_head_at_save": now}
+
+
+#: Scenes in nuScenes v1.0-trainval's train split. Every scene these runs render is
+#: one of them, so `trained_on` declares nuscenes/train with the share actually read.
+NUSCENES_TRAIN_SCENES = 700
+#: What the labelled sets themselves are: NeuRAD renders with an inserted actor. Not
+#: a paddock dataset key, so recorded for the reader, never cross-checked.
+RENDERED = "neuroncap-actor-insertion"
+
+
+def scene_of(episode: str) -> str:
+    """ "frontal-0064/run_3" -> "0064"."""
+    return episode.split("/", 1)[0].rsplit("-", 1)[-1]
+
+
+def exclude_scenes(ticks: list[dict], scenes: list[str]) -> tuple[list[dict], list[str]]:
+    """Ticks outside `scenes`, and the scenes as matched ("scene-0064" and "0064" alike).
+
+    Refuses an exclusion that drops nothing: `scene-0064`, the form `scenarios.py
+    --scene` takes, used to match no tick and still be recorded as excluded.
+    """
+    wanted = [s.strip().removeprefix("scene-") for s in scenes]
+    present = {scene_of(t["episode"]) for t in ticks}
+    absent = [s for s in wanted if s not in present]
+    if absent:
+        raise SystemExit(f"--exclude-scene {', '.join(absent)}: no loaded tick is from that scene")
+    return [t for t in ticks if scene_of(t["episode"]) not in set(wanted)], wanted
+
+
+def labelled_digest(directory: Path) -> str:
+    """sha256 over a labelled directory's files, names and bytes, in name order.
+
+    A path says where the labels were; this says which labels. `labelled_round0_v2`
+    was rewritten in place between two runs that both name it.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(Path(directory).glob("*.jsonl")):
+        digest.update(path.name.encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
+
+
+def declared_training(
+    train: list[dict], labelled: list[str], read_share: float, inherited=()
+) -> tuple[sidecar.TrainedOn, ...]:
+    """`trained_on`: the nuScenes scenes read, each labelled set, and what `--init` saw.
+
+    `read_share` is the share of the loaded ticks kept (below 1 for a `--limit`
+    smoke), so a smoke checkpoint does not claim the whole round.
+    """
+    scenes = {scene_of(t["episode"]) for t in train}
+    fraction = round(len(scenes) / NUSCENES_TRAIN_SCENES * read_share, 6)
+    own = [sidecar.TrainedOn("nuscenes", "train", fraction)]
+    own += [
+        sidecar.TrainedOn(RENDERED, Path(path).name, None if read_share >= 1 else read_share)
+        for path in dict.fromkeys(labelled)
+    ]
+    out = list(dict.fromkeys(own))
+    out += [t for t in inherited if t not in out]
+    return tuple(out)
+
+
+def inherited_training(init: Path | None) -> tuple:
+    """The `trained_on` of the checkpoint `--init` points into: what it already saw."""
+    if init is None:
+        return ()
+    try:
+        return sidecar.read(Path(init).parent).trained_on
+    except sidecar.SidecarError as error:
+        raise SystemExit(f"--init {init}: {error}; its training cannot be carried forward") from error
 
 
 def fresh_run(cfg: SiteConfig, train_run: str) -> Path:
@@ -421,7 +491,12 @@ def main() -> None:
     # A scene whose inserted car renders as nothing teaches reactions to an empty
     # road. scene-0064's car was only ever seen 47 m+ away, and in its frontal
     # episodes it is not visible at all.
-    parser.add_argument("--exclude-scene", action="append", default=[], help="e.g. 0064; repeatable")
+    parser.add_argument(
+        "--exclude-scene",
+        action="append",
+        default=[],
+        help="e.g. 0064 or scene-0064; repeatable, and refused if it drops nothing",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
     parser.add_argument(
@@ -524,7 +599,7 @@ def main() -> None:
         n = sum(1 for t in ticks if t["source"] == i)
         print(f"  source {i}: {n} ticks from {s.labelled} (drove: {s.drove})")
     if args.exclude_scene:
-        kept = [t for t in ticks if not any(f"-{scene}/" in t["episode"] for scene in args.exclude_scene)]
+        kept, args.exclude_scene = exclude_scenes(ticks, args.exclude_scene)
         print(f"  excluded scenes {', '.join(args.exclude_scene)}: {len(ticks) - len(kept)} ticks dropped")
         ticks = kept
     if args.exclude_episodes:
@@ -537,11 +612,19 @@ def main() -> None:
     # skipped there, the sidecar described ticks the model never saw.
     ticks, unrebuildable = keep_rebuildable(ticks, rebuildable)
     print(f"  dropped {unrebuildable['dropped']} unrebuildable ticks: {unrebuildable['by_expert_kind']}")
+    loaded = len(ticks)
     if args.limit:
         # Evenly spaced, not the first N: the files are sorted by scenario-scene,
         # so a head slice is one scene and a smoke run over it holds out its own
         # entire training set.
         ticks = [ticks[i] for i in np.linspace(0, len(ticks) - 1, args.limit).round().astype(int)]
+    read_share = min(1.0, len(ticks) / max(loaded, 1))
+    inherited = inherited_training(args.init)
+    # Once, at the start: the labels this run loaded, whatever happens to the directory.
+    # By index, not zip(strict=): this runs in the 3.9 training interpreter.
+    digests = [labelled_digest(Path(s.labelled)) for s in sources]
+    for i, s in enumerate(sources):
+        print(f"  {s.labelled}: sha256 {digests[i][:12]}")
     train, val = split_by_scene(ticks, args.held_out)
     print(f"  {len(ticks)} labelled ticks: {len(train)} train, {len(val)} held out (scene {args.held_out})")
     if not train:
@@ -754,12 +837,9 @@ def main() -> None:
                 step=step,
                 train_git_sha=checked["code"]["sha"],
                 train_run=args.train_run,
-                trained_on=(
-                    sidecar.TrainedOn(
-                        dataset="neuroncap-actor-insertion",
-                        split="round0, 5 non-benchmark nuScenes train scenes",
-                    ),
-                ),
+                # Built from what this run read, not a literal: the literal said
+                # "round0, 5 scenes" for runs on three data sets and three scenes.
+                trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
                 selection_split=f"held-out scene {args.held_out}",
                 params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
                 precision="fp32",
@@ -773,7 +853,13 @@ def main() -> None:
                     "excluded_episodes": args.exclude_episodes,
                     # Which label set and which dumps: v4 could only be traced to
                     # its labels by file timestamps.
-                    "sources": [s._asdict() for s in sources],
+                    "sources": [
+                        {**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)
+                    ],
+                    # the scenes actually read, which `trained_on` counts but cannot name
+                    "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
+                    "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
+                    "limit": args.limit or None,
                     "preflight": checked,
                     "history": history,
                     # every 25-step mean and held-out check of this run, beside the checkpoints
