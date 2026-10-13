@@ -14,7 +14,7 @@ import json
 import typer
 
 from gallops import checkpoint as ckpt
-from gallops.config import ConfigError, SiteConfig
+from gallops.config import REPO_ROOT, ConfigError, SiteConfig
 
 app = typer.Typer(add_completion=False, help="Training for driving policies.")
 
@@ -64,7 +64,7 @@ def show(directory: str) -> None:
 
 @app.command("train-rerank")
 def train_rerank(
-    dataset: str = typer.Argument(..., help="candidate dataset exported by paddock's rerank.py"),
+    dataset: str = typer.Argument(..., help="dataset from `python -m gallops.data.rerank dataset`"),
     train_run: str = typer.Option(..., help="label for this run; names the checkpoint directory"),
     model: str = typer.Option("drivejepa_rerank", help="paddock adapter name"),
     hidden: int = typer.Option(128, help="MLP hidden units (0 = linear)"),
@@ -90,18 +90,24 @@ def train_rerank(
     )
     result = rerank.train(
         Path(dataset),
-        cfg.weights,
+        cfg,
         model=model,
         train_run=train_run,
         settings=settings,
-        train_git_sha=rerank.git_sha(Path(__file__).resolve().parents[2]),
+        train_git_sha=rerank.git_sha(REPO_ROOT),
     )
-    typer.echo(f"wrote     {result.directory}")
-    typer.echo(f"epoch     {result.epoch}")
+    typer.echo(f"wrote      {result.directory}")
+    typer.echo(f"epoch      {result.epoch}")
+    # "selection split", not "held-out": the epoch was chosen on these scenes, so
+    # the pick ADE is optimistic. Report from a split nothing was selected on.
     typer.echo(
-        f"held-out  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
-        f"pick ADE {result.holdout_pick_ade:.3f}"
-        + (f", model's own pick {result.holdout_model_pick_ade:.3f}" if result.holdout_model_pick_ade else "")
+        f"selection  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
+        f"pick ADE {result.selection_pick_ade:.3f}"
+        + (
+            f", model's own pick {result.holdout_model_pick_ade:.3f}"
+            if result.holdout_model_pick_ade is not None
+            else ""
+        )
         + f", best of the candidates {result.holdout_best_ade:.3f}"
     )
 

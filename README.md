@@ -47,6 +47,7 @@ $EDITOR gallops.toml                        # point at YOUR weights, runs and da
 gallops config                              # what this machine resolved
 gallops show <checkpoint dir>               # what a checkpoint claims about itself
 gallops train-rerank <dataset.npz> --train-run <name>   # see gallops/train/rerank.py
+python -m gallops.data.rerank keyframes|dataset ...     # its training data; see gallops/data/rerank.py
 ```
 
 Point `[roots.weights]` at **the same directory as paddock's

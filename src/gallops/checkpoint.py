@@ -10,7 +10,8 @@ So the two communicate through a directory on disk:
         checkpoint.json      <- this module writes it, paddock reads it
         model.safetensors
 
-`checkpoint.json` is a few hundred bytes of JSON. It is deliberately not a
+`checkpoint.json` is a small JSON file -- kilobytes at most, mostly the scene
+list a run records in `notes`. It is deliberately not a
 pickle, not a torch object, and not anything that requires either side to share
 a dependency to read it. Paddock parses it with `json.load`; this module is
 stdlib-only so it can be imported anywhere, including from a training script
@@ -43,11 +44,15 @@ tolerant of unknown keys so a newer trainer does not break an older scorer.
 from __future__ import annotations
 
 import json
+import shutil
 
 # `time.gmtime` rather than `datetime.UTC`: a trainer runs inside the model's
 # own interpreter, Drive-JEPA's is Python 3.9, and ruff's pyupgrade rewrites
 # any datetime spelling back to the 3.11-only one.
 import time
+import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -235,6 +240,38 @@ def write(directory: Path | str, checkpoint: Checkpoint) -> Path:
     tmp.write_text(json.dumps(checkpoint.to_dict(), indent=2, sort_keys=True) + "\n")
     tmp.replace(path)
     return path
+
+
+@contextmanager
+def staged(directory: Path | str) -> Iterator[Path]:
+    """Build a checkpoint directory under a temporary name, then publish it whole.
+
+    Yields an empty sibling of `directory`. Save the weights and `write()` the
+    sidecar into it; on a clean exit it is renamed to `directory` in one step,
+    and on any exception it is removed. A reader therefore sees a complete
+    checkpoint or nothing -- never weights without their sidecar, and never new
+    weights beside an old one, which is what a job killed between two in-place
+    writes leaves behind.
+
+    Refuses a `directory` that already exists. A step is written once: rewriting
+    one in place is how two fits end up described by one sidecar.
+    """
+    directory = Path(directory)
+    if directory.exists():
+        raise SidecarError(f"{directory} already exists; a checkpoint is written once, never over another")
+    directory.parent.mkdir(parents=True, exist_ok=True)
+    # A dot-prefixed sibling: the same filesystem, so the rename is atomic, and
+    # nothing that globs `step_*` picks up a partial one.
+    tmp = directory.parent / f".{directory.name}.{uuid.uuid4().hex[:8]}.partial"
+    tmp.mkdir()
+    try:
+        yield tmp
+        if not (tmp / SIDECAR_NAME).exists():
+            raise SidecarError(f"refusing to publish {directory} without its {SIDECAR_NAME}")
+        tmp.rename(directory)
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
 
 
 def read(directory: Path | str) -> Checkpoint:
