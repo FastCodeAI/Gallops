@@ -25,6 +25,10 @@ Runs inside Drive-JEPA's own interpreter (Python 3.9) with its cwd and environme
 mtd/stage4/train_mtd.py, with refine_from_cache and load_split from generator-ft (which imported paddock's
 policy at module level; only these two functions were used). Arithmetic unchanged.
 
+**RAM: about 26 GB.** load_split holds every feature chunk, train and held-out, in memory (22 GB of feat_*.npy
+for the Final's cache; 26 GB RSS measured on 5 Oct). The stage refuses to start with less available than the
+cache plus 4 GB (host.require_free_ram), and two of it at once do not fit beside other work on a 123 GB box.
+
     python -m gallops.drivejepa_b2d.train_generator --cache <feature cache> --teachers <dir> --checkpoint
         <ckpt>
         --out <dir> [--lr 2e-5 --batch 32 --epochs 10 --teacher-weight 0.5]
@@ -41,6 +45,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from gallops.drivejepa_b2d.host import OVERHEAD_BYTES, cache_bytes, require_free_ram
 from gallops.drivejepa_b2d.provenance import git_sha
 
 TAGS = ("M2_t", "M3", "M1merge", "N")
@@ -229,6 +234,7 @@ def main() -> None:
     assert not a.out.exists() or not any(a.out.glob("*.pt")), (
         f"{a.out} already has checkpoints -- never overwrite"
     )
+    require_free_ram(cache_bytes(a.cache) + OVERHEAD_BYTES, "the generator stage (its whole cache in RAM)")
     a.out.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(a.seed)
     rng = np.random.default_rng(a.seed)

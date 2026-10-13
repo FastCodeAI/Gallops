@@ -25,6 +25,7 @@ PY39 = (
     "drivejepa_b2d/__init__.py",
     "drivejepa_b2d/provenance.py",
     "drivejepa_b2d/batch_fix.py",
+    "drivejepa_b2d/host.py",
     "drivejepa_b2d/train_generator.py",
 )
 

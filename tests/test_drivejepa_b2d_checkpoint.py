@@ -135,3 +135,20 @@ def test_the_final_ships_its_area_head() -> None:
     args = list(stage.args)
     assert args[args.index("--area") + 1] == "{out}/final-area-head"
     assert "final-area-head" in stage.after
+
+
+def test_the_generator_refuses_to_start_without_room_for_its_cache(tmp_path: Path) -> None:
+    from gallops.drivejepa_b2d import host
+
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / "feat_train_0_0000.npy").write_bytes(b"x" * 3000)
+    (cache / "feat_held_0_0000.npy").write_bytes(b"x" * 1000)
+    (cache / "meta_train_0_0000.npz").write_bytes(b"x" * 500)
+    assert host.cache_bytes(cache) == 4000
+    meminfo = tmp_path / "meminfo"
+    meminfo.write_text("MemTotal: 100 kB\nMemAvailable:       3 kB\n")
+    with pytest.raises(SystemExit, match="refusing"):
+        host.require_free_ram(host.cache_bytes(cache), "test", meminfo=str(meminfo))
+    meminfo.write_text("MemAvailable:       5 kB\n")
+    host.require_free_ram(host.cache_bytes(cache), "test", meminfo=str(meminfo))

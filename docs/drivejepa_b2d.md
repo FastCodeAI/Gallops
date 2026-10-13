@@ -65,7 +65,10 @@ Three trained parts and one policy switch:
    on Bench2Drive frames only) instead of the scorer's top anchors. From the
    release, Adam 2e-5, batch 32, 10 epochs, seed 0, kept epoch 10 by held-out
    objective. Runs from a cache of backbone features in Drive-JEPA's own Python
-   3.9 env, with the batch fix below.
+   3.9 env, with the batch fix below. **It holds the whole cache in RAM: about
+   26 GB** (22 GB of features; 26 GB RSS measured on 5 Oct), and refuses to
+   start with less available than the cache plus 4 GB. Two at once swapped this
+   box out for about 13 minutes on 5 Oct.
 2. **Split head** (`final-split-head`). Split-v4's recipe, initialised from
    split-v4aug, on the new generator's candidates and their m05b labels (0.5 m
    margin on moving actors, expert-masked). Kept epoch 25.
