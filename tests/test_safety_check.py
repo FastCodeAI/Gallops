@@ -83,3 +83,58 @@ def test_length_and_end_speed():
     plan = [[1.0, 0.0], [2.0, 0.0], [3.0, 0.0]]
     assert sc.length(plan) == pytest.approx(3.0)
     assert sc.end_speed(plan) == pytest.approx(2.0)  # 1 m over the last 0.5 s
+
+
+def _rows(agree: int, of: int = 10):
+    row = {"pick_hit_at": None, "recorded_driven_hits": None}
+    return [{**row, "recomputed_clear": [True], "recorded_clear": [i < agree]} for i in range(of)]
+
+
+def test_a_failed_guard_stops_before_any_finetune(tmp_path):
+    """#5 review, finding 2: the guard ran after every model, and nothing recorded it."""
+
+    out, calls = tmp_path / "check.json", []
+
+    def measure_model(path):
+        calls.append(path)
+        return {"approach": _rows(9)}  # 90% agreement
+
+    with pytest.raises(SystemExit, match="GUARD FAILED"):
+        sc.measure_all([("released", None), ("s1", "s1.pt")], measure_model, out)
+    assert calls == [None], "no finetune is measured once the guard fails"
+    assert not out.exists() and (tmp_path / "check.json.guard-failed").exists()
+
+
+def test_results_are_published_whole_and_carry_their_guard(tmp_path):
+    import json
+
+    out = tmp_path / "check.json"
+
+    def dies_on_the_finetune(path):
+        if path:
+            raise RuntimeError("CUDA out of memory")
+        return {"approach": _rows(10)}
+
+    with pytest.raises(RuntimeError):
+        sc.measure_all([("released", None), ("s1", "s1.pt")], dies_on_the_finetune, out)
+    assert not out.exists(), "a half-measured file must not sit under the name a reader expects"
+    sc.measure_all([("released", None)], dies_on_the_finetune, out)
+    written = json.loads(out.read_text())
+    assert written["guard"]["passed"] and written["guard"]["verdicts_agree"] == 1.0 and "released" in written
+
+
+def test_a_drivable_directory_without_the_scenes_raster_is_refused(tmp_path):
+    import json
+
+    import numpy as np
+
+    from gallops.train.swerve_data import episode_context
+
+    episode = tmp_path / "stationary-0042" / "run_0"
+    (episode / "CAM_FRONT").mkdir(parents=True)
+    (episode / "ego_poses.json").write_text(json.dumps({"1": np.eye(4).tolist()}))
+    (episode / "actors.json").write_text("[]")
+    tick = {"frame": str(episode / "CAM_FRONT" / "1.jpg"), "timestamp": 1}
+    assert episode_context(tick)[2] is None  # no drivable directory given: no road check, by request
+    with pytest.raises(FileNotFoundError, match="scene-0042"):
+        episode_context(tick, tmp_path / "rasters")

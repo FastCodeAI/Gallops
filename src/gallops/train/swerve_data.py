@@ -265,8 +265,11 @@ def _episode_static(directory: str, drivable: str | None) -> tuple:
     area = None
     if drivable:
         path = Path(drivable) / f"scene-{root.parent.name.rsplit('-', 1)[-1]}.npz"
-        if path.exists():
-            area = DrivableArea.load(path)
+        if not path.exists():
+            # Silently None, the road check is skipped and a plan that leaves the road
+            # grades clear -- which is what a relative --drivable did after build_model's chdir.
+            raise FileNotFoundError(f"{path}: a drivable directory was given without this scene's raster")
+        area = DrivableArea.load(path)
     return poses, [a for a in actors if a["is_target_actor"]], area
 
 

@@ -48,7 +48,7 @@ CREEP_BELOW_MPS = 3.0
 #: Approach ticks are thinned evenly to at most this many per scene and shape.
 MAX_APPROACH = 120
 #: The share of the released model's candidate verdicts that must match the labels
-#: before any result is reported. The trainer's preflight demands an exact match on
+#: before any finetune is measured or any result reported. The trainer's preflight demands an exact match on
 #: its sample; across a whole scene a few verdicts flip on rebuilt inputs.
 GUARD_MIN_AGREEMENT = 0.995
 
@@ -201,6 +201,39 @@ def summary(rows: list[dict]) -> dict:
     }
 
 
+def measure_all(models: list[tuple[str, str | None]], measure_model, out: Path) -> dict:
+    """Every model's rows, the released model first and guarded before any finetune runs.
+
+    The guard depends only on the released rows, so it runs as soon as they exist:
+    a scene that fails it costs one model, not every model on the shared GPU. The
+    file is written as `<out>.partial` after each model and renamed only once all
+    are measured, and it carries the guard, so a reader never takes an unguarded or
+    half-written result for the real one.
+    """
+    if not models or models[0][0] != "released":
+        raise ValueError("the released model is measured first: the guard is computed from it")
+    partial = out.with_name(out.name + ".partial")
+    results: dict = {}
+    check: dict = {}
+    for name, path in models:
+        results[name] = measure_model(path)
+        if name == "released":
+            check = guard([r for rows in results["released"].values() for r in rows])
+            check["min_agreement"] = GUARD_MIN_AGREEMENT
+            check["passed"] = check["verdicts_agree"] >= GUARD_MIN_AGREEMENT
+        partial.write_text(json.dumps({"guard": check, **results}, indent=1))  # nothing lost
+        if not check["passed"]:
+            failed = out.with_name(out.name + ".guard-failed")
+            partial.rename(failed)
+            raise SystemExit(
+                f"  GUARD FAILED: candidate verdicts agree {check['verdicts_agree']:.2%} "
+                f"< {GUARD_MIN_AGREEMENT:.1%} with the labels; released results moved to {failed}, "
+                "no finetune measured"
+            )
+    partial.rename(out)
+    return {"guard": check, "models": results}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -222,6 +255,14 @@ def main() -> None:
         help="a finetune to measure beside the released model; repeatable",
     )
     args = parser.parse_args()
+    # Absolute now: `build_model` changes into the vendor's repo, and a relative --out
+    # was written there, while a relative --drivable found no raster and graded no road.
+    args.labelled, args.drivable, args.out = (p.resolve() for p in (args.labelled, args.drivable, args.out))
+    if not (args.drivable / f"scene-{args.scene}.npz").exists():
+        raise SystemExit(
+            f"--drivable {args.drivable} has no scene-{args.scene}.npz; off-road cannot be graded"
+        )
+    args.checkpoint = [f"{n}={Path(p).resolve()}" for n, p in (c.split("=", 1) for c in args.checkpoint)]
 
     cfg = SiteConfig.load()
     for name, template in (
@@ -246,29 +287,22 @@ def main() -> None:
     )
     _agent, model, torch = build_model(released, args.device, cfg.resolve("{data.drivejepa_repo}"))
 
-    results: dict = {}
-    for name, path in [("released", None), *(c.split("=", 1) for c in args.checkpoint)]:
+    def measure_model(path):
         if path:
             model.load_state_dict(torch.load(path, map_location=args.device, weights_only=True))
-        results[name] = {
+        return {
             g: measure(model, TickDataset(ts, args.device), ts, torch, args.drivable)
             for g, ts in sets.items()
         }
-        args.out.write_text(json.dumps(results, indent=1))  # after every model: nothing lost
 
-    check = guard([r for rows in results["released"].values() for r in rows])
+    models = [("released", None), *((n, p) for n, p in (c.split("=", 1) for c in args.checkpoint))]
+    measured = measure_all(models, measure_model, args.out)
+    check, results = measured["guard"], measured["models"]
     print(
         f"\n  GUARD released vs labelling: candidate verdicts agree {check['verdicts_agree']:.1%}, "
         f"ticks identical {check['ticks_identical']:.1%}, "
         f"picked plan hits iff driven plan hit {check['pick_hits_iff_driven_hit']:.1%}"
     )
-    if check["verdicts_agree"] < GUARD_MIN_AGREEMENT:
-        failed = args.out.with_suffix(args.out.suffix + ".guard-failed")
-        args.out.rename(failed)
-        raise SystemExit(
-            f"  GUARD FAILED: candidate verdicts agree {check['verdicts_agree']:.2%} "
-            f"< {GUARD_MIN_AGREEMENT:.1%} with the labels; results moved to {failed} and not reported"
-        )
 
     columns = (
         "n",

@@ -566,6 +566,15 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = SiteConfig.load()
+    # Absolute before `build_model` changes into the vendor's repo, where a relative
+    # path would resolve -- or silently not, for --drivable.
+    for name in ("labelled", "dumps", "drivable", "init"):
+        if getattr(args, name) is not None:
+            setattr(args, name, getattr(args, name).resolve())
+    args.source = [
+        [str(Path(labelled).resolve()), str(Path(dumps).resolve()), drove]
+        for labelled, dumps, drove in args.source
+    ]
     out_root = fresh_run(cfg, args.train_run)  # before any of the minutes below
     loaded = git_sha(REPO_ROOT)  # the commit whose modules this process imported
     # The agent reads these at construction, exactly as paddock's model.yaml
