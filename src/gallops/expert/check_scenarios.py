@@ -53,12 +53,17 @@ def actor_poses(actor: dict, query_times: np.ndarray) -> tuple[np.ndarray, np.nd
     return xy, yaw
 
 
+ENGINE_STEP_S = 0.1
+
+
 def check(scene, body: dict) -> dict:
     general = body["general"]
     actor = body["actors"][0]
     start_s = float(scene.times[general["start-frame"]])
     duration = float(general["duration"])
-    query = np.linspace(start_s, start_s + duration, int(duration * 2) + 1)
+    # The engine's own step (neuroNCAP's TIME_STEP, 0.1 s). At 2 Hz, 20 m/s of closing
+    # speed moves 10 m between samples, enough to step over an overlap entirely.
+    query = np.linspace(start_s, start_s + duration, int(round(duration / ENGINE_STEP_S)) + 1)
 
     ego_xy = np.column_stack([np.interp(query, scene.times, scene.positions[:, k]) for k in (0, 1)])
     steps = np.vstack([np.diff(ego_xy, axis=0), np.diff(ego_xy, axis=0)[-1:]])

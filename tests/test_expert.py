@@ -49,6 +49,7 @@ class TestGrader:
             pytest.skip("set NEURO_NCAP_REPO to check the constants against the vendor")
         source = (__import__("pathlib").Path(repo) / "neuro_ncap" / "evaluation" / "collision.py").read_text()
         assert "4.018" in source and "1.85" in source
+        assert "0.5" in source, "the box centre sits 0.5 m ahead of the rear axle"
 
     def test_a_box_dead_ahead_is_a_collision(self):
         verdict = grader.grade(straight(10.0), np.eye(4), 0, [actor_ahead(15.0)])
@@ -276,14 +277,19 @@ class TestDrivableArea:
             location="test",
         )
         reference = np.column_stack([np.arange(0.0, 200.0, 1.0), np.zeros(200), np.zeros(200)])
-        blocker = actor_ahead(26.0)
-        blocker["poses"] = [np.array(p) for p in blocker["poses"]]
-        for pose in blocker["poses"]:
-            pose[1, 3] = -0.4  # slightly right, so "away" would be left... then flip
-        blocker["poses"] = [p.tolist() for p in blocker["poses"]]
+        # Oncoming at 8 m/s and slightly LEFT, so "away from it" is right, off the
+        # road. Parked, the expert brakes instead, and this test never asserted.
+        poses = []
+        for t in (-10.0, 10.0):
+            pose = np.eye(4)
+            pose[:2, :2] = [[-1.0, 0.0], [0.0, -1.0]]
+            pose[0, 3], pose[1, 3] = 40.0 - 8.0 * t, 0.4
+            poses.append(pose.tolist())
+        blocker = {"timestamps": [-10e6, 10e6], "poses": poses, "dims": [1.9, 4.5, 1.6]}
+        blocker["is_target_actor"] = True
         plan = draw.teach(np.eye(4), 0, 9.0, reference, [blocker], area=shifted)
-        if plan.kind == "swerve":
-            assert plan.offset_m > 0, "the only drivable side is to the left"
+        assert plan.kind == "swerve", plan.kind
+        assert plan.offset_m > 0, "the only drivable side is to the left"
 
 
 class TestRounds:
@@ -645,3 +651,74 @@ def test_the_expert_follows_the_lane_the_car_is_in_when_one_was_computed(tmp_pat
     assert max(abs(y) for t in drifted for _, y, _ in t["expert"]) > 1.0, (
         "fixture should show the old behaviour"
     )
+
+
+def test_labelling_refuses_an_existing_label_set(tmp_path):
+    """labelled_round0_v2 was rewritten in place between two runs that both name it."""
+    from gallops.expert.label import fresh_out
+
+    out = tmp_path / "labelled"
+    fresh_out(out)
+    assert out.is_dir()
+    fresh_out(out)  # empty: nothing to overwrite
+    (out / "frontal-0053__run_0.jsonl").write_text("{}\n")
+    with pytest.raises(SystemExit, match="already holds labels"):
+        fresh_out(out)
+
+
+def test_a_gt_row_without_the_models_pick_is_refused():
+    from gallops.expert.label import model_pick
+
+    assert model_pick({"timestamp": 1, "trajectory": [[1, 0, 0]]}) is None  # model drove
+    assert model_pick({"timestamp": 1, "drive": "gt", "model_trajectory": [[2, 0, 0]]}) == [[2, 0, 0]]
+    with pytest.raises(SystemExit, match="no model_trajectory"):
+        model_pick({"timestamp": 1, "drive": "gt", "trajectory": [[1, 0, 0]]})
+
+
+def _peak_lateral_accel(waypoints) -> float:
+    """v^2 kappa, chord by chord, from the car's own pose: what a passenger would feel."""
+    points = np.vstack([[0.0, 0.0], np.asarray(waypoints)[:, :2]])
+    heading = step = worst = 0.0
+    for i in range(1, len(points)):
+        delta = points[i] - points[i - 1]
+        length = float(np.hypot(*delta))
+        if length <= draw.STILL_M:
+            continue
+        new = float(np.arctan2(delta[1], delta[0]))
+        turn = abs((new - heading + np.pi) % (2 * np.pi) - np.pi)
+        worst = max(worst, (length / draw.WAYPOINT_DT) ** 2 * turn / ((step + length) / 2))
+        heading, step = new, length
+    return worst
+
+
+def test_a_recovery_stays_within_the_lateral_acceleration_limit():
+    """#2 review 7b: a 3 m return over RETURN_S alone peaked at 4.7 m/s^2 (limit 4)."""
+    from gallops.expert.draw import LATERAL_ACCEL_MAX, _plan_from, min_ramp_for, undrivable
+
+    reference = np.column_stack([np.arange(-20.0, 300.0, 1.0), np.zeros(320)])
+    for speed in (9.0, 12.0, 15.0):
+        plan = _plan_from(reference, speed, 1.0, 3.0, min_ramp_for(3.0, speed), 0.0, 1.5)
+        assert _peak_lateral_accel(plan) <= LATERAL_ACCEL_MAX * 1.01, speed
+        assert undrivable(plan) is None
+
+
+def test_chasing_a_lane_off_the_cars_heading_stays_within_the_limit():
+    """#4 review 3: pursuit clamped curvature only; 15 deg off at 12 m/s took 8.7 m/s^2."""
+    from gallops.expert.draw import LATERAL_ACCEL_MAX, _plan_from, undrivable
+
+    angle = np.radians(15.0)
+    along = np.arange(-10.0, 200.0)
+    reference = np.column_stack([along * np.cos(angle), along * np.sin(angle)])
+    plan = _plan_from(reference, 12.0, 1.0, 0.0, 1.0)
+    assert _peak_lateral_accel(plan) <= LATERAL_ACCEL_MAX * 1.01
+    assert undrivable(plan) is None
+
+
+def test_undrivable_refuses_a_turn_wide_enough_but_too_fast():
+    from gallops.expert.draw import undrivable
+
+    # a 20 m radius arc at 15 m/s: 11 m/s^2 sideways, though wider than MIN_TURN_RADIUS_M
+    s = 15.0 * 0.5 * np.arange(1, 9)
+    arc = np.column_stack([20 * np.sin(s / 20), 20 * (1 - np.cos(s / 20)), s / 20])
+    reason = undrivable(arc)
+    assert reason is not None and "m/s^2" in reason

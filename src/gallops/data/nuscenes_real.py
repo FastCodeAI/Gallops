@@ -39,31 +39,14 @@ from pathlib import Path
 
 import numpy as np
 
-NEURONCAP_SCENES = {
-    "0061",
-    "0099",
-    "0101",
-    "0103",
-    "0106",
-    "0108",
-    "0110",
-    "0278",
-    "0331",
-    "0346",
-    "0783",
-    "0796",
-    "0921",
-    "0923",
-    "0966",
-}
+#: In nuScenes train, so not in paddock's official set, but it carries a neuroNCAP
+#: scenario (the vendor's "mini set"), so its log stays out of training too.
+NEURONCAP_MINI = {"0061"}
 RECONSTRUCTED = {"0053", "0058", "0064", "0070", "0075"}
-TURN_THRESHOLD_M = 2.0
-COMMAND_STEPS = 6  # 3 s at 2 Hz
+COMMAND_STEPS = 6  # 3 s at 2 Hz: VAD's rule reads the offset there
 FUTURE_STEPS = 8  # 4 s
 HISTORY_DT_US = 500_000
 HISTORY_TOLERANCE_US = 50_000
-#: neuroNCAP's Command enum: RIGHT 0, LEFT 1, STRAIGHT 2.
-RIGHT, LEFT, STRAIGHT = 0, 1, 2
 CAMERAS = ("CAM_FRONT", "CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_BACK", "LIDAR_TOP")
 
 
@@ -95,12 +78,26 @@ def to_ego(ego2world: np.ndarray, poses: list[np.ndarray]) -> np.ndarray:
     return np.asarray(out)
 
 
+def _paddock(module: str):
+    """A paddock module, imported: its contracts are not restated here (CLAUDE.md)."""
+    import importlib
+
+    try:
+        return importlib.import_module(module)
+    except ModuleNotFoundError as error:
+        raise SystemExit(f"cannot import {module}: put paddock's src/ on PYTHONPATH") from error
+
+
 def command(future_xy: np.ndarray) -> int:
-    """VAD's rule as paddock's nuScenes harness applies it: lateral offset at the 3 s point."""
-    lateral = future_xy[COMMAND_STEPS - 1][1]
-    if abs(lateral) < TURN_THRESHOLD_M:
-        return STRAIGHT
-    return LEFT if lateral > 0 else RIGHT
+    """VAD's rule, as paddock's nuScenes harness applies it: its own function, on the first 3 s."""
+    loader = _paddock("paddock.adapters.benchmarks.nuscenes.loader")
+    return loader.command_from_future(np.asarray(future_xy)[:COMMAND_STEPS])[0]
+
+
+def neuroncap_scenes() -> set[str]:
+    """Every scene with a neuroNCAP scenario: paddock's official set, and the mini set's 0061."""
+    harness = _paddock("paddock.adapters.benchmarks.neuroncap.harness")
+    return {scene for scenes in harness.OFFICIAL_SET.values() for scene in scenes} | NEURONCAP_MINI
 
 
 def nearest(times: list[int], t: int) -> int:
@@ -189,11 +186,8 @@ def main() -> None:
     print("tables loaded", flush=True)
 
     val = set(json.loads(args.val_scenes.read_text())["val"])
-    names = [
-        s["name"]
-        for s in scenes
-        if s["name"] not in val and s["name"].split("-")[1] not in NEURONCAP_SCENES | RECONSTRUCTED
-    ]
+    kept_out = neuroncap_scenes() | RECONSTRUCTED
+    names = [s["name"] for s in scenes if s["name"] not in val and s["name"].split("-")[1] not in kept_out]
     rng = random.Random(0)
     holdout = set(rng.sample(names, int(round(len(names) * args.holdout_frac))))
     if args.check:

@@ -1,14 +1,15 @@
 """Grade every plan in a scorer cache: the answers the scorer's logits are trained on.
 
 For each cached episode (``scorer_cache``), every native plan and every vocabulary
-path is graded with `fastgrade` against every vehicle in the episode (neuroNCAP
-counts a collision with any of them, ego stopped or not), the lane centre the
-labeller used, and the scene's drivable raster. The result sits beside the cache
+path is graded with `fastgrade` against every vehicle in the episode that can come
+within reach of it while it is graded (neuroNCAP counts a collision with any of
+them, ego stopped or not), the lane centre the labeller used, and the scene's
+drivable raster. The result sits beside the cache
 file as ``<episode>.labels.npz``.
 
 Before an episode's labels are written, a sample of its plans is graded again with
-`grader.grade` -- the function every earlier label came from -- and any
-disagreement stops the run. The vectorised grader exists to be fast, never to be
+`grader.grade` -- the function every earlier label came from -- against every
+vehicle, unfiltered, and any disagreement stops the run. The vectorised grader exists to be fast, never to be
 different.
 
     python -m gallops.train.scorer_labels --cache <dir> --drivable <dir>
@@ -29,8 +30,34 @@ from gallops.expert.lanes import load_references, reference_at
 
 #: neuroNCAP excludes pedestrians; annotated walkers are about 0.5 m long.
 VEHICLE_MIN_LENGTH_M = 1.2
-NEAR_M = 70.0
 CHECKS_PER_EPISODE = 12
+#: The prefilter's slack past a plan's own reach: both boxes' half-lengths, the
+#: ego's travel over the TTC check's look-ahead, and room to spare. A vehicle is
+#: dropped only when it cannot come this close at any moment a plan is graded over.
+REACH_MARGIN_M = 20.0
+#: The grading window: 5 s of extended plan (`hit5_at`), plus TTC's furthest offset.
+WINDOW_S = fastgrade.EXTENDED_S + max(fastgrade.TTC_OFFSETS)
+
+
+def reachable(vehicles: list[dict], ts: int, here: np.ndarray, reach_m: float) -> list[dict]:
+    """The vehicles that come within `reach_m` of `here` at any time in [ts, ts + WINDOW_S].
+
+    The filter this replaced kept vehicles within 70 m AND active at `ts`, so a car
+    80 m out closing at 21 m/s, or a track starting a second later, was never graded
+    -- and the re-check graded the same list, so it could not see that.
+    """
+    window = ts + np.arange(0.0, WINDOW_S + 1e-9, 0.1) * 1e6
+    keep = []
+    for actor in vehicles:
+        times = np.asarray(actor["timestamps"], dtype=float)
+        live = window[(window >= times[0]) & (window <= times[-1])]
+        if not len(live):
+            continue
+        xy = np.asarray(actor["poses"])[:, :2, 3]
+        gap = np.hypot(np.interp(live, times, xy[:, 0]) - here[0], np.interp(live, times, xy[:, 1]) - here[1])
+        if gap.min() < reach_m:
+            keep.append(actor)
+    return keep
 
 
 def human_travel(logged_times: np.ndarray, logged_xy: np.ndarray, t0: int, horizon_s: float = 4.0) -> float:
@@ -78,11 +105,8 @@ def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator
         ts = int(ts)
         ego2world = np.asarray(poses[str(ts)])
         here = ego2world[:2, 3]
-        near = [
-            a
-            for a in vehicles
-            if (s := grader.actor_at(a, float(ts))) is not None and np.linalg.norm(s[0] - here) < NEAR_M
-        ]
+        reach = float(np.linalg.norm(plans_all[i, :, :, :2], axis=-1).max()) * fastgrade.EXTENDED_S / 4.0
+        near = reachable(vehicles, ts, here, reach + REACH_MARGIN_M)
         reference, kind = reference_at(ts, logged, lanes)
         graded = fastgrade.grade_many(plans_all[i], ego2world, ts, near, reference, area, targets=targets)
         for k in keys:
@@ -91,7 +115,8 @@ def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator
         out["reference_is_lane"][i] = kind == "lane"
         if i in check_ticks:
             for j in rng.choice(plans_all.shape[1], size=CHECKS_PER_EPISODE // 3, replace=False):
-                slow = grader.grade(plans_all[i, j], ego2world, ts, near, reference, area)
+                # against EVERY vehicle, so the prefilter is checked too, not only fastgrade
+                slow = grader.grade(plans_all[i, j], ego2world, ts, vehicles, reference, area)
                 for key, value in (
                     ("hit_at", slow.hit_at),
                     ("off_road_at", slow.off_road_at),
@@ -111,9 +136,27 @@ def label_episode(cache_file: Path, drivable_dir: Path, rng: np.random.Generator
                 checked += 1
     target = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
     tmp = target.with_name(target.name + ".tmp.npz")
-    np.savez(tmp, **out, timestamp=data["timestamp"], n_vehicles=np.int32(len(vehicles)))
+    # the key of the cache file graded, so labels are never read against another build of it
+    stamp = {
+        "timestamp": data["timestamp"],
+        "n_vehicles": np.int32(len(vehicles)),
+        "cache_key": data["cache_key"],
+    }
+    np.savez(tmp, **out, **stamp)
     tmp.rename(target)
     return {"ticks": len(plans_all), "checked": checked}
+
+
+def labels_current(cache_file: Path) -> bool:
+    """Whether `cache_file`'s labels exist and graded this build of it; refuses stale ones."""
+    labels = cache_file.with_name(cache_file.name.replace(".npz", ".labels.npz"))
+    if not labels.exists():
+        return False
+    with np.load(cache_file) as data, np.load(labels) as graded:
+        built = str(data["cache_key"])
+        if "cache_key" not in graded.files or str(graded["cache_key"]) != built:
+            raise SystemExit(f"{labels} graded another build of {cache_file.name}; remove it to relabel")
+    return True
 
 
 def main() -> None:
@@ -127,6 +170,9 @@ def main() -> None:
         "--only", nargs="*", default=None, help="source directory names to label (to run shards in parallel)"
     )
     args = parser.parse_args()
+    from gallops.train.scorer_cache import require_key
+
+    require_key(args.cache)
     rng = np.random.default_rng(args.seed)
     files = sorted(
         p for p in args.cache.glob("*/*.npz") if not p.name.endswith(".labels.npz") and ".tmp" not in p.name
@@ -135,7 +181,7 @@ def main() -> None:
         files = [f for f in files if f.parent.name in args.only]
     started, done, checked = time.time(), 0, 0
     for f in files:
-        if f.with_name(f.name.replace(".npz", ".labels.npz")).exists():
+        if labels_current(f):
             continue
         result = label_episode(f, args.drivable, rng)
         done += 1

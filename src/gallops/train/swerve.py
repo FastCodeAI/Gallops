@@ -1,5 +1,6 @@
 """Teach Drive-JEPA to propose a sideways plan AND to rank it above driving into
-something -- both heads at once, because separating them did not work.
+something. Jointly by default; `--train-only scorer|refiner` trains one part at a
+time, which the later runs (s1-s3) did after joint training damaged the candidates.
 
 **What the first attempt measured.** Training the refiner alone, behind a frozen
 scorer, moved the proposals: the widest of the 32 went from 0.70 m to over 5 m
@@ -7,7 +8,7 @@ sideways. It also broke the model. On neuroNCAP scene 0103 the released model
 scores 5.0 ten times out of ten on the stationary and side scenarios; after that
 finetune it scored 1.09 and 0.68 and hit the obstacle in every run, while the
 frontal case it was built for got no better. The run is kept as
-`swerve-stageA-round0-seen` and the numbers in ops/dj_train/reach.json.
+`swerve-stageA-round0-seen`; its reach numbers were in a site-local ops file, not this repo.
 
 Two things caused it, and both are fixed here rather than worked around:
 
@@ -31,8 +32,9 @@ earlier probe showed obstacles on the ego's path are already legible in what it
 outputs, so it is frozen -- which also means it cannot quietly learn what a
 NeuRAD-inserted car looks like, the shortcut this whole setup most invites.
 
-**What this first run is and is not.** It trains on round-0 data only: 150
-episodes in which the released model drove and never swerved. No navtrain replay
+**What the first run was and was not.** It trained on round-0 data only: 150
+episodes in which the released model drove and never swerved. (`--source` now takes
+several labelled sets, GT-driven and DAgger rounds among them.) No navtrain replay
 yet, so the model WILL drift on ordinary driving, and that is expected rather than
 hidden -- the point of this run is to answer one question cheaply, whether the
 refiner can be moved to propose an evasion at all. If it can, navtrain mixing and
@@ -44,6 +46,7 @@ stage B follow. If it cannot, nothing further is worth building.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import random
@@ -54,7 +57,7 @@ from pathlib import Path
 import numpy as np
 
 from gallops import checkpoint as sidecar
-from gallops.config import SiteConfig
+from gallops.config import REPO_ROOT, SiteConfig
 from gallops.expert.grader import grade
 from gallops.expert.lanes import load_references, reference_at
 from gallops.train.losses import (
@@ -66,7 +69,8 @@ from gallops.train.losses import (
     trajectory_loss,
     travelled,
 )
-from gallops.train.swerve_data import episode_context
+from gallops.train.preflight import keep_rebuildable
+from gallops.train.swerve_data import episode_context, one_tick_per_pass, rebuildable
 
 #: Only these move. Everything else, the encoder above all, is frozen.
 #: `scorer` is the addition the first run's failure argued for: 4.70 M more, and
@@ -97,21 +101,148 @@ def oversampled(ticks: list[dict], factors: dict[str, int]) -> list[int]:
     return [i for i, tick in enumerate(ticks) for _ in range(factors.get(tick.get("expert_kind", ""), 1))]
 
 
+def parse_oversample(specs: list[str], ticks: list[dict]) -> dict[str, int]:
+    """`--oversample KIND=N` specs, refused unless KIND is a loaded expert kind and N >= 1.
+
+    `swerv=4` used to change nothing and `swerve=0` to drop every swerve tick, both
+    silently.
+    """
+    kinds = {t.get("expert_kind") for t in ticks}
+    factors = {}
+    for spec in specs:
+        kind, _, n = spec.partition("=")
+        if kind not in kinds:
+            raise SystemExit(f"--oversample {spec}: no loaded tick has expert kind {kind!r}")
+        if not n.isdigit() or int(n) < 1:
+            raise SystemExit(f"--oversample {spec}: N must be a whole number of at least 1")
+        factors[kind] = int(n)
+    return factors
+
+
+def epoch_means(losses: list[tuple]) -> tuple:
+    """Mean of each loss over an epoch, None for one the stage skips (never 0.0, a perfect fit)."""
+    # by index, not zip: this runs in the 3.9 training interpreter, and ruff wants strict=
+    columns = [[row[k] for row in losses] for k in range(2)]
+    return tuple(None if not c or c[0] is None else float(np.mean(c)) for c in columns)
+
+
 def excluded(ticks: list[dict], prefixes: list[str]) -> list[dict]:
     """Ticks whose episode starts with none of `prefixes` (e.g. "frontal-0064")."""
     return [t for t in ticks if not any(t["episode"].startswith(p) for p in prefixes)]
 
 
+#: The paddock adapter family these checkpoints load under.
+MODEL = "drivejepa_swerve"
+
+
 def git_sha(repo: Path) -> str:
+    """HEAD, with `-dirty` when `src/` or `tests/` hold uncommitted changes."""
     try:
-        return subprocess.run(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        head = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+        dirty = subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain", "--", "src", "tests"],
             capture_output=True,
             text=True,
             check=True,
         ).stdout.strip()
+        return head + ("-dirty" if dirty else "")
     except Exception:
         return "unknown"
+
+
+def head_moved(started: str, repo: Path) -> dict:
+    """`{"git_head_at_save": sha}` when HEAD is no longer the commit the run started from.
+
+    The sidecar's `train_git_sha` is the start's (the preflight's), because that is
+    the code Python loaded. A checkout or commit during the run does not change it,
+    but a reader should know the tree moved under the run, so it is recorded beside.
+    """
+    now = git_sha(repo)
+    return {} if now == started else {"git_head_at_save": now}
+
+
+#: Scenes in nuScenes v1.0-trainval's train split. Every scene these runs render is
+#: one of them, so `trained_on` declares nuscenes/train with the share actually read.
+NUSCENES_TRAIN_SCENES = 700
+#: What the labelled sets themselves are: NeuRAD renders with an inserted actor. Not
+#: a paddock dataset key, so recorded for the reader, never cross-checked.
+RENDERED = "neuroncap-actor-insertion"
+
+
+def scene_of(episode: str) -> str:
+    """ "frontal-0064/run_3" -> "0064"."""
+    return episode.split("/", 1)[0].rsplit("-", 1)[-1]
+
+
+def exclude_scenes(ticks: list[dict], scenes: list[str]) -> tuple[list[dict], list[str]]:
+    """Ticks outside `scenes`, and the scenes as matched ("scene-0064" and "0064" alike).
+
+    Refuses an exclusion that drops nothing: `scene-0064`, the form `scenarios.py
+    --scene` takes, used to match no tick and still be recorded as excluded.
+    """
+    wanted = [s.strip().removeprefix("scene-") for s in scenes]
+    present = {scene_of(t["episode"]) for t in ticks}
+    absent = [s for s in wanted if s not in present]
+    if absent:
+        raise SystemExit(f"--exclude-scene {', '.join(absent)}: no loaded tick is from that scene")
+    return [t for t in ticks if scene_of(t["episode"]) not in set(wanted)], wanted
+
+
+def labelled_digest(directory: Path) -> str:
+    """sha256 over a labelled directory's files, names and bytes, in name order.
+
+    A path says where the labels were; this says which labels. `labelled_round0_v2`
+    was rewritten in place between two runs that both name it.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(Path(directory).glob("*.jsonl")):
+        digest.update(path.name.encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
+
+
+def declared_training(
+    train: list[dict], labelled: list[str], read_share: float, inherited=()
+) -> tuple[sidecar.TrainedOn, ...]:
+    """`trained_on`: the nuScenes scenes read, each labelled set, and what `--init` saw.
+
+    `read_share` is the share of the loaded ticks kept (below 1 for a `--limit`
+    smoke), so a smoke checkpoint does not claim the whole round.
+    """
+    scenes = {scene_of(t["episode"]) for t in train}
+    fraction = round(len(scenes) / NUSCENES_TRAIN_SCENES * read_share, 6)
+    own = [sidecar.TrainedOn("nuscenes", "train", fraction)]
+    own += [
+        sidecar.TrainedOn(RENDERED, Path(path).name, None if read_share >= 1 else read_share)
+        for path in dict.fromkeys(labelled)
+    ]
+    out = list(dict.fromkeys(own))
+    out += [t for t in inherited if t not in out]
+    return tuple(out)
+
+
+def inherited_training(init: Path | None) -> tuple:
+    """The `trained_on` of the checkpoint `--init` points into: what it already saw."""
+    if init is None:
+        return ()
+    try:
+        return sidecar.read(Path(init).parent).trained_on
+    except sidecar.SidecarError as error:
+        raise SystemExit(f"--init {init}: {error}; its training cannot be carried forward") from error
+
+
+def fresh_run(cfg: SiteConfig, train_run: str) -> Path:
+    """The run directory for `train_run`, refused if a fit is already in it.
+
+    One fit is one run. Rerun into an existing one and the new fit starts again from
+    the released weights, overwrites step directories it reaches and lands new ones
+    beside the old fit's -- which paddock then groups as one sweep.
+    """
+    run = cfg.checkpoint_dir(MODEL, train_run, 0).parent
+    if run.exists() and any(run.iterdir()):
+        raise SystemExit(f"{run} already holds a fit; one fit is one run -- choose a new --train-run")
+    return run
 
 
 def load_ticks(labelled: Path, blind: bool = False, source: int = 0) -> list[dict]:
@@ -369,7 +500,9 @@ def main() -> None:
     )
     parser.add_argument("--epochs", type=int, default=6)
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--batch", type=int, default=8)
+    # One tick per forward pass: see TICKS_PER_PASS in swerve_data. Every run before
+    # it trained at 8, each tick but the first on its batch-mate's image mask.
+    parser.add_argument("--batch", type=one_tick_per_pass, default=1)
     # 0058 was the first choice and a bad one: 54 swerve ticks in 1,673, exactly
     # one of them frontal, so its held-out loss was measuring ordinary driving.
     # 0053 has 444 swerve ticks (157 frontal) and the only balanced mix of all
@@ -385,7 +518,12 @@ def main() -> None:
     # A scene whose inserted car renders as nothing teaches reactions to an empty
     # road. scene-0064's car was only ever seen 47 m+ away, and in its frontal
     # episodes it is not visible at all.
-    parser.add_argument("--exclude-scene", action="append", default=[], help="e.g. 0064; repeatable")
+    parser.add_argument(
+        "--exclude-scene",
+        action="append",
+        default=[],
+        help="e.g. 0064 or scene-0064; repeatable, and refused if it drops nothing",
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
     parser.add_argument(
@@ -441,6 +579,7 @@ def main() -> None:
         default=0.0,
         help="weight of the ranking loss over the 32 plans, added to the scorer's BCE (0 = BCE only)",
     )
+    parser.add_argument("--seed", type=int, default=0, help="seeds python, numpy and torch; recorded")
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
     # Validation during the epoch, not only after it: the held-out trajectory loss
@@ -455,6 +594,17 @@ def main() -> None:
     args = parser.parse_args()
 
     cfg = SiteConfig.load()
+    # Absolute before `build_model` changes into the vendor's repo, where a relative
+    # path would resolve -- or silently not, for --drivable.
+    for name in ("labelled", "dumps", "drivable", "init"):
+        if getattr(args, name) is not None:
+            setattr(args, name, getattr(args, name).resolve())
+    args.source = [
+        [str(Path(labelled).resolve()), str(Path(dumps).resolve()), drove]
+        for labelled, dumps, drove in args.source
+    ]
+    out_root = fresh_run(cfg, args.train_run)  # before any of the minutes below
+    loaded = git_sha(REPO_ROOT)  # the commit whose modules this process imported
     # The agent reads these at construction, exactly as paddock's model.yaml
     # supplies them to its node. NAVSIM_EXP_ROOT in particular is where it looks
     # for the V-JEPA weights the encoder is built on.
@@ -486,7 +636,7 @@ def main() -> None:
         n = sum(1 for t in ticks if t["source"] == i)
         print(f"  source {i}: {n} ticks from {s.labelled} (drove: {s.drove})")
     if args.exclude_scene:
-        kept = [t for t in ticks if not any(f"-{scene}/" in t["episode"] for scene in args.exclude_scene)]
+        kept, args.exclude_scene = exclude_scenes(ticks, args.exclude_scene)
         print(f"  excluded scenes {', '.join(args.exclude_scene)}: {len(ticks) - len(kept)} ticks dropped")
         ticks = kept
     if args.exclude_episodes:
@@ -495,11 +645,23 @@ def main() -> None:
             f"  excluded episodes {', '.join(args.exclude_episodes)}: {len(ticks) - len(kept)} ticks dropped"
         )
         ticks = kept
+    # Dropped here, before anything counts them, rather than skipped by the dataset:
+    # skipped there, the sidecar described ticks the model never saw.
+    ticks, unrebuildable = keep_rebuildable(ticks, rebuildable)
+    print(f"  dropped {unrebuildable['dropped']} unrebuildable ticks: {unrebuildable['by_expert_kind']}")
+    loaded = len(ticks)
     if args.limit:
         # Evenly spaced, not the first N: the files are sorted by scenario-scene,
         # so a head slice is one scene and a smoke run over it holds out its own
         # entire training set.
         ticks = [ticks[i] for i in np.linspace(0, len(ticks) - 1, args.limit).round().astype(int)]
+    read_share = min(1.0, len(ticks) / max(loaded, 1))
+    inherited = inherited_training(args.init)
+    # Once, at the start: the labels this run loaded, whatever happens to the directory.
+    # By index, not zip(strict=): this runs in the 3.9 training interpreter.
+    digests = [labelled_digest(Path(s.labelled)) for s in sources]
+    for i, s in enumerate(sources):
+        print(f"  {s.labelled}: sha256 {digests[i][:12]}")
     train, val = split_by_scene(ticks, args.held_out)
     print(f"  {len(ticks)} labelled ticks: {len(train)} train, {len(val)} held out (scene {args.held_out})")
     if not train:
@@ -512,13 +674,18 @@ def main() -> None:
     )
     scorer_only = args.train_only == "scorer"
     refiner_only = args.train_only == "refiner"
-    factors = {k: int(v) for k, v in (spec.split("=", 1) for spec in args.oversample)}
+    factors = parse_oversample(args.oversample, train)
     agent, model, torch = build_model(
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
         train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE_REFINER if refiner_only else TRAINABLE,
     )
+    # The anchor term draws from numpy's global RNG and the vendor's GridMask from it
+    # too; unseeded, no run could be rebuilt from its sidecar.
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
     loss_options = {
         "with_trajectory": not scorer_only,
         "rank_weight": args.rank_weight,
@@ -527,12 +694,15 @@ def main() -> None:
     # Held-out checks still grade the candidates when training skips it: how the frozen
     # scorer picks among the refiner's new plans is the thing to watch.
     eval_options = {**loss_options, "with_score": True}
+    # In train mode the frozen encoder still applies the vendor's GridMask(prob 0.7):
+    # its weights do not move, but the frames the trained parts learn from are masked.
+    gridmask = "; the frozen encoder runs in train mode, so the vendor's GridMask augmentation is on"
     if scorer_only:
-        stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen"
+        stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen and in eval mode"
     elif refiner_only:
-        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped"
+        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped" + gridmask
     else:
-        stage_note = "joint -- refiner and scorer train, encoder frozen"
+        stage_note = "joint -- refiner and scorer train, encoder frozen" + gridmask
     loss_note = "vendor trajectory_loss_anchors (winner + good anchors)" if not scorer_only else ""
     if not refiner_only:
         loss_note += (" + " if loss_note else "") + "scorer BCE against score_target"
@@ -557,6 +727,10 @@ def main() -> None:
     # `agent.anchors` is the vendor's own trajectory vocabulary: data/8192.npy,
     # subsampled to the 8 poses the model plans over.
     referee = Referee(agent.anchors, drivable=args.drivable)
+    # Its own RNG: on the shared one, an interim check at step 100 drew anchors for
+    # 400 held-out ticks and changed every later training tick's anchor set, so the
+    # weights depended on --val-every and --val-sample.
+    held_referee = Referee(agent.anchors, drivable=args.drivable, seed=1)
 
     # Before any step: the code is committed and its tests pass, the trainer's own
     # grading reproduces the labels exactly, and the starting weights reproduce
@@ -565,7 +739,7 @@ def main() -> None:
     from gallops.train import preflight
 
     checked = preflight.run(
-        Path(__file__).resolve().parents[3],
+        REPO_ROOT,
         train,
         referee,
         sources,
@@ -574,6 +748,12 @@ def main() -> None:
         torch,
         args.device,
     )
+
+    if checked["code"]["sha"] != loaded:
+        raise SystemExit(
+            f"HEAD moved from {loaded} to {checked['code']['sha']} while the model loaded; the "
+            "preflight checked a tree this process did not import -- start again"
+        )
 
     if args.init:
         # Only now: the preflight above held the released weights to the dumps they drove,
@@ -584,12 +764,12 @@ def main() -> None:
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
-    out_root = Path(cfg.resolve("{weights}")) / "drivejepa_swerve" / args.train_run
     out_root.mkdir(parents=True, exist_ok=True)
     # One JSON line per 25 training steps and per held-out check, beside the
-    # checkpoints, so curves can be drawn from the run itself.
+    # checkpoints, so curves can be drawn from the run itself. "x": a second fit
+    # appending here would put two runs' curves under both runs' sidecars.
     metrics_path = out_root / "metrics.jsonl"
-    metrics = metrics_path.open("a")
+    metrics = metrics_path.open("x")
 
     def record(kind: str, **fields) -> None:
         metrics.write(json.dumps({"kind": kind, "time": round(time.time(), 1), **fields}) + "\n")
@@ -635,11 +815,16 @@ def main() -> None:
             timed("backward", loss.backward)
             torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             optimiser.step()
-            losses.append((float(trajectory.detach()), float(scored.detach())))
+            losses.append(
+                (
+                    None if scorer_only else float(trajectory.detach()),
+                    None if refiner_only else float(scored.detach()),
+                )
+            )
             recent_parts.append(parts)
             step += 1
             if step % 25 == 0:
-                recent = np.asarray(losses[-25:])
+                recent = np.asarray([[np.nan if v is None else v for v in row] for row in losses[-25:]])
                 record(
                     "train",
                     epoch=epoch,
@@ -655,7 +840,9 @@ def main() -> None:
                     flush=True,
                 )
             if interim and args.val_every and step % args.val_every == 0:
-                held_out = evaluate(model, validation, interim, referee, torch, args.batch, **eval_options)
+                held_out = evaluate(
+                    model, validation, interim, held_referee, torch, args.batch, **eval_options
+                )
                 record("val", epoch=epoch, step=step, ticks=len(interim), **held_out)
                 nan = float("nan")
                 print(
@@ -666,16 +853,22 @@ def main() -> None:
                     flush=True,
                 )
 
-        trained = np.asarray(losses)
+        mean_trajectory, mean_score = epoch_means(losses)
         entry = {
             "epoch": epoch,
-            "train_trajectory": float(trained[:, 0].mean()),
-            "train_score": float(trained[:, 1].mean()),
+            "train_trajectory": mean_trajectory,
+            "train_score": mean_score,
             "minutes": (time.time() - started) / 60,
         }
         if validation is not None:
             held_out = evaluate(
-                model, validation, list(range(len(validation))), referee, torch, args.batch, **eval_options
+                model,
+                validation,
+                list(range(len(validation))),
+                held_referee,
+                torch,
+                args.batch,
+                **eval_options,
             )
             if held_out:
                 record("val_full", epoch=epoch, step=step, ticks=len(validation), **held_out)
@@ -686,29 +879,29 @@ def main() -> None:
                 entry["val_score_above_floor"] = held_out["score_above_floor"]
         history.append(entry)
         print(
-            f"  epoch {epoch}: train traj {entry['train_trajectory']:.4f} "
-            f"score {entry['train_score']:.4f} | val traj {entry.get('val_trajectory')} "
+            f"  epoch {epoch}: train traj {entry['train_trajectory']} "
+            f"score {entry['train_score']} | val traj {entry.get('val_trajectory')} "
             f"score {entry.get('val_score')} pick is best {entry.get('val_pick_is_best')} "
             f"regret {entry.get('val_pick_regret')} in {entry['minutes']:.1f} min",
             flush=True,
         )
 
-        directory = out_root / f"step_{step:09d}"
+        directory = cfg.checkpoint_dir(MODEL, args.train_run, step)
         directory.mkdir(parents=True, exist_ok=True)
         torch.save({k: v for k, v in model.state_dict().items()}, directory / "model.pt")
+        moved = head_moved(checked["code"]["sha"], REPO_ROOT)
+        if moved:
+            print(f"  HEAD moved during the run to {moved['git_head_at_save']}; recorded beside", flush=True)
         sidecar.write(
             directory,
             sidecar.Checkpoint(
-                model="drivejepa_swerve",
+                model=MODEL,
                 step=step,
-                train_git_sha=git_sha(Path(__file__).resolve().parents[3]),
+                train_git_sha=checked["code"]["sha"],
                 train_run=args.train_run,
-                trained_on=(
-                    sidecar.TrainedOn(
-                        dataset="neuroncap-actor-insertion",
-                        split="round0, 5 non-benchmark nuScenes train scenes",
-                    ),
-                ),
+                # Built from what this run read, not a literal: the literal said
+                # "round0, 5 scenes" for runs on three data sets and three scenes.
+                trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
                 selection_split=f"held-out scene {args.held_out}",
                 params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
                 precision="fp32",
@@ -722,7 +915,13 @@ def main() -> None:
                     "excluded_episodes": args.exclude_episodes,
                     # Which label set and which dumps: v4 could only be traced to
                     # its labels by file timestamps.
-                    "sources": [s._asdict() for s in sources],
+                    "sources": [
+                        {**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)
+                    ],
+                    # the scenes actually read, which `trained_on` counts but cannot name
+                    "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
+                    "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
+                    "limit": args.limit or None,
                     "preflight": checked,
                     "history": history,
                     # every 25-step mean and held-out check of this run, beside the checkpoints
@@ -730,6 +929,14 @@ def main() -> None:
                     "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
                     "off_camera_targets": "kept" if args.keep_blind else "dropped",
                     "excluded_scenes": args.exclude_scene,
+                    # dropped before training because their input cannot be rebuilt
+                    "unrebuildable": unrebuildable,
+                    "seed": args.seed,
+                    "val_every": args.val_every,
+                    "val_sample": args.val_sample,
+                    # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
+                    "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
+                    **moved,
                 },
             ),
         )

@@ -164,21 +164,6 @@ def follow(reference_ego: np.ndarray, distances: np.ndarray) -> np.ndarray:
     )
 
 
-def _trajectory(points: np.ndarray) -> np.ndarray:
-    """Waypoints with headings. A step too short to have a direction keeps the last one.
-
-    arctan2 of a 2 cm step is noise, and a stopping plan is made of such steps:
-    round-0 targets had stopped cars pointing 90 deg off the road.
-    """
-    steps = np.diff(np.vstack([[0.0, 0.0], points]), axis=0)
-    headings, last = np.zeros(len(points)), 0.0
-    for i, (dx, dy) in enumerate(steps):
-        if np.hypot(dx, dy) > STILL_M:
-            last = float(np.arctan2(dy, dx))
-        headings[i] = last
-    return np.column_stack([points, headings])
-
-
 def min_length_for(offset: float, min_radius: float = MIN_TURN_RADIUS_M) -> float:
     """Shortest distance over which a cosine S-curve moves `offset` sideways
     without turning tighter than `min_radius`: peak curvature is pi^2 |offset| / (2 L^2)."""
@@ -186,13 +171,18 @@ def min_length_for(offset: float, min_radius: float = MIN_TURN_RADIUS_M) -> floa
 
 
 def undrivable(
-    waypoints: np.ndarray, min_radius: float = MIN_TURN_RADIUS_M, tolerance: float = 1.3
+    waypoints: np.ndarray,
+    min_radius: float = MIN_TURN_RADIUS_M,
+    tolerance: float = 1.3,
+    accel_max: float = LATERAL_ACCEL_MAX,
 ) -> str | None:
-    """Why no car could follow this plan, or None if one could.
+    """Why no car could follow this plan, or None if one could: too tight a turn, or
+    too much lateral acceleration (v^2 kappa) at the speed it turns at.
 
     Between two chords of an arc of radius R the heading turns by (ds_prev + ds) / 2R;
     the first chord leaves the car's own heading. `tolerance` covers the chord
-    approximation on a correctly drawn S-curve, which peaks at exactly 1 / R.
+    approximation on a correctly drawn S-curve, which peaks at exactly 1 / R. The
+    acceleration test is the same turn over the same span, at the chord's speed.
     """
     points = np.vstack([[0.0, 0.0], np.asarray(waypoints, dtype=float)[:, :2]])
     previous_heading, previous_step = 0.0, 0.0
@@ -207,6 +197,10 @@ def undrivable(
         if turn > allowed:
             radius = (previous_step + length) / (2 * max(turn, 1e-9))
             return f"turns at a {radius:.1f} m radius into waypoint {i} (limit {min_radius:.0f} m)"
+        speed = length / WAYPOINT_DT
+        lateral = speed**2 * 2 * turn / (previous_step + length)
+        if lateral > tolerance * accel_max:
+            return f"turns at {lateral:.1f} m/s^2 into waypoint {i} (limit {accel_max:.0f} m/s^2)"
         previous_heading, previous_step = heading, length
     return None
 
@@ -350,7 +344,9 @@ def rejoin(reference_ego: np.ndarray, speed: float, distances: np.ndarray) -> np
 
     The ramp is laid out over DISTANCE travelled, not time. Over time, a plan
     that braked to a stop still covered the whole correction: 934 of 9,495
-    round-0 targets slid up to 2 m sideways over 2.8 m of travel. Over distance
+    round-0 targets slid up to 2 m sideways over 2.8 m of travel. (Those are the
+    stop-and-slide plans only; by `undrivable`, 4,347 of the 9,495 could not be
+    followed, 4,320 of them turning off the car's heading at the first waypoint.) Over distance
     the turning radius holds whatever the brake does, and a car that stops early
     stops part of the way back.
     """
@@ -391,7 +387,14 @@ def _plan_from(
                 along,
                 delay_s * v,
                 None if return_at is None else return_at * v,
-                return_s=max(RETURN_S * v, min_length_for(offset)),
+                # the return is laid out over distance, so its peak lateral acceleration
+                # is pi^2 |offset| v^2 / (2 L^2): at RETURN_S alone that broke the limit
+                # for any offset over 1.82 m
+                return_s=max(
+                    RETURN_S * v,
+                    min_length_for(offset),
+                    v * np.pi * np.sqrt(abs(offset) / (2 * LATERAL_ACCEL_MAX)),
+                ),
             )
         return points
 
@@ -404,10 +407,12 @@ def pursue(desired, distances: np.ndarray, speed: float, min_radius: float = MIN
     A drawn path is a wish; this is what a car starting HERE, pointing THIS way,
     can actually do with it. The plan used to be the drawn points themselves, and
     a drawing that ignored the car's heading or ran out of travel produced plans
-    no car could follow -- 934 of 9,495 round-0 targets, stops that slid 2 m
-    sideways onto the logged path. Driven, a plan that stops early stops where it
+    no car could follow -- 4,347 of 9,495 round-0 targets by `undrivable`, most
+    turning off the car's own heading at the first waypoint, and among them 934
+    stops that slid 2 m sideways onto the logged path. Driven, a plan that stops early stops where it
     got to, still pointing down the road, and no plan ever turns tighter than
-    `min_radius`. The grader then judges the path driven, not the path wished for.
+    `min_radius`, nor at more than LATERAL_ACCEL_MAX at its own speed. The grader
+    then judges the path driven, not the path wished for.
     """
     lookahead = max(LOOKAHEAD_MIN_M, LOOKAHEAD_S * speed)
     grid = np.arange(0.0, float(distances[-1]) + lookahead + PURSUIT_STEP_M, PURSUIT_STEP_M)
@@ -415,11 +420,17 @@ def pursue(desired, distances: np.ndarray, speed: float, min_radius: float = MIN
     x = y = heading = travelled = 0.0
     out = np.zeros((len(distances), 3))
     for i, goal in enumerate(distances):
+        # The car's speed over this waypoint step: curvature is clamped so that
+        # v^2 kappa stays within LATERAL_ACCEL_MAX as well as 1 / min_radius. Chasing a
+        # lane that points 15 degrees off the car's heading at 12 m/s used to take
+        # 8.7 m/s^2; a car follows the lane more loosely instead.
+        step_speed = (goal - (distances[i - 1] if i else 0.0)) / WAYPOINT_DT
+        limit = min(1 / min_radius, LATERAL_ACCEL_MAX / max(step_speed, 0.1) ** 2)
         while travelled < goal - 1e-9:
             ds = min(PURSUIT_STEP_M, goal - travelled)
             tx, ty = path[min(int(round((travelled + lookahead) / PURSUIT_STEP_M)), len(path) - 1)]
             alpha = (np.arctan2(ty - y, tx - x) - heading + np.pi) % (2 * np.pi) - np.pi
-            kappa = float(np.clip(2 * np.sin(alpha) / lookahead, -1 / min_radius, 1 / min_radius))
+            kappa = float(np.clip(2 * np.sin(alpha) / lookahead, -limit, limit))
             # along the arc's midpoint heading, so a short arc is exact: turning first
             # over-turned a 0.8 m first chord past the radius it was clamped to
             x += ds * np.cos(heading + kappa * ds / 2)
@@ -441,8 +452,10 @@ def teach(
     """The trajectory the model should have produced at this tick.
 
     Drawn against a constant-velocity prediction of each target, then graded
-    against their real futures. Widening and braking are tried, in that order,
-    only when the grader rejects what was drawn.
+    against their real futures. Widening and braking are tried only when the
+    grader rejects what was drawn: braking first when nothing is closing on the
+    ego faster than APPROACHING_MPS (a parked or crossing car), widening first
+    when something is (an oncoming one).
     """
     reference = np.asarray(reference_world)[:, :2]
     reference_ego = to_ego(reference, ego2world)
