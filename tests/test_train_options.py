@@ -107,3 +107,28 @@ def test_a_loss_the_stage_skips_is_none_not_a_perfect_zero():
 
     assert epoch_means([(None, 0.5), (None, 1.5)]) == (None, 1.0)
     assert epoch_means([(2.0, None)]) == (2.0, None)
+
+
+def test_reach_measures_the_scene_the_run_held_out(tmp_path):
+    """#2 review, finding 10: the default, 0058, is a training scene of every run."""
+    import pytest
+
+    from gallops import checkpoint
+    from gallops.train.reach import held_out_scene
+
+    for step in (1, 2):
+        checkpoint.write(
+            tmp_path / f"step_{step:09d}",
+            checkpoint.Checkpoint(
+                model="m",
+                step=step,
+                train_git_sha="abc",
+                train_run="r",
+                selection_split="held-out scene 0053",
+                trained_on=(checkpoint.TrainedOn("nuscenes", "train", 0.004),),
+            ),
+        )
+    assert held_out_scene(tmp_path, None) == "0053"
+    assert held_out_scene(tmp_path, "0070") == "0070"
+    with pytest.raises(SystemExit, match="pass --held-out"):
+        held_out_scene(None, None)

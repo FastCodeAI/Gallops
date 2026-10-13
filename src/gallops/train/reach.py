@@ -61,6 +61,26 @@ def sample(ticks: list[dict], limit: int) -> list[dict]:
     return [ticks[i] for i in np.linspace(0, len(ticks) - 1, limit).round().astype(int)]
 
 
+def held_out_scene(run: Path | None, given: str | None) -> str:
+    """The scene to measure on: `--held-out`, else the one the run's checkpoints held out.
+
+    The old default, 0058, is in the training set of every run that held out 0053,
+    so without the flag this printed training ticks as "held-out ticks".
+    """
+    if given:
+        return given
+    from gallops import checkpoint
+
+    found = set()
+    for step in sorted(Path(run).glob("step_*")) if run else []:
+        if (step / checkpoint.SIDECAR_NAME).exists():
+            split = checkpoint.read(step).selection_split or ""
+            found.add(split.removeprefix("held-out scene ").strip())
+    if len(found) != 1 or not all(s.isdigit() for s in found):
+        raise SystemExit(f"pass --held-out: the sidecars name no single held-out scene: {sorted(found)}")
+    return found.pop()
+
+
 def measure(model, dataset, ticks, torch, drivable: Path | None, batch: int = 1) -> dict:
     """Reach and escape rate over `ticks`, split by what the expert asked for."""
     rows = []
@@ -129,7 +149,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--labelled", type=Path, required=True)
     parser.add_argument("--run", type=Path, help="a run directory of step_* checkpoints")
-    parser.add_argument("--held-out", default="0058")
+    parser.add_argument("--held-out", help="scene to measure; default: the one --run's checkpoints held out")
     parser.add_argument("--limit", type=int, default=200)
     parser.add_argument("--batch", type=one_tick_per_pass, default=1)  # see TICKS_PER_PASS
     parser.add_argument("--drivable", type=Path)
@@ -153,6 +173,7 @@ def main() -> None:
     os.environ.setdefault("DRIVE_JEPA_MSDA", "auto")
 
     # The held-out scene, so this measures a model on ticks it never trained on.
+    args.held_out = held_out_scene(args.run, args.held_out)
     ticks = [t for t in load_ticks(args.labelled) if args.held_out in t["episode"]]
     ticks = sample(ticks, args.limit)
     print(f"  {len(ticks)} held-out ticks from scene {args.held_out}")

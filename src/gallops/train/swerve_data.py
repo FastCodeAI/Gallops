@@ -43,8 +43,9 @@ model whose plan does not move when the camera is blanked.
 
 Transcribed from paddock's `adapters/models/drivejepa/policy.py`, which built the
 same AgentInput when these episodes were driven. The repos do not import each
-other, so `verify` is what keeps the copy honest -- and it kept the bug too,
-because a copy that agrees with its source cannot say the source is wrong.
+other, so the preflight's fidelity check is what keeps the copy honest -- and it
+kept the bug too, because a copy that agrees with its source cannot say the
+source is wrong. The sight check is the one whose reference is no recording.
 """
 
 from __future__ import annotations
@@ -527,6 +528,7 @@ def verify_fast_path(dataset, ticks, torch, model=None) -> None:
     proves it: the 32 proposals must come out bit-identical either way.
     """
     reused = "camera_feature"
+    ticks = [t for t in ticks if rebuildable(t)]  # `features` is None for the rest
     for tick in ticks:
         slow = dataset.features(tick, fast=False)
         fast = dataset.features(tick, fast=True)

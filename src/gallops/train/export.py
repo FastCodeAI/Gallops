@@ -32,7 +32,11 @@ def export(directory: Path, torch) -> Path:
     if any(key.startswith(PREFIX) for key in state):
         raise SystemExit(f"{directory}: model.pt is already prefixed; nothing to do")
     out = directory / "agent.ckpt"
-    torch.save({"state_dict": {PREFIX + key: value for key, value in state.items()}}, out)
+    # Under a temporary name, then renamed: the step directory is already published,
+    # and paddock may open agent.ckpt while 1.2 GB of it is still being written.
+    tmp = directory / ".agent.ckpt.partial"
+    torch.save({"state_dict": {PREFIX + key: value for key, value in state.items()}}, tmp)
+    tmp.replace(out)
     return out
 
 
