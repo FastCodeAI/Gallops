@@ -113,3 +113,15 @@ def test_real_nuscenes_takes_the_command_rule_and_scene_set_from_paddock(monkeyp
     monkeypatch.setitem(sys.modules, "paddock.adapters.benchmarks.nuscenes.loader", None)
     with pytest.raises(SystemExit, match="PYTHONPATH"):
         nuscenes_real.command(np.zeros((8, 2)))
+
+
+def test_real_held_out_scenes_are_never_trained_on():
+    """#6 review, finding 9: their scene number is never one of SCENES, so every fold took them."""
+    d = {
+        "scene": np.array(["0053", "0058", "1234", "1234"]),
+        "episode": np.array(["a", "b", "c", "d"]),
+        "usable": np.array([True, True, True, True]),
+        "holdout": np.array([False, False, True, False]),
+    }
+    train, test = scorer_folds.fold_rows(d, "0053")
+    assert list(test) == [0] and list(train) == [1, 3]
