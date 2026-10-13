@@ -7,14 +7,16 @@ NAVSIM that scorer ranks close to random: on KITScenes the best of its 32 is
 selector -- recovers most of that gap for the cost of a CPU minute. See
 docs/STRATEGY.md.
 
-The input is a dataset exported by paddock (`tools/models/drivejepa/rerank.py
-dataset`), not raw model output, so that paddock alone defines the features:
+The input is the dataset `python -m gallops.data.rerank dataset` builds from
+paddock's candidate dump, not raw model output. Its features are a transcription
+of paddock's, and that module says what holds the two equal. The dataset holds:
 
     x              (N, K, F)  features of K candidates for N samples
     ade            (N, K)     each candidate's ADE to the logged future
     scene          (N,)       scene id, so held-out selection splits by scene
     feature_names  (F,)       copied into the weights for paddock to check
     dataset, split            what the samples are, for `trained_on`
+    feature_probe_*           optional; copied into the weights (`FEATURE_PROBE`)
 
 The label is a soft target over the K, softmax(-ade / temperature); the loss is
 listwise cross-entropy; the model is a one-hidden-layer MLP trained full-batch
@@ -26,7 +28,8 @@ Output, in `{weights}/<model>/<train_run>/step_<epoch>/`:
 
     reranker.npz     format, feature_names, mean, std, w1, b1, w2, b2, and a
                      probe: inputs plus the scores this forward pass gave them,
-                     which paddock recomputes at load and refuses on mismatch
+                     which paddock recomputes at load and refuses on mismatch;
+                     and the export's feature probe (`FEATURE_PROBE`), if any
     checkpoint.json  the sidecar (`gallops.checkpoint`)
 
 numpy only. `pip install -e ".[train]"` provides it.
@@ -51,6 +54,15 @@ from gallops.config import SiteConfig
 FORMAT = "paddock-listwise-mlp/1"
 
 WEIGHTS_NAME = "reranker.npz"
+
+#: The feature probe: a few real candidate sets as raw model output, and the
+#: features gallops' `candidate_features` computed from them. The score probe
+#: replays stored features, so it cannot see the two repos' feature copies
+#: part; recomputing these can. `python -m gallops.data.rerank dataset` writes
+#: them into the export and the trainer carries them into the weights
+#: untouched. Paddock does not check them yet (a paddock follow-up), so they are
+#: additive under the same FORMAT: an older reader ignores keys it does not use.
+FEATURE_PROBE = ("feature_probe_proposals", "feature_probe_logits", "feature_probe_speed", "feature_probe_x")
 
 
 @dataclass(frozen=True)
@@ -208,6 +220,31 @@ def check_export(path: Path, x, ade, scenes, feature_names, model_pick) -> None:
         raise ValueError(f"{path}: model_pick must be one candidate index in [0, {x.shape[1]}) per sample")
 
 
+def check_feature_probe(path: Path, probe: dict[str, np.ndarray], x: np.ndarray) -> None:
+    """Refuse a feature probe that is partial or not shaped like this export's samples.
+
+    Absent is allowed: an export from before the probe existed still fits, and
+    its weights simply carry none. Partial is not, since a reader could not
+    replay it.
+    """
+    if not probe:
+        return
+    if set(probe) != set(FEATURE_PROBE):
+        raise ValueError(f"{path}: feature probe has {sorted(probe)}, needs all of {list(FEATURE_PROBE)}")
+    n, (k, f) = len(probe["feature_probe_speed"]), x.shape[1:]
+    shapes_agree = (
+        probe["feature_probe_speed"].shape == (n,)
+        and probe["feature_probe_proposals"].shape[:2] == (n, k)
+        and probe["feature_probe_logits"].shape[:2] == (n, k)
+        and probe["feature_probe_x"].shape == (n, k, f)
+    )
+    if not (n and shapes_agree):
+        shapes = {key: value.shape for key, value in probe.items()}
+        raise ValueError(
+            f"{path}: feature probe {shapes} does not fit samples of {k} candidates x {f} features"
+        )
+
+
 def sample_ids_digest(sample_ids: np.ndarray) -> str:
     """sha256 of the sample ids, sorted and newline-joined.
 
@@ -259,6 +296,7 @@ def train(
     with np.load(io.BytesIO(raw), allow_pickle=False) as npz:
         x, ade, scenes = npz["x"].astype(np.float64), npz["ade"].astype(np.float64), npz["scene"]
         feature_names = npz["feature_names"]
+        feature_probe = {key: npz[key] for key in FEATURE_PROBE if key in npz.files}
         source, split = str(npz["dataset"]), str(npz["split"])
         model_pick = npz["model_pick"] if "model_pick" in npz.files else None
         sample_ids = npz["sample_id"].astype(str) if "sample_id" in npz.files else None
@@ -277,6 +315,7 @@ def train(
     check_export(dataset, x, ade, scenes, feature_names, model_pick)
     if sample_ids is not None and sample_ids.shape != (len(x),):
         raise ValueError(f"{dataset}: {sample_ids.shape} sample ids for {len(x)} samples")
+    check_feature_probe(dataset, feature_probe, x)
 
     held = split_by_scene(scenes, settings.holdout_frac, settings.seed)
     if held.all():
@@ -309,6 +348,7 @@ def train(
         "std": std,
         "probe_x": probe_x,
         "probe_scores": probe_scores,
+        **feature_probe,
         **ranker.state(),
     }
     buffer = io.BytesIO()

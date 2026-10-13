@@ -64,7 +64,7 @@ def show(directory: str) -> None:
 
 @app.command("train-rerank")
 def train_rerank(
-    dataset: str = typer.Argument(..., help="candidate dataset exported by paddock's rerank.py"),
+    dataset: str = typer.Argument(..., help="dataset from `python -m gallops.data.rerank dataset`"),
     train_run: str = typer.Option(..., help="label for this run; names the checkpoint directory"),
     model: str = typer.Option("drivejepa_rerank", help="paddock adapter name"),
     hidden: int = typer.Option(128, help="MLP hidden units (0 = linear)"),
