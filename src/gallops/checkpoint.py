@@ -10,7 +10,8 @@ So the two communicate through a directory on disk:
         checkpoint.json      <- this module writes it, paddock reads it
         model.safetensors
 
-`checkpoint.json` is a few hundred bytes of JSON. It is deliberately not a
+`checkpoint.json` is a small JSON file -- kilobytes at most, mostly the scene
+list a run records in `notes`. It is deliberately not a
 pickle, not a torch object, and not anything that requires either side to share
 a dependency to read it. Paddock parses it with `json.load`; this module is
 stdlib-only so it can be imported anywhere, including from a training script
