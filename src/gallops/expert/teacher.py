@@ -59,6 +59,7 @@ from .grader import (
     Verdict,
     actor_at,
     grade,
+    leaves_road,
 )
 
 #: Classes neuro-ncap's CollisionChecker checks (`evaluation/collision.py`); a hit on any of them ends
@@ -72,7 +73,10 @@ TRIGGER_S = 3.5
 #: ...and the hazard spans at least this many pixels of the 512-px-wide crop the encoder sees
 #: (16-px patches): at v5's first reaction a frontal car was a median 15 px.
 MIN_PX = 16.0
-#: Below this time to contact, act whatever the camera shows: too late to wait to be seen.
+#: Below this time to contact, act on any part of it in frame: too late to wait for 16 px. A hazard
+#: wholly outside the frame is never acted on (user, 2026-10-13: brake when it appears). A crossing
+#: car on a collision course holds a constant bearing, 36-45 deg in our scenes, outside the camera's
+#: 32.6 deg half-field until the last second; reacting earlier would teach reacting to the unseen.
 EMERGENCY_S = 1.5
 #: ...or the car is already this far out of its lane, i.e. partway through a manoeuvre the camera
 #: shows by the road itself; the hazard can be at the frame's edge by then.
@@ -124,6 +128,9 @@ SWERVE_LATERAL_ACCEL = 3.0
 REJOIN_MIN_M = 6.0
 #: The ego's front bumper ahead of the rear axle.
 EGO_FRONT_M = REAR_AXLE_TO_CENTRE + EGO_LENGTH / 2
+#: Plans must keep the footprint this far inside the drivable raster: a swerve drawn to the very
+#: edge ran 1-2 corners over it once the tracker's lag was added (frontal-0058).
+ROAD_MARGIN_M = 0.3
 #: How far around the ego actors are considered at all.
 NEAR_M = 90.0
 
@@ -305,6 +312,22 @@ def human_cruise(route: Route, poses: list, timestamps: list[int]) -> tuple[np.n
     return along[order], speeds[order]
 
 
+class Eroded:
+    """A drivable area shrunk by `margin`: a point counts only if its neighbourhood does too."""
+
+    def __init__(self, area, margin: float) -> None:
+        self.area = area
+        angles = np.linspace(0, 2 * np.pi, 8, endpoint=False)
+        self.offsets = margin * np.column_stack([np.cos(angles), np.sin(angles)])
+
+    def contains(self, points: np.ndarray) -> np.ndarray:
+        points = np.atleast_2d(points)
+        inside = np.asarray(self.area.contains(points), dtype=bool)
+        for offset in self.offsets:
+            inside &= np.asarray(self.area.contains(points + offset), dtype=bool)
+        return inside
+
+
 class Teacher:
     """Expert v6 for one episode. Call `teach` on each tick, in time order.
 
@@ -324,7 +347,9 @@ class Teacher:
     ) -> None:
         self.route = Route(route_world)
         self.actors = [guarded(a) for a in actors if a.get("cls_name", "car") in COLLISION_CLASSES]
-        self.area = area
+        self.raw_area = area
+        self.eroded_area = None if area is None else Eroded(area, ROAD_MARGIN_M)
+        self.area = self.eroded_area
         self.cruise = cruise
         self.trigger_s = trigger_s
         self.min_px = min_px
@@ -514,6 +539,14 @@ class Teacher:
     def teach(self, ego2world: np.ndarray, t0: int, speed: float) -> Taught:
         ego2world = np.asarray(ego2world, dtype=float)
         near = self._near(ego2world, t0)
+        # The margin is for where plans go, not where the car already is: a car starting inside it
+        # would fail every plan from the first step, and the choice between them becomes arbitrary.
+        self.area = self.eroded_area
+        if (
+            self.raw_area is not None
+            and leaves_road(np.zeros((1, 3)), ego2world, self.eroded_area) is not None
+        ):
+            self.area = self.raw_area
         man = self.manoeuvre
         px = None
 
@@ -529,7 +562,7 @@ class Teacher:
             act = (
                 hit_at is not None
                 and hit_at <= self.trigger_s
-                and (px >= self.min_px or hit_at <= EMERGENCY_S or off_lane)
+                and (px >= self.min_px or (px > 0 and hit_at <= EMERGENCY_S) or off_lane)
             )
             if not act:
                 kind = "continue" if man is None else "resume"

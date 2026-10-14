@@ -494,6 +494,10 @@ def _first(seq, predicate):
     return next((i for i, x in enumerate(seq) if predicate(x)), None)
 
 
+#: A car first in frame less than this before contact could not have been braked for by a camera driver.
+UNSEEN_S = 1.0
+
+
 def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
     """Gate B's measurements on one expert-driven episode."""
     from .grader import EGO_LENGTH, EGO_WIDTH, REAR_AXLE_TO_CENTRE, actor_at, corners
@@ -522,16 +526,41 @@ def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
         "off_road_ticks": off_road,
         "widest_lateral_m": widest,
     }
+    # A collision with a car the camera could not see in time is the camera's limit, not the expert's:
+    # recorded separately (user, 2026-10-13: side cases brake when the car appears).
+    row["unseen_collision"] = False
+    if collided and drive_result["collision"]:
+        from .teacher import hazard_px
+
+        hit_uuid = drive_result["collision"]["colliding_actor"]
+        hit = next((a for a in drive_result["actors"] if a["uuid"] == hit_uuid), None)
+        hit_at = drive_result["collision"]["collision_time"]
+        seen = None
+        if hit is not None:
+            for t in ticks:
+                state = actor_at(hit, t["timestamp"])
+                if state is not None and hazard_px(np.asarray(t["ego2world"]), (state, hit["dims"])) > 0:
+                    seen = t["timestamp"]
+                    break
+        row["seen_before_contact_s"] = None if seen is None else (hit_at - seen) / 1e6
+        row["unseen_collision"] = seen is None or (hit_at - seen) / 1e6 < UNSEEN_S
     acted = _first(ticks, lambda t: t["kind"] != "continue")
     row["acted_at_s"] = None if acted is None else (ticks[acted]["timestamp"] - ticks[0]["timestamp"]) / 1e6
     row["acted_px"] = None if acted is None else ticks[acted]["hazard_px"]
     if shape == "frontal":
         # Sideways movement counted from where the car was when the expert acted, not from the route:
         # some episodes start half a metre off the lane centre.
+        # Only movement TOWARD the swerve side counts: easing back to the lane centre while braking is
+        # not a swerve. None when the episode never needed one.
+        side = next((t["side"] for t in ticks if t["kind"] == "brake+swerve" and t["side"]), 0)
         start_lateral = None if acted is None else ticks[acted]["lateral_m"]
-        moved = None if acted is None else _first(ticks, lambda t: abs(t["lateral_m"] - start_lateral) > 0.3)
+        moved = (
+            None
+            if acted is None or not side
+            else _first(ticks, lambda t: side * (t["lateral_m"] - start_lateral) > 0.3)
+        )
         row["brakes_before_moving"] = (
-            acted is not None and moved is not None and ticks[moved]["speed"] < ticks[acted]["speed"] - 0.5
+            None if moved is None else bool(ticks[moved]["speed"] < ticks[acted]["speed"] - 0.5)
         )
     else:
         target = next((a for a in drive_result["actors"] if a["is_target_actor"]), None)
@@ -545,6 +574,12 @@ def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
                 # bumper to bumper, roughly: the ego's front overhang and half the other car
                 gaps.append(centres - (REAR_AXLE_TO_CENTRE + EGO_LENGTH / 2) - target["dims"][1] / 2)
         row["stopped_gap_m"] = min(gaps) if gaps else None
+        # Sideways excursion beyond the band between where it started and the lane centre: easing back
+        # to the centre is not a swerve round the car.
+        low, high = min(0.0, ticks[0]["lateral_m"]), max(0.0, ticks[0]["lateral_m"])
+        row["sideways_excursion_m"] = max(
+            (max(t["lateral_m"] - high, low - t["lateral_m"], 0.0) for t in ticks), default=0.0
+        )
     # The label must be predictable from the present: relabel every state with no memory. Kinds
     # are compared in groups the model could tell apart; plans by their first six waypoints, which
     # is all the engine follows.
@@ -578,11 +613,13 @@ def gate_b(
     trigger_s: float,
     min_px: float,
     limit: int = 0,
+    scenes: list[str] | None = None,
 ) -> dict:
     from .label import episode_dirs
 
     rows, ticks_out = [], {}
-    for count, directory in enumerate(episode_dirs(collect)):
+    directories = [d for d in episode_dirs(collect) if not scenes or Episode.from_dir(d).scene in scenes]
+    for count, directory in enumerate(directories):
         if limit and count >= limit:
             break
         result = drive_expert(Episode.from_dir(directory), packs, scenarios, drivable, trigger_s, min_px)
@@ -596,12 +633,20 @@ def gate_b(
             f"widest {row['widest_lateral_m']:.2f} m agree {row['memoryless_agreement']:.2f}",
             flush=True,
         )
+    return {**summarise(rows, trigger_s, min_px), "ticks": ticks_out}
+
+
+def summarise(rows: list[dict], trigger_s: float, min_px: float) -> dict:
+    """Gate B's figures over episodes; collisions with a car never seen in time are counted apart."""
     by_shape = {}
     for shape in sorted({r["shape"] for r in rows}):
         group = [r for r in rows if r["shape"] == shape]
         by_shape[shape] = {
             "episodes": len(group),
             "collision_free": sum(not r["collided"] for r in group) / len(group),
+            "unseen_collisions": sum(bool(r.get("unseen_collision")) for r in group),
+            "collision_free_seen": sum(not r["collided"] or bool(r.get("unseen_collision")) for r in group)
+            / len(group),
             "mean_ncap": float(np.mean([r["ncap_score"] for r in group])),
             "side_flips": sum(r["side_flips"] for r in group),
             "off_road_ticks": sum(r["off_road_ticks"] for r in group),
@@ -610,19 +655,23 @@ def gate_b(
             "memoryless_kind_agreement": float(np.mean([r["memoryless_kind_agreement"] for r in group])),
         }
         if shape == "frontal":
-            by_shape[shape]["brakes_before_moving"] = sum(bool(r.get("brakes_before_moving")) for r in group)
+            swerved = [r for r in group if r.get("brakes_before_moving") is not None]
+            by_shape[shape]["brakes_before_moving"] = sum(bool(r["brakes_before_moving"]) for r in swerved)
+            by_shape[shape]["swerving_episodes"] = len(swerved)
         else:
             stops = [r["stopped_gap_m"] for r in group if r.get("stopped_gap_m") is not None]
             by_shape[shape]["closest_stop_m"] = min(stops) if stops else None
+            by_shape[shape]["sideways_excursion_m"] = max(r.get("sideways_excursion_m", 0.0) for r in group)
     return {
         "trigger_s": trigger_s,
         "min_px": min_px,
         "episodes": len(rows),
         "collision_free": sum(not r["collided"] for r in rows) / max(len(rows), 1),
+        "collision_free_seen": sum(not r["collided"] or bool(r.get("unseen_collision")) for r in rows)
+        / max(len(rows), 1),
         "mean_ncap": float(np.mean([r["ncap_score"] for r in rows])) if rows else None,
         "by_shape": by_shape,
         "rows": rows,
-        "ticks": ticks_out,
     }
 
 
@@ -657,11 +706,35 @@ def main() -> None:
     exp.add_argument("--min-px", type=float, default=16.0)
     exp.add_argument("--out", type=Path, required=True)
     exp.add_argument("--limit", type=int, default=0)
+    exp.add_argument("--scene", action="append", default=None, help="only these scenes; repeatable")
+    merge = commands.add_parser("merge", help="join Gate B reports run per scene into one")
+    merge.add_argument("parts", type=Path, nargs="+")
+    merge.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+
+    if args.command == "merge":
+        parts = [json.loads(p.read_text()) for p in args.parts]
+        rows = [r for part in parts for r in part["rows"]]
+        ticks = {k: v for part in parts for k, v in part["ticks"].items()}
+        report = {**summarise(rows, parts[0]["trigger_s"], parts[0]["min_px"]), "ticks": ticks}
+        args.out.write_text(json.dumps(report, default=float))
+        print(
+            json.dumps(
+                {k: v for k, v in report.items() if k not in ("rows", "ticks")}, indent=1, default=float
+            )
+        )
+        return
 
     if args.command == "expert":
         report = gate_b(
-            args.collect, args.packs, args.scenarios, args.drivable, args.trigger_s, args.min_px, args.limit
+            args.collect,
+            args.packs,
+            args.scenarios,
+            args.drivable,
+            args.trigger_s,
+            args.min_px,
+            args.limit,
+            args.scene,
         )
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(report, default=float))

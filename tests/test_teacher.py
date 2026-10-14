@@ -131,10 +131,10 @@ def test_for_an_oncoming_car_it_brakes_first_then_steers_round_it_on_one_side():
 
 
 class _LeftBlocked:
-    """Drivable everywhere except more than 1.2 m left of the route."""
+    """Drivable everywhere except more than 2.0 m left of the route: the kerb of a 4 m lane."""
 
     def contains(self, points):
-        return np.atleast_2d(points)[:, 1] <= 1.2
+        return np.atleast_2d(points)[:, 1] <= 2.0
 
 
 def test_with_the_near_side_blocked_it_passes_on_the_other():
@@ -143,7 +143,7 @@ def test_with_the_near_side_blocked_it_passes_on_the_other():
     log = _drive([oncoming], area=_LeftBlocked())
     assert not any(t["hit"] for t in log)
     assert {t["side"] for t in log if t["kind"] == "brake+swerve"} == {-1}
-    assert max(t["y"] for t in log) <= 1.2
+    assert max(t["y"] for t in log) <= 2.0 - 0.925  # the car body stays on the road
 
 
 def _at(plan: np.ndarray, times: np.ndarray) -> np.ndarray:
