@@ -72,7 +72,7 @@ def test_the_training_set_is_the_train_split_and_nothing_else(training_clips) ->
     assert len({row["uuid"] for row in training_clips}) == 4018
     checks = _json(EXP / "04_training_set" / "checks.json")
     assert checks["clips"] == 4015
-    for name in ("README.md", "docs/data.md", "docs/drivejepa-retrain.md"):
+    for name in ("docs/data.md", "docs/drivejepa-retrain.md"):
         text = (REPO_ROOT / name).read_text()
         assert "4,015 clips" in text, name
         assert "from 4,018 clips" not in text, name
@@ -107,10 +107,6 @@ def test_the_experiment_doc_quotes_each_recorded_table_exactly(tables, name: str
     """Two steps have tables and no report, so the doc's copy is the report."""
     doc = (REPO_ROOT / "docs" / "drivejepa-retrain.md").read_text()
     assert tables.block(name) in doc, f"docs/drivejepa-retrain.md is out of step with doc_tables.py {name}"
-
-
-def test_the_readme_quotes_the_results_table_exactly(tables) -> None:
-    assert tables.block("results") in (REPO_ROOT / "README.md").read_text()
 
 
 def test_the_headline_is_what_totals_json_says() -> None:

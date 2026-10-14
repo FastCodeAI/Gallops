@@ -1,12 +1,30 @@
-# Gallops
+<h1 align="center">
+  <img src="docs/assets/gallops.svg" height="44" alt=""> Gallops
+</h1>
 
-**Training for driving policies. Scored by [paddock](../paddock); imported by nobody.**
+<p align="center"><strong>Gallops trains driving policies. <a href="https://github.com/FastCodeAI/Paddock">Paddock</a> scores them. Neither repo imports the other.</strong></p>
 
-Paddock is the enclosure where a horse is saddled and paraded before a race —
-where you look at it and judge it. The gallops is the training ground, where it
-is made fast.
+<p align="center">
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="#quickstart"><img src="https://img.shields.io/badge/gate-make_check_(no_CI_yet)-555555.svg" alt="Gate: make check, no CI yet"></a>
+  <a href="#training-so-far"><img src="https://img.shields.io/badge/training_so_far-6_efforts-2E8B4E.svg" alt="Training so far: 6 efforts"></a>
+  <a href="docs/reviewing.md"><img src="https://img.shields.io/badge/reviews-severity_scale-B4560A.svg" alt="Review standard"></a>
+</p>
 
-The two repos never import each other. They meet at a directory on disk:
+Gallops takes a driving model, trains it, and writes a checkpoint that paddock
+scores on the same benchmarks, with the same machinery, that scored four vendor
+models first. So far every run has started from the released Drive-JEPA and
+retrained part of it. Our own model, gallops-v0, is designed
+([docs/architecture.md](docs/architecture.md)) but not built yet.
+
+Every checkpoint written here says what it is: which model, at what step, from
+which commit, trained on which scenes. That record is how a number on paddock's
+leaderboard traces back to the training that produced it, and most of the rules
+in this repo exist to keep it true.
+
+The two repos meet at a directory on disk:
 
 ```
 {weights}/<model>/<train_run>/step_<n>/
@@ -14,125 +32,71 @@ The two repos never import each other. They meet at a directory on disk:
     model.safetensors
 ```
 
-Gallops writes that. Paddock reads it, scores the model on the same benchmarks
-that scored four vendor models before it, and puts the result in the same table.
-That separation is the point — see [why](#why-two-repos).
+Gallops writes it. Paddock reads it, scores the model, and puts the result in
+the same table as every other model. That separation is the point; see
+[why](#why-two-repos).
+
+| Where | What |
+|---|---|
+| [src/gallops/train/](src/gallops/train/) | the trainers: the KITScenes re-ranker, the swerve finetune, the scorer on cached features, and the preflight and safety checks they must pass |
+| [src/gallops/expert/](src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by |
+| [src/gallops/data/](src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
+| [src/gallops/drivejepa_b2d/](src/gallops/drivejepa_b2d/), [recipes/](recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
+| [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) | the Physical AI AV retrain, as the scripts that ran |
+| [checkpoint.py](src/gallops/checkpoint.py), [config.py](src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
+
+The names: a paddock is the enclosure where a horse is paraded and judged
+before a race. The gallops is the training ground where it is made fast.
 
 ---
 
 ## Status
 
-**One trainer, and the loop proven end to end.** `gallops train-rerank` fits a
-selector over Drive-JEPA's 32 candidate trajectories and writes a checkpoint
-with its sidecar. Paddock's `drivejepa_rerank` adapter loads it and scores it
-like any other model. It is small on purpose: its job was to prove
-train → checkpoint → sidecar → paddock row, and it also closes a measured gap
-(see [docs/STRATEGY.md](docs/STRATEGY.md)). Beyond that there is the
-site-config split, the checkpoint contract, and the conventions a training run
-has to respect for its numbers to mean anything.
-
-**The Drive-JEPA retrain on NVIDIA Physical AI AV is recorded outside the
-package.** It is under
-[experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) as the scripts
-that ran, in folders numbered in the order the work was done, and is described
-in the next section.
-
-**One recipe:** the training behind Drive-JEPA's Bench2Drive results. It is not
-gallops-v0; it was moved here so it is tracked and portable. See
-[docs/drivejepa_b2d.md](docs/drivejepa_b2d.md).
+**gallops-v0, our own model, is not built yet.** Every training run so far has
+started from the released Drive-JEPA checkpoint and retrained part of it, or
+trained something small on top of it. [Training so far](#training-so-far) lists
+all six efforts. The loop is proven end to end: `gallops train-rerank` writes a
+checkpoint with its sidecar, and paddock's `drivejepa_rerank` adapter loads it
+and scores it like any other model.
 
 Read [docs/STRATEGY.md](docs/STRATEGY.md) first. It carries what paddock's
 results already established about what to build, and what this machine can and
 cannot actually do today.
 
-## Drive-JEPA, retrained on Physical AI AV
+## Training so far
 
-The full account is [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md).
+Status at 2026-10-14. Everything below starts from the released Drive-JEPA
+checkpoint, with its image encoder frozen. Each row's doc has the full account;
+the numbers here are copied from it, never re-derived.
 
-**Approach.** Start from the released Drive-JEPA checkpoint and train it
-further on NVIDIA's Physical AI AV driving clips, keeping its image encoder
-frozen.
+| What was trained | Retrained on top of the release | Trained on | Headline | How far it holds | Doc |
+|---|---|---|---|---|---|
+| **Re-ranker** (`drivejepa_rerank`) | nothing: a new small MLP chooses among the frozen model's 32 candidates | KITScenes `train`: 318 scenes, plus 55 to choose the epoch | KITScenes ADE@3s **0.973 m**, against **2.521** for the model's own pick (223 samples) | **Strong, open loop:** paired t −8.0. **Worse in closed loop:** 1.85 against 3.01 on 9 neuroNCAP episodes | [STRATEGY.md](docs/STRATEGY.md#first-target--taken-drive-jepas-selection-not-its-head), paddock's `docs/models/drivejepa_rerank.md` |
+| **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
+| **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
+| **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
+| **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
+| **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |
 
-Drive-JEPA has two parts: a generator that proposes 32 candidate paths, and a
-scorer that rates them and picks one. Both were trained together in the first
-training run. The scorer did not pass that run's own quality check, so it was
-frozen for the second training run, which retrained only the generator. The
-shipped checkpoint therefore contains the first run's scorer unchanged.
+How to read it:
 
-Three things change in what the model is given, in training and again when it
-drives. The bottom 37 rows of each camera frame are blacked out (the bonnet
-mask: the recording car's own bonnet is in every training frame and the
-simulator never draws one). Acceleration is fed as zero. And the list of path
-shapes the generator builds its candidates from grows from 8,192 to 10,240, to
-add shapes taken from human driving at 14 m/s and above.
-
-**Data and splits.** NVIDIA Physical AI AV. Training reads the `train` split
-only: 126,981 samples from 4,015 clips. Each run makes several passes (a pass
-is one sweep through the training data) and keeps one of them: which pass of
-the first run to keep was chosen on `val`; which pass of the second, on 145
-`train` clips held out of that run. `test` is excluded. So are the simulator's 913 public scenes, which
-include the 30 scenes the result below is measured on; every step's scripts
-assert both exclusions, and `tests/test_drivejepa_retrain.py` re-checks them
-from the committed clip lists.
-
-**Result.** A closed-loop test: the model's plan steers a simulated car, and
-what it sees next depends on where that plan took it. 30 scenes in the AlpaSim
-simulator, one drive per scene:
-
-<!-- table:results -->
-| Adapter | Weights | Mean `scene_score` | At-fault collisions | Any collision | Off-road | Stalls | Mean progress | Mean distance (m) |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| 0.1.4b | released checkpoint, momentum-aware selection | 0.5433 | 4 / 30 | 10 / 30 | 4 / 30 | 3 / 30 | 0.5366 | 75.8 |
-| 0.1.6 | intermediate checkpoint, not shipped (first training run) | 0.7032 | 2 / 30 | 7 / 30 | 3 / 30 | 4 / 30 | 0.6977 | 115.4 |
-| 0.1.7 | retrained checkpoint (second training run, generator only) | 0.7697 | 3 / 30 | 3 / 30 | 2 / 30 | 2 / 30 | 0.8284 | 151.6 |
-<!-- /table:results -->
-
-Read the first row against the last. The version numbers name the driver that
-feeds the model in the simulator: 0.1.4b is the released checkpoint with
-momentum (a step from the Drive-JEPA paper that favours candidates consistent
-with the plan already being driven); 0.1.7 is the same driver with the
-retrained checkpoint. The middle row, 0.1.6, drove the first training run's
-checkpoint, was never shipped, and is shown once so the two runs can be told
-apart. An at-fault collision is one the scoring attributes to the driven car.
-For scale, a constant-velocity baseline (a car that keeps its current speed and
-heading, with no model) scores 0.4876 on the same 30 scenes; it ran with one
-simulator setting different and is a reference only.
-
-Each column is narrower than its heading. Collisions and off-road are counted
-only up to the point where a scene's scoring stops; over the whole clip 0.1.7
-has 6 scenes with a collision and 4 off-road, not 3 and 2. "Stalls" does not
-count the two scenes where the car never moves under any version. One scene
-scores 0 for any driver, and one "at-fault" collision is pedestrians walking
-into the stationary car. And 0.1.7 against 0.1.6 is 0.066 with a standard
-error of 0.068, so the table does not show that the second run beat the first.
-The definitions are in the experiment doc, under "How to read the columns".
-
-Most steps of the experiment did not pass the checks they set themselves
-beforehand, and the experiment doc has that table too.
-
-Stated plainly:
-
-- **The spacing term was switched off.** The second run's code has a loss term
-  that penalises unevenly spaced waypoints. It exists in the code but was
-  switched off (weight 0) for the shipped checkpoint.
-- **0.1.7 has three at-fault collisions and two of them are new.** The mean
-  rose; one drive per scene cannot say it is safer.
-- **The committed code has not been re-run** since its machine paths were
-  replaced by placeholders.
-
-**Running it.** Gallops holds no driver. The weights are run in the simulator
-by paddock's Drive-JEPA driver at `tools/models/drivejepa/alpasim_driver/`
-(version 0.1.7; paddock's `docs/models/drivejepa.md` says what it feeds the
-model and how to launch it).
-
-**Weights.** `{weights}/drivejepa_physicalai/second-run-generator/step_000000002/drive_jepa_physicalai_generator.ckpt`,
-1,273,002,536 bytes, sha256
-`29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916`, with a
-`checkpoint.json` beside it that declares `trained_on: physicalai_av / train`.
-Paddock has no `datasets.yaml` key for that dataset yet, and the sidecar's
-`train_git_sha` was set after the fact; both are explained in the experiment
-doc. Every other artefact is in
-[experiments/drivejepa_retrain/POINTERS.md](experiments/drivejepa_retrain/POINTERS.md).
+- **Nothing here is yet a closed-loop safety gain** shown on a split nothing was
+  chosen on. The strongest result is the re-ranker's open-loop gain on KITScenes,
+  and the same weights do worse on neuroNCAP.
+- **Every swerve and scorer-cache run was camera-blind.** Paddock and the
+  trainer both placed the cameras relative to nuScenes' LIDAR_TOP, so no image
+  reached the model; a black frame gave the same plan. Those numbers are what
+  the runs measured, but they say nothing about learning to *see* a hazard. The
+  trainer is fixed and its preflight now refuses a model that a blanked camera
+  does not move. Paddock's half is #62, still open.
+- **The swerve runs also trained at batch 8, and scorer cache v1 was built at
+  batch 4.** The vendor model mixes ticks within a batch, which did not matter
+  while it was blind but would from the first run that sees. Every forward pass
+  is now one tick, so any rerun trains differently (see swerve-finetune.md).
+- **Several shipped sidecars are known to be wrong about their own run,** and
+  were left as written rather than hand-edited. Each doc lists them.
+- **Bench2Drive and AlpaSim runs are one run per route or scene,** so a
+  difference of a few points is not a result on its own.
 
 ## Quickstart
 
@@ -192,7 +156,9 @@ Four reasons, in increasing order of importance:
 | [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
+| [docs/reviewing.md](docs/reviewing.md) | reviewing a PR — what gets checked, and the 🔴 / 🟠 / 🟡 scale |
 | [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
+| [docs/scorer-cache.md](docs/scorer-cache.md) | training Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
 | [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
 | [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
 
