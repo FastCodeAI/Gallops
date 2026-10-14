@@ -5,10 +5,9 @@
 
 Two steps of this experiment have tables and no written report: the second
 training run and the 30-scene closed-loop test of adapter 0.1.7. Rather than
-write those reports after the fact, README.md and
-docs/drivejepa-retrain.md carry these blocks, and
-tests/test_drivejepa_retrain.py fails if a doc's copy drifts from what this
-prints. Numbers are rounded to four decimals here; the JSON beside this file
+write those reports after the fact, docs/drivejepa-retrain.md carries these
+blocks, and tests/test_drivejepa_retrain.py fails if its copy drifts from what
+this prints. Numbers are rounded to four decimals here; the JSON beside this file
 has them unrounded.
 
 Stdlib only, so it runs under `make check` with no torch and no data.
