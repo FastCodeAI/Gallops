@@ -157,7 +157,7 @@ def test_each_tick_continues_the_last_ticks_plan():
     oncoming = _actor("oncoming", (90.0, 0.5), (-6.0, 0.0), np.pi)
     log = _drive([oncoming])
     worst, compared = 0.0, 0
-    for before, after in zip(log, log[1:], strict=False):
+    for before, after in (log[i : i + 2] for i in range(len(log) - 1)):  # py3.9: no zip(strict=)
         if before["kind"] not in ("brake", "brake+swerve") or after["kind"] != before["kind"]:
             continue
         times = np.arange(1, 7) * 0.5

@@ -509,7 +509,7 @@ def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
     ticks, shape, area = drive_result["ticks"], drive_result["shape"], drive_result["area"]
     collided = bool(drive_result["metrics"]["any_collide@0.0s"])
     sides = [t["side"] for t in ticks if t["kind"] == "brake+swerve" and t["side"]]
-    flips = sum(1 for a, b in zip(sides, sides[1:], strict=False) if a != b)
+    flips = sum(1 for i in range(len(sides) - 1) if sides[i] != sides[i + 1])
     off_road = 0
     for t in ticks:
         pose = np.asarray(t["ego2world"])
