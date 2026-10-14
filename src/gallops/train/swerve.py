@@ -148,8 +148,12 @@ def split_by_scene(ticks: list[dict], held_out: str) -> tuple[list[dict], list[d
     split would put near-duplicates on both sides and report a validation loss
     that means nothing.
     """
-    train = [t for t in ticks if held_out not in t["episode"]]
-    val = [t for t in ticks if held_out in t["episode"]]
+    def scene(tick: dict) -> str:
+        # "frontal-0075/run_3" -> "0075"; exact, so 613 real scenes cannot match a substring
+        return tick["episode"].split("/")[0].rsplit("-", 1)[-1]
+
+    train = [t for t in ticks if scene(t) != held_out]
+    val = [t for t in ticks if scene(t) == held_out]
     return train, val
 
 
