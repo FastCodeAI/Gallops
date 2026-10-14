@@ -54,25 +54,40 @@ def build_episode(args: tuple[str, str]) -> str:
 
 
 class FrameCache:
-    """Read side: one memory-mapped array per episode, looked up by frame path."""
+    """Read side: each episode's array read whole on first use, the last `keep` episodes held in RAM.
 
-    def __init__(self, root: Path) -> None:
+    Memory-mapping the arrays off the NAS was slower than decoding (4.5 s a tick against 1.4 s on
+    frontal-0070): every frame was a random network read. One sequential read per episode, about
+    27 MB, is not.
+    """
+
+    def __init__(self, root: Path, keep: int = 64) -> None:
+        from collections import OrderedDict
+
         self.root = Path(root)
-        self._open: dict[str, tuple[dict[int, int], np.ndarray]] = {}
+        self.keep = keep
+        self._open: OrderedDict[str, tuple[dict[int, int], np.ndarray] | None] = OrderedDict()
 
     def get(self, path) -> np.ndarray | None:
         path = Path(path)
-        directory = path.parent.parent
-        name = key(directory)
-        if name not in self._open:
+        name = key(path.parent.parent)
+        if name in self._open:
+            self._open.move_to_end(name)
+        else:
             frames = self.root / f"{name}.npy"
-            if not frames.exists():
-                return None
-            stamps = np.load(self.root / f"{name}.stamps.npy")
-            self._open[name] = ({int(s): i for i, s in enumerate(stamps)}, np.load(frames, mmap_mode="r"))
-        index, stack = self._open[name]
+            if frames.exists():
+                stamps = np.load(self.root / f"{name}.stamps.npy")
+                self._open[name] = ({int(s): i for i, s in enumerate(stamps)}, np.load(frames))
+            else:
+                self._open[name] = None
+            while len(self._open) > self.keep:
+                self._open.popitem(last=False)
+        entry = self._open[name]
+        if entry is None:
+            return None
+        index, stack = entry
         i = index.get(int(path.stem))
-        return None if i is None else np.asarray(stack[i])
+        return None if i is None else stack[i]
 
 
 def main() -> None:
