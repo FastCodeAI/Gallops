@@ -451,12 +451,15 @@ def drive_expert(
     cruise = human_cruise(Route(route), dataset._poses, dataset.timestamps)
     teacher = Teacher(route, actors_dicts, area, cruise, trigger_s=trigger_s, min_px=min_px)
     log: list[dict] = []
+    poses: dict[int, np.ndarray] = {}
 
     def plan_fn(state):
         if state.current_step < engine.scenario.general.priming_steps:
             return torch.zeros(N_WAYPOINTS, 2)  # the engine replays the log while priming
         ego2world = state.ego2world.numpy()
-        taught = teacher.teach(ego2world, int(state.timestamp), float(state.speed))
+        poses[int(state.timestamp)] = ego2world
+        before = poses.get(int(state.timestamp) - 500_000)
+        taught = teacher.teach(ego2world, int(state.timestamp), float(state.speed), before)
         man = taught.manoeuvre
         s, lateral = teacher.route.project(ego2world[:2, 3])
         log.append(
@@ -584,6 +587,7 @@ def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
     # are compared in groups the model could tell apart; plans by their first six waypoints, which
     # is all the engine follows.
     kinds = plans = 0
+    by_stamp = {t["timestamp"]: np.asarray(t["ego2world"]) for t in ticks}
     for t in ticks:
         fresh = Teacher(
             drive_result["route"],
@@ -593,7 +597,8 @@ def judge_drive(drive_result: dict, trigger_s: float, min_px: float) -> dict:
             trigger_s=trigger_s,
             min_px=min_px,
         )
-        again = fresh.teach(np.asarray(t["ego2world"]), t["timestamp"], t["speed"])
+        before = by_stamp.get(t["timestamp"] - 500_000)
+        again = fresh.teach(np.asarray(t["ego2world"]), t["timestamp"], t["speed"], before)
         same_side = (
             t["kind"] != "brake+swerve" or again.manoeuvre is None or again.manoeuvre.side == t["side"]
         )

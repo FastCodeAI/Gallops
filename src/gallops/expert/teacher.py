@@ -450,6 +450,20 @@ class Teacher:
         return Manoeuvre(actor["uuid"], motion, t0, stopping_decel(speed, stop_s - s_ego), 0.0, stop_s)
 
     def _commit_swerve(self, actor, t0, ego2world, speed, near, sides=(1, -1)) -> Manoeuvre | None:
+        """A clear swerve with the full margins; failing that, a tight one (see `_swerve`)."""
+        found = self._swerve(actor, t0, ego2world, speed, near, sides, PASS_MARGIN_M)
+        if found is not None or self.raw_area is None:
+            return found
+        # On a narrow road (frontal-0058: 6.6 m across) no pass keeps 0.75 m from the car AND 0.3 m
+        # from the kerb, and the expert braked into the car instead. A tight pass -- the guard's 0.3 m
+        # beside the car, the raw road edge -- beats a crash; it still never leaves the road.
+        wide, self.area = self.area, self.raw_area
+        try:
+            return self._swerve(actor, t0, ego2world, speed, near, sides, 0.0)
+        finally:
+            self.area = wide
+
+    def _swerve(self, actor, t0, ego2world, speed, near, sides, margin) -> Manoeuvre | None:
         """Brake, then pass on the side that needs the least further move and stays on the road and clear.
 
         None while the meeting point is still beyond the horizon: until then braking is the whole
@@ -470,12 +484,15 @@ class Teacher:
         if meet is None:
             return None
         k, s_h, d_h = meet
-        clearance = EGO_WIDTH / 2 + actor["dims"][0] / 2 + PASS_MARGIN_M
+        clearance = EGO_WIDTH / 2 + actor["dims"][0] / 2 + margin
         options = []
         for side in sides:
             # Pass on `side` of it: our distance from the route must exceed its own by the clearance.
             offset = d_h + side * clearance
-            if abs(offset) > TRUST_BAND_M:
+            if side * offset > TRUST_BAND_M - 0.1:
+                # Just past the trust band: try the widest move it allows; the grader says if it clears.
+                offset = side * (TRUST_BAND_M - 0.1)
+            if side * offset < 0 and abs(offset) > TRUST_BAND_M:
                 continue
             ramp = max(
                 min_length_for(offset, MIN_TURN_RADIUS_M),
@@ -500,8 +517,11 @@ class Teacher:
             options.append((not verdict.clear, abs(offset - d_ego), man))
         if not options:
             return None
-        options.sort(key=lambda o: (o[0], o[1]))
-        return options[0][2]
+        # Only a swerve that clears is committed to. With none, braking continues and the escalation
+        # (and in the end least-impact) decides; v6 once took a swerve that left the road because it
+        # was the only one drawn (frontal-0058).
+        clear = sorted((o for o in options if not o[0]), key=lambda o: o[1])
+        return clear[0][2] if clear else None
 
     def _escalate(
         self, man: Manoeuvre, ego2world, t0, speed, near
@@ -536,7 +556,9 @@ class Teacher:
                 return candidate, plan, verdict
         return None
 
-    def teach(self, ego2world: np.ndarray, t0: int, speed: float) -> Taught:
+    def teach(self, ego2world: np.ndarray, t0: int, speed: float, ego2world_before=None) -> Taught:
+        """`ego2world_before` is the pose 0.5 s earlier: the model reads that frame too, so a car in
+        either frame counts as seen."""
         ego2world = np.asarray(ego2world, dtype=float)
         near = self._near(ego2world, t0)
         # The margin is for where plans go, not where the car already is: a car starting inside it
@@ -556,6 +578,9 @@ class Teacher:
             if actor is not None:
                 state = actor_at(actor, t0)
                 px = hazard_px(ego2world, (state, actor["true_dims"])) if state is not None else 0.0
+                before = actor_at(actor, t0 - 0.5e6)
+                if ego2world_before is not None and before is not None:
+                    px = max(px, hazard_px(np.asarray(ego2world_before), (before, actor["true_dims"])))
             # Seen well enough to react to, or too close to wait, or already out of the lane: a car
             # mid-swerve has the hazard at the edge of the frame, but its own position shows the move.
             off_lane = abs(self.route.project(ego2world[:2, 3])[1]) > OFF_LANE_M
