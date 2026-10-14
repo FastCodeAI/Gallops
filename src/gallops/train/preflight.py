@@ -68,6 +68,9 @@ import numpy as np
 
 #: `Source.drove` for dumps the weights a run starts from collected.
 START = "start"
+#: `Source.drove` for logged human driving (real nuScenes): the target is the human's path, there are
+#: no dumps and no candidates to grade, so the grading and fidelity checks have nothing to compare.
+HUMAN = "human"
 
 
 class Source(NamedTuple):
@@ -385,7 +388,7 @@ def describe(ticks: list[dict]) -> dict:
     """What is about to be trained on, for the log and the sidecar."""
     shapes = Counter(t["episode"].split("-", 1)[0] for t in ticks)
     kinds = Counter(t["expert_kind"] for t in ticks)
-    creep = sum(1 for t in ticks if t["speed"] < 3.0 and t["driven_hits"] is not None)
+    creep = sum(1 for t in ticks if t["speed"] < 3.0 and t.get("driven_hits") is not None)
     return {
         "ticks": len(ticks),
         "episodes": len({episode_key(t) for t in ticks}),
@@ -420,7 +423,11 @@ def run(
     problems = []
     report["code"], found = code_checks(repo)
     problems += found
-    groups = [[t for t in train if t.get("source", 0) == i] for i in range(len(sources))]
+    groups = [
+        [t for t in train if t.get("source", 0) == i]
+        for i in range(len(sources))
+        if sources[i].drove != HUMAN
+    ]
     groups = [g for g in groups if g]
     per = max(3, sample_size // 4 // max(1, len(groups)))
     sample = [t for g in groups for t in sample_ticks(g, episodes=per, per_episode=4)]

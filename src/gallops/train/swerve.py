@@ -441,6 +441,21 @@ def main() -> None:
         default=0.0,
         help="weight of the ranking loss over the 32 plans, added to the scorer's BCE (0 = BCE only)",
     )
+    parser.add_argument(
+        "--accumulate",
+        type=int,
+        default=1,
+        help="micro-batches per optimiser step: with --batch 1, an exact batch of N without the vendor "
+        "model mixing ticks inside a batch (encoder.py:237, temporal_self_attention.py:195, "
+        "spatial_cross_attention.py:155)",
+    )
+    parser.add_argument(
+        "--subsample-source",
+        action="append",
+        default=[],
+        metavar="I=FRACTION",
+        help="each epoch keep this random fraction of source I's ticks, e.g. 2=0.33 for real driving",
+    )
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
     # Validation during the epoch, not only after it: the held-out trajectory loss
@@ -550,6 +565,13 @@ def main() -> None:
             model.scorer.eval()
         else:
             model.train()
+        # A module with nothing to train runs as at inference. Left in train mode the frozen
+        # image encoder applied the vendor's GridMask augmentation (p 0.7) to every frame, so
+        # the refiner trained on masked images it never sees when driving.
+        for module in model.modules():
+            params = list(module.parameters())
+            if params and not any(p.requires_grad for p in params):
+                module.eval()
 
     dataset = TickDataset(train, args.device)
     validation = TickDataset(val, args.device) if val else None
@@ -617,6 +639,10 @@ def main() -> None:
     for epoch in range(args.epochs):
         training_mode()
         order = oversampled(dataset.ticks, factors) if factors else list(range(len(dataset)))
+        shares = {int(k): float(v) for k, v in (spec.split("=", 1) for spec in args.subsample_source)}
+        if shares:
+            keep = random.Random(1000 + epoch)
+            order = [i for i in order if keep.random() < shares.get(dataset.ticks[i].get("source", 0), 1.0)]
         random.Random(epoch).shuffle(order)
         losses = []
         recent_parts: list[dict] = []
@@ -631,10 +657,13 @@ def main() -> None:
                 output, target, ticks_used, referee, torch, **loss_options
             )
             loss = args.trajectory_weight * trajectory + args.score_weight * scored
-            optimiser.zero_grad(set_to_none=True)
-            timed("backward", loss.backward)
-            torch.nn.utils.clip_grad_norm_(parameters, 1.0)
-            optimiser.step()
+            micro = (start // args.batch) % args.accumulate
+            if micro == 0:
+                optimiser.zero_grad(set_to_none=True)
+            timed("backward", lambda lo=loss: (lo / args.accumulate).backward())
+            if micro == args.accumulate - 1 or start + args.batch >= len(order):
+                torch.nn.utils.clip_grad_norm_(parameters, 1.0)
+                optimiser.step()
             losses.append((float(trajectory.detach()), float(scored.detach())))
             recent_parts.append(parts)
             step += 1
