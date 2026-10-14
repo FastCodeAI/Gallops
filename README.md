@@ -1,7 +1,17 @@
-# Gallops
+<h1 align="center">
+  <img src="docs/assets/gallops.svg" height="44" alt=""> Gallops
+</h1>
 
-**Gallops trains driving policies. [Paddock](../paddock) scores them. Neither
-repo imports the other.**
+<p align="center"><strong>Gallops trains driving policies. <a href="https://github.com/FastCodeAI/Paddock">Paddock</a> scores them. Neither repo imports the other.</strong></p>
+
+<p align="center">
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="#quickstart"><img src="https://img.shields.io/badge/gate-make_check_(no_CI_yet)-555555.svg" alt="Gate: make check, no CI yet"></a>
+  <a href="#training-so-far"><img src="https://img.shields.io/badge/training_so_far-6_efforts-2E8B4E.svg" alt="Training so far: 6 efforts"></a>
+  <a href="docs/reviewing.md"><img src="https://img.shields.io/badge/reviews-severity_scale-B4560A.svg" alt="Review standard"></a>
+</p>
 
 Gallops takes a driving model, trains it, and writes a checkpoint that paddock
 scores on the same benchmarks, with the same machinery, that scored four vendor

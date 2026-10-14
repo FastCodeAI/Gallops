@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Gallops">
+  <title>Gallops</title>
+  <rect width="512" height="512" rx="112" fill="#E6F4EA"/>
+  <g transform="translate(256 256) scale(1.12) translate(-256 -350)">
+    <!-- the gallops: a training track, and the car made fast on it -->
+    <g stroke="#1E6B3A" stroke-width="28" stroke-linecap="round" fill="none">
+      <path d="M72 446 L440 446"/>
+    </g>
+    <!-- speed lines -->
+    <g stroke="#3FA45F" stroke-width="26" stroke-linecap="round" fill="none">
+      <path d="M104 286 L170 286"/>
+      <path d="M70 336 L160 336"/>
+      <path d="M104 386 L166 386"/>
+    </g>
+    <!-- the car, paddock's, at speed -->
+    <g fill="#2E8B4E">
+      <path d="M196 372 L196 336 Q196 316 216 312 L244 306 L274 262 Q282 250 296 250 L356 250 Q370 250 378 262 L404 306 L426 312 Q444 316 444 336 L444 372 Q444 388 428 388 L212 388 Q196 388 196 372 Z" transform="translate(-24 0)"/>
+    </g>
+    <g fill="#14482A">
+      <circle cx="228" cy="396" r="30"/>
+      <circle cx="364" cy="396" r="30"/>
+    </g>
+    <g fill="#E6F4EA">
+      <circle cx="228" cy="396" r="12"/>
+      <circle cx="364" cy="396" r="12"/>
+      <!-- windows -->
+      <path d="M260 302 L274 276 L324 276 L338 302 Z"/>
+    </g>
+  </g>
+</svg>
