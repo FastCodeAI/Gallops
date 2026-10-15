@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from gallops.train import frame_cache
 from gallops.train.frame_cache import FrameCache, build_episode, crop_resize
 
 
@@ -27,3 +28,24 @@ def test_a_cached_frame_is_the_decoded_frame(tmp_path):
         np.testing.assert_array_equal(cache.get(path), crop_resize(path))
     assert cache.get(episode / "CAM_FRONT" / "999.jpg") is None
     assert FrameCache(tmp_path / "empty").get(paths[0]) is None
+
+
+def test_a_read_error_is_retried_and_a_lasting_one_raised(tmp_path, monkeypatch):
+    path = tmp_path / "frames.npy"
+    np.save(path, np.arange(3))
+    real, calls = np.load, []
+
+    def flaky(p, *args, **kwargs):
+        calls.append(p)
+        if len(calls) < 3:
+            raise OSError(5, "Input/output error")
+        return real(p, *args, **kwargs)
+
+    monkeypatch.setattr(frame_cache.np, "load", flaky)
+    np.testing.assert_array_equal(frame_cache._load(path, wait_s=0.0), np.arange(3))
+    assert len(calls) == 3
+    monkeypatch.setattr(
+        frame_cache.np, "load", lambda p: (_ for _ in ()).throw(OSError(5, "Input/output error"))
+    )
+    with pytest.raises(OSError):
+        frame_cache._load(path, attempts=2, wait_s=0.0)

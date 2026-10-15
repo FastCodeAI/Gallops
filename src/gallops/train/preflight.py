@@ -71,14 +71,20 @@ START = "start"
 #: `Source.drove` for logged human driving (real nuScenes): the target is the human's path, there are
 #: no dumps and no candidates to grade, so the grading and fidelity checks have nothing to compare.
 HUMAN = "human"
+#: `Source.drove` for a DAgger round driven by the weights `--init` loads. The start-of-run fidelity
+#: check cannot cover it (the released weights never drove it), so `init_fidelity` checks it once
+#: those weights are loaded: same rebuild, same limits.
+INIT = "init"
 
 
 class Source(NamedTuple):
     """One labelled directory, the dumps it was labelled from, and who drove.
 
     `drove` is START when the weights training starts from drove the collection
-    (round 0, GT-shadow), else a name for the checkpoint that did (a DAgger
-    round's). Only START sources can be fidelity-checked.
+    (round 0, GT-shadow), INIT when the `--init` weights did (a DAgger round
+    continued from the checkpoint that drove it), else a name for the checkpoint
+    that did. START sources are fidelity-checked before `--init` loads, INIT
+    sources after.
     """
 
     labelled: str
@@ -382,6 +388,24 @@ def sight_check(model, dataset_cls, sample: list[dict], torch, device: str) -> t
             "model; check the camera extrinsics"
         ]
     return report, []
+
+
+def init_fidelity(
+    train: list[dict], referee, sources, model, dataset_cls, torch, device: str, sample_size: int = 48
+) -> dict:
+    """The fidelity check again, once `--init` has loaded, on the sources those weights drove.
+
+    Raises PreflightFailed on a problem; returns {} when no source is INIT.
+    """
+    group = [t for t in train if sources[t.get("source", 0)].drove == INIT]
+    if not group:
+        return {}
+    sample = sample_ticks(group, episodes=max(3, sample_size // 4), per_episode=4)
+    report, problems = fidelity_check(model, dataset_cls, sample, referee, sources, torch, device)
+    print("  preflight, --init weights: " + json.dumps(report), flush=True)
+    if problems:
+        raise PreflightFailed(problems)
+    return report
 
 
 def describe(ticks: list[dict]) -> dict:

@@ -228,3 +228,30 @@ def test_a_tick_whose_past_was_a_priming_frame_is_not_rebuilt():
     chosen = history_stamps(frames, now=frames[10])
     assert chosen is not None
     assert chosen[-1] == frames[10] and chosen[-2] == frames[5]
+
+
+def test_a_round_the_init_weights_drove_is_checked_against_them(tmp_path, monkeypatch):
+    """INIT sources skip the start-of-run fidelity check and get their own once --init loads."""
+    ticks, d0, d1 = _two_rounds(tmp_path)
+    sources = [
+        preflight.Source("r0", str(d0), preflight.START),
+        preflight.Source("r1", str(d1), preflight.INIT),
+    ]
+    seen = []
+
+    def fidelity(model, dataset_cls, sample, referee, dumps, torch, device):
+        seen.append({t["source"] for t in sample})
+        return {"compared": len(sample)}, []
+
+    monkeypatch.setattr(preflight, "fidelity_check", fidelity)
+    report = preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")
+    assert seen == [{1}] and report["compared"] > 0
+    assert (
+        preflight.init_fidelity(
+            [t for t in ticks if t["source"] == 0], None, sources, None, None, None, "cpu"
+        )
+        == {}
+    )
+    monkeypatch.setattr(preflight, "fidelity_check", lambda *a: ({}, ["fidelity: off"]))
+    with pytest.raises(preflight.PreflightFailed):
+        preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")

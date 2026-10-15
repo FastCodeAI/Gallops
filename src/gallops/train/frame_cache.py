@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import time
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -53,6 +54,24 @@ def build_episode(args: tuple[str, str]) -> str:
     return f"wrote {directory} ({len(frames)} frames)"
 
 
+#: Attempts at reading one cached file. Round 1B died at 93% of its last epoch on one
+#: `OSError: [Errno 5] Input/output error` from the NAS; the same file read cleanly minutes later.
+READ_ATTEMPTS = 5
+
+
+def _load(path: Path, attempts: int = READ_ATTEMPTS, wait_s: float = 5.0) -> np.ndarray:
+    """np.load, retried on OSError with a growing wait; the last failure is raised."""
+    for attempt in range(attempts):
+        try:
+            return np.load(path)
+        except OSError as error:
+            if attempt == attempts - 1:
+                raise
+            print(f"  frame cache: {error}; retry {attempt + 1} of {attempts - 1}", flush=True)
+            time.sleep(wait_s * (attempt + 1))
+    raise AssertionError("unreachable")
+
+
 class FrameCache:
     """Read side: each episode's array read whole on first use, the last `keep` episodes held in RAM.
 
@@ -76,8 +95,8 @@ class FrameCache:
         else:
             frames = self.root / f"{name}.npy"
             if frames.exists():
-                stamps = np.load(self.root / f"{name}.stamps.npy")
-                self._open[name] = ({int(s): i for i, s in enumerate(stamps)}, np.load(frames))
+                stamps = _load(self.root / f"{name}.stamps.npy")
+                self._open[name] = ({int(s): i for i, s in enumerate(stamps)}, _load(frames))
             else:
                 self._open[name] = None
             while len(self._open) > self.keep:

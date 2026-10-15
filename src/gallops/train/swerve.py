@@ -148,6 +148,7 @@ def split_by_scene(ticks: list[dict], held_out: str) -> tuple[list[dict], list[d
     split would put near-duplicates on both sides and report a validation loss
     that means nothing.
     """
+
     def scene(tick: dict) -> str:
         # "frontal-0075/run_3" -> "0075"; exact, so 613 real scenes cannot match a substring
         return tick["episode"].split("/")[0].rsplit("-", 1)[-1]
@@ -606,6 +607,14 @@ def main() -> None:
         # which a later checkpoint never drove. Which parameters train is unchanged.
         model.load_state_dict(torch.load(args.init, map_location=args.device, weights_only=True))
         print(f"  started from {args.init}", flush=True)
+    if any(s.drove == preflight.INIT for s in sources):
+        if not args.init:
+            raise SystemExit(
+                f"a source says the --init weights drove it ({preflight.INIT!r}), but there is no --init"
+            )
+        checked["fidelity_init"] = preflight.init_fidelity(
+            train, referee, sources, model, TickDataset, torch, args.device
+        )
 
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
