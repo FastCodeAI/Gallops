@@ -55,7 +55,7 @@ before a race. The gallops is the training ground where it is made fast.
 **gallops-v0, our own model, is not built yet.** Every training run so far has
 started from the released Drive-JEPA checkpoint and retrained part of it, or
 trained something small on top of it. [Training so far](#training-so-far) lists
-all six efforts. The loop is proven end to end: `gallops train-rerank` writes a
+all eight efforts. The loop is proven end to end: `gallops train-rerank` writes a
 checkpoint with its sidecar, and paddock's `drivejepa_rerank` adapter loads it
 and scores it like any other model.
 
@@ -65,7 +65,7 @@ cannot actually do today.
 
 ## Training so far
 
-Status at 2026-10-14. Everything below starts from the released Drive-JEPA
+Status at 2026-10-15. Everything below starts from the released Drive-JEPA
 checkpoint, with its image encoder frozen. Each row's doc has the full account;
 the numbers here are copied from it, never re-derived.
 
@@ -77,6 +77,8 @@ the numbers here are copied from it, never re-derived.
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
 | **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
 | **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |
+| **Sub-score scorer, seeing** | as above, on features that include the camera, over 32 inserted swerve paths | the 5 scenes re-collected with the seeing model, plus cache v4: 23,777 ticks | 0103 frontal **5.00** (0/3 hit) against **2.36** released | **Parked.** It swerves in every scenario from 0.5 s and flips side up to 16 times an episode | [brake-swerve-expert.md](docs/brake-swerve-expert.md#1-sub-score-scorer-with-inserted-swerves-parked) |
+| **Expert v6 imitation**, rounds 1A and 1B | the refiner and the scorer | 5 scenes relabelled by expert v6 (8,402 ticks), 150 episodes the expert drove (9,234), real nuScenes | 0103 frontal **4.21** (1/3 hit) against **2.36**; side **0.00** against 1.67. nuScenes L2 **1.186** against 2.380 | **3 runs per shape.** On 0103, +0.06 overall with SE 1.01: the frontal gain and side loss cancel. The scorer does not carry over to a held-out scene | [brake-swerve-expert.md](docs/brake-swerve-expert.md) |
 
 How to read it:
 
@@ -88,7 +90,7 @@ How to read it:
   reached the model; a black frame gave the same plan. Those numbers are what
   the runs measured, but they say nothing about learning to *see* a hazard. The
   trainer is fixed and its preflight now refuses a model that a blanked camera
-  does not move. Paddock's half is #62, still open.
+  does not move. Paddock's half is #62, merged.
 - **The swerve runs also trained at batch 8, and scorer cache v1 was built at
   batch 4.** The vendor model mixes ticks within a batch, which did not matter
   while it was blind but would from the first run that sees. Every forward pass
@@ -159,6 +161,7 @@ Four reasons, in increasing order of importance:
 | [docs/reviewing.md](docs/reviewing.md) | reviewing a PR — what gets checked, and the 🔴 / 🟠 / 🟡 scale |
 | [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
 | [docs/scorer-cache.md](docs/scorer-cache.md) | training Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
+| [docs/brake-swerve-expert.md](docs/brake-swerve-expert.md) | the first training with the camera working — the parked sub-score scorer, expert v6 and its gates, rounds 1A and 1B |
 | [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
 | [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
 
