@@ -58,3 +58,19 @@ runs = "/path/to/gallops-runs"
 # [datasets.navsim]
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
+
+# [datasets.drivejepa_b2d]
+# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (docs/drivejepa_b2d.md)
+
+# ---------------------------------------------------------------------------
+# Interpreters and upstream code, for stages that must run inside a model's own
+# environment. A recipe names them as {python.NAME} and {code.NAME}; see
+# recipes/ and `gallops recipe <name>`.
+# ---------------------------------------------------------------------------
+
+# [python]
+# train     = "/path/to/env-with-torch/bin/python"     # Python >= 3.11 with torch
+# drivejepa = "/path/to/drive-jepa-env/bin/python"     # Drive-JEPA's own env (Python 3.9, navsim installed)
+
+# [code]
+# drivejepa = "/path/to/Drive-JEPA"

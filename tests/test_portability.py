@@ -23,6 +23,7 @@ variable, not an entry in EXEMPT.
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -39,6 +40,11 @@ MACHINE_ROOTS = (
     "/scratch/",
     "/Users/",
 )
+
+# A path under one person's home directory, written without the root above:
+# "$HOME/<their checkout>" names one machine's layout exactly as "/home/<them>/"
+# does. Dotfiles are left alone -- "~/.cache" is the same place for everybody.
+HOME_RELATIVE = re.compile(r"(?:\$HOME|\$\{HOME\}|(?<![\w/.])~)/(?![.{$<])[\w-]")
 
 # Universal on any Linux box, so not a portability risk.
 ALLOWED = (
@@ -112,6 +118,9 @@ def offending_lines(path: Path) -> list[str]:
                 continue
             hits.append(f"{rel}:{number}: {line.strip()}")
             break
+        else:
+            if HOME_RELATIVE.search(line):
+                hits.append(f"{rel}:{number}: {line.strip()}")
     return hits
 
 
@@ -135,3 +144,6 @@ def test_the_gate_can_actually_see_a_violation() -> None:
     # Confirm the matcher itself works, without touching the filesystem.
     line = "root = '/home/someone/data'"
     assert any(r in line for r in MACHINE_ROOTS)
+    assert HOME_RELATIVE.search("A=$HOME/some-checkout/tools")
+    assert HOME_RELATIVE.search("cd ~/work/repo")
+    assert not HOME_RELATIVE.search("open('~/.cache/huggingface/token')")

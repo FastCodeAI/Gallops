@@ -15,9 +15,11 @@ means.
 **The collision test is the benchmark's own.** Footprint, rear-axle offset and
 the separating-axis overlap are transcribed from
 `neuro_ncap/evaluation/collision.py` (4.018 x 1.85 m, box centre 0.5 m ahead of
-the rear axle). `tests/test_expert_grader.py` reads that vendor file and fails if
-the constants drift. Paddock transcribes the same numbers for its own analysis;
-the two repos do not import each other, so each cites the source instead.
+the rear axle). `TestGrader.test_footprint_still_matches_the_vendor` in
+`tests/test_expert.py` reads that vendor file and fails if the constants drift; it
+is skipped unless NEURO_NCAP_REPO is set, so `make check` does not run it.
+Paddock transcribes the same numbers for its own analysis; the two repos do not
+import each other, so each cites the source instead.
 
 Open loop, per tick: the trajectory is placed at the ego pose it was planned from
 and followed with no replanning, while scripted actors are replayed from the
@@ -41,7 +43,8 @@ HORIZON = np.round(np.arange(0.1, 4.0001, 0.1), 1)
 #: How far off the logged path a trajectory may go before the NeuRAD
 #: reconstruction stops being something to trust. Reasoned, not measured: one
 #: lane width clears a car, and Drive-JEPA's own episodes stay under 4 m while
-#: the renders are visibly fine. See docs/models/drivejepa-neuroncap.md.
+#: the renders are visibly fine. See paddock's docs/models/drivejepa-neuroncap.md
+#: (on its unmerged `analysis/drivejepa-ncap-candidates` branch).
 TRUST_BAND_M = 4.0
 
 
@@ -182,8 +185,8 @@ def leaves_road(waypoints: np.ndarray, ego2world: np.ndarray, area) -> float | N
     Without this the expert had no idea where the road was: it chose the side of a
     swerve from the actor's position alone, and on a two-lane street with the ego
     in the right-hand lane it steered toward the parked cars rather than the empty
-    oncoming carriageway. Both footprint corners on the swerving side are tested,
-    not the centre, since a car leaves the road edge-first.
+    oncoming carriageway. All four footprint corners are tested, not the centre,
+    since a car leaves the road edge-first.
     """
     x, y, heading = densify(waypoints)
     rotation, origin = ego2world[:2, :2], ego2world[:2, 3]

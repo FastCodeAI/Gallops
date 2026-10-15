@@ -1,0 +1,39 @@
+{
+ "epochs_done": 1,
+ "stopped": null,
+ "steps": 4,
+ "sec_per_step_mean": 0.8282487392425537,
+ "sec_per_step_median": 0.700996994972229,
+ "wall_h": 0.014486274785465665,
+ "gpu_max_alloc_gb": 3.9277634620666504,
+ "gpu_max_reserved_gb": 4.265625,
+ "sampler_share": {
+  "A": 0.4,
+  "ordinary": 0.2,
+  "B_pass": 0.2,
+  "B_raw": 0.2
+ },
+ "raw_only_batches_in_training": {
+  "batches": 0,
+  "scorer_unchanged": 0
+ },
+ "s4_post_training_raw_steps": [
+  {
+   "scorer_unchanged": true,
+   "generator_moved": true,
+   "encoder_unchanged": true,
+   "scorer_grad_none": true
+  }
+ ],
+ "slice_samples": 96,
+ "heldout_samples": 72,
+ "draws_per_epoch": 120,
+ "batch_size": 32,
+ "device": "cuda",
+ "torch": "2.8.0+cu128",
+ "vocab_shape": [
+  10240,
+  40,
+  3
+ ]
+}

@@ -1,0 +1,10 @@
+chunk,feature,bytes,secs,clips,MBps
+10,egomotion.offline,1624334,1.59,98,1.0
+10,obstacle.offline,59515792,5.75,98,10.3
+10,vehicle_dimensions,9284,1.06,100,0.0
+57,egomotion.offline,1626319,1.78,98,0.9
+57,obstacle.offline,66776069,4.53,98,14.7
+57,vehicle_dimensions,9288,0.97,100,0.0
+2409,egomotion.offline,1560778,1.56,94,1.0
+2409,obstacle.offline,36404020,2.41,94,15.1
+2409,vehicle_dimensions,9177,1.01,98,0.0

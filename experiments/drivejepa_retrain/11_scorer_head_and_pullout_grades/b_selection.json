@@ -1,0 +1,15 @@
+{
+ "written": "2026-10-09T00:08:27+05:30",
+ "note": "written before UNSEEN is opened",
+ "seed": 20261008,
+ "t": 0.6,
+ "t_rechosen": true,
+ "gate_weight_decay": 0.001,
+ "gate_val_loss": 0.1328904628753662,
+ "ranker_weight_decay": 0.01,
+ "train_instants": 9476,
+ "val_instants": 2366,
+ "val_regret_at_t": 0.07505730511219141,
+ "val_regret_scorer": 0.07214703934860754,
+ "val_regret_s7_head": 0.07915082023442044
+}

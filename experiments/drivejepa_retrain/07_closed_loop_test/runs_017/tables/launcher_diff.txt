@@ -1,0 +1,77 @@
+--- ../../../../drafts/drivejepa-0.1.6/serve_drivejepa_0_1_6.py	2026-10-07 22:01:38.318491342 +0530
++++ draft/serve_drivejepa_0_1_7.py	2026-10-10 01:35:11.459447654 +0530
+@@ -2,7 +2,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ """Serve the Drive-JEPA adapter at 0.1.6 (0.1.4 + paper §3.5 momentum-aware selection).
+ 
+-    alpasim/.venv/bin/python drafts/drivejepa-0.1.6/serve_drivejepa_0_1_6.py \
++    alpasim/.venv/bin/python analysis_3.0/Retrain-data/07_closed_loop_test/runs_017/draft/serve_drivejepa_0_1_7.py \
+         --host 0.0.0.0 --port 9149 --device cpu --control-timestep-us 50000
+ 
+ Why this launcher exists rather than `PYTHONPATH=... adapters/serve_planner.py`:
+@@ -44,7 +44,7 @@
+ The shared `scaffold` module is still imported from adapters/ -- only the
+ registry and CLI are local.
+ 
+-**Why 0.1.6 lives in adapters/drivejepa016/ and not adapters/drivejepa/.**
++**Why 0.1.6 lives in runs_017/adapters/drivejepa017/ and not adapters/drivejepa/.**
+ Same reason. 0.1.3's gate reads `constants.ADAPTER_VERSION`
+ (serve_drivejepa_0_1_3.py:83-90); bumping it in the shared module would make
+ 0.1.3 refuse to start. Everything 0.1.6 does not change -- real_model.py,
+@@ -54,7 +54,7 @@
+ Three things enforce provenance, rather than leaving it to convention:
+ 
+   1. ``_resolve_planner`` refuses to serve a planner whose real path is not
+-     under ``adapters/drivejepa016/`` -- a re-introduced real file in the draft
++     under ``runs_017/adapters/drivejepa017/`` -- a re-introduced real file in the draft
+      fails at startup instead of quietly winning. That is the 0.1.2 failure
+      mode, and the 0.1.3 gate that caught it, pointed at the new package.
+   2. The version gate reads ``constants.ADAPTER_VERSION`` from the *imported*
+@@ -71,8 +71,11 @@
+ from pathlib import Path
+ 
+ _HERE = Path(__file__).resolve().parent
+-_ADAPTERS = _HERE.parent.parent / "adapters"
+-_LIVE_PACKAGE = _ADAPTERS / "drivejepa016"
++# 0.1.7 is built inside 07_closed_loop_test/runs_017/ (Sid: write only there): the package is runs_017/adapters/drivejepa017/,
++# the shared scaffold stays in Alpasim/adapters/.
++_ADAPTERS = _HERE.parents[4] / "adapters"
++_LIVE_PACKAGE = _HERE.parent / "adapters" / "drivejepa017"
++assert (_ADAPTERS / "scaffold.py").is_file(), _ADAPTERS
+ 
+ # Draft FIRST so `drivejepa` resolves here; adapters after it for the shared
+ # scaffold.
+@@ -82,12 +85,12 @@
+ 
+ #: What this launcher is for. The *expectation*; the reported value always
+ #: comes out of the imported module, never from this literal.
+-EXPECTED_VERSION = "0.1.6"
++EXPECTED_VERSION = "0.1.7"
+ 
+ #: AlpaSim logical_id of the front camera. Same as serve_planner's default.
+ FRONT_CAMERA_ID = "camera_front_wide_120fov"
+ 
+-logger = logging.getLogger("serve_drivejepa_0_1_6")
++logger = logging.getLogger("serve_drivejepa_0_1_7")
+ 
+ 
+ def _resolve_planner():
+@@ -149,6 +152,9 @@
+                 "missing copy would drive on plain S while claiming §3.5."
+             )
+ 
++    # 0.1.7: the batch fix must be on. The off value exists for the build gate only.
++    if not constants.BATCH_FIX or os.environ.get(constants.BATCH_FIX_ENV, "on").strip().lower() == "off":
++        raise SystemExit("refusing to serve: 0.1.7 drives with the batch fix on; DRIVEJEPA_BATCH_FIX=off is for the build gate only")
+     version = getattr(constants, "ADAPTER_VERSION", None)
+     if version != EXPECTED_VERSION:
+         raise SystemExit(
+@@ -156,7 +162,7 @@
+             f"expected {EXPECTED_VERSION!r}.\n"
+             f"drivejepa package came from {real_path}\n"
+             "Check sys.path ordering, or bump "
+-            "adapters/drivejepa016/constants.py."
++            "runs_017/adapters/drivejepa017/constants.py."
+         )
+     return planner, divider, constants, real_path
+ 

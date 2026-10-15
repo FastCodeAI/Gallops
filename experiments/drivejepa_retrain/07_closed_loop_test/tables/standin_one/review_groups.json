@@ -1,0 +1,37 @@
+{
+ "improved": {
+  "title": "Score improved",
+  "lead": "PROVISIONAL one-scene proof of the media chain; not the trial's result.",
+  "points": [
+   "provisional"
+  ],
+  "scenes": []
+ },
+ "decreased": {
+  "title": "Score decreased",
+  "lead": "PROVISIONAL one-scene proof of the media chain; not the trial's result.",
+  "points": [
+   "provisional"
+  ],
+  "scenes": []
+ },
+ "same": {
+  "title": "No change in score",
+  "lead": "PROVISIONAL one-scene proof of the media chain; not the trial's result.",
+  "points": [
+   "provisional"
+  ],
+  "buckets": [
+   {
+    "title": "Provisional",
+    "note": "",
+    "scenes": [
+     "01d503d4"
+    ]
+   }
+  ]
+ },
+ "why": {
+  "01d503d4": "provisional row from b014b_readout.arm_block"
+ }
+}

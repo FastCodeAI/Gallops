@@ -22,7 +22,8 @@ The engine's clock, which the emitted `times` must agree with
   moves has none and needs `initial-yaw`.
 
 Three shapes, each aimed at a habit measured in
-paddock's `docs/models/drivejepa-neuroncap.md`:
+paddock's `docs/models/drivejepa-neuroncap.md` (on paddock branch
+`analysis/drivejepa-ncap-candidates`, not yet merged):
 
     stationary   parked on the path            -> the 1.3 m/s creep
     frontal      driving back down it at us    -> no lateral evasion, the real gap

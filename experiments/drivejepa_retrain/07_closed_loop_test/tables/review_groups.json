@@ -1,0 +1,112 @@
+{
+ "header": "Drive-JEPA 0.1.4b (recorded) vs 0.1.6 (S4 pass-9 weights, bonnet mask, acceleration zeroed) on the 30 census scenes: mean score 0.543 to 0.703; 10 improved, 5 decreased, 15 unchanged; at-fault collisions 4 to 2, none new.",
+ "improved": {
+  "title": "Score improved",
+  "scenes": [
+   "04394343",
+   "b1b170d0",
+   "bd07fb91",
+   "032b6f21",
+   "89f2eeb8",
+   "71d7d03b",
+   "2e1ce314",
+   "d1a25a99",
+   "98dd56b2",
+   "5f064b02"
+  ],
+  "lead": "Ten scenes. In six of them the event that ended or zeroed the 0.1.4b run does not happen under 0.1.6: two at-fault collisions, one off-road exit, two early collisions that were not the car's fault, and one departure from the human path. A seventh, 89f2eeb8, loses its stop. Six of the ten now reach full score.",
+  "points": [
+   "Two of 0.1.4b's four at-fault collisions are gone: 04394343 (was at +2.2 s) and b1b170d0 (was at +0.4 s). Both now run to the end of the clip at full score. No scene gains an at-fault collision.",
+   "The hard brake after handover is gone where it mattered. Peak demanded deceleration of the driven plan falls from 18.2 to 1.0 m/s² on 04394343, from 20.7 to 1.0 on b1b170d0 and from 13.2 to 1.3 on 032b6f21, and peak steering falls from 0.76-0.79 rad to 0.01-0.02 rad on all three.",
+   "89f2eeb8, the no-cue stop: the stop is gone. 0.1.4b braked to 0.0 m/s by +2.5 s; 0.1.6 never drops below 9.7 m/s and scoring runs to +14.85 s instead of +8.5 s.",
+   "bd07fb91 reaches full score without leaving the road, but it still shows a full steering swing (0.78 rad) at +6.5 s, the moment scoring ends; a collision follows at +7.15 s. The score does not see either.",
+   "Three gains are partial: 5f064b02 (0.65 to 0.69) and 98dd56b2 (0.16 to 0.34) still end on a collision that is not the car's fault, later than before; d1a25a99 (0.33 to 0.67) still ends early, at +10.45 s."
+  ]
+ },
+ "decreased": {
+  "title": "Score decreased",
+  "scenes": [
+   "e121e37d",
+   "0245ff75",
+   "bae463d3",
+   "1acf2f5d",
+   "cdd9448c"
+  ],
+  "lead": "Five scenes, none with an at-fault collision or an off-road exit under either version. All five lose progress, for two different reasons.",
+  "points": [
+   "Two leave the human path and the scoring window closes early: e121e37d is 4 m off the path at +9.65 s (it ran the full 16.8 s under 0.1.4b) and cdd9448c at +13.4 s. On e121e37d the car is faster than before (11.1 against 9.4 m/s) when it drifts.",
+   "Three drive slower: 1acf2f5d (mean 4.0 against 4.7 m/s), bae463d3 (1.4 against 2.2 m/s, stalled under both) and 0245ff75 (7.5 against 8.0 m/s), where the collision that ends scoring, not the car's fault in either run, comes at +11.0 s instead of +12.9 s.",
+   "Four of the five were among 0.1.4b's best scenes (0.86 to 1.00). None has a new at-fault collision."
+  ]
+ },
+ "same": {
+  "title": "No change in score",
+  "lead": "Fifteen scenes. Nine are at full score under both versions. Six fail in the same way under both: three leave the road early, two have the same at-fault collision, one never pulls out.",
+  "points": [
+   "Full score under both (9): five of the nine cover more of the route than before, which the score cannot show because it saturates at 80 % progress (023b7fcc 0.87 to 1.00, 026d6a39 0.84 to 1.00, 02eadd92 0.82 to 1.00, 048b974e 0.84 to 1.00, 6725df2d 0.89 to 1.00).",
+   "Highway, 04749bb9 and acd22430: both still leave the road with a full steering swing (0.78 rad). 04749bb9 gets past the first second (off the road at +2.7 s instead of +0.4 s) and holds 18-22 m/s for three seconds; acd22430 is off the road at +0.25 s. The first plan now asks for 5-7 m/s² of braking instead of 14-17, and the plan half a second later asks for 12.",
+   "Pull-outs, d2715023 and b44a4a44: neither moves. Plans that leave are on the menu at every replan (a median of 21 and 24 of the 32), but the scorer's best-ranked one sits at rank 9 to 12 of 32 and is never picked.",
+   "8023dce5 has the same at-fault collision, later (+7.2 s instead of +4.1 s). 791d68ce is off the road from the handover under both."
+  ],
+  "buckets": [
+   {
+    "title": "Full score under both",
+    "scenes": [
+     "01d503d4",
+     "023b7fcc",
+     "026d6a39",
+     "02e075b9",
+     "02eadd92",
+     "048b974e",
+     "16b83346",
+     "6725df2d",
+     "e3ed554f"
+    ]
+   },
+   {
+    "title": "Leaves the road early under both",
+    "scenes": [
+     "04749bb9",
+     "acd22430",
+     "791d68ce"
+    ]
+   },
+   {
+    "title": "Same at-fault collision",
+    "scenes": [
+     "8023dce5",
+     "b44a4a44"
+    ]
+   },
+   {
+    "title": "Does not pull out",
+    "scenes": [
+     "d2715023"
+    ]
+   }
+  ]
+ },
+ "why": {
+  "04394343": "At-fault collision at +2.2 s is gone; runs to the end of the clip.",
+  "b1b170d0": "At-fault collision at +0.4 s is gone; runs to the end of the clip.",
+  "bd07fb91": "No longer leaves the road at +0.7 s; still a full steering swing at +6.5 s.",
+  "032b6f21": "The collision at +4.45 s is gone; 94 % of the route.",
+  "89f2eeb8": "The no-cue stop is gone: lowest speed 9.7 m/s against 0.0.",
+  "71d7d03b": "Stays on the human path; 98 % of the route against 44 %.",
+  "2e1ce314": "The collision at +8.95 s is gone; drives 14.3 against 10.4 m/s.",
+  "d1a25a99": "Scoring ends at +10.45 s instead of +7.75 s.",
+  "98dd56b2": "The collision that ends scoring comes at +7.8 s instead of +5.45 s.",
+  "5f064b02": "Same ending collision, 0.3 s later.",
+  "e121e37d": "Leaves the human path; scoring ends at +9.65 s instead of the end of the clip.",
+  "0245ff75": "Slower, and the ending collision comes 1.9 s earlier.",
+  "bae463d3": "Slower: 1.4 against 2.2 m/s; stalled under both.",
+  "1acf2f5d": "Slower: 4.0 against 4.7 m/s.",
+  "cdd9448c": "Leaves the human path; scoring ends at +13.4 s.",
+  "04749bb9": "Off the road at +2.7 s instead of +0.4 s; no longer brakes to a stop.",
+  "acd22430": "Off the road at +0.25 s, as before.",
+  "791d68ce": "Off the road from the handover under both.",
+  "8023dce5": "Same at-fault collision, at +7.2 s instead of +4.1 s.",
+  "b44a4a44": "Never moves; struck at +6.6 s as before.",
+  "d2715023": "Creeps 1.3 m in 16.8 s; never pulls out."
+ }
+}

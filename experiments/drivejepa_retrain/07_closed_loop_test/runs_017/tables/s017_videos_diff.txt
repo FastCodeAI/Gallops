@@ -1,0 +1,20 @@
+2c2
+< """S5 TRIAL copy of baseline_014b/b014b_videos.py for the 0.1.6 arm (diff: tables/s5_videos_diff.txt -- output folder, arm label "016" with the
+---
+> """GENERATOR-ONLY TRIAL copy of 07_closed_loop_test/s5_videos.py for the 0.1.7 arm (diff: tables/s017_videos_diff.txt -- menus and videos on the NAS, arm label "017" with the same overlays). Original docstring: S5 TRIAL copy of baseline_014b/b014b_videos.py for the 0.1.6 arm (diff: tables/s5_videos_diff.txt -- output folder, arm label "016" with the
+20c20
+< S5 = pathlib.Path(__file__).resolve().parent; VID = S5 / "videos"
+---
+> S5 = pathlib.Path("{runs}/drivejepa_retrain/07_closed_loop_test_017"); VID = S5 / "videos"; VID.mkdir(exist_ok=True)
+23c23
+< ARM_LABEL = {"014": "0.1.4 recorded", "014b": "0.1.4b (paper 3.5 momentum)", "016": "0.1.6 (S4 weights + 3.5 momentum)"}
+---
+> ARM_LABEL = {"014": "0.1.4 recorded", "014b": "0.1.4b (paper 3.5 momentum)", "016": "0.1.6 (S4 weights + 3.5 momentum)", "017": "0.1.7 (S10 generator, pass-9 scorer)"}
+77c77
+<             if arm in ("014b", "016"):
+---
+>             if arm in ("014b", "016", "017"):
+82c82
+<         if arm in ("014b", "016") and veto: d.rectangle([W // 2 - 96, 28, W // 2 + 96, 52], fill=(0, 110, 140)); d.text((W // 2 - 88, 32), "\u00a73.5 changed pick", fill=WHITE, font=fnt_b)
+---
+>         if arm in ("014b", "016", "017") and veto: d.rectangle([W // 2 - 96, 28, W // 2 + 96, 52], fill=(0, 110, 140)); d.text((W // 2 - 88, 32), "\u00a73.5 changed pick", fill=WHITE, font=fnt_b)

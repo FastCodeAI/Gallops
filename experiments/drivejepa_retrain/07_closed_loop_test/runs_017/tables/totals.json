@@ -1,0 +1,191 @@
+{
+ "n": 30,
+ "skipped": [],
+ "014b": {
+  "mean_score": 0.5433270979008733,
+  "at_fault": 4,
+  "at_fault_scenes": [
+   "04394343",
+   "8023dce5",
+   "b1b170d0",
+   "b44a4a44"
+  ],
+  "any_collision": 10,
+  "offroad": 4,
+  "offroad_scenes": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430",
+   "bd07fb91"
+  ],
+  "stalls": 3,
+  "stall_scenes": [
+   "032b6f21",
+   "bae463d3",
+   "bd07fb91"
+  ],
+  "mean_progress_clipped_rel": 0.5366459254899983,
+  "mean_progress": 0.5366459254899983,
+  "mean_dist_traveled": 75.81687517521442,
+  "full_score": [
+   "01d503d4",
+   "023b7fcc",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "048b974e",
+   "16b83346",
+   "6725df2d",
+   "cdd9448c",
+   "e3ed554f"
+  ]
+ },
+ "016": {
+  "mean_score": 0.7032255676810347,
+  "at_fault": 2,
+  "at_fault_scenes": [
+   "8023dce5",
+   "b44a4a44"
+  ],
+  "any_collision": 7,
+  "offroad": 3,
+  "offroad_scenes": [
+   "04749bb9",
+   "791d68ce",
+   "acd22430"
+  ],
+  "stalls": 4,
+  "stall_scenes": [
+   "791d68ce",
+   "8023dce5",
+   "bae463d3",
+   "bd07fb91"
+  ],
+  "mean_progress_clipped_rel": 0.6977075337647115,
+  "mean_progress": 0.6977075337647115,
+  "mean_dist_traveled": 115.3880267191939,
+  "full_score": [
+   "01d503d4",
+   "023b7fcc",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "048b974e",
+   "16b83346",
+   "2e1ce314",
+   "6725df2d",
+   "71d7d03b",
+   "b1b170d0",
+   "bd07fb91",
+   "e3ed554f"
+  ]
+ },
+ "017": {
+  "mean_score": 0.7696771320451908,
+  "at_fault": 3,
+  "at_fault_scenes": [
+   "acd22430",
+   "b44a4a44",
+   "bd07fb91"
+  ],
+  "any_collision": 3,
+  "offroad": 2,
+  "offroad_scenes": [
+   "791d68ce",
+   "d1a25a99"
+  ],
+  "stalls": 2,
+  "stall_scenes": [
+   "8023dce5",
+   "bae463d3"
+  ],
+  "mean_progress_clipped_rel": 0.8284397347342072,
+  "mean_progress": 0.8284397347342072,
+  "mean_dist_traveled": 151.56444988906236,
+  "full_score": [
+   "01d503d4",
+   "023b7fcc",
+   "0245ff75",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "048b974e",
+   "16b83346",
+   "1acf2f5d",
+   "2e1ce314",
+   "5f064b02",
+   "6725df2d",
+   "71d7d03b",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "cdd9448c",
+   "e121e37d",
+   "e3ed554f"
+  ]
+ },
+ "017_vs_016": {
+  "improved": [
+   "0245ff75",
+   "04749bb9",
+   "1acf2f5d",
+   "5f064b02",
+   "8023dce5",
+   "89f2eeb8",
+   "98dd56b2",
+   "cdd9448c",
+   "e121e37d"
+  ],
+  "decreased": [
+   "b1b170d0",
+   "bd07fb91",
+   "d1a25a99"
+  ],
+  "unchanged": [
+   "01d503d4",
+   "023b7fcc",
+   "026d6a39",
+   "02e075b9",
+   "02eadd92",
+   "032b6f21",
+   "04394343",
+   "048b974e",
+   "16b83346",
+   "2e1ce314",
+   "6725df2d",
+   "71d7d03b",
+   "791d68ce",
+   "acd22430",
+   "b44a4a44",
+   "bae463d3",
+   "d2715023",
+   "e3ed554f"
+  ],
+  "mean_delta": 0.06645156436415613,
+  "new_at_fault": [
+   "acd22430",
+   "bd07fb91"
+  ],
+  "removed_at_fault": [
+   "8023dce5"
+  ]
+ },
+ "runs": {
+  "complete": 30,
+  "gates_ok": 30,
+  "provenance_ok": 30,
+  "nre": [
+   "26.1.112-59673f88"
+  ],
+  "adapter_diff_sha256": [
+   "dc8bc7693ca649963c25d03210523e4d5ad715bb05e4c4523983656135f24813"
+  ],
+  "checkpoint_sha256": [
+   "29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916"
+  ]
+ }
+}

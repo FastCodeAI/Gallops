@@ -10,11 +10,13 @@ green first, so that when something moves you know it was the model.
 from __future__ import annotations
 
 import json
+from typing import Annotated
 
 import typer
 
 from gallops import checkpoint as ckpt
-from gallops.config import ConfigError, SiteConfig
+from gallops import recipe as recipes
+from gallops.config import REPO_ROOT, ConfigError, SiteConfig
 
 app = typer.Typer(add_completion=False, help="Training for driving policies.")
 
@@ -36,6 +38,9 @@ def config() -> None:
     typer.echo(f"source   {cfg.source}")
     typer.echo(f"weights  {cfg.weights}{'' if cfg.weights.exists() else '   (MISSING)'}")
     typer.echo(f"runs     {cfg.runs}{'' if cfg.runs.exists() else '   (MISSING)'}")
+    for table in ("python", "code"):
+        for name, path in sorted(getattr(cfg, table).items()):
+            typer.echo(f"{table:<8} {name:<12} {path}{'' if path.exists() else '   (MISSING)'}")
     if not cfg.datasets:
         typer.echo("datasets none configured")
         return
@@ -62,9 +67,38 @@ def show(directory: str) -> None:
     typer.echo(json.dumps(record.to_dict(), indent=2, sort_keys=True))
 
 
+@app.command()
+def recipe(
+    name: str,
+    stages: Annotated[
+        list[str] | None, typer.Argument(help="stages to show or run; all when omitted")
+    ] = None,
+    run: Annotated[bool, typer.Option("--run", help="run the stages in order; otherwise only print")] = False,
+) -> None:
+    """Print, or run, the commands of a recipe (recipes/<name>.toml) on this machine.
+
+    Printing is the default: read what would run, with this site's paths filled
+    in, before spending GPU hours on it.
+    """
+    try:
+        cfg = SiteConfig.load()
+        rec = recipes.load(name)
+        cmds = recipes.commands(rec, cfg, stages or None)
+    except ConfigError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+    for cmd in cmds:
+        typer.echo(f"# {cmd.stage}\n{cmd.shell()}\n")
+        if run:
+            code = recipes.run(cmd)
+            if code:
+                typer.secho(f"stage {cmd.stage} exited {code}; stopping", fg=typer.colors.RED, err=True)
+                raise typer.Exit(code)
+
+
 @app.command("train-rerank")
 def train_rerank(
-    dataset: str = typer.Argument(..., help="candidate dataset exported by paddock's rerank.py"),
+    dataset: str = typer.Argument(..., help="dataset from `python -m gallops.data.rerank dataset`"),
     train_run: str = typer.Option(..., help="label for this run; names the checkpoint directory"),
     model: str = typer.Option("drivejepa_rerank", help="paddock adapter name"),
     hidden: int = typer.Option(128, help="MLP hidden units (0 = linear)"),
@@ -90,18 +124,24 @@ def train_rerank(
     )
     result = rerank.train(
         Path(dataset),
-        cfg.weights,
+        cfg,
         model=model,
         train_run=train_run,
         settings=settings,
-        train_git_sha=rerank.git_sha(Path(__file__).resolve().parents[2]),
+        train_git_sha=rerank.git_sha(REPO_ROOT),
     )
-    typer.echo(f"wrote     {result.directory}")
-    typer.echo(f"epoch     {result.epoch}")
+    typer.echo(f"wrote      {result.directory}")
+    typer.echo(f"epoch      {result.epoch}")
+    # "selection split", not "held-out": the epoch was chosen on these scenes, so
+    # the pick ADE is optimistic. Report from a split nothing was selected on.
     typer.echo(
-        f"held-out  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
-        f"pick ADE {result.holdout_pick_ade:.3f}"
-        + (f", model's own pick {result.holdout_model_pick_ade:.3f}" if result.holdout_model_pick_ade else "")
+        f"selection  {result.holdout_samples} samples / {result.holdout_scenes} scenes: "
+        f"pick ADE {result.selection_pick_ade:.3f}"
+        + (
+            f", model's own pick {result.holdout_model_pick_ade:.3f}"
+            if result.holdout_model_pick_ade is not None
+            else ""
+        )
         + f", best of the candidates {result.holdout_best_ade:.3f}"
     )
 

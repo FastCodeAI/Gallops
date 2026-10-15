@@ -1,0 +1,35 @@
+2c2
+< # S5 TRIAL: all 30 census scenes on drive-jepa 0.1.6, sequential, one run each, DRIVEJEPA_MOMENTUM=on. Pattern of baseline_014b/sweep_014b*.sh.
+---
+> # S5 TRIAL, GENERATOR ONLY: all 30 census scenes on drive-jepa 0.1.7 (copy of 07_closed_loop_test/sweep_016.sh; names, the NAS run root and the start checks changed), sequential, one run each, DRIVEJEPA_MOMENTUM=on. Pattern of baseline_014b/sweep_014b*.sh.
+6,7c6,7
+< T=experiments/drivejepa_retrain/07_closed_loop_test
+< SID={runs}/paddock_sid; RUNS=$SID/Alpasim/runs/drivejepa
+---
+> T=experiments/drivejepa_retrain/07_closed_loop_test/runs_017
+> SID={runs}/paddock_sid; RUNS={runs}/drivejepa_retrain/07_closed_loop_test_017/runs
+11,12c11,12
+< grep -q '"ok": true' "$T/tables/step1_proof.json" || { log "FATAL: Step 1 proof not passed"; exit 3; }
+< [ -s "$T/tables/build_016.sha256" ] || { log "FATAL: build not frozen"; exit 3; }
+---
+> grep -q '"gate_1_under_2cm": true' "$T/tables/gate_017.json" || { log "FATAL: build gate not passed"; exit 3; }
+> [ -s "$T/tables/build_017.sha256" ] && [ -s "$T/tables/adapter_diff.sha256" ] || { log "FATAL: build not frozen"; exit 3; }
+14,15c14,16
+< [ "$(sha256sum {runs}/drivejepa_retrain/06_first_training_run/candidate/drive_jepa_s4_pass09.ckpt | cut -d' ' -f1)" = 8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2 ] || { log "FATAL: candidate checkpoint sha256 mismatch"; exit 3; }
+< log "candidate checkpoint sha256 verified"
+---
+> [ "$(sha256sum {runs}/drivejepa_retrain/12_second_training_run/ckpt/drive_jepa_physicalai_generator.ckpt | cut -d' ' -f1)" = 29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916 ] || { log "FATAL: S10 generator checkpoint sha256 mismatch"; exit 3; }
+> ( cd {runs}/drivejepa_retrain/12_second_training_run && sha256sum -c --quiet final_choice.sha256 ) || { log "FATAL: final_choice.json does not match its sha256"; exit 3; }
+> log "S10 generator checkpoint sha256 29d5f951... verified; final_choice.json verified; adapter diff sha256 $(cut -d' ' -f1 "$T/tables/adapter_diff.sha256")"
+19c20
+<   if [ -e "$RUNS/drivejepa_016_${short}/rollouts" ]; then log "=== RUN $i: $short already has rollouts -- skipped ==="; continue; fi
+---
+>   if [ -e "$RUNS/drivejepa_017_${short}/rollouts" ]; then log "=== RUN $i: $short already has rollouts -- skipped ==="; continue; fi
+22c23
+<   DRIVEJEPA_MOMENTUM=on "$T/run_016_scene.sh" dj "$short" "$scene" on --scenes-csv "$csv" --gpu-floor-mib 8000 < /dev/null
+---
+>   DRIVEJEPA_MOMENTUM=on "$T/run_017_scene.sh" dj "$short" "$scene" on --scenes-csv "$csv" --gpu-floor-mib 8000 < /dev/null
+28c29
+< log "post-sweep: containers of ours: $(docker ps -a --format '{{.Names}}' | grep -c 'drivejepa_016_' || true); networks of ours: $(docker network ls --format '{{.Name}}' | grep -c 'drivejepa_016_' || true); subnets used $(docker network ls --filter driver=bridge -q | wc -l)/31"
+---
+> log "post-sweep: containers of ours: $(docker ps -a --format '{{.Names}}' | grep -c 'drivejepa_017_' || true); networks of ours: $(docker network ls --format '{{.Name}}' | grep -c 'drivejepa_017_' || true); subnets used $(docker network ls --filter driver=bridge -q | wc -l)/31"

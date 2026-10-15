@@ -1,0 +1,4 @@
+scorer,n,fresh_pick_is_best,s4_pick_is_best_same_examples,same_verdict_per_example,max_abs_diff_grade_of_pick,share_grade_of_pick_within_1e3,max_abs_diff_best_grade,max_abs_diff_dist4_m,closepass_n,fresh_pick_within_1p5m,s4_pick_within_1p5m,fresh_menu_has_1p5m,s4_menu_has_1p5m
+shipped (pass 0),10,0.4,0.4,1.0,0.020831167697906494,0.6,0.002070307731628418,4.284771856644769,2,0.0,0.0,1.0,1.0
+pass 1,10,0.4,0.4,1.0,0.02412039041519165,0.5,0.0,5.0029017556915445,2,0.0,0.0,1.0,1.0
+pass 9,10,0.5,0.4,0.9,0.02652198076248169,0.7,0.0,6.283898521229183,2,0.0,0.0,1.0,1.0

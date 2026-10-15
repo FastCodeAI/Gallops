@@ -35,7 +35,7 @@ so the model applies `lidar2img` straight to sample points in ego coordinates.
 This module used to compose nuScenes' real LIDAR_TOP into the extrinsics, copying
 paddock; LIDAR_TOP is yawed -90 degrees, so no sample point landed in the front
 image and the model planned from ego status alone. Every episode collected before
-paddock #62 was driven by that camera-blind model, and every checkpoint trained
+paddock #62 (open) was driven by that camera-blind model, and every checkpoint trained
 here before this fix (stage A, joint v1-v4, v4fix, l4fix, l5, s1-s3, the cached
 scorers) learned from features with no image in them. The fidelity check now
 refuses those collections, rightly; the sight check in `preflight.py` refuses a
@@ -43,8 +43,9 @@ model whose plan does not move when the camera is blanked.
 
 Transcribed from paddock's `adapters/models/drivejepa/policy.py`, which built the
 same AgentInput when these episodes were driven. The repos do not import each
-other, so `verify` is what keeps the copy honest -- and it kept the bug too,
-because a copy that agrees with its source cannot say the source is wrong.
+other, so the preflight's fidelity check is what keeps the copy honest -- and it
+kept the bug too, because a copy that agrees with its source cannot say the
+source is wrong. The sight check is the one whose reference is no recording.
 """
 
 from __future__ import annotations
@@ -74,8 +75,51 @@ HISTORY_DT = 0.5
 #: drove, against 0.10 m once the frame exists (round 0, 506 ticks). Such a tick
 #: cannot be rebuilt, so it is not trained on.
 HISTORY_TOLERANCE_S = 0.05
-#: NeuroNCAP's Command enum -> NAVSIM's one-hot [left, straight, right, unknown].
-COMMAND_ONE_HOT = {0: [0, 0, 1, 0], 1: [1, 0, 0, 0], 2: [0, 1, 0, 0], 3: [0, 0, 0, 1]}
+#: Ticks per forward pass of the vendor model, everywhere. Its spatial cross-attention
+#: chooses which queries sample each camera from `mask_per_img[0]` -- batch element
+#: 0's mask -- for every element of the batch (`bevformer/spatial_cross_attention.py`,
+#: where the per-camera `indexes` are built). BEVFormer's queries are one grid shared
+#: by every sample, so there that is harmless. Drive-JEPA's are each tick's own
+#: proposals, so a tick behind a batch-mate whose points miss the frame takes no image
+#: features at all: camera-blind, made blind by its neighbour. Measured on the real
+#: model with 8 fixed-camera ticks, batching moved the plans 0.16-3.65 m against the
+#: same ticks one at a time, and took the fidelity median from 0.00% to 1.65% of
+#: travel. Paddock drives one tick at a time, so a batch is an input the model never
+#: has at inference. Until that selection is per element, every pass is one tick.
+TICKS_PER_PASS = 1
+
+
+def command_one_hot() -> dict[int, list[int]]:
+    """Paddock's `Command`, as the dumps record it, -> NAVSIM's one-hot [left, straight, right, unknown].
+
+    Keyed by paddock's own enum, imported rather than restated: it is paddock's
+    adapter that turned each Command into the one-hot the model saw, and a copy of
+    the numbers here would go on agreeing with itself after paddock's moved.
+    """
+    try:
+        from paddock.policy.protocol import Command
+    except ModuleNotFoundError as error:
+        raise SystemExit(
+            "paddock is not importable: put paddock's src/ on PYTHONPATH (CLAUDE.md: contracts are "
+            "imported, never restated)"
+        ) from error
+    return {
+        int(Command.LEFT): [1, 0, 0, 0],
+        int(Command.STRAIGHT): [0, 1, 0, 0],
+        int(Command.RIGHT): [0, 0, 1, 0],
+        int(Command.FOLLOW_REFERENCE): [0, 0, 0, 1],
+    }
+
+
+def one_tick_per_pass(batch: int | str) -> int:
+    """`--batch`, refused unless it is `TICKS_PER_PASS`; usable as an argparse `type`."""
+    batch = int(batch)
+    if batch != TICKS_PER_PASS:
+        raise SystemExit(
+            f"--batch {batch}: Drive-JEPA mixes the ticks of a batch (one tick's image mask is "
+            f"used for all of them), so every pass is {TICKS_PER_PASS} tick; see TICKS_PER_PASS"
+        )
+    return batch
 
 
 def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
@@ -166,6 +210,32 @@ def history_stamps(stamps: list[int], now: int) -> list[int] | None:
     return chosen
 
 
+@lru_cache(maxsize=4096)
+def _episode_stamps(directory: str) -> tuple[list[int], frozenset]:
+    """An episode's saved front frames, sorted, and the stamps it logged a pose for."""
+    root = Path(directory)
+    frames = sorted(int(p.stem) for p in (root / "CAM_FRONT").glob("*.jpg"))
+    poses = frozenset(int(k) for k in json.loads((root / "ego_poses.json").read_text()))
+    return frames, poses
+
+
+def rebuildable(tick: dict) -> bool:
+    """Whether `TickDataset` can rebuild this tick's input: the same two tests it makes.
+
+    The past it reads (0.5 s back) must be on disk, and the current frame needs a
+    logged pose. Without torch, so the trainer can drop such ticks BEFORE it counts
+    and records what it trains on -- `TickDataset.batch` skipping them silently left
+    the sidecar claiming ticks the model never saw (on l4fix, 269 of 1,423 brake).
+    """
+    if not tick.get("frame"):
+        return False
+    frames, poses = _episode_stamps(str(Path(tick["frame"]).parent.parent))
+    if not frames:
+        return False
+    chosen = history_stamps(frames, int(tick["timestamp"]))
+    return chosen is not None and chosen[-1] in poses
+
+
 def episode_context(tick: dict, drivable: Path | None = None) -> tuple:
     """The actors, pose and map a tick's trajectories are graded against.
 
@@ -196,8 +266,11 @@ def _episode_static(directory: str, drivable: str | None) -> tuple:
     area = None
     if drivable:
         path = Path(drivable) / f"scene-{root.parent.name.rsplit('-', 1)[-1]}.npz"
-        if path.exists():
-            area = DrivableArea.load(path)
+        if not path.exists():
+            # Silently None, the road check is skipped and a plan that leaves the road
+            # grades clear -- which is what a relative --drivable did after build_model's chdir.
+            raise FileNotFoundError(f"{path}: a drivable directory was given without this scene's raster")
+        area = DrivableArea.load(path)
     return poses, [a for a in actors if a["is_target_actor"]], area
 
 
@@ -219,6 +292,7 @@ class TickDataset:
         self._bev_cache: dict[str, dict] = {}
         self._feature_builder = None
         self._frames: dict[str, np.ndarray] = {}
+        self._command = command_one_hot()
 
     def __len__(self) -> int:
         return len(self.ticks)
@@ -260,7 +334,7 @@ class TickDataset:
                     ego_pose=relative_pose(pose, current_pose),
                     ego_velocity=np.array([tick["speed"], 0.0], dtype=np.float32),
                     ego_acceleration=np.array([tick["accel"], 0.0], dtype=np.float32),
-                    driving_command=np.array(COMMAND_ONE_HOT[int(tick["command"])], dtype=np.int64),
+                    driving_command=np.array(self._command[int(tick["command"])], dtype=np.int64),
                 )
             )
             # `resized` is the fast path: the model reads cam_f0 cropped to
@@ -434,6 +508,10 @@ class TickDataset:
         and the referee has to grade the trajectories of the ticks that are
         actually in the batch.
         """
+        if len(indices) > TICKS_PER_PASS:
+            # Refused here, where every caller passes: a batch of ticks is not what the
+            # model sees at inference (see TICKS_PER_PASS).
+            raise ValueError(f"{len(indices)} ticks in one pass; Drive-JEPA takes {TICKS_PER_PASS}")
         torch = self.torch
         collected, targets, used = [], [], []
         for index in indices:
@@ -465,6 +543,7 @@ def verify_fast_path(dataset, ticks, torch, model=None) -> None:
     proves it: the 32 proposals must come out bit-identical either way.
     """
     reused = "camera_feature"
+    ticks = [t for t in ticks if rebuildable(t)]  # `features` is None for the rest
     for tick in ticks:
         slow = dataset.features(tick, fast=False)
         fast = dataset.features(tick, fast=True)

@@ -4,7 +4,7 @@
 tick for 64 plans against every vehicle, which is a day of CPU for the 24k ticks
 the scorer cache holds. This is the same judgement written over arrays. It is held
 to `grader.grade` exactly -- `tests/test_fastgrade.py` compares the two on random
-scenes, and `cache_labels` re-checks a sample of real ticks before it writes --
+scenes, and `scorer_labels.label_episode` re-checks a sample of real ticks before it writes --
 so a verdict here means what a verdict there means.
 
 Beyond the grader's three answers it computes what Drive-JEPA's scorer has slots
@@ -14,8 +14,9 @@ for but was never trained on (the vendor's `sub_score_weight` is 0):
   its final velocity, so a plan clear at 4 s but closing fast on a car still counts.
 * `ttc_at` -- the first step (up to 3 s) where the ego box, carried on at its
   current velocity for 0.3, 0.6 or 0.9 s, overlaps a vehicle ahead of it. Shaped
-  after PDM's time-to-collision check; not PDM's code, and with neuroNCAP's rule
-  that a stopped ego can still be hit.
+  after PDM's time-to-collision check, not PDM's code, and with PDM's rule that a
+  stopped ego has no TTC violation (neuroNCAP's `hit_at` still counts a stopped
+  ego being hit; `final` multiplies by that, so the scorer is unaffected).
 * `lane_run_s` -- the longest continuous time the plan's centre is more than
   0.5 m from the lane centre (PDM's lane-keeping fails at 2 s).
 * `travel` -- path length over 4 s, for the progress answer.

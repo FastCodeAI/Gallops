@@ -1,0 +1,11 @@
+{
+ "path": "{runs}/drivejepa_retrain/06_first_training_run/candidate/drive_jepa_s4_pass09.ckpt",
+ "sha256": "8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2",
+ "bytes": 1273002795,
+ "passno": 9,
+ "tensors_from_shipped_encoder": 294,
+ "tensors_from_s4": 201,
+ "s4_tensors_that_differ_from_shipped": 185,
+ "base_checkpoint": "{runs}/alpasim_bulk/navsim-exp/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt",
+ "base_sha256": "740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d30d05"
+}

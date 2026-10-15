@@ -1,0 +1,132 @@
+{
+ "pass_A_all_replans": [
+  {
+   "scene": "02e075b9",
+   "replans": 39,
+   "reproduced": 39,
+   "worst_plan_diff_m": 1.5539323868551946e-05
+  },
+  {
+   "scene": "16b83346",
+   "replans": 39,
+   "reproduced": 39,
+   "worst_plan_diff_m": 8.434960875547404e-06
+  },
+  {
+   "scene": "04749bb9",
+   "replans": 39,
+   "reproduced": 39,
+   "worst_plan_diff_m": 7.993172189912912e-06
+  }
+ ],
+ "three_ticks": [
+  {
+   "scene": "02e075b9",
+   "t_after_handover_s": 2.0,
+   "tick_us": 37355925003,
+   "recorded_pick": 6,
+   "replayed_pick": 6,
+   "recorded_pick_without_momentum": 6,
+   "replayed_pick_without_momentum": 6,
+   "momentum_code": "OK",
+   "plan_max_abs_diff_m": 3.336867038683522e-06,
+   "same_pick": true,
+   "camera_feature_1": true,
+   "camera_feature_1_masked_rows_max": 0.0,
+   "camera_feature_2": true,
+   "camera_feature_2_masked_rows_max": 0.0,
+   "ego_status_equals_loader_rule": true,
+   "accel_reported": [
+    -0.059,
+    -0.002
+   ],
+   "accel_fed_to_model": [
+    0.0,
+    0.0
+   ],
+   "other_feature_keys_unchanged": true,
+   "momentum_accel_016": [
+    0.0,
+    0.0
+   ],
+   "momentum_accel_014b_rule": [
+    -0.059,
+    -0.002
+   ],
+   "momentum_velocity_unchanged": true
+  },
+  {
+   "scene": "16b83346",
+   "t_after_handover_s": 5.0,
+   "tick_us": 1975354431026,
+   "recorded_pick": 6,
+   "replayed_pick": 6,
+   "recorded_pick_without_momentum": 17,
+   "replayed_pick_without_momentum": 17,
+   "momentum_code": "OK",
+   "plan_max_abs_diff_m": 5.539477214711042e-06,
+   "same_pick": true,
+   "camera_feature_1": true,
+   "camera_feature_1_masked_rows_max": 0.0,
+   "camera_feature_2": true,
+   "camera_feature_2_masked_rows_max": 0.0,
+   "ego_status_equals_loader_rule": true,
+   "accel_reported": [
+    -2.228,
+    -0.0
+   ],
+   "accel_fed_to_model": [
+    0.0,
+    0.0
+   ],
+   "other_feature_keys_unchanged": true,
+   "momentum_accel_016": [
+    0.0,
+    0.0
+   ],
+   "momentum_accel_014b_rule": [
+    -2.228,
+    -0.0
+   ],
+   "momentum_velocity_unchanged": true
+  },
+  {
+   "scene": "04749bb9",
+   "t_after_handover_s": 0.0,
+   "tick_us": 5322245706587,
+   "recorded_pick": 30,
+   "replayed_pick": 30,
+   "recorded_pick_without_momentum": 30,
+   "replayed_pick_without_momentum": 30,
+   "momentum_code": "OK",
+   "plan_max_abs_diff_m": 4.579415488592531e-06,
+   "same_pick": true,
+   "camera_feature_1": true,
+   "camera_feature_1_masked_rows_max": 0.0,
+   "camera_feature_2": true,
+   "camera_feature_2_masked_rows_max": 0.0,
+   "ego_status_equals_loader_rule": true,
+   "accel_reported": [
+    0.0,
+    0.0
+   ],
+   "accel_fed_to_model": [
+    0.0,
+    0.0
+   ],
+   "other_feature_keys_unchanged": true,
+   "momentum_accel_016": [
+    0.0,
+    0.0
+   ],
+   "momentum_accel_014b_rule": [
+    0.0,
+    0.0
+   ],
+   "momentum_velocity_unchanged": true
+  }
+ ],
+ "ok": true,
+ "momentum_py_sha256": "d3ac010a097b24b13f741c90953000e9352750bdc1b28d75e6ef64c3d509c231",
+ "checkpoint_shipped": "drivejepa014b worker (real_model.DEFAULT_CHECKPOINT)"
+}

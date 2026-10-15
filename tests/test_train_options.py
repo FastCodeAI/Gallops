@@ -32,3 +32,103 @@ def test_excluding_an_episode_prefix_keeps_the_rest_of_its_scene():
     kept = excluded(_ticks(), ["frontal-0064"])
     assert [t["episode"] for t in kept if "0064" in t["episode"]] == ["side-0064/run_0"]
     assert len(kept) == len(_ticks()) - 1
+
+
+def test_an_exclusion_takes_either_spelling_and_refuses_to_drop_nothing():
+    import pytest
+
+    from gallops.train.swerve import exclude_scenes
+
+    kept, names = exclude_scenes(_ticks(), ["scene-0064"])
+    assert names == ["0064"] and all("0064" not in t["episode"] for t in kept) and len(kept) == 5
+    assert exclude_scenes(_ticks(), ["0064"])[0] == kept
+    with pytest.raises(SystemExit, match="no loaded tick"):
+        exclude_scenes(_ticks(), ["0099"])
+
+
+def test_trained_on_counts_the_scenes_read_and_carries_the_init_forward(tmp_path):
+    from gallops import checkpoint
+    from gallops.train.swerve import NUSCENES_TRAIN_SCENES, declared_training, inherited_training
+
+    train = [t for t in _ticks() if "0064" not in t["episode"]]
+    declared = declared_training(train, ["/x/labelled_gt", "/x/labelled_round1"], 1.0)
+    assert declared[0] == checkpoint.TrainedOn("nuscenes", "train", round(1 / NUSCENES_TRAIN_SCENES, 6))
+    assert [t.split for t in declared[1:]] == ["labelled_gt", "labelled_round1"]
+    smoke = declared_training(train, ["/x/labelled_gt"], 0.01)
+    assert smoke[0].fraction < declared[0].fraction and smoke[1].fraction == 0.01
+
+    step = tmp_path / "step_000000001"
+    checkpoint.write(
+        step,
+        checkpoint.Checkpoint(
+            model="m",
+            step=1,
+            train_git_sha="abc",
+            train_run="r",
+            trained_on=(checkpoint.TrainedOn("neuroncap-actor-insertion", "labelled_round0"),),
+        ),
+    )
+    inherited = inherited_training(step / "model.pt")
+    lineage = declared_training(train, ["/x/labelled_gt"], 1.0, inherited)
+    assert lineage[-1].split == "labelled_round0" and len(lineage) == 3
+
+
+def test_an_init_without_a_sidecar_is_refused(tmp_path):
+    import pytest
+
+    from gallops.train.swerve import inherited_training
+
+    with pytest.raises(SystemExit, match="cannot be carried forward"):
+        inherited_training(tmp_path / "model.pt")
+
+
+def test_the_label_digest_sees_a_rewrite(tmp_path):
+    from gallops.train.swerve import labelled_digest
+
+    (tmp_path / "a.jsonl").write_text('{"x": 1}\n')
+    before = labelled_digest(tmp_path)
+    (tmp_path / "a.jsonl").write_text('{"x": 2}\n')
+    assert labelled_digest(tmp_path) != before
+
+
+def test_oversampling_refuses_an_unknown_kind_or_a_factor_below_one():
+    import pytest
+
+    from gallops.train.swerve import parse_oversample
+
+    assert parse_oversample(["swerve=4", "brake=2"], _ticks()) == {"swerve": 4, "brake": 2}
+    for spec in ("swerv=4", "swerve=0", "swerve=-1", "swerve=x"):
+        with pytest.raises(SystemExit):
+            parse_oversample([spec], _ticks())
+
+
+def test_a_loss_the_stage_skips_is_none_not_a_perfect_zero():
+    from gallops.train.swerve import epoch_means
+
+    assert epoch_means([(None, 0.5), (None, 1.5)]) == (None, 1.0)
+    assert epoch_means([(2.0, None)]) == (2.0, None)
+
+
+def test_reach_measures_the_scene_the_run_held_out(tmp_path):
+    """#2 review, finding 10: the default, 0058, is a training scene of every run."""
+    import pytest
+
+    from gallops import checkpoint
+    from gallops.train.reach import held_out_scene
+
+    for step in (1, 2):
+        checkpoint.write(
+            tmp_path / f"step_{step:09d}",
+            checkpoint.Checkpoint(
+                model="m",
+                step=step,
+                train_git_sha="abc",
+                train_run="r",
+                selection_split="held-out scene 0053",
+                trained_on=(checkpoint.TrainedOn("nuscenes", "train", 0.004),),
+            ),
+        )
+    assert held_out_scene(tmp_path, None) == "0053"
+    assert held_out_scene(tmp_path, "0070") == "0070"
+    with pytest.raises(SystemExit, match="pass --held-out"):
+        held_out_scene(None, None)

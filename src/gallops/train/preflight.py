@@ -15,8 +15,9 @@ comparison is the heart of this module, and it fails loudly on that bug.
 
 Three groups, cheapest first:
 
-    code       the tree is committed, so `train_git_sha` names the code that
-               ran, and the test suite passes under the interpreter that trains
+    code       the tree is committed, and its sha -- taken here, once -- is the
+               `train_git_sha` of every checkpoint the run writes; the test
+               suite passes under the interpreter that trains
     grading    on a sample of ticks, the trainer's own grading path -- the
                Referee -- reproduces what labelling recorded, EXACTLY: the
                expert's verdict, the driven plan's hit time, and all 32
@@ -32,15 +33,20 @@ Three groups, cheapest first:
                between two close candidates). This is only meaningful when
                `--dumps` were collected by those same weights.
 
+               Gated on the median AND the p90, with a bound on ticks it could
+               not rebuild, and the sample gains each episode's earliest tick.
                It was an absolute 5 cm at first, set from one scene's late
-               ticks, and it refused its first real run: the error scales with
-               speed, and an episode's first half second has no real past at
-               all (see `HISTORY_TOLERANCE_S` in swerve_data.py). Both were
-               measured before the limit moved, and the second was a defect the
-               trainer now skips rather than a reason to loosen anything.
+               ticks, and it refused its first real run because of that design:
+               the error scales with speed, and the run passed once the limit
+               became a share of travel. The 506-tick measurement the refusal
+               prompted is what found an episode's first half second has no
+               real past (see `HISTORY_TOLERANCE_S` in swerve_data.py); the
+               median gate itself could not see that, since 1 of its 48
+               sampled ticks sat there. Such ticks are now dropped before
+               anything is counted.
     sight      the starting weights' plan changes when the front camera is
                blanked. Fidelity compares the trainer with a recording, and a
-               recording can carry the same mistake: before paddock #62 both
+               recording can carry the same mistake: before paddock #62 (open) both
                placed the cameras relative to nuScenes' LIDAR_TOP (yawed -90
                degrees), no image sample landed in the frame, and fidelity
                passed because the model had driven blind too. Stage A through
@@ -101,6 +107,18 @@ FIDELITY_VERDICT_TOLERANCE = 0.05
 #: seconds' travel at the tick's speed. Measured 0.29%; a gap this size is three
 #: times what the JPEG round trip explains.
 FIDELITY_MEDIAN_PICK_FRACTION = 0.01
+#: The same gap's 90th percentile. A median cannot see a defect confined to a
+#: minority of ticks: 22 of 48 sampled ticks 10 m off still pass it. Twice the p90
+#: measured over 446 round-0 ticks with a real past (4.9%), as the median limit is
+#: about three times its own baseline.
+FIDELITY_P90_PICK_FRACTION = 0.10
+#: Sampled ticks fidelity may fail to rebuild. The trainer drops unrebuildable ticks
+#: before the preflight (`swerve_data.rebuildable`), so a skip here means the filter
+#: and the dataset disagree; unbounded, 42 of 48 skipped still passed on 6.
+FIDELITY_MAX_SKIPPED = 0.10
+#: Unrebuildable ticks the trainer may drop before it refuses the data. Measured
+#: 6.2-6.7% of round 0 (positions 0-4 of each episode), most of them brake targets.
+MAX_UNREBUILDABLE = 0.10
 #: Blanking the front camera must move the starting weights' plan by more than
 #: this somewhere in the sample. Camera-blind it moved 0.000 m on every tick;
 #: with the cameras on the ego frame, 9.6 m on a frontal tick near impact.
@@ -132,6 +150,14 @@ def code_checks(repo: Path) -> tuple[dict, list[str]]:
             "commit first, so train_git_sha names the code that actually ran"
         )
     report["git_clean"] = status.returncode == 0 and not status.stdout.strip()
+    # The sha is taken HERE, beside the check that makes it mean something, and the
+    # trainer writes this one into every sidecar of the run. Read again at save time
+    # it names whatever was checked out by then: v4fix's sidecar says 85e1f9c and
+    # c18f488 trained it; l5's says a9ef8ba and cdfdb64 trained it.
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True)
+    report["sha"] = (
+        head.stdout.strip() + ("" if report["git_clean"] else "-dirty") if head.returncode == 0 else "unknown"
+    )
 
     env = dict(os.environ, PYTHONPATH=str(repo / "src") + os.pathsep + os.environ.get("PYTHONPATH", ""))
     tests = subprocess.run(
@@ -216,22 +242,10 @@ def _dump_index(dumps: str) -> dict[int, list[Path]]:
 
 def grading_checks(sample: list[dict], referee, dumps) -> tuple[dict, list[str]]:
     """The trainer's grading path against what labelling recorded, exactly."""
-    from gallops.expert.draw import undrivable
     from gallops.expert.grader import first_hit, grade
 
     problems, cache = [], {}
     agree = Counter()
-    # Every target trained on must be one a car could follow. 934 of 9,495 round-0
-    # targets were not -- stops that slid up to 2 m sideways -- and nothing noticed.
-    sliding = [
-        t for t in sample if t.get("usable_for_imitation", True) and undrivable(np.asarray(t["expert"]))
-    ]
-    if sliding:
-        problems.append(
-            f"{len(sliding)} of {len(sample)} sampled targets are undrivable "
-            f"({undrivable(np.asarray(sliding[0]['expert']))}, {sliding[0]['episode']}): "
-            "relabel with the current expert"
-        )
     clear_scores, hit_scores = [], []
     missing = 0
     for tick in sample:
@@ -284,6 +298,28 @@ def grading_checks(sample: list[dict], referee, dumps) -> tuple[dict, list[str]]
     return report, problems
 
 
+def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
+    """Every target trained on is one a car could follow -- all of them, not a sample.
+
+    4,347 of round 0's 9,495 targets were not, by `undrivable` (the 934 stops that
+    slid 2 m sideways among them), and nothing noticed. Checking all of them costs a
+    fraction of a second; a 48-tick sample misses a 1% regression 62% of the time.
+    """
+    from gallops.expert.draw import undrivable
+
+    usable = [t for t in ticks if t.get("usable_for_imitation", True)]
+    bad = [t for t in usable if undrivable(np.asarray(t["expert"]))]
+    report = {"undrivable": f"{len(bad)}/{len(usable)}"}
+    if not bad:
+        return report, []
+    first = bad[0]
+    return report, [
+        f"{len(bad)} of {len(usable)} targets are undrivable "
+        f"({undrivable(np.asarray(first['expert']))}, {first['episode']} @ {first['timestamp']}): "
+        "relabel with the current expert"
+    ]
+
+
 def fidelity_check(
     model, dataset_cls, sample: list[dict], referee, dumps, torch, device: str
 ) -> tuple[dict, list[str]]:
@@ -302,11 +338,11 @@ def fidelity_check(
     was_training = model.training
     model.eval()
     with torch.no_grad():
-        # One tick per pass: the vendor model mixes ticks within a batch (batch 1 reproduces a
-        # driven plan to 5e-5 m, batch 4 drifted up to 1.0 m), and with the image now reaching it
-        # that mixing could fail a faithful rebuild.
-        for start in range(len(ticks)):
-            features, _, used = dataset.batch([start])
+        # One tick per pass, as paddock drives it: batched, the vendor model hands every
+        # tick the first one's image mask (TICKS_PER_PASS in swerve_data), and a correct
+        # loader then fails this check while the message blames the inputs.
+        for index in range(len(ticks)):
+            features, _, used = dataset.batch([index])
             if features is None:
                 continue
             picked = model(features)["trajectory"].float().cpu().numpy()
@@ -331,13 +367,26 @@ def fidelity_check(
         return {}, ["fidelity: the dataset rebuilt none of the sampled ticks"]
     agreement = same / len(diffs)
     median = float(np.median(fractions))
+    tail = float(np.percentile(fractions, 90))
+    skipped = len(ticks) - len(diffs)
     report = {
         "compared": len(diffs),
-        "skipped_unrebuildable": len(ticks) - len(diffs),
+        "skipped_unrebuildable": skipped,
         "pick_verdict_agrees": f"{same}/{len(diffs)}",
         "median_pick_diff_m": round(float(np.median(diffs)), 4),
         "median_pick_diff_of_travel": round(median, 4),
+        "p90_pick_diff_of_travel": round(tail, 4),
     }
+    if skipped > FIDELITY_MAX_SKIPPED * len(ticks):
+        problems.append(
+            f"fidelity: {skipped} of {len(ticks)} sampled ticks could not be rebuilt "
+            f"(limit {FIDELITY_MAX_SKIPPED:.0%}); what was compared is not the sample"
+        )
+    if tail > FIDELITY_P90_PICK_FRACTION:
+        problems.append(
+            f"fidelity: the rebuilt pick's p90 gap is {tail:.2%} of four seconds' travel "
+            f"(limit {FIDELITY_P90_PICK_FRACTION:.0%}): some ticks are rebuilt unlike what the model saw"
+        )
     if agreement < 1 - FIDELITY_VERDICT_TOLERANCE:
         problems.append(
             f"fidelity: the starting weights' pick hits/clears differently from the driven plan on "
@@ -361,9 +410,10 @@ def sight_check(model, dataset_cls, sample: list[dict], torch, device: str) -> t
     model.eval()
     with torch.no_grad():
         for index in range(len(ticks)):
-            # One tick per pass: the vendor model mixes ticks within a batch. And two
-            # separate builds, because its forward rewrites `lidar2img` in the dict
-            # it is given, so the same dict cannot be fed to it twice.
+            # One tick per pass: batched, the vendor model gives every tick the first
+            # one's image mask (TICKS_PER_PASS in swerve_data). And two separate
+            # builds, because its forward rewrites `lidar2img` in the dict it is
+            # given, so the same dict cannot be fed to it twice.
             real, _, used = dataset.batch([index])
             if real is None:
                 continue
@@ -406,6 +456,45 @@ def init_fidelity(
     if problems:
         raise PreflightFailed(problems)
     return report
+
+
+def keep_rebuildable(ticks: list[dict], rebuildable) -> tuple[list[dict], dict]:
+    """The ticks `rebuildable` accepts, and what was dropped, by expert kind.
+
+    Refuses when more than MAX_UNREBUILDABLE of them are dropped: the drop falls on
+    an episode's first half second, where most brake targets sit (18.9% of l4fix's
+    brake ticks against 1.8% of `continue`), so a bigger one changes what is taught.
+    """
+    kept = [t for t in ticks if rebuildable(t)]
+    dropped = Counter(t.get("expert_kind", "?") for t in ticks if not rebuildable(t))
+    report = {
+        "dropped": sum(dropped.values()),
+        "of": len(ticks),
+        "by_expert_kind": {
+            k: f"{n}/{sum(1 for t in ticks if t.get('expert_kind', '?') == k)}"
+            for k, n in sorted(dropped.items())
+        },
+    }
+    if ticks and report["dropped"] > MAX_UNREBUILDABLE * len(ticks):
+        raise SystemExit(
+            f"{report['dropped']} of {len(ticks)} ticks cannot be rebuilt (limit {MAX_UNREBUILDABLE:.0%}): "
+            f"{report['by_expert_kind']}"
+        )
+    return kept, report
+
+
+def earliest_per_episode(ticks: list[dict], episodes: set[str]) -> list[dict]:
+    """Each named episode's first tick in `ticks`.
+
+    The sample starts a tenth of the way in, so it almost never holds the ticks
+    nearest an episode's start -- exactly where the priming-frame defect lived.
+    """
+    first: dict[str, dict] = {}
+    for tick in ticks:
+        key = episode_key(tick)
+        if key in episodes and (key not in first or int(tick["timestamp"]) < int(first[key]["timestamp"])):
+            first[key] = tick
+    return [first[k] for k in sorted(first)]
 
 
 def describe(ticks: list[dict]) -> dict:
@@ -457,8 +546,19 @@ def run(
     sample = [t for g in groups for t in sample_ticks(g, episodes=per, per_episode=4)]
     report["grading"], found = grading_checks(sample, referee, sources)
     problems += found
+    report["targets"], found = drivable_checks(train)
+    problems += found
     own = [t for t in sample if sources[t.get("source", 0)].drove == START]
     if own:
+        chosen = {(episode_key(t), int(t["timestamp"])) for t in own}
+        own += [
+            t
+            for t in earliest_per_episode(
+                [t for t in train if sources[t.get("source", 0)].drove == START],
+                {episode_key(t) for t in own},
+            )
+            if (episode_key(t), int(t["timestamp"])) not in chosen
+        ]
         report["fidelity"], found = fidelity_check(model, dataset_cls, own, referee, sources, torch, device)
         problems += found
     else:

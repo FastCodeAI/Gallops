@@ -38,7 +38,7 @@ import numpy as np
 
 from gallops import checkpoint as sidecar
 from gallops.config import SiteConfig
-from gallops.data.nuscenes_real import NEURONCAP_SCENES
+from gallops.data.nuscenes_real import neuroncap_scenes
 from gallops.train import subscorer
 from gallops.train.preflight import FIDELITY_VERDICT_TOLERANCE, PreflightFailed, code_checks
 from gallops.train.scorer_folds import released_state
@@ -134,7 +134,7 @@ def fidelity_check(d: dict, labelled: dict[str, Path], start: list[str]) -> tupl
 def data_check(d: dict) -> tuple[dict, list[str]]:
     source = subscorer.source_of(d)
     rendered = ~np.isin(source, subscorer.REAL_SOURCES)
-    leaked = sorted(set(d["scene"][rendered]) & NEURONCAP_SCENES)
+    leaked = sorted(set(d["scene"][rendered]) & neuroncap_scenes())
     report = {
         "ticks_by_source": dict(Counter(source.tolist())),
         "rendered_ticks_by_scenario": dict(Counter(d["shape"][rendered].tolist())),

@@ -27,7 +27,7 @@ swerves. That is not a defect to fix; it is what iteration 1 always looks like.
 
 This module owns the bookkeeping -- which rounds exist, which checkpoint drove
 each, and what to hand a trainer -- not the driving or the training, which are
-`ops/dj_collect/collect.py` and gallops' trainer respectively.
+a site-local collection script (not in this repo) and gallops' trainer respectively.
 """
 
 from __future__ import annotations

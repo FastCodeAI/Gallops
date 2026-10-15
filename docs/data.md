@@ -15,7 +15,7 @@ Measured on this workspace, not assumed.
 | dataset | held here | usable for training |
 |---|---|---|
 | **nuScenes** | full 850 scenes, 34,149 keyframes, ~54 GB | **Yes** — the one real corpus we have. |
-| **KITScenes** | 127 of 1,006 sequences, all `val` / `overlap_train_val` | **No** — roughly 40 minutes of front-camera driving, and no `train` split at all. |
+| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly** — enough to train the re-ranker (5,711 keyframes from those 373); not re-measured since. |
 | **NAVSIM / OpenScene** | `navtest` only: 136 logs, 12,146 scenes | **No** — evaluation split only. |
 
 ### nuScenes — usable, with caveats
@@ -26,11 +26,14 @@ keyframe count. Camera-only training is viable; sensor fusion is not, and
 generating `nuscenes_infos*.pkl` against a keyframe-only copy degrades silently
 rather than failing.
 
-### KITScenes — not a training set here
+### KITScenes — part of `train`
 
 The full public release is ~4.2 TB across 1,006 sequences: 533 `train`
 (2.38 TB), 206 `test`, 117 `val`, 127 `test-e2e`, 23 `overlap_train_val`. **We
-hold none of `train`.** A full pull only fits on the largest available volume.
+hold part of `train`:** at least the 373 sequences the re-ranker trained on, the
+first to finish downloading in 2026-09. A full pull only fits on the largest
+available volume. Since the subset follows no rule, a checkpoint trained on it
+records the scenes it read (`notes.train_scenes`), not just the split.
 
 Two properties that matter for training:
 
@@ -58,6 +61,31 @@ acquisition available to us.**
 Note OpenScene is a redistribution of **nuPlan**, not nuScenes — a different
 collection campaign, rig, cities and map format. The nuScenes copy cannot serve
 it.
+
+## NVIDIA Physical AI AV — used by the Drive-JEPA retrain
+
+Not one of the three corpora above, and not held the way they are: it is
+an access-restricted Hugging Face dataset, read by range request and cached per step, never
+mirrored whole. What the retrain read, and how it split it, is recorded in
+[drivejepa-retrain.md](drivejepa-retrain.md) and, step by step, under
+`experiments/drivejepa_retrain/`.
+
+| | |
+|---|---|
+| Access | restricted; each site accepts the terms on its own account. No frames, clips, trajectories, coordinates or arrays from it are in this repository. Tables derived from it are: lists of clip ids, a per-clip table of id, chunk, split and country (`04_training_set/clips.csv`), and per-event measurements computed from its ego motion and object labels, such as speeds, clearances and actor sizes (`01_find_clips/d3_around.csv`). Whether the dataset's terms allow publishing those is for whoever accepted the terms to confirm before this repository is opened beyond the people who have |
+| Splits | NVIDIA's own `train` / `val` / `test`, by chunk. Every one of the 3,146 chunks lies in exactly one split (asserted) |
+| Read for training | `train` only: 4,015 clips → 126,981 samples (4,018 converted; three yielded none). The list of converted clips is `experiments/drivejepa_retrain/04_training_set/clips.csv` |
+| Read for choosing a checkpoint | `val`: 801 clips → 24,657 examples |
+| Never read | `test`; and the AlpaSim simulator's 913 public scenes (`experiments/drivejepa_retrain/01_find_clips/exam_exclusions.txt`), which are reconstructions of clips from this dataset and are what paddock's AlpaSim benchmark scores on |
+| Name in a sidecar | `physicalai_av` |
+
+**`physicalai_av` is not a key in paddock's `datasets.yaml`.** Everything above
+about names matching paddock's applies in reverse here: a checkpoint that
+declares `trained_on: physicalai_av` is making a declaration paddock cannot yet
+cross-check against a benchmark's scene list. The exclusion of the evaluation
+scenes is enforced by assertions in the training scripts and re-checked from
+the committed lists by `tests/test_drivejepa_retrain.py`. Registering the
+dataset in paddock, so that the check runs there, is open.
 
 ## Synthetic data
 

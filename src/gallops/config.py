@@ -13,6 +13,10 @@ template variables which this module expands:
     {site}             the site label
     {data.NAME}        the dataset's path, or its first existing tier
     {data.NAME.tiers}  every tier, colon-joined
+    {python.NAME}      an interpreter from [python] -- training code often has to run
+                       inside the environment a model was built for, not this repo's
+    {code.NAME}        a source tree from [code] -- an upstream repo a stage imports or
+                       reads relative files from
 
 `tests/test_portability.py` enforces the split by failing the build if a tracked
 file names a real machine root. When it fails, the fix is nearly always a
@@ -104,6 +108,12 @@ class SiteConfig:
     weights: Path
     runs: Path
     datasets: dict[str, Dataset] = field(default_factory=dict)
+    #: [python]: name -> interpreter. Training code often has to run inside the
+    #: environment a model was built for, which is not this repo's.
+    python: dict[str, Path] = field(default_factory=dict)
+    #: [code]: name -> source tree, for upstream repos a stage imports or reads
+    #: relative files from.
+    code: dict[str, Path] = field(default_factory=dict)
     source: Path | None = None
 
     @classmethod
@@ -135,6 +145,8 @@ class SiteConfig:
             weights=_abs(roots["weights"]),
             runs=_abs(roots["runs"]),
             datasets=datasets,
+            python={k: _abs(v) for k, v in (raw.get("python") or {}).items()},
+            code={k: _abs(v) for k, v in (raw.get("code") or {}).items()},
             source=path,
         )
 
@@ -155,10 +167,12 @@ class SiteConfig:
                 return str(getattr(self, key))
             if key.startswith("data."):
                 return self._resolve_data(key)
+            if key.startswith(("python.", "code.")):
+                return self._resolve_table(key)
             raise ConfigError(
                 f"unknown template variable {{{key}}} in {template!r}; "
-                f"known: weights, runs, site, data.<name>, data.<name>.tiers, "
-                f"plus context {sorted(context)}"
+                f"known: weights, runs, site, data.<name>, data.<name>.tiers, python.<name>, "
+                f"code.<name>, plus context {sorted(context)}"
             )
 
         return _TEMPLATE.sub(substitute, template)
@@ -185,6 +199,26 @@ class SiteConfig:
             return str(extra)
         return str(dataset.resolve())
 
+    def _resolve_table(self, key: str) -> str:
+        table, _, name = key.partition(".")
+        entries: dict[str, Path] = getattr(self, table)
+        if name not in entries:
+            known = ", ".join(sorted(entries)) or "none configured"
+            raise ConfigError(f"no [{table}] entry {name!r} in {self.source}; known: {known}")
+        return str(entries[name])
+
+    def run_dir(self, model: str, train_run: str) -> Path:
+        """Where one training run's checkpoints go.
+
+        Each name must be one path component: an absolute or nested `train_run`
+        would otherwise land outside `{weights}`, or a level deeper than paddock
+        looks.
+        """
+        for label, name in (("model", model), ("train_run", train_run)):
+            if name in ("", ".", "..") or Path(name).name != name:
+                raise ValueError(f"{label} must be a single directory name, got {name!r}")
+        return self.weights / model / train_run
+
     def checkpoint_dir(self, model: str, train_run: str, step: int) -> Path:
         """Where one checkpoint goes.
 
@@ -192,7 +226,7 @@ class SiteConfig:
         docs/checkpoints.md -- so it lives here rather than being spelled out at
         each call site, where the two would eventually drift.
         """
-        return self.weights / model / train_run / f"step_{step:09d}"
+        return self.run_dir(model, train_run) / f"step_{step:09d}"
 
 
 def _abs(value: str | Path) -> Path:

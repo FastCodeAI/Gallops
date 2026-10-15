@@ -35,6 +35,9 @@ CLI (after `source .venv/bin/activate`, or as `.venv/bin/gallops`):
 gallops config              # what this machine resolved — run this first
 gallops show <ckpt-dir>     # what a checkpoint claims about itself
 gallops train-rerank <dataset.npz> --train-run <name>   # re-ranker over a frozen model's candidates
+python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, for paddock to dump candidates for
+python -m gallops.data.rerank dataset <dump.jsonl> --split train -o <dataset.npz>
+gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.
@@ -117,11 +120,15 @@ before its first step, and stops with every reason listed if any check fails:
   [docs/swerve-finetune.md](docs/swerve-finetune.md): v1–v4 graded every tick from
   the first tick's pose, and on round 0 the preflight rejects that referee on
   28 of 48 ticks.
-- **fidelity** — the starting weights, fed the trainer's rebuilt inputs, reproduce
-  the plan they drove at collection: the pick's verdict on ≥95% of ticks, and a
-  median gap under 1% of four seconds' travel (measured 0.29%). Its first real
-  run was refused, and rightly: an episode's first half second needs a priming
-  frame the logger never saved, so those ticks are now skipped as unrebuildable.
+- **fidelity** — the starting weights, fed the trainer's rebuilt inputs one tick
+  per pass, reproduce the plan they drove at collection: the pick's verdict on
+  ≥95% of ticks, a median gap under 1% of four seconds' travel (measured 0.29%)
+  and a p90 under 10%, with at most 10% of the sample unrebuildable and each
+  episode's earliest tick included. Its first real run was refused by how the
+  limit was first set (an absolute 5 cm, where the gap scales with speed); the
+  506-tick measurement that refusal prompted found that an episode's first half
+  second needs a priming frame the logger never saved. Those ticks are dropped
+  before training and counted by kind in the sidecar (`notes.unrebuildable`).
 
 Do not add a way to skip it. A check that can be skipped is skipped the one time
 it matters. If it fails on data you believe is right, the disagreement is the

@@ -117,3 +117,35 @@ def test_sight_passes_a_model_that_looks():
     report, problems = preflight.sight_check(model, _Dataset, [{}] * 3, _Torch, "cpu")
     assert problems == [] and report["compared"] == 3 and report["max_move_m"] > preflight.SIGHT_MIN_MOVE_M
     assert model.training is True, "the model's mode must be restored"
+
+
+def test_the_command_one_hot_is_keyed_by_paddocks_enum(monkeypatch):
+    """Restated, the map agreed with paddock only until paddock's enum moved."""
+    import sys
+    import types
+    from enum import IntEnum
+
+    import pytest
+
+    from gallops.train.swerve_data import command_one_hot
+
+    class Command(IntEnum):  # renumbered on purpose: the map must follow it
+        STRAIGHT = 0
+        LEFT = 1
+        RIGHT = 2
+        FOLLOW_REFERENCE = 3
+
+    protocol = types.ModuleType("paddock.policy.protocol")
+    protocol.Command = Command
+    for name, module in (
+        ("paddock", types.ModuleType("paddock")),
+        ("paddock.policy", types.ModuleType("paddock.policy")),
+        ("paddock.policy.protocol", protocol),
+    ):
+        monkeypatch.setitem(sys.modules, name, module)
+    one_hot = command_one_hot()
+    assert one_hot[0] == [0, 1, 0, 0] and one_hot[2] == [0, 0, 1, 0] and one_hot[1] == [1, 0, 0, 0]
+
+    monkeypatch.setitem(sys.modules, "paddock.policy.protocol", None)
+    with pytest.raises(SystemExit, match="PYTHONPATH"):
+        command_one_hot()

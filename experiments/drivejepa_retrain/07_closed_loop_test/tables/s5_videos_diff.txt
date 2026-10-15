@@ -1,0 +1,21 @@
+2c2,3
+< """DRIVEJEPA_014B site -- copy of s5/s5_videos.py for the 0.1.4b arm (diff: paths, label, the 0.1.5 overlays replaced by the
+---
+> """S5 TRIAL copy of baseline_014b/b014b_videos.py for the 0.1.6 arm (diff: tables/s5_videos_diff.txt -- output folder, arm label "016" with the
+> same overlays as 0.1.4b). Original docstring: DRIVEJEPA_014B site -- copy of s5/s5_videos.py for the 0.1.4b arm (diff: paths, label, the 0.1.5 overlays replaced by the
+19c20
+< S5 = pathlib.Path("{runs}/paddock_sid/Alpasim/analysis_3.0/Re-ranker/baseline_014b"); VID = S5 / "videos"
+---
+> S5 = pathlib.Path(__file__).resolve().parent; VID = S5 / "videos"
+21a23
+> ARM_LABEL = {"014": "0.1.4 recorded", "014b": "0.1.4b (paper 3.5 momentum)", "016": "0.1.6 (S4 weights + 3.5 momentum)"}
+75c77
+<             if arm == "014b":
+---
+>             if arm in ("014b", "016"):
+79,80c81,82
+<         d.rectangle([0, 0, W, 22], fill=(0, 0, 0)); d.text((6, 4), f"{'0.1.4 recorded' if arm == '014' else '0.1.4b (paper 3.5 momentum)'}  {run.name[:22]}  t {rel:+6.2f} s  ego {(f'{v:4.1f}' if np.isfinite(v) else '  --')} m/s  tick {i:3d}{'  force-GT' if tk['tn'] < ho else ''}", fill=WHITE, font=fnt)
+<         if arm == "014b" and veto: d.rectangle([W // 2 - 96, 28, W // 2 + 96, 52], fill=(0, 110, 140)); d.text((W // 2 - 88, 32), "\u00a73.5 changed pick", fill=WHITE, font=fnt_b)
+---
+>         d.rectangle([0, 0, W, 22], fill=(0, 0, 0)); d.text((6, 4), f"{ARM_LABEL[arm]}  {run.name[:22]}  t {rel:+6.2f} s  ego {(f'{v:4.1f}' if np.isfinite(v) else '  --')} m/s  tick {i:3d}{'  force-GT' if tk['tn'] < ho else ''}", fill=WHITE, font=fnt)
+>         if arm in ("014b", "016") and veto: d.rectangle([W // 2 - 96, 28, W // 2 + 96, 52], fill=(0, 110, 140)); d.text((W // 2 - 88, 32), "\u00a73.5 changed pick", fill=WHITE, font=fnt_b)

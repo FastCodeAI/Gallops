@@ -66,6 +66,7 @@ def load(cache: Path, labelled: dict[str, Path]) -> dict:
                 "shape",
                 "source",
                 "episode",
+                "holdout",
             )
         },
     )
@@ -106,9 +107,47 @@ def load(cache: Path, labelled: dict[str, Path]) -> dict:
             rows["shape"].append(np.full(t, shape))
             rows["source"].append(np.full(t, src_dir.name))
             rows["episode"].append(np.full(t, f"{src_dir.name}/{f.stem}"))
+            # `nuscenes_real --labelled-holdout` rows: real scenes kept back for testing
+            rows["holdout"].append(np.array([bool(ex[int(ts)].get("holdout")) for ts in d["timestamp"]]))
     out = {k: np.concatenate(v) for k, v in rows.items()}
     out["features"] = np.concatenate(feats)
     return out
+
+
+def reduced_input(cache: Path, labelled: dict[str, Path], loader=None) -> dict:
+    """`load(cache, labelled)`, kept beside the cache and reused only for the same inputs.
+
+    It used to be reused whenever the file existed, whatever cache build or labels
+    it was reduced from.
+    """
+    from gallops.train.scorer_cache import require_key
+
+    inputs = {"cache": require_key(cache), "labelled": sorted((k, str(v)) for k, v in labelled.items())}
+    key = json.dumps(inputs, sort_keys=True)
+    reduced = cache / "folds_input.npz"
+    if reduced.exists():
+        with np.load(reduced) as stored:
+            if "input_key" in stored.files and str(stored["input_key"]) == key:
+                return {k: stored[k] for k in stored.files if k != "input_key"}
+        print(f"  {reduced.name} was reduced from other inputs; rebuilding it", flush=True)
+    d = (loader or load)(cache, labelled)
+    tmp = reduced.with_name("folds_input.tmp.npz")
+    np.savez(tmp, **d, input_key=np.array(key))
+    tmp.rename(reduced)
+    return d
+
+
+def fold_rows(d: dict, scene: str | None) -> tuple[np.ndarray, np.ndarray]:
+    """(train, test) row indices for one fold: `scene` held out, or the last episode for None."""
+    if scene is None:
+        last = d["episode"] == sorted(set(d["episode"]))[-1]
+        test_mask, train_mask = last, ~last
+    else:
+        test_mask, train_mask = d["scene"] == scene, d["scene"] != scene
+    # A real held-out scene's `scene` is its own number, never one of SCENES, so
+    # without this every fold trained on the scenes meant to test it.
+    train_idx = np.where(train_mask & d["usable"] & ~d["holdout"])[0]
+    return train_idx, np.where(test_mask)[0]
 
 
 def subscore_targets(d: dict) -> np.ndarray:
@@ -279,8 +318,7 @@ def run_probe_geo(args) -> None:
     d = {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
     source = subscorer.source_of(d)
     print(
-        f"  loaded {len(source)} ticks in {time.time() - started:.0f} s: "
-        f"{dict(Counter(source.tolist()))}",
+        f"  loaded {len(source)} ticks in {time.time() - started:.0f} s: {dict(Counter(source.tolist()))}",
         flush=True,
     )
     sight, problems = subscorer.sight_from_cache(d)
@@ -407,12 +445,7 @@ def main() -> None:
 
     started = time.time()
     # Reading 450 cache files from the NAS takes ~7 min; keep the reduced arrays beside them.
-    reduced = args.cache / "folds_input.npz"
-    if reduced.exists():
-        d = dict(np.load(reduced))
-    else:
-        d = load(args.cache, {name: Path(p) for name, p in args.labelled})
-        np.savez(reduced, **d)
+    d = reduced_input(args.cache, {name: Path(p) for name, p in args.labelled})
     print(
         f"  loaded {len(d['scene'])} ticks x {d['features'].shape[1]} plans in {time.time() - started:.0f} s",
         flush=True,
@@ -441,18 +474,11 @@ def main() -> None:
     ctl = control_targets(d)
     y_sub = torch.from_numpy(sub).to(args.device)
     y_ctl = torch.from_numpy(ctl).to(args.device)
-    usable = d["usable"]
     folds = [("smoke", None)] if args.smoke_split else [(s, s) for s in SCENES if (d["scene"] == s).any()]
     saved = {}
     results = {"released_drift": float(drift), "released_pick_agreement": float(agree), "folds": {}}
     for name, scene in folds:
-        if scene is None:
-            last = d["episode"] == sorted(set(d["episode"]))[-1]
-            test_mask, train_mask = last, ~last
-        else:
-            test_mask, train_mask = d["scene"] == scene, d["scene"] != scene
-        train_idx = np.where(train_mask & usable)[0]
-        test_idx = np.where(test_mask)[0]
+        train_idx, test_idx = fold_rows(d, scene)
         fold = {"train_ticks": int(len(train_idx)), "test_ticks": int(len(test_idx))}
         natives_only = np.where(np.arange(rel_logits.shape[1]) < 32, rel_logits[..., -1], -np.inf)
         picks = {

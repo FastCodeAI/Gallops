@@ -1,0 +1,20 @@
+{
+ "Z1": {
+  "manifest_exam": 0,
+  "manifest_test": 0,
+  "manifest_val": 0,
+  "disk_exam": 0,
+  "disk_test": 0,
+  "disk_val": 0,
+  "not_raw_train": 0
+ },
+ "Z2": 0.9473879903327757,
+ "Z3": 0.062085106382978726,
+ "Z4_exempt": 0.006808510638297872,
+ "Z4_tight": 0.9333333333333333,
+ "Z5": false,
+ "Z6": true,
+ "samples": 126981,
+ "clips": 4015,
+ "has_label2": 21806
+}

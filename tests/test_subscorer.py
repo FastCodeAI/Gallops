@@ -150,7 +150,14 @@ def test_fidelity_compares_cached_scores_with_the_live_ones(tmp_path):
     assert problems and "no --start source" in problems[0]
 
 
-def test_benchmark_scenes_are_refused():
+def test_benchmark_scenes_are_refused(monkeypatch):
+    """The benchmark's scene set is paddock's own (`nuscenes_real.neuroncap_scenes`); a stand-in here."""
+    import sys
+    import types
+
+    harness = types.ModuleType("harness")
+    harness.OFFICIAL_SET = {"frontal": ("0103",)}
+    monkeypatch.setitem(sys.modules, "paddock.adapters.benchmarks.neuroncap.harness", harness)
     d = {
         "episode": np.array(["round0_cam/frontal-0103__run_0", "round0_cam/frontal-0070__run_0"]),
         "scene": np.array(["0103", "0070"]),

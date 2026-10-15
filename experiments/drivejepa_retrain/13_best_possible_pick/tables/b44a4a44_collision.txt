@@ -1,0 +1,29 @@
+collision_any first at 2.15 n 113
+collision_at_fault first at None n 0
+collision_front first at 2.15 n 40
+collision_lateral first at 2.3 n 9
+collision_rear first at 8.4 n 64
+offroad first at 8.4 n 83
+box overlap first at t=2.00 s actor 25 label automobile size [4.0, 1.96] ego speed 3.17 m/s actor speed ~3.19 m/s
+box overlap first at t=8.20 s actor 187 label automobile size [3.8, 1.77] ego speed 27.45 m/s actor speed ~0.01 m/s
+box overlap first at t=8.30 s actor 199 label automobile size [3.93, 1.77] ego speed 27.74 m/s actor speed ~0.02 m/s
+box overlap first at t=8.45 s actor 178 label automobile size [3.77, 1.78] ego speed 27.87 m/s actor speed ~0.03 m/s
+box overlap first at t=9.05 s actor 206 label automobile size [4.32, 1.9] ego speed 25.68 m/s actor speed ~nan m/s
+box overlap first at t=11.85 s actor 245 label automobile size [3.87, 1.74] ego speed 10.66 m/s actor speed ~nan m/s
+box overlap first at t=12.00 s actor 238 label automobile size [3.54, 1.7] ego speed 9.98 m/s actor speed ~nan m/s
+box overlap first at t=13.35 s actor 240 label automobile size [4.02, 1.81] ego speed 4.56 m/s actor speed ~0.04 m/s
+step 6 t 0.0 free 15 picked 7 nc_time_idx of picked -1 boxes 107 ttc picked 0.0 nc_lenient free 15
+step 7 t 0.5 free 19 picked 1 nc_time_idx of picked -1 boxes 108 ttc picked 0.0 nc_lenient free 19
+step 8 t 1.0 free 21 picked 7 nc_time_idx of picked -1 boxes 108 ttc picked 0.0 nc_lenient free 21
+step 9 t 1.5 free 32 picked 4 nc_time_idx of picked -1 boxes 107 ttc picked 1.0 nc_lenient free 32
+step 10 t 2.0 free 0 picked 21 nc_time_idx of picked 0 boxes 107 ttc picked 0.0 nc_lenient free 0
+step 11 t 2.5 free 0 picked 14 nc_time_idx of picked 0 boxes 107 ttc picked 0.0 nc_lenient free 23
+step 12 t 3.0 free 28 picked 4 nc_time_idx of picked -1 boxes 110 ttc picked 0.0 nc_lenient free 28
+t -3.0s actor 25 centre in the car's frame: ahead +35.43 m, left +2.19 m, heading diff +180 deg, actor speed 7.41 m/s, car speed 0.29 m/s
+t +0.0s actor 25 centre in the car's frame: ahead +14.70 m, left +2.16 m, heading diff +178 deg, actor speed 5.19 m/s, car speed 0.00 m/s
+t +1.0s actor 25 centre in the car's frame: ahead +9.45 m, left +2.12 m, heading diff +178 deg, actor speed 4.09 m/s, car speed 1.12 m/s
+t +1.5s actor 25 centre in the car's frame: ahead +6.73 m, left +1.97 m, heading diff +170 deg, actor speed 3.61 m/s, car speed 1.96 m/s
+t +2.0s actor 25 centre in the car's frame: ahead +3.85 m, left +2.16 m, heading diff +161 deg, actor speed 2.94 m/s, car speed 3.17 m/s
+t +2.5s actor 25 centre in the car's frame: ahead +0.64 m, left +2.70 m, heading diff +158 deg, actor speed 2.17 m/s, car speed 4.10 m/s
+t +3.0s actor 25 centre in the car's frame: ahead -2.52 m, left +3.17 m, heading diff +158 deg, actor speed 1.41 m/s, car speed 4.41 m/s
+ego box [5.20699978 2.15700006] rig->centre 1.467499852180481
