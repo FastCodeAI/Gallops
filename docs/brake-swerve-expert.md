@@ -1,6 +1,6 @@
 # Brake, and brake then swerve: expert v6 and the first imitation rounds
 
-Status at 2026-10-15. This is the first training work on Drive-JEPA **with the
+Status at 2026-10-16. This is the first training work on Drive-JEPA **with the
 camera reaching the model** (gallops #8, paddock #62). Everything in
 [swerve-finetune.md](swerve-finetune.md) and [scorer-cache.md](scorer-cache.md)
 was camera-blind.
@@ -13,7 +13,11 @@ Two attempts, in order:
 1. **A sub-score scorer over inserted swerve paths.** It avoided the oncoming car
    on 0103 but swerved everywhere, and was parked.
 2. **A redesigned expert (v6), proven in an offline copy of the simulator, which
-   the model then imitates.** Rounds 1A and 1B are below; a DAgger round is next.
+   the model then imitates.** Rounds 1A, 1B and a short DAgger round 2 are below.
+
+**Where it stands:** the model learns to brake then swerve on the scenes it
+trained on, and with 5 reconstructed scenes that does not transfer reliably to
+an unseen street. See [Conclusion](#conclusion).
 
 ## 1. Sub-score scorer with inserted swerves (parked)
 
@@ -204,9 +208,61 @@ Left as written, not hand-edited:
   real nuScenes, and 1B the expert-driven collection; `notes.sources` lists them.
 - `--accumulate` and `--subsample-source` are not recorded.
 
-## Next
+## 5. Round 2, a short DAgger round
 
-A short DAgger round (round 2) was started on 2026-10-15: 1B epoch 2 drives the
-5 scenes, frontal and stationary, on new seeds; v6 labels what it reaches; 1B
-continues for one epoch with brake-then-swerve at 2×. Its results are not in
-this doc.
+Round 1B epoch 2 drove the 5 training scenes, frontal and stationary only, on
+new seeds 10–13: 40 episodes. On these, which it trained on, frontal had no
+contact in 10 of 20 runs (mean 2.85) and stationary in 16 of 20 (4.16). The
+released seeing model, on the same scenes with seeds 0–9, had 4 of 50 frontal
+and 46 of 50 stationary.
+
+v6 labelled them (2,466 ticks: 1,135 brake, 507 brake then swerve, 288
+least-impact). `{weights}/drivejepa_swerve/v6-r2-short` continues 1B for one
+epoch on all of them plus a quarter of round 0 and of the expert-driven set and
+a tenth of the real driving, with brake-then-swerve at 2× (1B: 4×). The new
+`init` preflight held 1B's weights to what 1B drove: 45/45 ticks, 0.0 m apart.
+
+| 0103, 3 runs per shape | Frontal | Stationary | Side | Mean |
+|---|---|---|---|---|
+| Released, seeing | 2.36, 3/3 hit | 5.00 | 1.67, 2/3 hit | 3.01 |
+| Round 1B epoch 2 | 4.21, 1/3 hit | 5.00 | 0.00, 3/3 hit | 3.07 |
+| Round 2 | 1.79, 3/3 hit | 5.00 | 0.13, 3/3 hit | 2.31 |
+
+Round 2 lost 1B's swerve: its widest frontal move was 1.1 m against about 3 m,
+and two frontal runs braked to about 1 m/s and were hit, as the released model
+is. The needless stationary veer is gone (widest 0.6 m against 3.1 m). Three
+things changed at once from 1B (the weighting, the share of old data, one
+epoch), so this does not say which one cost the swerve.
+
+## Conclusion
+
+**Shown:**
+
+- The camera fix made Drive-JEPA see: on the full neuroNCAP set, 4.13 against
+  3.57 blind, 49 collisions in 200 against 91 (paddock #71).
+- Expert v6 does what we want in simulation for everything the front camera can
+  see (Gate B), and the real engine agrees with the offline copy.
+- Imitating it teaches brake-then-swerve on the scenes it trained on: 10 of 20
+  frontal runs clear on new seeds, against 4 of 50 for the released model.
+
+**Not shown:** that it transfers. With 5 reconstructed scenes from 2 cities, the
+behaviour on an unseen street is inconsistent: 1A on held-out 0075 learned to
+brake for the side car (10/10) but not to swerve (0/10); 1B on 0103 cleared
+frontal 2 of 3 times, one of them a swerve without braking; round 2, a small
+retrain from 1B, cleared it 0 of 3. The scorer's training curves say the same:
+its pick is the best plan on 27–31% of training ticks and 9–22% on the held-out
+scene, where its loss never falls.
+
+**Most likely cause, argued and not tested:** too few scenes. The other open
+explanations are the scorer's design and labels judged as if each plan were
+followed for its full 4 s. A learning curve would separate them: train on 1, 2,
+3 and 4 scenes and score the held-out one each time; a held-out score that rises
+with every added scene points at data.
+
+**Separate from data:** side. The crossing car holds a bearing of 36–45° and the
+front camera sees 32.6° to each side, so it is out of view until it is too late.
+More front-camera data cannot fix that; more cameras can.
+
+**What would move it:** more reconstructed scenes (NeuRAD measured 7.5 h each on
+this machine), with more than two cities, before more training rounds on these
+five. Results here rest on 3 runs per shape on 0103 and 10 on 0075.
