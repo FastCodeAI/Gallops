@@ -39,7 +39,7 @@ the same table as every other model. That separation is the point; see
 | Where | What |
 |---|---|
 | [src/gallops/train/](src/gallops/train/) | the trainers: the KITScenes re-ranker, the swerve finetune, the scorer on cached features, and the preflight and safety checks they must pass |
-| [src/gallops/expert/](src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by |
+| [src/gallops/expert/](src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by. `alpamayo_teacher.py` reuses the same solver for Alpamayo rather than a second expert — see its module docstring for what it does and does not do; no live NeuroNCAP episode has driven it yet, that's paddock's half of the wiring |
 | [src/gallops/data/](src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
 | [src/gallops/drivejepa_b2d/](src/gallops/drivejepa_b2d/), [recipes/](recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
 | [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) | the Physical AI AV retrain, as the scripts that ran |
