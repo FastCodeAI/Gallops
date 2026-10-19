@@ -26,6 +26,28 @@ keyframe count. Camera-only training is viable; sensor fusion is not, and
 generating `nuscenes_infos*.pkl` against a keyframe-only copy degrades silently
 rather than failing.
 
+### nuScenes — picking which scenes the teacher trains on
+
+`src/gallops/data/teacher_scenes.py` scores the nuScenes `train` split for the
+privileged closed-loop teacher's data-collection plan: which scenes to
+reconstruct with NeuRAD, excluding anything already spoken for by paddock's
+14-scene neuroNCAP eval set or already reconstructed for the swerve finetune.
+Both exclusion lists are read from `gallops.data.nuscenes_real`
+(`neuroncap_scenes()`, `RECONSTRUCTED`), which itself imports paddock's own
+`OFFICIAL_SET` — not restated here, so the two repos cannot silently drift
+apart on which scenes are "eval."
+
+Turn/curve/straight classification reuses paddock's own 3 s-horizon, 2.0 m
+lateral rule (`adapters/benchmarks/nuscenes/loader.py:command_from_future`)
+rather than a from-scratch heuristic. One correctness point worth knowing
+before touching this file again: a sample with no full lookahead window
+remaining — the last ~3 s of every scene — is **excluded** from every
+category, the same way paddock's nuScenes harness drops those samples. An
+earlier version instead shrank the lookahead window for those tail samples,
+which biased them toward "straight" and could erase a genuine turn signal
+right at a scene's end; `_turn_classification_flags` is the fix, and
+`tests/test_teacher_scenes.py` is the regression guard.
+
 ### KITScenes — part of `train`
 
 The full public release is ~4.2 TB across 1,006 sequences: 533 `train`
