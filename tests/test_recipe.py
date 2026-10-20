@@ -27,6 +27,27 @@ PY39 = (
     "drivejepa_b2d/batch_fix.py",
     "drivejepa_b2d/host.py",
     "drivejepa_b2d/train_generator.py",
+    # gallops.drivejepa_aux, and every gallops module importing it loads under 3.9 (listed from
+    # sys.modules in Drive-JEPA's interpreter, not by reading imports)
+    "drivejepa_aux/__init__.py",
+    "drivejepa_aux/bev.py",
+    "drivejepa_aux/targets.py",
+    "drivejepa_aux/nusc.py",
+    "drivejepa_aux/inputs.py",
+    "drivejepa_aux/heads.py",
+    "drivejepa_aux/step.py",
+    "checkpoint.py",
+    "config.py",
+    "data/__init__.py",
+    "data/nuscenes_real.py",
+    "expert/__init__.py",
+    "expert/grader.py",
+    "expert/lanes.py",
+    "train/__init__.py",
+    "train/losses.py",
+    "train/preflight.py",
+    "train/swerve.py",
+    "train/swerve_data.py",
 )
 
 
