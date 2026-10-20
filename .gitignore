@@ -17,3 +17,5 @@ wandb/
 *.safetensors
 *.ckpt
 *.pt
+
+.tmp
