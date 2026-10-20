@@ -73,4 +73,5 @@ runs = "/path/to/gallops-runs"
 # drivejepa = "/path/to/drive-jepa-env/bin/python"     # Drive-JEPA's own env (Python 3.9, navsim installed)
 
 # [code]
-# drivejepa = "/path/to/Drive-JEPA"
+# drivejepa = "/path/to/Drive-JEPA"   # with paddock's patches/Drive-JEPA applied: 0001 is needed on cards newer than sm_86
+# paddock   = "/path/to/paddock"      # its src/ supplies the contracts Drive-JEPA-side code imports (Command, ...)
