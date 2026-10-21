@@ -19,6 +19,8 @@
   - Paddock's gate, so nothing here speaks to NAVSIM, closed loop or H-safe.
 
   No checkpoint of these runs is a ship candidate.
+- **Next:** [Learnings](#learnings) says what these runs taught, and
+  [drivejepa-aux-next.md](drivejepa-aux-next.md) is the plan that follows from them.
 
 Statements marked *verified* were checked in the code or on disk on that date; *measured* ones come
 from executed code: the notebook's outputs, or the runs' own files. Everything else is an argument
@@ -670,6 +672,81 @@ same rows):
 - **The held-out scenes are not independent of training.** They come from the same logs and maps,
   so they are in domain. The effect is a difference between arms trained alike, so that leaks into
   every arm equally, but the absolute numbers against R are optimistic for the same reason.
+
+## Learnings
+
+What these runs taught, beyond the verdicts. Each is marked *measured* (the runs' own files) or
+*argued*. [docs/drivejepa-aux-next.md](drivejepa-aux-next.md) turns them into a plan.
+
+![Two held-out keyframes chosen by rule: a stopped human, and a case where T2's pick is the worse](assets/drivejepa-aux/cases.png)
+
+*Two cases, chosen by rule rather than by eye.*
+- *A is the median of the stopped keyframes where C's and T2's picks differ by more than 0.5 m at
+  3 s (341 of 549).*
+- *B is the median of the keyframes where T2's pick is the worse one by more than 0.5 m.*
+
+*Over seed 0, T2's pick is nearer the human by more than 0.5 m on 1,416 of 2,996 keyframes and
+farther by more than 0.5 m on 547.*
+
+1. **Measure the plan that gets driven, not only the proposals or the loss.** *Measured.*
+   - The heads' whole effect is in which proposal the frozen scorer picks.
+   - The two numbers the plan chose epochs and judged arms by cannot see that: best-of-32 is equal
+     across arms, and the held-out planning loss ranks C first.
+   - Every refiner run reports the picked plan, and the selection should read it.
+2. **Fine-tuning the refiner behind a frozen scorer makes the pick worse, even when the proposals
+   get better.** *Measured; the mechanism is argued.*
+   - C's best-of-32 improved 27% on the release.
+   - Its pick moved away from the human: it picks the proposal nearest the human on 2.4–2.8% of
+     keyframes against the release's 4.7%, and overshoots at 3 s by +1.04 to +1.11 m against
+     +0.86 m.
+   - The scorer reads what the refiner makes, so any change to the refiner is also a change to
+     the scorer's input. That is swerve's lesson again ("a frozen scorer ranking proposals it had
+     never seen"), measured now on real logs.
+   - The heads counteract it.
+3. **Selection is the bottleneck, and the heads close about a quarter of it.** *Measured.*
+   - The best of the 32 is within 0.20 m of the human (ADE over 3 s).
+   - The pick's regret over that best is 1.67 m for the release, 1.70 m for C and 1.23–1.32 m for
+     T2.
+   - Most of the error left is in the choice. That matches what the re-ranker found on KITScenes
+     ([STRATEGY.md](STRATEGY.md)): Drive-JEPA's weak link is its selection.
+4. **The release overshoots where the human is stopped.** *Measured.*
+   - At 3 s it is +2.72 m beyond the human on the 549 held-out keyframes with the ego standing
+     still. Case A is one: a truck crossing, the release planning 7.7 m into the junction.
+   - T2 cuts that to +1.4 to +1.7 m but does not remove it. Case B is a red light where T2 creeps
+     further than C.
+5. **Fix the epoch, or select on another split.** *Measured.*
+   - The held-out planning loss moves 0.01–0.03 from epoch to epoch, as much as the gaps between
+     arms, so the kept epoch flatters every arm.
+   - Saving every epoch's weights (32 MB each) made an unbiased re-measurement possible after the
+     fact, with no retraining (`evaluate.py`).
+6. **Rare classes do not learn under unweighted losses.** *Measured.*
+   - Lane changes are 4% of keyframes: the head always says "keep".
+   - Lane dividers are 2% of the labelled cells: the map never draws one.
+   - Risk 3 came true for both. They need class weights, or should be dropped.
+7. **The lead head learned, and T2 beat T1.** *Measured; that the lead head causes the extra gain
+   is argued.*
+   - The lead head's gap error is 3.5–4.1 m against 15.2 m for the train mean.
+   - T2's largest shift is toward stopping: where the human stands still, its overshoot at 3 s is
+     +1.4 to +1.7 m against C's +2.6 m.
+   - Until arm S and a lead-only arm run, information is not told apart from regularisation.
+8. **The heads pull hard and sideways.** *Measured; the reading is argued.*
+   - Their gradient on the refiner grew to a third of the planning gradient.
+   - Its cosine with the planning gradient stayed near zero (per-run medians −0.012 to +0.010).
+   - Reading: the heads do not fight the planning loss. They move the query features along
+     directions that loss ignores, and the scorer reads those directions.
+9. **Engineering lessons.** *Measured.*
+   - A full-dataset pass finds what a 60-scene sample does not: one self-crossing walkway polygon,
+     and 8 lane-graph edges to lanes that do not exist.
+   - Take provenance when a pass starts. Taken at the end, the token pass's manifest would have
+     named a tree edited during its half hour.
+   - Run long jobs from a `git worktree` at the commit under test. The main checkout can move on,
+     and every sidecar still names the code that ran.
+   - The test suite had silently stopped collecting under Drive-JEPA's 3.9, so no trainer's
+     preflight could have passed there.
+   - The release file is 3.7 GB, 2.5 GB of it the release's own training state. Serve the state
+     dict alone.
+   - From cached tokens an epoch is about 35 s of GPU time. Nine concurrent runs saturate one H200
+     and finish in 83 min: concurrency buys utilisation, not speed.
 
 ## Preflight
 
