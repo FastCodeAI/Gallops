@@ -1,15 +1,28 @@
 # Auxiliary prediction heads for Drive-JEPA: plan
 
-**Status (2026-10-20): partly built.**
-- **Built and run on real data:** the labels, the heads and one training step. On one nuScenes keyframe
-  the step runs end to end, and
-  [notebooks/drivejepa_aux_train_step.ipynb](../notebooks/drivejepa_aux_train_step.ipynb) shows every
-  tensor it touches.
-- **Not built yet:** the training loop, the preflight, the checkpoint writer and the gate runs. No
-  checkpoint has been trained.
+**Status (2026-10-21): built and run; open loop and in domain only.**
+- **Built:** the labels, the heads, the cache, the training loop, its preflight, the served
+  checkpoint, the report and the recipe (`recipes/drivejepa_aux.toml`).
+- **Run:** nine fine-tunes, arms C, T1 and T2 with three seeds each. All passed the preflight, and
+  all were measured on 2,996 keyframes of 102 held-out nuScenes train scenes. See
+  [Results](#results-2026-10-21).
+- **Found:**
+  - **The heads leave the 32 proposals no better than planning alone does**: best-of-32 ADE is
+    0.197–0.199 m in every arm.
+  - **They move the plan the frozen scorer picks.** Against C, L2 at 3 s is −0.32 to −0.48 m for
+    T1 and −0.78 to −0.89 m for T2, on every seed; C's range across seeds is 0.009 m.
+  - **The selection objective cannot see this**: the held-out planning loss ranks C first.
+- **Not done:**
+  - the inputs against Paddock's (deferred by decision);
+  - the shuffled-label arm S;
+  - `PREDICTIONS.md`;
+  - Paddock's gate, so nothing here speaks to NAVSIM, closed loop or H-safe.
+
+  No checkpoint of these runs is a ship candidate.
 
 Statements marked *verified* were checked in the code or on disk on that date; *measured* ones come
-from the notebook's executed outputs. Everything else is an argument or an estimate, and says so.
+from executed code: the notebook's outputs, or the runs' own files. Everything else is an argument
+or an estimate, and says so.
 
 The idea is to train Drive-JEPA with extra outputs: lane lines, objects, the lead vehicle and lane
 changes. Their only job is to shape the features the planner reads, and they are dropped at
@@ -512,33 +525,180 @@ first run:
   inherited from the release. `selection_split` is the held-out train scenes.
 - neuroNCAP's scenes and the five reconstructed ones are excluded by name.
 
-**Cost** (*estimates* unless marked):
-- **The encoder pass:** about 20k keyframes, at about 0.2 s each through the full model
-  (*measured* in the notebook: 182 ms per forward). That is about an hour, and the cache is about
-  10 GB in fp32.
-- **Training:** minutes per run on cached tokens.
-- **The gate:** a few hours per checkpoint per smoke.
+**Cost** (*measured* on one H200, 2026-10-21, unless marked):
+- **The labels pass:** 19,948 keyframes of 679 scenes in 198 s on 48 CPU workers; 833 MB.
+- **The encoder pass:** 19,948 keyframes in 15.9 min, all of them rebuilt; 9.9 GB of fp32 tokens.
+  The forward is 29 ms at batch 1 (the notebook's 182 ms included the first call's set-up); the
+  input build, 144 ms a keyframe on one thread, is what bounds it, and runs on 24 threads.
+- **Training:** one step at batch 32 from cached tokens is 66 ms alone on the GPU. With three runs
+  sharing it, an epoch of 529 steps took 2.0 min (C) and 3.1 min (T1, T2). All nine ran at once on
+  one H200: 49 to 76 min each, 83 min from the first start to the last end.
+- **The gate:** a few hours per checkpoint per smoke. *Estimate*; not run.
+
+## Results (2026-10-21)
+
+**What ran.**
+- The recipe's nine training stages: arms C, T1 and T2, seeds 0, 1 and 2, all from b48f731.
+- Each run: 10 epochs of 529 steps at batch 32, on 16,952 keyframes of 577 nuScenes train scenes.
+- Measured on 2,996 keyframes of 102 other train scenes, the held-out list.
+- Every preflight passed with the same report ([Preflight](#preflight)).
+- Every run wrote its served checkpoint to `{weights}/drivejepa_aux/<run>/step_<n>/`; each probe
+  reloaded it as Paddock does and reproduced the trained model exactly.
+- Reports in `{runs}/drivejepa_aux/`: `report.md` (kept epochs), `report-epoch10.md`,
+  `picks-epoch10.md`.
+
+**Which numbers to read: the fixed epoch, not the kept one.**
+- A run keeps the epoch with the lowest held-out planning loss, measured on the same scenes its
+  summary then reports. That loss moves 0.01–0.03 from epoch to epoch, so the kept epoch flatters
+  every arm.
+- So every number below is each run at **epoch 10**, which the recipe fixes and nothing chose
+  (`evaluate.py`).
+- The kept-epoch report reaches the same verdicts; six of the nine runs kept epoch 10 anyway.
+- How to read the tables: means over keyframes; "±" is the standard error clustered by scene; an
+  arm's cell is the mean of its three seeds, with their range in brackets.
+
+**The plan, *measured*:**
+
+| | R (the release) | C | T1 | T2 |
+|---|---|---|---|---|
+| L2 at 1 s (m) | 0.935 | 0.896 (0.887–0.904) | 0.856 (0.834–0.885) | **0.709** (0.680–0.744) |
+| L2 at 2 s (m) | 2.086 | 2.048 (2.036–2.063) | 1.853 (1.810–1.929) | **1.562** (1.500–1.619) |
+| L2 at 3 s (m) | 3.788 | 3.760 (3.755–3.765) | 3.340 (3.283–3.444) | **2.934** (2.863–2.989) |
+| best of 32, ADE over 3 s (m) | 0.268 | 0.197 (0.196–0.197) | 0.199 (0.199–0.199) | 0.198 (0.198–0.198) |
+| collision within 3 s (%) | 4.04 | 3.53 (3.37–3.60) | 3.91 (3.57–4.17) | 2.69 (2.47–2.94) |
+| held-out planning loss (the selection objective) | 0.574 | **0.503** (0.502–0.504) | 0.516 (0.512–0.523) | 0.515 (0.513–0.517) |
+| sight: blanking the camera moves the plan, max (m) | 16.1 | 16.4–16.8 | 16.8–17.0 | 14.6–16.8 |
+
+Off road is left out: 1.0% for every model and for the human's own path, all of it from one
+held-out scene (scene-0502) where the map and the logged path disagree. The human's path scores 0.0%
+on the collision metric, so that metric does not flag correct driving.
+
+**T against C, paired over the same keyframes, *measured*:**
+
+| | seed 0 | seed 1 | seed 2 | C's range across seeds |
+|---|---|---|---|---|
+| T1 − C, L2 at 3 s (m) | −0.46 ± 0.12 | −0.32 ± 0.12 | −0.48 ± 0.11 | 0.009 |
+| T2 − C, L2 at 3 s (m) | −0.89 ± 0.11 | −0.78 ± 0.11 | −0.81 ± 0.10 | 0.009 |
+| T2 − C, L2 at 1 s (m) | −0.22 ± 0.04 | −0.16 ± 0.04 | −0.18 ± 0.03 | 0.017 |
+| T2 − C, collision (points) | −1.14 ± 0.45 | −0.67 ± 0.44 | −0.70 ± 0.42 | 0.23 |
+| T1 − C, collision (points) | +0.37 ± 0.40 | +0.57 ± 0.51 | +0.20 ± 0.39 | 0.23 |
+| T − C, best of 32 (m) | +0.001 to +0.002 ± 0.001, every arm and seed | | | 0.001 |
+
+![Best of 32 against the plan the scorer picks, every run at epoch 10](assets/drivejepa-aux/picks.png)
+
+*Left: the best of the 32 proposals improves alike in every arm. Right: only the heads move the
+plan the frozen scorer picks. Each bar is that run's own standard error; the T-vs-C test above
+uses the paired one, which is smaller.*
+
+**What changed is the pick, not the proposals. *Measured*** (`diagnose.py`, each model at epoch 10):
+
+| | along-track error at 3 s, mean | when the human is stopped / moving | picks the slowest of 32 | picks the one nearest the human | distinct proposals picked |
+|---|---|---|---|---|---|
+| R | +0.86 m | +2.72 / +0.44 m | 8.0% | 4.7% | 29 |
+| C | +1.04 to +1.11 m | +2.6 / +0.7 m | 4.6–4.7% | 2.4–2.8% | 30 |
+| T1 | −0.30 to −0.53 m | +1.5 / −0.7 to −1.0 m | 9.2–10.1% | 6.1–7.5% | 31 |
+| T2 | −0.08 to +0.02 m | +1.4 to +1.7 / −0.3 to −0.4 m | 7.0–7.1% | 6.4–6.9% | 31–32 |
+
+- **Every pick overshoots or undershoots the human.** The release and C plan to keep moving when
+  the human stays stopped (549 of the held-out keyframes). C overshoots more than the release does.
+  T1 corrects too far and is slow when moving. T2 matches the human's 3 s progress on average:
+  15.0 m against 15.08 m.
+- **The picks are not degenerate.** T2 picks the slowest proposal no more often than the release
+  does, spreads its picks over 31–32 proposals, and picks the one nearest the human more often than
+  R or C.
+
+**The heads themselves, *measured*** (epoch 10, against what a model that never looks scores on the
+same rows):
+
+| Head | No camera | T1 | T2 |
+|---|---|---|---|
+| BEV mIoU, 8 classes | 0.104 (each cell's majority) | 0.190–0.192 | 0.187–0.192 |
+| BEV IoU: road / vehicle / lane divider | 0.481 / 0 / 0 | 0.603–0.604 / 0.06–0.09 / 0.000 | 0.600–0.604 / 0.05–0.10 / 0.000 |
+| boxes: F1 (p > 0.5, within 2 m); centre error | 0 | 0.28–0.30; 1.1–1.2 m | 0.27–0.28; 1.1–1.2 m |
+| lead present: accuracy | 0.710 ("never") | — | 0.809–0.814 |
+| lead gap: mean error | 15.2 m (the train mean) | — | 3.5–4.1 m |
+| lane change: F1 left / right | 0 / 0 ("always keep") | — | **0 / 0** |
+
+![Held-out planning loss by epoch, each arm's mean over its three seeds](assets/drivejepa-aux/curves.png)
+
+![The heads' gradient on the refiner against the planning gradient, and their cosine](assets/drivejepa-aux/pull.png)
+
+**How hard the heads pulled, *measured*** (every 100 steps, on that step's batch):
+- **The size of the pull grew.** The heads' gradient on the refiner went from 5–12% of the planning
+  gradient at the first step to a median of 23–33% over the run.
+- **Its direction stayed orthogonal.** The cosine between the two had a median of −0.012 to +0.010
+  per run. Single-batch values ranged from −0.15 to +0.21.
+
+**Against the decision rules of step 4.**
+
+| Rule | Verdict | Strength |
+|---|---|---|
+| 1. Do the heads learn? | **Partly.** The BEV map (road, vehicles), the boxes and the lead vehicle beat their no-camera baselines. Lane dividers (IoU 0.000) and lane changes (F1 0: the head always says "keep") learned nothing: the two rare classes, under unweighted losses (risk 3) | *measured* |
+| 2. T beats C by more than C's seed range and twice the paired SE, on every seed | **For the plan picked: yes.** T2 at 1, 2 and 3 s; T1 at 3 s. **For the proposals and the loss: no**; both slightly favour C. T2's lower collision rate is not resolved: seed 1 lies inside two SE | *measured*; which reading of "held-out planning" the rule meant is a judgement |
+| 3. Does the plan still move when the image is blanked? | **Yes**, 14.6–17.0 m for every run | *measured* |
+| 4. Does S match T? | Not run | — |
+| 5–6. The gate: REGRESSION against R? GAIN in closed loop? | Not run | — |
+
+**What this does and does not show.**
+- **Verified:**
+  - On held-out scenes from the four nuScenes maps, open loop, both head sets improve the plan the
+    frozen scorer picks over the same fine-tune without them.
+  - The change is in the pick, not in the proposals.
+  - It is not a collapse onto the slowest proposal.
+- **Argued, not verified:**
+  - **The mechanism.** The frozen scorer reads the refiner's query features. Planning alone moves
+    those features where the scorer was never trained, and its pick drifts faster: C picks the
+    proposal nearest the human half as often as the release does. That is the failure swerve's
+    docstring describes, a frozen scorer ranking what it has not seen. The heads hold the features
+    to the scene, and the same scorer then picks slower, more human-like plans, most of all where
+    the human is stopped.
+  - **T2 over T1 is consistent with the lead head carrying information.** It learned (gap error
+    3.5 m against 15.2 m), and a lead vehicle is what makes the ego stop. But the lane-change head
+    learned nothing, and without arm S, information is not told apart from regularisation.
+  - **The pick that matches nuScenes drivers may cost NAVSIM.** NAVSIM is where the scorer was
+    trained to pick, and its ego-progress term rewards the speed T2 gave up. That is the first
+    gate question, not an answer.
+- **Not verified, and how to:**
+  1. The inputs against Paddock's: the deferred preflight check. It needs `paddock_candidates.py
+     --rows` for nuScenes.
+  2. Arm S, T2 with its labels shuffled across keyframes.
+  3. Paddock's gate on T2 seed 0, against R and against C seed 0. nuScenes val is a clean open-loop
+     test, since these runs never read it; then NAVSIM, for H-safe, and neuroNCAP.
+  4. A selection rule that can see the effect. The held-out planning loss never sees the scorer, so
+     it ranked C first while C's picks were the worst of the three arms.
+  5. Class weights for lane dividers and lane changes, if those heads are to learn at all.
+- **The held-out scenes are not independent of training.** They come from the same logs and maps,
+  so they are in domain. The effect is a difference between arms trained alike, so that leaks into
+  every arm equally, but the absolute numbers against R are optimistic for the same reason.
 
 ## Preflight
 
 [CLAUDE.md](../CLAUDE.md) requires that no run trains until these checks pass, with no flag to
-skip them.
+skip them. Built as `drivejepa_aux/preflight.py`; `train.py` runs it after building the model and
+before the first step. The sample is 60 train keyframes: 4 from each of 12 scenes, visited late
+first, plus each scene's earliest. Every run's report sits in its sidecar. *Measured* by all nine
+runs, identically:
 
-- **code:** `src/` and `tests/` are committed, and the tests pass in the training interpreter.
-- **inputs:**
-  - On a sample of keyframes, the released weights on Gallops' inputs reproduce the 32
-    candidates and the pick Paddock's adapter dumps for the same keyframes.
-  - Cached tokens equal live ones.
-  - Batch 32 with the batch fix equals batch 1.
-- **labels:**
-  - The human's logged path lies on the rasterised road for at least 99% of the waypoints in view.
-  - Boxes in the ego frame equal the devkit's own transform.
-  - Every box kept projects inside the front image.
-- **heads:** upstream's heads as the trainer runs them equal `Scorer.forward` in training mode.
-  `step.check_heads` exists; it measured 0.0.
-- **sight:** blanking the image moves the released plan.
-- **loss parity:** on the first batch, the planning loss equals the agent's own
-  `trajectory_loss_anchors`.
+| Check | What is compared | Limit | Measured |
+|---|---|---|---|
+| code | `src/`, `tests/` committed; the suite under the training interpreter (3.9) | clean, green | b48f731, 251 passed |
+| data | train and held-out share no scene; all are devkit train scenes, none `val` or neuroNCAP's; rows without tokens | ≤ 10% | 577 / 102 scenes, 0 rows |
+| inputs | live rebuild (input builder + the vendor's forward, batch 1) against the cache: tokens, l2i, img_shape, ego, the human's plan, the 32 proposals | 1e-4 / 1e-3 m | **0.0** on 60 of 60, picks 60 of 60 |
+| trainer | `cache.batch` + `step.cached_forward`, the 60 as one batch with the batch fix, against the live batch-1 record | 1e-3 m; picks ≥ 95% | 4.6e-5 m; picks 60 of 60 |
+| loss parity | the planning loss against the agent's own `trajectory_loss_anchors` | 1e-4 relative | identical (0.684431) |
+| labels | the labeller re-run against what `cache.batch` feeds the heads; road; future boxes | 1e-5 | identical |
+| boxes | ego-frame boxes against the devkit's `Box.translate/rotate` | 1e-4 m, 1e-2 rad | 6.7e-13 m, 1.3e-15 rad |
+| projection | boxes the labels call seen, projected by the devkit's `view_points` | inside the crop | 286 of 286 |
+| road | the human's path in view on the rasterised road, whole train split | ≥ 99% | 68,212 of 68,421 (99.69%) |
+| heads | upstream's heads as trained against `Scorer.forward` in training mode (T1, T2) | 1e-6 | 0.0 |
+| sight | blanking the front camera moves the release's plan | > 0.05 m | 11.8 m max, 4.7 m median |
+
+**Not checked: the inputs against Paddock's.** Deferred by decision for these runs. Paddock's
+candidate dump (`tools/models/drivejepa/paddock_candidates.py`) takes `--rows` for KITScenes only,
+so the nuScenes-table feed (`inputs.TablesTickDataset`) is held to Gallops' own builder. That
+builder is `swerve_data.TickDataset`, which swerve's fidelity check holds to Paddock's adapter on
+neuroNCAP dumps; the table feed in front of it is new. Every sidecar says so
+(`notes.paddock_parity`). No checkpoint of these runs is a ship candidate until the check exists.
 
 ## Environment
 
@@ -560,6 +720,18 @@ What this site needed, recorded in the gitignored `gallops.toml`:
   importing the harness needs Python 3.11 (`tomllib`).
 - **The nuScenes devkit's map module fails to import** with matplotlib ≥ 3.6 (a renamed style).
   `nusc.devkit_map` registers the old name first.
+- **Two defects in the nuScenes maps**, found by the first full labels pass (the notebook's 60
+  scenes touched neither):
+  - one boston-seaport walkway polygon (`b7ada811`) crosses itself, and clipping it raises GEOS's
+    `TopologyException`. It is the only invalid polygon among the four maps' drivable areas and
+    walkways; `buffer(0)` repairs it with its area unchanged (554.7 m²);
+  - 8 of singapore-onenorth's 2,140 lane-graph edges point at a lane the map does not hold, and the
+    devkit raises when asked for that lane's successors. `MapView.reachable` counts such a lane as
+    reachable and does not expand it.
+- **The test suite under Drive-JEPA's 3.9.** It had stopped collecting (`recipe.py` imported
+  `tomllib`), so no trainer's preflight could have passed in that interpreter. `recipe.py` now takes
+  `config.py`'s `tomli` fallback, and the re-ranker's tests, which test 3.11-only code, skip below
+  3.11.
 - **To open the notebook in Jupyter or VS Code,** register the interpreter once:
   `{python.drivejepa} -m ipykernel install --user --name drive-jepa-mmcv-py39 --display-name "Python 3.9 (Drive-JEPA + mmcv)"`.
 
@@ -602,17 +774,19 @@ gitGraph
 | 5 | `drivejepa_aux: the heads, the model's inputs and one training step` | `heads.py`, `inputs.py`, `step.py`; 19 modules added to `PY39` | done |
 | 6 | `notebooks: one training step of the refiner on a real nuScenes keyframe` | the executed notebook; a `[code] paddock` key in `gallops.toml.example` | done |
 | 7 | `docs: step 1 with a real keyframe, why not LoRA, nuScenes decided` | this file, and its figures | done |
-| 8 | `drivejepa_aux: the held-out scenes and the token cache` | `heldout_scenes.json`; the encoder pass, with a parity check against live tokens | next |
-| 9 | `drivejepa_aux: the training loop` | `train.py`: epochs, selection on held-out planning loss; `--heads none` is arm C | |
-| 10 | `drivejepa_aux: preflight` | the checks above; tests with fake torch | |
-| 11 | `drivejepa_aux: served weights and sidecar` | built from b2d's writer and `sidecar.publish` | |
-| 12 | `recipe: drivejepa_aux` | the stages; `test_recipe.py` parametrised over it | |
-| 13 | `experiment: predictions, written before any run` | `PREDICTIONS.md` and its sha256 | |
-| 14 | `results: held-out metrics and gate verdicts` | `REPORT.md`, manifests, verdicts; a verified / argued table here | |
+| 8 | `tests: the suite runs under Drive-JEPA's Python 3.9` (abd31e0); `drivejepa_aux: the held-out scenes, the cache and the held-out metrics` (44b37df) | `split.py`, `heldout_scenes.json`, `cache.py`, `metrics.py` | done |
+| 8a | two map fixes (963fe13, 52c2dfd); the cache's provenance taken as a pass starts (4bbb888) | `nusc.py`, `cache.py` | done |
+| 9–11 | `drivejepa_aux: the training loop, its preflight and the served checkpoint` (7317f04), `serve the state dict alone` (da98c94) | `train.py`, `preflight.py`, `publish.py` | done |
+| 11a | `drivejepa_aux: the report that puts the runs side by side` (89a4bc9) | `report.py` | done |
+| 12 | `recipe: drivejepa_aux, from the extract to the report` (b48f731) | the stages; `test_recipe.py` parametrised over both recipes | done |
+| 13 | `experiment: predictions, written before any run` | `PREDICTIONS.md` and its sha256 | **not written.** The runs went ahead without it. The decision rules they are read against are the ones in step 4 above, committed at 1ec1823 before any run, unchanged |
+| 12a | `the report also lists the selection objective` (bb6456e); `measure every run at a fixed epoch, which nothing chose` (fa69178); `what the frozen scorer picks, run by run` (c4ff2e8) | `report.py`, `evaluate.py`, `diagnose.py`; their recipe stages | done, after the runs: the runs trained from b48f731, which none of them changes |
+| 14 | `docs: the aux runs' results` | this file's results section and its three figures | done; the gate is not run |
 
 **Ordering**
-- The runs happen between commits 13 and 14, each from a clean tree. Every sidecar records the
-  commit its run trained from (`train_git_sha`).
+- The nine runs trained from b48f731, from a separate worktree with nothing uncommitted, so the
+  preflight's clean-tree check and every sidecar's `train_git_sha` name the code that ran. The cache
+  passes ran the same way: labels at 52c2dfd, tokens at 4bbb888 (each manifest's `git_sha`).
 - **Merge with a merge commit, not a squash.** A squash makes those recorded commits unreachable.
 
 ## Risks
