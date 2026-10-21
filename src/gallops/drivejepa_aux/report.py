@@ -41,9 +41,12 @@ PLANNING = (
 ORDER = {"C": 0, "T1": 1, "T2": 2}
 
 
-def load_run(directory: Path) -> dict:
+def load_run(directory: Path, epoch: int | None = None) -> dict:
+    """A run's files; with `epoch`, its measurement at that fixed epoch (`evaluate.py`) in place of the
+    kept one."""
     directory = Path(directory)
-    npz = np.load(directory / "heldout.npz", allow_pickle=False)
+    suffix = "" if epoch is None else f"_epoch{epoch:02d}"
+    npz = np.load(directory / f"heldout{suffix}.npz", allow_pickle=False)
     measured = {"release": {}, "kept": {}}
     for key in npz.files:
         which, _, name = key.partition("_")
@@ -53,7 +56,7 @@ def load_run(directory: Path) -> dict:
         entry = json.loads(line)
         if entry["kind"] == "pull":
             pulls.append(entry)
-    summary = json.loads((directory / "summary.json").read_text())
+    summary = json.loads((directory / f"summary{suffix}.json").read_text())
     return {"name": directory.name, "summary": summary, "measured": measured, "pulls": pulls}
 
 
@@ -122,17 +125,26 @@ def verdict(per_seed: list, span: float) -> str:
     return "not resolved"
 
 
-def render(runs: list) -> str:
+def render(runs: list, fixed_epoch: int | None = None) -> str:
+    """The markdown report. `fixed_epoch`: every run is measured at that epoch (`evaluate.py`), which
+    nothing chose, in place of the kept one."""
     runs = sorted(runs, key=lambda r: (ORDER.get(r["summary"]["arm"], 9), r["summary"]["seed"]))
-    out = ["# Drive-JEPA auxiliary heads: held-out results", ""]
+    title = "# Drive-JEPA auxiliary heads: held-out results"
+    out = [title + ("" if fixed_epoch is None else f" at the fixed epoch {fixed_epoch}"), ""]
     problems = check_release(runs)
     release = runs[0]["measured"]["release"]
     n_rows, n_scenes = len(release["rows"]), len(np.unique(release["scene"]))
     out += [
         f"Held-out: {n_rows} keyframes in {n_scenes} nuScenes train scenes the runs never trained on "
         "(recipes/drivejepa_aux/heldout_scenes.json). Every value is a mean over keyframes ± its standard "
-        "error clustered by scene. The same scenes chose each run's epoch, so these numbers carry that "
-        "selection; paddock's benchmarks are the clean test.",
+        "error clustered by scene. "
+        + (
+            "The same scenes chose each run's epoch, so these numbers carry that selection: report "
+            "the fixed-epoch ones (`report --epoch`) or paddock's benchmarks."
+            if fixed_epoch is None
+            else f"Every run is measured at epoch {fixed_epoch}, which the recipe fixes and nothing chose, "
+            "so these numbers carry no selection; the 'kept epoch' column is that fixed epoch."
+        ),
         "",
     ]
     if problems:
@@ -308,8 +320,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("runs", type=Path, nargs="+", help="run directories ({runs}/drivejepa_aux/runs/<name>)")
     ap.add_argument("-o", "--out", type=Path, help="write the markdown here (default: print it)")
+    ap.add_argument(
+        "--epoch", type=int, help="every run at this fixed epoch (`evaluate.py`), not its kept one"
+    )
     args = ap.parse_args()
-    text = render([load_run(d) for d in args.runs])
+    text = render([load_run(d, args.epoch) for d in args.runs], args.epoch)
     if args.out:
         args.out.write_text(text)
         print(f"wrote {args.out}")

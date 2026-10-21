@@ -121,3 +121,31 @@ args = [
   "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
   "-o", "{out}/report.md",
 ]
+
+# The kept epochs were chosen on the held-out scenes the report above then measures them on. Every run
+# again at the recipe's last epoch, which nothing chose: the numbers to quote.
+
+[[stage]]
+name = "evaluate-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.evaluate"
+after = ["c-s0", "c-s1", "c-s2", "t1-s0", "t1-s1", "t1-s2", "t2-s0", "t2-s1", "t2-s2"]
+args = [
+  "--cache", "{cache}", "--extract", "{extract}", "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+]
+
+[[stage]]
+name = "report-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.report"
+after = ["evaluate-epoch10"]
+args = [
+  "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+  "-o", "{out}/report-epoch10.md",
+]

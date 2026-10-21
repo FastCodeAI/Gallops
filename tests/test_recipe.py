@@ -43,6 +43,7 @@ PY39 = (
     "drivejepa_aux/publish.py",
     "drivejepa_aux/train.py",
     "drivejepa_aux/report.py",
+    "drivejepa_aux/evaluate.py",
     "drivejepa_b2d/sidecar.py",
     "checkpoint.py",
     "config.py",
