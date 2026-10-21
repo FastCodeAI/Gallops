@@ -82,6 +82,8 @@ def _publish(staging: Path, manifest: dict) -> Path:
 
 
 def _provenance(extract: Path) -> dict:
+    """What a pass read and ran, taken as it starts: read at the end, the sha named whatever was
+    checked out by then (swerve's preflight learned the same: v4fix's sidecar named a later tree)."""
     from gallops.drivejepa_b2d.provenance import git_sha
     from gallops.drivejepa_b2d.sidecar import sha256
 
@@ -164,6 +166,7 @@ def stack_records(records: list[dict], ticks: list[dict]) -> dict:
 
 def build_labels(extract: Path, out: Path, nuscenes_root: Path, workers: int, limit: int = 0) -> Path:
     staging = _staging(out, LABELS)
+    provenance = _provenance(extract)  # now, not at the end: the code this process loaded
     started = time.time()
     _DATA.update(load_extract(extract))
     names = [n for n in sorted(_DATA["ticks"]) if _DATA["ticks"][n]]
@@ -177,7 +180,7 @@ def build_labels(extract: Path, out: Path, nuscenes_root: Path, workers: int, li
     np.savez(staging / "labels.npz", **arrays)
     judged, on = int(arrays["expert_judged"].sum()), int(arrays["expert_on_road"].sum())
     manifest = {
-        **_provenance(extract),
+        **provenance,
         "rows": len(ticks),
         "scenes": len(names),
         "limit": limit or None,
@@ -220,6 +223,7 @@ def build_tokens(
     from gallops.drivejepa_b2d.sidecar import sha256
 
     staging = _staging(out, TOKENS)
+    provenance = _provenance(extract)  # now, not at the end: the code this process loaded
     started = time.time()
     data = load_extract(extract)
     inputs.use_calibration(Path(extract) / "calib")
@@ -297,7 +301,7 @@ def build_tokens(
     del tokens
     np.savez(staging / "inputs.npz", spatial=shapes["spatial"], level=shapes["level"], **arrays)
     manifest = {
-        **_provenance(extract),
+        **provenance,
         "rows": n,
         "built": int(arrays["built"].sum()),
         "limit": limit or None,
@@ -330,6 +334,43 @@ def load(cache: Path, tokens: bool = True) -> dict:
         if out["manifest"][TOKENS]["extract_sha256"] != out["manifest"][LABELS]["extract_sha256"]:
             raise SystemExit(f"{cache}: the labels and tokens passes read different extracts")
         out["tokens"] = np.load(cache / TOKENS / "tokens.npy")
+    return out
+
+
+def batch(data: dict, index, device: str, with_labels: bool = True) -> dict:
+    """The rows `index` as the trainer feeds them: the refiner's inputs, the human's plan, the
+    pseudo-teachers and, with `with_labels`, the heads' targets with `heads.collate`'s keys and
+    dtypes. One function for the trainer and the preflight, so the preflight checks this one."""
+    import torch
+
+    index = np.asarray(index)
+    inputs, labels = data["inputs"], data["labels"]
+
+    def put(array, dtype=torch.float32):
+        return torch.as_tensor(np.asarray(array), dtype=dtype, device=device)
+
+    out = {
+        "inputs": {
+            "tokens": put(data["tokens"][index]),
+            "l2i": put(inputs["l2i"][index]),
+            "img_shape": put(inputs["img_shape"][index]),
+            "ego": put(inputs["ego"][index]),
+        },
+        "target": put(inputs["target"][index]),
+        "teachers": put(inputs["teachers"][index]),
+        "n_teachers": torch.full((len(index),), inputs["teachers"].shape[1], device=device),
+        "labels": None,
+    }
+    if with_labels:
+        out["labels"] = {
+            "bev": put(labels["bev"][index], torch.long),
+            "agent_states": put(labels["agent_states"][index]),
+            "agent_valid": put(labels["agent_valid"][index], torch.bool),
+            "lead_present": put(labels["lead_present"][index]),
+            "lead_gap": put(labels["lead_gap"][index]),
+            "lead_closing": put(labels["lead_closing"][index]),
+            "lane_change": put(labels["lane_change"][index], torch.long),
+        }
     return out
 
 
