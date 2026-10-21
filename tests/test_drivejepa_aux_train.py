@@ -8,7 +8,7 @@ import math
 import numpy as np
 import pytest
 
-from gallops.drivejepa_aux import bev, cache, metrics, split
+from gallops.drivejepa_aux import bev, cache, metrics, preflight, publish, split, train
 
 
 def straight(speed: float = 5.0) -> np.ndarray:
@@ -197,3 +197,82 @@ def test_lane_f1_scores_changes_and_skips_unknowns() -> None:
     scores = metrics.lane_f1(predicted, label)
     assert scores["left"] == pytest.approx(2 / 4) and scores["right"] == 0.0
     assert np.isnan(metrics.lane_f1(np.zeros(3, int), np.zeros(3, int))["left"])
+
+
+# --- the served file ------------------------------------------------------------------------------
+
+
+def test_the_shared_refiner_goes_into_every_pass() -> None:
+    assert publish.served_names("_trajectory_head.0.attn.weight") == [
+        f"agent._pad_model._trajectory_head.{i}.attn.weight" for i in range(4)
+    ]
+    assert publish.served_names("init_feature.weight") == ["agent._pad_model.init_feature.weight"]
+
+
+def test_the_heads_are_not_served_and_nothing_else_may_train() -> None:
+    trained = {
+        "init_feature.weight": "q",
+        "hist_encoding.weight": "w",
+        "hist_encoding.bias": "b",
+        "_trajectory_head.0.a": "r",
+        "scorer.map_head.conv.weight": "m",
+        "scorer._agent_head.query": "h",
+    }
+    served = publish.replacements(trained)
+    assert len(served) == 3 + 4 and not any("map_head" in k or "_agent_head" in k for k in served)
+    with pytest.raises(SystemExit, match="nothing else may train"):
+        publish.replacements({"scorer.pred_score.mlp.0.weight": "s"})
+
+
+def test_upstream_heads_are_saved_beside_the_refiner_path() -> None:
+    from gallops.drivejepa_aux.publish import SERVED, UPSTREAM_HEAD_KEYS
+
+    assert "_trajectory_head.0." in SERVED and "scorer.map_head." in UPSTREAM_HEAD_KEYS
+
+
+# --- the preflight's sample and the trainer's summary ----------------------------------------------
+
+
+def test_the_sample_visits_late_rows_first_and_adds_each_scenes_first() -> None:
+    scenes = np.array(["a"] * 20 + ["b"] * 10)
+    keyframes = np.r_[np.arange(1, 21), np.arange(1, 11)]
+    rows = preflight.sample_rows(scenes, keyframes, np.arange(30), n_scenes=2, per_scene=4)
+    for name in ("a", "b"):
+        mine = [r for r in rows if scenes[r] == name]
+        late = mine[:-1]
+        assert keyframes[late].tolist() == sorted(keyframes[late], reverse=True)
+        assert keyframes[mine[-1]] == 1  # the scene's earliest row, last
+
+
+def test_summary_json_stays_strict() -> None:
+    clean = train.plain({"iou": {"road": float("nan"), "vehicle": 0.5}, "se": [1.0, float("inf")]})
+    assert clean == {"iou": {"road": None, "vehicle": 0.5}, "se": [1.0, None]}
+    json.dumps(clean, allow_nan=False)
+
+
+def test_summarize_reads_the_rows_it_was_given() -> None:
+    expert = np.stack([straight(), straight()])
+    plan = expert.copy()
+    plan[1, :, 1] = 2.0  # the second row two metres left all the way
+    data = {
+        "labels": {
+            "lead_present": np.array([1, 0], np.int8),
+            "lead_gap": np.array([10.0, np.nan], np.float32),
+            "lane_change": np.array([0, 1], np.int8),
+        }
+    }
+    measured = {
+        "rows": np.array([0, 1]),
+        "scene": np.array(["s1", "s2"]),
+        "l2": metrics.l2(plan, expert),
+        "min_ade": np.zeros(2),
+        "collided": np.array([False, True]),
+        "off_road": np.array([0.0, np.nan]),
+        "lead": np.array([[0.9, 12.0, 0.0], [0.2, 5.0, 0.0]]),
+        "lane": np.array([0, 1]),
+    }
+    summary = train.summarize(measured, data)
+    assert summary["l2_3s"]["mean"] == pytest.approx(1.0) and summary["l2_3s"]["scenes"] == 2
+    assert summary["collision_3s"]["mean"] == 0.5 and summary["off_road_3s"]["scenes"] == 1
+    assert summary["lead_present_accuracy"] == 1.0 and summary["lead_gap_mae_m"] == pytest.approx(2.0)
+    assert summary["lane_f1"]["left"] == 1.0

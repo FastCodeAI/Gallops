@@ -27,12 +27,11 @@ from pathlib import Path
 import torch
 
 from gallops.drivejepa_aux import bev, heads, targets
+from gallops.drivejepa_aux.publish import SERVED, UPSTREAM_HEAD_KEYS
 
-#: Prefixes of upstream's switched-on heads inside the model, the only keys the release lacks.
-UPSTREAM_HEAD_KEYS = ("scorer.map_head.", "scorer._agent_head.")
 #: What a run changes and saves: the refiner path -- the one shared refiner under its first name,
 #: as `train_generator.gen_state` keeps it -- and upstream's heads.
-TRAINED_KEYS = ("init_feature.", "hist_encoding.", "_trajectory_head.0.") + UPSTREAM_HEAD_KEYS
+TRAINED_KEYS = SERVED + UPSTREAM_HEAD_KEYS
 #: The refiner path trains at the Bench2Drive generator stage's rate; the heads, which start from
 #: random weights, at the rate the release itself was trained at (DriveJEPAAgent lr).
 LR_REFINER = 2e-5
