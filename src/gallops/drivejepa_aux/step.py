@@ -20,16 +20,50 @@ One step, in order:
 
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
+
 import torch
 
 from gallops.drivejepa_aux import bev, heads, targets
 
 #: Prefixes of upstream's switched-on heads inside the model, the only keys the release lacks.
 UPSTREAM_HEAD_KEYS = ("scorer.map_head.", "scorer._agent_head.")
+#: What a run changes and saves: the refiner path -- the one shared refiner under its first name,
+#: as `train_generator.gen_state` keeps it -- and upstream's heads.
+TRAINED_KEYS = ("init_feature.", "hist_encoding.", "_trajectory_head.0.") + UPSTREAM_HEAD_KEYS
 #: The refiner path trains at the Bench2Drive generator stage's rate; the heads, which start from
 #: random weights, at the rate the release itself was trained at (DriveJEPAAgent lr).
 LR_REFINER = 2e-5
 LR_HEADS = 1e-4
+#: The released checkpoint, where paddock's model.yaml finds it.
+RELEASE = "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
+
+
+def enter(cfg) -> str:
+    """Drive-JEPA's environment, as paddock's model.yaml gives it to its node; returns the release.
+
+    Changes into navsim_v2/: the agent opens ./data/8192.npy and ./vjepa2/... relative to its cwd.
+    NAVSIM's data need not exist here -- nothing reads it -- so its configured path is passed as it
+    is, not resolved (resolving checks it exists). paddock's src/ supplies `Command`.
+    """
+    navsim_v2 = Path(cfg.resolve("{code.drivejepa}")) / "navsim_v2"
+    exp = cfg.resolve("{data.navsim.exp}")
+    navsim_data = str(cfg.datasets["navsim"].path)
+    os.environ.update(
+        NAVSIM_DEVKIT_ROOT=str(navsim_v2),
+        NAVSIM_EXP_ROOT=exp,
+        OPENSCENE_DATA_ROOT=navsim_data,
+        NUPLAN_MAPS_ROOT=navsim_data + "/maps",
+        NUPLAN_MAP_VERSION="nuplan-maps-v1.0",
+        DRIVE_JEPA_MSDA="auto",
+    )
+    for path in (cfg.resolve("{code.paddock}") + "/src", str(navsim_v2)):
+        if path not in sys.path:
+            sys.path.insert(0, path)
+    os.chdir(navsim_v2)
+    return cfg.resolve(RELEASE)
 
 
 def check_grid(config, aux: bool) -> None:
@@ -46,12 +80,13 @@ def check_grid(config, aux: bool) -> None:
         raise SystemExit(f"num_bev_classes {config.num_bev_classes} != {len(bev.CLASSES)} label classes")
 
 
-def build_model(checkpoint: str, device: str, aux: bool = True, seed: int = 0):
+def build_model(checkpoint: str, device: str, aux: bool = True, seed: int = 0, scene: bool = True):
     """The released model with upstream's heads switched on, and the new heads.
 
     Loads the released state dict with strict=False and refuses unless the only missing keys are
     the two switched-on heads' and nothing is unexpected. Applies the batch fix, puts the model in
-    eval mode, and leaves requires_grad on the refiner path and the heads alone.
+    eval mode, and leaves requires_grad on the refiner path and the heads alone. `aux` False is
+    the release as it is (arm C); `scene` False keeps upstream's two heads and not ours (arm T1).
     """
     from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
     from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
@@ -79,8 +114,55 @@ def build_model(checkpoint: str, device: str, aux: bool = True, seed: int = 0):
     model = agent._pad_model.to(device).eval()
     for name, parameter in model.named_parameters():
         parameter.requires_grad = name.startswith(TRAINABLE_REFINER) or name.startswith(UPSTREAM_HEAD_KEYS)
-    scene_heads = heads.SceneHeads(config.tf_d_model).to(device).eval() if aux else None
+    scene_heads = heads.SceneHeads(config.tf_d_model).to(device).eval() if aux and scene else None
     return agent, model, scene_heads, config
+
+
+def trainable_state(model, scene_heads) -> dict:
+    """What a run changed, on the CPU: `model` (TRAINED_KEYS) and `scene_heads`."""
+    trained = {k: v for k, v in model.state_dict().items() if k.startswith(TRAINED_KEYS)}
+    state = {"model": {k: v.detach().cpu().clone() for k, v in trained.items()}}
+    if scene_heads is not None:
+        state["scene_heads"] = {k: v.detach().cpu().clone() for k, v in scene_heads.state_dict().items()}
+    return state
+
+
+def load_trainable(model, scene_heads, state: dict) -> None:
+    """`trainable_state`'s inverse. Loading `_trajectory_head.0.*` sets the one shared refiner, so
+    the four passes move together; refuses a key the model does not have."""
+    result = model.load_state_dict(state["model"], strict=False)
+    if result.unexpected_keys:
+        raise SystemExit(f"trained state has keys the model lacks: {result.unexpected_keys[:5]}")
+    if scene_heads is not None:
+        scene_heads.load_state_dict(state["scene_heads"])
+
+
+def cached_forward(
+    model, scene_heads, batch: dict, spatial, level, detach_heads: bool = False, score: bool = False
+):
+    """`forward` from the encoder's cached output: the same result, without the frozen ViT.
+
+    `batch` holds the cache's tokens (B, 512, 256), l2i (B, 1, 4, 4), img_shape (B, 4, 3) and ego
+    (B, 11). The four passes are `train_generator.refine_from_cache`, the generator stage's own;
+    `score` also runs the frozen scorer and picks a plan, as the vendor's forward does. B > 1 needs
+    the batch fix (`build_model` applies it); the preflight holds this path to the live one.
+    """
+    from gallops.drivejepa_b2d.train_generator import refine_from_cache
+
+    proposals, query = refine_from_cache(
+        model, batch["tokens"], batch["l2i"], batch["img_shape"], batch["ego"], spatial, level
+    )
+    out = {"proposal_list": proposals, "proposals": proposals[-1]}
+    if score:
+        out["pred_logit"] = model.scorer(proposals[-1], query)[0]
+        out["pdm_score"] = torch.sigmoid(out["pred_logit"])[:, :, -1]
+        pick = out["pdm_score"].argmax(1)
+        out["trajectory"] = proposals[-1][torch.arange(len(pick), device=pick.device), pick]
+    head_input = query.detach() if detach_heads else query
+    aux = heads.run_upstream_heads(model.scorer, head_input)
+    if scene_heads is not None:
+        aux.update(scene_heads(head_input))
+    return {"out": out, "query_features": query, "aux": aux}
 
 
 def make_optimizer(model, scene_heads) -> torch.optim.Optimizer:
@@ -109,6 +191,7 @@ def forward(model, scene_heads, features: dict, keep: bool = False, detach_heads
 
     def tokens(module, args, output):
         captured["tokens"] = output[0]  # (cameras, 512, B, 256)
+        captured["spatial"], captured["level"] = output[1], output[2]  # what `cached_forward` needs beside
 
     def refined(module, args, output):
         captured["passes"].append(output[0])
@@ -130,8 +213,8 @@ def forward(model, scene_heads, features: dict, keep: bool = False, detach_heads
         outputs.update(scene_heads(head_input))
     result = {"out": out, "query_features": query, "scorer_proposals": captured["proposals"], "aux": outputs}
     if keep:
-        result["tokens"] = captured["tokens"]
-        result["passes"] = captured["passes"]
+        for key in ("tokens", "spatial", "level", "passes"):
+            result[key] = captured[key]
     return result
 
 

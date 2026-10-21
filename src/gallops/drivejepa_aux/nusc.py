@@ -468,6 +468,7 @@ def keyframe_labels(scene: dict, tick: dict, annotations: list, view_map: MapVie
         "lead_closing": lead["closing"],
         "lane_change": change,
         # what the targets were built from, for checks and plots
+        "road": layers["road"],  # the whole grid, not only the camera's view: where a plan leaves the road
         "vehicles": vehicles,
         "vehicles_seen": seen,
         "lead_index": lead["index"],
@@ -475,6 +476,22 @@ def keyframe_labels(scene: dict, tick: dict, annotations: list, view_map: MapVie
         "lanes_later": sorted(lanes_later),
         "lane_shift": shift,
     }
+
+
+def future_boxes(scene: dict, tick: dict, annotations: dict) -> list:
+    """Every annotated box at each of the next FUTURE_STEPS keyframes, in THIS keyframe's ego frame,
+    (N, 5) [x, y, heading, length, width] per step: what a plan made here would drive into.
+
+    Every category, as paddock's nuScenes benchmark counts them for its collision rate (its index
+    keeps every sample_annotation); `annotations` is the extract's, keyed by sample token.
+    """
+    frames = scene["keyframes"]
+    k = tick["keyframe"]
+    ego2global = np.asarray(frames[k]["ego"])
+    return [
+        _boxes(annotations.get(frames[k + j]["sample"], []), ego2global, ("",))[0]
+        for j in range(1, FUTURE_STEPS + 1)
+    ]
 
 
 def main() -> None:
