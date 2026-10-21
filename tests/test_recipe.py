@@ -59,8 +59,12 @@ PY39 = (
 )
 
 
+#: Every tracked recipe, which the generic checks below run over.
+RECIPES = ("drivejepa_b2d", "drivejepa_aux")
+
+
 def write_site(tmp: Path) -> SiteConfig:
-    for d in ("dump", "navsim"):
+    for d in ("dump", "navsim", "nuscenes"):
         (tmp / d).mkdir(exist_ok=True)
     path = tmp / "gallops.toml"
     path.write_text(
@@ -74,6 +78,9 @@ train = "{tmp}/py/train"
 drivejepa = "{tmp}/py/drivejepa"
 [code]
 drivejepa = "{tmp}/Drive-JEPA"
+paddock = "{tmp}/paddock"
+[datasets.nuscenes]
+path = "{tmp}/nuscenes"
 [datasets.navsim]
 path = "{tmp}/navsim"
 exp = "{tmp}/navsim-exp"
@@ -89,8 +96,9 @@ def site(tmp_path: Path) -> SiteConfig:
     return write_site(tmp_path)
 
 
-def test_every_stage_resolves(site: SiteConfig) -> None:
-    rec = recipes.load("drivejepa_b2d")
+@pytest.mark.parametrize("name", RECIPES)
+def test_every_stage_resolves(site: SiteConfig, name: str) -> None:
+    rec = recipes.load(name)
     cmds = recipes.commands(rec, site)
     assert [c.stage for c in cmds] == rec.names()
     for c in cmds:
@@ -99,15 +107,20 @@ def test_every_stage_resolves(site: SiteConfig) -> None:
         assert c.argv[1] == "-m" and c.argv[2].startswith("gallops.")
 
 
-def test_every_stage_module_exists() -> None:
-    for s in recipes.load("drivejepa_b2d").stages:
+@pytest.mark.parametrize("name", RECIPES)
+def test_every_stage_module_exists(name: str) -> None:
+    for s in recipes.load(name).stages:
         path = SRC / (s.module.replace(".", "/") + ".py")
         assert path.exists(), f"stage {s.name} runs {s.module}, which is not at {path}"
 
 
-def test_stages_run_in_the_interpreter_they_name(site: SiteConfig) -> None:
-    for c in recipes.commands(recipes.load("drivejepa_b2d"), site):
+@pytest.mark.parametrize("name", RECIPES)
+def test_stages_run_in_an_interpreter_the_site_names(site: SiteConfig, name: str) -> None:
+    for c in recipes.commands(recipes.load(name), site):
         assert c.argv[0] in {str(p) for p in site.python.values()}
+
+
+def test_stages_run_in_the_interpreter_they_name(site: SiteConfig) -> None:
     gen = recipes.commands(recipes.load("drivejepa_b2d"), site, ["final-generator"])[0]
     assert gen.argv[0] == str(site.python["drivejepa"])
     assert gen.cwd == f"{site.code['drivejepa']}/navsim_v2", (
@@ -183,3 +196,21 @@ def test_provenance_finds_the_repo_root_config_does() -> None:
     from gallops.drivejepa_b2d import provenance
 
     assert provenance.REPO_ROOT == REPO_ROOT
+
+
+def test_the_aux_arms_differ_only_in_their_heads_and_seed(site: SiteConfig) -> None:
+    """The plan's one switch: every training stage reads the same cache with the same settings."""
+    commands = recipes.commands(recipes.load("drivejepa_aux"), site)
+    trains = [c for c in commands if c.argv[2].endswith(".train")]
+    assert len(trains) == 9
+
+    def settings(argv):
+        args = list(argv[3:])
+        for flag in ("--heads", "--seed", "--train-run"):
+            i = args.index(flag)
+            del args[i : i + 2]
+        return args
+
+    assert len({tuple(settings(c.argv)) for c in trains}) == 1
+    pairs = {(c.argv[c.argv.index("--heads") + 1], c.argv[c.argv.index("--seed") + 1]) for c in trains}
+    assert pairs == {(h, s) for h in ("none", "upstream", "all") for s in ("0", "1", "2")}
