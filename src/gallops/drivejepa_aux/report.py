@@ -271,6 +271,26 @@ def render(runs: list) -> str:
             out.append(f"| {run['name']} | {len(pulls)} | {ratios} | {cosines} |")
         out.append("")
 
+    # the selection objective itself, per arm: no per-row values are kept, so a spread across seeds only
+    out += [
+        "## The selection objective: held-out planning loss at the kept epoch",
+        "",
+        "| arm | runs | kept epochs | loss at the kept epoch: each seed | mean | range |",
+        "|---|---|---|---|---|---|",
+    ]
+    release_loss = runs[0]["summary"]["history"][0]["held_out"]["planning"]
+    out.append(f"| R | -- | -- | {release_loss:.4f} | {release_loss:.4f} | -- |")
+    for arm in ("C", "T1", "T2"):
+        mine = [r for r in runs if r["summary"]["arm"] == arm]
+        if not mine:
+            continue
+        kept = [r["summary"]["history"][r["summary"]["kept_epoch"]]["held_out"]["planning"] for r in mine]
+        epochs = ", ".join(str(r["summary"]["kept_epoch"]) for r in mine)
+        each = ", ".join(f"{v:.4f}" for v in kept)
+        spread = f"{max(kept) - min(kept):.4f}" if len(kept) > 1 else "--"
+        out.append(f"| {arm} | {len(mine)} | {epochs} | {each} | {np.mean(kept):.4f} | {spread} |")
+    out.append("")
+
     # the curves
     out += ["## Held-out planning loss by epoch (epoch 0 is the release)", ""]
     epochs = max(len(r["summary"]["history"]) for r in runs)
