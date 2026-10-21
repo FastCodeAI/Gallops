@@ -160,3 +160,19 @@ def test_riding_the_line_is_not_a_lane_change() -> None:
     # another lane's polygon holds the ego 4 s later, but it moved only 0.4 m across its lane
     assert targets.lane_change({"a"}, {"x"}, set(), 0.4) == 0
     assert targets.lane_change({"a"}, {"x"}, set(), -(targets.LANE_CHANGE_MIN_SHIFT_M - 0.01)) == 0
+
+
+def test_a_lane_the_graph_names_but_lacks_is_reachable_and_leads_nowhere() -> None:
+    from gallops.drivejepa_aux import nusc
+
+    class Graph:
+        connectivity = {"a": {"outgoing": ["b"]}, "b": {"outgoing": ["ghost"]}}
+
+        def get_outgoing_lane_ids(self, lane):
+            if lane not in self.connectivity:
+                raise ValueError(f"{lane} is not a valid lane.")  # the devkit's behaviour
+            return self.connectivity[lane]["outgoing"]
+
+    view = object.__new__(nusc.MapView)
+    view.nmap = Graph()
+    assert view.reachable({"a"}) == {"b", "ghost"}

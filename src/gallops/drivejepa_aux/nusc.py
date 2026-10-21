@@ -380,10 +380,18 @@ class MapView:
         return {self._lane_tokens[i] for i in near if self.lanes[self._lane_tokens[i]].contains(point)}
 
     def reachable(self, lanes: set, hops: int = LANE_HOPS) -> set:
-        """Every lane the lane graph leads to from `lanes` within `hops` steps."""
+        """Every lane the lane graph leads to from `lanes` within `hops` steps.
+
+        A successor the graph names but does not hold is reachable and leads nowhere: 8 of
+        singapore-onenorth's 2,140 edges point at no lane, and the devkit raises when asked for
+        such a lane's own successors.
+        """
+        graph = self.nmap.connectivity
         seen, frontier = set(), set(lanes)
         for _ in range(hops):
-            frontier = {n for lane in frontier for n in self.nmap.get_outgoing_lane_ids(lane)} - seen
+            frontier = {
+                n for lane in frontier if lane in graph for n in self.nmap.get_outgoing_lane_ids(lane)
+            } - seen
             seen |= frontier
         return seen
 
