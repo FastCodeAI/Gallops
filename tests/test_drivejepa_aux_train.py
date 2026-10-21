@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import math
 
@@ -374,3 +375,61 @@ def test_picks_reads_speed_rank_and_nearness_off_the_proposals() -> None:
     # at 3 s the slow plan is 6 m short of the human's 12 m, the fast one 6 m beyond
     assert out["along_3s_stopped_m"] == pytest.approx(-6.0) and out["along_3s_moving_m"] == pytest.approx(6.0)
     assert out["top_score"] == pytest.approx(0.8)
+
+
+# --- the torch code, read rather than run ---------------------------------------------------------
+
+
+def test_everything_the_aux_code_reaches_for_in_gallops_exists() -> None:
+    """docs/reviewing.md §1's structural guard. `make check` has no torch, so nothing it runs builds a
+    model or calls the trainer: a function renamed in step.py while train.py still calls it passes
+    every test here and fails minutes into a run. So the source is read instead. Every `module.name`
+    and every `from gallops.module import name` in drivejepa_aux must name something that module
+    defines at its top level."""
+    import ast
+
+    from gallops.config import REPO_ROOT
+
+    src = REPO_ROOT / "src"
+
+    def module_file(name: str):
+        path = src / (name.replace(".", "/") + ".py")
+        return path if path.exists() else None
+
+    @functools.cache
+    def defined(name: str) -> frozenset:
+        names = set()
+        for node in ast.parse(module_file(name).read_text()).body:
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                names.add(node.name)
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:  # `A = ...` and `A, B = ...`
+                    elts = target.elts if isinstance(target, (ast.Tuple, ast.List)) else [target]
+                    names |= {t.id for t in elts if isinstance(t, ast.Name)}
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                names.add(node.target.id)
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                names |= {(a.asname or a.name).split(".")[0] for a in node.names}
+        return frozenset(names)
+
+    checked = 0
+    for path in sorted((src / "gallops" / "drivejepa_aux").glob("*.py")):
+        tree = ast.parse(path.read_text())
+        modules = {}  # local name -> the gallops module it is bound to
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("gallops"):
+                for alias in node.names:
+                    if module_file(f"{node.module}.{alias.name}"):
+                        modules[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+                    elif module_file(node.module):
+                        missing = f"{path.name}:{node.lineno}: {node.module} has no {alias.name}"
+                        assert alias.name in defined(node.module), missing
+                        checked += 1
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)):
+                continue
+            if node.value.id in modules:
+                module = modules[node.value.id]
+                assert node.attr in defined(module), f"{path.name}:{node.lineno}: {module} has no {node.attr}"
+                checked += 1
+    assert checked > 100  # the guard is reading the code, not skipping it
