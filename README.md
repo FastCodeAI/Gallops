@@ -55,7 +55,7 @@ before a race. The gallops is the training ground where it is made fast.
 **gallops-v0, our own model, is not built yet.** Every training run so far has
 started from the released Drive-JEPA checkpoint and retrained part of it, or
 trained something small on top of it. [Training so far](#training-so-far) lists
-all six efforts. The loop is proven end to end: `gallops train-rerank` writes a
+all seven efforts. The loop is proven end to end: `gallops train-rerank` writes a
 checkpoint with its sidecar, and paddock's `drivejepa_rerank` adapter loads it
 and scores it like any other model.
 
@@ -65,7 +65,7 @@ cannot actually do today.
 
 ## Training so far
 
-Status at 2026-10-14. Everything below starts from the released Drive-JEPA
+Status at 2026-10-21. Everything below starts from the released Drive-JEPA
 checkpoint, with its image encoder frozen. Each row's doc has the full account;
 the numbers here are copied from it, never re-derived.
 
@@ -76,6 +76,7 @@ the numbers here are copied from it, never re-derived.
 | **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
 | **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
+| **Auxiliary heads** (`drivejepa_aux`), 9 runs | the refiner path (2.39 M); upstream's map and box heads switched on and two new heads, all for training only | nuScenes `train`: 16,952 keyframes of 577 scenes, 102 more held out | Picked plan's L2 at 3 s on the held-out scenes: T2 **2.93 m**, against **3.76** for the same fine-tune without heads and **3.79** released (2,996 keyframes, a fixed epoch) | **Open loop, in domain.** The gain is in which candidate the frozen scorer picks; best-of-32 is unchanged. Inputs not yet checked against paddock's, no gate run | [drivejepa-aux-heads.md](docs/drivejepa-aux-heads.md#results-2026-10-21) |
 | **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |
 
 How to read it:
@@ -83,6 +84,9 @@ How to read it:
 - **Nothing here is yet a closed-loop safety gain** shown on a split nothing was
   chosen on. The strongest result is the re-ranker's open-loop gain on KITScenes,
   and the same weights do worse on neuroNCAP.
+- **The auxiliary heads and the re-ranker say the same thing:** Drive-JEPA's
+  error sits in which of its 32 candidates it picks, not in the candidates.
+  Both moved the pick; neither has been through paddock's gate.
 - **Every swerve and scorer-cache run was camera-blind.** Paddock and the
   trainer both placed the cameras relative to nuScenes' LIDAR_TOP, so no image
   reached the model; a black frame gave the same plan. Those numbers are what

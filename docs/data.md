@@ -26,6 +26,17 @@ keyframe count. Camera-only training is viable; sensor fusion is not, and
 generating `nuscenes_infos*.pkl` against a keyframe-only copy degrades silently
 rather than failing.
 
+**The map expansion has two defects the devkit does not handle.** The first full
+pass over the train scenes' maps found both (2026-10-21,
+[drivejepa-aux-heads.md](drivejepa-aux-heads.md#environment)):
+
+- one boston-seaport walkway polygon crosses itself, and clipping it raises
+  GEOS's `TopologyException`. `buffer(0)` repairs it with its area unchanged;
+- 8 of singapore-onenorth's 2,140 lane-graph edges point at lanes the map does
+  not hold, and the devkit raises when asked for such a lane's successors.
+
+`drivejepa_aux.nusc.MapView` handles both.
+
 ### KITScenes — part of `train`
 
 The full public release is ~4.2 TB across 1,006 sequences: 533 `train`
