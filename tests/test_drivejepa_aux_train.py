@@ -8,7 +8,7 @@ import math
 import numpy as np
 import pytest
 
-from gallops.drivejepa_aux import bev, cache, metrics, preflight, publish, split, train
+from gallops.drivejepa_aux import bev, cache, metrics, preflight, publish, report, split, train
 
 
 def straight(speed: float = 5.0) -> np.ndarray:
@@ -276,3 +276,86 @@ def test_summarize_reads_the_rows_it_was_given() -> None:
     assert summary["collision_3s"]["mean"] == 0.5 and summary["off_road_3s"]["scenes"] == 1
     assert summary["lead_present_accuracy"] == 1.0 and summary["lead_gap_mae_m"] == pytest.approx(2.0)
     assert summary["lane_f1"]["left"] == 1.0
+
+
+# --- the report -----------------------------------------------------------------------------------
+
+
+def test_the_bar_needs_every_seed_beyond_the_range_and_two_errors() -> None:
+    assert report.verdict([(-0.3, 0.1, 9), (-0.4, 0.1, 9)], span=0.2) == "better, clears the bar"
+    # one seed inside C's range
+    assert report.verdict([(-0.3, 0.1, 9), (-0.1, 0.01, 9)], span=0.2) == "not resolved"
+    assert report.verdict([(-0.3, 0.2, 9)], span=0.1) == "not resolved"  # inside two standard errors
+    assert report.verdict([(0.5, 0.1, 9)], span=0.1) == "worse, clears the bar"
+    assert report.verdict([(-9.0, 0.1, 9)], span=float("nan")).startswith("not resolved")
+
+
+def fake_run(directory, arm: str, seed: int, shift: float) -> None:
+    """A run directory as train.py writes it: the release, and a kept plan `shift` m to the left."""
+    rng = np.random.default_rng(0)  # one held-out set and one release for every run, as in train.py
+    expert = np.stack([straight(5.0 + rng.normal()) for _ in range(6)])
+    release = expert + np.array([0.0, 0.3, 0.0])
+    kept = expert + np.array([0.0, 0.3 + shift, 0.0])
+    scenes = np.repeat(["s1", "s2", "s3"], 2)
+
+    def measured(plan):
+        return {
+            "rows": np.arange(6),
+            "scene": scenes,
+            "plan": plan,
+            "l2": metrics.l2(plan, expert),
+            "min_ade": np.full(6, 0.2),
+            "collided": np.zeros(6, bool),
+            "off_road": np.zeros(6),
+        }
+
+    directory.mkdir(parents=True)
+    np.savez(
+        directory / "heldout.npz",
+        **{f"release_{k}": v for k, v in measured(release).items()},
+        **{f"kept_{k}": v for k, v in measured(kept).items()},
+    )
+    stat = {"mean": 0.0, "se": 0.0, "scenes": 3}
+    planning = {key: stat for key, _, _, _ in report.PLANNING}
+    summary = {
+        "arm": arm,
+        "seed": seed,
+        "kept_epoch": 1,
+        "release": {**planning, "sight": {"max_move_m": 9.0}},
+        "kept": {**planning, "sight": {"max_move_m": 8.0}},
+        "baselines": {
+            "human_collision_3s": stat,
+            "human_off_road_3s": stat,
+            "bev_iou_prior": {"road": 0.5},
+            "lead_present_accuracy_never": 0.8,
+            "lead_gap_mae_train_mean_m": 7.0,
+            "lane_f1_always_keep": {"left": 0.0, "right": 0.0},
+        },
+        "history": [{"epoch": 0, "held_out": {"planning": 0.5}}, {"epoch": 1, "held_out": {"planning": 0.4}}],
+    }
+    (directory / "summary.json").write_text(json.dumps(summary))
+    pull = {"kind": "pull", "ratio": 0.05, "cosine": 0.02}
+    (directory / "metrics.jsonl").write_text(json.dumps(pull) + "\n" if arm != "C" else "")
+
+
+def test_the_report_pairs_arms_by_seed_over_the_same_rows(tmp_path) -> None:
+    for seed in (0, 1):
+        fake_run(tmp_path / f"c{seed}", "C", seed, shift=0.0)
+        fake_run(tmp_path / f"t{seed}", "T2", seed, shift=-0.3)  # back onto the human's path
+    runs = [report.load_run(d) for d in sorted(tmp_path.iterdir())]
+    assert report.check_release(runs) == []
+    t_minus_c = report.paired_row(runs[2]["measured"]["kept"], runs[0]["measured"]["kept"])
+    assert t_minus_c[2][0] == pytest.approx(-0.3)  # L2 at 3 s, 30 cm better on every row
+    assert report.seed_range(runs, "C")[2] == pytest.approx(0.0)
+    text = report.render(runs)
+    assert "| T2 − C | 0 |" in text and "| C − R | 1 |" in text and "**T2 vs C:**" in text
+
+
+def test_the_report_says_when_runs_disagree_about_the_release(tmp_path) -> None:
+    fake_run(tmp_path / "c0", "C", 0, shift=0.0)
+    fake_run(tmp_path / "t0", "T2", 0, shift=0.0)
+    npz = dict(np.load(tmp_path / "t0" / "heldout.npz"))
+    npz["release_plan"] = npz["release_plan"] + 1.0
+    np.savez(tmp_path / "t0" / "heldout.npz", **npz)
+    runs = [report.load_run(tmp_path / "c0"), report.load_run(tmp_path / "t0")]
+    assert report.check_release(runs) == ["t0 measured a different release plan"]
