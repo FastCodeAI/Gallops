@@ -8,7 +8,7 @@ import math
 import numpy as np
 import pytest
 
-from gallops.drivejepa_aux import bev, cache, metrics, preflight, publish, report, split, train
+from gallops.drivejepa_aux import bev, cache, diagnose, metrics, preflight, publish, report, split, train
 
 
 def straight(speed: float = 5.0) -> np.ndarray:
@@ -359,3 +359,18 @@ def test_the_report_says_when_runs_disagree_about_the_release(tmp_path) -> None:
     np.savez(tmp_path / "t0" / "heldout.npz", **npz)
     runs = [report.load_run(tmp_path / "c0"), report.load_run(tmp_path / "t0")]
     assert report.check_release(runs) == ["t0 measured a different release plan"]
+
+
+# --- what the scorer picks ------------------------------------------------------------------------
+
+
+def test_picks_reads_speed_rank_and_nearness_off_the_proposals() -> None:
+    human = straight(4.0)[None].repeat(2, 0)
+    proposals = np.stack([straight(v) for v in (2.0, 4.0, 6.0)])[None].repeat(2, 0)  # slow, human-like, fast
+    pick = np.array([0, 2])  # the slowest, then the fastest
+    out = diagnose.picks(proposals, pick, np.array([0.9, 0.7]), human, speed=np.array([0.0, 5.0]))
+    assert out["slowest"] == 0.5 and out["fastest"] == 0.5 and out["mean_rank"] == 1.0
+    assert out["nearest_human"] == 0.0 and out["distinct_picks"] == 2
+    # at 3 s the slow plan is 6 m short of the human's 12 m, the fast one 6 m beyond
+    assert out["along_3s_stopped_m"] == pytest.approx(-6.0) and out["along_3s_moving_m"] == pytest.approx(6.0)
+    assert out["top_score"] == pytest.approx(0.8)

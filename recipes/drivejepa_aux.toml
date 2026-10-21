@@ -149,3 +149,19 @@ args = [
   "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
   "-o", "{out}/report-epoch10.md",
 ]
+
+# What the frozen scorer picks at that epoch: where the picked plan's change comes from, and whether a
+# pick has gone degenerate.
+
+[[stage]]
+name = "diagnose-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.diagnose"
+after = ["c-s0", "c-s1", "c-s2", "t1-s0", "t1-s1", "t1-s2", "t2-s0", "t2-s1", "t2-s2"]
+args = [
+  "--cache", "{cache}", "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+  "-o", "{out}/picks-epoch10.md",
+]
