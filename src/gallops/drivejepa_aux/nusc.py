@@ -304,6 +304,10 @@ class MapView:
         for record in getattr(self.nmap, layer):
             for token in record.get("polygon_tokens", [record.get("polygon_token")]):
                 polygon = self.nmap.extract_polygon(token)
+                if not polygon.is_valid:
+                    # One in the four maps: a boston-seaport walkway (b7ada811) that crosses itself, on
+                    # which clipping raises GEOS's TopologyException. buffer(0) repairs it, area unchanged.
+                    polygon = polygon.buffer(0)
                 if not polygon.is_empty:
                     out.append((polygon, np.array(polygon.bounds)))
         return out
