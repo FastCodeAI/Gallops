@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import pickle
+import sys
 
 import numpy as np
 import pytest
@@ -13,6 +14,10 @@ from gallops.checkpoint import read
 from gallops.config import SiteConfig
 from gallops.data import rerank as data
 from gallops.train import rerank
+
+# The re-ranker runs in gallops' own interpreter (3.11: zip(strict=), X | None at run time), never in a
+# model's. A trainer's preflight runs this suite under Drive-JEPA's 3.9, where these could only fail.
+pytestmark = pytest.mark.skipif(sys.version_info < (3, 11), reason="the re-ranker is 3.11 code")
 
 
 def golden_input():
