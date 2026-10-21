@@ -81,8 +81,13 @@ def write(out_dir: Path, record, release: Path, trained: dict, probe) -> object:
     def save(staging: Path) -> dict:
         checkpoint = torch.load(release, map_location="cpu")
         replaced = replace(checkpoint["state_dict"], trained["model"])
-        torch.save(checkpoint, staging / WEIGHTS_FILE)
-        notes = {"replaced_tensors": replaced, "weights_file": WEIGHTS_FILE}
+        # The state dict alone. The release's file also carries its own Lightning training state --
+        # optimizer_states, loops, callbacks: 2.5 of its 3.7 GB -- which describes the release's
+        # training, not this run's, and which nothing that serves it reads (the agent's `initialize`
+        # takes ["state_dict"]).
+        torch.save({"state_dict": checkpoint["state_dict"]}, staging / WEIGHTS_FILE)
+        dropped = sorted(k for k in checkpoint if k != "state_dict")
+        notes = {"replaced_tensors": replaced, "weights_file": WEIGHTS_FILE, "release_keys_dropped": dropped}
         heads = {k: v for k, v in trained["model"].items() if k.startswith(UPSTREAM_HEAD_KEYS)}
         if heads or trained.get("scene_heads"):
             torch.save(

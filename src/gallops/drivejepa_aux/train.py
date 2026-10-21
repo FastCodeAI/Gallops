@@ -158,21 +158,25 @@ def baselines(data, train_rows, held_rows) -> dict:
         np.broadcast_to(prior, labels["bev"][held_rows].shape), labels["bev"][held_rows]
     )
     present = labels["lead_present"][held_rows].astype(bool)
-    train_gap = float(
-        np.nanmean(labels["lead_gap"][train_rows][labels["lead_present"][train_rows].astype(bool)])
-    )
+    train_gap = mean(labels["lead_gap"][train_rows][labels["lead_present"][train_rows].astype(bool)])
     lane = labels["lane_change"][held_rows]
     scene = labels["scene"][held_rows]
     return {
         "bev_iou_prior": dict(zip(bev.CLASSES, map(float, metrics.iou(counts)))),  # noqa: B905 -- 3.9
         "lead_present_accuracy_never": float(1.0 - present.mean()),
-        "lead_gap_mae_train_mean_m": float(np.abs(labels["lead_gap"][held_rows][present] - train_gap).mean()),
+        "lead_gap_mae_train_mean_m": mean(np.abs(labels["lead_gap"][held_rows][present] - train_gap)),
         "lane_f1_always_keep": metrics.lane_f1(np.zeros(len(lane), int), lane),
         "human_collision_3s": _stat(
             metrics.collided(expert[held_rows], [cache.future_boxes(labels, r) for r in held_rows]), scene
         ),
         "human_off_road_3s": _stat(metrics.off_road(expert[held_rows], cache.road(labels, held_rows)), scene),
     }
+
+
+def mean(values) -> float:
+    """The mean, NaN for no values (a held-out set with no lead vehicle) without numpy's warning."""
+    values = np.asarray(values, dtype=float)
+    return float(values.mean()) if values.size else float("nan")
 
 
 def plain(value):
@@ -214,9 +218,7 @@ def summarize(measured: dict, data: dict) -> dict:
     if "lead" in measured:
         present = labels["lead_present"][rows].astype(bool)
         out["lead_present_accuracy"] = float(((measured["lead"][:, 0] > 0.5) == present).mean())
-        out["lead_gap_mae_m"] = float(
-            np.abs(measured["lead"][present, 1] - labels["lead_gap"][rows][present]).mean()
-        )
+        out["lead_gap_mae_m"] = mean(np.abs(measured["lead"][present, 1] - labels["lead_gap"][rows][present]))
     if "lane" in measured:
         out["lane_f1"] = metrics.lane_f1(measured["lane"], labels["lane_change"][rows])
     return out
