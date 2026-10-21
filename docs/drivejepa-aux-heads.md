@@ -604,7 +604,7 @@ uses the paired one, which is smaller.*
 - **Every pick overshoots or undershoots the human.** The release and C plan to keep moving when
   the human stays stopped (549 of the held-out keyframes). C overshoots more than the release does.
   T1 corrects too far and is slow when moving. T2 matches the human's 3 s progress on average:
-  15.0 m against 15.08 m.
+  its mean along-track error is −0.08 to +0.02 m.
 - **The picks are not degenerate.** T2 picks the slowest proposal no more often than the release
   does, spreads its picks over 31–32 proposals, and picks the one nearest the human more often than
   R or C.
