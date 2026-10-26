@@ -67,11 +67,13 @@ cannot actually do today.
 
 Status at 2026-10-14. Everything below starts from the released Drive-JEPA
 checkpoint, with its image encoder frozen. Each row's doc has the full account;
-the numbers here are copied from it, never re-derived.
+the numbers here are copied from it, never re-derived. These rows are not in
+paddock's support matrix, which holds released checkpoints only; this table is
+where they live.
 
 | What was trained | Retrained on top of the release | Trained on | Headline | How far it holds | Doc |
 |---|---|---|---|---|---|
-| **Re-ranker** (`drivejepa_rerank`) | nothing: a new small MLP chooses among the frozen model's 32 candidates | KITScenes `train`: 318 scenes, plus 55 to choose the epoch | KITScenes ADE@3s **0.973 m**, against **2.521** for the model's own pick (223 samples) | **Strong, open loop:** paired t −8.0. **Worse in closed loop:** 1.85 against 3.01 on 9 neuroNCAP episodes | [STRATEGY.md](docs/STRATEGY.md#first-target--taken-drive-jepas-selection-not-its-head), paddock's `docs/models/drivejepa_rerank.md` |
+| **Re-ranker** (`drivejepa_rerank`) | nothing: a new small MLP chooses among the frozen model's 32 candidates | KITScenes `train`: 318 scenes, plus 55 to choose the epoch | KITScenes ADE@3s **0.973 m**, against **2.521** for the model's own pick (223 samples). nuScenes cumulative L2 **0.587 m**, against **1.360** for the model with the camera fix (5,119 samples; no nuScenes data in the re-ranker) | **Strong, open loop:** paired t −8.0. **Worse in closed loop:** 1.85 against 3.01 on 9 neuroNCAP episodes | [STRATEGY.md](docs/STRATEGY.md#first-target--taken-drive-jepas-selection-not-its-head), paddock's `docs/models/drivejepa_rerank.md` |
 | **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
