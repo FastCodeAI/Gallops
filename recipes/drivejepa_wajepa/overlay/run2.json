@@ -1,0 +1,58 @@
+{
+  "run": "run2",
+  "description": "Run 2: Drive-JEPA perception_based agent on cached frozen WA-JEPA tokens (cameras b0 f0 l0 r0), footprint look + global look, trained 16 Oct 2026 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2, epoch_19 kept)",
+  "upstream": {
+    "repo": "https://github.com/linhanwang/Drive-JEPA",
+    "sha": "548bb8215e3aae18e162a0f12f1ba83b4d3eb57e"
+  },
+  "files": {
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/bev_feature_build.py": {
+      "sha256": "68eb5ddd006c5bebff7e60c69f1e949c3365a499d6022788d9bdea7f773400d7",
+      "as_run_sha256": "68eb5ddd006c5bebff7e60c69f1e949c3365a499d6022788d9bdea7f773400d7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/encoder.py": {
+      "sha256": "dd544519b90f1a82ddce378f52af330e788f9636de771457e0a1f15984e891b1",
+      "as_run_sha256": "dd544519b90f1a82ddce378f52af330e788f9636de771457e0a1f15984e891b1"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/spatial_cross_attention.py": {
+      "sha256": "622aea6d22267c0485cbd23232d59a33529081750a7f40b7540d18c9de4eaaad",
+      "as_run_sha256": "622aea6d22267c0485cbd23232d59a33529081750a7f40b7540d18c9de4eaaad"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/temporal_self_attention.py": {
+      "sha256": "238948db798bb53accd6874f911a451042b57a5e07d34358a1d13bef069ad828",
+      "as_run_sha256": "238948db798bb53accd6874f911a451042b57a5e07d34358a1d13bef069ad828"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/wajepa.py": {
+      "sha256": "9a581cbc5f79ebd8ed847406d1e0c8adbddd22e2b600881340180f01420cde5a",
+      "as_run_sha256": "e996d04cc3bbf950a42c32b731689169ee18c21b0235713ff08e8d646f5c59d3",
+      "note": "new file: the frozen WA-JEPA encoder. WAJEPA_CODE / WAJEPA_WEIGHTS lose their machine-path defaults (environment only); nothing else differs from the file as run"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/drive_jepa_agent.py": {
+      "sha256": "89e408758953dbe140797c00dc06a89e5be085137d4793f8fcc681644f463bb7",
+      "as_run_sha256": "89e408758953dbe140797c00dc06a89e5be085137d4793f8fcc681644f463bb7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/drive_jepa_config.py": {
+      "sha256": "5fc3deaa276eec77e375106a0ad778112a119a3c579d106b01c135dcfcb96694",
+      "as_run_sha256": "5fc3deaa276eec77e375106a0ad778112a119a3c579d106b01c135dcfcb96694"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/drive_jepa_features.py": {
+      "sha256": "7ef1048539dde79c10e3d8d902c58db0c004f5cd105117323bf1b695960bbbd0",
+      "as_run_sha256": "7ef1048539dde79c10e3d8d902c58db0c004f5cd105117323bf1b695960bbbd0",
+      "note": "as run on 16 Oct; the checkout's copy gained DriveJEPAAgentTargetBuilder on 22 Oct for the agent decoder (Run 3A), an addition only"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/drive_jepa_model.py": {
+      "sha256": "27faf013e243dc846d9db44d5807ebe06e8d449850f74777f046fdcb552ce49d",
+      "as_run_sha256": "27faf013e243dc846d9db44d5807ebe06e8d449850f74777f046fdcb552ce49d",
+      "note": "includes the 19 Oct WAJEPA_GLOBAL_LOOK=0 switch for the ablation, default on; with it on, 500 navtest scenes reproduce the 17 Oct epoch-19 CSV exactly"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/global_look.py": {
+      "sha256": "644d9fd67ac17f42bc967028a0d94dcefd23c4279a60d42a81d6b352de9d86e7",
+      "as_run_sha256": "644d9fd67ac17f42bc967028a0d94dcefd23c4279a60d42a81d6b352de9d86e7",
+      "note": "new file: the global look (removed again in Run 3A)"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/traj_refiner.py": {
+      "sha256": "87b4b1bb196ad721b7f6f2b07aecea69b1d4af5182b383a6ae44331cb96b0c8d",
+      "as_run_sha256": "87b4b1bb196ad721b7f6f2b07aecea69b1d4af5182b383a6ae44331cb96b0c8d"
+    }
+  }
+}

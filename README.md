@@ -42,6 +42,7 @@ the same table as every other model. That separation is the point; see
 | [src/gallops/expert/](src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by |
 | [src/gallops/data/](src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
 | [src/gallops/drivejepa_b2d/](src/gallops/drivejepa_b2d/), [recipes/](recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
+| [src/gallops/drivejepa_wajepa/](src/gallops/drivejepa_wajepa/), [recipes/drivejepa_wajepa/](recipes/drivejepa_wajepa/) | Drive-JEPA's planner on a frozen WA-JEPA encoder (NAVSIM): the recipe, and the agent code each run trained with |
 | [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) | the Physical AI AV retrain, as the scripts that ran |
 | [checkpoint.py](src/gallops/checkpoint.py), [config.py](src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
 
@@ -65,8 +66,10 @@ cannot actually do today.
 
 ## Training so far
 
-Status at 2026-10-14. Everything below starts from the released Drive-JEPA
-checkpoint, with its image encoder frozen. Each row's doc has the full account;
+Status at 2026-10-14; the WA-JEPA row 2026-10-27. Everything below starts from
+the released Drive-JEPA checkpoint, with its image encoder frozen, except the
+WA-JEPA row, which trains Drive-JEPA's planner from scratch on a different,
+frozen encoder. Each row's doc has the full account;
 the numbers here are copied from it, never re-derived.
 
 | What was trained | Retrained on top of the release | Trained on | Headline | How far it holds | Doc |
@@ -74,6 +77,7 @@ the numbers here are copied from it, never re-derived.
 | **Re-ranker** (`drivejepa_rerank`) | nothing: a new small MLP chooses among the frozen model's 32 candidates | KITScenes `train`: 318 scenes, plus 55 to choose the epoch | KITScenes ADE@3s **0.973 m**, against **2.521** for the model's own pick (223 samples) | **Strong, open loop:** paired t −8.0. **Worse in closed loop:** 1.85 against 3.01 on 9 neuroNCAP episodes | [STRATEGY.md](docs/STRATEGY.md#first-target--taken-drive-jepas-selection-not-its-head), paddock's `docs/models/drivejepa_rerank.md` |
 | **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
+| **WA-JEPA Run 2** (`wajepa_dj`) | not the release: Drive-JEPA's planner from scratch, with AFARI's WA-JEPA encoder (frozen) in place of its ViT | NAVSIM `navtrain`: 103,288 scenes, Drive-JEPA's own split | navtest EPDMS **85.27** (human filter), against **87.78** for the release in the same evaluation | **Behind the release on NAVSIM**, which trained it. Bench2Drive 50 routes, zero-shot: DS 50.07–51.95 against 57.60 released; paddock cannot score it yet | [drivejepa_wajepa.md](docs/drivejepa_wajepa.md) |
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
 | **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
 | **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |

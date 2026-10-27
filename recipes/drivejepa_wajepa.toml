@@ -1,0 +1,150 @@
+# Drive-JEPA's planner on frozen WA-JEPA tokens, trained on NAVSIM navtrain: Run 2 (navtest EPDMS 85.27 with the
+# human filter, 81.98 without).
+#
+#   gallops recipe drivejepa_wajepa                    print every command for this machine
+#   gallops recipe drivejepa_wajepa run2-train --run   run one stage (only the named ones)
+#
+# Lineage, data, and what was verified: docs/drivejepa_wajepa.md. A run trains inside the tree its code stage builds:
+# upstream Drive-JEPA at the commit overlay/<run>.json pins, with recipes/drivejepa_wajepa/overlay/<run>/ laid over it.
+# Every stage that writes refuses an output that already exists (the token dump instead skips finished scenes).
+#
+# Site config this needs (gallops.toml):
+#   [python] train              Python >= 3.11 with torch (code, checkpoint, navtest-score)
+#   [python] drivejepa          Drive-JEPA's own interpreter (Python 3.9, navsim installed) with an mmcv-full built
+#                               for the GPU (sm_120 here: torch 2.8.0 cu128, mmcv-full 1.7.2)
+#   [code]   drivejepa          a Drive-JEPA checkout holding the pinned commit (only `git archive` is run in it)
+#   [code]   wajepa             AFARI's WA-JEPA code (bec2966); its encoder weights at {weights}/WA-JEPA/model_state_dict.pt
+#   [datasets.navsim]           path = the OpenScene/NAVSIM root (navsim_logs/, sensor_blobs/); exp = NAVSIM_EXP_ROOT,
+#                               holding Drive-JEPA-cache/{train_metric_cache_v2_pruned, anchors_scores_index_v2} (built by
+#                               Drive-JEPA's own scripts, not here); maps = the nuPlan maps; current1 = navtrain_current_1's
+#                               sensor blobs; metric_cache = the navtest metric cache
+#   [datasets.wajepa_tokens]    path = the token cache dump-tokens writes and the training reads (about 420 GB)
+
+description = "Drive-JEPA's planner on frozen WA-JEPA tokens (NAVSIM navtrain): Run 2"
+
+[vars]
+out = "{runs}/drivejepa_wajepa"
+tokens = "{data.wajepa_tokens}"
+overlay_run2 = "{repo}/recipes/drivejepa_wajepa/overlay/run2"
+tree_run2 = "{out}/run2/code"
+ckpt_run2 = "{out}/run2/epoch_ckpts"
+
+# ---------------------------------------------------------------------------------------------
+# The code a run trains in.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "code-run2"
+python = "train"
+module = "drivejepa_wajepa.code"
+args = ["--drivejepa", "{code.drivejepa}", "--overlay", "{overlay_run2}", "--out", "{tree_run2}"]
+
+# ---------------------------------------------------------------------------------------------
+# The token cache: frozen WA-JEPA over navtrain's four cameras, once. Run 3A trains from the same cache.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "dump-tokens"
+python = "drivejepa"
+module = "drivejepa_wajepa.dump_tokens"
+after = ["code-run2"]
+cwd = "{tree_run2}/navsim_v2"
+env = { NAVSIM_DEVKIT_ROOT = "{tree_run2}/navsim_v2", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", WAJEPA_CODE = "{code.wajepa}", WAJEPA_WEIGHTS = "{weights}/WA-JEPA/model_state_dict.pt" }
+args = [
+  "--navtrain", "{tree_run2}/navsim_v2/navsim/planning/script/config/common/train_test_split/scene_filter/navtrain.yaml",
+  "--data", "{data.navsim}",
+  "--current1", "{data.navsim.current1}",
+  "--out", "{tokens}",
+  "--workers", "8",
+]
+
+[[stage]]
+name = "verify-tokens"
+python = "drivejepa"
+module = "drivejepa_wajepa.verify_tokens"
+after = ["dump-tokens"]
+cwd = "{tree_run2}/navsim_v2"
+env = { NAVSIM_DEVKIT_ROOT = "{tree_run2}/navsim_v2", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", WAJEPA_CODE = "{code.wajepa}", WAJEPA_WEIGHTS = "{weights}/WA-JEPA/model_state_dict.pt" }
+args = [
+  "--navtrain", "{tree_run2}/navsim_v2/navsim/planning/script/config/common/train_test_split/scene_filter/navtrain.yaml",
+  "--data", "{data.navsim}",
+  "--current1", "{data.navsim.current1}",
+  "--cache", "{tokens}",
+  "--k", "16",
+]
+
+# ---------------------------------------------------------------------------------------------
+# Run 2: footprint look (f0, l0, r0) + global look, planner from scratch, Drive-JEPA's own losses and split
+# (navtrain's train_logs / val_logs), 20 epochs, the last one kept.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "run2-train"
+python = "drivejepa"
+module = "drivejepa_wajepa.train"
+after = ["code-run2", "verify-tokens"]
+env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0" }
+# The overrides are Run 2's code/hydra/overrides.yaml (16 Oct 17:48), with the cache path a template.
+args = [
+  "--tree", "{tree_run2}",
+  "--ckpt-dir", "{ckpt_run2}",
+  "--score-workers", "12",
+  "--",
+  "agent=drive_jepa_perception_based_agent",
+  "experiment_name=wajepa_dj_v2",
+  "train_test_split=navtrain",
+  "dataloader.params.batch_size=64",
+  "dataloader.params.num_workers=8",
+  "trainer.params.max_epochs=20",
+  "trainer.params.strategy=auto",
+  "cache_path={tokens}",
+  "use_cache_without_dataset=True",
+  "force_cache_computation=False",
+]
+
+[[stage]]
+name = "run2-navtest"
+python = "drivejepa"
+module = "drivejepa_wajepa.eval_navtest"
+after = ["run2-train"]
+env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", WAJEPA_CODE = "{code.wajepa}", WAJEPA_WEIGHTS = "{weights}/WA-JEPA/model_state_dict.pt" }
+# The 17 Oct evaluation's overrides (eval_wajepa_dj_v2_epoch19).
+args = [
+  "--tree", "{tree_run2}",
+  "--",
+  "train_test_split=navtest",
+  "agent=drive_jepa_perception_based_agent",
+  "agent.config.latent=False",
+  "agent.checkpoint_path={ckpt_run2}/epoch_19.ckpt",
+  "metric_cache_path={data.navsim.metric_cache}",
+  "experiment_name=eval_wajepa_dj_v2_epoch19",
+  "worker=single_machine_thread_pool",
+  "worker.max_workers=4",
+  "worker.use_process_pool=true",
+]
+
+[[stage]]
+name = "run2-navtest-score"
+python = "train"
+module = "drivejepa_wajepa.navtest_score"
+after = ["run2-navtest"]
+args = [
+  "run2_epoch19={data.navsim.exp}/eval_wajepa_dj_v2_epoch19/*/*.csv",
+  "--json", "{out}/run2/navtest.json",
+]
+
+[[stage]]
+name = "run2-checkpoint"
+python = "train"
+module = "drivejepa_wajepa.write_checkpoint"
+after = ["run2-train"]
+args = [
+  "--src", "{ckpt_run2}/epoch_19.ckpt",
+  "--overlay", "{overlay_run2}",
+  "--model", "wajepa_dj",
+  "--train-run", "run2",
+  # Drive-JEPA's own split: navtrain's train_logs trained it, its val_logs only logged val/score_epoch (the last
+  # epoch is kept, not the best), so both are training data.
+  "--trained-on", "navsim:navtrain",
+  "--note", "Run 2: Drive-JEPA planner on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look, epoch 19 of 20",
+]

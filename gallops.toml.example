@@ -58,9 +58,15 @@ runs = "/path/to/gallops-runs"
 # [datasets.navsim]
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
+# maps = "/path/to/nuplan/maps"                   # NUPLAN_MAPS_ROOT, when not under path/maps (recipes/drivejepa_wajepa.toml)
+# current1 = "/path/to/navtrain_current_1"        # its sensor blobs, laid over path's (docs/drivejepa_wajepa.md)
+# metric_cache = "/path/to/navtest/metric_cache"  # navsim's navtest metric cache, for run_pdm_score
 
 # [datasets.drivejepa_b2d]
 # path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (docs/drivejepa_b2d.md)
+
+# [datasets.wajepa_tokens]
+# path = "/path/to/wajepa_tokens_v2"          # frozen WA-JEPA tokens over navtrain, ~420 GB (recipes/drivejepa_wajepa.toml)
 
 # ---------------------------------------------------------------------------
 # Interpreters and upstream code, for stages that must run inside a model's own
@@ -74,3 +80,4 @@ runs = "/path/to/gallops-runs"
 
 # [code]
 # drivejepa = "/path/to/Drive-JEPA"
+# wajepa    = "/path/to/WA-JEPA"                 # AFARI-Research/WA-JEPA, the frozen encoder's code
