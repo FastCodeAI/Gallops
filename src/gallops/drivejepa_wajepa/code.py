@@ -1,8 +1,9 @@
-"""Stages code-run2 and code-run3a: rebuild the Drive-JEPA tree a run trained in.
+"""Stages code-run2, code-agent-decoder and code-run3a: rebuild the Drive-JEPA tree a run trained in.
 
-Upstream Drive-JEPA at the commit the manifest pins, exported from a site's checkout with `git archive` (the
-checkout itself is not touched: no worktree, no branch), then the run's overlay laid over it --
-recipes/drivejepa_wajepa/overlay/<run>/, the files that differ from upstream, as they ran.
+Upstream Drive-JEPA at the commit the manifests pin, exported from a site's checkout with `git archive` (the
+checkout itself is not touched: no worktree, no branch), then the run's overlays laid over it in order --
+recipes/drivejepa_wajepa/overlay/<name>/, the files that differ from upstream, as they ran. The agent
+decoder's tree is Run 2's overlay plus its own two files; Run 3A's package is self-contained.
 
 Every overlay file is checked against the manifest's sha256 before it is copied, so a tree built from an
 edited overlay is refused rather than trained in. The manifest also records each file's sha256 as it ran; the
@@ -10,10 +11,11 @@ two differ only where a machine path was replaced by an environment variable (th
 which), because a tracked file may not name a machine root (tests/test_portability.py).
 
 The tree is written to a staging directory and renamed into place, so --out is either complete or absent, and
-an existing --out is refused. OVERLAY.json beside navsim_v2/ records the manifest and this repo's commit.
+an existing --out is refused. OVERLAY.json beside navsim_v2/ records every overlay's files and hashes, and
+this repo's commit.
 
     python -m gallops.drivejepa_wajepa.code --drivejepa <checkout> --overlay <recipes/.../overlay/run2>
-        --out <dir>
+        [--overlay <...>] --out <dir>
 """
 
 from __future__ import annotations
@@ -67,29 +69,36 @@ def export(checkout: Path, sha: str, dest: Path) -> None:
         raise SystemExit(f"git archive {sha} failed in {checkout}: is the commit in that checkout?")
 
 
-def build(checkout: Path, overlay: Path, out: Path, sha: str | None = None) -> dict:
-    manifest = load_manifest(overlay)
-    files = check_overlay(overlay, manifest)
+def build(checkout: Path, overlays: list[Path], out: Path, sha: str | None = None) -> dict:
+    """Upstream at the pinned commit, then each overlay in order (a later one wins on a shared file)."""
+    manifests = [load_manifest(o) for o in overlays]
+    files = [check_overlay(o, m) for o, m in zip(overlays, manifests, strict=True)]
+    pins = {m["upstream"]["sha"] for m in manifests}
+    if len(pins) != 1:
+        raise SystemExit(f"the overlays pin different upstream commits: {sorted(pins)}")
     if out.exists():
         raise SystemExit(f"refusing: {out} exists; a run's tree is built once, into a new directory")
     tmp = out.with_name(out.name + ".partial")
     if tmp.exists():
         shutil.rmtree(tmp)
     tmp.mkdir(parents=True)
-    pinned = sha or manifest["upstream"]["sha"]
+    pinned = sha or pins.pop()
     export(checkout, pinned, tmp)
-    replaced = []
-    for rel in files:
-        dest = tmp / rel
-        if dest.exists():
-            replaced.append(rel)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(overlay / rel, dest)
+    replaced, layers = [], []
+    for overlay, manifest, rels in zip(overlays, manifests, files, strict=True):
+        for rel in rels:
+            dest = tmp / rel
+            if dest.exists():
+                replaced.append(rel)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(overlay / rel, dest)
+        layers.append(
+            {"run": manifest["run"], "files": {rel: manifest["files"][rel]["sha256"] for rel in rels}}
+        )
     record = {
-        "run": manifest["run"],
-        "upstream": {**manifest["upstream"], "sha": pinned},
-        "overlay": {rel: manifest["files"][rel]["sha256"] for rel in files},
-        "replaced_upstream_files": replaced,
+        "upstream": {**manifests[0]["upstream"], "sha": pinned},
+        "overlays": layers,
+        "replaced_files": sorted(set(replaced)),
         "gallops_git_sha": git_sha(),
     }
     (tmp / "OVERLAY.json").write_text(json.dumps(record, indent=2) + "\n")
@@ -102,13 +111,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--drivejepa", type=Path, required=True, help="a Drive-JEPA checkout holding the pinned commit"
     )
-    ap.add_argument("--overlay", type=Path, required=True, help="recipes/drivejepa_wajepa/overlay/<run>")
+    ap.add_argument(
+        "--overlay",
+        type=Path,
+        action="append",
+        required=True,
+        help="recipes/drivejepa_wajepa/overlay/<run>; repeat to layer several, in order",
+    )
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args(argv)
     record = build(a.drivejepa, a.overlay, a.out)
+    layers = ", ".join(f"{layer['run']} ({len(layer['files'])} files)" for layer in record["overlays"])
     print(
-        f"{a.out}: Drive-JEPA {record['upstream']['sha'][:12]} + {len(record['overlay'])} overlay files "
-        f"({len(record['replaced_upstream_files'])} replace upstream files)"
+        f"{a.out}: Drive-JEPA {record['upstream']['sha'][:12]} + {layers}; "
+        f"{len(record['replaced_files'])} upstream files replaced"
     )
     return 0
 

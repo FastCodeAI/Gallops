@@ -66,9 +66,9 @@ cannot actually do today.
 
 ## Training so far
 
-Status at 2026-10-14; the WA-JEPA row 2026-10-27. Everything below starts from
+Status at 2026-10-14; the WA-JEPA rows 2026-10-27. Everything below starts from
 the released Drive-JEPA checkpoint, with its image encoder frozen, except the
-WA-JEPA row, which trains Drive-JEPA's planner from scratch on a different,
+WA-JEPA rows, which train Drive-JEPA's planner from scratch on a different,
 frozen encoder. Each row's doc has the full account;
 the numbers here are copied from it, never re-derived.
 
@@ -78,6 +78,7 @@ the numbers here are copied from it, never re-derived.
 | **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **WA-JEPA Run 2** (`wajepa_dj`) | not the release: Drive-JEPA's planner from scratch, with AFARI's WA-JEPA encoder (frozen) in place of its ViT | NAVSIM `navtrain`: 103,288 scenes, Drive-JEPA's own split | navtest EPDMS **85.27** (human filter), against **87.78** for the release in the same evaluation | **Behind the release on NAVSIM**, which trained it. Bench2Drive 50 routes, zero-shot: DS 50.07–51.95 against 57.60 released; paddock cannot score it yet | [drivejepa_wajepa.md](docs/drivejepa_wajepa.md) |
+| **WA-JEPA Run 3A** (`wajepa_dj_run3a`) | as Run 2, plus an agent decoder trained first (300 slots), an agent look in the refiner, 12 scorer heads and a tuned pick | NAVSIM `navtrain` minus 51 held-out logs, which chose the epoch and the pick | navtest EPDMS **87.30** (locked pick), against **87.78** released and 85.27 for Run 2. Bench2Drive 50 routes **DS 63.29** (Run 2: 51.70 / 51.95); HUGSIM HD-Score **40.4** (released 33.8) | **Closed-loop gains are one run per route.** Behind the release on NAVSIM by 0.49 (paired CI −0.84 to −0.11); paddock cannot score it yet | [drivejepa_wajepa.md](docs/drivejepa_wajepa.md) |
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
 | **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
 | **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |

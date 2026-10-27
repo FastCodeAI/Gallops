@@ -32,6 +32,14 @@ PY39 = (
     "drivejepa_wajepa/verify_tokens.py",
     "drivejepa_wajepa/train.py",
     "drivejepa_wajepa/eval_navtest.py",
+    "drivejepa_wajepa/extract_agents.py",
+    "drivejepa_wajepa/agent_targets.py",
+    "drivejepa_wajepa/agent_decoder_data.py",
+    "drivejepa_wajepa/train_agent_decoder.py",
+    "drivejepa_wajepa/lane_centrelines.py",
+    "drivejepa_wajepa/teacher_rearok.py",
+    "drivejepa_wajepa/run3a_checks.py",
+    "drivejepa_wajepa/pick_tune.py",
 )
 
 
@@ -57,6 +65,7 @@ exp = "{tmp}/navsim-exp"
 maps = "{tmp}/maps"
 current1 = "{tmp}/current1"
 metric_cache = "{tmp}/metric_cache"
+drivejepa_cache = "{tmp}/drivejepa-cache"
 [datasets.wajepa_tokens]
 path = "{tmp}/tokens"
 """
@@ -110,6 +119,65 @@ def test_the_training_overrides_are_the_runs_own(site: SiteConfig) -> None:
     ]
 
 
+def test_run3a_trains_with_its_recorded_overrides_and_refuses_without_its_inputs(site: SiteConfig) -> None:
+    """Run 3A's code/hydra/overrides.yaml (24 Oct 17:34). Its model starts the agent decoder from random
+    weights, silently, when RUN3A_AGENT_DECODER_CKPT names no file, so the stage must require it."""
+    (cmd,) = recipes.commands(recipes.load("drivejepa_wajepa"), site, ["run3a-train"])
+    argv = list(cmd.argv)
+    overrides = argv[argv.index("--") + 1 :]
+    assert overrides == [
+        "agent=drive_jepa_run3a_agent",
+        "experiment_name=run3a",
+        "train_test_split=navtrain",
+        "dataloader.params.batch_size=64",
+        "dataloader.params.num_workers=8",
+        "trainer.params.max_epochs=20",
+        "trainer.params.strategy=auto",
+        "trainer.params.precision=16-mixed",
+        f"cache_path={site.datasets['wajepa_tokens'].path}",
+        "use_cache_without_dataset=True",
+        "force_cache_computation=False",
+    ]
+    assert argv[argv.index("--config-name") + 1] == "run3a_training"
+    required = [argv[i + 1] for i, a in enumerate(argv) if a == "--require"]
+    assert cmd.env["RUN3A_AGENT_DECODER_CKPT"] in required
+    assert cmd.env["RUN3A_CENTRELINES"] in required
+
+
+def test_the_teacher_list_goes_beside_the_metric_cache(site: SiteConfig) -> None:
+    """compute_navsim_score finds a sample's teachers by swapping the metric cache's directory name in its
+    path."""
+    (cmd,) = recipes.commands(recipes.load("drivejepa_wajepa"), site, ["teacher-rearok"])
+    argv = list(cmd.argv)
+    mc, out = Path(argv[argv.index("--metric-cache") + 1]), Path(argv[argv.index("--out") + 1])
+    assert mc.name == "train_metric_cache_v2_pruned" and out.parent == mc.parent
+    teacher_dir = "anchors_scores_index_v2_rearok_lane"
+    config = OVERLAYS / "run3a/navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_config.py"
+    assert out.name == teacher_dir and f'teacher_dir: str = "{teacher_dir}"' in config.read_text()
+
+
+def test_the_held_out_logs_are_run3as_validation_split() -> None:
+    """The 51 held-out logs chose Run 3A's epoch and pick, and are what the agent decoder holds out."""
+    held = [
+        ln.strip() for ln in (REPO_ROOT / "recipes/drivejepa_wajepa/heldout_logs.txt").read_text().split("\n")
+    ]
+    held = [h for h in held if h]
+    split = (
+        OVERLAYS / "run3a/navsim_v2/navsim/planning/script/config/training/run3a_log_split.yaml"
+    ).read_text()
+    sections: dict[str, list[str]] = {}
+    key = None
+    for line in split.splitlines():
+        if line and not line.startswith((" ", "#")):
+            key = line.rstrip(":")
+            sections[key] = []
+        elif line.strip().startswith("- ") and key:
+            sections[key].append(line.strip()[2:])
+    assert len(held) == len(set(held)) == 51
+    assert sorted(sections["val_logs"]) == sorted(held)
+    assert not set(sections["train_logs"]) & set(held)
+
+
 @pytest.mark.parametrize("rel", PY39)
 def test_drivejepa_side_is_python39(rel: str) -> None:
     ast.parse((SRC / rel).read_text(), filename=rel, feature_version=(3, 9))
@@ -124,7 +192,9 @@ def test_overlay_matches_its_manifest(run: str) -> None:
     assert len(manifest["upstream"]["sha"]) == 40
     for rel in files:
         entry = manifest["files"][rel]
-        if entry["sha256"] != entry["as_run_sha256"]:
+        if (
+            entry["sha256"] != entry["as_run_sha256"]
+        ):  # an edit, or a file whose as-run copy was not kept (null)
             assert "note" in entry, f"{rel} differs from the file as run and the manifest does not say why"
 
 
@@ -150,14 +220,14 @@ def upstream(tmp_path: Path) -> tuple[Path, str]:
     return repo, git(repo, "rev-parse", "HEAD").strip()
 
 
-def make_overlay(tmp_path: Path, files: dict[str, str]) -> Path:
+def make_overlay(tmp_path: Path, files: dict[str, str], pin: str = "0" * 40) -> Path:
     overlay = tmp_path / "overlay" / "run"
     entries = {}
     for rel, text in files.items():
         (overlay / rel).parent.mkdir(parents=True, exist_ok=True)
         (overlay / rel).write_text(text)
         entries[rel] = {"sha256": code.sha256(overlay / rel), "as_run_sha256": code.sha256(overlay / rel)}
-    manifest = {"run": "run", "upstream": {"repo": "x", "sha": "0" * 40}, "files": entries}
+    manifest = {"run": "run", "upstream": {"repo": "x", "sha": pin}, "files": entries}
     overlay.with_suffix(".json").write_text(json.dumps(manifest))
     return overlay
 
@@ -166,15 +236,33 @@ def test_code_builds_upstream_plus_overlay(tmp_path: Path, upstream: tuple[Path,
     repo, sha = upstream
     overlay = make_overlay(tmp_path, {"pkg/a.py": "a = 'ours'\n", "pkg/new.py": "n = 1\n"})
     out = tmp_path / "tree"
-    record = code.build(repo, overlay, out, sha=sha)
+    record = code.build(repo, [overlay], out, sha=sha)
     assert (out / "pkg/a.py").read_text() == "a = 'ours'\n"
     assert (out / "pkg/b.py").read_text() == "b = 'upstream'\n"
     assert (out / "pkg/new.py").read_text() == "n = 1\n"
-    assert record["replaced_upstream_files"] == ["pkg/a.py"]
+    assert record["replaced_files"] == ["pkg/a.py"]
     assert json.loads((out / "OVERLAY.json").read_text())["upstream"]["sha"] == sha
     assert not git(repo, "status", "--porcelain"), "the checkout must not be touched"
     with pytest.raises(SystemExit, match="exists"):
-        code.build(repo, overlay, out, sha=sha)
+        code.build(repo, [overlay], out, sha=sha)
+
+
+def test_code_layers_overlays_in_order(tmp_path: Path, upstream: tuple[Path, str]) -> None:
+    repo, sha = upstream
+    first = make_overlay(tmp_path / "1", {"pkg/a.py": "a = 'first'\n", "pkg/c.py": "c = 1\n"})
+    second = make_overlay(tmp_path / "2", {"pkg/a.py": "a = 'second'\n"})
+    record = code.build(repo, [first, second], tmp_path / "tree", sha=sha)
+    assert (tmp_path / "tree/pkg/a.py").read_text() == "a = 'second'\n"
+    assert (tmp_path / "tree/pkg/c.py").read_text() == "c = 1\n"
+    assert [layer["files"] and len(layer["files"]) for layer in record["overlays"]] == [2, 1]
+
+
+def test_code_refuses_overlays_pinning_different_commits(tmp_path: Path, upstream: tuple[Path, str]) -> None:
+    repo, sha = upstream
+    first = make_overlay(tmp_path / "1", {"pkg/a.py": "a = 1\n"})
+    second = make_overlay(tmp_path / "2", {"pkg/b.py": "b = 1\n"}, pin="1" * 40)
+    with pytest.raises(SystemExit, match="different upstream commits"):
+        code.build(repo, [first, second], tmp_path / "tree", sha=sha)
 
 
 def test_code_refuses_an_edited_overlay(tmp_path: Path, upstream: tuple[Path, str]) -> None:
@@ -182,7 +270,7 @@ def test_code_refuses_an_edited_overlay(tmp_path: Path, upstream: tuple[Path, st
     overlay = make_overlay(tmp_path, {"pkg/a.py": "a = 'ours'\n"})
     (overlay / "pkg/a.py").write_text("a = 'edited'\n")
     with pytest.raises(SystemExit, match="differ from the manifest"):
-        code.build(repo, overlay, tmp_path / "tree", sha=sha)
+        code.build(repo, [overlay], tmp_path / "tree", sha=sha)
     assert not (tmp_path / "tree").exists()
 
 
@@ -191,7 +279,7 @@ def test_code_refuses_an_unlisted_file(tmp_path: Path, upstream: tuple[Path, str
     overlay = make_overlay(tmp_path, {"pkg/a.py": "a = 'ours'\n"})
     (overlay / "pkg/stray.py").write_text("x = 1\n")
     with pytest.raises(SystemExit, match="disagree"):
-        code.build(repo, overlay, tmp_path / "tree", sha=sha)
+        code.build(repo, [overlay], tmp_path / "tree", sha=sha)
 
 
 CSV_COLS = ["token", "valid", "score", *navtest_score.GATES, *(c for c, _ in navtest_score.SOFT)]
@@ -244,6 +332,16 @@ def test_train_refuses_an_existing_checkpoint_dir(tmp_path: Path) -> None:
     (tmp_path / "ckpts").mkdir()
     with pytest.raises(SystemExit, match="never overwritten"):
         train.main(["--tree", str(tree), "--ckpt-dir", str(tmp_path / "ckpts"), "--", "agent=x"])
+
+
+def test_train_refuses_a_missing_required_input(tmp_path: Path) -> None:
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "OVERLAY.json").write_text("{}")
+    with pytest.raises(SystemExit, match="required inputs missing"):
+        train.main(
+            ["--tree", str(tree), "--ckpt-dir", str(tmp_path / "c"), "--require", str(tmp_path / "no.pt")]
+        )
 
 
 def test_train_refuses_a_tree_the_code_stage_did_not_build(tmp_path: Path) -> None:
