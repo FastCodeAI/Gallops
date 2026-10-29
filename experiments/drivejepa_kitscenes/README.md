@@ -57,7 +57,8 @@ was submitted are not.
 ## Reading a path in these files
 
 Every machine path was replaced by a placeholder before committing, and every mention of a working
-folder name by the folder's name here. Nothing else in a file was changed.
+folder name by the folder's name here. Apart from the edits listed at the end of this section,
+nothing else in a file was changed.
 
 | Placeholder | Stands for |
 |---|---|
@@ -80,5 +81,13 @@ folders only work together.
 
 [AS_RUN.sha256](AS_RUN.sha256) holds the sha256 of each of the 46 files as it was before these
 replacements, against its original path. It is a record of the originals, so `sha256sum -c` does not
-pass against the committed files; undoing the replacements reproduces every hash. Files not listed are
+pass against the committed files. The originals are kept at the training site. The replacements cannot
+be undone from the committed text alone, because they are many-to-one: `{workspace}` and `{paddock}`
+each stand for two spellings of a path (absolute and `~/`), and several working folder names became
+the same name here. The script that made the copy is not committed. Files not listed are
 byte-identical to what ran.
+
+Edited after review, beyond the placeholders:
+
+- `05_generator_survey/REPORT.md`, the **Folder** paragraph: reworded, because the renaming had turned
+  four working folder names into one and the sentence no longer read.

@@ -356,7 +356,7 @@ a GPU shared with other jobs.
 | Checkpoint sha256 and contents | hashed and opened on the CPU for this record | proof |
 | The vendored Drive-JEPA tree was not edited | no file in it newer than the first checkpoint; its own git status shows only the changes listed | verified |
 | The Drive-JEPA files the code imports | traced by importing the modules and building the model on the CPU | measured; a training-only code path could load more |
-| The committed files differ from the as-run ones only in paths and folder names | `AS_RUN.sha256` holds the originals' hashes | by construction; not re-verified by undoing the replacements |
+| The committed files differ from the as-run ones only in paths and folder names | `AS_RUN.sha256` holds the originals' hashes; the originals stay at the training site, and the replacements are many-to-one, so they cannot be undone from the committed text | by construction; not re-verified |
 | Bench2Drive plans asked for no motion | the controller's braking rule and the absence of a crash | argued; plans not recorded |
 | Input differences contribute to the closed-loop failures | — | **not verified** |
 
