@@ -346,7 +346,7 @@ a GPU shared with other jobs.
 
 | Claim | Evidence | Strength |
 |---|---|---|
-| The five-model held-out table | recomputed for this record from the two saved per-moment files (menus, picks, human paths) with an independent script; every value equal to 3 decimals; groups 221 / 37 reproduce | proof |
+| The five-model held-out table | recomputed for this record from the two saved per-moment files (menus, picks, human paths) with an independent script; every value equal to 3 decimals; groups 221 / 37 reproduce. The script and its inputs are not committed, so a reviewer cannot repeat it | measured by the author |
 | The paired 95 % intervals | as computed by the runs' report scripts; not re-run | as recorded |
 | The gate table | equal to the job's `verdict.json` | proof |
 | The gate's KITScenes input differences | read from Paddock's code at `9585f81` (`11_regression_gate/RESULTS.md` Part E) | verified by reading (as-run report) |
@@ -354,6 +354,7 @@ a GPU shared with other jobs.
 | `test` and `test-e2e` never read | the runs' own data rules and reports | argued |
 | The scorer loss never reaches the generator's weights | gradient check before training: zero on 41 of 41 generator tensors | as recorded |
 | Checkpoint sha256 and contents | hashed and opened on the CPU for this record | proof |
+| The held-out rows were produced by the checkpoints hashed here | no as-run file records a trained checkpoint's sha256; the held-out scripts (`09_heldout_comparison/src/final.py`, `10_encoder_generator_scorer/src/final5.py`) load them by path, and each checkpoint's file time is earlier than the held-out result file that used it | argued |
 | The vendored Drive-JEPA tree was not edited | no file in it newer than the first checkpoint; its own git status shows only the changes listed | verified |
 | The Drive-JEPA files the code imports | traced by importing the modules and building the model on the CPU | measured; a training-only code path could load more |
 | The committed files differ from the as-run ones only in paths and folder names | `AS_RUN.sha256` holds the originals' hashes; the originals stay at the training site, and the replacements are many-to-one, so they cannot be undone from the committed text | by construction; not re-verified |
