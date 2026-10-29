@@ -1,0 +1,28 @@
+{
+ "step": 1000,
+ "curve": [
+  {
+   "step": 0,
+   "fixed_loss": 0.5988116235733032
+  },
+  {
+   "step": 250,
+   "fixed_loss": 0.5056171526908875
+  },
+  {
+   "step": 500,
+   "fixed_loss": 0.5006950163841247
+  },
+  {
+   "step": 750,
+   "fixed_loss": 0.4988132562637329
+  },
+  {
+   "step": 1000,
+   "fixed_loss": 0.49731663131713866
+  }
+ ],
+ "gpu_wait_s": 0.04296994209289551,
+ "wall_s": 894.8828098773956,
+ "stop_reason": "rule: fixed-set loss improved 0.67 % over steps 500-1000 (< 1 %)"
+}

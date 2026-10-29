@@ -1,0 +1,27 @@
+{
+ "scenes": 532,
+ "train_moments": 13937,
+ "picking_moments": 1763,
+ "picking_scenes_calibration_same_at_first_and_last_moment": [
+  50,
+  50
+ ],
+ "img_shape_values": [
+  "[[448.0, 768.0, 3.0], [448.0, 768.0, 3.0], [448.0, 768.0, 3.0], [448.0, 768.0, 3.0]]"
+ ],
+ "build_s": 376.2,
+ "gate": {
+  "moments": 103,
+  "missing_from_main": 0,
+  "features_bit_equal": 103,
+  "human_path_bit_equal": 103,
+  "scenes_with_2plus_moments_lidar2img_constant": [
+   30,
+   30
+  ],
+  "unused_key_not_assembled": [
+   "camera_feature"
+  ],
+  "pass": true
+ }
+}

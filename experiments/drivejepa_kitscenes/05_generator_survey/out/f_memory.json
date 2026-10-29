@@ -1,0 +1,60 @@
+{
+ "gpu_wait_s": 0.06620526313781738,
+ "free_mib_before": 24982,
+ "trainable": {
+  "lora": 6291456,
+  "generator": 2389827,
+  "guesser": 22086016
+ },
+ "steps": [
+  {
+   "batch": 8,
+   "peak_allocated_GiB": 3.74,
+   "peak_reserved_GiB": 3.98,
+   "s_per_step": [
+    4.77,
+    0.5,
+    0.802
+   ],
+   "gen_loss": 0.7249736189842224,
+   "jepa_loss": 0.5835913419723511,
+   "lora_grad_nonzero_layers": 192,
+   "generator_grad_nonzero_tensors": 41,
+   "scorer_grads": 0,
+   "projector_grads": 0
+  },
+  {
+   "batch": 16,
+   "peak_allocated_GiB": 5.02,
+   "peak_reserved_GiB": 5.43,
+   "s_per_step": [
+    0.634,
+    0.5,
+    0.631
+   ],
+   "gen_loss": 0.7498612403869629,
+   "jepa_loss": 0.5820296406745911,
+   "lora_grad_nonzero_layers": 192,
+   "generator_grad_nonzero_tensors": 41,
+   "scorer_grads": 0,
+   "projector_grads": 0
+  },
+  {
+   "batch": 32,
+   "peak_allocated_GiB": 7.52,
+   "peak_reserved_GiB": 8.24,
+   "s_per_step": [
+    0.78,
+    0.986,
+    0.837
+   ],
+   "gen_loss": 0.6695360541343689,
+   "jepa_loss": 0.5750824809074402,
+   "lora_grad_nonzero_layers": 192,
+   "generator_grad_nonzero_tensors": 41,
+   "scorer_grads": 0,
+   "projector_grads": 0
+  }
+ ],
+ "free_mib_after": 16386
+}

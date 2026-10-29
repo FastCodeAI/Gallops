@@ -1,0 +1,1334 @@
+{
+ "n": {
+  "ALL": 223,
+  "SLOW": 221,
+  "FAST": 2,
+  "SLOW_TURNS": 37
+ },
+ "too_few": {
+  "ALL": false,
+  "SLOW": false,
+  "FAST": true,
+  "SLOW_TURNS": false
+ },
+ "models": {
+  "Released model": {
+   "groups": {
+    "ALL": {
+     "m1a": {
+      "mean": 0.37438603357107814,
+      "median": 0.3008921244837462
+     },
+     "m1b": {
+      "mean": 0.6644985891492947,
+      "median": 0.421431956709513
+     },
+     "m2_lt2": {
+      "mean": 17.524663677130047,
+      "median": 20.0
+     },
+     "m3_variety": {
+      "mean": 2.831124579459618,
+      "median": 2.972636577665554
+     },
+     "pick_ade": {
+      "mean": 2.371879947736172,
+      "median": 1.3917525048583705
+     },
+     "pick_fde@1s": {
+      "mean": 1.314053105822333,
+      "median": 0.7327713854597139
+     },
+     "pick_fde@2s": {
+      "mean": 2.67864053830522,
+      "median": 1.596907985660876
+     },
+     "pick_fde@3s": {
+      "mean": 4.206190546973074,
+      "median": 2.5447426427186683
+     }
+    },
+    "SLOW": {
+     "m1a": {
+      "mean": 0.35662485482122736,
+      "median": 0.29801192064583176
+     },
+     "m1b": {
+      "mean": 0.6280161442504247,
+      "median": 0.4213042253919739
+     },
+     "m2_lt2": {
+      "mean": 17.67873303167421,
+      "median": 20.0
+     },
+     "m3_variety": {
+      "mean": 2.830196495115833,
+      "median": 2.972636577665554
+     },
+     "pick_ade": {
+      "mean": 2.3231143580197267,
+      "median": 1.3645072606454758
+     },
+     "pick_fde@1s": {
+      "mean": 1.2906197300554882,
+      "median": 0.7182545600398389
+     },
+     "pick_fde@2s": {
+      "mean": 2.6227223142187928,
+      "median": 1.5527436022102468
+     },
+     "pick_fde@3s": {
+      "mean": 4.11427066000788,
+      "median": 2.4935703948692156
+     }
+    },
+    "FAST": {
+     "m1a": {
+      "mean": 2.3369962854295996,
+      "median": 2.3369962854295996
+     },
+     "m1b": {
+      "mean": 4.695808750474431,
+      "median": 4.695808750474431
+     },
+     "m2_lt2": {
+      "mean": 0.5,
+      "median": 0.5
+     },
+     "m3_variety": {
+      "mean": 2.9336778994478943,
+      "median": 2.9336778994478943
+     },
+     "pick_ade": {
+      "mean": 7.760477611403397,
+      "median": 7.760477611403397
+     },
+     "pick_fde@1s": {
+      "mean": 3.903441128058649,
+      "median": 3.903441128058649
+     },
+     "pick_fde@2s": {
+      "mean": 8.857604299855454,
+      "median": 8.857604299855454
+     },
+     "pick_fde@3s": {
+      "mean": 14.363338056627057,
+      "median": 14.363338056627057
+     }
+    },
+    "SLOW_TURNS": {
+     "m1a": {
+      "mean": 0.5575278297960323,
+      "median": 0.4201514060196128
+     },
+     "m1b": {
+      "mean": 1.1292482144793792,
+      "median": 0.5728224117771608
+     },
+     "m2_lt2": {
+      "mean": 19.54054054054054,
+      "median": 21.0
+     },
+     "m3_variety": {
+      "mean": 2.579250445223188,
+      "median": 2.5790679140356154
+     },
+     "pick_ade": {
+      "mean": 3.026192069419408,
+      "median": 1.6888331392882758
+     },
+     "pick_fde@1s": {
+      "mean": 1.5612120994172043,
+      "median": 0.6614568954106993
+     },
+     "pick_fde@2s": {
+      "mean": 3.363299477851622,
+      "median": 1.8090047873773838
+     },
+     "pick_fde@3s": {
+      "mean": 5.599442662699669,
+      "median": 3.5358624478025424
+     }
+    }
+   },
+   "tails_vs_encoder_only": {
+    "worse_gt_0.5m": 3,
+    "largest_increase_m": 0.7836183362178729,
+    "largest_increase_moment": [
+     "873eebf4-448a-cf6e-7d5e-2dc1cd010723",
+     130
+    ],
+    "worst10pct_mean_b": 5.156405082274864,
+    "worst10pct_n": 4
+   }
+  },
+  "Encoder only, tuned on KIT": {
+   "groups": {
+    "ALL": {
+     "m1a": {
+      "mean": 0.378365790894369,
+      "median": 0.3068324286853885
+     },
+     "m1b": {
+      "mean": 0.6624085704188096,
+      "median": 0.4262077573730571
+     },
+     "m2_lt2": {
+      "mean": 17.717488789237667,
+      "median": 19.0
+     },
+     "m3_variety": {
+      "mean": 2.81553245672976,
+      "median": 2.9557302585638423
+     },
+     "pick_ade": {
+      "mean": 1.8793429804954402,
+      "median": 1.2459788948800392
+     },
+     "pick_fde@1s": {
+      "mean": 1.0019103578823676,
+      "median": 0.542977085880939
+     },
+     "pick_fde@2s": {
+      "mean": 2.0854122342326593,
+      "median": 1.3099485467671539
+     },
+     "pick_fde@3s": {
+      "mean": 3.442010079554936,
+      "median": 2.4386377155995773
+     }
+    },
+    "SLOW": {
+     "m1a": {
+      "mean": 0.35895395438765804,
+      "median": 0.3032086725674414
+     },
+     "m1b": {
+      "mean": 0.6236119876583754,
+      "median": 0.42471411885832083
+     },
+     "m2_lt2": {
+      "mean": 17.873303167420815,
+      "median": 19.0
+     },
+     "m3_variety": {
+      "mean": 2.8142545566027044,
+      "median": 2.9557302585638423
+     },
+     "pick_ade": {
+      "mean": 1.8256692618792483,
+      "median": 1.1873458774599281
+     },
+     "pick_fde@1s": {
+      "mean": 0.9751732733800897,
+      "median": 0.5363855558162846
+     },
+     "pick_fde@2s": {
+      "mean": 2.024000785289085,
+      "median": 1.3057369120441717
+     },
+     "pick_fde@3s": {
+      "mean": 3.3418860476085195,
+      "median": 2.4240198339085155
+     }
+    },
+    "FAST": {
+     "m1a": {
+      "mean": 2.5233737248859254,
+      "median": 2.5233737248859254
+     },
+     "m1b": {
+      "mean": 4.949430965446773,
+      "median": 4.949430965446773
+     },
+     "m2_lt2": {
+      "mean": 0.5,
+      "median": 0.5
+     },
+     "m3_variety": {
+      "mean": 2.9567404207693686,
+      "median": 2.9567404207693686
+     },
+     "pick_ade": {
+      "mean": 7.81028888758464,
+      "median": 7.81028888758464
+     },
+     "pick_fde@1s": {
+      "mean": 3.9563581953840665,
+      "median": 3.9563581953840665
+     },
+     "pick_fde@2s": {
+      "mean": 8.87137734249761,
+      "median": 8.87137734249761
+     },
+     "pick_fde@3s": {
+      "mean": 14.505715609633981,
+      "median": 14.505715609633981
+     }
+    },
+    "SLOW_TURNS": {
+     "m1a": {
+      "mean": 0.5573276123756407,
+      "median": 0.3860716208181127
+     },
+     "m1b": {
+      "mean": 1.1922944344260116,
+      "median": 0.5746370476781801
+     },
+     "m2_lt2": {
+      "mean": 19.18918918918919,
+      "median": 22.0
+     },
+     "m3_variety": {
+      "mean": 2.5848988593902007,
+      "median": 2.574968922147726
+     },
+     "pick_ade": {
+      "mean": 2.5708233417144335,
+      "median": 1.7243839102608778
+     },
+     "pick_fde@1s": {
+      "mean": 1.307365380833979,
+      "median": 0.7173725395962773
+     },
+     "pick_fde@2s": {
+      "mean": 2.8522954829757143,
+      "median": 1.8651874422854278
+     },
+     "pick_fde@3s": {
+      "mean": 4.803654683857415,
+      "median": 3.482380817742075
+     }
+    }
+   },
+   "tails_vs_encoder_only": {
+    "worse_gt_0.5m": 0,
+    "largest_increase_m": 0.0,
+    "largest_increase_moment": [
+     "fdcc7efa-1a3c-66ac-4889-f19100d33831",
+     40
+    ],
+    "worst10pct_mean_b": 5.7498249811973725,
+    "worst10pct_n": 4
+   }
+  },
+  "Generator only, trained on KIT": {
+   "groups": {
+    "ALL": {
+     "m1a": {
+      "mean": 0.19371673410041718,
+      "median": 0.14587390785645443
+     },
+     "m1b": {
+      "mean": 0.37919293783250957,
+      "median": 0.2646084095148441
+     },
+     "m2_lt2": {
+      "mean": 25.932735426008968,
+      "median": 27.0
+     },
+     "m3_variety": {
+      "mean": 1.6335756488040036,
+      "median": 1.6308382853043535
+     },
+     "pick_ade": {
+      "mean": 1.1460202920335918,
+      "median": 0.9246178108401417
+     },
+     "pick_fde@1s": {
+      "mean": 0.31944520624892647,
+      "median": 0.25579656775356785
+     },
+     "pick_fde@2s": {
+      "mean": 1.2232208660136783,
+      "median": 1.0044250027791546
+     },
+     "pick_fde@3s": {
+      "mean": 2.6438743400071636,
+      "median": 2.020243156140749
+     }
+    },
+    "SLOW": {
+     "m1a": {
+      "mean": 0.19406078165093776,
+      "median": 0.14569952407641987
+     },
+     "m1b": {
+      "mean": 0.3797317772119991,
+      "median": 0.26408139318952245
+     },
+     "m2_lt2": {
+      "mean": 26.04524886877828,
+      "median": 27.0
+     },
+     "m3_variety": {
+      "mean": 1.6254927336018044,
+      "median": 1.6298559072099759
+     },
+     "pick_ade": {
+      "mean": 1.124168804987801,
+      "median": 0.9058850633258247
+     },
+     "pick_fde@1s": {
+      "mean": 0.3131206126733025,
+      "median": 0.250050062846627
+     },
+     "pick_fde@2s": {
+      "mean": 1.198432411558458,
+      "median": 1.002994350349503
+     },
+     "pick_fde@3s": {
+      "mean": 2.5936406084418513,
+      "median": 2.0186119821706616
+     }
+    },
+    "FAST": {
+     "m1a": {
+      "mean": 0.1556994797678944,
+      "median": 0.1556994797678944
+     },
+     "m1b": {
+      "mean": 0.31965118639891077,
+      "median": 0.31965118639891077
+     },
+     "m2_lt2": {
+      "mean": 13.5,
+      "median": 13.5
+     },
+     "m3_variety": {
+      "mean": 2.526737778647059,
+      "median": 2.526737778647059
+     },
+     "pick_ade": {
+      "mean": 3.560609610593466,
+      "median": 3.560609610593466
+     },
+     "pick_fde@1s": {
+      "mean": 1.0183127963553749,
+      "median": 1.0183127963553749
+     },
+     "pick_fde@2s": {
+      "mean": 3.9623450833155376,
+      "median": 3.9623450833155376
+     },
+     "pick_fde@3s": {
+      "mean": 8.19470167797417,
+      "median": 8.19470167797417
+     }
+    },
+    "SLOW_TURNS": {
+     "m1a": {
+      "mean": 0.35028545059145755,
+      "median": 0.2199921066084022
+     },
+     "m1b": {
+      "mean": 0.7011329844887253,
+      "median": 0.43904086453705243
+     },
+     "m2_lt2": {
+      "mean": 25.37837837837838,
+      "median": 27.0
+     },
+     "m3_variety": {
+      "mean": 1.6784103817439509,
+      "median": 1.6877619826821884
+     },
+     "pick_ade": {
+      "mean": 1.5446391859995336,
+      "median": 1.0834845600335596
+     },
+     "pick_fde@1s": {
+      "mean": 0.47266230706372725,
+      "median": 0.23739933168940927
+     },
+     "pick_fde@2s": {
+      "mean": 1.638624737552583,
+      "median": 1.082422735812481
+     },
+     "pick_fde@3s": {
+      "mean": 3.494207666167179,
+      "median": 2.7823546610257703
+     }
+    }
+   },
+   "tails_vs_encoder_only": {
+    "worse_gt_0.5m": 1,
+    "largest_increase_m": 0.6015637233133082,
+    "largest_increase_moment": [
+     "8dcfc2ba-200e-154a-4283-95f5a073b488",
+     40
+    ],
+    "worst10pct_mean_b": 2.8015413019185735,
+    "worst10pct_n": 4
+   }
+  },
+  "Generator and encoder trained together": {
+   "groups": {
+    "ALL": {
+     "m1a": {
+      "mean": 0.1895585632666525,
+      "median": 0.13842782708710913
+     },
+     "m1b": {
+      "mean": 0.37678800235889204,
+      "median": 0.24320339316452538
+     },
+     "m2_lt2": {
+      "mean": 25.982062780269057,
+      "median": 27.0
+     },
+     "m3_variety": {
+      "mean": 1.5966019448652746,
+      "median": 1.5884986755501196
+     },
+     "pick_ade": {
+      "mean": 1.1011203289848002,
+      "median": 0.8332008584252248
+     },
+     "pick_fde@1s": {
+      "mean": 0.3125767468784473,
+      "median": 0.23262827545051715
+     },
+     "pick_fde@2s": {
+      "mean": 1.1689830343182996,
+      "median": 0.8973483226328018
+     },
+     "pick_fde@3s": {
+      "mean": 2.53343550591718,
+      "median": 1.951263040999597
+     }
+    },
+    "SLOW": {
+     "m1a": {
+      "mean": 0.1888554870404884,
+      "median": 0.13777724363689672
+     },
+     "m1b": {
+      "mean": 0.3772244229009073,
+      "median": 0.23971249978720832
+     },
+     "m2_lt2": {
+      "mean": 26.07239819004525,
+      "median": 27.0
+     },
+     "m3_variety": {
+      "mean": 1.5867150696904913,
+      "median": 1.587895937538055
+     },
+     "pick_ade": {
+      "mean": 1.076726837206981,
+      "median": 0.8320470553599858
+     },
+     "pick_fde@1s": {
+      "mean": 0.3063647506945599,
+      "median": 0.23090011520575984
+     },
+     "pick_fde@2s": {
+      "mean": 1.1416805425628405,
+      "median": 0.8886592995739924
+     },
+     "pick_fde@3s": {
+      "mean": 2.4771935766125956,
+      "median": 1.9475256981453075
+     }
+    },
+    "FAST": {
+     "m1a": {
+      "mean": 0.26724848625779063,
+      "median": 0.26724848625779063
+     },
+     "m1b": {
+      "mean": 0.3285635324661994,
+      "median": 0.3285635324661994
+     },
+     "m2_lt2": {
+      "mean": 16.0,
+      "median": 16.0
+     },
+     "m3_variety": {
+      "mean": 2.6891016516788575,
+      "median": 2.6891016516788575
+     },
+     "pick_ade": {
+      "mean": 3.796601170433848,
+      "median": 3.796601170433848
+     },
+     "pick_fde@1s": {
+      "mean": 0.9990023251980039,
+      "median": 0.9990023251980039
+     },
+     "pick_fde@2s": {
+      "mean": 4.185908373296568,
+      "median": 4.185908373296568
+     },
+     "pick_fde@3s": {
+      "mean": 8.74816869407379,
+      "median": 8.74816869407379
+     }
+    },
+    "SLOW_TURNS": {
+     "m1a": {
+      "mean": 0.34624984259112035,
+      "median": 0.2483052280700342
+     },
+     "m1b": {
+      "mean": 0.7497901076133141,
+      "median": 0.47983420558651463
+     },
+     "m2_lt2": {
+      "mean": 25.135135135135137,
+      "median": 26.0
+     },
+     "m3_variety": {
+      "mean": 1.6830323403109377,
+      "median": 1.6912505002934721
+     },
+     "pick_ade": {
+      "mean": 1.764112650979917,
+      "median": 1.2810216535497434
+     },
+     "pick_fde@1s": {
+      "mean": 0.5705251759064831,
+      "median": 0.28494449448366255
+     },
+     "pick_fde@2s": {
+      "mean": 1.8942701562312099,
+      "median": 1.293780744558649
+     },
+     "pick_fde@3s": {
+      "mean": 3.90854046562355,
+      "median": 3.0605048859325232
+     }
+    }
+   },
+   "tails_vs_encoder_only": {
+    "worse_gt_0.5m": 3,
+    "largest_increase_m": 0.780357061795969,
+    "largest_increase_moment": [
+     "6f47eb66-9043-845f-5043-6731c294de25",
+     490
+    ],
+    "worst10pct_mean_b": 2.847394326045958,
+    "worst10pct_n": 4
+   }
+  }
+ },
+ "paired": [
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": 0.003979757323290763,
+   "median": 0.00203786009063478,
+   "better_gt_10cm": 19,
+   "worse_gt_10cm": 19,
+   "ci95": [
+    -0.009418595741378186,
+    0.01825550399892017
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": 0.002329099566430717,
+   "median": 0.00203786009063478,
+   "better_gt_10cm": 19,
+   "worse_gt_10cm": 18,
+   "ci95": [
+    -0.010762946565252845,
+    0.01657999081859889
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": 0.1863774394563258,
+   "median": 0.1863774394563258,
+   "better_gt_10cm": 0,
+   "worse_gt_10cm": 1,
+   "ci95": [
+    -0.006473023674458567,
+    0.37922790258711014
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": -0.00020021742039163845,
+   "median": -0.014134630269506343,
+   "better_gt_10cm": 8,
+   "worse_gt_10cm": 3,
+   "ci95": [
+    -0.058387218925589346,
+    0.07106232206870072
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": -0.4925369672407317,
+   "median": -0.053370188808931074,
+   "better_gt_10cm": 96,
+   "worse_gt_10cm": 55,
+   "ci95": [
+    -0.6874927919121192,
+    -0.3134806069916504
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": -0.4974450961404781,
+   "median": -0.053370188808931074,
+   "better_gt_10cm": 95,
+   "worse_gt_10cm": 54,
+   "ci95": [
+    -0.6961335171817089,
+    -0.31784477745410356
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": 0.0498112761812437,
+   "median": 0.0498112761812437,
+   "better_gt_10cm": 1,
+   "worse_gt_10cm": 1,
+   "ci95": [
+    -0.1759559624986604,
+    0.2755785148611478
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Encoder only, tuned on KIT",
+   "old": "Released model",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": -0.45536872770497355,
+   "median": -0.050205401515669434,
+   "better_gt_10cm": 14,
+   "worse_gt_10cm": 7,
+   "ci95": [
+    -0.8637305299038378,
+    -0.08845664376623065
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": -0.18464905679395177,
+   "median": -0.14254870309053091,
+   "better_gt_10cm": 138,
+   "worse_gt_10cm": 8,
+   "ci95": [
+    -0.23143986203643083,
+    -0.1460766643149903
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": -0.16489317273672027,
+   "median": -0.14203213267892878,
+   "better_gt_10cm": 136,
+   "worse_gt_10cm": 8,
+   "ci95": [
+    -0.19920576620933853,
+    -0.13599439144905323
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": -2.367674245118031,
+   "median": -2.367674245118031,
+   "better_gt_10cm": 2,
+   "worse_gt_10cm": 0,
+   "ci95": [
+    -3.330893375387698,
+    -1.4044551148483642
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": -0.2070421617841831,
+   "median": -0.11451371261491927,
+   "better_gt_10cm": 21,
+   "worse_gt_10cm": 2,
+   "ci95": [
+    -0.3893064618036782,
+    -0.08000336372147245
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": -0.7333226884618482,
+   "median": -0.3978547653099195,
+   "better_gt_10cm": 144,
+   "worse_gt_10cm": 58,
+   "ci95": [
+    -0.9296023674542112,
+    -0.5452949966089679
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": -0.701500456891447,
+   "median": -0.3825129866522545,
+   "better_gt_10cm": 142,
+   "worse_gt_10cm": 58,
+   "ci95": [
+    -0.8884311449329899,
+    -0.517908492462859
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": -4.249679276991174,
+   "median": -4.249679276991174,
+   "better_gt_10cm": 2,
+   "worse_gt_10cm": 0,
+   "ci95": [
+    -5.74948883193237,
+    -2.7498697220499793
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Generator only, trained on KIT",
+   "old": "Encoder only, tuned on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": -1.0261841557149,
+   "median": -0.5942015483239527,
+   "better_gt_10cm": 29,
+   "worse_gt_10cm": 8,
+   "ci95": [
+    -1.6007896021491044,
+    -0.5386431055581006
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": -0.004158170833764637,
+   "median": -0.007364115691154097,
+   "better_gt_10cm": 7,
+   "worse_gt_10cm": 9,
+   "ci95": [
+    -0.01261026436714445,
+    0.003945258251618111
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": -0.00520529461044935,
+   "median": -0.007725056037354294,
+   "better_gt_10cm": 7,
+   "worse_gt_10cm": 8,
+   "ci95": [
+    -0.013371605434986724,
+    0.0030647621751952233
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": 0.11154900648989623,
+   "median": 0.11154900648989623,
+   "better_gt_10cm": 0,
+   "worse_gt_10cm": 1,
+   "ci95": [
+    0.09520354979803206,
+    0.1278944631817604
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "closest candidate ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": -0.004035608000337198,
+   "median": -0.010177067079481683,
+   "better_gt_10cm": 4,
+   "worse_gt_10cm": 6,
+   "ci95": [
+    -0.04447253230909192,
+    0.03171874524079282
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "ALL",
+   "n": 223,
+   "mean": -0.044899963048791486,
+   "median": -0.0696884921533252,
+   "better_gt_10cm": 98,
+   "worse_gt_10cm": 65,
+   "ci95": [
+    -0.11369653241827753,
+    0.026344290500807766
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW",
+   "n": 221,
+   "mean": -0.047441967780820216,
+   "median": -0.0696884921533252,
+   "better_gt_10cm": 97,
+   "worse_gt_10cm": 64,
+   "ci95": [
+    -0.11511499364509298,
+    0.023781241354883374
+   ],
+   "too_few": false
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "FAST",
+   "n": 2,
+   "mean": 0.2359915598403819,
+   "median": 0.2359915598403819,
+   "better_gt_10cm": 1,
+   "worse_gt_10cm": 1,
+   "ci95": [
+    -0.29744505283795153,
+    0.7694281725187153
+   ],
+   "too_few": true
+  },
+  {
+   "new": "Generator and encoder trained together",
+   "old": "Generator only, trained on KIT",
+   "metric": "scorer's pick ADE (3 s)",
+   "group": "SLOW_TURNS",
+   "n": 37,
+   "mean": 0.21947346498038345,
+   "median": 0.0862367153561241,
+   "better_gt_10cm": 7,
+   "worse_gt_10cm": 17,
+   "ci95": [
+    -0.05549184681019938,
+    0.5354800198006524
+   ],
+   "too_few": false
+  }
+ ],
+ "picking_vs_heldout": {
+  "Encoder only, tuned on KIT ALL": {
+   "picking": [
+    0.6165789202059042,
+    1.0932908792561995
+   ],
+   "heldout": [
+    0.378365790894369,
+    0.6624085704188096
+   ],
+   "n_picking": 1763
+  },
+  "Encoder only, tuned on KIT SLOW": {
+   "picking": [
+    0.32173979946667536,
+    0.5720295982483251
+   ],
+   "heldout": [
+    0.35895395438765804,
+    0.6236119876583754
+   ],
+   "n_picking": 1681
+  },
+  "Generator only, trained on KIT ALL": {
+   "picking": [
+    0.20190510100269216,
+    0.390811767560754
+   ],
+   "heldout": [
+    0.19371673410041718,
+    0.37919293783250957
+   ],
+   "n_picking": 1763
+  },
+  "Generator only, trained on KIT SLOW": {
+   "picking": [
+    0.1797467193074455,
+    0.3462234518368822
+   ],
+   "heldout": [
+    0.19406078165093776,
+    0.3797317772119991
+   ],
+   "n_picking": 1681
+  },
+  "Generator and encoder trained together ALL": {
+   "picking": [
+    0.2013748608970737,
+    0.4054385785588602
+   ],
+   "heldout": [
+    0.1895585632666525,
+    0.37678800235889204
+   ],
+   "n_picking": 1763
+  },
+  "Generator and encoder trained together SLOW": {
+   "picking": [
+    0.1774794071707076,
+    0.35518553734633684
+   ],
+   "heldout": [
+    0.1888554870404884,
+    0.3772244229009073
+   ],
+   "n_picking": 1681
+  },
+  "gain Generator only, trained on KIT over Encoder only, tuned on KIT ALL": {
+   "picking": [
+    -0.41467381920321217,
+    -0.7024791116954453
+   ],
+   "heldout": [
+    -0.18464905679395177,
+    -0.28321563258630017
+   ]
+  },
+  "gain Generator only, trained on KIT over Encoder only, tuned on KIT SLOW": {
+   "picking": [
+    -0.1419930801592298,
+    -0.2258061464114428
+   ],
+   "heldout": [
+    -0.16489317273672027,
+    -0.24388021044637653
+   ]
+  },
+  "gain Generator and encoder trained together over Encoder only, tuned on KIT ALL": {
+   "picking": [
+    -0.41520405930883053,
+    -0.6878523006973392
+   ],
+   "heldout": [
+    -0.18880722762771646,
+    -0.28562056805991765
+   ]
+  },
+  "gain Generator and encoder trained together over Encoder only, tuned on KIT SLOW": {
+   "picking": [
+    -0.1442603922959677,
+    -0.21684406090198818
+   ],
+   "heldout": [
+    -0.17009846734716966,
+    -0.2463875647574683
+   ]
+  }
+ },
+ "pictures": {
+  "most_improved_generator_vs_encoder": [
+   {
+    "moment": [
+     "54cd7acd-3f87-9d32-b605-9cd85fc6b7bb",
+     40
+    ],
+    "speed_mps": 15.925461769104004,
+    "Released model": {
+     "a": 3.5018874335090255,
+     "b": 6.5740447481686495,
+     "pick_ade": 8.68803993075837
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 3.495414409834567,
+     "b": 6.549760787566364,
+     "pick_ade": 8.51208396825971
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.16452103444686905,
+     "b": 0.36606812416673207,
+     "pick_ade": 2.7625951363273398
+    },
+    "Generator and encoder trained together": {
+     "a": 0.29241549762862945,
+     "b": 0.26250068613091,
+     "pick_ade": 3.532023308846055
+    }
+   },
+   {
+    "moment": [
+     "f0b1b61b-e17e-797b-e65d-065c8a0360e5",
+     130
+    ],
+    "speed_mps": 5.5989603996276855,
+    "Released model": {
+     "a": 5.597637152203215,
+     "b": 13.576114359629873,
+     "pick_ade": 11.459905620620956
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 5.083263866333794,
+     "b": 13.456270857473896,
+     "pick_ade": 11.460176574470822
+    },
+    "Generator only, trained on KIT": {
+     "a": 2.3456701688930397,
+     "b": 5.972372153899105,
+     "pick_ade": 8.410284723783086
+    },
+    "Generator and encoder trained together": {
+     "a": 2.7136641300911655,
+     "b": 5.908777804333612,
+     "pick_ade": 8.49652143913921
+    }
+   },
+   {
+    "moment": [
+     "ba826f49-37df-54f1-1f9e-b3df77208a5d",
+     310
+    ],
+    "speed_mps": 15.653308868408203,
+    "Released model": {
+     "a": 1.1721051373501739,
+     "b": 2.817572752780211,
+     "pick_ade": 6.8329152920484235
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 1.551333039937284,
+     "b": 3.349101143327182,
+     "pick_ade": 7.108493806909571
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.14687792508891973,
+     "b": 0.2732342486310895,
+     "pick_ade": 4.358624084859592
+    },
+    "Generator and encoder trained together": {
+     "a": 0.24208147488695178,
+     "b": 0.3946263788014888,
+     "pick_ade": 4.0611790320216405
+    }
+   }
+  ],
+  "most_worsened_generator_vs_encoder": [
+   {
+    "moment": [
+     "6f47eb66-9043-845f-5043-6731c294de25",
+     490
+    ],
+    "speed_mps": 3.3013358116149902,
+    "Released model": {
+     "a": 0.6967931088777988,
+     "b": 2.014050936478269,
+     "pick_ade": 5.7011887214652
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 0.5330455742732482,
+     "b": 1.9899986635254547,
+     "pick_ade": 5.681550415390196
+    },
+    "Generator only, trained on KIT": {
+     "a": 1.1715761101185012,
+     "b": 1.8995773572278496,
+     "pick_ade": 3.8135761120446787
+    },
+    "Generator and encoder trained together": {
+     "a": 1.3212243195541211,
+     "b": 2.7703557253214237,
+     "pick_ade": 3.1209477027573733
+    }
+   },
+   {
+    "moment": [
+     "ba826f49-37df-54f1-1f9e-b3df77208a5d",
+     220
+    ],
+    "speed_mps": 12.704299926757812,
+    "Released model": {
+     "a": 0.5521741041285891,
+     "b": 1.5359433962805797,
+     "pick_ade": 2.7793974317867054
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 0.5494733440947277,
+     "b": 1.5265423177624724,
+     "pick_ade": 2.7109425797178552
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.8571129059247494,
+     "b": 2.218695958009387,
+     "pick_ade": 2.1142675101237614
+    },
+    "Generator and encoder trained together": {
+     "a": 0.7732073989801149,
+     "b": 1.868904706420787,
+     "pick_ade": 1.5617319442481563
+    }
+   },
+   {
+    "moment": [
+     "6f47eb66-9043-845f-5043-6731c294de25",
+     400
+    ],
+    "speed_mps": 5.37867546081543,
+    "Released model": {
+     "a": 0.1865175729369415,
+     "b": 0.20062461657064568,
+     "pick_ade": 0.6761998466373954
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 0.18130375890271888,
+     "b": 0.42356572013474836,
+     "pick_ade": 1.1493142983505893
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.3912041684524199,
+     "b": 0.7104741051442324,
+     "pick_ade": 1.8591421039418066
+    },
+    "Generator and encoder trained together": {
+     "a": 0.30711101424000137,
+     "b": 0.8250984560126838,
+     "pick_ade": 0.30711101424000137
+    }
+   }
+  ],
+  "fast": [
+   {
+    "moment": [
+     "54cd7acd-3f87-9d32-b605-9cd85fc6b7bb",
+     40
+    ],
+    "speed_mps": 15.925461769104004,
+    "Released model": {
+     "a": 3.5018874335090255,
+     "b": 6.5740447481686495,
+     "pick_ade": 8.68803993075837
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 3.495414409834567,
+     "b": 6.549760787566364,
+     "pick_ade": 8.51208396825971
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.16452103444686905,
+     "b": 0.36606812416673207,
+     "pick_ade": 2.7625951363273398
+    },
+    "Generator and encoder trained together": {
+     "a": 0.29241549762862945,
+     "b": 0.26250068613091,
+     "pick_ade": 3.532023308846055
+    }
+   },
+   {
+    "moment": [
+     "ba826f49-37df-54f1-1f9e-b3df77208a5d",
+     310
+    ],
+    "speed_mps": 15.653308868408203,
+    "Released model": {
+     "a": 1.1721051373501739,
+     "b": 2.817572752780211,
+     "pick_ade": 6.8329152920484235
+    },
+    "Encoder only, tuned on KIT": {
+     "a": 1.551333039937284,
+     "b": 3.349101143327182,
+     "pick_ade": 7.108493806909571
+    },
+    "Generator only, trained on KIT": {
+     "a": 0.14687792508891973,
+     "b": 0.2732342486310895,
+     "pick_ade": 4.358624084859592
+    },
+    "Generator and encoder trained together": {
+     "a": 0.24208147488695178,
+     "b": 0.3946263788014888,
+     "pick_ade": 4.0611790320216405
+    }
+   }
+  ]
+ }
+}

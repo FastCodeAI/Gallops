@@ -9,7 +9,7 @@
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
   <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
   <a href="#quickstart"><img src="https://img.shields.io/badge/gate-make_check_(no_CI_yet)-555555.svg" alt="Gate: make check, no CI yet"></a>
-  <a href="#training-so-far"><img src="https://img.shields.io/badge/training_so_far-6_efforts-2E8B4E.svg" alt="Training so far: 6 efforts"></a>
+  <a href="#training-so-far"><img src="https://img.shields.io/badge/training_so_far-7_efforts-2E8B4E.svg" alt="Training so far: 7 efforts"></a>
   <a href="docs/reviewing.md"><img src="https://img.shields.io/badge/reviews-severity_scale-B4560A.svg" alt="Review standard"></a>
 </p>
 
@@ -43,6 +43,7 @@ the same table as every other model. That separation is the point; see
 | [src/gallops/data/](src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
 | [src/gallops/drivejepa_b2d/](src/gallops/drivejepa_b2d/), [recipes/](recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
 | [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) | the Physical AI AV retrain, as the scripts that ran |
+| [experiments/drivejepa_kitscenes/](experiments/drivejepa_kitscenes/) | the KITScenes retraining, three experiments, as the scripts that ran |
 | [checkpoint.py](src/gallops/checkpoint.py), [config.py](src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
 
 The names: a paddock is the enclosure where a horse is paraded and judged
@@ -55,7 +56,7 @@ before a race. The gallops is the training ground where it is made fast.
 **gallops-v0, our own model, is not built yet.** Every training run so far has
 started from the released Drive-JEPA checkpoint and retrained part of it, or
 trained something small on top of it. [Training so far](#training-so-far) lists
-all six efforts. The loop is proven end to end: `gallops train-rerank` writes a
+all seven efforts. The loop is proven end to end: `gallops train-rerank` writes a
 checkpoint with its sidecar, and paddock's `drivejepa_rerank` adapter loads it
 and scores it like any other model.
 
@@ -65,8 +66,9 @@ cannot actually do today.
 
 ## Training so far
 
-Status at 2026-10-14. Everything below starts from the released Drive-JEPA
-checkpoint, with its image encoder frozen. Each row's doc has the full account;
+Status at 2026-10-14; the KITScenes row was added on 2026-10-30. Everything below
+starts from the released Drive-JEPA checkpoint, with its image encoder frozen,
+except that the KITScenes retraining adds a small trainable change (a LoRA) to it. Each row's doc has the full account;
 the numbers here are copied from it, never re-derived.
 
 | What was trained | Retrained on top of the release | Trained on | Headline | How far it holds | Doc |
@@ -75,6 +77,7 @@ the numbers here are copied from it, never re-derived.
 | **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
 | **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
+| **KITScenes retraining**, three experiments | an encoder LoRA; the generator; and the scorer's pick head, in three combinations | KITScenes `train`: 482 scenes (13,937 moments), plus 50 to choose the checkpoint | KITScenes pick ADE (3 s) **0.596 m**, against **2.372** for the released model (223 held-out moments) | **Open loop only, and it fails the regression gate:** the one checkpoint gated regresses on NAVSIM, Bench2Drive and AlpaSim. A research record, not for deployment | [drivejepa-kitscenes.md](docs/drivejepa-kitscenes.md) |
 | **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
 | **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |
 
@@ -160,6 +163,7 @@ Four reasons, in increasing order of importance:
 | [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
 | [docs/scorer-cache.md](docs/scorer-cache.md) | training Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
 | [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
+| [docs/drivejepa-kitscenes.md](docs/drivejepa-kitscenes.md) | the Drive-JEPA KITScenes retraining — three experiments, the held-out comparison, the regression gate |
 | [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
 
 ## Licence

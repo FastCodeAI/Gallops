@@ -1,0 +1,116 @@
+{
+ "preflight": {
+  "load5": 21.15771484375,
+  "ram_gb": 84.9,
+  "disk_gb": 40.5,
+  "gpu_wait_s": 0.1
+ },
+ "models": {
+  "model4_checkpoint_keys": [
+   "generator",
+   "guesser",
+   "key_lora",
+   "lora",
+   "progress_passes",
+   "run",
+   "start",
+   "step"
+  ],
+  "tensors_differing_1_vs_2": {
+   "encoder": 96,
+   "generator": 0,
+   "other": 0
+  },
+  "tensors_differing_2_vs_3": {
+   "encoder": 0,
+   "generator": 155,
+   "other": 0
+  },
+  "tensors_differing_3_vs_4": {
+   "encoder": 96,
+   "generator": 155,
+   "other": 0
+  },
+  "tensors_differing_1_vs_4": {
+   "encoder": 96,
+   "generator": 155,
+   "other": 0
+  },
+  "names": {
+   "1": "Released model",
+   "2": "Encoder only, tuned on KIT",
+   "3": "Generator only, trained on KIT",
+   "4": "Generator and encoder trained together"
+  }
+ },
+ "G2": {
+  "3": {
+   "bit_identical_to_saved_dump": "103 / 103",
+   "m1b_103_now": 0.402655873168921,
+   "m1b_103_recorded": 0.402655873168921,
+   "pass": true
+  },
+  "4": {
+   "bit_identical_to_saved_dump": "103 / 103",
+   "m1b_103_now": 0.3690581848373963,
+   "m1b_103_recorded": 0.3690581848373963,
+   "pass": true
+  },
+  "wrapper_path_103": {
+   "3": {
+    "bit_identical_menus_and_picks": "103 / 103",
+    "max_abs_diff_m": 0.0
+   },
+   "4": {
+    "bit_identical_menus_and_picks": "103 / 103",
+    "max_abs_diff_m": 0.0
+   }
+  },
+  "pass": true
+ },
+ "heldout": {
+  "wall_s": 278.9,
+  "scenes": {
+   "val": 117,
+   "overlap_train_val": 23
+  },
+  "moments": 223
+ },
+ "wall_s": 1698.6,
+ "G1_first_attempt_loop_order_mean": {
+  "1": {
+   "ade_mean_now": 2.3718799477361716,
+   "ade_mean_recorded": 2.371879947736172,
+   "per_moment_rows_equal": "223 / 223",
+   "dumps_bit_identical": "223 / 223",
+   "pass": false
+  },
+  "2": {
+   "ade_mean_now": 1.8793429804954402,
+   "ade_mean_recorded": 1.8793429804954402,
+   "per_moment_rows_equal": "223 / 223",
+   "dumps_bit_identical": "223 / 223",
+   "pass": true
+  },
+  "pass": false
+ },
+ "G1": {
+  "1": {
+   "ade_mean_now": 2.371879947736172,
+   "ade_mean_loop_order": 2.3718799477361716,
+   "ade_mean_recorded": 2.371879947736172,
+   "per_moment_rows_equal": "223 / 223",
+   "dumps_bit_identical": "223 / 223",
+   "pass": true
+  },
+  "2": {
+   "ade_mean_now": 1.8793429804954402,
+   "ade_mean_loop_order": 1.8793429804954402,
+   "ade_mean_recorded": 1.8793429804954402,
+   "per_moment_rows_equal": "223 / 223",
+   "dumps_bit_identical": "223 / 223",
+   "pass": true
+  },
+  "pass": true
+ }
+}

@@ -1,0 +1,160 @@
+{
+ "gpu_wait_s": 0.04644632339477539,
+ "C_params": {
+  "encoder_vit (_backbone.img_backbone)": 303885312,
+  "projector (_backbone.projector, 1024->256)": 262400,
+  "generator.hist_encoding (ego status 11->256)": 3072,
+  "generator.init_feature (learned queries, 32x8 rows x 256)": 65536,
+  "generator.refiner.traj_decoder (MLP 256->1024->3, output head)": 1319939,
+  "generator.refiner.Bev_refiner.positional_encoding": 5120,
+  "generator.refiner.Bev_refiner.bev_decoder (1 BEVFormer layer)": 996160,
+  "generator total (unique)": 2389827,
+  "trajectory_head modules / distinct objects": [
+   4,
+   1
+  ],
+  "scorer": 4704992,
+  "scorer children": {
+   "pred_score": 1323014,
+   "pred_col_agent": 2054864,
+   "pred_area": 1327114
+  },
+  "unique total": 311242531,
+  "named tensors (state_dict keys under _trajectory_head)": 168,
+  "bev_decoder layer children": {
+   "attentions": 460352,
+   "ffns": 525568,
+   "norms": 1536
+  }
+ },
+ "init_feature_shape": [
+  256,
+  256
+ ],
+ "projector_in_backbone": true,
+ "optimizer_groups_upstream": {
+  "backbone_group (0.1*lr) contains projector": true
+ },
+ "ckpt_meta": {
+  "epoch": 12,
+  "global_step": 17277,
+  "pytorch-lightning_version": "2.2.1",
+  "loops": "{'fit_loop': {'state_dict': {}, 'epoch_loop.state_dict': {'_batches_that_stepped': 17277}, 'epoch_loop.batch_progress': {'total': {'ready': 17277, 'completed': 17277, 'started': 17277, 'processed': 17277}, 'current': {'ready': 1329, 'completed': 1329, 'started': 1329, 'processed': 1329}, 'is_last_batch': True}, 'epoch_loop.scheduler_progress': {'total': {'ready': 0, 'completed': 0}, 'current': {'ready': 0, 'completed': 0}}, 'epoch_loop.automatic_optimization.state_dict': {}, 'epoch_loop.automatic_optimization.optim_progress': {'optimizer': {'step': {'total': {'ready': 17277, 'completed': 17277",
+  "callbacks": "{\"ModelCheckpoint{'monitor': 'val/score_epoch', 'mode': 'max', 'every_n_train_steps': 0, 'every_n_epochs': 1, 'train_time_interval': None}\": {'monitor': 'val/score_epoch', 'best_model_score': tensor(0.8767), 'best_model_path': '/projects/yinlin_chen/linhan/projects/navsim_workspace/exp/train_ipad_vjepa_v2_topk_anchors_1/2025.12.08.02.14.54/checkpoints/best_epoch=12.ckpt', 'current_score': tensor(0.8767), 'dirpath': '/projects/yinlin_chen/linhan/projects/navsim_workspace/exp/train_ipad_vjepa_v2_topk_anchors_1/2025.12.08.02.14.54/checkpoints', 'best_k_models': {'/projects/yinlin_chen/linhan/proj",
+  "optimizer_states": "list",
+  "lr_schedulers": "list",
+  "MixedPrecision": "dict",
+  "optimizer_param_groups": [
+   {
+    "lr": 1e-05,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0,
+    "amsgrad": false,
+    "maximize": false,
+    "foreach": null,
+    "capturable": false,
+    "differentiable": false,
+    "fused": null,
+    "n_tensors": 294
+   },
+   {
+    "lr": 0.0001,
+    "betas": [
+     0.9,
+     0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0,
+    "amsgrad": false,
+    "maximize": false,
+    "foreach": null,
+    "capturable": false,
+    "differentiable": false,
+    "fused": null,
+    "n_tensors": 75
+   }
+  ]
+ },
+ "E_modules_with_randomness": [
+  "_backbone.grid_mask:GridMask(p=None)"
+ ],
+ "E_grid_mask_training_flag_in_eval": false,
+ "selection_feature_keys": {
+  "camera_feature": [
+   [
+    4,
+    3,
+    448,
+    768
+   ],
+   "torch.float32"
+  ],
+  "img_shape": [
+   [
+    4,
+    3
+   ],
+   "torch.float32"
+  ],
+  "lidar2img": [
+   [
+    4,
+    4,
+    4
+   ],
+   "torch.float32"
+  ],
+  "camera_feature_1": [
+   [
+    3,
+    256,
+    512
+   ],
+   "torch.float32"
+  ],
+  "camera_feature_2": [
+   [
+    3,
+    256,
+    512
+   ],
+   "torch.float32"
+  ],
+  "ego_status": [
+   [
+    4,
+    11
+   ],
+   "torch.float32"
+  ]
+ },
+ "selection_entry_keys": [
+  "driving_command",
+  "ego_speed",
+  "features",
+  "future_interval_s",
+  "future_poses",
+  "ground_offset",
+  "keyframe",
+  "scene_id"
+ ],
+ "E_determinism": {
+  "moments": 16,
+  "projector_out_shape_per_moment": [
+   512,
+   256
+  ],
+  "encoder_out_shape_per_moment": [
+   512,
+   1024
+  ],
+  "repeat_batch1_bit_identical": true,
+  "batch8_vs_batch1_max_abs_diff_projector": 0.0020221471786499023,
+  "batch8_vs_batch1_max_abs_diff_encoder": 0.005139827728271484,
+  "projector_out_abs_max": 10.167176246643066
+ }
+}

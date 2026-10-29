@@ -1,0 +1,250 @@
+{
+ "preflight": {
+  "load5": 29.32958984375,
+  "ram_gb": 84.7,
+  "disk_gb": 63.2,
+  "gpu_wait_s": 0.1
+ },
+ "control": {
+  "trainable_values": 2381123,
+  "G1": {
+   "menus_1763_bit_identical_to_p9.5_dump": true,
+   "metrics_103_equal": true,
+   "cont_1b_equals_s2_record": true,
+   "pass": true
+  },
+  "G2": {
+   "steps": [
+    {
+     "gen_loss": 0.8036025166511536,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0
+     }
+    },
+    {
+     "gen_loss": 0.4952743947505951,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0
+     }
+    },
+    {
+     "gen_loss": 0.5172988772392273,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0
+     }
+    },
+    {
+     "gen_loss": 0.7178772687911987,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0
+     }
+    },
+    {
+     "gen_loss": 0.8002981543540955,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0
+     }
+    }
+   ],
+   "mode": "control",
+   "peak_allocated_GiB": 3.64,
+   "s_per_step_after_first": 0.522,
+   "restored_bit_exact": true,
+   "pass": true
+  },
+  "stopped": "no SLOW 1b improvement for 6 checks (pass 3.5)",
+  "best": 0.5,
+  "beats_step0": true
+ },
+ "phase2": {
+  "trainable_values": 8672579,
+  "G1": {
+   "menus_1763_bit_identical_to_p9.5_dump": true,
+   "metrics_103_equal": true,
+   "cont_1b_equals_s2_record": true,
+   "pass": true
+  },
+  "G2": {
+   "steps": [
+    {
+     "generator_loss_only_lora_nonzero": 192,
+     "generator_loss_only_guesser_any": 0,
+     "game_loss": 0.49117159843444824,
+     "gen_loss": 0.8004879951477051,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0,
+      "answer_key": 0
+     },
+     "lora_nonzero": 192,
+     "guesser_nonzero": 151,
+     "guesser_total": 160,
+     "guesser_zero_grad": [
+      "mask_tokens.1",
+      "mask_tokens.2",
+      "mask_tokens.3",
+      "mask_tokens.4",
+      "mask_tokens.5",
+      "mask_tokens.6",
+      "mask_tokens.7",
+      "mask_tokens.8",
+      "mask_tokens.9"
+     ]
+    },
+    {
+     "game_loss": 0.4717608094215393,
+     "gen_loss": 0.4851599931716919,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0,
+      "answer_key": 0
+     },
+     "lora_nonzero": 192,
+     "guesser_nonzero": 151,
+     "guesser_total": 160,
+     "guesser_zero_grad": [
+      "mask_tokens.1",
+      "mask_tokens.2",
+      "mask_tokens.3",
+      "mask_tokens.4",
+      "mask_tokens.5",
+      "mask_tokens.6",
+      "mask_tokens.7",
+      "mask_tokens.8",
+      "mask_tokens.9"
+     ]
+    },
+    {
+     "game_loss": 0.4715825915336609,
+     "gen_loss": 0.5264738202095032,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0,
+      "answer_key": 0
+     },
+     "lora_nonzero": 192,
+     "guesser_nonzero": 151,
+     "guesser_total": 160,
+     "guesser_zero_grad": [
+      "mask_tokens.1",
+      "mask_tokens.2",
+      "mask_tokens.3",
+      "mask_tokens.4",
+      "mask_tokens.5",
+      "mask_tokens.6",
+      "mask_tokens.7",
+      "mask_tokens.8",
+      "mask_tokens.9"
+     ]
+    },
+    {
+     "game_loss": 0.4723306894302368,
+     "gen_loss": 0.7248672842979431,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0,
+      "answer_key": 0
+     },
+     "lora_nonzero": 192,
+     "guesser_nonzero": 151,
+     "guesser_total": 160,
+     "guesser_zero_grad": [
+      "mask_tokens.1",
+      "mask_tokens.2",
+      "mask_tokens.3",
+      "mask_tokens.4",
+      "mask_tokens.5",
+      "mask_tokens.6",
+      "mask_tokens.7",
+      "mask_tokens.8",
+      "mask_tokens.9"
+     ]
+    },
+    {
+     "game_loss": 0.4666402339935303,
+     "gen_loss": 0.7386642098426819,
+     "generator_nonzero": 41,
+     "others_any_grad": {
+      "projector": 0,
+      "scorer": 0,
+      "fixed_grids": 0,
+      "encoder_base": 0,
+      "rest": 0,
+      "answer_key": 0
+     },
+     "lora_nonzero": 192,
+     "guesser_nonzero": 151,
+     "guesser_total": 160,
+     "guesser_zero_grad": [
+      "mask_tokens.1",
+      "mask_tokens.2",
+      "mask_tokens.3",
+      "mask_tokens.4",
+      "mask_tokens.5",
+      "mask_tokens.6",
+      "mask_tokens.7",
+      "mask_tokens.8",
+      "mask_tokens.9"
+     ]
+    }
+   ],
+   "mode": "phase2",
+   "peak_allocated_GiB": 6.98,
+   "s_per_step_after_first": 2.301,
+   "restored_bit_exact": true,
+   "pass": true
+  },
+  "stopped": "turning check failed at 2 checks in a row (pass 3.0)",
+  "best": 1.0,
+  "beats_step0": false
+ },
+ "G3": {
+  "pass": true,
+  "first_20_match": true,
+  "all_common_steps": {
+   "n": 1305,
+   "matching": 1305
+  }
+ }
+}

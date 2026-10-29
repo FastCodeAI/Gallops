@@ -1,0 +1,269 @@
+{
+ "gpu": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+ "before": {
+  "apps": [
+   {
+    "pid": 3587376,
+    "mib": 8408
+   },
+   {
+    "pid": 3690343,
+    "mib": 15664
+   },
+   {
+    "pid": 3534796,
+    "mib": 6556
+   },
+   {
+    "pid": 551102,
+    "mib": 2500
+   },
+   {
+    "pid": 1312549,
+    "mib": 3528
+   },
+   {
+    "pid": 68422,
+    "mib": 4340
+   },
+   {
+    "pid": 2970751,
+    "mib": 1574
+   },
+   {
+    "pid": 1367117,
+    "mib": 20464
+   }
+  ],
+  "used_total_util": "63434, 97887, 100"
+ },
+ "free_mib_start": 33251,
+ "read_32_pairs_s": 36.8,
+ "timing": {
+  "8": {
+   "s_per_step_mean": 0.395,
+   "s_per_step_min": 0.329,
+   "s_per_step_max": 0.622,
+   "pairs_per_s": 20.28,
+   "max_memory_allocated_mib": 4313,
+   "max_memory_reserved_mib": 4410,
+   "free_mib_before": 29411,
+   "free_mib_after": 28689,
+   "last_loss": 0.5378708243370056,
+   "others_during": {
+    "apps": [
+     {
+      "pid": 3587376,
+      "mib": 8408
+     },
+     {
+      "pid": 3690343,
+      "mib": 15664
+     },
+     {
+      "pid": 3534796,
+      "mib": 6556
+     },
+     {
+      "pid": 551102,
+      "mib": 2500
+     },
+     {
+      "pid": 1312549,
+      "mib": 3528
+     },
+     {
+      "pid": 68422,
+      "mib": 4340
+     },
+     {
+      "pid": 2970751,
+      "mib": 1574
+     },
+     {
+      "pid": 1367117,
+      "mib": 20464
+     },
+     {
+      "pid": 2575588,
+      "mib": 5112
+     }
+    ],
+    "used_total_util": "68552, 97887, 100"
+   }
+  },
+  "16": {
+   "s_per_step_mean": 0.378,
+   "s_per_step_min": 0.323,
+   "s_per_step_max": 0.615,
+   "pairs_per_s": 42.29,
+   "max_memory_allocated_mib": 4655,
+   "max_memory_reserved_mib": 4826,
+   "free_mib_before": 29335,
+   "free_mib_after": 28271,
+   "last_loss": 0.5409495830535889,
+   "others_during": {
+    "apps": [
+     {
+      "pid": 3587376,
+      "mib": 8408
+     },
+     {
+      "pid": 3690343,
+      "mib": 15664
+     },
+     {
+      "pid": 3534796,
+      "mib": 6556
+     },
+     {
+      "pid": 551102,
+      "mib": 2500
+     },
+     {
+      "pid": 1312549,
+      "mib": 3528
+     },
+     {
+      "pid": 68422,
+      "mib": 4340
+     },
+     {
+      "pid": 2970751,
+      "mib": 1574
+     },
+     {
+      "pid": 1367117,
+      "mib": 20464
+     },
+     {
+      "pid": 2575588,
+      "mib": 5530
+     }
+    ],
+    "used_total_util": "68970, 97887, 13"
+   }
+  },
+  "32": {
+   "s_per_step_mean": 0.442,
+   "s_per_step_min": 0.378,
+   "s_per_step_max": 0.624,
+   "pairs_per_s": 72.42,
+   "max_memory_allocated_mib": 5131,
+   "max_memory_reserved_mib": 5422,
+   "free_mib_before": 29333,
+   "free_mib_after": 27675,
+   "last_loss": 0.5277683734893799,
+   "others_during": {
+    "apps": [
+     {
+      "pid": 3587376,
+      "mib": 8408
+     },
+     {
+      "pid": 3690343,
+      "mib": 15664
+     },
+     {
+      "pid": 3534796,
+      "mib": 6556
+     },
+     {
+      "pid": 551102,
+      "mib": 2500
+     },
+     {
+      "pid": 1312549,
+      "mib": 3528
+     },
+     {
+      "pid": 68422,
+      "mib": 4340
+     },
+     {
+      "pid": 2970751,
+      "mib": 1574
+     },
+     {
+      "pid": 1367117,
+      "mib": 20464
+     },
+     {
+      "pid": 2575588,
+      "mib": 6126
+     }
+    ],
+    "used_total_util": "69566, 97887, 100"
+   }
+  }
+ },
+ "after": {
+  "apps": [
+   {
+    "pid": 3587376,
+    "mib": 8408
+   },
+   {
+    "pid": 3690343,
+    "mib": 15664
+   },
+   {
+    "pid": 3534796,
+    "mib": 6556
+   },
+   {
+    "pid": 551102,
+    "mib": 2500
+   },
+   {
+    "pid": 1312549,
+    "mib": 3528
+   },
+   {
+    "pid": 68422,
+    "mib": 4340
+   },
+   {
+    "pid": 2970751,
+    "mib": 1574
+   },
+   {
+    "pid": 1367117,
+    "mib": 20464
+   },
+   {
+    "pid": 2575588,
+    "mib": 2134
+   }
+  ],
+  "used_total_util": "65574, 97887, 47"
+ },
+ "pass_estimate": {
+  "train_pairs": 93784,
+  "reader_pairs_per_s": {
+   "1": 0.46,
+   "4": 0.8,
+   "8": 1.27
+  },
+  "by_batch": {
+   "8": {
+    "gpu_only_h": 1.28,
+    "with_1_workers_from_NAS_h": 56.6,
+    "with_4_workers_from_NAS_h": 32.6,
+    "with_8_workers_from_NAS_h": 20.5
+   },
+   "16": {
+    "gpu_only_h": 0.62,
+    "with_1_workers_from_NAS_h": 56.6,
+    "with_4_workers_from_NAS_h": 32.6,
+    "with_8_workers_from_NAS_h": 20.5
+   },
+   "32": {
+    "gpu_only_h": 0.36,
+    "with_1_workers_from_NAS_h": 56.6,
+    "with_4_workers_from_NAS_h": 32.6,
+    "with_8_workers_from_NAS_h": 20.5
+   }
+  }
+ }
+}

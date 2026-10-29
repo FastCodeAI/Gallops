@@ -1,0 +1,159 @@
+{
+ "gpu_wait_s": 0.03717374801635742,
+ "pass3_reproduces_recorded_ade": {
+  "now": 1.8732948781716308,
+  "recorded": 1.8732948781716308
+ },
+ "trained_layer_norms": {
+  "sum": 264.9057621238085,
+  "min": 0.9510366491555062,
+  "max": 6.363424214651009
+ },
+ "verdict": "TRAINED-MATTERS",
+ "verdict_inputs": {
+  "pass3_ade": 1.8732948781716308,
+  "random_ades": [
+   2.4649977212021956,
+   2.441072874674083,
+   2.533950959173358,
+   2.4791693062944753,
+   2.413417678409018
+  ],
+  "margin_to_best_random": 0.5401228002373875,
+  "random_mean_minus_pass3": 0.5932268297789951
+ },
+ "table": {
+  "zero": {
+   "ade_mean": 2.3921765067852556,
+   "ade_median": 1.4138354899329284,
+   "fde3_mean": 4.3458379970179175,
+   "best_of_32_ade_mean": 0.5734020690854773,
+   "mean_proposal_shift_m": 0.0,
+   "max_proposal_shift_m": 0.0,
+   "mean_abs_grade_change": 0.0,
+   "picks_changed": 0,
+   "plan_speed_mean_mps": 5.8712745037556
+  },
+  "pass3": {
+   "ade_mean": 1.8732948781716308,
+   "ade_median": 1.0013018329000987,
+   "fde3_mean": 3.477167002492553,
+   "best_of_32_ade_mean": 0.5632779216035154,
+   "mean_proposal_shift_m": 0.2668288479432772,
+   "max_proposal_shift_m": 5.985440991212611,
+   "mean_abs_grade_change": 0.0895182412689624,
+   "picks_changed": 74,
+   "plan_speed_mean_mps": 6.169043278264739
+  },
+  "seed1": {
+   "ade_mean": 2.4649977212021956,
+   "ade_median": 1.418652202772028,
+   "fde3_mean": 4.450879863771906,
+   "best_of_32_ade_mean": 0.5728358712427577,
+   "mean_proposal_shift_m": 0.047718597179851455,
+   "max_proposal_shift_m": 3.6033361969515623,
+   "mean_abs_grade_change": 0.011278119451904363,
+   "picks_changed": 15,
+   "plan_speed_mean_mps": 5.816026792974493,
+   "norm_match_worst_rel_err": 1.135622377545175e-09
+  },
+  "seed2": {
+   "ade_mean": 2.441072874674083,
+   "ade_median": 1.4694838204317875,
+   "fde3_mean": 4.447063794921517,
+   "best_of_32_ade_mean": 0.5725743414551456,
+   "mean_proposal_shift_m": 0.04935652339341956,
+   "max_proposal_shift_m": 5.713632185626471,
+   "mean_abs_grade_change": 0.008979057158497207,
+   "picks_changed": 16,
+   "plan_speed_mean_mps": 5.864904475647072,
+   "norm_match_worst_rel_err": 1.1491318023394761e-09
+  },
+  "seed3": {
+   "ade_mean": 2.533950959173358,
+   "ade_median": 1.5066728815935193,
+   "fde3_mean": 4.51232799169533,
+   "best_of_32_ade_mean": 0.567668820998062,
+   "mean_proposal_shift_m": 0.04235616517823743,
+   "max_proposal_shift_m": 3.413114816739774,
+   "mean_abs_grade_change": 0.010584200663464957,
+   "picks_changed": 20,
+   "plan_speed_mean_mps": 5.77175228518377,
+   "norm_match_worst_rel_err": 1.019435392007454e-09
+  },
+  "seed4": {
+   "ade_mean": 2.4791693062944753,
+   "ade_median": 1.525129175888006,
+   "fde3_mean": 4.466468240755335,
+   "best_of_32_ade_mean": 0.5738733155656881,
+   "mean_proposal_shift_m": 0.04985798080823568,
+   "max_proposal_shift_m": 5.5832495759420935,
+   "mean_abs_grade_change": 0.01198865199129287,
+   "picks_changed": 19,
+   "plan_speed_mean_mps": 5.786814110005636,
+   "norm_match_worst_rel_err": 1.2815031039791014e-09
+  },
+  "seed5": {
+   "ade_mean": 2.413417678409018,
+   "ade_median": 1.457555020274822,
+   "fde3_mean": 4.374907385891346,
+   "best_of_32_ade_mean": 0.5714539114900437,
+   "mean_proposal_shift_m": 0.04466950295999428,
+   "max_proposal_shift_m": 5.493016116190013,
+   "mean_abs_grade_change": 0.010100278904767779,
+   "picks_changed": 15,
+   "plan_speed_mean_mps": 5.88874928944413,
+   "norm_match_worst_rel_err": 1.49097825166941e-09
+  },
+  "random_mean": {
+   "ade_mean": 2.466521707950626,
+   "ade_median": 1.4754986201920326,
+   "fde3_mean": 4.450329455407088,
+   "best_of_32_ade_mean": 0.5716812521503394,
+   "mean_proposal_shift_m": 0.046791753903947686,
+   "max_proposal_shift_m": 4.761269778289983,
+   "mean_abs_grade_change": 0.010586061633985436,
+   "picks_changed": 17.0,
+   "plan_speed_mean_mps": 5.82564939065102
+  },
+  "random_range": {
+   "ade_mean": [
+    2.413417678409018,
+    2.533950959173358
+   ],
+   "ade_median": [
+    1.418652202772028,
+    1.525129175888006
+   ],
+   "fde3_mean": [
+    4.374907385891346,
+    4.51232799169533
+   ],
+   "best_of_32_ade_mean": [
+    0.567668820998062,
+    0.5738733155656881
+   ],
+   "mean_proposal_shift_m": [
+    0.04235616517823743,
+    0.04985798080823568
+   ],
+   "max_proposal_shift_m": [
+    3.413114816739774,
+    5.713632185626471
+   ],
+   "mean_abs_grade_change": [
+    0.008979057158497207,
+    0.01198865199129287
+   ],
+   "picks_changed": [
+    15.0,
+    20.0
+   ],
+   "plan_speed_mean_mps": [
+    5.77175228518377,
+    5.88874928944413
+   ]
+  }
+ },
+ "gpu_process_s": 159.3
+}

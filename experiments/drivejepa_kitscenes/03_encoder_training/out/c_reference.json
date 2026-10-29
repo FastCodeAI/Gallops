@@ -1,0 +1,86 @@
+{
+ "C1": {
+  "gpu_wait_s": 0.034302711486816406,
+  "moments": 103,
+  "scenes": 50,
+  "checks": {
+   "forward_dump_eq_compute_trajectory": 103,
+   "zero_lora_dump_eq_plain": 103,
+   "of": 103,
+   "drift_zero_lora_vs_plain": {
+    "samples": 103,
+    "mean_proposal_shift_m": 0.0,
+    "max_proposal_shift_m": 0.0,
+    "mean_grade_change": 0.0,
+    "chosen_changed": 0
+   }
+  },
+  "cached_path_ade_equal": true,
+  "selection_before": {
+   "n": 103,
+   "ade": {
+    "mean": 2.3921765067852556,
+    "median": 1.4138354899329284
+   },
+   "fde@1s": {
+    "mean": 1.2748470935629403,
+    "median": 0.6393826086469698
+   },
+   "fde@2s": {
+    "mean": 2.688894149966645,
+    "median": 1.6828053138345254
+   },
+   "fde@3s": {
+    "mean": 4.3458379970179175,
+    "median": 2.874712697717926
+   }
+  },
+  "chosen_index_hist": {
+   "0": 2,
+   "1": 2,
+   "2": 4,
+   "3": 8,
+   "5": 1,
+   "6": 10,
+   "7": 8,
+   "9": 3,
+   "10": 4,
+   "11": 6,
+   "12": 12,
+   "13": 2,
+   "14": 1,
+   "15": 1,
+   "16": 4,
+   "17": 7,
+   "20": 7,
+   "21": 3,
+   "22": 3,
+   "23": 1,
+   "24": 4,
+   "25": 4,
+   "26": 1,
+   "27": 3,
+   "28": 1,
+   "31": 1
+  },
+  "wall_s": 421.9,
+  "selection_features_file": "{runs}/drivejepa_kitscenes/encoder_lora_kit/s2/selection_features.pt",
+  "selection_features_MB": 2025.3
+ },
+ "C2": {
+  "gpu_wait_s": 0.05718708038330078,
+  "load_s": 2.1,
+  "pairs": 2000,
+  "scenes": 50,
+  "batches": 63,
+  "hidden_counts_first_batch": [
+   263,
+   480
+  ],
+  "items_sha256": "fd268f7e0ec5d74e0d61d9abe7ed50f5d6047b351ffaeebecf94fdb04abf2066",
+  "zero_lora_loss": 0.5988116235733032,
+  "repeat_loss": 0.5988116235733032,
+  "repeat_identical": true,
+  "eval_s": 29.3
+ }
+}

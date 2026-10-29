@@ -1,0 +1,23 @@
+{
+ "pairs_train": 93784,
+ "pairs_selection": 11315,
+ "frames_train": 96194,
+ "frames_selection": 11565,
+ "index_build_seconds": 222.4,
+ "frames_per_scene_min_max": [
+  100,
+  700
+ ],
+ "pair_shape": [
+  2,
+  3,
+  256,
+  512
+ ],
+ "pair_dtype": "torch.float32",
+ "pairs_per_second_by_workers": {
+  "1": 0.46,
+  "4": 0.8,
+  "8": 1.27
+ }
+}
