@@ -56,7 +56,7 @@ AGENT_CKPT_SHA256 = "740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d
 E50 = NAVSIM_EXP_ROOT / "Drive-JEPA-cache/vitl_merge_3dataset_e50.pt"
 E50_SHA256 = "4649182770ef68f84a001780c6579435345948fd80f186fa3616ab078ced668f"
 
-NAS_OUT = Path("{nas}/siddesh-physicalai/encoder_lora_kit/02_encoder_build")
+NAS_OUT = Path("{nas}/siddesh-physicalai/encoder_lora_kit/s1_build")
 
 
 def sha256_file(path: Path, chunk: int = 1 << 24) -> str:
