@@ -2,7 +2,7 @@
 
 Date 2026-10-17, shakaal. Nothing was trained and no weights were saved. No tracked file, Gallops branch file, experiments/drivejepa_kitscenes file or vendored file was edited. The 223 held-out moments (val + overlap_train_val) and test were **not read**. About 6 min of GPU time in total.
 
-**Folder.** The brief's `experiments/drivejepa_kitscenes/` no longer exists. It was renamed to `experiments/drivejepa_kitscenes/` (holding `experiments/drivejepa_kitscenes/`), and an empty `experiments/drivejepa_kitscenes/` was created at 00:38 the same night. This work therefore sits in `experiments/drivejepa_kitscenes/05_generator_survey/`. Large outputs go to `{runs}/drivejepa_kitscenes/generator_joint_kit/s0/`, which is empty because nothing large was produced.
+**Folder.** The working folder the brief named no longer exists. It was renamed to the folder that now holds Experiment 1 (`01_encoder_survey/` to `04_encoder_checks/` here), and an empty folder for this work was created at 00:38 the same night. This work therefore sits in `experiments/drivejepa_kitscenes/05_generator_survey/`. Large outputs go to `{runs}/drivejepa_kitscenes/generator_joint_kit/s0/`, which is empty because nothing large was produced. *(Reworded at commit time: the original sentence named four working folders, which the folder renaming had collapsed into one name.)*
 
 **Terms.**
 - **Generator:** the part of the planner that proposes the 32 candidate trajectories.
