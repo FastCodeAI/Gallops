@@ -40,7 +40,7 @@
   "global_step": 17277,
   "pytorch-lightning_version": "2.2.1",
   "loops": "{'fit_loop': {'state_dict': {}, 'epoch_loop.state_dict': {'_batches_that_stepped': 17277}, 'epoch_loop.batch_progress': {'total': {'ready': 17277, 'completed': 17277, 'started': 17277, 'processed': 17277}, 'current': {'ready': 1329, 'completed': 1329, 'started': 1329, 'processed': 1329}, 'is_last_batch': True}, 'epoch_loop.scheduler_progress': {'total': {'ready': 0, 'completed': 0}, 'current': {'ready': 0, 'completed': 0}}, 'epoch_loop.automatic_optimization.state_dict': {}, 'epoch_loop.automatic_optimization.optim_progress': {'optimizer': {'step': {'total': {'ready': 17277, 'completed': 17277",
-  "callbacks": "{\"ModelCheckpoint{'monitor': 'val/score_epoch', 'mode': 'max', 'every_n_train_steps': 0, 'every_n_epochs': 1, 'train_time_interval': None}\": {'monitor': 'val/score_epoch', 'best_model_score': tensor(0.8767), 'best_model_path': '/projects/yinlin_chen/linhan/projects/navsim_workspace/exp/train_ipad_vjepa_v2_topk_anchors_1/2025.12.08.02.14.54/checkpoints/best_epoch=12.ckpt', 'current_score': tensor(0.8767), 'dirpath': '/projects/yinlin_chen/linhan/projects/navsim_workspace/exp/train_ipad_vjepa_v2_topk_anchors_1/2025.12.08.02.14.54/checkpoints', 'best_k_models': {'/projects/yinlin_chen/linhan/proj",
+  "callbacks": "removed at commit time: the released checkpoint's ModelCheckpoint state, which names the upstream author's training paths (best val/score_epoch 0.8767 at epoch 12)",
   "optimizer_states": "list",
   "lr_schedulers": "list",
   "MixedPrecision": "dict",

@@ -79,8 +79,8 @@ here will not run until its placeholders are put back to real locations, and non
 they were put in.** The `run.sh` launchers put earlier folders' `src/` on `PYTHONPATH`, so the
 folders only work together.
 
-[AS_RUN.sha256](AS_RUN.sha256) holds the sha256 of each of the 46 files as it was before these
-replacements, against its original path. It is a record of the originals, so `sha256sum -c` does not
+[AS_RUN.sha256](AS_RUN.sha256) holds the sha256 of each of the 47 files as it was before these
+changes, against its original path. It is a record of the originals, so `sha256sum -c` does not
 pass against the committed files. The originals are kept at the training site. The replacements cannot
 be undone from the committed text alone, because they are many-to-one: `{workspace}` and `{paddock}`
 each stand for two spellings of a path (absolute and `~/`), and several working folder names became
@@ -91,3 +91,6 @@ Edited after review, beyond the placeholders:
 
 - `05_generator_survey/REPORT.md`, the **Folder** paragraph: reworded, because the renaming had turned
   four working folder names into one and the sentence no longer read.
+- `05_generator_survey/out/ce_parts.json`, `ckpt_meta.callbacks`: replaced by a one-line note. It held the
+  released checkpoint's training-callback state, which names the upstream author's machine paths.
+  Its original hash is in `AS_RUN.sha256`.
