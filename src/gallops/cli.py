@@ -15,6 +15,7 @@ from typing import Annotated
 import typer
 
 from gallops import checkpoint as ckpt
+from gallops import experiments as exps
 from gallops import recipe as recipes
 from gallops.config import REPO_ROOT, ConfigError, SiteConfig
 
@@ -94,6 +95,163 @@ def recipe(
             if code:
                 typer.secho(f"stage {cmd.stage} exited {code}; stopping", fg=typer.colors.RED, err=True)
                 raise typer.Exit(code)
+
+
+experiments_app = typer.Typer(
+    add_completion=False,
+    help="The experiment registry: experiments/<ID>_<slug>/experiment.toml, and the README rendered from it.",
+)
+app.add_typer(experiments_app, name="experiments")
+
+
+def _registry() -> exps.Registry:
+    try:
+        return exps.Registry.load()
+    except exps.RegistryError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+
+
+@experiments_app.command("check")
+def experiments_check() -> None:
+    """Validate every experiment, the decision log, the code map, and that the README is rendered.
+
+    The same checks `make check` runs; this prints all of them at once.
+    """
+    reg = _registry()
+    problems = list(reg.errors)
+    if not problems:
+        problems = [f"{t} is out of date: run `gallops experiments render --write`" for t in exps.stale(reg)]
+    for problem in problems:
+        typer.secho(problem, fg=typer.colors.RED, err=True)
+    if problems:
+        raise typer.Exit(1)
+    typer.echo(f"{len(reg.experiments)} experiments, {len(reg.decisions)} decisions: ok")
+
+
+@experiments_app.command("render")
+def experiments_render(
+    write: Annotated[bool, typer.Option("--write", help="rewrite the marked blocks in place")] = False,
+) -> None:
+    """Render the README blocks from the registry; print them, or rewrite them in place with --write."""
+    reg = _registry()
+    if reg.errors:
+        for problem in reg.errors:
+            typer.secho(problem, fg=typer.colors.RED, err=True)
+        typer.secho("fix the registry before rendering from it", fg=typer.colors.RED, err=True)
+        raise typer.Exit(1)
+    if write:
+        changed = exps.write(reg)
+        typer.echo("rewrote " + ", ".join(changed) if changed else "already up to date")
+        return
+    for target, blocks in exps.TARGETS.items():
+        for name, body in exps.render(reg, blocks).items():
+            start, end = exps.markers(name)
+            typer.echo(f"# {target}\n{start}\n{body}\n{end}\n")
+
+
+@experiments_app.command("new")
+def experiments_new(
+    eid: Annotated[str, typer.Argument(help="the next free id: GCnn or Hnn")],
+    slug: Annotated[str, typer.Argument(help="lower_case_words naming it")],
+    track: Annotated[str, typer.Option(help="hypothesis | enabler | gap-closing")] = "hypothesis",
+    owner: Annotated[str, typer.Option(help="a name from experiments/people.toml")] = "",
+) -> None:
+    """Start an experiment folder from experiments/_template, before the first run.
+
+    PREDICTIONS.md comes with it: fill it in and commit it before anything is trained, because a
+    prediction written after the result is not one.
+    """
+    import datetime as dt
+    import shutil
+
+    folder = exps.REPO_ROOT / "experiments" / f"{eid}_{slug}"
+    if not exps.FOLDER_RE.match(folder.name) or not exps.ID_RE.match(eid):
+        typer.secho(f"{folder.name} is not <GCnn|Hnn>_<lower_case_slug>", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    if track not in exps.TRACKS:
+        typer.secho(f"--track is one of {', '.join(exps.TRACKS)}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    taken = {e.id for e in _registry().experiments}
+    if eid in taken or folder.exists():
+        typer.secho(f"{eid} is taken: ids are never reused", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2)
+    shutil.copytree(exps.REPO_ROOT / "experiments" / "_template", folder)
+    fill = {
+        "{{ID}}": eid,
+        "{{ID_LOWER}}": eid.lower(),
+        "{{FOLDER}}": folder.name,
+        "{{TRACK}}": track,
+        "{{OWNER}}": owner or "?",
+        "{{DATE}}": dt.date.today().isoformat(),
+    }
+    for path in folder.rglob("*"):
+        if path.is_file():
+            text = path.read_text()
+            for key, value in fill.items():
+                text = text.replace(key, value)
+            path.write_text(text)
+    typer.echo(f"created {folder.relative_to(exps.REPO_ROOT)}/ -- write PREDICTIONS.md before the first run")
+
+
+#: What a weights file in a step directory is called, by the trainers this repo has.
+_WEIGHTS = (".safetensors", ".ckpt", ".pt", ".pth", ".npz", ".bin")
+
+
+@experiments_app.command("checkpoint")
+def experiments_checkpoint(
+    directory: Annotated[str, typer.Argument(help="a step directory holding checkpoint.json")],
+    rehash: Annotated[
+        bool, typer.Option("--hash", help="hash the weights even if the sidecar has a digest")
+    ] = False,
+) -> None:
+    """Print the [runs.checkpoint] block for a checkpoint directory, pinned by its weights' sha256.
+
+    The digest comes from the sidecar when it has one; otherwise (or with --hash) the largest weights
+    file is hashed here. A sidecar that disagrees with its own weights is reported, not papered over.
+    """
+    from pathlib import Path
+
+    path = Path(directory)
+    try:
+        record = ckpt.read(path)
+    except ckpt.SidecarError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+    files = sorted((p for p in path.iterdir() if p.suffix in _WEIGHTS), key=lambda p: p.stat().st_size)
+    weights = files[-1] if files else None
+    digest = record.weights_sha256
+    if weights is not None and (rehash or not digest):
+        computed = ckpt.sha256_file(weights)
+        if digest and computed != digest:
+            typer.secho(
+                f"{weights.name} hashes to {computed}, but the sidecar says {digest}",
+                fg=typer.colors.RED,
+                err=True,
+            )
+            raise typer.Exit(1)
+        digest = computed
+    lines = [
+        "[runs.checkpoint]",
+        f'model = "{record.model}"',
+        f'train_run = "{record.train_run}"',
+        f"step = {record.step}",
+        'step_unit = "?"  # epoch | pass | optimizer_step: the sidecar does not say which',
+    ]
+    if digest:
+        lines.append(f'weights_sha256 = "{digest}"')
+    if weights is not None:
+        lines.append(f'file = "{weights.name}"')
+    lines += [
+        f'location = "{{weights}}/{record.model}/{record.train_run}/step_{record.step:09d}/"',
+        "sidecar = true",
+        f"# train_git_sha = {record.train_git_sha}  (put it on the run)",
+    ]
+    for t in record.trained_on:
+        lines.append(f"# trained_on: {t.dataset} / {t.split}" + (f" ({t.fraction})" if t.fraction else ""))
+    if record.selection_split:
+        lines.append(f"# selection_split: {record.selection_split}")
+    typer.echo("\n".join(lines))
 
 
 @app.command("train-rerank")

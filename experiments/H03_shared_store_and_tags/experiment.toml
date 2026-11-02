@@ -1,0 +1,48 @@
+# H03 -- one shared folder and group for the three of us; every checkpoint tagged by its weights sha256
+# with full metadata. Owner Naren (setup), all. Sources: "Renesas Progress and Plan", 22 Oct 2026
+# (Next steps item 3), paddock PR #109 and docs/queue.md, this repo's registry code, and the machine's
+# group table (read 3 Nov 2026).
+
+schema = 1
+id = "H03"
+title = "One shared folder and group; every checkpoint tagged by weights sha256 with full metadata"
+short = "Shared store and checkpoint tags"
+track = "enabler"
+owner = "Naren"
+benchmarks = []
+started = 2026-10-21
+status = "running"
+verdict = "none"
+priority = 3
+question = """We could not run each other's models twice in the week of 19 Oct. One shared folder and \
+group for the three of us, and a tag on every checkpoint (its weights sha256) with full metadata, so \
+that anyone can run anyone's checkpoint and every result traces to one. Gallops' checkpoint file \
+already records step, commit and training data; the group needs the machine admin's OK."""
+learned = """So far: the paddock account and a paddock group holding the three of us exist on shakaal; \
+paddock's gate queue (#109, 26 Oct) copies every submitted checkpoint into a shared store named by its \
+sha256. This registry pins every checkpoint by weights_sha256 with model, run, step, data and code, and \
+`gallops experiments checkpoint` prints that block from a checkpoint directory. Not every past checkpoint \
+has its digest recorded: those without one say so, and a gated checkpoint without one fails make check."""
+narrative = "experiments/H03_shared_store_and_tags/README.md"
+external = [
+  "The shared checkpoint store is paddock's gate-queue store ([queue] store in the site paddock.toml); paddock docs/queue.md says how it is set up.",
+]
+
+[[checks]]
+name = "The shared group"
+result = "the paddock account and group exist on shakaal; the group's members are naren, navrant and siddesh"
+source = "getent group paddock on shakaal, read 3 Nov 2026 (when it was created is not recorded)"
+
+[[checks]]
+name = "A shared checkpoint store, by content (paddock #109)"
+date = 2026-10-26
+result = "`gate_queue submit` copies a checkpoint file or directory into the shared store under a name made from its sha256, with the small files beside it (gallops' checkpoint.json), so a job measures what was submitted even if the original is overwritten"
+decided = "merged 26 Oct; anyone in the paddock group can submit"
+source = "paddock PR #109 (ef3f004), docs/queue.md"
+
+[[checks]]
+name = "Checkpoint tags in this registry"
+date = 2026-11-03
+result = "a [runs.checkpoint] carries weights_sha256 where it is known (64 hex digits, each claimed by one run only; required once a checkpoint is gated), model, train_run, step, file and location as a template; `gallops experiments checkpoint <dir>` prints the block from a sidecar and hashes the weights when the sidecar has no digest (with --hash it hashes anyway and reports a sidecar that disagrees)"
+decided = "the tagging half of H03; the shared group is the other half"
+source = "src/gallops/experiments.py, src/gallops/cli.py, src/gallops/checkpoint.py (sha256_file)"

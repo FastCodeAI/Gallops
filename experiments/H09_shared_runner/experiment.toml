@@ -1,0 +1,62 @@
+# H09 -- a shared runner: one queue, one job at a time, warm simulators owned by the queue. Owner Naren.
+# Sources: "Renesas Progress and Plan", 22 Oct 2026 (Next steps item 9; "One shared runner"), paddock
+# PRs #100, #109, #111, #115 and docs/queue.md on main, and the queue's own job files on shakaal
+# (read 3 Nov 2026).
+
+schema = 1
+id = "H09"
+title = "A shared runner: one queue, one job at a time, with warm neuroNCAP renderers and a persistent CARLA"
+short = "Shared gate runner"
+track = "enabler"
+owner = "Naren"
+benchmarks = ["navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "alpasim"]
+started = 2026-10-21
+status = "running"
+verdict = "none"
+priority = 9
+question = """Can runs from all three of us share the GPU and simulators safely? Nothing coordinated \
+between users: GPU waits reserved nothing until #100's GPU lock (merged 22 Oct), a crashing CARLA killed \
+its user's other CARLAs, AlpaSim used fixed ports, and Navvrat was not in the docker group. The plan: one \
+queue that runs one job at a time, each job naming a checkpoint in a shared store, with warm neuroNCAP \
+renderers and a persistent CARLA owned by the queue. It waited on the machine admin for a paddock service \
+account and a group for the three of us."""
+learned = """So far: the queue landed (paddock #109, 26 Oct) and runs as the paddock account, one job at a \
+time, with each submitted checkpoint copied into a shared store by its sha256 and the code pinned to a \
+pushed commit; by 27 Oct it had made Drive-JEPA's quick- and closed-tier baselines and gated a \
+teammate's candidate. Not built: warm simulators. Every benchmark run still starts its simulator cold."""
+narrative = "experiments/H09_shared_runner/README.md"
+external = [
+  "Queue jobs: job.json and result.json under the queue root's jobs/ ([queue] root in the site paddock.toml), on shakaal.",
+]
+
+[[checks]]
+name = "Safe beside other jobs (paddock #100)"
+date = 2026-10-22
+result = "a crashed Bench2Drive route kills only its own CARLA; one launch at a time per GPU across all users (a lock over the last free-memory check and the model load); AlpaSim runs started together use separate host ports"
+decided = "merged 22 Oct (ee62a6b)"
+source = "paddock PR #100; Renesas Progress and Plan, 22 Oct 2026 (PR #100 table)"
+
+[[checks]]
+name = "The gate queue (paddock #109)"
+date = 2026-10-26
+result = "one queue for the site; one worker, running as the paddock account, runs jobs one at a time with tools.gate smoke; submit checks each --env key against model.yaml at the job's commit, copies the checkpoint into a shared store named by its sha256, and pins the code to a commit on GitHub; the queue keeps its own baselines, remade when a model's settings change on main"
+decided = "merged 26 Oct (ef3f004)"
+source = "paddock PR #109; docs/queue.md"
+
+[[checks]]
+name = "The queue in use, 23–27 Oct"
+date = 2026-10-27
+result = "8 jobs (7 by naren, 1 by siddesh): Drive-JEPA baseline jobs done on 23 Oct (quick), 26 Oct (quick, at main with momentum on) and 26–27 Oct (closed: neuroNCAP 15 pairs, Bench2Drive 7 routes, AlpaSim 10 scenes); two released-as-candidate tests ended HOLD; two jobs cancelled; Siddesh's KITScenes candidate (encoder LoRA + generator + scorer pick head, --tier all) ended FAIL on 27 Oct"
+source = "the queue's job files on shakaal (jobs/<id>/job.json, result.json), read 3 Nov 2026"
+
+[[checks]]
+name = "Simulators side by side (paddock #111, #115)"
+date = 2026-10-26
+result = "neuroNCAP, Bench2Drive and AlpaSim run at once when the card holds them, each counted against GPU memory until its lane ends; AlpaSim's Docker containers are pinned to the lane's cores"
+decided = "merged 26 Oct (31e3714, 058a88d); the worker re-reads [queue] (lanes, ports) before each job"
+source = "paddock PRs #111 and #115; docs/gate.md"
+
+[[checks]]
+name = "Warm simulators"
+result = "not built: simulators start cold for every benchmark run; keeping neuroNCAP renderers and CARLA up between jobs is the next step, and changes how runs are made, so it comes with its own check that no score moves"
+source = "paddock docs/queue.md, Limits"

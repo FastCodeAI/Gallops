@@ -1,0 +1,233 @@
+# H02 -- the smallest valid regression gate: subset size per benchmark from the spread of past paired runs.
+# Owner Naren. Sources: "Renesas Progress and Plan", 22 Oct 2026 (Next steps item 2; Regression gate section),
+# paddock docs/gate.md and tools/gate_smoke/*.toml on main, the paddock PRs named below, and the 20 Oct
+# run's own files (manifest.toml, each run.json's provenance). Numbers are copied, never re-derived.
+
+schema = 1
+id = "H02"
+title = "Smallest valid gate: subset size per benchmark from the spread of past paired runs"
+short = "Smallest valid gate"
+track = "enabler"
+owner = "Naren"
+benchmarks = ["navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "alpasim"]
+started = 2026-10-20
+ended = 2026-10-21
+status = "done"
+verdict = "none"
+priority = 2
+question = """How small can each benchmark's gate subset be and still catch a change worth catching? \
+Measured as the smallest drop each subset detects at 80% power, from the spread of past paired runs \
+(CPU and existing results only), so that every checkpoint can go through the gate."""
+learned = """Smallest drop each subset detects (80% power): neuroNCAP closed tier 0.73 for a small change \
+and 2.85 for a big one, out of 5; its quick tier 2.5 / 6.7, a pipeline check only; NAVSIM about 0.0035; \
+KITScenes 0.51 m for a big change; Bench2Drive only 17–38 points; AlpaSim about 0.23, argued. Decided \
+21 Oct: the subset sizes stay, every verdict prints its MDE, and each benchmark's own score decides. The \
+first timed run (20 Oct, released against itself) took 2 h 40 min, the quick tier 19 min, and matched its \
+baselines to the last digit: HOLD."""
+narrative = "experiments/H02_smallest_valid_gate/README.md"
+external = [
+  "The MDE table exists only on the team page (Renesas Progress and Plan, 22 Oct 2026); paddock records Bench2Drive's 17-38 points in tools/gate_smoke/bench2drive.toml and docs/gate.md.",
+  "The 20 Oct run: paddock docs/gate.md ('The tiered smoke, timed'), state dir {runs}/gate/smoke/drivejepa-released-timing-20261021/ under paddock's runs root.",
+  "Later gate changes: paddock PRs #100, #105, #110, #111, #113, #114, #115, #116, #120 (docs/gate.md on main).",
+]
+
+[[runs]]
+id = "H02.mde"
+label = "smallest detectable drop (MDE, 80% power, two-sided 5%) per gate subset, from the spread of existing paired runs"
+ended = 2026-10-21
+notes = "Cost: CPU, existing results. A small change is a finetune of the same model; a big change is one that changes what the model sees (page). Bench2Drive's 17–38 points and the not-adopted neuroNCAP alternative are under checks: a range is not one number."
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "MDE, small change (closed tier, 6 pairs × 3 seeds)"
+  value = "0.73"
+  better = "lower"
+  n = 6
+  unit = "scenario pair"
+  strength = "argued"
+  flags = ["no-record"]
+  headline = true
+  note = "out of 5; measured from past paired runs per the page, not in either repo"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "MDE, big change (closed tier, 6 pairs × 3 seeds)"
+  value = "2.85"
+  better = "lower"
+  n = 6
+  unit = "scenario pair"
+  strength = "argued"
+  flags = ["no-record"]
+  note = "out of 5"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "MDE, small change (quick tier, 0103 × 3 shapes, 1 seed)"
+  value = "2.5"
+  better = "lower"
+  n = 3
+  unit = "scenario pair"
+  strength = "argued"
+  flags = ["no-record"]
+  note = "out of 5; a pipeline check only"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "MDE, big change (quick tier, 0103 × 3 shapes, 1 seed)"
+  value = "6.7"
+  better = "lower"
+  n = 3
+  unit = "scenario pair"
+  strength = "argued"
+  flags = ["no-record"]
+  note = "out of 5; a pipeline check only"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "MDE in EPDMS, small change (1,000 of 12,146 navtest scenarios)"
+  value = "0.0035"
+  better = "lower"
+  n = 136
+  unit = "log"
+  strength = "argued"
+  flags = ["no-record"]
+  note = "'about 0.0035'"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "kitscenes"
+  metric = "MDE in ADE (m), big change (all 223 keyframes)"
+  value = "0.51"
+  better = "lower"
+  n = 140
+  unit = "scene"
+  strength = "argued"
+  flags = ["no-record"]
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "MDE (10 clips, public_2601_first10)"
+  value = "0.23"
+  better = "lower"
+  n = 10
+  unit = "clip"
+  strength = "argued"
+  flags = ["no-record"]
+  note = "'about 0.23, argued from PR #93's swings, not measured'"
+  source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
+
+[[runs]]
+id = "H02.timing"
+label = "first timed gate run: released Drive-JEPA against itself, --tier all, three lanes for the quick tier"
+started = 2026-10-20
+ended = 2026-10-20
+notes = "18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke (one lane, before tiers) took 7.7 h. Each run.json records paddock 340b7fa, clean, and the adapter as it then was: image_geometry native (uncropped), momentum off -- before #106 and #95 changed both defaults."
+
+  [runs.checkpoint]
+  model = "drivejepa"
+  train_run = "released"
+  weights_sha256 = "740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d30d05"
+  file = "drive_jepa_perception_based_agent_vitl_v2.ckpt"
+  location = "{data.navsim.exp}/Drive-JEPA-cache/"
+  sidecar = false
+
+  [[runs.gate]]
+  date = 2026-10-20
+  tier = "all"
+  verdict = "HOLD"
+  baseline = "the released model's own earlier runs (15–16 Oct smokes; 12 Oct full nuScenes and neuroNCAP runs)"
+  paddock_commit = "340b7fa"
+  manifest = "{runs}/gate/smoke/drivejepa-released-timing-20261021/manifest.toml"
+  note = "Total 2 h 40 min: quick tier 19 min, closed tier 2 h 21 min. HOLD overall, as expected for the model against itself. The page and paddock docs/gate.md record the open-loop and neuroNCAP pairs as identical to the last digit; NEUTRAL is the gate's word for a zero difference (tools/gate.py), not a word copied from the run. The first neuroNCAP row is the quick tier (0103 × 3 shapes, 1 seed), the second the closed tier (6 pairs × 3 seeds). AlpaSim was not run: Drive-JEPA had no AlpaSim baseline yet, and its model.yaml did not declare AlpaSim."
+
+    [[runs.gate.pairs]]
+    bench = "kitscenes"
+    metric = "ADE (m)"
+    baseline = "3.222"
+    candidate = "3.222"
+    units = 140
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "nuscenes"
+    metric = "L2"
+    baseline = "2.497"
+    candidate = "2.497"
+    units = 30
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "navsim"
+    metric = "EPDMS"
+    baseline = "0.875"
+    candidate = "0.875"
+    units = 136
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "NCAP score (quick: 0103 × 3 shapes, 1 seed)"
+    baseline = "4.000"
+    candidate = "4.000"
+    units = 3
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "NCAP score (closed: 6 pairs × 3 seeds)"
+    baseline = "3.175"
+    candidate = "3.175"
+    units = 6
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving score (+7.0; cannot ship)"
+    t = "0.82"
+    mde = "28.7"
+    units = 7
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    verdict = "NOT RUN"
+
+[[checks]]
+name = "Smallest drop each subset detects (80% power)"
+date = 2026-10-21
+result = "neuroNCAP closed 0.73 small / 2.85 big (of 5); quick 2.5 / 6.7, a pipeline check only; NAVSIM about 0.0035; KITScenes 0.51 m big; Bench2Drive only 17–38 points (paired route differences of 13.6–30.4 sd); AlpaSim about 0.23, argued"
+decided = "the subset sizes stay, and every verdict prints its MDE (Naren); shipped in paddock #100, merged 22 Oct"
+source = "Renesas Progress and Plan, 22 Oct 2026; paddock tools/gate_smoke/bench2drive.toml for the 17–38"
+
+[[checks]]
+name = "neuroNCAP: the same ~20 episodes as 20 pairs × 1 seed"
+date = 2026-10-21
+result = "would detect 0.55 small / 1.49 big, because scene-to-scene noise is larger than seed noise"
+decided = "not adopted: Naren kept the subset sizes"
+source = "Renesas Progress and Plan, 22 Oct 2026; paddock docs/gate.md (about 0.55 / 1.5, measured from the 200-episode sweeps, 2026-10-21)"
+
+[[checks]]
+name = "Bench2Drive's 7 routes and the quick tier's 3 neuroNCAP episodes"
+date = 2026-10-22
+result = "Bench2Drive's 7 routes detect only a 17–38 point drop; 3 episodes are too few to ship on"
+decided = "both can fail a checkpoint but never ship one (can_ship = false), paddock #100, merged 22 Oct"
+source = "paddock PR #100 (ee62a6b), docs/gate.md"
+
+[[checks]]
+name = "Every subset redrawn within groups (paddock #105)"
+date = 2026-10-22
+result = "groups by maneuver, speed, city, crash type, scenario family; every group the same share, random within it (seed 20261022). NAVSIM 1,018 tokens from 126 logs; nuScenes 1,000 keyframes from 143 scenes (was the first 30 scenes); neuroNCAP closed 15 pairs × 1 run (was 6 × 3), quick 1 pair per crash type (was always 0103); Bench2Drive 7 of all 220 routes; KITScenes decides on its 186 val keyframes"
+decided = "agreed 22 Oct (commit message; who is not stated), merged 23 Oct"
+source = "paddock PR #105 (bbcbc42); docs/gate.md 'How the subsets are drawn'; tools/gate_smoke/*.toml"
+
+[[checks]]
+name = "AlpaSim's 10 gate scenes"
+date = 2026-10-27
+result = "the 22 Oct draw of 10 of all 913 never ran (none on disk); #110 drew 10 from the 50 downloaded; 2 were not on the drivers' scene list (#116) and on 2 more every model left the road at once (#120)"
+decided = "swap only those 4 for seeded picks from the same group, keep the other 8 so the baseline keeps its finished scenes; the quick tier's crash-check scene redrawn as 1acf2f5d"
+source = "paddock PRs #110 (54306af), #116 (9819e36), #120 (9585f81); tools/gate_smoke/alpasim.toml"
