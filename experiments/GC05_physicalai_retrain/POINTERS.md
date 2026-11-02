@@ -13,11 +13,11 @@ the "where it sits" column says where each one is, relative to that site's
 store for this experiment, written `{runs}/drivejepa_retrain`. Folders under it
 are written with this repository's folder names; on the store itself each
 still carries its working name, which the "Where this came from" table in
-`docs/drivejepa-retrain.md` gives. Lay artefacts out as the template column
+`experiments/GC05_physicalai_retrain/README.md` gives. Lay artefacts out as the template column
 says when copying.
 
 The sidecar for the retrained checkpoint is `checkpoint.json`, beside the
-weights; `docs/drivejepa-retrain.md` reproduces it.
+weights; `experiments/GC05_physicalai_retrain/README.md` reproduces it.
 
 ## Weights
 

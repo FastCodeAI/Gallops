@@ -1,5 +1,5 @@
 # GC03 -- the swerve finetune: eleven runs teaching released Drive-JEPA to evade on reconstructed scenes
-# with inserted hazards (Naren). Every number is copied, never re-derived, from docs/swerve-finetune.md,
+# with inserted hazards (Naren). Every number is copied, never re-derived, from experiments/GC03_swerve_finetune/README.md,
 # except: weights hashes, steps, commits, label sets and tick counts, read from each checkpoint's sidecar
 # (`gallops experiments checkpoint`); and the pairing of each 0103 smoke with the step it drove, read from the
 # path digest in the paddock run.json (paddock branch record/drivejepa-camera-blind) and matched here to the
@@ -26,12 +26,12 @@ learned = """Eleven camera-blind finetunes taught no evasion. The one run taken 
 0103 was chosen on those six episodes and is one episode. Retraining the refiner made the car faster and lost \
 its braking; with no image reaching the model, the runs say nothing about learning to see a hazard."""
 parents = ["GC02"]
-narrative = "docs/swerve-finetune.md"
+narrative = "experiments/GC03_swerve_finetune/README.md"
 external = [
   "neuroNCAP 0103 smokes and the s1 full sweep (20261008T021909-55974f): paddock branch record/drivejepa-camera-blind, kept, not for merging. The s1 sweep is recorded valid: true there only through a runner gap the branch describes.",
   "Collections, candidate dumps and label sets (collect_dumps*, labelled_round0*, labelled_gt, labelled_round1_s2, rounds.json): under {runs} at the training site, not in git.",
   "The grader's reference, paddock's check.json, comes from candidate_check.py on paddock branch analysis/drivejepa-ncap-candidates (no PR).",
-  "The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in docs/swerve-finetune.md 'Reproducing'.",
+  "The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in experiments/GC03_swerve_finetune/README.md 'Reproducing'.",
 ]
 
 [[runs]]
@@ -95,7 +95,7 @@ out scene 0058, replaced by 0053 from v1 on: 0058 has 54 swerve ticks of 1,673, 
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 1.90 / 1.90, stationary 1.30 / 0.89, side 0.81 / 0.56; recorded valid: false"
-  source = "docs/swerve-finetune.md; paddock run 20260930T081242-bb52e8"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T081242-bb52e8"
 
 [[runs]]
 id = "GC03.v1"
@@ -150,7 +150,7 @@ The doc's table once gave its 0103 mean as 2.56; corrected to 2.50."""
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 5.00 / 5.00, stationary 0.00 / 0.00, side 0.00 / 5.00"
-  source = "docs/swerve-finetune.md; paddock run 20260930T212532-af6551"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T212532-af6551"
 
 [[runs]]
 id = "GC03.v2"
@@ -205,7 +205,7 @@ carry defect 6. 0103 smoke: 20261002T010108-5f6f80."""
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 1.60 / 1.60, stationary 5.00 / 5.00, side 5.00 / 0.07"
-  source = "docs/swerve-finetune.md; paddock run 20261002T010108-5f6f80"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T010108-5f6f80"
 
 [[runs]]
 id = "GC03.v3"
@@ -310,7 +310,7 @@ episodes were collected under v4 and stopped, because v4 does not swerve. 0103 s
   strength = "argued"
   flags = ["blind", "smoke", "selected-on-report"]
   note = "frontal 2.15 / 5.00, stationary and side 5.00 ×4. Best of four checkpoints chosen on these six episodes; its whole +0.47 is frontal run_1 (5.0 where the released model averages 2.16). Lower impact speed, not an evasion"
-  source = "docs/swerve-finetune.md; paddock run 20261002T080920-070cd5"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T080920-070cd5"
 
 [[runs]]
 id = "GC03.v4fix"
@@ -370,7 +370,7 @@ it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 2.07 / 5.00, stationary and side 5.00 ×4"
-  source = "docs/swerve-finetune.md; paddock run 20261005T225911-49344e"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T225911-49344e"
 
   [[runs.results]]
   bench = "offline"
@@ -382,7 +382,7 @@ it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[runs]]
 id = "GC03.l4fix"
@@ -445,7 +445,7 @@ at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 1.41 / 5.00, stationary and side 5.00 ×4"
-  source = "docs/swerve-finetune.md; paddock run 20261005T231510-5dcf05"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T231510-5dcf05"
 
   [[runs.results]]
   bench = "offline"
@@ -457,7 +457,7 @@ at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[runs]]
 id = "GC03.l5"
@@ -521,7 +521,7 @@ it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-994
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 3.05 / 3.05, stationary 2.51 / 2.44, side 2.40 / 2.45"
-  source = "docs/swerve-finetune.md; paddock run 20261007T202011-99499f"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261007T202011-99499f"
 
   [[runs.results]]
   bench = "offline"
@@ -533,7 +533,7 @@ it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-994
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[runs]]
 id = "GC03.s1"
@@ -617,7 +617,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   flags = ["blind"]
   headline = true
   note = "+0.103 with a pair-level SE of 0.079: not a proven win. 83 collisions against 91 (10 avoided, 2 new); per pair stationary +0.16, side +0.17, frontal −0.08. Most of the side gain is side-0108 seeds 1 and 8. The released sweep ran on older harness code and was not re-run"
-  source = "docs/swerve-finetune.md; paddock run 20261008T021909-55974f"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T021909-55974f"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -632,7 +632,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 2.02 / 2.23, stationary and side 5.00 ×4"
-  source = "docs/swerve-finetune.md; paddock run 20261008T020429-00e049"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T020429-00e049"
 
   [[runs.results]]
   bench = "offline"
@@ -644,7 +644,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "disagrees with closed loop (5.0 on both stationary 0103 runs, +0.16 per pair on stationary over the full set), unexplained; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
   [[runs.results]]
   bench = "offline"
@@ -654,7 +654,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   better = "higher"
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[runs]]
 id = "GC03.s2"
@@ -729,7 +729,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 2.19 / 2.19, stationary 5.00 / 1.15, side 1.07 / 1.04"
-  source = "docs/swerve-finetune.md; paddock run 20261008T103801-ec9faa"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T103801-ec9faa"
 
   [[runs.results]]
   bench = "offline"
@@ -741,7 +741,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
   [[runs.results]]
   bench = "offline"
@@ -751,7 +751,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   better = "higher"
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[runs]]
 id = "GC03.s3"
@@ -836,7 +836,7 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   strength = "argued"
   flags = ["blind", "smoke"]
   note = "frontal 0.56 / 0.80, stationary 1.04 / 0.83, side 0.73 / 0.86"
-  source = "docs/swerve-finetune.md; paddock run 20261008T205424-aee62f"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T205424-aee62f"
 
   [[runs.results]]
   bench = "offline"
@@ -848,7 +848,7 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
   [[runs.results]]
   bench = "offline"
@@ -860,67 +860,67 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   better = "higher"
   strength = "argued"
   flags = ["blind", "open-loop", "smoke"]
-  source = "docs/swerve-finetune.md ('After the fix')"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
 [[checks]]
 name = "The grader against paddock's verdicts"
 result = "reproduces paddock's check.json exactly: 38,080 of 38,080 candidate verdicts"
 decided = "every drawn target and every proposal goes through the same grader"
-source = "docs/swerve-finetune.md ('What was built')"
+source = "experiments/GC03_swerve_finetune/README.md ('What was built')"
 
 [[checks]]
 name = "Defect 1: reactions taught to an off-camera hazard (found by plotting the training set)"
 result = "the crossing actor sits a median 43.5° off axis against a 32.6° half-FOV; 400 of 9,495 ticks taught an evasion of something outside the frame"
 decided = "every tick records the hazard's bearing; reactive targets that cannot see their hazard are dropped"
-source = "docs/swerve-finetune.md (defect 1)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 1)"
 
 [[checks]]
 name = "Defect 2: a swerve from t = 0 held to the horizon (found by watching the closed-loop video)"
 result = "at 10 Hz the target re-commanded full displacement at once on every tick; the model threw the wheel over at first sight"
 decided = "the drawn plan holds its lane, then moves, then recovers"
-source = "docs/swerve-finetune.md (defect 2)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 2)"
 
 [[checks]]
 name = "Defect 3: an undrivable recovery (found by probing a state round 0 never visits)"
 result = "a plan for a car 3 m off the logged path began with a 3 m jump: 24.5 m/s², six times the module's own comfort limit, taught after every evasion"
 decided = "rejoin() eases the correction: 1.7 m/s², back in lane by 4 s"
-source = "docs/swerve-finetune.md (defect 3)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 3)"
 
 [[checks]]
 name = "Defect 4: swerving where braking was available (found by measurement)"
 result = "braking alone was clear on 197 of 197 sampled stationary swerve ticks and 10 of 10 side ones, every one taught as a swerve"
 decided = "brake for what is not closing on the ego, swerve for what is (closing-speed split near −3.0 m/s): the v2 expert"
-source = "docs/swerve-finetune.md (defect 4)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 4)"
 
 [[checks]]
 name = "Defect 5: the scorer taught to want the opposite of the expert"
 result = "score_target scored a clear swerve 1.00 and a clear brake 0.75 on every tick; swerve-first to brake-first moved 1,200 targets and changed behaviour not at all; a cap at the expert's distance tied brake with full speed (v3)"
 decided = "the progress term peaks at the expert's distance and falls on both sides (v4): slowing on brake ticks −26% → +47%"
-source = "docs/swerve-finetune.md (defect 5)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 5)"
 
 [[checks]]
 name = "Defect 6: every scorer target graded from the wrong pose (found by a creep check that could not be true)"
 date = 2026-10-06
 result = "Referee cached the ego pose once per episode, 14–16 m off; re-grading round 0 that way flipped 19.5% of 3,776 stationary, 36.6% of 3,008 frontal and 1.6% of 3,808 side hit/clear verdicts. In every run that trained the scorer: v1 to v4"
 decided = "episode_context returns the tick's own pose; no run trains until the preflight shows the trainer's grading reproduces the labels exactly; v4's recipe retrained under the fix (v4fix)"
-source = "docs/swerve-finetune.md (defect 6); CLAUDE.md ('Before any training run')"
+source = "experiments/GC03_swerve_finetune/README.md (defect 6); CLAUDE.md ('Before any training run')"
 
 [[checks]]
 name = "Preflight fidelity: the rebuilt past (506 round-0 ticks)"
 result = "the first real run was refused by an absolute 5 cm limit; measuring why found that an episode's first half second needs a priming frame the logger never saved: rebuilt pick a median 0.4–0.5 m (p90 2.4 m) from the driven one, against 0.10 m once the real frame exists; about 7% of every round's ticks"
 decided = "unrebuildable ticks are dropped before counting and recorded by kind (notes.unrebuildable); a set with more than 10% is refused; fidelity gates the median at 1% of travel (measured 0.29%) and the p90 at 10%"
-source = "docs/swerve-finetune.md; CLAUDE.md ('Before any training run')"
+source = "experiments/GC03_swerve_finetune/README.md; CLAUDE.md ('Before any training run')"
 
 [[checks]]
 name = "Camera-blind: did any image reach the model?"
 date = 2026-10-12
 result = "no: the trainer's inputs (swerve_data.py) and paddock's adapter placed the cameras relative to nuScenes' LIDAR_TOP, yawed −90°; a black frame gave the identical plan, in every run and every collection here"
 decided = "fixed in camera_extrinsics (paddock half: #62); the preflight refuses a model a blanked camera does not move; these runs say nothing about learning to see a hazard"
-source = "docs/swerve-finetune.md (correction)"
+source = "experiments/GC03_swerve_finetune/README.md (correction)"
 
 [[checks]]
 name = "Ticks mixed within a batch"
 date = 2026-10-14
 result = "every run here trained at --batch 8; the vendor's spatial cross-attention picks each camera's queries from batch element 0's mask for the whole batch"
 decided = "every forward pass is one tick (TICKS_PER_PASS in swerve_data.py); --batch refuses anything else"
-source = "docs/swerve-finetune.md (correction)"
+source = "experiments/GC03_swerve_finetune/README.md (correction)"

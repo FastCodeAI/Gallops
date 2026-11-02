@@ -1,8 +1,8 @@
 # Training the scorer on cached features
 
-What came after s3 ([swerve-finetune.md](swerve-finetune.md)): can Drive-JEPA's
+What came after s3 ([GC03's account](../GC03_swerve_finetune/README.md)): can Drive-JEPA's
 scorer learn to pick a safe plan on a scene it has never seen? Measurements
-unless marked as an argument, as [conventions.md](conventions.md) asks.
+unless marked as an argument, as [conventions.md](../../docs/conventions.md) asks.
 
 > **Correction (2026-10-12): every cache here was camera-blind.** `scorer_cache`
 > rebuilds inputs with `swerve_data.py`, which placed the cameras relative to
@@ -37,11 +37,11 @@ computed once and training becomes minutes over arrays.
 
 | module | what it does |
 |---|---|
-| [expert/fastgrade.py](../src/gallops/expert/fastgrade.py) | the grader over arrays, held exactly to `grader.grade` by tests and a per-episode re-check; adds the sub-scores the scorer's unused logits have slots for (hit within 5 s, time to collision, …) |
-| [train/scorer_cache.py](../src/gallops/train/scorer_cache.py) | pass 1 runs the released model; pass 2 reruns only the refiner's last stage for a vocabulary of extra plans; stores what the scorer reads |
-| [train/scorer_labels.py](../src/gallops/train/scorer_labels.py) | grades every cached plan against **every** vehicle, the lane centre and the drivable raster |
-| [train/scorer_folds.py](../src/gallops/train/scorer_folds.py) | leave-one-scene-out training: a control (s1's target and ranking loss) against sub-score heads, and a gated pick (the released plan unless the collision head vetoes it) |
-| [data/nuscenes_real.py](../src/gallops/data/nuscenes_real.py) | real nuScenes train scenes written as episodes the cache reads, graded against where their vehicles really went |
+| [expert/fastgrade.py](../../src/gallops/expert/fastgrade.py) | the grader over arrays, held exactly to `grader.grade` by tests and a per-episode re-check; adds the sub-scores the scorer's unused logits have slots for (hit within 5 s, time to collision, …) |
+| [train/scorer_cache.py](../../src/gallops/train/scorer_cache.py) | pass 1 runs the released model; pass 2 reruns only the refiner's last stage for a vocabulary of extra plans; stores what the scorer reads |
+| [train/scorer_labels.py](../../src/gallops/train/scorer_labels.py) | grades every cached plan against **every** vehicle, the lane centre and the drivable raster |
+| [train/scorer_folds.py](../../src/gallops/train/scorer_folds.py) | leave-one-scene-out training: a control (s1's target and ranking loss) against sub-score heads, and a gated pick (the released plan unless the collision head vetoes it) |
+| [data/nuscenes_real.py](../../src/gallops/data/nuscenes_real.py) | real nuScenes train scenes written as episodes the cache reads, graded against where their vehicles really went |
 
 ```bash
 python -m gallops.train.scorer_cache  --source <labelled dir> <name> [--source ...] --vocab <vocab.py> \

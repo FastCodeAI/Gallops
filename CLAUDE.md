@@ -121,7 +121,7 @@ before its first step, and stops with every reason listed if any check fails:
   the trainer's own `Referee` reproduces the labels *exactly*: the expert's
   verdict, the driven plan's hit time, all 32 candidate verdicts. This is the
   check that would have caught defect 6 in
-  [docs/swerve-finetune.md](docs/swerve-finetune.md): v1–v4 graded every tick from
+  [experiments/GC03_swerve_finetune/README.md](experiments/GC03_swerve_finetune/README.md): v1–v4 graded every tick from
   the first tick's pose, and on round 0 the preflight rejects that referee on
   28 of 48 ticks.
 - **fidelity** — the starting weights, fed the trainer's rebuilt inputs one tick

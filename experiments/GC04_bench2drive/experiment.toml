@@ -1,5 +1,5 @@
 # GC04 -- Drive-JEPA retrained on the Bench2Drive base set: Split-v4, then the Final (Navvrat).
-# Every number below is copied from docs/drivejepa_b2d.md, recipes/drivejepa_b2d.toml and the module docstrings
+# Every number below is copied from experiments/GC04_bench2drive/README.md, recipes/drivejepa_b2d.toml and the module docstrings
 # in src/gallops/drivejepa_b2d/, never re-derived. The released baseline (57.60 at 2 Hz) is paddock's record:
 # results/bench2drive/drivejepa/native50-2hz-40c29d24c37d542a-447e23 and docs/benchmarks/bench2drive-native-rate.md.
 # manifest_sha256 is the sha256 of the tracked data manifest named in each run's note. No checkpoint of either
@@ -24,7 +24,7 @@ learned = """Split-v4 reached a mean DS of 68.1 and the Final 73.6 on 50 routes,
 model, but each is one run per route on routes that also chose the variant, with no run record committed and \
 same-spot twins of 26 eval routes in the training set. Split-v4's head stages reproduce bitwise from this repo; \
 the Final's three training stages have not been rerun."""
-narrative = "docs/drivejepa_b2d.md"
+narrative = "experiments/GC04_bench2drive/README.md"
 external = [
   "Bench2Drive runs behind 68.1 (30 Sep) and 73.6 (6 Oct): no run record in any repository. paddock's drivejepa_scorer_b2d adapter that drove them existed on 13 Oct only as uncommitted files in one local paddock worktree (rerank-native), on no paddock branch.",
   "Baseline: paddock results/bench2drive/drivejepa/native50-2hz-40c29d24c37d542a-447e23 (released Drive-JEPA, 2 Hz, DS 57.60; 31.71 at 20 Hz), paddock docs/benchmarks/bench2drive-native-rate.md.",
@@ -97,7 +97,7 @@ notes = "Stages ipad-base-start (kept epoch 17) → split-full (epoch 32, mean A
   strength = "argued"
   flags = ["adapted", "selected-on-report", "no-record"]
   note = "inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz"
-  source = "docs/drivejepa_b2d.md"
+  source = "experiments/GC04_bench2drive/README.md"
 
   [[runs.results]]
   bench = "offline"
@@ -107,7 +107,7 @@ notes = "Stages ipad-base-start (kept epoch 17) → split-full (epoch 32, mean A
   strength = "moderate"
   flags = ["selected-on-report"]
   note = "kept epoch 20, chosen on the same clips; split-full also 0.940"
-  source = "docs/drivejepa_b2d.md"
+  source = "experiments/GC04_bench2drive/README.md"
 
 [[runs]]
 id = "GC04.final"
@@ -174,7 +174,7 @@ notes = "Generator from the release with its own multimodal loss (expert winner-
   flags = ["adapted", "selected-on-report", "no-record"]
   headline = true
   note = "the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes"
-  source = "docs/drivejepa_b2d.md"
+  source = "experiments/GC04_bench2drive/README.md"
 
   [[runs.results]]
   bench = "bench2drive"
@@ -189,7 +189,7 @@ notes = "Generator from the release with its own multimodal loss (expert winner-
   strength = "unverified"
   flags = ["adapted", "selected-on-report", "no-record"]
   note = "Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result"
-  source = "docs/drivejepa_b2d.md"
+  source = "experiments/GC04_bench2drive/README.md"
 
 [[checks]]
 name = "Batch fix: the refiner mixes batch elements"
@@ -203,11 +203,11 @@ name = "Split-v4's head stages rerun from this repo"
 date = 2026-10-13
 result = "ipad-base-start, split-full and split-v4aug rerun on the recorded data, each from the previous rerun's output: every head_best.pt bitwise identical (same GPU and torch build); so the held-out list is the original"
 decided = "the recipe stands for Split-v4's training (verified); the dump holds its files (strong: copied ~30 min after the rerun read the same paths)"
-source = "docs/drivejepa_b2d.md"
+source = "experiments/GC04_bench2drive/README.md"
 
 [[checks]]
 name = "Deployed checkpoints against the release"
 date = 2026-10-13
 result = "Split-v4: its 10 head tensors equal split-v4aug's head_best.pt and its other 495 equal the release. Final: its 10 head tensors equal the m05b head, the generator's 45 tensors its 171, nothing else differs"
 decided = "the recipe's writer replaces the same tensors (argued: never run on the release)"
-source = "docs/drivejepa_b2d.md"
+source = "experiments/GC04_bench2drive/README.md"

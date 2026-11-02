@@ -14,7 +14,7 @@ there, paddock cannot score a checkpoint this recipe writes.
 | Split-v4 | 68.1 (30 Sep 2026, one run per route) | the scorer head |
 | Final | 73.6 (6 Oct 2026, one run per route) | the proposal generator, the split head, the area head |
 
-Recipe: [`recipes/drivejepa_b2d.toml`](../recipes/drivejepa_b2d.toml).
+Recipe: [`recipes/drivejepa_b2d.toml`](../../recipes/drivejepa_b2d.toml).
 `gallops recipe drivejepa_b2d` prints every command for this machine;
 `gallops recipe drivejepa_b2d <stage> --run` runs one.
 
@@ -48,7 +48,7 @@ the optimizer step of the head's stage up to its kept epoch (Split-v4: 20 × 442
 `data_split_v4.json` and the 150 held-out clips with their list's sha256.
 
 **Split.** 150 of the 1,000 base clips are held out
-([`recipes/drivejepa_b2d/heldout_150.json`](../recipes/drivejepa_b2d/heldout_150.json)):
+([`recipes/drivejepa_b2d/heldout_150.json`](../../recipes/drivejepa_b2d/heldout_150.json)):
 3,499 held-out frames against 19,950 training frames. Every kept epoch was
 chosen on them. The list was recovered on 29 Sep from the feature cache after
 the re-ranker directory that first defined it was deleted; the bitwise rerun
@@ -110,8 +110,8 @@ The stages read one frozen dump, `[datasets.drivejepa_b2d]` in `gallops.toml`:
 | `teachers/` | the Final: the MTD-H teacher set, one npz per clip |
 
 Its file list, sizes and sha256 are tracked in
-[`recipes/drivejepa_b2d/data_split_v4.json`](../recipes/drivejepa_b2d/data_split_v4.json) and
-[`data_final.json`](../recipes/drivejepa_b2d/data_final.json); the `check-data`
+[`recipes/drivejepa_b2d/data_split_v4.json`](../../recipes/drivejepa_b2d/data_split_v4.json) and
+[`data_final.json`](../../recipes/drivejepa_b2d/data_final.json); the `check-data`
 and `check-data-final` stages compare a site's copy against them (sizes in seconds,
 `--hash` for contents). They run first when the whole recipe runs;
 `gallops recipe drivejepa_b2d <stage> --run` runs only the stages it names, so

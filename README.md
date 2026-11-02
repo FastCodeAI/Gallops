@@ -179,10 +179,10 @@ experiment's [details](#experiment-details).
 |---|---|---|---|---|---|---|---|---|
 | [**GC01**](#gc01) | KITScenes re-ranker | Naren | KITScenes, nuScenes, neuroNCAP | KITScenes ADE@3s (m) 2.521 → **0.973** (n=223 samples) | ●●●○ strong · adapted, open-loop | ◐ mixed | `2050b799e8e8` | [record](experiments/GC01_rerank_kitscenes/README.md) |
 | [**GC02**](#gc02) | Selection without training | Naren, Siddesh | AlpaSim, neuroNCAP | AlpaSim scene_score 0.4209 → **0.5433** (n=30 scenes) | ●●○○ moderate | ◐ mixed | — | [record](experiments/GC02_selection_without_training/README.md) |
-| [**GC03**](#gc03) | Swerve finetune, 11 runs | Naren | neuroNCAP, offline | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs) | ○○○○ unverified · blind | ⏸ parked (inconclusive) | `e7cda1681023` | [record](docs/swerve-finetune.md) |
-| [**GC04**](#gc04) | Bench2Drive retrain (Split-v4, Final) | Navvrat | Bench2Drive | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes) | ●○○○ argued · adapted, selected-on-report, no-record | ✅ positive | — | [record](docs/drivejepa_b2d.md) |
-| [**GC05**](#gc05) | Physical AI AV retrain | Siddesh | AlpaSim | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes) | ●●○○ moderate · adapted | ✅ positive | `29d5f9517c2e` | [record](docs/drivejepa-retrain.md) |
-| [**GC06**](#gc06) | Scorer on cached features | Naren | offline, neuroNCAP | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes) | ●●○○ moderate · blind, open-loop | ⏸ parked (inconclusive) | — | [record](docs/scorer-cache.md) |
+| [**GC03**](#gc03) | Swerve finetune, 11 runs | Naren | neuroNCAP, offline | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs) | ○○○○ unverified · blind | ⏸ parked (inconclusive) | `e7cda1681023` | [record](experiments/GC03_swerve_finetune/README.md) |
+| [**GC04**](#gc04) | Bench2Drive retrain (Split-v4, Final) | Navvrat | Bench2Drive | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes) | ●○○○ argued · adapted, selected-on-report, no-record | ✅ positive | — | [record](experiments/GC04_bench2drive/README.md) |
+| [**GC05**](#gc05) | Physical AI AV retrain | Siddesh | AlpaSim | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes) | ●●○○ moderate · adapted | ✅ positive | `29d5f9517c2e` | [record](experiments/GC05_physicalai_retrain/README.md) |
+| [**GC06**](#gc06) | Scorer on cached features | Naren | offline, neuroNCAP | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes) | ●●○○ moderate · blind, open-loop | ⏸ parked (inconclusive) | — | [record](experiments/GC06_scorer_cache/README.md) |
 | [**GC07**](#gc07) | Sub-score scorer, seeing | Naren | neuroNCAP | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs) | ●○○○ argued · smoke, adapted, no-record | ⏸ parked (mixed) | `1f11144e697e` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
 | [**GC08**](#gc08) | Expert v6 imitation | Naren | neuroNCAP, nuScenes | neuroNCAP ncap_score, mean of 3 shapes 3.01 → **2.31** (n=9 runs) | ●○○○ argued · smoke, adapted, no-record | ❌ negative | `916b930a38ea` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
 <!-- /experiments:gap-closing -->
@@ -354,7 +354,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC02.momentum-alpasim ★ | AlpaSim scene_score 0.4209 → **0.5433** (n=30 scenes)<br>30 scenes, one drive each; at-fault collisions 7 → 4, any collision 12 → 10; no paired SE recorded. Constant velocity scores 0.4876 on the same 30 (one simulator setting differs) | released, driver 0.1.4 | ●●○○ moderate | experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/models_compare.json; paddock docs/models/drivejepa.md |
+| GC02.momentum-alpasim ★ | AlpaSim scene_score 0.4209 → **0.5433** (n=30 scenes)<br>30 scenes, one drive each; at-fault collisions 7 → 4, any collision 12 → 10; no paired SE recorded. Constant velocity scores 0.4876 on the same 30 (one simulator setting differs) | released, driver 0.1.4 | ●●○○ moderate | experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json; paddock docs/models/drivejepa.md |
 | GC02.momentum-ncap | neuroNCAP ncap_score 3.568 → 3.618 (n=20 scenario pairs)<br>full set, 20 pairs × 10 seeds, paired seed for seed; SE 0.050; t 0.99; read by its author as no measurable effect: the whole +0.050 is side-0108 seeds 1 and 8. Pick changed on 324 of 13,977 ticks (2.4%); collision rate 45.5% → 44.5% | drivejepa, run 20260905T220225-f11ac0 | ○○○○ unverified · blind | paddock branch record/drivejepa-camera-blind: docs/models/drivejepa_momentum.md, results/neuroncap/drivejepa_momentum/20261002T065426-a87115 |
 | GC02.signals | neuroNCAP rescue ticks on which the collision head's safest pick is clear 0 (n=322 ticks)<br>7 pairs × 3 seeds, offline over candidate dumps; also 0 of 322 for the linear probe on proposal_feature and for the KITScenes re-ranker. The head does rank hitting candidates as riskier: 85–94% (stationary), 77–91% (frontal), blind on side | — | ●●○○ moderate · blind, open-loop | paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (d737456, 66dddac) |
 | GC02.signals | neuroNCAP rescue ticks with the TTC logit as the picker 17 (n=322 ticks)<br>7 pairs × 3 seeds, offline over candidate dumps; only by braking everywhere: it costs KITScenes ADE 0.97 → 3.96 | — | ●●○○ moderate · blind, open-loop | paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (d737456) |
@@ -370,7 +370,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 - No gallops code: momentum is upstream's calibrate_score, run by paddock's AlpaSim driver (tools/models/drivejepa/alpasim_driver/, tracked at 0.1.7) and by the drivejepa node (paddock #59, on by default since #95).
 - neuroNCAP momentum run 20261002T065426-a87115 and its separate adapter (drivejepa_momentum): paddock branch record/drivejepa-camera-blind, kept, not for merging.
 - Signal and injection analyses: paddock branch analysis/drivejepa-ncap-candidates (no PR); the dump and injection adapters stay outside paddock; dumps under {runs}.
-- AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/drivejepa_retrain/POINTERS.md).
+- AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/GC05_physicalai_retrain/POINTERS.md).
 
 **Record:** [record](experiments/GC02_selection_without_training/README.md)
 
@@ -414,26 +414,26 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC03.stageA | neuroNCAP ncap_score 4.05 → 1.22 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.90 / 1.90, stationary 1.30 / 0.89, side 0.81 / 0.56; recorded valid: false | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20260930T081242-bb52e8 |
-| GC03.v1 | neuroNCAP ncap_score 4.05 → 2.50 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 5.00 / 5.00, stationary 0.00 / 0.00, side 0.00 / 5.00 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20260930T212532-af6551 |
-| GC03.v2 | neuroNCAP ncap_score 4.05 → 3.05 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.60 / 1.60, stationary 5.00 / 5.00, side 5.00 / 0.07 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261002T010108-5f6f80 |
-| GC03.v4 | neuroNCAP ncap_score 4.05 → 4.53 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.15 / 5.00, stationary and side 5.00 ×4. Best of four checkpoints chosen on these six episodes; its whole +0.47 is frontal run_1 (5.0 where the released model averages 2.16). Lower impact speed, not an evasion | released (n=10) | ●○○○ argued · blind, smoke, selected-on-report | docs/swerve-finetune.md; paddock run 20261002T080920-070cd5 |
-| GC03.v4fix | neuroNCAP ncap_score 4.05 → 4.51 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.07 / 5.00, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261005T225911-49344e |
-| GC03.v4fix | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 88%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.l4fix | neuroNCAP ncap_score 4.05 → 4.40 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.41 / 5.00, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261005T231510-5dcf05 |
-| GC03.l4fix | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 55%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.l5 | neuroNCAP ncap_score 4.05 → 2.65 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 3.05 / 3.05, stationary 2.51 / 2.44, side 2.40 / 2.45 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261007T202011-99499f |
-| GC03.l5 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 32%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s1 ★ | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs)<br>full set, 20 pairs × 10 seeds, paired seed for seed; SE 0.079; +0.103 with a pair-level SE of 0.079: not a proven win. 83 collisions against 91 (10 avoided, 2 new); per pair stationary +0.16, side +0.17, frontal −0.08. Most of the side gain is side-0108 seeds 1 and 8. The released sweep ran on older harness code and was not re-run | released, sweep of 5 Sep (20260905T220225-f11ac0) | ○○○○ unverified · blind | docs/swerve-finetune.md; paddock run 20261008T021909-55974f |
-| GC03.s1 | neuroNCAP ncap_score 4.05 → 4.04 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.02 / 2.23, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261008T020429-00e049 |
-| GC03.s1 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 8%<br>disagrees with closed loop (5.0 on both stationary 0103 runs, +0.16 per pair on stationary over the full set), unexplained; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s1 | offline held-out top-choice accuracy 23%<br>scene 0053, on the released candidates | — | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s2 | neuroNCAP ncap_score 4.05 → 2.11 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.19 / 2.19, stationary 5.00 / 1.15, side 1.07 / 1.04 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261008T103801-ec9faa |
-| GC03.s2 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 40%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s2 | offline held-out top-choice accuracy 7%<br>scene 0053, s2b on its own refiner's candidates | — | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s3 | neuroNCAP ncap_score 4.05 → 0.80 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 0.56 / 0.80, stationary 1.04 / 0.83, side 0.73 / 0.86 | released (n=10) | ●○○○ argued · blind, smoke | docs/swerve-finetune.md; paddock run 20261008T205424-aee62f |
-| GC03.s3 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 29%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
-| GC03.s3 | offline held-out top-choice accuracy 5.8% → 4%<br>scene 0053, s3b on its own refiner's candidates | keeping s2's scorer | ●○○○ argued · blind, open-loop, smoke | docs/swerve-finetune.md ('After the fix') |
+| GC03.stageA | neuroNCAP ncap_score 4.05 → 1.22 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.90 / 1.90, stationary 1.30 / 0.89, side 0.81 / 0.56; recorded valid: false | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20260930T081242-bb52e8 |
+| GC03.v1 | neuroNCAP ncap_score 4.05 → 2.50 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 5.00 / 5.00, stationary 0.00 / 0.00, side 0.00 / 5.00 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20260930T212532-af6551 |
+| GC03.v2 | neuroNCAP ncap_score 4.05 → 3.05 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.60 / 1.60, stationary 5.00 / 5.00, side 5.00 / 0.07 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261002T010108-5f6f80 |
+| GC03.v4 | neuroNCAP ncap_score 4.05 → 4.53 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.15 / 5.00, stationary and side 5.00 ×4. Best of four checkpoints chosen on these six episodes; its whole +0.47 is frontal run_1 (5.0 where the released model averages 2.16). Lower impact speed, not an evasion | released (n=10) | ●○○○ argued · blind, smoke, selected-on-report | experiments/GC03_swerve_finetune/README.md; paddock run 20261002T080920-070cd5 |
+| GC03.v4fix | neuroNCAP ncap_score 4.05 → 4.51 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.07 / 5.00, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261005T225911-49344e |
+| GC03.v4fix | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 88%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.l4fix | neuroNCAP ncap_score 4.05 → 4.40 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 1.41 / 5.00, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261005T231510-5dcf05 |
+| GC03.l4fix | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 55%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.l5 | neuroNCAP ncap_score 4.05 → 2.65 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 3.05 / 3.05, stationary 2.51 / 2.44, side 2.40 / 2.45 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261007T202011-99499f |
+| GC03.l5 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 32%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s1 ★ | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs)<br>full set, 20 pairs × 10 seeds, paired seed for seed; SE 0.079; +0.103 with a pair-level SE of 0.079: not a proven win. 83 collisions against 91 (10 avoided, 2 new); per pair stationary +0.16, side +0.17, frontal −0.08. Most of the side gain is side-0108 seeds 1 and 8. The released sweep ran on older harness code and was not re-run | released, sweep of 5 Sep (20260905T220225-f11ac0) | ○○○○ unverified · blind | experiments/GC03_swerve_finetune/README.md; paddock run 20261008T021909-55974f |
+| GC03.s1 | neuroNCAP ncap_score 4.05 → 4.04 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.02 / 2.23, stationary and side 5.00 ×4 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261008T020429-00e049 |
+| GC03.s1 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 8%<br>disagrees with closed loop (5.0 on both stationary 0103 runs, +0.16 per pair on stationary over the full set), unexplained; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s1 | offline held-out top-choice accuracy 23%<br>scene 0053, on the released candidates | — | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s2 | neuroNCAP ncap_score 4.05 → 2.11 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 2.19 / 2.19, stationary 5.00 / 1.15, side 1.07 / 1.04 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261008T103801-ec9faa |
+| GC03.s2 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 40%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s2 | offline held-out top-choice accuracy 7%<br>scene 0053, s2b on its own refiner's candidates | — | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s3 | neuroNCAP ncap_score 4.05 → 0.80 (n=6 episodes)<br>scene 0103, seeds 0 / 1, two runs per scenario; frontal 0.56 / 0.80, stationary 1.04 / 0.83, side 0.73 / 0.86 | released (n=10) | ●○○○ argued · blind, smoke | experiments/GC03_swerve_finetune/README.md; paddock run 20261008T205424-aee62f |
+| GC03.s3 | offline safe picks on held-out 0053 approach ticks (stationary, expert brakes) 89% → 29%<br>from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking | released | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
+| GC03.s3 | offline held-out top-choice accuracy 5.8% → 4%<br>scene 0053, s3b on its own refiner's candidates | keeping s2's scorer | ●○○○ argued · blind, open-loop, smoke | experiments/GC03_swerve_finetune/README.md ('After the fix') |
 
 **Checks that decided something**
 
@@ -453,9 +453,9 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 - neuroNCAP 0103 smokes and the s1 full sweep (20261008T021909-55974f): paddock branch record/drivejepa-camera-blind, kept, not for merging. The s1 sweep is recorded valid: true there only through a runner gap the branch describes.
 - Collections, candidate dumps and label sets (collect_dumps*, labelled_round0*, labelled_gt, labelled_round1_s2, rounds.json): under {runs} at the training site, not in git.
 - The grader's reference, paddock's check.json, comes from candidate_check.py on paddock branch analysis/drivejepa-ncap-candidates (no PR).
-- The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in docs/swerve-finetune.md 'Reproducing'.
+- The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in experiments/GC03_swerve_finetune/README.md 'Reproducing'.
 
-**Record:** [record](docs/swerve-finetune.md)
+**Record:** [record](experiments/GC03_swerve_finetune/README.md)
 
 </details>
 
@@ -479,10 +479,10 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC04.split-v4 | Bench2Drive mean driving score 68.1 (n=50 routes)<br>50 routes, one run each, 30 Sep 2026; inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz | — | ●○○○ argued · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
-| GC04.split-v4 | offline split-v4aug mean AUC, 150 held-out clips 0.940<br>kept epoch 20, chosen on the same clips; split-full also 0.940 | — | ●●○○ moderate · selected-on-report | docs/drivejepa_b2d.md |
-| GC04.final ★ | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes)<br>50 routes, one run each, 6 Oct 2026; the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes | released Drive-JEPA at 2 Hz (paddock native50-2hz-40c29d24c37d542a-447e23) | ●○○○ argued · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
-| GC04.final | Bench2Drive mean driving score 68.1 → 73.6 (n=50 routes)<br>50 routes, one run each; Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result | Split-v4 | ○○○○ unverified · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
+| GC04.split-v4 | Bench2Drive mean driving score 68.1 (n=50 routes)<br>50 routes, one run each, 30 Sep 2026; inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz | — | ●○○○ argued · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
+| GC04.split-v4 | offline split-v4aug mean AUC, 150 held-out clips 0.940<br>kept epoch 20, chosen on the same clips; split-full also 0.940 | — | ●●○○ moderate · selected-on-report | experiments/GC04_bench2drive/README.md |
+| GC04.final ★ | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes)<br>50 routes, one run each, 6 Oct 2026; the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes | released Drive-JEPA at 2 Hz (paddock native50-2hz-40c29d24c37d542a-447e23) | ●○○○ argued · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
+| GC04.final | Bench2Drive mean driving score 68.1 → 73.6 (n=50 routes)<br>50 routes, one run each; Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result | Split-v4 | ○○○○ unverified · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
 
 **Checks that decided something**
 
@@ -498,7 +498,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 - Deployed checkpoints: written by paddock-ops' writers (scorer-retrain/write_scorer_checkpoint.py, generator-ft/step4_write_ckpt.py) with a hand-written sidecar; not under this machine's weights root.
 - What still fails on the Final (left turns 0/7, right turns 0/3, ambulance 0/5, road works and two-way accidents 0/5, a stall after a first stop): the team's status page, citing Navvrat's Bench2Drive write-up; in no repository.
 
-**Record:** [record](docs/drivejepa_b2d.md)
+**Record:** [record](experiments/GC04_bench2drive/README.md)
 
 </details>
 
@@ -510,25 +510,25 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 
 **Question.** Released Drive-JEPA scores 0.421 on AlpaSim's 30 scenes, below constant velocity (0.4876), and its 8,192-path vocabulary tops out near 15 m/s. Does retraining it on in-domain NVIDIA Physical AI AV driving, with a vocabulary that reaches highway speed, close that gap?
 
-**Predictions.** [PREDICTIONS_phase1.md](experiments/drivejepa_retrain/12_second_training_run/PREDICTIONS_phase1.md), written before the run.
+**Predictions.** [PREDICTIONS_phase1.md](experiments/GC05_physicalai_retrain/12_second_training_run/PREDICTIONS_phase1.md), written before the run.
 
 **What we learned.** In-domain data closes most of the AlpaSim gap: 0.5433 → 0.7697 on 30 scenes, one drive each (moderate, adapted). The gain is the generator's; the retrained scorer failed its own pick-the-best check (37.9% against a 50% bar), so the shipped checkpoint keeps the first run's scorer and retrains only the generator. Two of its three at-fault collisions are new, and two scenes never move under any driver.
 
 | Run | Started from | Trained | Data | Code | Checkpoint |
 |---|---|---|---|---|---|
-| **GC05.run1**<br>first training run: generator and scorer together, 10 passes; pass 9 kept | released (740335c800e2) | generator, scorer (7.08 M); frozen: encoder | physicalai_av `train` 126,981 samples (train) — from 4,015 clips; AlpaSim's 913 public scenes (which hold the 30 test scenes) excluded<br>physicalai_av `val_full` 24,657 examples (selection) — 801 clips; chose which pass to keep | [scripts in 06_first_training_run/](experiments/drivejepa_retrain/06_first_training_run/)<br>Drive-JEPA @ `e21f474` + patches | `{weights}/drivejepa_physicalai/first-run/step_000000009/`<br>sha256 `8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2` |
-| **GC05.run2**<br>second training run: generator only, scorer frozen; 1 pilot pass + 2 passes (final_P0) | GC05.run1 | generator (2.38 M); frozen: encoder, scorer | physicalai_av `train` (train) — run 1's training set minus 145 held-out training clips<br>physicalai_av `train (145 held-out clips)` 4,400 examples (selection) — chose the arm and the pass by a rule written beforehand (PREDICTIONS_phase1.md)<br>physicalai_av `val` (eval) — the after-the-fact evaluation on clips neither run trained on (unseen_clip_evaluation.md) | [scripts in 12_second_training_run/](experiments/drivejepa_retrain/12_second_training_run/)<br>commit `3e8901a`<br>Drive-JEPA @ `e21f474` + patches | `{weights}/drivejepa_physicalai/second-run-generator/step_000000002/`<br>sha256 `29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916`<br>shipped as AlpaSim driver 0.1.7<br>⚠️ sidecar: train_git_sha was set after the fact; `val` is missing from trained_on |
+| **GC05.run1**<br>first training run: generator and scorer together, 10 passes; pass 9 kept | released (740335c800e2) | generator, scorer (7.08 M); frozen: encoder | physicalai_av `train` 126,981 samples (train) — from 4,015 clips; AlpaSim's 913 public scenes (which hold the 30 test scenes) excluded<br>physicalai_av `val_full` 24,657 examples (selection) — 801 clips; chose which pass to keep | [scripts in 06_first_training_run/](experiments/GC05_physicalai_retrain/06_first_training_run/)<br>Drive-JEPA @ `e21f474` + patches | `{weights}/drivejepa_physicalai/first-run/step_000000009/`<br>sha256 `8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2` |
+| **GC05.run2**<br>second training run: generator only, scorer frozen; 1 pilot pass + 2 passes (final_P0) | GC05.run1 | generator (2.38 M); frozen: encoder, scorer | physicalai_av `train` (train) — run 1's training set minus 145 held-out training clips<br>physicalai_av `train (145 held-out clips)` 4,400 examples (selection) — chose the arm and the pass by a rule written beforehand (PREDICTIONS_phase1.md)<br>physicalai_av `val` (eval) — the after-the-fact evaluation on clips neither run trained on (unseen_clip_evaluation.md) | [scripts in 12_second_training_run/](experiments/GC05_physicalai_retrain/12_second_training_run/)<br>commit `3e8901a`<br>Drive-JEPA @ `e21f474` + patches | `{weights}/drivejepa_physicalai/second-run-generator/step_000000002/`<br>sha256 `29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916`<br>shipped as AlpaSim driver 0.1.7<br>⚠️ sidecar: train_git_sha was set after the fact; `val` is missing from trained_on |
 
 - **GC05.run1:** Driven in AlpaSim as driver 0.1.6; never shipped.
 - **GC05.run2:** Spacing weight lam = 0 (a tie-break, pilot_choice.json). Merged file = released encoder + run-1 scorer + run-2 generator, bit for bit (gen_ckpt.json).
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC05.run1 | AlpaSim scene_score 0.5433 → 0.7032 (n=30 scenes)<br>30 scenes, one drive each; at-fault collisions 4 → 2; highway and pull-outs not fixed (07_closed_loop_test/REPORT.md: MIXED) | released, driver 0.1.4b (momentum-aware selection) | ●○○○ argued · adapted | experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json |
-| GC05.run1 | offline scorer picks the best of 32 (val) 34.2% → 37.9%<br>the run's own bar was ≥ 50%: failed, so the scorer was frozen for run 2 | released scorer | ●●○○ moderate | experiments/drivejepa_retrain/06_first_training_run/REPORT.md |
-| GC05.run2 ★ | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes)<br>30 scenes, one drive each; SE 0.069; +0.226 paired; at-fault 4 → 3, two of them new; constant velocity 0.4876 (different simulator setting) | released, driver 0.1.4b (momentum-aware selection) | ●●○○ moderate · adapted | experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json |
-| GC05.run2 | AlpaSim scene_score 0.7032 → 0.7697 (n=30 scenes)<br>30 scenes, one drive each; SE 0.068; +0.066 paired: not a resolved difference | run 1, driver 0.1.6 | ○○○○ unverified · adapted | experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json |
-| GC05.run2 | offline scorer picks the best of 32 (val, batch 1) 38.3% → 54.6%<br>95% interval 52.1–56.9; same scorer weights, better candidates | run 1's checkpoint | ●●○○ moderate | experiments/drivejepa_retrain/12_second_training_run/unseen_clip_evaluation.md |
+| GC05.run1 | AlpaSim scene_score 0.5433 → 0.7032 (n=30 scenes)<br>30 scenes, one drive each; at-fault collisions 4 → 2; highway and pull-outs not fixed (07_closed_loop_test/REPORT.md: MIXED) | released, driver 0.1.4b (momentum-aware selection) | ●○○○ argued · adapted | experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/totals.json |
+| GC05.run1 | offline scorer picks the best of 32 (val) 34.2% → 37.9%<br>the run's own bar was ≥ 50%: failed, so the scorer was frozen for run 2 | released scorer | ●●○○ moderate | experiments/GC05_physicalai_retrain/06_first_training_run/REPORT.md |
+| GC05.run2 ★ | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes)<br>30 scenes, one drive each; SE 0.069; +0.226 paired; at-fault 4 → 3, two of them new; constant velocity 0.4876 (different simulator setting) | released, driver 0.1.4b (momentum-aware selection) | ●●○○ moderate · adapted | experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/totals.json |
+| GC05.run2 | AlpaSim scene_score 0.7032 → 0.7697 (n=30 scenes)<br>30 scenes, one drive each; SE 0.068; +0.066 paired: not a resolved difference | run 1, driver 0.1.6 | ○○○○ unverified · adapted | experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/totals.json |
+| GC05.run2 | offline scorer picks the best of 32 (val, batch 1) 38.3% → 54.6%<br>95% interval 52.1–56.9; same scorer weights, better candidates | run 1's checkpoint | ●●○○ moderate | experiments/GC05_physicalai_retrain/12_second_training_run/unseen_clip_evaluation.md |
 
 **Checks that decided something**
 
@@ -540,9 +540,9 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 **Evidence outside this repo**
 
 - AlpaSim runs: paddock PR #68, results/alpasim/*/legacy-*_30scenes (paddock's own record of what was driven).
-- Weights, training set and large tables: off-repo at the training site, each with bytes and sha256 in experiments/drivejepa_retrain/POINTERS.md.
+- Weights, training set and large tables: off-repo at the training site, each with bytes and sha256 in experiments/GC05_physicalai_retrain/POINTERS.md.
 
-**Record:** [record](docs/drivejepa-retrain.md)
+**Record:** [record](experiments/GC05_physicalai_retrain/README.md)
 
 </details>
 
@@ -570,10 +570,10 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC06.v1 ★ | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes)<br>each rendered scene held out in turn; 0.660 / 0.706 / 0.695 / 0.828 / 0.751 for 0053 / 0058 / 0064 / 0070 / 0075, against 0.50–0.59 for the released final score; one seed | released final score, best of the same 5 folds | ●●○○ moderate · blind, open-loop | docs/scorer-cache.md; dj_cache/v1/folds.json |
-| GC06.v2 | offline held-out collision ranking AUC, trained on a single scene 0.8<br>'about 0.8'; from code not on main (train/sighted-scorer) | — | ○○○○ unverified · blind, open-loop | docs/scorer-cache.md; dj_cache/v2/learning_curve_*.json |
-| GC06.v3_nusc | offline override rate on real nuScenes held-out ticks (real scenes masked from the collision label) 55%<br>66 held-out real nuScenes train scenes; and keeps only 68% of them safe; from code not on main (train/sighted-scorer) | — | ○○○○ unverified · blind, open-loop | docs/scorer-cache.md; dj_cache/v2/probe_attngeo_realmask* |
-| GC06.relative-0103 | neuroNCAP ncap_score, frontal 4.044839 (n=3 episodes)<br>scene 0103, frontal, seeds 0-2; 2.13 / 5.0 / 5.0. Not an avoidance: every switch happens in the first 3 s, identically in the frontal, stationary and side runs, and drifts the ego about 2 m left; the oncoming car misses an ego already displaced | released (blind): 2.07 / 2.26 / 2.08 | ●○○○ argued · blind, smoke | docs/scorer-cache.md; paddock branch record/drivejepa-camera-blind, results/neuroncap/drivejepa_subscore/20261012T131011-c43ac5/metrics.json |
+| GC06.v1 ★ | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes)<br>each rendered scene held out in turn; 0.660 / 0.706 / 0.695 / 0.828 / 0.751 for 0053 / 0058 / 0064 / 0070 / 0075, against 0.50–0.59 for the released final score; one seed | released final score, best of the same 5 folds | ●●○○ moderate · blind, open-loop | experiments/GC06_scorer_cache/README.md; dj_cache/v1/folds.json |
+| GC06.v2 | offline held-out collision ranking AUC, trained on a single scene 0.8<br>'about 0.8'; from code not on main (train/sighted-scorer) | — | ○○○○ unverified · blind, open-loop | experiments/GC06_scorer_cache/README.md; dj_cache/v2/learning_curve_*.json |
+| GC06.v3_nusc | offline override rate on real nuScenes held-out ticks (real scenes masked from the collision label) 55%<br>66 held-out real nuScenes train scenes; and keeps only 68% of them safe; from code not on main (train/sighted-scorer) | — | ○○○○ unverified · blind, open-loop | experiments/GC06_scorer_cache/README.md; dj_cache/v2/probe_attngeo_realmask* |
+| GC06.relative-0103 | neuroNCAP ncap_score, frontal 4.044839 (n=3 episodes)<br>scene 0103, frontal, seeds 0-2; 2.13 / 5.0 / 5.0. Not an avoidance: every switch happens in the first 3 s, identically in the frontal, stationary and side runs, and drifts the ego about 2 m left; the oncoming car misses an ego already displaced | released (blind): 2.07 / 2.26 / 2.08 | ●○○○ argued · blind, smoke | experiments/GC06_scorer_cache/README.md; paddock branch record/drivejepa-camera-blind, results/neuroncap/drivejepa_subscore/20261012T131011-c43ac5/metrics.json |
 
 **Checks that decided something**
 
@@ -589,7 +589,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 - The feature caches v1, v2 and v3_nusc (25 GB), fold logits and the scorer .pt files stay off the repository at the training site.
 - The closed-loop adapter drivejepa_subscore is on paddock branch model/drivejepa-subscore (no PR); its two 0103 runs are on paddock branch record/drivejepa-camera-blind.
 
-**Record:** [record](docs/scorer-cache.md)
+**Record:** [record](experiments/GC06_scorer_cache/README.md)
 
 </details>
 
@@ -1316,10 +1316,7 @@ Four reasons, in increasing order of importance:
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
 | [docs/reviewing.md](docs/reviewing.md) | reviewing a PR — what gets checked, and the 🔴 / 🟠 / 🟡 scale |
-| [docs/swerve-finetune.md](docs/swerve-finetune.md) | GC03, the swerve finetune — results, and the defects the measurements exposed |
-| [docs/scorer-cache.md](docs/scorer-cache.md) | GC06, Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
-| [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | GC05, the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
-| [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | GC04, the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
+| `experiments/<ID>_<slug>/README.md` | the full account of one experiment — e.g. [GC03](experiments/GC03_swerve_finetune/README.md), the swerve finetune and the defects its measurements exposed; [GC05](experiments/GC05_physicalai_retrain/README.md), the Physical AI AV retrain |
 
 ## Licence
 

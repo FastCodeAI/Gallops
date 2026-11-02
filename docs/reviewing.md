@@ -124,7 +124,7 @@ This is the lesson that cost the most here, so it gets its own section.
   re-grading reproduced the labeller's labels exactly. Each check tested a part
   that was right. Nothing compared *what the trainer computes* with *what the
   labeller recorded*. A per-episode cache was grading every tick from the
-  wrong pose, wrong on up to 36.6% of verdicts (swerve-finetune.md, defect 6).
+  wrong pose, wrong on up to 36.6% of verdicts (experiments/GC03_swerve_finetune/README.md, defect 6).
 - **The fidelity check passed on a camera-blind model,** because it compared the
   trainer against a recording made by code with the same bug (§2).
 - **The safety check graded against the logged human path while the labels used

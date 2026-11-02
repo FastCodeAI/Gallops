@@ -3,7 +3,7 @@
 # Every number below is copied, never re-derived, from: paddock docs/models/drivejepa.md and docs/ROADMAP.md
 # (origin/main); paddock branch record/drivejepa-camera-blind, docs/models/drivejepa_momentum.md and its
 # run files; paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (commits
-# d737456, 66dddac); and experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/models_compare.json.
+# d737456, 66dddac); and experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json.
 
 schema = 1
 id = "GC02"
@@ -30,7 +30,7 @@ external = [
   "No gallops code: momentum is upstream's calibrate_score, run by paddock's AlpaSim driver (tools/models/drivejepa/alpasim_driver/, tracked at 0.1.7) and by the drivejepa node (paddock #59, on by default since #95).",
   "neuroNCAP momentum run 20261002T065426-a87115 and its separate adapter (drivejepa_momentum): paddock branch record/drivejepa-camera-blind, kept, not for merging.",
   "Signal and injection analyses: paddock branch analysis/drivejepa-ncap-candidates (no PR); the dump and injection adapters stay outside paddock; dumps under {runs}.",
-  "AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/drivejepa_retrain/POINTERS.md).",
+  "AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/GC05_physicalai_retrain/POINTERS.md).",
 ]
 
 [[runs]]
@@ -63,7 +63,7 @@ not camera-blind (no lidar in its chain; paddock docs/models/drivejepa.md)."""
   strength = "moderate"
   headline = true
   note = "at-fault collisions 7 → 4, any collision 12 → 10; no paired SE recorded. Constant velocity scores 0.4876 on the same 30 (one simulator setting differs)"
-  source = "experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/models_compare.json; paddock docs/models/drivejepa.md"
+  source = "experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json; paddock docs/models/drivejepa.md"
 
 [[runs]]
 id = "GC02.momentum-ncap"

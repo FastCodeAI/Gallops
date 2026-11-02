@@ -1,11 +1,11 @@
 """Render the tables the docs quote, straight from the recorded JSON.
 
-    python experiments/drivejepa_retrain/doc_tables.py            # print every block
-    python experiments/drivejepa_retrain/doc_tables.py results    # print one
+    python experiments/GC05_physicalai_retrain/doc_tables.py            # print every block
+    python experiments/GC05_physicalai_retrain/doc_tables.py results    # print one
 
 Two steps of this experiment have tables and no written report: the second
 training run and the 30-scene closed-loop test of adapter 0.1.7. Rather than
-write those reports after the fact, docs/drivejepa-retrain.md carries these
+write those reports after the fact, experiments/GC05_physicalai_retrain/README.md carries these
 blocks, and tests/test_drivejepa_retrain.py fails if its copy drifts from what
 this prints. Numbers are rounded to four decimals here; the JSON beside this file
 has them unrounded.

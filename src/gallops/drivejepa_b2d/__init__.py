@@ -11,7 +11,7 @@ parts of it on the Bench2Drive base set; the backbone is never trained.
 
 The stages, in order and with their arguments, are `recipes/drivejepa_b2d.toml`;
 `gallops recipe drivejepa_b2d` prints them for this machine. What each stage
-reads and how the port was verified is in docs/drivejepa_b2d.md.
+reads and how the port was verified is in experiments/GC04_bench2drive/README.md.
 
 Every module here is a stage run as `python -m gallops.drivejepa_b2d.<stage>`,
 and the generator stage runs inside Drive-JEPA's own Python 3.9 interpreter. So

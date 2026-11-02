@@ -41,7 +41,7 @@ step, and there is no way to skip it."""
 by = ["Naren"]
 evidence = ["GC03.v4"]
 next = ["GC03.v4fix"]
-source = "docs/swerve-finetune.md, \"The six defects\"; CLAUDE.md, \"Before any training run\""
+source = "experiments/GC03_swerve_finetune/README.md, \"The six defects\"; CLAUDE.md, \"Before any training run\""
 
 [[decision]]
 id = "D04"
@@ -52,7 +52,7 @@ encoder and refiner, with sub-score heads, so a run takes minutes and can be che
 by = ["Naren"]
 evidence = ["GC03.s1", "GC03.s2", "GC03.s3"]
 next = ["GC06"]
-source = "docs/scorer-cache.md, \"Why a cache\""
+source = "experiments/GC06_scorer_cache/README.md, \"Why a cache\""
 
 [[decision]]
 id = "D05"
@@ -62,7 +62,7 @@ decision = """After its 30-scene trial, the second run's merged checkpoint — r
 second-run generator — drives AlpaSim as driver 0.1.7."""
 by = ["Siddesh"]
 evidence = ["GC05.run2"]
-source = "docs/drivejepa-retrain.md"
+source = "experiments/GC05_physicalai_retrain/README.md"
 
 [[decision]]
 id = "D06"
@@ -74,7 +74,7 @@ the caches are to be rebuilt, and the preflight now refuses a model a blanked ca
 by = ["Naren"]
 evidence = ["GC03", "GC06"]
 next = ["GC07"]
-source = "docs/STRATEGY.md (the camera correction at the top); docs/scorer-cache.md"
+source = "docs/STRATEGY.md (the camera correction at the top); experiments/GC06_scorer_cache/README.md"
 
 [[decision]]
 id = "D07"
@@ -84,7 +84,7 @@ decision = """A closed-loop gain counts only once the switches behind it are sho
 scorer-cache model's 0103 gain was a drift that happened to clear the car, not an avoidance."""
 by = ["Naren"]
 evidence = ["GC06.relative-0103"]
-source = "docs/scorer-cache.md"
+source = "experiments/GC06_scorer_cache/README.md"
 
 [[decision]]
 id = "D08"
@@ -106,7 +106,7 @@ decision = """The vendor model mixes ticks within a batch, so every forward pass
 swerve runs and the batch-4 cache v1 would train differently today; a rerun is a new run."""
 by = ["Naren"]
 evidence = ["GC03", "GC06.v1"]
-source = "docs/swerve-finetune.md; README, \"How to read it\""
+source = "experiments/GC03_swerve_finetune/README.md; README, \"How to read it\""
 
 [[decision]]
 id = "D10"

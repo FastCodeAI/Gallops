@@ -13,10 +13,10 @@ The rules — IDs, names, versions, where code and data go — are in
 [docs/experiments.md](../docs/experiments.md). Start a new experiment with
 `gallops experiments new <ID> <slug> --owner <name>`, which copies [_template/](_template/).
 
-Two experiments still keep their account where it was written before this registry existed:
-`docs/*.md` and [drivejepa_retrain/](drivejepa_retrain/) (GC05's scripts and reports). Their
-`experiment.toml` points there. Records marked "on branch" live on a branch that has not been
-merged yet; their `experiment.toml` is here so the evidence is indexed now.
+GC05 also keeps its step-by-step record as it ran: one numbered folder per step, explained by
+[GC05_physicalai_retrain/RECORD.md](GC05_physicalai_retrain/RECORD.md). Records marked "on branch"
+live on a branch that has not been merged yet; their `experiment.toml` is here so the evidence is
+indexed now, and the record moves into the folder when the branch merges.
 
 ## Index
 
