@@ -39,6 +39,8 @@ from pathlib import Path
 
 import numpy as np
 
+from gallops.compat import zip_strict
+
 #: In nuScenes train, so not in paddock's official set, but it carries a neuroNCAP
 #: scenario (the vendor's "mini set"), so its log stays out of training too.
 NEURONCAP_MINI = {"0061"}
@@ -312,14 +314,14 @@ def main() -> None:
             if not link.exists():
                 os.symlink(args.nuscenes / r["filename"], link)
         (episode / "ego_poses.json").write_text(
-            json.dumps({str(t): p.round(6).tolist() for t, p in zip(stamps, ego, strict=True)})
+            json.dumps({str(t): p.round(6).tolist() for t, p in zip_strict(stamps, ego)})
         )
         (episode / "actors.json").write_text(json.dumps(actors))
         (episode / "reference_trajectory.json").write_text(
             json.dumps(
                 {
                     str(t): [float(p[0, 3]), float(p[1, 3]), float(math.atan2(p[1, 0], p[0, 0]))]
-                    for t, p in zip(stamps, ego, strict=True)
+                    for t, p in zip_strict(stamps, ego)
                 }
             )
         )
@@ -328,7 +330,7 @@ def main() -> None:
         (episode / "lane_reference.json").write_text(json.dumps(lanes))
 
         rows_out = []
-        for k, (t, p) in enumerate(zip(stamps, ego, strict=True)):
+        for k, (t, p) in enumerate(zip_strict(stamps, ego)):
             if k == 0 or k + FUTURE_STEPS >= len(stamps):
                 continue
             if abs((t - stamps[k - 1]) - HISTORY_DT_US) > HISTORY_TOLERANCE_US:

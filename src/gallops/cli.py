@@ -10,7 +10,7 @@ green first, so that when something moves you know it was the model.
 from __future__ import annotations
 
 import json
-from typing import Annotated
+from typing import Annotated, Optional
 
 import typer
 
@@ -72,7 +72,10 @@ def show(directory: str) -> None:
 def recipe(
     name: str,
     stages: Annotated[
-        list[str] | None, typer.Argument(help="stages to show or run; all when omitted")
+        # Optional, not `| None`: typer evaluates these hints at run time, and Drive-JEPA's
+        # interpreter (Python 3.9, where a trainer's preflight runs the tests) has no `X | Y`.
+        Optional[list[str]],  # noqa: UP045
+        typer.Argument(help="stages to show or run; all when omitted"),
     ] = None,
     run: Annotated[bool, typer.Option("--run", help="run the stages in order; otherwise only print")] = False,
 ) -> None:
