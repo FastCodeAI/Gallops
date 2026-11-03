@@ -5,7 +5,7 @@
 
 **Navvrat** · Bench2Drive · ✅ positive · 29 Sep – 13 Oct 2026 · gap-closing
 
-[← all experiments](../../README.md#gap-closing-experiments) · [the account](../../docs/drivejepa_b2d.md) · [experiment.toml](experiment.toml)
+[← all experiments](../../README.md#gap-closing-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
 ## Question
 
@@ -31,10 +31,10 @@ Split-v4 reached a mean DS of 68.1 and the Final 73.6 on 50 routes, against 57.6
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC04.split-v4 | Bench2Drive mean driving score 68.1 (n=50 routes)<br>50 routes, one run each, 30 Sep 2026; inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz | — | ●○○○ argued · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
-| GC04.split-v4 | offline split-v4aug mean AUC, 150 held-out clips 0.940<br>kept epoch 20, chosen on the same clips; split-full also 0.940 | — | ●●○○ moderate · selected-on-report | docs/drivejepa_b2d.md |
-| GC04.final ★ | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes)<br>50 routes, one run each, 6 Oct 2026; the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes | released Drive-JEPA at 2 Hz (paddock native50-2hz-40c29d24c37d542a-447e23) | ●○○○ argued · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
-| GC04.final | Bench2Drive mean driving score 68.1 → 73.6 (n=50 routes)<br>50 routes, one run each; Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result | Split-v4 | ○○○○ unverified · adapted, selected-on-report, no-record | docs/drivejepa_b2d.md |
+| GC04.split-v4 | Bench2Drive mean driving score 68.1 (n=50 routes)<br>50 routes, one run each, 30 Sep 2026; inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz | — | ●●○○ moderate · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
+| GC04.split-v4 | offline split-v4aug mean AUC, 150 held-out clips 0.940<br>kept epoch 20, chosen on the same clips; split-full also 0.940 | — | ●●○○ moderate · selected-on-report | experiments/GC04_bench2drive/README.md |
+| GC04.final ★ | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes)<br>50 routes, one run each, 6 Oct 2026; the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes | released Drive-JEPA at 2 Hz (paddock native50-2hz-40c29d24c37d542a-447e23) | ●●○○ moderate · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
+| GC04.final | Bench2Drive mean driving score 68.1 → 73.6 (n=50 routes)<br>50 routes, one run each; Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result | Split-v4 | ○○○○ unverified · adapted, selected-on-report, no-record | experiments/GC04_bench2drive/README.md |
 
 ## Checks that decided something
 

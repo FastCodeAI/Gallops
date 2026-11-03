@@ -2,7 +2,7 @@
 
 The scripts, reports and result tables of one experiment, step by step, as they
 were written. The account of what was done and what it measured is
-[docs/drivejepa-retrain.md](../../docs/drivejepa-retrain.md); start there.
+[README.md](README.md), beside this file; start there.
 
 **This is a record, not a package.** It sits outside `src/gallops/` and outside
 `make lint`. The scripts ran as scripts, from a working tree at the training
@@ -38,7 +38,7 @@ step.
 written day by day and are committed as written, so they use short labels for
 steps, checkpoints and checks that the docs do not. The folder names above were
 given at commit time; the names the work was done under are in the "Where this
-came from" table in `docs/drivejepa-retrain.md`, and file names inside each
+came from" table in `README.md`, and file names inside each
 folder are unchanged.
 
 ## What is not here
@@ -53,7 +53,7 @@ folder are unchanged.
   (`05_small_overfit_check/train_patch/dataset.diff`, `drive_jepa_agent.diff`,
   and `12_second_training_run/train_patch/drive_jepa_agent_s10.diff`, which
   applies on top of the second). Applying them reproduces the files as they
-  stood when training ended, byte for byte; their sha256 are in `docs/drivejepa-retrain.md`.
+  stood when training ended, byte for byte; their sha256 are in `README.md`.
 - **No weights, arrays, frames, videos, caches or logs**, and no table over
   100 KB outside the closed-loop test, except the list of converted clips
   (`04_training_set/clips.csv`, 283 KB). [POINTERS.md](POINTERS.md) lists them
@@ -69,7 +69,7 @@ they still rebuild the files that trained.
 
 | Placeholder | Stands for |
 |---|---|
-| `experiments/drivejepa_retrain` | this folder, when it was the working tree at the training site |
+| `experiments/drivejepa_retrain` | this folder, when it was the working tree at the training site. It was `experiments/drivejepa_retrain/` in this repository too until the experiment registry gave it its ID folder; the as-run files keep the old name |
 | `{runs}/drivejepa_retrain` | that site's network store for this experiment (checkpoints, manifests, downloads) |
 | `{runs}/alpasim_bulk` | that site's bulk disk for the simulator: environments, run folders, the released weights |
 | `{runs}/paddock_sid` | a personal working tree inside a paddock checkout, where the drivers and earlier analyses live |

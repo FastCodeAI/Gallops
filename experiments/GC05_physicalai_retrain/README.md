@@ -4,8 +4,8 @@ The first model trained under this repository that paddock's simulator can
 drive. It is not gallops-v0 and shares no code with it: it is the released
 [Drive-JEPA](https://github.com/linhanwang/Drive-JEPA) checkpoint, trained
 further on NVIDIA's Physical AI AV dataset. The scripts, step-by-step reports
-and result tables are under
-[experiments/drivejepa_retrain/](../experiments/drivejepa_retrain/).
+and result tables are in this folder, one numbered folder per step;
+[RECORD.md](RECORD.md) says how to read them.
 
 Drive-JEPA has two parts: a generator that proposes 32 candidate paths, and a
 scorer that rates them and picks one. Both were trained together in the first
@@ -101,7 +101,7 @@ Four things this page will not let a reader assume:
   (`12_second_training_run/pilot_choice.json`).
 - **The committed code has not been re-run.** Machine paths were replaced by
   placeholders before committing and nothing has been executed since. See
-  [the experiment README](../experiments/drivejepa_retrain/README.md).
+  [the experiment README](RECORD.md).
 
 ---
 
@@ -311,7 +311,7 @@ records what the test ran; it is not a second copy of the driver.
 | Vocabulary | `vocab_10240.npy` beside it, 4,915,328 bytes, sha256 `4b0bc3c9a55c1787cd54d4a27c8bfd7119bbe6ae2cbe1bf1cfe3343da639e785` |
 
 Every other artefact, with size and hash, is in
-[POINTERS.md](../experiments/drivejepa_retrain/POINTERS.md).
+[POINTERS.md](POINTERS.md).
 
 The `checkpoint.json` written beside the weights, with `gallops.checkpoint`:
 
@@ -329,7 +329,7 @@ The `checkpoint.json` written beside the weights, with `gallops.checkpoint`:
     "sidecar_written": "2026-10-13, after the weights (2026-10-09), not by the function that saved them",
     "spacing_weight": 0.0,
     "step_meaning": "pass 2 of the second training run's two further passes; that run starts from the first run's kept checkpoint plus one pilot pass",
-    "train_git_sha_set_after_the_fact": "The training code was not in git when the runs were made (2026-10-07 and 2026-10-09). The sha is the commit on gallops branch train/drivejepa-physicalai-retrain that first holds all of it; experiments/drivejepa_retrain/AS_RUN.sha256 has the hashes of the files as they ran. It stays reachable only if that branch is merged with a merge commit; after a squash merge this field is updated to the merged main sha.",
+    "train_git_sha_set_after_the_fact": "The training code was not in git when the runs were made (2026-10-07 and 2026-10-09). The sha is the commit on gallops branch train/drivejepa-physicalai-retrain that first holds all of it; experiments/GC05_physicalai_retrain/AS_RUN.sha256 has the hashes of the files as they ran. It stays reachable only if that branch is merged with a merge commit; after a squash merge this field is updated to the merged main sha.",
     "vocabulary": "vocab_10240.npy, sha256 4b0bc3c9a55c1787cd54d4a27c8bfd7119bbe6ae2cbe1bf1cfe3343da639e785",
     "weights_bytes": 1273002536,
     "weights_file": "drive_jepa_physicalai_generator.ckpt (upstream Drive-JEPA state dict, not model.safetensors)"
@@ -360,7 +360,7 @@ Six things about it that a reader should not have to infer:
 - **`train_git_sha` was set after the fact.** The training code was not in any
   git repository when either run was made. The sha recorded is the commit on
   this branch that first holds all of that code; `notes` says so, and
-  `experiments/drivejepa_retrain/AS_RUN.sha256` holds the hashes of the files
+  `experiments/GC05_physicalai_retrain/AS_RUN.sha256` holds the hashes of the files
   as they ran. That commit stays reachable only if this branch is merged with
   a merge commit. If it is squash-merged, the sidecar is updated to the merged
   `main` sha as a follow-up.
@@ -420,7 +420,7 @@ effect of the spacing term at a non-zero weight beyond the one-pass pilot.
 Weights, the training set, the run folders, tables over 100 KB, and the
 after-the-fact evaluation of the second run — all listed, with sizes and hashes
 where a single file exists, in
-[POINTERS.md](../experiments/drivejepa_retrain/POINTERS.md). An earlier line of
+[POINTERS.md](POINTERS.md). An earlier line of
 work that tried to re-rank the released model's candidates without retraining
 is not here at all.
 

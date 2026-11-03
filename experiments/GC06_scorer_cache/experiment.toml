@@ -1,5 +1,5 @@
 # GC06 -- Drive-JEPA's scorer trained on cached features: caches v1, v2 and v3_nusc, and one closed-loop
-# 0103 run (Naren). Every number is copied, never re-derived, from docs/scorer-cache.md, except: the 0103
+# 0103 run (Naren). Every number is copied, never re-derived, from experiments/GC06_scorer_cache/README.md, except: the 0103
 # frontal mean, from the run's metrics.json on paddock branch record/drivejepa-camera-blind; and the scorer
 # weights' identity, from their sidecar (the same bytes as results/subscore_weights_sidecar/ in the record on
 # gallops branch record/blind-scorer-experiments, experiments/2026-10-blind-scorer/).
@@ -25,7 +25,7 @@ collisions better than chance for the first time (AUC 0.66–0.83 against 0.50�
 it learned plan geometry and ego motion, not the car. Real nuScenes data broke it either way, and its one \
 closed-loop gain on 0103 was a 2 m drift set off by the scene, not an avoidance."""
 parents = ["GC03"]
-narrative = "docs/scorer-cache.md"
+narrative = "experiments/GC06_scorer_cache/README.md"
 external = [
   "The raw record -- scripts and ops chains as run, small result JSONs, the scorer's sidecars: gallops branch record/blind-scorer-experiments, experiments/2026-10-blind-scorer/ (kept for the record, not the current state of anything).",
   "The v2 measurements were made by code not on main (attention and plan-geometry scorer, probe paths, real / real-mask / 0.2-weight variants, learning curves, five seeds), on gallops branch train/sighted-scorer.",
@@ -71,7 +71,7 @@ to the branch record's results/v1/."""
   flags = ["blind", "open-loop"]
   headline = true
   note = "0.660 / 0.706 / 0.695 / 0.828 / 0.751 for 0053 / 0058 / 0064 / 0070 / 0075, against 0.50–0.59 for the released final score; one seed"
-  source = "docs/scorer-cache.md; dj_cache/v1/folds.json"
+  source = "experiments/GC06_scorer_cache/README.md; dj_cache/v1/folds.json"
 
 [[runs]]
 id = "GC06.v2"
@@ -103,7 +103,7 @@ copied to the branch record's results/v2/."""
   strength = "unverified"
   flags = ["blind", "open-loop"]
   note = "'about 0.8'; from code not on main (train/sighted-scorer)"
-  source = "docs/scorer-cache.md; dj_cache/v2/learning_curve_*.json"
+  source = "experiments/GC06_scorer_cache/README.md; dj_cache/v2/learning_curve_*.json"
 
 [[runs]]
 id = "GC06.v3_nusc"
@@ -144,7 +144,7 @@ results/v2/. The real-nuScenes conversion itself is unaffected by the camera bug
   strength = "unverified"
   flags = ["blind", "open-loop"]
   note = "and keeps only 68% of them safe; from code not on main (train/sighted-scorer)"
-  source = "docs/scorer-cache.md; dj_cache/v2/probe_attngeo_realmask*"
+  source = "experiments/GC06_scorer_cache/README.md"
 
 [[runs]]
 id = "GC06.relative-0103"
@@ -159,8 +159,7 @@ notes = """Run by paddock's drivejepa_subscore adapter, neuroNCAP run 20261012T1
 records neither the scorer directory nor the rule; these weights are identified as the ones the adapter loaded by \
 the branch record (scripts/final_train.py, results/subscore_weights_sidecar/, byte-identical to this \
 directory's sidecar). Trained 20 epochs on the rendered scenes (round0_v5, gt, round1_s2) and on real nuScenes \
-train for on_road, in_lane and progress only. Five seed files, sha256 seed_0 5f113faf20fb…, seed_1 2a90cd232ae5…, \
-seed_2 81a1813270a3…, seed_3 df4903d8cdce…, seed_4 7debbf4db701…. The absolute rule (run \
+train for on_road, in_lane and progress only. Five seed files, pinned together: their digests are the checkpoint's members. The absolute rule (run \
 20261011T160321-c43ac5) scored frontal 2.20 / 2.26 / 2.21, all hit."""
 
   [[runs.data]]
@@ -175,7 +174,14 @@ seed_2 81a1813270a3…, seed_3 df4903d8cdce…, seed_4 7debbf4db701…. The abso
   train_run = "realmask-attngeo-v1"
   step = 20
   step_unit = "epoch"
-  file = "seed_0.pt to seed_4.pt, with scorer.json"
+  weights_sha256 = "9973608b1952fe3a24b5d429402ddf1fddbb1498b1e8698a6345ed754ac3c1df"
+  members = [
+    "5f113faf20fb8c4fe919b271afb7fb4260acecd3ec57c2b0705589599fb289a8  seed_0.pt",
+    "2a90cd232ae567b09141e3bc919a8e41cf37b4f68978224c79aafc6bd72a8472  seed_1.pt",
+    "81a1813270a38149e4fb328c0d367bfccbcf971872f48d5725497b2f57b62ec0  seed_2.pt",
+    "df4903d8cdce9666a1040b40bae2d762abb522a444a35b9a99aa4826c9d75e19  seed_3.pt",
+    "7debbf4db701ed3324ceadf4e3e52f0e519c21e62298fea9d3e2edf85ac628bf  seed_4.pt",
+  ]
   location = "{weights}/drivejepa_subscore/realmask-attngeo-v1/step_000000020/"
   sidecar = true
   known_wrong = "the sidecar is not in gallops.checkpoint's format (no train_run, no weights_sha256, `unit` where a step unit goes), so `gallops experiments checkpoint` refuses it; nothing records the pick rule a run used: scorer.json gives the absolute rule, and this run drove the relative one"
@@ -189,33 +195,33 @@ seed_2 81a1813270a3…, seed_3 df4903d8cdce…, seed_4 7debbf4db701…. The abso
   baseline = "released (blind): 2.07 / 2.26 / 2.08"
   value = "4.044839"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "2.13 / 5.0 / 5.0. Not an avoidance: every switch happens in the first 3 s, identically in the frontal, stationary and side runs, and drifts the ego about 2 m left; the oncoming car misses an ego already displaced"
-  source = "docs/scorer-cache.md; paddock branch record/drivejepa-camera-blind, results/neuroncap/drivejepa_subscore/20261012T131011-c43ac5/metrics.json"
+  source = "experiments/GC06_scorer_cache/README.md; paddock branch record/drivejepa-camera-blind, results/neuroncap/drivejepa_subscore/20261012T131011-c43ac5/metrics.json"
 
 [[checks]]
 name = "The released scorer on cached features (v1)"
 result = "reproduces its own picks on 99.62% of ticks, max logit drift 0.0017"
 decided = "cached features stand in for the live forward pass"
-source = "docs/scorer-cache.md; folds.log"
+source = "experiments/GC06_scorer_cache/README.md; folds2.log, line 25"
 
 [[checks]]
 name = "Does the scorer's answer change when only the hazard car changes?"
 date = 2026-10-12
 result = "no: on GT drives, where 30 runs of a scene share every pose, the cached tokens were bit-identical across runs whose images differ by up to 23% of pixels; the cameras were placed relative to LIDAR_TOP, so no image reached the refiner"
 decided = "caches v1, v2 and v3_nusc must be rebuilt; a cache records its key (camera frame, code sha, --batch, vocabulary sha256, checkpoint, calibration source), and scorer_labels and scorer_folds refuse a cache without camera_frame: ego"
-source = "docs/scorer-cache.md (correction)"
+source = "experiments/GC06_scorer_cache/README.md (correction)"
 
 [[checks]]
 name = "Ticks mixed within a batch"
 result = "at batch 1 the rebuilt plans match the driven ones to 5e-5 m, at batch 4 by up to 1.0 m: the vendor's spatial cross-attention takes every element's camera queries from element 0's mask"
 decided = "every pass is one tick (TICKS_PER_PASS); scorer_cache, the trainer, reach and the preflight refuse --batch above 1"
-source = "docs/scorer-cache.md ('Open')"
+source = "experiments/GC06_scorer_cache/README.md ('Open')"
 
 [[checks]]
 name = "Is the 0103 closed-loop gain an avoidance?"
 date = 2026-10-12
 result = "no: the relative rule's switches happen in the first 3 s with the same times, offsets and scores in frontal, stationary and side runs"
 decided = "any closed-loop gain must be checked for switches that differ between scenarios before it is credited"
-source = "docs/scorer-cache.md; paddock branch record/drivejepa-camera-blind, docs/models/drivejepa_subscore.md"
+source = "experiments/GC06_scorer_cache/README.md; paddock branch record/drivejepa-camera-blind, docs/models/drivejepa_subscore.md"

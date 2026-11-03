@@ -15,7 +15,7 @@ How small can each benchmark's gate subset be and still catch a change worth cat
 
 ## What we learned
 
-Smallest drop each subset detects (80% power): neuroNCAP closed tier 0.73 for a small change and 2.85 for a big one, out of 5; its quick tier 2.5 / 6.7, a pipeline check only; NAVSIM about 0.0035; KITScenes 0.51 m for a big change; Bench2Drive only 17–38 points; AlpaSim about 0.23, argued. Decided 21 Oct: the subset sizes stay, every verdict prints its MDE, and each benchmark's own score decides. The first timed run (20 Oct, released against itself) took 2 h 40 min, the quick tier 19 min, and matched its baselines to the last digit: HOLD.
+Smallest drop each subset detects (80% power): neuroNCAP closed tier 0.73 for a small change and 2.85 for a big one, out of 5; its quick tier 2.5 / 6.7, a pipeline check only; NAVSIM about 0.0035; KITScenes 0.51 m for a big change; Bench2Drive only 17–38 points; AlpaSim about 0.23, argued. Decided 21 Oct: the subset sizes stay, every verdict prints its MDE, and each benchmark's own score decides. The first timed run (20 Oct, released against itself) took 2 h 40 min, the quick tier 19 min. Five subsets on four benchmarks reproduced their baselines exactly; Bench2Drive moved +7.0 driving score (t 0.82, MDE 28.7: NEUTRAL), the run-to-run noise its gate has to absorb. HOLD.
 
 ## Runs
 
@@ -25,7 +25,7 @@ Smallest drop each subset detects (80% power): neuroNCAP closed tier 0.73 for a 
 | **H02.timing**<br>first timed gate run: released Drive-JEPA against itself, --tier all, three lanes for the quick tier | — | — | — | — | `{data.navsim.exp}/Drive-JEPA-cache/`<br>sha256 `740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d30d05` |
 
 - **H02.mde:** Cost: CPU, existing results. A small change is a finetune of the same model; a big change is one that changes what the model sees (page). Bench2Drive's 17–38 points and the not-adopted neuroNCAP alternative are under checks: a range is not one number.
-- **H02.timing:** 18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke (one lane, before tiers) took 7.7 h. Each run.json records paddock 340b7fa, clean, and the adapter as it then was: image_geometry native (uncropped), momentum off -- before #106 and #95 changed both defaults.
+- **H02.timing:** 18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke (one lane, before tiers) took 7.7 h. Five of the six candidate runs' run.json record paddock 340b7fa, clean, and the adapter as it then was: image_geometry native (uncropped), momentum off -- before #106 and #95 changed both defaults; the NAVSIM run's carries no policy block. 340b7fa is a pre-squash commit of paddock #100 that is on no remote; its squash on paddock main is ee62a6b.
 
 ## Results
 
@@ -33,12 +33,12 @@ Smallest drop each subset detects (80% power): neuroNCAP closed tier 0.73 for a 
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| H02.mde ★ | neuroNCAP MDE, small change (closed tier, 6 pairs × 3 seeds) **0.73** (n=6 scenario pairs)<br>out of 5; measured from past paired runs per the page, not in either repo | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
-| H02.mde | neuroNCAP MDE, big change (closed tier, 6 pairs × 3 seeds) 2.85 (n=6 scenario pairs)<br>out of 5 | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
-| H02.mde | neuroNCAP MDE, small change (quick tier, 0103 × 3 shapes, 1 seed) 2.5 (n=3 scenario pairs)<br>out of 5; a pipeline check only | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
-| H02.mde | neuroNCAP MDE, big change (quick tier, 0103 × 3 shapes, 1 seed) 6.7 (n=3 scenario pairs)<br>out of 5; a pipeline check only | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
-| H02.mde | NAVSIM MDE in EPDMS, small change (1,000 of 12,146 navtest scenarios) 0.0035 (n=136 logs)<br>'about 0.0035' | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
-| H02.mde | KITScenes MDE in ADE (m), big change (all 223 keyframes) 0.51 (n=140 scenes) | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde ★ | neuroNCAP MDE, small change (closed tier, 6 pairs × 3 seeds) **0.73** (n=6 scenario pairs)<br>out of 5; measured from past paired runs per the page, not in either repo | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde | neuroNCAP MDE, big change (closed tier, 6 pairs × 3 seeds) 2.85 (n=6 scenario pairs)<br>out of 5 | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde | neuroNCAP MDE, small change (quick tier, 0103 × 3 shapes, 1 seed) 2.5 (n=3 scenario pairs)<br>out of 5; a pipeline check only | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde | neuroNCAP MDE, big change (quick tier, 0103 × 3 shapes, 1 seed) 6.7 (n=3 scenario pairs)<br>out of 5; a pipeline check only | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde | NAVSIM MDE in EPDMS, small change (1,000 of 12,146 navtest scenarios) 0.0035 (n=136 logs)<br>'about 0.0035' | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
+| H02.mde | KITScenes MDE in ADE (m), big change (all 223 keyframes) 0.51 (n=140 scenes) | — | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
 | H02.mde | AlpaSim MDE (10 clips, public_2601_first10) 0.23 (n=10 clips)<br>'about 0.23, argued from PR #93's swings, not measured' | — | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table) |
 
 ## Regression gate

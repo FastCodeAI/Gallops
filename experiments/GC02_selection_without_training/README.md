@@ -17,7 +17,7 @@ copied from them:
   `docs/models/drivejepa-camera-blind.md`, and the run files they name;
 - paddock branch `analysis/drivejepa-ncap-candidates`: `docs/models/drivejepa-neuroncap.md`,
   at commits `d737456` (23 Sep) and `66dddac` (26 Sep);
-- [models_compare.json](../drivejepa_retrain/07_closed_loop_test/runs_017/tables/models_compare.json)
+- [models_compare.json](../GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json)
   in this repo, which holds the AlpaSim numbers.
 
 **Every neuroNCAP number here is camera-blind.** Until paddock #62, cameras were

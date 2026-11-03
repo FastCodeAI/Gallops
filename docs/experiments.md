@@ -136,6 +136,9 @@ bit-for-bit comparison), **strong**, **moderate**, **argued** (reasoned, not mea
 *verified by reading*, *not supported*; a record translates them into this ladder and keeps the
 original wording in `note`.
 
+`argued` is for a claim reasoned from other evidence. A number read from a run is not argued,
+however thin the run: its flags say how thin (`smoke`, `no-record`).
+
 Flags say what kind of number it is:
 
 | Flag | Means |

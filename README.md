@@ -180,12 +180,12 @@ gate verdicts and the checks that decided something.
 |---|---|---|---|---|---|---|---|---|
 | [**GC01**](experiments/GC01_rerank_kitscenes/CARD.md) | KITScenes re-ranker | Naren | KITScenes, nuScenes, neuroNCAP | KITScenes ADE@3s (m) 2.521 → **0.973** (n=223 samples) | ●●●○ strong · adapted, open-loop | ◐ mixed | `2050b799e8e8` | [account](experiments/GC01_rerank_kitscenes/README.md) |
 | [**GC02**](experiments/GC02_selection_without_training/CARD.md) | Selection without training | Naren, Siddesh | AlpaSim, neuroNCAP | AlpaSim scene_score 0.4209 → **0.5433** (n=30 scenes) | ●●○○ moderate | ◐ mixed | — | [account](experiments/GC02_selection_without_training/README.md) |
-| [**GC03**](experiments/GC03_swerve_finetune/CARD.md) | Swerve finetune, 11 runs | Naren | neuroNCAP, offline | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs) | ○○○○ unverified · blind | ⏸ parked (inconclusive) | `e7cda1681023` | [account](docs/swerve-finetune.md) |
-| [**GC04**](experiments/GC04_bench2drive/CARD.md) | Bench2Drive retrain (Split-v4, Final) | Navvrat | Bench2Drive | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes) | ●○○○ argued · adapted, selected-on-report, no-record | ✅ positive | — | [account](docs/drivejepa_b2d.md) |
-| [**GC05**](experiments/GC05_physicalai_retrain/CARD.md) | Physical AI AV retrain | Siddesh | AlpaSim | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes) | ●●○○ moderate · adapted | ✅ positive | `29d5f9517c2e` | [account](docs/drivejepa-retrain.md) |
-| [**GC06**](experiments/GC06_scorer_cache/CARD.md) | Scorer on cached features | Naren | offline, neuroNCAP | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes) | ●●○○ moderate · blind, open-loop | ⏸ parked (inconclusive) | — | [account](docs/scorer-cache.md) |
-| [**GC07**](experiments/GC07_subscore_scorer/CARD.md) | Sub-score scorer, seeing | Naren | neuroNCAP | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs) | ●○○○ argued · smoke, adapted, no-record | ⏸ parked (mixed) | `1f11144e697e` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
-| [**GC08**](experiments/GC08_expert_v6_imitation/CARD.md) | Expert v6 imitation | Naren | neuroNCAP, nuScenes | neuroNCAP ncap_score, mean of 3 shapes 3.01 → **2.31** (n=9 runs) | ●○○○ argued · smoke, adapted, no-record | ❌ negative | `916b930a38ea` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
+| [**GC03**](experiments/GC03_swerve_finetune/CARD.md) | Swerve finetune, 11 runs | Naren | neuroNCAP, offline | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs) | ○○○○ unverified · blind | ⏸ parked (inconclusive) | `78071f68af07` | [account](experiments/GC03_swerve_finetune/README.md) |
+| [**GC04**](experiments/GC04_bench2drive/CARD.md) | Bench2Drive retrain (Split-v4, Final) | Navvrat | Bench2Drive | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes) | ●●○○ moderate · adapted, selected-on-report, no-record | ✅ positive | — | [account](experiments/GC04_bench2drive/README.md) |
+| [**GC05**](experiments/GC05_physicalai_retrain/CARD.md) | Physical AI AV retrain | Siddesh | AlpaSim | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes) | ●●○○ moderate · adapted | ✅ positive | `29d5f9517c2e` | [account](experiments/GC05_physicalai_retrain/README.md) |
+| [**GC06**](experiments/GC06_scorer_cache/CARD.md) | Scorer on cached features | Naren | offline, neuroNCAP | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes) | ●●○○ moderate · blind, open-loop | ⏸ parked (inconclusive) | — | [account](experiments/GC06_scorer_cache/README.md) |
+| [**GC07**](experiments/GC07_subscore_scorer/CARD.md) | Sub-score scorer, seeing | Naren | neuroNCAP | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs) | ●●○○ moderate · smoke, adapted, no-record | ⏸ parked (mixed) | `b6e0c778e9f0` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
+| [**GC08**](experiments/GC08_expert_v6_imitation/CARD.md) | Expert v6 imitation | Naren | neuroNCAP, nuScenes | neuroNCAP ncap_score, mean of 3 shapes 3.01 → **2.31** (n=9 runs) | ●●○○ moderate · smoke, adapted, no-record | ❌ negative | `305892faf6bb` | [on branch ⎇](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) |
 <!-- /experiments:gap-closing -->
 
 How to read it:
@@ -222,7 +222,7 @@ written down before it runs and its checkpoint put through the
 | [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera base (WA-JEPA + DJ planner) | Navvrat | 1 | ⏳ running | `run2` | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | 4 | ⏳ running | `agent-decoder`, `run3a` | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren | 5 | 📝 planned | — | — | — | — |
-| [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | 6 | ⏳ running | `navsim_off`, `b2d_off` | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●○○○ argued · no-record, open-loop | — |
+| [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | 6 | ⏳ running | `navsim_off`, `b2d_off` | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | ⏳ running | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
@@ -405,10 +405,7 @@ Four reasons, in increasing order of importance:
 | [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
 | [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
 | [docs/reviewing.md](docs/reviewing.md) | reviewing a PR — what gets checked, and the 🔴 / 🟠 / 🟡 scale |
-| [docs/swerve-finetune.md](docs/swerve-finetune.md) | GC03, the swerve finetune — results, and the defects the measurements exposed |
-| [docs/scorer-cache.md](docs/scorer-cache.md) | GC06, Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
-| [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | GC05, the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
-| [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | GC04, the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
+| `experiments/<ID>_<slug>/README.md` | the full account of one experiment — e.g. [GC03](experiments/GC03_swerve_finetune/README.md), the swerve finetune and the defects its measurements exposed; [GC05](experiments/GC05_physicalai_retrain/README.md), the Physical AI AV retrain |
 
 ## Licence
 

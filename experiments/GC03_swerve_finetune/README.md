@@ -3,7 +3,7 @@
 The record of the first end-to-end training experiment in this repo: what was
 built, what each run measured, and the six defects the measurements exposed.
 Numbers here are measurements unless the text says they are an argument — the
-standard [conventions.md](conventions.md) holds both repos to.
+standard [conventions.md](../../docs/conventions.md) holds both repos to.
 
 > **Correction (2026-10-12): every run on this page was camera-blind.** The trainer's
 > inputs (`swerve_data.py`) and the paddock adapter that drove every collection both
@@ -68,7 +68,7 @@ through them while an expert labels every tick offline.
 reconstruct  ->  author scenarios  ->  collect (the model drives)  ->  label  ->  train  ->  measure
 ```
 
-The expert is in [expert/draw.py](../src/gallops/expert/draw.py). It **solves**
+The expert is in [expert/draw.py](../../src/gallops/expert/draw.py). It **solves**
 the evasion rather than picking from a lattice: the offset comes from geometry,
 the timing from a lateral-acceleration and curvature budget. Two rules keep a
 drawn target honest.
@@ -250,7 +250,7 @@ recorded**, and a creep check that copied the same cache is what finally exposed
 it: it reported the released model's pick clear on ticks where it had crashed.
 
 `episode_context` now caches only what an episode shares and returns the tick's own
-pose, and [train/preflight.py](../src/gallops/train/preflight.py) runs before every
+pose, and [train/preflight.py](../../src/gallops/train/preflight.py) runs before every
 training step: the tree is committed and its tests pass under the training
 interpreter; the trainer's own grading reproduces the labels exactly — expert
 verdict, driven hit time, all 32 candidate verdicts — on ticks sampled late-first
@@ -290,7 +290,7 @@ ticks it cannot rebuild, and samples each episode's earliest tick.
 
 Each row changes one thing from the one above, for the reason given. "Held out"
 was produced by the ops copy of what is now
-[train/safety_check.py](../src/gallops/train/safety_check.py) (the module was
+[train/safety_check.py](../../src/gallops/train/safety_check.py) (the module was
 checked against that copy on scene 0075 only), on scene 0053,
 never trained on: the share of approach ticks (stationary, expert brakes) where
 the model's pick is safe. The released model scores 89%.
@@ -462,25 +462,25 @@ the argument for many small rounds over one large one.
 
 Built because the obvious measurement was the wrong one more than once.
 
-- [train/reach.py](../src/gallops/train/reach.py) — lateral reach of the 32 **and**
+- [train/reach.py](../../src/gallops/train/reach.py) — lateral reach of the 32 **and**
   how much the plan slows, both against the expert's own geometry. Comparing
   against `expert_offset_m` is wrong: it is 0 for `continue` by construction,
   while a correct `continue` plan on curving scene 0053 sweeps 1.93 m. That
   baseline produced one wrong diagnosis before it was caught. Its `escape`
   column carried defect 6 until the fix; the reach and slowing columns are
   ego-frame geometry and never depended on the pose.
-- [train/preflight.py](../src/gallops/train/preflight.py) — runs inside the
+- [train/preflight.py](../../src/gallops/train/preflight.py) — runs inside the
   trainer before the first step and refuses to train on any failure: committed
   tree and passing tests, the trainer's grading reproducing the labels exactly,
   and the starting weights reproducing what they drove. Its report goes into the
   checkpoint's sidecar.
-- [train/safety_check.py](../src/gallops/train/safety_check.py) — replays the
+- [train/safety_check.py](../../src/gallops/train/safety_check.py) — replays the
   creep and approach ticks of one scene through the released model and any
   finetunes, and says whether each pick is safe and why not, including hits on
   any other car in the scene. Its guard refuses to report below 99.5% agreement
   with the labels: an earlier copy graded against the logged human path while the
   labels used the lane centre, and only a training scene exposed it.
-- [train/export.py](../src/gallops/train/export.py) — `model.pt` to the vendor's
+- [train/export.py](../../src/gallops/train/export.py) — `model.pt` to the vendor's
   checkpoint shape, so paddock's adapter needs no change to evaluate a finetune.
 - *Not in this repo:* a side-by-side video of two runs, each panel carrying its
   own score, which is the only form in which "it swerved the wrong way" is obvious;
@@ -548,7 +548,7 @@ exactly one of them frontal, so its validation loss measures ordinary driving.
    cost the swerve and the braking.
 2. **Can the model see the car?** Drive-JEPA's scorer has a collision head that
    inference never computes; the scorer-cache work tests it and sub-score heads
-   held out scene by scene; it is written up in docs/scorer-cache.md in the PR after this one.
+   held out scene by scene; it is written up in experiments/GC06_scorer_cache/README.md in the PR after this one.
 3. **Teach earlier, gentler braking**, the way the released model already drives,
    so the refiner stops learning "hold speed".
 4. **Occlusion-aware visibility** and **the lane term**, both still open from the

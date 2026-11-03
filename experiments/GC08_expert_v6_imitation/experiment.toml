@@ -43,7 +43,7 @@ start_from = "released Drive-JEPA (seeing)"
 trained = ["refiner", "scorer"]
 frozen = ["encoder"]
 train_git_sha = "21067a5"
-notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1 × 8 accumulated, lr 1e-4, brake ticks 2×, brake-then-swerve 4×, 3 epochs. Training curves: nearest-candidate distance to the v6 plan 1.18 → 0.48 m (train), 0.83 → ~0.59 m (held-out 0075); scorer picks the best of 32 on 27–31% of training ticks, 9–22% on 0075, where its loss does not fall. Pinned checkpoint is epoch 1 (the one driven on 0103); epochs 2 and 3 are step_000031485 (ed263d39acfb) and step_000047338 (b1c829eb3dec). The sidecar's step counts one-tick forward passes, not optimizer steps (train/swerve.py increments it per micro-batch)."
+notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.pt is a member). That agent.ckpt was written 15 Oct 03:53 IST, after the 0103 run 0d6a7b that loaded it (14 Oct 21:05 IST). It holds the same tensors as model.pt (495 tensors, 318,206,188 elements, none differing; checked 4 Nov), and model.pt predates that run. Re-running the export does not reproduce its bytes (#26 review), so which bytes the run read is still not shown. Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1 × 8 accumulated, lr 1e-4, brake ticks 2×, brake-then-swerve 4×, 3 epochs. Training curves: nearest-candidate distance to the v6 plan 1.18 → 0.48 m (train), 0.83 → ~0.59 m (held-out 0075); scorer picks the best of 32 on 27–31% of training ticks, 9–22% on 0075, where its loss does not fall. Pinned checkpoint is epoch 1 (the one driven on 0103); epochs 2 and 3 are step_000031485 (ed263d39acfb) and step_000047338 (b1c829eb3dec). The sidecar's step counts one-tick forward passes, not optimizer steps (train/swerve.py increments it per micro-batch)."
 
   [runs.code]
   entry = "gallops.train.swerve"
@@ -90,8 +90,12 @@ notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1
   model = "drivejepa_swerve"
   train_run = "v6-r1a-loso0075"
   step = 15684
-  weights_sha256 = "49bf193783003cb8487eb6cc29856556fa07b4b80c7c6d182cc022b22e51b838"
-  file = "model.pt"
+  weights_sha256 = "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5"
+  file = "agent.ckpt"
+  members = [
+    "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5  agent.ckpt",
+    "49bf193783003cb8487eb6cc29856556fa07b4b80c7c6d182cc022b22e51b838  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r1a-loso0075/step_000015684/"
   sidecar = true
   known_wrong = "train_git_sha records 048d49c, the commit at save time; 1A ran 21067a5. trained_on names only the rendered round-0 collection (it also read real nuScenes; notes.sources lists it). --accumulate and --subsample-source are not recorded"
@@ -106,7 +110,7 @@ notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1
   baseline_value = "0.00"
   value = "5.00"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "10/10 clear against 0/10; it brakes for the side car. Checkpoint epoch not recorded"
   source = "docs/brake-swerve-expert.md §4 (branch)"
@@ -121,7 +125,7 @@ notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1
   baseline_value = "1.84"
   value = "1.69"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "0/10 clear either way: no swerve learned on the unseen street; stationary 5.00 for both"
   source = "docs/brake-swerve-expert.md §4 (branch)"
@@ -136,7 +140,7 @@ notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1
   baseline_value = "2.36"
   value = "2.01"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "3/3 hit either way; side 0.00 (3/3 hit) against 1.67 (2/3 hit); stationary 5.00 for both"
   source = "docs/brake-swerve-expert.md §4 (branch); paddock run neuroncap/drivejepa/20261014T153543-0d6a7b"
@@ -209,8 +213,12 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   model = "drivejepa_swerve"
   train_run = "v6-r1b-all"
   step = 69186
-  weights_sha256 = "2195fc27212d57a22ca35067d9f2642894343e0fbd60e6cfc6863c96213487eb"
-  file = "model.pt"
+  weights_sha256 = "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e"
+  file = "agent.ckpt"
+  members = [
+    "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e  agent.ckpt",
+    "2195fc27212d57a22ca35067d9f2642894343e0fbd60e6cfc6863c96213487eb  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r1b-all/step_000069186/"
   sidecar = true
   known_wrong = "trained_on names only the rendered round-0 collection (it also read real nuScenes and the expert-driven collection; notes.sources lists them). --accumulate and --subsample-source are not recorded"
@@ -224,11 +232,10 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   baseline = "released Drive-JEPA, seeing"
   baseline_value = "3.01"
   value = "3.07"
-  se = "1.01"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
-  note = "+0.06 over 9 paired runs: frontal 4.21 (1/3 hit) vs 2.36 (3/3), side 0.00 (3/3 hit) vs 1.67 (2/3); the frontal gain and the side loss cancel"
+  note = "+0.059 over 9 paired runs, paired SE 0.749 (recomputed from the two runs' samples.jsonl, 49c277 against 7153f0, in the #25 review; the doc on #17 gives 1.01, which is the unpaired SE). Frontal 4.21 (1/3 hit) vs 2.36 (3/3), side 0.00 (3/3 hit) vs 1.67 (2/3); the frontal gain and the side loss cancel"
   source = "docs/brake-swerve-expert.md §4-5 (branch); paddock run neuroncap/drivejepa/20261015T055256-49c277"
 
   [[runs.results]]
@@ -241,7 +248,7 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   baseline_value = 4
   value = 10
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["adapted", "no-record"]
   note = "scenes it trained on; different seeds and run counts (10 of 20 against 4 of 50). Mean 2.85; stationary 16 of 20 (4.16) against 46 of 50"
   source = "docs/brake-swerve-expert.md §5 (branch)"
@@ -307,8 +314,12 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   model = "drivejepa_swerve"
   train_run = "v6-r2-short"
   step = 11377
-  weights_sha256 = "916b930a38ead276c601c3e6ccdbe0b5fbd20835f252c7cc879887cf8a5bdff9"
-  file = "model.pt"
+  weights_sha256 = "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e"
+  file = "agent.ckpt"
+  members = [
+    "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e  agent.ckpt",
+    "916b930a38ead276c601c3e6ccdbe0b5fbd20835f252c7cc879887cf8a5bdff9  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r2-short/step_000011377/"
   sidecar = true
   known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only"
@@ -323,7 +334,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   baseline_value = "3.01"
   value = "2.31"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   headline = true
   note = "frontal 1.79 (3/3 hit), side 0.13 (3/3 hit), stationary 5.00. Lost 1B's swerve: widest frontal move 1.1 m against ~3 m; the needless stationary veer is gone (0.6 m against 3.1 m)"
