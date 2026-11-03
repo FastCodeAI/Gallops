@@ -30,7 +30,9 @@ holds the copies equal:
 - paddock's loader refuses weights whose `feature_names` differ from its own
 - both repos test their copy against the same input and expected values
   (`GOLDEN` in tests/test_rerank_data.py here, `test_features_match_gallops`
-  in the adapter's tests, which are a record now and run in no `make check`)
+  in the adapter's tests, which are a record now and run in no `make check`),
+  and `test_features_match_the_recorded_adapter` here compares this
+  definition with the recorded adapter's `ranker.py` directly
 - the export keeps a feature probe, the raw inputs of its first few samples
   with their features, and the trainer copies it into the weights
   (`gallops.train.rerank.FEATURE_PROBE`), so a reader can recompute it with
