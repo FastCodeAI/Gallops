@@ -19,6 +19,10 @@ it from the log pickle:
   The node decodes all four cameras of all four frames; the frames the model never reads are left
   empty here, which changes no tensor the model reads (checked against paddock's own plans by
   `checks fidelity`).
+* **Decoding in parallel.** The five reads are independent, so `agent_input` can hand them to a
+  thread pool (`decode_pool`); PIL releases the GIL while it decodes and resizes. Each image goes
+  back to the camera slot it came from, by position, so the input does not depend on the number of
+  workers or the order the reads finish in (`checks workers` compares 1 and 4 workers bit for bit).
 
 The geometry constants and the crop rule are paddock's (`drivejepa/kitscenes_adapter.py`
 `_crop_box`, `target_intrinsics`), repeated here because gallops does not import paddock's
@@ -29,10 +33,13 @@ Runs in Drive-JEPA's interpreter (Python 3.9), with navsim on the path (`model.e
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from concurrent.futures import Executor, ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
 
+from gallops.compat import zip_strict
 from gallops.memory.ticks import CURRENT_CAMERAS, FRONT, history_indices
 
 #: OpenScene's camera, which the node's "openscene" geometry warps every image onto.
@@ -121,10 +128,30 @@ def find_image(roots: list, data_path: str) -> Path:
     raise FileNotFoundError(f"{data_path} is in none of {[str(r) for r in roots]}")
 
 
-def agent_input(frames: list, frame_idx: int, roots: list, blank: bool = False):
+def decode_pool(workers: int) -> Executor | None:
+    """A pool for the image reads, or None for reading them in the calling thread (1 worker)."""
+    if workers < 1:
+        raise ValueError(f"workers must be >= 1, got {workers}")
+    return ThreadPoolExecutor(max_workers=workers, thread_name_prefix="decode") if workers > 1 else None
+
+
+def load_all(
+    jobs: Sequence[tuple],
+    pool: Executor | None = None,
+    load: Callable[..., tuple[np.ndarray, np.ndarray]] = load_image,
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """`load(*job)` for every job, results in the jobs' order whatever order the reads finish in."""
+    if pool is None:
+        return [load(*job) for job in jobs]
+    futures = [pool.submit(load, *job) for job in jobs]
+    return [future.result() for future in futures]
+
+
+def agent_input(frames: list, frame_idx: int, roots: list, blank: bool = False, pool: Executor | None = None):
     """The NAVSIM AgentInput paddock's node would build for the moment at `frame_idx`.
 
-    `frames` is the log pickle's list; `roots` the image roots, searched in order.
+    `frames` is the log pickle's list; `roots` the image roots, searched in order; `pool` an
+    optional `decode_pool` for the image reads (the result is the same either way).
     """
     from navsim.common.dataclasses import AgentInput, Camera, Cameras, EgoStatus
     from navsim.planning.simulation.planner.pdm_planner.utils.pdm_geometry_utils import (
@@ -146,7 +173,7 @@ def agent_input(frames: list, frame_idx: int, roots: list, blank: bool = False):
     local = np.asarray(local, dtype=np.float32)
     current = pose_matrix(local[-1])
 
-    statuses, cameras = [], []
+    statuses, jobs, wanted_by_frame = [], [], []
     for j, f in enumerate(history):
         dyn = np.asarray(f["ego_dynamic_state"], dtype=np.float32)
         statuses.append(
@@ -158,11 +185,20 @@ def agent_input(frames: list, frame_idx: int, roots: list, blank: bool = False):
             )
         )
         wanted = CURRENT_CAMERAS if j == len(history) - 1 else (FRONT,) if j == len(history) - 2 else ()
-        slots = {slot: Camera() for slot in _ALL_SLOTS}
+        wanted_by_frame.append(wanted)
         for name in wanted:
             cam = f["cams"][name]
             k = np.asarray(cam["cam_intrinsic"], dtype=np.float64)[:3, :3]
-            pixels, intrinsics = load_image(find_image(roots, cam["data_path"]), k, blank=blank)
+            # find_image runs here, so a missing image raises before any read is queued
+            jobs.append((find_image(roots, cam["data_path"]), k, blank))
+    loaded = iter(load_all(jobs, pool))
+
+    cameras = []
+    for f, wanted in zip_strict(history, wanted_by_frame):
+        slots = {slot: Camera() for slot in _ALL_SLOTS}
+        for name in wanted:
+            cam = f["cams"][name]
+            pixels, intrinsics = next(loaded)
             slots[_SLOT[name]] = Camera(
                 image=pixels,
                 sensor2lidar_rotation=np.asarray(cam["sensor2lidar_rotation"], dtype=np.float32),

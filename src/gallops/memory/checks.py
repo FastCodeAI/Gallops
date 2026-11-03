@@ -5,6 +5,8 @@
     python -m gallops.memory.checks sight       [--n 5]               # a blank image changes the encoder map
     python -m gallops.memory.checks contact     --png PATH [--n 20]   # training moments, by eye
     python -m gallops.memory.checks time        [--n 200]             # training moments end to end
+    python -m gallops.memory.checks workers     [--n 20] [--workers 4] # 1 vs N decode workers, same arrays
+    python -m gallops.memory.checks rate        [--n 200] [--workers 4] # the build's own loop, timed
 
 Each writes a JSON verdict to {data.navtrain.cache}/checks/<name>.json and prints a summary.
 
@@ -17,6 +19,10 @@ NAVSIM sends four frames through `/infer_sequence`, which resets the node, so mo
 there and the plain argmax is what paddock drove.
 
 **determinism** runs the same tokens in two fresh processes and compares every stored array.
+**workers** builds the same training moments with 1 decode worker and with N, through the build's
+own loop (`cache.log_inputs`, read-ahead included), and requires every stored array to be equal.
+**rate** times that loop on whole runs of consecutive moments from random training logs, as the
+full build meets them (pickle loads timed apart: the full run loads each log once).
 **sight** blanks the five images the model reads and requires the encoder map to change.
 """
 
@@ -33,6 +39,8 @@ import time
 from pathlib import Path
 
 import numpy as np
+
+from gallops.compat import zip_strict
 
 WAYPOINT_TOL_M = 1e-3
 #: GPU memory a check waits for before loading the model (MiB).
@@ -256,6 +264,125 @@ def _training_sample(cfg, n: int, seed: int, graded_only: bool = False):
     return table, sorted(rng.choice(index, size=n, replace=False).tolist())
 
 
+def _run_rows(agent, builder, cfg, table, rows, workers: int, device: str):
+    """The build's loop (`cache.log_inputs` + `cache.run`) over `rows`, grouped by log in row order.
+
+    Returns ({array: stacked in `rows` order}, pickle seconds, loop seconds, failures).
+    """
+    import torch
+
+    from gallops.memory import cache
+
+    data = cfg.datasets["navtrain"]
+    roots = [data.extra["blobs"], data.extra["extra_blobs"]]
+    by_log: dict = {}
+    for i in rows:
+        by_log.setdefault(str(table["log"][i]), []).append(int(i))
+    frames_by_log, t0 = {}, time.time()
+    for log in by_log:
+        with open(data.extra["logs"] / f"{log}.pkl", "rb") as f:
+            frames_by_log[log] = pickle.load(f)
+    pickle_s = time.time() - t0
+    pool, ahead = cache.decoders(workers)
+    out, failed, t0 = {}, 0, time.time()
+    try:
+        for log, log_rows in by_log.items():
+            idx = [int(table["frame_idx"][i]) for i in log_rows]
+            for i, ai in zip_strict(log_rows, cache.log_inputs(frames_by_log[log], idx, roots, pool, ahead)):
+                if isinstance(ai, FileNotFoundError):
+                    failed += 1
+                    continue
+                out[i] = cache.run(agent, builder, ai, device)
+        if device.startswith("cuda"):
+            torch.cuda.synchronize()
+        loop_s = time.time() - t0
+    finally:
+        for executor in (ahead, pool):
+            if executor is not None:
+                executor.shutdown()
+    arrays = {name: np.stack([out[i][name] for i in rows if i in out]) for name in cache.ARRAYS}
+    return arrays, pickle_s, loop_s, failed
+
+
+def workers(args) -> int:
+    """The same moments with 1 decode worker and with `args.workers`: every array equal."""
+    import torch
+
+    from gallops.memory import cache
+
+    cfg = _cfg()
+    table, rows = _training_sample(cfg, args.n, seed=5)
+    agent, builder, _, _ = _load(cfg, args.device)
+    torch.set_num_threads(2)  # as cache.build
+    one, _, one_s, f1 = _run_rows(agent, builder, cfg, table, rows, 1, args.device)
+    many, _, many_s, fn = _run_rows(agent, builder, cfg, table, rows, args.workers, args.device)
+    diffs = {name: float(np.max(np.abs(one[name] - many[name]))) for name in cache.ARRAYS}
+    equal = {name: bool(np.array_equal(one[name], many[name])) for name in cache.ARRAYS}
+    verdict = {
+        "check": "decode workers",
+        "verdict": "PASS" if all(equal.values()) and f1 == fn == 0 else "FAIL",
+        "moments": len(rows),
+        "workers": [1, args.workers],
+        "max_abs_diff": diffs,
+        "bit_identical": equal,
+        "loop_s": [round(one_s, 1), round(many_s, 1)],
+        "failed": [f1, fn],
+        "rows": rows,
+    }
+    _write(cfg, "workers", verdict)
+    return 0 if verdict["verdict"] == "PASS" else 1
+
+
+def _consecutive_sample(table, n: int, seed: int, split: str = "train") -> list[int]:
+    """`n` rows: every usable moment of random logs of `split`, in row order, until there are n."""
+    ok = table["inputs_ok"] & (table["split"] == split)
+    logs = sorted(set(table["log"][ok].tolist()))
+    rng = random.Random(seed)
+    rng.shuffle(logs)
+    rows: list[int] = []
+    for log in logs:
+        rows += np.flatnonzero(ok & (table["log"] == log)).tolist()
+        if len(rows) >= n:
+            break
+    return sorted(rows[:n]) if len(rows) > n else rows
+
+
+def rate(args) -> int:
+    """The build's loop timed on consecutive moments, with 1 decode worker and with `args.workers`."""
+    import torch
+
+    cfg = _cfg()
+    from gallops.memory import ticks
+
+    table = ticks.load(Path(cfg.resolve("{data.navtrain.cache}")) / "ticks")
+    rows = _consecutive_sample(table, args.n, seed=6)
+    agent, builder, _, free = _load(cfg, args.device)
+    torch.set_num_threads(2)  # as cache.build
+    torch.cuda.reset_peak_memory_stats()
+    _run_rows(agent, builder, cfg, table, rows[:5], args.workers, args.device)  # warm-up, untimed
+    timed = {}
+    for w in sorted({1, args.workers}):
+        _, pickle_s, loop_s, failed = _run_rows(agent, builder, cfg, table, rows, w, args.device)
+        timed[str(w)] = {
+            "loop_s": round(loop_s, 1),
+            "per_moment_s": round(loop_s / len(rows), 3),
+            "pickle_s": round(pickle_s, 1),
+            "failed": failed,
+        }
+    verdict = {
+        "check": "rate",
+        "moments": len(rows),
+        "logs": len({str(table["log"][i]) for i in rows}),
+        "by_workers": timed,
+        "cpu_affinity": sorted(os.sched_getaffinity(0)),
+        "torch_threads": torch.get_num_threads(),
+        "gpu_peak_reserved_mib": round(torch.cuda.max_memory_reserved() / 2**20),
+        "gpu_free_mib_at_start": free,
+    }
+    _write(cfg, "rate", verdict)
+    return 0
+
+
 def contact(args) -> int:
     import matplotlib
 
@@ -361,14 +488,27 @@ def timing(args) -> int:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("check", choices=("fidelity", "determinism", "dump", "sight", "contact", "time"))
+    ap.add_argument(
+        "check",
+        choices=("fidelity", "determinism", "dump", "sight", "contact", "time", "workers", "rate"),
+    )
     ap.add_argument("--run", type=Path, help="a paddock NAVSIM run dir with trajectories.jsonl")
     ap.add_argument("--n", type=int)
     ap.add_argument("--npz", type=Path, help="dump's output")
     ap.add_argument("--png", type=Path, help="contact's output")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--workers", type=int, default=4, help="workers/rate: decode threads to compare with 1")
     args = ap.parse_args()
-    defaults = {"fidelity": 200, "determinism": 20, "dump": 20, "sight": 5, "contact": 20, "time": 200}
+    defaults = {
+        "fidelity": 200,
+        "determinism": 20,
+        "dump": 20,
+        "sight": 5,
+        "contact": 20,
+        "time": 200,
+        "workers": 20,
+        "rate": 200,
+    }
     args.n = args.n or defaults[args.check]
     # paths before `cache.enter` changes directory
     for name in ("run", "npz", "png"):
@@ -381,6 +521,8 @@ def main() -> None:
         "sight": sight,
         "contact": contact,
         "time": timing,
+        "workers": workers,
+        "rate": rate,
     }[args.check]
     raise SystemExit(run(args))
 

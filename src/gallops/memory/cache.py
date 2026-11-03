@@ -1,6 +1,6 @@
 """The released Drive-JEPA run once over every moment, its outputs on disk.
 
-    python -m gallops.memory.cache build [--ticks DIR] [--out DIR] [--limit N]   # GPU, resumable
+    python -m gallops.memory.cache build [--ticks DIR] [--out DIR] [--limit N] [--workers N]  # GPU, resumable
 
 **Why it can be cached.** In the memory picker the encoder, the proposal generator and the released
 scorer are all frozen; only the memory and the new picker head train. So what the release makes of
@@ -23,6 +23,10 @@ of the same model would compute, which `checks fidelity` measures on NAVSIM's na
 log; a restart skips them. The arrays are created whole at the start (np.lib.format.open_memmap),
 so a killed run leaves a valid file with some rows unbuilt.
 
+**Decoding in parallel** (`--workers N`, default 1). The five image reads of a moment go to a pool
+of N threads, and with N > 1 the next moment's inputs are built while the GPU runs this one. The
+forward pass stays batch 1 and in row order; the arrays do not depend on N (`checks workers`).
+
 The forward pass is the vendor's own, at batch 1, in eval mode, on a shallow copy of the features
 (it rebinds features["lidar2img"]). Runs in Drive-JEPA's interpreter (Python 3.9, torch 2.7.1).
 """
@@ -37,9 +41,12 @@ import os
 import pickle
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
+
+from gallops.compat import zip_strict
 
 #: The released checkpoint, where paddock's model.yaml finds it.
 RELEASE = "{data.navsim.exp}/Drive-JEPA-cache/drive_jepa_perception_based_agent_vitl_v2.ckpt"
@@ -140,6 +147,40 @@ def released_pick(logits: np.ndarray) -> int:
 # --- the build ---------------------------------------------------------------------------------
 
 
+def decoders(workers: int):
+    """(decode pool, read-ahead thread): both None for 1 worker, the reads then run in the caller."""
+    from gallops.memory import inputs
+
+    pool = inputs.decode_pool(workers)
+    ahead = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ahead") if workers > 1 else None
+    return pool, ahead
+
+
+def log_inputs(frames: list, frame_idxs: list, roots: list, pool=None, ahead=None):
+    """Each moment's AgentInput (or the FileNotFoundError that stopped it), in `frame_idxs`' order.
+
+    With `ahead`, the next moment's inputs are built while the caller uses this one (the GPU
+    forward), at most one moment ahead, so memory stays at two moments' images.
+    """
+    from gallops.memory import inputs
+
+    def make(frame_idx):
+        try:
+            return inputs.agent_input(frames, frame_idx, roots, pool=pool)
+        except FileNotFoundError as exc:
+            return exc
+
+    if ahead is None:
+        for frame_idx in frame_idxs:
+            yield make(frame_idx)
+        return
+    nxt = ahead.submit(make, frame_idxs[0]) if frame_idxs else None
+    for n, _ in enumerate(frame_idxs):
+        current = nxt.result()
+        nxt = ahead.submit(make, frame_idxs[n + 1]) if n + 1 < len(frame_idxs) else None
+        yield current
+
+
 def open_arrays(out: Path, n: int, mode: str) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     arrays = {}
@@ -156,13 +197,13 @@ def open_arrays(out: Path, n: int, mode: str) -> dict:
     return arrays
 
 
-def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=None) -> dict:
+def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=None, workers: int = 1) -> dict:
     """Every moment (or `rows`, row indices of the ticks table) through the release; resumable per log."""
     import torch
 
     from gallops.drivejepa_b2d.provenance import git_sha
     from gallops.drivejepa_b2d.sidecar import sha256
-    from gallops.memory import inputs, ticks
+    from gallops.memory import ticks
 
     table = ticks.load(ticks_dir)
     n = len(table["log"])
@@ -185,6 +226,7 @@ def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=Non
             "pass": "the vendor's forward, eval mode, batch 1, paddock's NAVSIM inputs (inputs.agent_input)",
             "torch": torch.__version__,
             "dtype": "float32",
+            "decode_workers": workers,
         }
         manifest_path.write_text(json.dumps(manifest, indent=1) + "\n")
     progress = json.loads(progress_path.read_text()) if progress_path.exists() else {"logs_done": []}
@@ -202,15 +244,15 @@ def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=Non
     names = [name for name in sorted(by_log) if name not in finished]
     if limit:
         names = names[:limit]
-    started, built, failed = time.time(), 0, []
+    started, built, failed, failed_total = time.time(), 0, [], 0
+    pool, ahead = decoders(workers)
     for k, log in enumerate(names):
         with open(logs_dir / f"{log}.pkl", "rb") as f:
             frames = pickle.load(f)
-        for i in by_log[log]:
-            try:
-                ai = inputs.agent_input(frames, int(table["frame_idx"][i]), roots)
-            except FileNotFoundError as exc:
-                failed.append({"row": i, "error": str(exc)})
+        idx = [int(table["frame_idx"][i]) for i in by_log[log]]
+        for i, ai in zip_strict(by_log[log], log_inputs(frames, idx, roots, pool, ahead)):
+            if isinstance(ai, FileNotFoundError):
+                failed.append({"row": i, "error": str(ai)})
                 continue
             result = run(agent, feature_builder, ai, device)
             for name in ARRAYS:
@@ -230,12 +272,24 @@ def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=Non
             logs_this_run=k + 1,
             logs_left=len(names) - k - 1,
         )
+        failed_total += len(failed)
         failed = []
         progress_path.write_text(json.dumps(progress, indent=1) + "\n")
         if (k + 1) % 10 == 0:
             rate = built / (time.time() - started)
-            print(f"  {k + 1} of {len(names)} logs, {built} moments, {rate:.2f}/s", flush=True)
-    return {"built": built, "seconds": round(time.time() - started, 1), "logs": len(names)}
+            print(
+                f"  {k + 1} of {len(names)} logs, {built} moments, {rate:.2f}/s, {failed_total} failed",
+                flush=True,
+            )
+    for executor in (ahead, pool):
+        if executor is not None:
+            executor.shutdown()
+    return {
+        "built": built,
+        "seconds": round(time.time() - started, 1),
+        "logs": len(names),
+        "failed": failed_total,
+    }
 
 
 def main() -> None:
@@ -245,6 +299,9 @@ def main() -> None:
     ap.add_argument("--out", type=Path, help="default: {data.navtrain.cache}/release")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--limit", type=int, default=0, help="only the first N logs (a quick look)")
+    ap.add_argument(
+        "--workers", type=int, default=1, help="image-decoding threads (the arrays do not change)"
+    )
     args = ap.parse_args()
 
     from gallops.config import SiteConfig
@@ -257,7 +314,7 @@ def main() -> None:
         from gallops.memory.checks import wait_for_gpu
 
         print(f"GPU free at start: {wait_for_gpu()} MiB", flush=True)
-    print(json.dumps(build(cfg, ticks_dir, out, args.device, args.limit)))
+    print(json.dumps(build(cfg, ticks_dir, out, args.device, args.limit, workers=args.workers)))
 
 
 if __name__ == "__main__":
