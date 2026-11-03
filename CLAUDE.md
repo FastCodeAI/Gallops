@@ -4,7 +4,7 @@ Guidance for Claude Code working in this repository.
 
 ## What this repo is
 
-Gallops trains driving policies. [Paddock](../paddock) scores them. **Neither
+Gallops trains driving policies. [Paddock](https://github.com/FastCodeAI/Paddock) scores them. **Neither
 imports the other**, and the whole interface between them is a JSON file beside
 a checkpoint — see [docs/checkpoints.md](docs/checkpoints.md).
 
