@@ -131,9 +131,12 @@ def experiments_check() -> None:
 
 @experiments_app.command("render")
 def experiments_render(
-    write: Annotated[bool, typer.Option("--write", help="rewrite the marked blocks in place")] = False,
+    write: Annotated[bool, typer.Option("--write", help="rewrite the rendered files in place")] = False,
 ) -> None:
-    """Render the README blocks from the registry; print them, or rewrite them in place with --write."""
+    """Render the README's blocks, the index and every experiment's CARD.md from the registry.
+
+    Without --write, only list the files that would change.
+    """
     reg = _registry()
     if reg.errors:
         for problem in reg.errors:
@@ -144,10 +147,8 @@ def experiments_render(
         changed = exps.write(reg)
         typer.echo("rewrote " + ", ".join(changed) if changed else "already up to date")
         return
-    for target, blocks in exps.TARGETS.items():
-        for name, body in exps.render(reg, blocks).items():
-            start, end = exps.markers(name)
-            typer.echo(f"# {target}\n{start}\n{body}\n{end}\n")
+    changed = exps.stale(reg)
+    typer.echo("would rewrite " + ", ".join(changed) if changed else "already up to date")
 
 
 @experiments_app.command("new")

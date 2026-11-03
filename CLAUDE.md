@@ -39,7 +39,7 @@ python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, 
 python -m gallops.data.rerank dataset <dump.jsonl> --split train -o <dataset.npz>
 gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
 gallops experiments check   # every experiment record valid, README rendered from them (make check runs it too)
-gallops experiments render --write   # re-render the README's tables from experiments/*/experiment.toml
+gallops experiments render --write   # re-render the README's tables and every CARD.md from experiment.toml
 gallops experiments new <ID> <slug> --owner <name>   # register an experiment before it runs
 gallops experiments checkpoint <ckpt-dir>   # the [runs.checkpoint] block, pinned by weights sha256
 ```
@@ -149,8 +149,8 @@ separately is not enough: in defect 6 every part was right on its own.
 ## Recording an experiment
 
 **Every experiment has a folder `experiments/<ID>_<slug>/` and an
-`experiment.toml`, and the README's tables are rendered from those files** —
-never typed. `GCnn` is phase 1 (gap closing, closed); `Hnn` is phase 2
+`experiment.toml`, and the README's tables and each folder's `CARD.md` are
+rendered from those files** — never typed. `GCnn` is phase 1 (gap closing, closed); `Hnn` is phase 2
 (hypotheses and enablers, H01–H11 being the team's list of 21 Oct). IDs are
 never reused or renumbered. The rules, and the reasons, are in
 [docs/experiments.md](docs/experiments.md); `src/gallops/experiments.py`

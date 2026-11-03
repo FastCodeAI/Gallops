@@ -160,10 +160,15 @@ def _repo(tmp_path: Path, record: str | None = RECORD, decisions: str = DECISION
 def test_the_small_repository_is_valid_and_renders(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     assert reg.errors == []
-    assert exps.write(reg) == ["README.md", "experiments/README.md"]
+    assert exps.write(reg) == ["README.md", "experiments/README.md", "experiments/H01_thing/CARD.md"]
     assert exps.stale(exps.Registry.load(reg.root)) == []
     readme = (reg.root / "README.md").read_text()
-    assert "[**H01**](#h01)" in readme and "**0.885**" in readme and "`aaaaaaaaaaaa`" in readme
+    # the README links each ID to its card, and keeps one row per experiment
+    assert "[**H01**](experiments/H01_thing/CARD.md)" in readme and "**0.885**" in readme
+    card = (reg.root / "experiments" / "H01_thing" / "CARD.md").read_text()
+    # the card holds the detail, with links relative to its own folder
+    assert f"`{SHA}`" in card and "[the account](README.md)" in card
+    assert "[← all experiments](../../README.md#hypothesis-experiments)" in card
 
 
 @pytest.mark.parametrize(
@@ -246,6 +251,16 @@ def test_a_hand_edited_readme_is_caught(tmp_path) -> None:
     assert exps.stale(exps.Registry.load(reg.root)) == ["README.md"]
 
 
+def test_a_hand_edited_or_missing_card_is_caught(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    exps.write(reg)
+    card = reg.root / "experiments" / "H01_thing" / "CARD.md"
+    card.write_text(card.read_text().replace("It did.", "It did, and more."))
+    assert exps.stale(exps.Registry.load(reg.root)) == ["experiments/H01_thing/CARD.md"]
+    card.unlink()
+    assert exps.stale(exps.Registry.load(reg.root)) == ["experiments/H01_thing/CARD.md"]
+
+
 def test_a_record_on_an_unmerged_branch_is_linked_there_not_checked_here(tmp_path) -> None:
     on_branch = RECORD.replace("learned =", 'branch = "train/thing"\nlearned =').replace(
         '"experiments/H01_thing/README.md"', '"docs/thing.md"'
@@ -255,7 +270,8 @@ def test_a_record_on_an_unmerged_branch_is_linked_there_not_checked_here(tmp_pat
     assert [e for e in reg.errors if "docs/thing.md" in e] == []
     assert any("gallops.train.thing is used by no experiment" in e for e in reg.errors)
     exps.write(exps.Registry.load(reg.root))
-    assert f"{exps.GITHUB}/blob/train/thing/docs/thing.md" in (reg.root / "README.md").read_text()
+    card = (reg.root / "experiments" / "H01_thing" / "CARD.md").read_text()
+    assert f"{exps.GITHUB}/blob/train/thing/docs/thing.md" in card
 
 
 def test_numbers_keep_the_precision_they_were_reported_at() -> None:
