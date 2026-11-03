@@ -18,16 +18,22 @@ Layout (docs/experiments.md has the rules and the reasons):
             README.md        the narrative
             PREDICTIONS.md   hypothesis experiments: written before the run
 
-Stdlib only (`tomllib`), so `make check` runs it on a machine with no GPU. It is never imported
-by a trainer, so it may use 3.11.
+Stdlib only, so `make check` runs it on a machine with no GPU. No trainer imports it, but the
+training preflight runs the whole test suite under the trainer's interpreter (train/preflight.py,
+`code_checks`), and Drive-JEPA's is Python 3.9: so it keeps to 3.9, as config.py does.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import posixpath
 import re
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9, the model envs; see config.py
+    import tomli as tomllib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,6 +56,8 @@ RUN_RE = re.compile(r"^((GC|H)\d{2})\.[A-Za-z0-9][A-Za-z0-9_-]*$")
 DECISION_RE = re.compile(r"^D\d{2}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
+#: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
+MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -168,6 +176,7 @@ _CHECKPOINT: dict[str, tuple[Any, bool]] = {
     "sidecar": (bool, False),
     "known_wrong": (str, False),
     "shipped_as": (str, False),
+    "members": (list, False),
 }
 _RESULT: dict[str, tuple[Any, bool]] = {
     "bench": (str, True),
@@ -349,6 +358,39 @@ def _enum(where: str, value: Any, allowed: Iterable[str], errors: list[str]) -> 
         errors.append(f"{where}: {value!r} is not one of {', '.join(allowed)}")
 
 
+def member(sha: str, name: str) -> str:
+    return f"{sha}  {name}"
+
+
+def ensemble_digest(members: list[str]) -> str:
+    """The digest of a checkpoint that is several files (an ensemble of seeds): sha256 over its members'
+    `sha256  name` lines, sorted by name. `sha256sum seed_*.pt | sha256sum` reproduces it."""
+    lines = sorted(members, key=lambda m: m.split("  ", 1)[1])
+    return hashlib.sha256("".join(line + "\n" for line in lines).encode()).hexdigest()
+
+
+def _members_agree(ck: dict[str, Any]) -> str | None:
+    """Why a checkpoint's `weights_sha256` disagrees with its `members`, or None.
+
+    With `file` naming a member, the digest is that file's: the one paddock loads, the others kept as
+    second digests. Without it, the checkpoint is the members together, and the digest is theirs.
+    """
+    members = ck.get("members", [])
+    bad = [m for m in members if not isinstance(m, str) or not MEMBER_RE.match(m)]
+    if bad:
+        return f"members are `sha256  name` lines, as sha256sum prints them: {bad[0]!r}"
+    wsha = ck.get("weights_sha256")
+    if not members or not wsha:
+        return None
+    by_name = {m.split("  ", 1)[1]: m.split("  ", 1)[0] for m in members}
+    if ck.get("file") in by_name:
+        if wsha != by_name[ck["file"]]:
+            return f"weights_sha256 is not the digest members give {ck['file']}"
+    elif wsha != ensemble_digest(members):
+        return "weights_sha256 is not the digest over members, and `file` names none of them"
+    return None
+
+
 def _module_exists(root: Path, dotted: str) -> bool:
     if not dotted.startswith("gallops"):
         return False
@@ -504,6 +546,9 @@ def validate(reg: Registry) -> list[str]:
             ck = run.get("checkpoint")
             if ck is not None and _fields(f"{rwhere} checkpoint", ck, _CHECKPOINT, errors):
                 _enum(f"{rwhere} checkpoint", ck.get("step_unit"), STEP_UNITS, errors)
+                why = _members_agree(ck)
+                if why:
+                    errors.append(f"{rwhere} checkpoint: {why}")
                 wsha = ck.get("weights_sha256")
                 if wsha is not None:
                     if not SHA256_RE.match(wsha):
@@ -1067,9 +1112,15 @@ def _checkpoint_text(run: dict[str, Any]) -> str:
     )
     text = f"`{where}`"
     if ck.get("weights_sha256"):
-        text += f"<br>sha256 `{ck['weights_sha256']}`"
+        whose = f" ({ck['file']})" if ck.get("file") and ck.get("members") else ""
+        if ck.get("members") and not ck.get("file"):
+            whose = f" (over {len(ck['members'])} files)"
+        text += f"<br>sha256{whose} `{ck['weights_sha256']}`"
     else:
         text += "<br>sha256 not recorded"
+    if ck.get("members"):
+        files = ", ".join(f"{m.split('  ', 1)[1]} `{m[:12]}`" for m in ck["members"])
+        text += f"<br>files: {files}"
     if ck.get("shipped_as"):
         text += f"<br>shipped as {ck['shipped_as']}"
     if ck.get("known_wrong"):

@@ -85,8 +85,22 @@ case, e.g. `h04-r1-subscore`, so a directory names its experiment.
 which can be overwritten or copied between sites; paddock's `drivejepa_rerank` adapter records the
 digest for the same reason. The **tag** is the first 12 hex digits (`29d5f9517c2e`); the record
 holds all 64. `gallops experiments checkpoint <step dir>` prints the record's
-`[runs.checkpoint]` block from the sidecar, hashing the weights if the sidecar has no digest, and
-fails if the two disagree.
+`[runs.checkpoint]` block. It hashes the weights every time and fails if the sidecar's digest
+disagrees, because the record pins the bytes on disk, not what the sidecar remembers;
+`--trust-sidecar` copies the sidecar's digest instead, and says so in the block.
+
+**A step directory with several weights files is refused until you say what the checkpoint is:**
+
+- `--file <name>` pins the file paddock loads. The swerve trainer writes `model.pt` and
+  `agent.ckpt`, and paddock loads `agent.ckpt`, the smaller one. The other files go in `members`,
+  each with its own digest.
+- `--ensemble` pins the files together, for an ensemble of seeds (`seed_0.pt` … `seed_4.pt`). The
+  digest is sha256 over the members' `sha256  name` lines in name order, which
+  `sha256sum seed_*.pt | sha256sum` reproduces from a shell.
+
+`members` lists every weights file as `sha256sum` prints it, and `make check` refuses a
+`weights_sha256` that is neither the digest of the member `file` names nor the digest over all of
+them.
 
 `location` is the template location, `{weights}/<model>/<train_run>/step_<n>/`: where the checkpoint
 lives, or where its `POINTERS.md` says a copy belongs if it has not been moved into that layout yet.

@@ -9,6 +9,9 @@ temporary directory and break it one way at a time, so each rule is shown to bit
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -37,6 +40,26 @@ def test_the_readme_is_what_the_registry_renders(registry) -> None:
 def test_paddocks_link_into_this_readme_still_lands() -> None:
     """Paddock's README links Gallops#training-so-far for its trained Drive-JEPA rows (paddock 9a51c15)."""
     assert '<a id="training-so-far"></a>' in (REPO_ROOT / "README.md").read_text()
+
+
+def test_the_registry_imports_where_tomllib_does_not_exist() -> None:
+    """The preflight runs this suite under Drive-JEPA's Python 3.9, which has tomli and no tomllib."""
+    # Under 3.11+ hide tomllib and offer it as tomli, the 3.9 layout; under a real 3.9 there is no
+    # tomllib to hide, and the module's own fallback is what runs.
+    code = "\n".join(
+        [
+            "import sys",
+            "try:",
+            "    import tomllib",
+            "    sys.modules['tomli'], sys.modules['tomllib'] = tomllib, None",
+            "except ModuleNotFoundError:",
+            "    pass",
+            "import gallops.experiments",
+            "print('ok')",
+        ]
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=REPO_ROOT)
+    assert out.returncode == 0 and out.stdout.strip() == "ok", out.stderr
 
 
 def test_the_template_fills_into_a_valid_record(tmp_path) -> None:
@@ -286,3 +309,100 @@ def test_dates_render_as_a_reader_says_them() -> None:
         == "16 Oct – 17 Oct 2026"
     )
     assert exps._span({"started": dt.date(2026, 9, 26), "ended": dt.date(2026, 9, 26)}) == "26 Sep 2026"
+
+
+# ---------------------------------------------------------------- pinning a checkpoint
+
+
+def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) -> Path:
+    from gallops import checkpoint as ck
+
+    d = tmp_path / "weights" / "m" / "r" / "step_000000003"
+    d.mkdir(parents=True)
+    for name, data in files.items():
+        (d / name).write_bytes(data)
+    ck.write(
+        d, ck.Checkpoint(model="m", step=3, train_git_sha="abc1234", train_run="r", weights_sha256=digest)
+    )
+    return d
+
+
+def _pin(d: Path, *args: object):
+    """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
+    from typer.testing import CliRunner
+
+    from gallops.cli import app
+
+    site = d.parents[3]
+    config = site / "gallops.toml"
+    config.write_text(f'[roots]\nweights = "{site / "weights"}"\nruns = "{site / "runs"}"\n')
+    return CliRunner().invoke(
+        app, ["experiments", "checkpoint", str(d), *map(str, args)], env={"GALLOPS_CONFIG": str(config)}
+    )
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def test_pinning_refuses_to_guess_which_weights_file_is_the_checkpoint(tmp_path) -> None:
+    """The swerve trainer writes model.pt and agent.ckpt; paddock loads agent.ckpt, the smaller one."""
+    d = _step(tmp_path, {"agent.ckpt": b"A" * 10, "model.pt": b"M" * 20})
+    out = _pin(d)
+    assert out.exit_code == 2 and "agent.ckpt, model.pt" in out.output
+    out = _pin(d, "--file", "agent.ckpt")
+    assert out.exit_code == 0, out.output
+    assert f'weights_sha256 = "{_sha(b"A" * 10)}"' in out.output and 'file = "agent.ckpt"' in out.output
+    assert f'"{_sha(b"M" * 20)}  model.pt"' in out.output  # the other file is kept, with its digest
+
+
+def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:
+    seeds = {f"seed_{i}.pt": bytes([i]) * 8 for i in range(3)}
+    out = _pin(_step(tmp_path, seeds), "--ensemble")
+    assert out.exit_code == 0, out.output
+    listing = "".join(
+        f"{_sha(data)}  {name}\n" for name, data in sorted(seeds.items())
+    )  # sha256sum seed_*.pt
+    assert f'weights_sha256 = "{_sha(listing.encode())}"' in out.output
+    assert "file =" not in out.output
+
+
+def test_a_sidecar_digest_is_checked_against_the_bytes_not_copied(tmp_path) -> None:
+    d = _step(tmp_path, {"reranker.npz": b"rewritten after the sidecar"}, digest="0" * 64)
+    out = _pin(d)
+    assert out.exit_code == 1 and f"hashes to {_sha(b'rewritten after the sidecar')}" in out.output
+    out = _pin(d, "--trust-sidecar")
+    assert out.exit_code == 0 and "NOT re-hashed" in out.output
+
+
+def test_location_is_the_layout_configs_and_a_stray_directory_is_flagged(tmp_path) -> None:
+    home = _step(tmp_path, {"reranker.npz": b"x"})
+    out = _pin(home)
+    assert out.exit_code == 0 and "warning" not in out.output
+    assert 'location = "{weights}/m/r/step_000000003/"' in out.output
+    stray = tmp_path / "copies" / "m" / "r" / "step_000000003"
+    stray.parent.mkdir(parents=True)
+    home.rename(stray)
+    (tmp_path / "copies" / "weights").mkdir()
+    out = _pin(stray)
+    assert out.exit_code == 0 and "is not where the layout puts this checkpoint" in out.output
+    assert 'location = "{weights}/m/r/step_000000003/"' in out.output
+
+
+@pytest.mark.parametrize(
+    ("members", "file", "error"),
+    [
+        ([f"{SHA}  agent.ckpt", f"{'b' * 64}  model.pt"], "agent.ckpt", None),
+        ([f"{'c' * 64}  agent.ckpt", f"{'b' * 64}  model.pt"], "agent.ckpt", "not the digest members give"),
+        ([f"{'c' * 64}  seed_0.pt", f"{'b' * 64}  seed_1.pt"], None, "not the digest over members"),
+        ([f"{SHA} agent.ckpt"], "agent.ckpt", "as sha256sum prints them"),
+    ],
+)
+def test_members_agree_with_the_pinned_digest(tmp_path, members, file, error) -> None:
+    block = f'  weights_sha256 = "{SHA}"\n'
+    extra = (f'  file = "{file}"\n' if file else "") + f"  members = {members!r}\n".replace("'", '"')
+    reg = exps.Registry.load(_repo(tmp_path, RECORD.replace(block, block + extra, 1)))
+    if error is None:
+        assert reg.errors == []
+    else:
+        assert any(error in e for e in reg.errors), reg.errors

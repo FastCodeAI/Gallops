@@ -202,49 +202,91 @@ _WEIGHTS = (".safetensors", ".ckpt", ".pt", ".pth", ".npz", ".bin")
 @experiments_app.command("checkpoint")
 def experiments_checkpoint(
     directory: Annotated[str, typer.Argument(help="a step directory holding checkpoint.json")],
-    rehash: Annotated[
-        bool, typer.Option("--hash", help="hash the weights even if the sidecar has a digest")
+    file: Annotated[
+        str | None, typer.Option("--file", help="the weights file paddock loads, when there are several")
+    ] = None,
+    ensemble: Annotated[
+        bool, typer.Option("--ensemble", help="the weights files are one checkpoint together (seeds)")
+    ] = False,
+    trust_sidecar: Annotated[
+        bool, typer.Option("--trust-sidecar", help="copy the sidecar's digest without hashing the weights")
     ] = False,
 ) -> None:
     """Print the [runs.checkpoint] block for a checkpoint directory, pinned by its weights' sha256.
 
-    The digest comes from the sidecar when it has one; otherwise (or with --hash) the largest weights
-    file is hashed here. A sidecar that disagrees with its own weights is reported, not papered over.
+    The weights are hashed here, and a sidecar whose digest disagrees is refused: the record pins the
+    bytes on disk, not what the sidecar remembers. A directory with several weights files is refused
+    until you say what the checkpoint is: --file names the one paddock loads (the others are recorded
+    as members, each with its digest), --ensemble pins them all together (docs/experiments.md).
     """
     from pathlib import Path
+
+    def fail(message: str, code: int = 2) -> typer.Exit:
+        typer.secho(message, fg=typer.colors.RED, err=True)
+        return typer.Exit(code)
 
     path = Path(directory)
     try:
         record = ckpt.read(path)
-    except ckpt.SidecarError as exc:
-        typer.secho(str(exc), fg=typer.colors.RED, err=True)
-        raise typer.Exit(2) from exc
-    files = sorted((p for p in path.iterdir() if p.suffix in _WEIGHTS), key=lambda p: p.stat().st_size)
-    weights = files[-1] if files else None
-    digest = record.weights_sha256
-    if weights is not None and (rehash or not digest):
-        computed = ckpt.sha256_file(weights)
-        if digest and computed != digest:
-            typer.secho(
-                f"{weights.name} hashes to {computed}, but the sidecar says {digest}",
-                fg=typer.colors.RED,
-                err=True,
-            )
-            raise typer.Exit(1)
-        digest = computed
+        cfg = SiteConfig.load()
+    except (ckpt.SidecarError, ConfigError) as exc:
+        raise fail(str(exc)) from exc
+    # The layout is config's (SiteConfig.checkpoint_dir, the paddock contract), never restated here.
+    home = cfg.checkpoint_dir(record.model, record.train_run, record.step)
+    if path.resolve() != home.resolve():
+        typer.secho(
+            f"warning: {path} is not where the layout puts this checkpoint ({home}); "
+            "`location` below names the layout's place",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+    if file and ensemble:
+        raise fail("--file or --ensemble, not both")
+    files = sorted(p for p in path.iterdir() if p.is_file() and p.suffix in _WEIGHTS)
+    if not files:
+        raise fail(f"no weights file ({', '.join(_WEIGHTS)}) in {path}")
+    if file:
+        if not (path / file).is_file():
+            raise fail(f"no {file} in {path}")
+    elif not ensemble and len(files) > 1:
+        names = ", ".join(p.name for p in files)
+        raise fail(
+            f"{len(files)} weights files in {path}: {names}\n"
+            "  name the one paddock loads with --file, or pin them all together with --ensemble"
+        )
+    chosen = file or (None if ensemble else files[0].name)
+
+    members: list[str] = []
+    if trust_sidecar:
+        if not record.weights_sha256:
+            raise fail("the sidecar has no weights_sha256 to trust; drop --trust-sidecar")
+        digest = record.weights_sha256
+    else:
+        shas = {p.name: ckpt.sha256_file(p) for p in files}
+        members = [exps.member(shas[name], name) for name in sorted(shas)] if len(shas) > 1 else []
+        digest = shas[chosen] if chosen else exps.ensemble_digest(members)
+        claimed = record.weights_sha256
+        if claimed and claimed != digest:
+            what = chosen or f"the {len(files)} files together"
+            raise fail(f"the sidecar says {claimed}, but {what} hashes to {digest}", code=1)
+
     lines = [
         "[runs.checkpoint]",
         f'model = "{record.model}"',
         f'train_run = "{record.train_run}"',
         f"step = {record.step}",
         'step_unit = "?"  # epoch | pass | optimizer_step: the sidecar does not say which',
+        f'weights_sha256 = "{digest}"'
+        + ("  # from the sidecar, NOT re-hashed (--trust-sidecar)" if trust_sidecar else ""),
     ]
-    if digest:
-        lines.append(f'weights_sha256 = "{digest}"')
-    if weights is not None:
-        lines.append(f'file = "{weights.name}"')
+    if chosen:
+        lines.append(f'file = "{chosen}"')
+    if members:
+        lines.append("members = [")
+        lines += [f'  "{m}",' for m in members]
+        lines.append("]")
     lines += [
-        f'location = "{{weights}}/{record.model}/{record.train_run}/step_{record.step:09d}/"',
+        f'location = "{{weights}}/{home.relative_to(cfg.weights).as_posix()}/"',
         "sidecar = true",
         f"# train_git_sha = {record.train_git_sha}  (put it on the run)",
     ]
