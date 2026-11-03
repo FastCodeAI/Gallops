@@ -327,12 +327,18 @@ def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) ->
     return d
 
 
-def _pin(*args: object):
+def _pin(d: Path, *args: object):
+    """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
     from typer.testing import CliRunner
 
     from gallops.cli import app
 
-    return CliRunner().invoke(app, ["experiments", "checkpoint", *map(str, args)])
+    site = d.parents[3]
+    config = site / "gallops.toml"
+    config.write_text(f'[roots]\nweights = "{site / "weights"}"\nruns = "{site / "runs"}"\n')
+    return CliRunner().invoke(
+        app, ["experiments", "checkpoint", str(d), *map(str, args)], env={"GALLOPS_CONFIG": str(config)}
+    )
 
 
 def _sha(data: bytes) -> str:
@@ -367,6 +373,20 @@ def test_a_sidecar_digest_is_checked_against_the_bytes_not_copied(tmp_path) -> N
     assert out.exit_code == 1 and f"hashes to {_sha(b'rewritten after the sidecar')}" in out.output
     out = _pin(d, "--trust-sidecar")
     assert out.exit_code == 0 and "NOT re-hashed" in out.output
+
+
+def test_location_is_the_layout_configs_and_a_stray_directory_is_flagged(tmp_path) -> None:
+    home = _step(tmp_path, {"reranker.npz": b"x"})
+    out = _pin(home)
+    assert out.exit_code == 0 and "warning" not in out.output
+    assert 'location = "{weights}/m/r/step_000000003/"' in out.output
+    stray = tmp_path / "copies" / "m" / "r" / "step_000000003"
+    stray.parent.mkdir(parents=True)
+    home.rename(stray)
+    (tmp_path / "copies" / "weights").mkdir()
+    out = _pin(stray)
+    assert out.exit_code == 0 and "is not where the layout puts this checkpoint" in out.output
+    assert 'location = "{weights}/m/r/step_000000003/"' in out.output
 
 
 @pytest.mark.parametrize(

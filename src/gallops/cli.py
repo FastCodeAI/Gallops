@@ -228,8 +228,18 @@ def experiments_checkpoint(
     path = Path(directory)
     try:
         record = ckpt.read(path)
-    except ckpt.SidecarError as exc:
+        cfg = SiteConfig.load()
+    except (ckpt.SidecarError, ConfigError) as exc:
         raise fail(str(exc)) from exc
+    # The layout is config's (SiteConfig.checkpoint_dir, the paddock contract), never restated here.
+    home = cfg.checkpoint_dir(record.model, record.train_run, record.step)
+    if path.resolve() != home.resolve():
+        typer.secho(
+            f"warning: {path} is not where the layout puts this checkpoint ({home}); "
+            "`location` below names the layout's place",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
     if file and ensemble:
         raise fail("--file or --ensemble, not both")
     files = sorted(p for p in path.iterdir() if p.is_file() and p.suffix in _WEIGHTS)
@@ -276,7 +286,7 @@ def experiments_checkpoint(
         lines += [f'  "{m}",' for m in members]
         lines.append("]")
     lines += [
-        f'location = "{{weights}}/{record.model}/{record.train_run}/step_{record.step:09d}/"',
+        f'location = "{{weights}}/{home.relative_to(cfg.weights).as_posix()}/"',
         "sidecar = true",
         f"# train_git_sha = {record.train_git_sha}  (put it on the run)",
     ]
