@@ -55,6 +55,8 @@ FOLDER_RE = re.compile(r"^((GC|H)\d{2})_[a-z0-9]+(_[a-z0-9]+)*$")
 RUN_RE = re.compile(r"^((GC|H)\d{2})\.[A-Za-z0-9][A-Za-z0-9_-]*$")
 DECISION_RE = re.compile(r"^D\d{2}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+#: What an empty file, or an ensemble of nothing, hashes to. It is valid hex and pins no weights.
+EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
@@ -553,6 +555,8 @@ def validate(reg: Registry) -> list[str]:
                 if wsha is not None:
                     if not SHA256_RE.match(wsha):
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is not 64 lower-case hex digits")
+                    elif wsha == EMPTY_SHA256:
+                        errors.append(f"{rwhere} checkpoint: weights_sha256 is the SHA-256 of empty input")
                     elif wsha in seen_sha:
                         errors.append(f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}")
                     else:
@@ -783,11 +787,16 @@ def link(d: dict[str, Any], path: str | None = None, base: str = "") -> str:
     return rel(path, base)
 
 
+def _ref_kind(d: dict[str, Any]) -> str:
+    """What `branch` names: a branch, or the commit a closed PR keeps once its branch is deleted."""
+    return "commit" if GIT_SHA_RE.match(d["branch"]) else "branch"
+
+
 def record(d: dict[str, Any], base: str = "") -> str:
     if not d.get("narrative"):
         return "—"
     if d.get("branch"):
-        return f"[on branch ⎇]({link(d, base=base)})"
+        return f"[on {_ref_kind(d)} ⎇]({link(d, base=base)})"
     return f"[account]({link(d, base=base)})"
 
 
@@ -1178,14 +1187,14 @@ def render_card(reg: Registry, e: Experiment) -> str:
     ]
     nav = [f"[← all experiments]({rel('README.md', base)}#{_BACK[d['track']]})"]
     if d.get("narrative"):
-        nav.append(f"[the account]({link(d, base=base)})" + (" (on branch ⎇)" if d.get("branch") else ""))
+        where = f" (on {_ref_kind(d)} ⎇)" if d.get("branch") else ""
+        nav.append(f"[the account]({link(d, base=base)})" + where)
     nav.append(f"[experiment.toml]({rel(base + '/experiment.toml', base)})")
     out += [" · ".join(nav), ""]
     if d.get("branch"):
-        out += [
-            f"> The record is on branch `{d['branch']}`, not merged yet; its links go to that branch.",
-            "",
-        ]
+        kind = _ref_kind(d)
+        ref = d["branch"][:7] if kind == "commit" else d["branch"]
+        out += [f"> The record is on {kind} `{ref}`, not merged yet; its links go to that {kind}.", ""]
     meta = []
     if d.get("priority"):
         meta.append(f"**Priority:** {d['priority']}")
