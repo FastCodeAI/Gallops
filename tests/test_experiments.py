@@ -297,6 +297,19 @@ def test_a_record_on_an_unmerged_branch_is_linked_there_not_checked_here(tmp_pat
     assert f"{exps.GITHUB}/blob/train/thing/docs/thing.md" in card
 
 
+def test_a_record_whose_branch_was_deleted_is_linked_at_its_commit(tmp_path) -> None:
+    """A closed PR keeps its head commit after the branch goes, so `branch` can name that commit."""
+    sha = "1c60e59" + "0" * 33
+    gone = RECORD.replace("learned =", f'branch = "{sha}"\nlearned =').replace(
+        '"experiments/H01_thing/README.md"', '"docs/thing.md"'
+    )
+    reg = exps.Registry.load(_repo(tmp_path, gone))
+    exps.write(exps.Registry.load(reg.root))
+    card = (reg.root / "experiments" / "H01_thing" / "CARD.md").read_text()
+    assert f"{exps.GITHUB}/blob/{sha}/docs/thing.md" in card
+    assert "on commit `1c60e59`" in card and "on branch" not in card
+
+
 def test_numbers_keep_the_precision_they_were_reported_at() -> None:
     assert exps._num("87.30") == "87.30"
     assert exps._num(126981) == "126,981"
@@ -365,6 +378,20 @@ def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:
     )  # sha256sum seed_*.pt
     assert f'weights_sha256 = "{_sha(listing.encode())}"' in out.output
     assert "file =" not in out.output
+
+
+def test_an_ensemble_of_one_file_is_refused(tmp_path) -> None:
+    """One file gives no members, so the digest would be over nothing: the same for every such directory."""
+    out = _pin(_step(tmp_path, {"seed_0.pt": b"one seed"}), "--ensemble")
+    assert out.exit_code == 2 and "two or more" in out.output
+    assert _sha(b"") not in out.output
+
+
+def test_the_digest_of_nothing_pins_nothing(tmp_path) -> None:
+    block = f'  weights_sha256 = "{SHA}"\n'
+    empty = RECORD.replace(block, f'  weights_sha256 = "{_sha(b"")}"\n', 1)
+    reg = exps.Registry.load(_repo(tmp_path, empty))
+    assert any("SHA-256 of empty input" in e for e in reg.errors), reg.errors
 
 
 def test_a_sidecar_digest_is_checked_against_the_bytes_not_copied(tmp_path) -> None:

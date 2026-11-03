@@ -245,6 +245,9 @@ def experiments_checkpoint(
     files = sorted(p for p in path.iterdir() if p.is_file() and p.suffix in _WEIGHTS)
     if not files:
         raise fail(f"no weights file ({', '.join(_WEIGHTS)}) in {path}")
+    if ensemble and len(files) < 2:
+        # One file gives no members, and a digest over no members is the same for every directory.
+        raise fail(f"--ensemble needs two or more weights files; {path} has only {files[0].name}")
     if file:
         if not (path / file).is_file():
             raise fail(f"no {file} in {path}")

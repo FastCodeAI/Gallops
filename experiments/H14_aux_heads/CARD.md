@@ -5,9 +5,9 @@
 
 **Shreedhar** · nuScenes · ⏳ running · 20 Oct 2026 · hypothesis
 
-[← all experiments](../../README.md#hypothesis-experiments) · [the account](https://github.com/FastCodeAI/Gallops/blob/train/drivejepa-auxilliary/docs/drivejepa-aux-heads.md) (on branch ⎇) · [experiment.toml](experiment.toml)
+[← all experiments](../../README.md#hypothesis-experiments) · [the account](https://github.com/FastCodeAI/Gallops/blob/1c60e59df49114e314b525987561023bb6ad5c7b/docs/drivejepa-aux-heads.md) (on commit ⎇) · [experiment.toml](experiment.toml)
 
-> The record is on branch `train/drivejepa-auxilliary`, not merged yet; its links go to that branch.
+> The record is on commit `1c60e59`, not merged yet; its links go to that commit.
 
 ## Question
 
@@ -29,9 +29,9 @@ So far, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train 
 
 | Run | Started from | Trained | Data | Code | Checkpoint |
 |---|---|---|---|---|---|
-| **H14.C**<br>arm C: refiner fine-tune on nuScenes train, no heads (control); seeds 0, 1, 2 | released | refiner path (2.39 M); frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) — chose each run's kept epoch; the numbers quoted are at epoch 10, which nothing chose | [drivejepa_aux.toml#c-s0](https://github.com/FastCodeAI/Gallops/blob/train/drivejepa-auxilliary/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-c-s0/`<br>sha256 not recorded |
-| **H14.T1**<br>arm T1: as C, plus upstream's BEV map and object heads; seeds 0, 1, 2 | released | refiner path, BEV map head, object head; frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) | [drivejepa_aux.toml#t1-s0](https://github.com/FastCodeAI/Gallops/blob/train/drivejepa-auxilliary/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-t1-s0/`<br>sha256 not recorded |
-| **H14.T2**<br>arm T2: T1 plus lead-vehicle and lane-change heads; seeds 0, 1, 2 | released | refiner path, BEV map head, object head, lead-vehicle head, lane-change head; frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) | [drivejepa_aux.toml#t2-s0](https://github.com/FastCodeAI/Gallops/blob/train/drivejepa-auxilliary/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-t2-s0/`<br>sha256 not recorded |
+| **H14.C**<br>arm C: refiner fine-tune on nuScenes train, no heads (control); seeds 0, 1, 2 | released | refiner path (2.39 M); frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) — chose each run's kept epoch; the numbers quoted are at epoch 10, which nothing chose | [drivejepa_aux.toml#c-s0](https://github.com/FastCodeAI/Gallops/blob/1c60e59df49114e314b525987561023bb6ad5c7b/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-c-s0/`<br>sha256 not recorded |
+| **H14.T1**<br>arm T1: as C, plus upstream's BEV map and object heads; seeds 0, 1, 2 | released | refiner path, BEV map head, object head; frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) | [drivejepa_aux.toml#t1-s0](https://github.com/FastCodeAI/Gallops/blob/1c60e59df49114e314b525987561023bb6ad5c7b/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-t1-s0/`<br>sha256 not recorded |
+| **H14.T2**<br>arm T2: T1 plus lead-vehicle and lane-change heads; seeds 0, 1, 2 | released | refiner path, BEV map head, object head, lead-vehicle head, lane-change head; frozen: encoder, projector, scorer | nuscenes `train, 577 scenes` 16,952 keyframes (train)<br>nuscenes `train, 102 held-out scenes (15%, seed 0)` 2,996 keyframes (selection) | [drivejepa_aux.toml#t2-s0](https://github.com/FastCodeAI/Gallops/blob/1c60e59df49114e314b525987561023bb6ad5c7b/recipes/drivejepa_aux.toml)<br>commit `b48f731` | `{weights}/drivejepa_aux/aux-t2-s0/`<br>sha256 not recorded |
 
 - **H14.C:** Three seeds (recipe stages c-s0, c-s1, c-s2; train runs aux-c-s0..2), 10 epochs of 529 steps at batch 32; planning loss = the Bench2Drive generator stage's mtd_loss with the release's top-2 plans as teachers; Adam 2e-5 on the refiner path. All nine runs passed the preflight identically and trained from b48f731 in a clean worktree. Numbers at the fixed epoch 10; a run's kept epoch was chosen on the held-out scenes it reports on.
 - **H14.T1:** Stages t1-s0..2 (train runs aux-t1-s0..2). Heads at upstream's weights (class 1.0, box 0.1, BEV 1.0), Adam 1e-4; dropped at inference. T1 - C, L2 at 3 s, per seed: -0.46 +/- 0.12, -0.32 +/- 0.12, -0.48 +/- 0.11 (C's seed range 0.009). T1 - C collision: +0.37 +/- 0.40, +0.57 +/- 0.51, +0.20 +/- 0.39 points.
@@ -57,5 +57,6 @@ So far, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train 
 
 ## Evidence outside this repo
 
+- PR #20 was closed unmerged on 28 Oct 2026 and its branch train/drivejepa-auxilliary deleted. The account, recipe and code are at that PR's head, 1c60e59 (refs/pull/20/head), which is where this record links.
 - Served checkpoints at {weights}/drivejepa_aux/aux-<arm>-s<seed>/step_<n>/ with sidecars, and reports at {runs}/drivejepa_aux/ (report.md, report-epoch10.md, picks-epoch10.md), at the training site (one H200); no sha256 is recorded on the branch.
 - The next round is proposed, not run: docs/drivejepa-aux-next.md (PREDICTIONS.md first, then the inputs check against paddock, then the gate on T2 seed 0).

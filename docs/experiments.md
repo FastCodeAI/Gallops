@@ -271,7 +271,9 @@ checkpoint to `gallops-v0.N`. The README draws the log as the decision path and 
 
 Several branches were opened before the registry existed; each adds a row to the old README table,
 and they conflict with each other there. The registry already holds an `experiment.toml` for each,
-with `branch` set so the README links to the record on that branch. When one merges:
+with `branch` set so the README links to the record on that branch. If a branch is deleted without
+merging, set `branch` to the full commit its closed PR keeps (`refs/pull/<n>/head`), so the links
+still work. When one merges:
 
 1. Take main's README when resolving the conflict; do not keep the branch's hand-written row.
 2. Move the branch's record into its ID folder (`git mv`), and its account to that folder's
