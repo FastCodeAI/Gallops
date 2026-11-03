@@ -9,6 +9,7 @@ temporary directory and break it one way at a time, so each rule is shown to bit
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -308,3 +309,80 @@ def test_dates_render_as_a_reader_says_them() -> None:
         == "16 Oct – 17 Oct 2026"
     )
     assert exps._span({"started": dt.date(2026, 9, 26), "ended": dt.date(2026, 9, 26)}) == "26 Sep 2026"
+
+
+# ---------------------------------------------------------------- pinning a checkpoint
+
+
+def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) -> Path:
+    from gallops import checkpoint as ck
+
+    d = tmp_path / "weights" / "m" / "r" / "step_000000003"
+    d.mkdir(parents=True)
+    for name, data in files.items():
+        (d / name).write_bytes(data)
+    ck.write(
+        d, ck.Checkpoint(model="m", step=3, train_git_sha="abc1234", train_run="r", weights_sha256=digest)
+    )
+    return d
+
+
+def _pin(*args: object):
+    from typer.testing import CliRunner
+
+    from gallops.cli import app
+
+    return CliRunner().invoke(app, ["experiments", "checkpoint", *map(str, args)])
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def test_pinning_refuses_to_guess_which_weights_file_is_the_checkpoint(tmp_path) -> None:
+    """The swerve trainer writes model.pt and agent.ckpt; paddock loads agent.ckpt, the smaller one."""
+    d = _step(tmp_path, {"agent.ckpt": b"A" * 10, "model.pt": b"M" * 20})
+    out = _pin(d)
+    assert out.exit_code == 2 and "agent.ckpt, model.pt" in out.output
+    out = _pin(d, "--file", "agent.ckpt")
+    assert out.exit_code == 0, out.output
+    assert f'weights_sha256 = "{_sha(b"A" * 10)}"' in out.output and 'file = "agent.ckpt"' in out.output
+    assert f'"{_sha(b"M" * 20)}  model.pt"' in out.output  # the other file is kept, with its digest
+
+
+def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:
+    seeds = {f"seed_{i}.pt": bytes([i]) * 8 for i in range(3)}
+    out = _pin(_step(tmp_path, seeds), "--ensemble")
+    assert out.exit_code == 0, out.output
+    listing = "".join(
+        f"{_sha(data)}  {name}\n" for name, data in sorted(seeds.items())
+    )  # sha256sum seed_*.pt
+    assert f'weights_sha256 = "{_sha(listing.encode())}"' in out.output
+    assert "file =" not in out.output
+
+
+def test_a_sidecar_digest_is_checked_against_the_bytes_not_copied(tmp_path) -> None:
+    d = _step(tmp_path, {"reranker.npz": b"rewritten after the sidecar"}, digest="0" * 64)
+    out = _pin(d)
+    assert out.exit_code == 1 and f"hashes to {_sha(b'rewritten after the sidecar')}" in out.output
+    out = _pin(d, "--trust-sidecar")
+    assert out.exit_code == 0 and "NOT re-hashed" in out.output
+
+
+@pytest.mark.parametrize(
+    ("members", "file", "error"),
+    [
+        ([f"{SHA}  agent.ckpt", f"{'b' * 64}  model.pt"], "agent.ckpt", None),
+        ([f"{'c' * 64}  agent.ckpt", f"{'b' * 64}  model.pt"], "agent.ckpt", "not the digest members give"),
+        ([f"{'c' * 64}  seed_0.pt", f"{'b' * 64}  seed_1.pt"], None, "not the digest over members"),
+        ([f"{SHA} agent.ckpt"], "agent.ckpt", "as sha256sum prints them"),
+    ],
+)
+def test_members_agree_with_the_pinned_digest(tmp_path, members, file, error) -> None:
+    block = f'  weights_sha256 = "{SHA}"\n'
+    extra = (f'  file = "{file}"\n' if file else "") + f"  members = {members!r}\n".replace("'", '"')
+    reg = exps.Registry.load(_repo(tmp_path, RECORD.replace(block, block + extra, 1)))
+    if error is None:
+        assert reg.errors == []
+    else:
+        assert any(error in e for e in reg.errors), reg.errors
