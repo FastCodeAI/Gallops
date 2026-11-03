@@ -43,7 +43,7 @@ start_from = "released Drive-JEPA (seeing)"
 trained = ["refiner", "scorer"]
 frozen = ["encoder"]
 train_git_sha = "21067a5"
-notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1 × 8 accumulated, lr 1e-4, brake ticks 2×, brake-then-swerve 4×, 3 epochs. Training curves: nearest-candidate distance to the v6 plan 1.18 → 0.48 m (train), 0.83 → ~0.59 m (held-out 0075); scorer picks the best of 32 on 27–31% of training ticks, 9–22% on 0075, where its loss does not fall. Pinned checkpoint is epoch 1 (the one driven on 0103); epochs 2 and 3 are step_000031485 (ed263d39acfb) and step_000047338 (b1c829eb3dec). The sidecar's step counts one-tick forward passes, not optimizer steps (train/swerve.py increments it per micro-batch)."
+notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.pt is a member). That agent.ckpt was written 15 Oct 03:53 (site time), after the 0103 run 0d6a7b that loaded it: probably a deterministic re-export of model.pt (train/export.py), not shown to be the bytes that run read (argued, #25 review). Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1 × 8 accumulated, lr 1e-4, brake ticks 2×, brake-then-swerve 4×, 3 epochs. Training curves: nearest-candidate distance to the v6 plan 1.18 → 0.48 m (train), 0.83 → ~0.59 m (held-out 0075); scorer picks the best of 32 on 27–31% of training ticks, 9–22% on 0075, where its loss does not fall. Pinned checkpoint is epoch 1 (the one driven on 0103); epochs 2 and 3 are step_000031485 (ed263d39acfb) and step_000047338 (b1c829eb3dec). The sidecar's step counts one-tick forward passes, not optimizer steps (train/swerve.py increments it per micro-batch)."
 
   [runs.code]
   entry = "gallops.train.swerve"
@@ -90,8 +90,12 @@ notes = "Winner-takes-all L1 to the v6 plan plus scorer BCE and ranking; batch 1
   model = "drivejepa_swerve"
   train_run = "v6-r1a-loso0075"
   step = 15684
-  weights_sha256 = "49bf193783003cb8487eb6cc29856556fa07b4b80c7c6d182cc022b22e51b838"
-  file = "model.pt"
+  weights_sha256 = "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5"
+  file = "agent.ckpt"
+  members = [
+    "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5  agent.ckpt",
+    "49bf193783003cb8487eb6cc29856556fa07b4b80c7c6d182cc022b22e51b838  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r1a-loso0075/step_000015684/"
   sidecar = true
   known_wrong = "train_git_sha records 048d49c, the commit at save time; 1A ran 21067a5. trained_on names only the rendered round-0 collection (it also read real nuScenes; notes.sources lists it). --accumulate and --subsample-source are not recorded"
@@ -209,8 +213,12 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   model = "drivejepa_swerve"
   train_run = "v6-r1b-all"
   step = 69186
-  weights_sha256 = "2195fc27212d57a22ca35067d9f2642894343e0fbd60e6cfc6863c96213487eb"
-  file = "model.pt"
+  weights_sha256 = "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e"
+  file = "agent.ckpt"
+  members = [
+    "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e  agent.ckpt",
+    "2195fc27212d57a22ca35067d9f2642894343e0fbd60e6cfc6863c96213487eb  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r1b-all/step_000069186/"
   sidecar = true
   known_wrong = "trained_on names only the rendered round-0 collection (it also read real nuScenes and the expert-driven collection; notes.sources lists them). --accumulate and --subsample-source are not recorded"
@@ -306,8 +314,12 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   model = "drivejepa_swerve"
   train_run = "v6-r2-short"
   step = 11377
-  weights_sha256 = "916b930a38ead276c601c3e6ccdbe0b5fbd20835f252c7cc879887cf8a5bdff9"
-  file = "model.pt"
+  weights_sha256 = "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e"
+  file = "agent.ckpt"
+  members = [
+    "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e  agent.ckpt",
+    "916b930a38ead276c601c3e6ccdbe0b5fbd20835f252c7cc879887cf8a5bdff9  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/v6-r2-short/step_000011377/"
   sidecar = true
   known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only"
