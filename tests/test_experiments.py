@@ -297,6 +297,19 @@ def test_a_record_on_an_unmerged_branch_is_linked_there_not_checked_here(tmp_pat
     assert f"{exps.GITHUB}/blob/train/thing/docs/thing.md" in card
 
 
+def test_a_record_whose_branch_was_deleted_is_linked_at_its_commit(tmp_path) -> None:
+    """A closed PR keeps its head commit after the branch goes, so `branch` can name that commit."""
+    sha = "1c60e59" + "0" * 33
+    gone = RECORD.replace("learned =", f'branch = "{sha}"\nlearned =').replace(
+        '"experiments/H01_thing/README.md"', '"docs/thing.md"'
+    )
+    reg = exps.Registry.load(_repo(tmp_path, gone))
+    exps.write(exps.Registry.load(reg.root))
+    card = (reg.root / "experiments" / "H01_thing" / "CARD.md").read_text()
+    assert f"{exps.GITHUB}/blob/{sha}/docs/thing.md" in card
+    assert "on commit `1c60e59`" in card and "on branch" not in card
+
+
 def test_numbers_keep_the_precision_they_were_reported_at() -> None:
     assert exps._num("87.30") == "87.30"
     assert exps._num(126981) == "126,981"

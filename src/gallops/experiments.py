@@ -787,11 +787,16 @@ def link(d: dict[str, Any], path: str | None = None, base: str = "") -> str:
     return rel(path, base)
 
 
+def _ref_kind(d: dict[str, Any]) -> str:
+    """What `branch` names: a branch, or the commit a closed PR keeps once its branch is deleted."""
+    return "commit" if GIT_SHA_RE.match(d["branch"]) else "branch"
+
+
 def record(d: dict[str, Any], base: str = "") -> str:
     if not d.get("narrative"):
         return "—"
     if d.get("branch"):
-        return f"[on branch ⎇]({link(d, base=base)})"
+        return f"[on {_ref_kind(d)} ⎇]({link(d, base=base)})"
     return f"[account]({link(d, base=base)})"
 
 
@@ -1182,14 +1187,14 @@ def render_card(reg: Registry, e: Experiment) -> str:
     ]
     nav = [f"[← all experiments]({rel('README.md', base)}#{_BACK[d['track']]})"]
     if d.get("narrative"):
-        nav.append(f"[the account]({link(d, base=base)})" + (" (on branch ⎇)" if d.get("branch") else ""))
+        where = f" (on {_ref_kind(d)} ⎇)" if d.get("branch") else ""
+        nav.append(f"[the account]({link(d, base=base)})" + where)
     nav.append(f"[experiment.toml]({rel(base + '/experiment.toml', base)})")
     out += [" · ".join(nav), ""]
     if d.get("branch"):
-        out += [
-            f"> The record is on branch `{d['branch']}`, not merged yet; its links go to that branch.",
-            "",
-        ]
+        kind = _ref_kind(d)
+        ref = d["branch"][:7] if kind == "commit" else d["branch"]
+        out += [f"> The record is on {kind} `{ref}`, not merged yet; its links go to that {kind}.", ""]
     meta = []
     if d.get("priority"):
         meta.append(f"**Priority:** {d['priority']}")
