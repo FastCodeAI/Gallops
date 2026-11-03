@@ -5,10 +5,10 @@ input takes three steps, and two of them are here:
 
 1. `keyframes` lists the KITScenes train keyframes to dump: every keyframe of
    the scenes in `rerank_train_scenes.txt`.
-2. Paddock runs Drive-JEPA on each, through its own input path
-   (`tools/models/drivejepa/paddock_candidates.py --rows`), and writes one JSON
-   row of candidates per keyframe. That step runs the model, so it stays in
-   paddock.
+2. Released Drive-JEPA runs on each, through paddock's own input path
+   (`tools/models/drivejepa/paddock_candidates.py --rows`, which paddock held
+   until #121; it is copied in experiments/GC01_rerank_kitscenes/paddock/), and
+   writes one JSON row of candidates per keyframe.
 3. `dataset` turns that dump into the `.npz` `train-rerank` reads: each
    candidate's features, and its ADE to the logged future, which is the label.
 
@@ -19,9 +19,10 @@ input takes three steps, and two of them are here:
 `tier` and `split`), and refuses a dump that mixes them; `--dataset`/`--split`
 only check that record.
 
-**The features are paddock's.** The selector runs inside paddock's
+**The features are the adapter's.** The selector ran inside paddock's
 `drivejepa_rerank` adapter, which computes them with `candidate_features` in
-`adapters/models/drivejepa_rerank/ranker.py`. Neither repo imports the other,
+`adapters/models/drivejepa_rerank/ranker.py`; paddock removed the adapter in #121,
+and it is copied in experiments/GC01_rerank_kitscenes/paddock/. Neither imports the other,
 so `candidate_features` below is a transcription of it. Weights fitted to a
 different definition would still load and pass paddock's probe, which replays
 the forward pass on stored features, and then drive the wrong candidate. What
@@ -29,7 +30,7 @@ holds the copies equal:
 - paddock's loader refuses weights whose `feature_names` differ from its own
 - both repos test their copy against the same input and expected values
   (`GOLDEN` in tests/test_rerank_data.py here, `test_features_match_gallops`
-  in paddock's drivejepa_rerank tests)
+  in the adapter's tests, which are a record now and run in no `make check`)
 - the export keeps a feature probe, the raw inputs of its first few samples
   with their features, and the trainer copies it into the weights
   (`gallops.train.rerank.FEATURE_PROBE`), so a reader can recompute it with
@@ -237,7 +238,8 @@ def geometry_of(rows: list[dict]) -> str:
     if None in found or len(found) != 1:
         raise SystemExit(
             f"dump records image_geometry {sorted(map(str, found))}; expected exactly one. "
-            "Re-dump with paddock's paddock_candidates.py, which records it per row."
+            "Re-dump with paddock_candidates.py (experiments/GC01_rerank_kitscenes/paddock/), "
+            "which records it per row."
         )
     return found.pop()
 

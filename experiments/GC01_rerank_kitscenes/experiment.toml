@@ -1,7 +1,7 @@
 # GC01 -- the KITScenes re-ranker: a small selector over released Drive-JEPA's 32 candidates (Naren).
 # Every number below is copied, never re-derived, from: docs/STRATEGY.md ("First target -- taken");
-# paddock docs/models/drivejepa_rerank.md, docs/ROADMAP.md and docs/models/comparison.md;
-# paddock src/paddock/adapters/models/drivejepa_rerank/model.yaml; the checkpoint's own checkpoint.json
+# paddock's docs/models/drivejepa_rerank.md and src/paddock/adapters/models/drivejepa_rerank/model.yaml, both
+# copied into paddock/ here; paddock docs/ROADMAP.md and docs/models/comparison.md at a263819; the checkpoint's own checkpoint.json
 # (read through `gallops experiments checkpoint`); and, for the nuScenes row, gallops branch
 # docs/rerank-nuscenes-result (README) and the same paddock page. The offline neuroNCAP check is on
 # paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md.
@@ -27,9 +27,9 @@ zero-shot. It learned closeness to the human path and nothing about collisions: 
 seeing model it scored 1.85 against 3.01 (9 episodes), and it never picks a stop."""
 narrative = "experiments/GC01_rerank_kitscenes/README.md"
 external = [
-  "paddock docs/models/drivejepa_rerank.md: the model page with every number, the rebuild steps and the limits; adapter src/paddock/adapters/models/drivejepa_rerank/ (paddock #54, nuScenes #66).",
-  "paddock results/kitscenes/drivejepa_rerank/20260921T210621-d7ed08 and results/nuscenes/drivejepa_rerank/20261012T220930-6194bd: the tracked runs.",
-  "The neuroNCAP 0103 run neuroncap/drivejepa_rerank/20261012T231620-01570a is not tracked in paddock; only its numbers are, in docs/models/drivejepa_rerank.md.",
+  "experiments/GC01_rerank_kitscenes/paddock/: what ran in paddock, copied from paddock a263819 when paddock stopped holding checkpoints other than the released models (paddock #121 removed it): the adapter (paddock #54, nuScenes #66), the candidate dump and report tools, and the model page with every number, the rebuild steps and the limits.",
+  "experiments/GC01_rerank_kitscenes/paddock/results/: the two run records paddock tracked, kitscenes/drivejepa_rerank/20260921T210621-d7ed08 and nuscenes/drivejepa_rerank/20261012T220930-6194bd.",
+  "The neuroNCAP 0103 run neuroncap/drivejepa_rerank/20261012T231620-01570a was never tracked; only its numbers are, in the model page.",
   "The input-side checks (acceleration, route command, ego origin, lens distortion) are on paddock branch drivejepa/selection-diagnostics, not merged.",
   "The nuScenes headline is added to this repo's README on the unmerged branch docs/rerank-nuscenes-result.",
 ]
@@ -46,12 +46,14 @@ notes = """Listwise cross-entropy against softmax(−ADE) over the 32, full batc
 temperature won a sweep over {16, 32, 64, 128} × {0.3, 0.5, 1.0} ranked on held-out train scenes only; the \
 sweep also computed the benchmark score of every configuration and the held-out winner was the benchmark's \
 best too, so the paddock page says the benchmark 'was not unseen'. Candidates were dumped through paddock's \
-own KITScenes harness (tools/models/drivejepa/paddock_candidates.py, DRIVEJEPA_IMAGE_GEOMETRY=openscene); \
+own KITScenes harness (tools/models/drivejepa/paddock_candidates.py, now copied in paddock/ here; \
+DRIVEJEPA_IMAGE_GEOMETRY=openscene); \
 that step is paddock's, the data and training steps are gallops'."""
 
   [runs.code]
   entry = "gallops.train.rerank"
   modules = ["gallops.data.rerank"]
+  as_run = ["experiments/GC01_rerank_kitscenes/paddock/"]
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -105,7 +107,7 @@ that step is paddock's, the data and training steps are gallops'."""
   file = "reranker.npz"
   location = "{weights}/drivejepa_rerank/kitscenes-train-h128-t1/step_000000325/"
   sidecar = true
-  shipped_as = "paddock model drivejepa_rerank (its model.yaml pins this directory)"
+  shipped_as = "paddock model drivejepa_rerank, until paddock #121 removed it; its model.yaml, which pins this directory, is in paddock/ here"
 
   [[runs.results]]
   bench = "kitscenes"
@@ -123,7 +125,7 @@ that step is paddock's, the data and training steps are gallops'."""
   flags = ["adapted", "open-loop"]
   headline = true
   note = "paired −1.548 m with scene-clustered SE over 140 scenes; best of the 32 (any selector's ceiling) 0.409; the recorded drivejepa row (devkit loader) 2.364; FDE@3s 2.082; better than the model's pick on 155 samples, worse on 46"
-  source = "paddock docs/models/drivejepa_rerank.md, run 20260921T210621-d7ed08"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md, run 20260921T210621-d7ed08"
 
   [[runs.results]]
   bench = "kitscenes"
@@ -140,7 +142,7 @@ that step is paddock's, the data and training steps are gallops'."""
   strength = "moderate"
   flags = ["adapted", "open-loop"]
   note = "paired −0.186 m: it is not just picking 'keep your speed'"
-  source = "paddock docs/models/drivejepa_rerank.md, run 20260921T210621-d7ed08"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md, run 20260921T210621-d7ed08"
 
   [[runs.results]]
   bench = "kitscenes"
@@ -155,7 +157,7 @@ that step is paddock's, the data and training steps are gallops'."""
   strength = "moderate"
   flags = ["adapted", "open-loop", "selected-on-report"]
   note = "best of the 32 here 0.502; this is the split the epoch was chosen on"
-  source = "paddock docs/models/drivejepa_rerank.md; checkpoint.json notes.holdout_pick_ade"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md; checkpoint.json notes.holdout_pick_ade"
 
   [[runs.results]]
   bench = "nuscenes"
@@ -171,7 +173,7 @@ that step is paddock's, the data and training steps are gallops'."""
   strength = "moderate"
   flags = ["open-loop"]
   note = "zero-shot; paired −0.054 m with SEs over the 150 scenes; ADE@3s 0.949 against 1.069 (t −3.4); point collisions 1.21% against 1.66%, not separated (t −1.5)"
-  source = "paddock docs/models/drivejepa_rerank.md, run 20261012T220930-6194bd"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md, run 20261012T220930-6194bd"
 
   [[runs.results]]
   bench = "nuscenes"
@@ -187,7 +189,7 @@ that step is paddock's, the data and training steps are gallops'."""
   strength = "moderate"
   flags = ["open-loop"]
   note = "paired −0.772 m, but it mixes two changes: this model runs on the OpenScene crop, drivejepa on native cameras. The selector's own effect at the same pixels is unmeasured on nuScenes"
-  source = "paddock docs/models/drivejepa_rerank.md; gallops branch docs/rerank-nuscenes-result"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md; gallops branch docs/rerank-nuscenes-result"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -202,24 +204,24 @@ that step is paddock's, the data and training steps are gallops'."""
   strength = "argued"
   flags = ["smoke", "no-record"]
   note = "hit in 6 of 9 against 5; a subset, not a neuroNCAP score. The re-ranker's run 20261012T231620-01570a is not tracked"
-  source = "paddock docs/models/drivejepa_rerank.md (Limits); paddock docs/ROADMAP.md"
+  source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md (Limits); paddock docs/ROADMAP.md at a263819"
 
 [[checks]]
 name = "Input-side explanations before the selector"
 date = 2026-09-19
 result = "none moved the pick beyond noise: acceleration zeroed or smoothed ≤ 0.07 m (t ≤ 1.75), route command ≤ 0.07 m (t ≤ 1.75), ego origin at the rear axle −0.09 to +0.02 m (t ≤ 0.7), OpenScene lens distortion −0.14 m (t −1.27); best of 32 stayed 0.35–0.39 m and the pick's mean rank 14.6–15.3"
 decided = "the deficit is the scorer's choice, so the first target became a re-ranker, not a speed head"
-source = "paddock docs/models/drivejepa_rerank.md ('Why the choice'); docs/STRATEGY.md"
+source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md ('Why the choice'); docs/STRATEGY.md"
 
 [[checks]]
 name = "Rebuild from gallops' data steps"
 result = "`gallops.data.rerank keyframes` lists the same 5,711 keyframes the checkpoint trained on; `dataset` on the original dump gives every array of the original train.npz unchanged (its sha256 is checkpoint.json's dataset_sha256); a 5-sample smoke matched the paddock run to the dump's 4-decimal rounding"
 decided = "the data steps moved from paddock into gallops (gallops.data.rerank)"
-source = "paddock docs/models/drivejepa_rerank.md"
+source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md"
 
 [[checks]]
 name = "The re-ranker as the picker on neuroNCAP candidate dumps (camera-blind)"
 date = 2026-09-23
 result = "picked a clear plan on 0 of the 322 ticks where the driven plan hits although one of the 32 was clear; it never picks a stop"
 decided = "not quoted on the model page, because the dumps were camera-blind; the model stays open-loop only until a full neuroNCAP run pairs it with drivejepa"
-source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md; paddock docs/models/drivejepa_rerank.md"
+source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md; experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md"
