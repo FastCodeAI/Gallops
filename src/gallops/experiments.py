@@ -18,8 +18,9 @@ Layout (docs/experiments.md has the rules and the reasons):
             README.md        the narrative
             PREDICTIONS.md   hypothesis experiments: written before the run
 
-Stdlib only (`tomllib`), so `make check` runs it on a machine with no GPU. It is never imported
-by a trainer, so it may use 3.11.
+Stdlib only, so `make check` runs it on a machine with no GPU. No trainer imports it, but the
+training preflight runs the whole test suite under the trainer's interpreter (train/preflight.py,
+`code_checks`), and Drive-JEPA's is Python 3.9: so it keeps to 3.9, as config.py does.
 """
 
 from __future__ import annotations
@@ -27,7 +28,11 @@ from __future__ import annotations
 import datetime as dt
 import posixpath
 import re
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9, the model envs; see config.py
+    import tomli as tomllib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path

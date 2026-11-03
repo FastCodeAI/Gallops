@@ -9,6 +9,8 @@ temporary directory and break it one way at a time, so each rule is shown to bit
 from __future__ import annotations
 
 import datetime as dt
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -37,6 +39,26 @@ def test_the_readme_is_what_the_registry_renders(registry) -> None:
 def test_paddocks_link_into_this_readme_still_lands() -> None:
     """Paddock's README links Gallops#training-so-far for its trained Drive-JEPA rows (paddock 9a51c15)."""
     assert '<a id="training-so-far"></a>' in (REPO_ROOT / "README.md").read_text()
+
+
+def test_the_registry_imports_where_tomllib_does_not_exist() -> None:
+    """The preflight runs this suite under Drive-JEPA's Python 3.9, which has tomli and no tomllib."""
+    # Under 3.11+ hide tomllib and offer it as tomli, the 3.9 layout; under a real 3.9 there is no
+    # tomllib to hide, and the module's own fallback is what runs.
+    code = "\n".join(
+        [
+            "import sys",
+            "try:",
+            "    import tomllib",
+            "    sys.modules['tomli'], sys.modules['tomllib'] = tomllib, None",
+            "except ModuleNotFoundError:",
+            "    pass",
+            "import gallops.experiments",
+            "print('ok')",
+        ]
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=REPO_ROOT)
+    assert out.returncode == 0 and out.stdout.strip() == "ok", out.stderr
 
 
 def test_the_template_fills_into_a_valid_record(tmp_path) -> None:
