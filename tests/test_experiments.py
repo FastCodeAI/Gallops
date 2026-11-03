@@ -378,6 +378,16 @@ def test_pinning_refuses_to_guess_which_weights_file_is_the_checkpoint(tmp_path)
     assert f'"{_sha(b"M" * 20)}  model.pt"' in out.output  # the other file is kept, with its digest
 
 
+def test_file_must_name_a_weights_file(tmp_path) -> None:
+    """A scorer.json beside the weights exists, and is not what gets pinned."""
+    d = _step(tmp_path, {"reranker.npz": b"w"})
+    (d / "scorer.json").write_text("{}")
+    for name in ("scorer.json", "nothing.pt"):
+        out = _pin(d, "--file", name)
+        assert out.exit_code == 2 and "is not a weights file" in out.output, name
+        assert out.exception is None or isinstance(out.exception, SystemExit), out.exception
+
+
 def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:
     seeds = {f"seed_{i}.pt": bytes([i]) * 8 for i in range(3)}
     out = _pin(_step(tmp_path, seeds), "--ensemble")
