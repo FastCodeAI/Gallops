@@ -6,8 +6,9 @@ produced it, to the checkpoint by its sha256, to the data it trained on and the 
 it, to the decision the team took because of it.
 
 The mechanism is small. Every experiment has a folder `experiments/<ID>_<slug>/` holding an
-`experiment.toml`, and the README's tables, decision path and gate log are rendered from those
-files by `gallops experiments render --write`. `make check` fails if the README differs from what
+`experiment.toml`, and the README's tables, decision path and gate log — and a one-page
+`CARD.md` in each folder, which the README's IDs link to — are rendered from those files by
+`gallops experiments render --write`. `make check` fails if the README differs from what
 the registry renders, if a record is malformed, if it points at a file that does not exist, or if
 a module in `src/gallops` was used by no experiment. The validation is in
 [src/gallops/experiments.py](../src/gallops/experiments.py); this page explains the reasons.
@@ -247,7 +248,8 @@ checkpoint to `gallops-v0.N`. The README draws the log as the decision path and 
 7. **When the gate runs,** copy its verdict into `[[runs.gate]]`.
 8. **When the team decides,** add the decision to `experiments/decisions.toml`, and set `status`,
    `verdict` and `learned`.
-9. `gallops experiments render --write`, then `make check`, then open the PR.
+9. `gallops experiments render --write` (the README and the cards; never edit `CARD.md` by hand), then
+   `make check`, then open the PR.
 
 <a id="open-branches"></a>
 
