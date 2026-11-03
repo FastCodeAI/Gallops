@@ -201,7 +201,7 @@ that step is paddock's, the data and training steps are gallops'."""
   baseline_value = "3.01"
   value = "1.85"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["smoke", "no-record"]
   note = "hit in 6 of 9 against 5; a subset, not a neuroNCAP score. The re-ranker's run 20261012T231620-01570a is not tracked"
   source = "experiments/GC01_rerank_kitscenes/paddock/docs/models/drivejepa_rerank.md (Limits); paddock docs/ROADMAP.md at a263819"

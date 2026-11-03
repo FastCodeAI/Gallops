@@ -18,15 +18,22 @@ Layout (docs/experiments.md has the rules and the reasons):
             README.md        the narrative
             PREDICTIONS.md   hypothesis experiments: written before the run
 
-Stdlib only (`tomllib`), so `make check` runs it on a machine with no GPU. It is never imported
-by a trainer, so it may use 3.11.
+Stdlib only, so `make check` runs it on a machine with no GPU. No trainer imports it, but the
+training preflight runs the whole test suite under the trainer's interpreter (train/preflight.py,
+`code_checks`), and Drive-JEPA's is Python 3.9: so it keeps to 3.9, as config.py does.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import posixpath
 import re
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9, the model envs; see config.py
+    import tomli as tomllib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -37,6 +44,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 #: Bump when a field changes meaning; adding an optional field does not need it.
 SCHEMA = 1
 
+#: Each experiment's one-page card, rendered whole into its folder; the README's IDs link to it.
+CARD = "CARD.md"
+
 #: Where a record on an unmerged branch is linked. A URL, not a machine path.
 GITHUB = "https://github.com/FastCodeAI/Gallops"
 
@@ -46,6 +56,8 @@ RUN_RE = re.compile(r"^((GC|H)\d{2})\.[A-Za-z0-9][A-Za-z0-9_-]*$")
 DECISION_RE = re.compile(r"^D\d{2}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
+#: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
+MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -164,6 +176,7 @@ _CHECKPOINT: dict[str, tuple[Any, bool]] = {
     "sidecar": (bool, False),
     "known_wrong": (str, False),
     "shipped_as": (str, False),
+    "members": (list, False),
 }
 _RESULT: dict[str, tuple[Any, bool]] = {
     "bench": (str, True),
@@ -345,6 +358,39 @@ def _enum(where: str, value: Any, allowed: Iterable[str], errors: list[str]) -> 
         errors.append(f"{where}: {value!r} is not one of {', '.join(allowed)}")
 
 
+def member(sha: str, name: str) -> str:
+    return f"{sha}  {name}"
+
+
+def ensemble_digest(members: list[str]) -> str:
+    """The digest of a checkpoint that is several files (an ensemble of seeds): sha256 over its members'
+    `sha256  name` lines, sorted by name. `sha256sum seed_*.pt | sha256sum` reproduces it."""
+    lines = sorted(members, key=lambda m: m.split("  ", 1)[1])
+    return hashlib.sha256("".join(line + "\n" for line in lines).encode()).hexdigest()
+
+
+def _members_agree(ck: dict[str, Any]) -> str | None:
+    """Why a checkpoint's `weights_sha256` disagrees with its `members`, or None.
+
+    With `file` naming a member, the digest is that file's: the one paddock loads, the others kept as
+    second digests. Without it, the checkpoint is the members together, and the digest is theirs.
+    """
+    members = ck.get("members", [])
+    bad = [m for m in members if not isinstance(m, str) or not MEMBER_RE.match(m)]
+    if bad:
+        return f"members are `sha256  name` lines, as sha256sum prints them: {bad[0]!r}"
+    wsha = ck.get("weights_sha256")
+    if not members or not wsha:
+        return None
+    by_name = {m.split("  ", 1)[1]: m.split("  ", 1)[0] for m in members}
+    if ck.get("file") in by_name:
+        if wsha != by_name[ck["file"]]:
+            return f"weights_sha256 is not the digest members give {ck['file']}"
+    elif wsha != ensemble_digest(members):
+        return "weights_sha256 is not the digest over members, and `file` names none of them"
+    return None
+
+
 def _module_exists(root: Path, dotted: str) -> bool:
     if not dotted.startswith("gallops"):
         return False
@@ -500,6 +546,9 @@ def validate(reg: Registry) -> list[str]:
             ck = run.get("checkpoint")
             if ck is not None and _fields(f"{rwhere} checkpoint", ck, _CHECKPOINT, errors):
                 _enum(f"{rwhere} checkpoint", ck.get("step_unit"), STEP_UNITS, errors)
+                why = _members_agree(ck)
+                if why:
+                    errors.append(f"{rwhere} checkpoint: {why}")
                 wsha = ck.get("weights_sha256")
                 if wsha is not None:
                     if not SHA256_RE.match(wsha):
@@ -709,10 +758,6 @@ def mark(d: dict[str, Any]) -> str:
     return STATUS_MARK.get(d.get("status", ""), d.get("status", ""))
 
 
-def anchor(eid: str) -> str:
-    return eid.lower()
-
-
 def person(reg: Registry, key: str) -> str:
     return key if key in reg.people else f"{key}?"
 
@@ -721,22 +766,40 @@ def owners(reg: Registry, d: dict[str, Any]) -> str:
     return ", ".join(person(reg, k) for k in [d.get("owner", ""), *d.get("contributors", [])])
 
 
-def link(d: dict[str, Any], path: str | None = None) -> str:
+def rel(path: str, base: str) -> str:
+    """`path` (repo-root relative, maybe with #fragment) as a link from a file in folder `base`."""
+    target, sep, frag = path.partition("#")
+    out = posixpath.relpath(target, base or ".") if target else ""
+    return out + ("/" if target.endswith("/") and not out.endswith("/") else "") + sep + frag
+
+
+def link(d: dict[str, Any], path: str | None = None, base: str = "") -> str:
     """A link to a record: relative in the working tree, or to the branch on GitHub while it is unmerged."""
     path = path or d.get("narrative", "")
     if not path:
         return ""
     if d.get("branch"):
         return f"{GITHUB}/blob/{d['branch']}/{path}"
-    return path
+    return rel(path, base)
 
 
-def record(d: dict[str, Any]) -> str:
+def record(d: dict[str, Any], base: str = "") -> str:
     if not d.get("narrative"):
         return "—"
     if d.get("branch"):
-        return f"[on branch ⎇]({link(d)})"
-    return f"[record]({link(d)})"
+        return f"[on branch ⎇]({link(d, base=base)})"
+    return f"[account]({link(d, base=base)})"
+
+
+def card_path(reg: Registry, e: Experiment) -> str:
+    """Where an experiment's card is rendered, relative to the repo root."""
+    return f"{e.folder.relative_to(reg.root).as_posix()}/{CARD}"
+
+
+def card(reg: Registry, eid: str, base: str = "") -> str:
+    """A link to an experiment's card from a file in folder `base`."""
+    by_id = reg.by_id()
+    return rel(card_path(reg, by_id[eid]), base) if eid in by_id else ""
 
 
 def benches(d: dict[str, Any]) -> str:
@@ -814,7 +877,7 @@ def render_status(reg: Registry) -> str:
         bad = [BENCHMARKS[p["bench"]] for p in g.get("pairs", []) if p.get("verdict") == "REGRESSION"]
         why = f" — regressed on {', '.join(bad)}" if bad else ""
         lines.append(
-            f"- **Last gate run:** {_date(g['date'])} · [{run['id']}](#{anchor(e.id)}) · "
+            f"- **Last gate run:** {_date(g['date'])} · [{run['id']}]({card(reg, e.id)}) · "
             f"{GATE_MARK[g['verdict']]}{why}."
         )
     for track, label in (("hypothesis", "Hypotheses in progress"), ("enabler", "Enablers in progress")):
@@ -823,7 +886,7 @@ def render_status(reg: Registry) -> str:
         ]
         if running:
             items = ", ".join(
-                f"[{e.id}](#{anchor(e.id)}) {e.data['short']} ({owners(reg, e.data)})" for e in running
+                f"[{e.id}]({card(reg, e.id)}) {e.data['short']} ({owners(reg, e.data)})" for e in running
             )
             lines.append(f"- **{label}:** {items}.")
     planned = sorted(
@@ -831,7 +894,7 @@ def render_status(reg: Registry) -> str:
         key=lambda e: e.data.get("priority", 99),
     )
     if planned:
-        items = ", ".join(f"[{e.id}](#{anchor(e.id)}) {e.data['short']}" for e in planned[:4])
+        items = ", ".join(f"[{e.id}]({card(reg, e.id)}) {e.data['short']}" for e in planned[:4])
         lines.append(f"- **Next, by priority:** {items}.")
     return "\n".join(lines)
 
@@ -909,7 +972,7 @@ def render_gap_closing(reg: Registry) -> str:
         res = result_text(head[1]) if head else "—"
         strg = strength(head[1]) if head else "—"
         rows.append(
-            f"| [**{e.id}**](#{anchor(e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {benches(d)} | "
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {benches(d)} | "
             f"{_cell(res)} | {strg} | {mark(d)} | {tag(head[0] if head else None)} | {record(d)} |"
         )
     return "\n".join(rows)
@@ -939,7 +1002,7 @@ def render_hypotheses(reg: Registry) -> str:
         gate = latest_gate(e)
         gate_text = f"{GATE_MARK[gate[1]['verdict']]} {_date(gate[1]['date'])}" if gate else "—"
         rows.append(
-            f"| [**{e.id}**](#{anchor(e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
             f"{d.get('priority', '—')} | {mark(d)} | {_runs_cell(e)} | "
             f"{_cell(result_text(head[1])) if head else '—'} | {strength(head[1]) if head else '—'} | "
             f"{gate_text} |"
@@ -958,7 +1021,7 @@ def render_enablers(reg: Registry) -> str:
             continue
         gives = first_sentence(d.get("learned") or d["question"])
         rows.append(
-            f"| [**{e.id}**](#{anchor(e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
             f"{d.get('priority', '—')} | {mark(d)} | {_cell(gives)} |"
         )
     return "\n".join(rows)
@@ -988,7 +1051,7 @@ def render_gate(reg: Registry) -> str:
         pairs = {p["bench"]: p for p in g.get("pairs", [])}
         cells = " | ".join(_pair_cell(pairs.get(b)) for b in GATE_BENCHES)
         rows.append(
-            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}](#{anchor(e.id)}) | {tag(run)} | "
+            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}]({card(reg, e.id)}) | {tag(run)} | "
             f"{g['tier']} | "
             f"{cells} | {GATE_MARK[g['verdict']]} |"
         )
@@ -997,12 +1060,13 @@ def render_gate(reg: Registry) -> str:
     return "\n".join(rows)
 
 
-def _refs(reg: Registry, refs: list[str]) -> str:
+def _refs(reg: Registry, refs: list[str], base: str = "") -> str:
+    """Experiments or runs, each linked to its experiment's card from a file in folder `base`."""
     runs = reg.run_ids()
     out = []
     for ref in refs:
         eid = runs[ref][0].id if ref in runs else ref
-        out.append(f"[{ref}](#{anchor(eid)})")
+        out.append(f"[{ref}]({card(reg, eid, base)})")
     return ", ".join(out) if out else "—"
 
 
@@ -1048,9 +1112,15 @@ def _checkpoint_text(run: dict[str, Any]) -> str:
     )
     text = f"`{where}`"
     if ck.get("weights_sha256"):
-        text += f"<br>sha256 `{ck['weights_sha256']}`"
+        whose = f" ({ck['file']})" if ck.get("file") and ck.get("members") else ""
+        if ck.get("members") and not ck.get("file"):
+            whose = f" (over {len(ck['members'])} files)"
+        text += f"<br>sha256{whose} `{ck['weights_sha256']}`"
     else:
         text += "<br>sha256 not recorded"
+    if ck.get("members"):
+        files = ", ".join(f"{m.split('  ', 1)[1]} `{m[:12]}`" for m in ck["members"])
+        text += f"<br>files: {files}"
     if ck.get("shipped_as"):
         text += f"<br>shipped as {ck['shipped_as']}"
     if ck.get("known_wrong"):
@@ -1058,19 +1128,21 @@ def _checkpoint_text(run: dict[str, Any]) -> str:
     return _cell(text)
 
 
-def _code_text(d: dict[str, Any], run: dict[str, Any]) -> str:
+def _code_text(d: dict[str, Any], run: dict[str, Any], base: str = "") -> str:
     code = run.get("code") or {}
     bits = []
     if code.get("entry"):
         entry = code["entry"]
         # A script links to its folder, not its file: as-run scripts keep the working names the work was
-        # done under, which the README does not repeat (tests/test_drivejepa_retrain.py). The record has it.
+        # done under, which the rendered pages do not repeat (tests/test_drivejepa_retrain.py).
         folder = Path(entry).parent.as_posix()
         bits.append(
-            f"`{entry}`" if _is_module(entry) else f"[scripts in {Path(folder).name}/]({link(d, folder)}/)"
+            f"`{entry}`"
+            if _is_module(entry)
+            else f"[scripts in {Path(folder).name}/]({link(d, folder + '/', base)})"
         )
     if code.get("recipe"):
-        bits.append(f"[{code['recipe'].split('/')[-1]}]({link(d, code['recipe'].split('#')[0])})")
+        bits.append(f"[{code['recipe'].split('/')[-1]}]({link(d, code['recipe'].split('#')[0], base)})")
     if run.get("train_git_sha"):
         bits.append(f"commit `{run['train_git_sha']}`")
     up = code.get("upstream")
@@ -1079,114 +1151,139 @@ def _code_text(d: dict[str, Any], run: dict[str, Any]) -> str:
     return "<br>".join(bits) or "—"
 
 
-def render_details(reg: Registry) -> str:
-    out = []
-    for e in reg.experiments:
-        d = e.data
-        out.append(f'<a id="{anchor(e.id)}"></a>')
-        out.append("<details>")
-        out.append(
-            f"<summary><b>{e.id} · {d['title']}</b> — {owners(reg, d)} · {benches(d)} · {mark(d)}</summary>"
+#: Where a card's "back" link lands in the README, by track.
+_BACK = {
+    "gap-closing": "gap-closing-experiments",
+    "hypothesis": "hypothesis-experiments",
+    "enabler": "enablers",
+}
+
+
+def render_card(reg: Registry, e: Experiment) -> str:
+    """One experiment's card: everything its record holds, on one page in its own folder.
+
+    The README keeps one row per experiment and links its ID here, so the README stays the same size as
+    experiments are added. Rendered whole; the file is never edited by hand.
+    """
+    d = e.data
+    base = e.folder.relative_to(reg.root).as_posix()
+    out = [
+        "<!-- Rendered from experiment.toml by `gallops experiments render --write`.",
+        "     Edit that file, not this one: make check fails when the two differ. -->",
+        "",
+        f"# {e.id} · {d['title']}",
+        "",
+        f"**{owners(reg, d)}** · {benches(d)} · {mark(d)} · {_span(d)} · {d['track']}",
+        "",
+    ]
+    nav = [f"[← all experiments]({rel('README.md', base)}#{_BACK[d['track']]})"]
+    if d.get("narrative"):
+        nav.append(f"[the account]({link(d, base=base)})" + (" (on branch ⎇)" if d.get("branch") else ""))
+    nav.append(f"[experiment.toml]({rel(base + '/experiment.toml', base)})")
+    out += [" · ".join(nav), ""]
+    if d.get("branch"):
+        out += [
+            f"> The record is on branch `{d['branch']}`, not merged yet; its links go to that branch.",
+            "",
+        ]
+    meta = []
+    if d.get("priority"):
+        meta.append(f"**Priority:** {d['priority']}")
+    if d.get("parents"):
+        meta.append(f"**Builds on:** {_refs(reg, d['parents'], base)}")
+    led = [
+        x["id"]
+        for x in reg.decisions
+        if e.id in x.get("evidence", []) or any(r.startswith(e.id + ".") for r in x.get("evidence", []))
+    ]
+    if led:
+        meta.append(
+            "**Evidence for:** "
+            + ", ".join(led)
+            + f" ([decision log]({rel('README.md', base)}#decision-log))"
         )
+    if meta:
+        out += [" · ".join(meta), ""]
+    out += ["## Question", "", d["question"], ""]
+    if d.get("hypothesis"):
+        out += ["## Hypothesis", "", d["hypothesis"], ""]
+    if d.get("predictions"):
+        pred = d["predictions"]
+        if pred.startswith("none:"):
+            text = f"⚠️ Not pre-registered: {pred[5:].strip()}"
+        else:
+            text = f"[{Path(pred).name}]({link(d, pred, base)}), written before the run."
+        out += ["## Predictions", "", text, ""]
+    if d.get("learned"):
+        out += ["## What we learned", "", d["learned"], ""]
+    if e.runs:
+        out += [
+            "## Runs",
+            "",
+            "| Run | Started from | Trained | Data | Code | Checkpoint |",
+            "|---|---|---|---|---|---|",
+        ]
+        for run in e.runs:
+            out.append(
+                f"| **{run['id']}**<br>{_cell(run['label'])} | {_cell(run.get('start_from', '—'))} | "
+                f"{_trained_text(run)} | {_data_text(run)} | {_code_text(d, run, base)} | "
+                f"{_checkpoint_text(run)} |"
+            )
         out.append("")
-        meta = [f"**When:** {_span(d)}", f"**Track:** {d['track']}"]
-        if d.get("priority"):
-            meta.append(f"**Priority:** {d['priority']}")
-        if d.get("parents"):
-            meta.append(f"**Builds on:** {_refs(reg, d['parents'])}")
-        out.append(" · ".join(meta))
-        out.append("")
-        out.append(f"**Question.** {d['question']}")
-        out.append("")
-        if d.get("hypothesis"):
-            out.append(f"**Hypothesis.** {d['hypothesis']}")
-            out.append("")
-        if d.get("predictions"):
-            pred = d["predictions"]
-            if pred.startswith("none:"):
-                out.append(f"**Predictions.** ⚠️ not pre-registered — {pred[5:].strip()}")
-            else:
-                out.append(f"**Predictions.** [{Path(pred).name}]({link(d, pred)}), written before the run.")
-            out.append("")
-        if d.get("learned"):
-            out.append(f"**What we learned.** {d['learned']}")
-            out.append("")
-        if e.runs:
-            out.append("| Run | Started from | Trained | Data | Code | Checkpoint |")
-            out.append("|---|---|---|---|---|---|")
-            for run in e.runs:
-                out.append(
-                    f"| **{run['id']}**<br>{_cell(run['label'])} | {_cell(run.get('start_from', '—'))} | "
-                    f"{_trained_text(run)} | {_data_text(run)} | {_code_text(d, run)} | "
-                    f"{_checkpoint_text(run)} |"
-                )
-            out.append("")
-            notes = [f"- **{run['id']}:** {run['notes']}" for run in e.runs if run.get("notes")]
-            if notes:
-                out.extend([*notes, ""])
-        results = list(e.results())
-        if results:
-            out.append("| Run | Result | Baseline | Strength | Source |")
-            out.append("|---|---|---|---|---|")
-            for run, res in results:
-                star = " ★" if res.get("headline") else ""
-                extra = []
-                if res.get("subset"):
-                    extra.append(res["subset"])
-                if "se" in res:
-                    extra.append(f"SE {_num(res['se'])}")
-                if "t" in res:
-                    extra.append(f"t {_num(res['t'])}")
-                if res.get("note"):
-                    extra.append(res["note"])
-                text = result_text(res, bold=bool(star)) + (f"<br>{'; '.join(extra)}" if extra else "")
-                out.append(
-                    f"| {run['id']}{star} | {_cell(text)} | {_cell(res.get('baseline', '—'))} | "
-                    f"{strength(res)} | {_cell(res.get('source', '—'))} |"
-                )
-            out.append("")
-        gates = [(run, g) for run in e.runs for g in run.get("gate", [])]
-        for run, g in gates:
-            head = f"**Regression gate, {run['id']}** — {_date(g['date'])} {g['date'].year}, {g['tier']} tier"
-            head += f", against {g['baseline']}" if g.get("baseline") else ""
-            out.append(f"{head}: {GATE_MARK[g['verdict']]}")
-            out.append("")
-            if g.get("pairs"):
-                out.append("| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |")
-                out.append("|---|---|---|---|---|---|---|---|")
-                for p in g["pairs"]:
-                    out.append(
-                        f"| {BENCHMARKS[p['bench']]} | {p.get('metric', '')} | "
-                        f"{_num(p.get('baseline', ''))} | {_num(p.get('candidate', ''))} | "
-                        f"{_num(p.get('t', ''))} | {_num(p.get('mde', ''))} | {_num(p.get('units', ''))} | "
-                        f"{PAIR_MARK[p['verdict']]} {p['verdict']} |"
-                    )
-                out.append("")
-            if g.get("note"):
-                out.append(f"{g['note']}")
-                out.append("")
-        if d.get("checks"):
-            out.append("**Checks that decided something**")
-            out.append("")
-            for c in d["checks"]:
-                when = f" ({_date(c['date'])})" if c.get("date") else ""
-                decided = f" → {c['decided']}" if c.get("decided") else ""
-                out.append(f"- **{c['name']}**{when}: {c['result']}{decided}")
-            out.append("")
-        notes = [f"- {x}" for x in d.get("external", [])]
+        notes = [f"- **{run['id']}:** {run['notes']}" for run in e.runs if run.get("notes")]
         if notes:
-            out.append("**Evidence outside this repo**")
-            out.append("")
-            out.extend(notes)
-            out.append("")
-        where = [record(d)]
-        if d.get("branch"):
-            where.append(f"branch `{d['branch']}`, not merged yet")
-        out.append(f"**Record:** {' · '.join(where)}")
+            out.extend([*notes, ""])
+    results = list(e.results())
+    if results:
+        out += ["## Results", "", "★ marks the headline.", ""]
+        out += ["| Run | Result | Baseline | Strength | Source |", "|---|---|---|---|---|"]
+        for run, res in results:
+            star = " ★" if res.get("headline") else ""
+            extra = []
+            if res.get("subset"):
+                extra.append(res["subset"])
+            if "se" in res:
+                extra.append(f"SE {_num(res['se'])}")
+            if "t" in res:
+                extra.append(f"t {_num(res['t'])}")
+            if res.get("note"):
+                extra.append(res["note"])
+            text = result_text(res, bold=bool(star)) + (f"<br>{'; '.join(extra)}" if extra else "")
+            out.append(
+                f"| {run['id']}{star} | {_cell(text)} | {_cell(res.get('baseline', '—'))} | "
+                f"{strength(res)} | {_cell(res.get('source', '—'))} |"
+            )
         out.append("")
-        out.append("</details>")
+    gates = [(run, g) for run in e.runs for g in run.get("gate", [])]
+    if gates:
+        out += ["## Regression gate", ""]
+    for run, g in gates:
+        head = f"**{run['id']}** — {_date(g['date'])} {g['date'].year}, {g['tier']} tier"
+        head += f", against {g['baseline']}" if g.get("baseline") else ""
+        out += [f"{head}: {GATE_MARK[g['verdict']]}", ""]
+        if g.get("pairs"):
+            out.append("| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |")
+            out.append("|---|---|---|---|---|---|---|---|")
+            for pr in g["pairs"]:
+                out.append(
+                    f"| {BENCHMARKS[pr['bench']]} | {pr.get('metric', '')} | "
+                    f"{_num(pr.get('baseline', ''))} | {_num(pr.get('candidate', ''))} | "
+                    f"{_num(pr.get('t', ''))} | {_num(pr.get('mde', ''))} | {_num(pr.get('units', ''))} | "
+                    f"{PAIR_MARK[pr['verdict']]} {pr['verdict']} |"
+                )
+            out.append("")
+        if g.get("note"):
+            out += [g["note"], ""]
+    if d.get("checks"):
+        out += ["## Checks that decided something", ""]
+        for c in d["checks"]:
+            when = f" ({_date(c['date'])})" if c.get("date") else ""
+            decided = f" → {c['decided']}" if c.get("decided") else ""
+            out.append(f"- **{c['name']}**{when}: {c['result']}{decided}")
         out.append("")
-    return "\n".join(out).rstrip()
+    if d.get("external"):
+        out += ["## Evidence outside this repo", "", *[f"- {x}" for x in d["external"]], ""]
+    return "\n".join(out).rstrip() + "\n"
 
 
 def render_index(reg: Registry) -> str:
@@ -1195,7 +1292,8 @@ def render_index(reg: Registry) -> str:
         d = e.data
         folder = e.folder.relative_to(reg.root / "experiments").as_posix()
         rows.append(
-            f"| {e.id} | {_cell(d['title'])} | {d['track']} | {owners(reg, d)} | {_span(d)} | {mark(d)} | "
+            f"| [{e.id}]({card(reg, e.id, 'experiments')}) | {_cell(d['title'])} | {d['track']} | "
+            f"{owners(reg, d)} | {_span(d)} | {mark(d)} | "
             f"[{folder}/]({folder}/) |"
         )
     return "\n".join(rows)
@@ -1218,7 +1316,6 @@ README_BLOCKS = {
     "enablers": render_enablers,
     "gate": render_gate,
     "decisions": render_decisions,
-    "details": render_details,
 }
 INDEX_BLOCKS = {"index": render_index, "code-map": render_code_map}
 
@@ -1245,24 +1342,31 @@ def apply(text: str, rendered: dict[str, str]) -> str:
     return text
 
 
-def stale(reg: Registry) -> list[str]:
-    """The target files whose rendered blocks differ from what the registry renders now."""
-    out = []
+def rendered(reg: Registry) -> dict[str, str]:
+    """Every file the registry renders, repo-root path -> the text it should hold.
+
+    The README and the index have marked blocks inside hand-written prose; each card is rendered whole.
+    """
+    out = {}
     for target, blocks in TARGETS.items():
-        path = reg.root / target
-        text = path.read_text()
-        if apply(text, render(reg, blocks)) != text:
-            out.append(target)
+        out[target] = apply((reg.root / target).read_text(), render(reg, blocks))
+    for e in reg.experiments:
+        out[card_path(reg, e)] = render_card(reg, e)
     return out
 
 
+def stale(reg: Registry) -> list[str]:
+    """The rendered files that are missing or differ from what the registry renders now."""
+    return [
+        target
+        for target, text in rendered(reg).items()
+        if not (reg.root / target).is_file() or (reg.root / target).read_text() != text
+    ]
+
+
 def write(reg: Registry) -> list[str]:
-    changed = []
-    for target, blocks in TARGETS.items():
-        path = reg.root / target
-        text = path.read_text()
-        new = apply(text, render(reg, blocks))
-        if new != text:
-            path.write_text(new)
-            changed.append(target)
+    changed = stale(reg)
+    for target, text in rendered(reg).items():
+        if target in changed:
+            (reg.root / target).write_text(text)
     return changed

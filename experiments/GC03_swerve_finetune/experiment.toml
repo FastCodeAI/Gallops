@@ -77,8 +77,12 @@ out scene 0058, replaced by 0053 from v1 on: 0058 has 54 swerve ticks of 1,673, 
   train_run = "swerve-stageA-round0-seen"
   step = 928
   step_unit = "optimizer_step"
-  weights_sha256 = "1ab1c66126ab4cfb7bee344129ed9384fe4b2ae9730f59e081d381a52788196f"
-  file = "model.pt"
+  weights_sha256 = "46d27e70cf47d65f1bf1c8e14a76acfaef2c5ca36136dfdaad8c9e9fbf56f23c"
+  file = "agent.ckpt"
+  members = [
+    "46d27e70cf47d65f1bf1c8e14a76acfaef2c5ca36136dfdaad8c9e9fbf56f23c  agent.ckpt",
+    "1ab1c66126ab4cfb7bee344129ed9384fe4b2ae9730f59e081d381a52788196f  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-stageA-round0-seen/step_000000928/"
   sidecar = true
 
@@ -131,8 +135,12 @@ The doc's table once gave its 0103 mean as 2.56; corrected to 2.50."""
   train_run = "swerve-joint-round0"
   step = 917
   step_unit = "optimizer_step"
-  weights_sha256 = "b1c4bf00256fb59be5d73ab97a53674ea831b37e53ad2bd1720696f790371b27"
-  file = "model.pt"
+  weights_sha256 = "965222b8e50cd93c0379b04ac7622a200cbf9d51933745314245acd7efa2031f"
+  file = "agent.ckpt"
+  members = [
+    "965222b8e50cd93c0379b04ac7622a200cbf9d51933745314245acd7efa2031f  agent.ckpt",
+    "b1c4bf00256fb59be5d73ab97a53674ea831b37e53ad2bd1720696f790371b27  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0/step_000000917/"
   sidecar = true
   known_wrong = "notes.stage says 'A -- refiner only, scorer and encoder frozen', a stale note: v1 trained its scorer (its scorer weights differ from Stage A's frozen ones by up to 0.032)"
@@ -186,8 +194,12 @@ carry defect 6. 0103 smoke: 20261002T010108-5f6f80."""
   train_run = "swerve-joint-round0-v2"
   step = 922
   step_unit = "optimizer_step"
-  weights_sha256 = "593279d1467c9faffeb8d3675669dbe24c03ed5cd2fcbcbf1b1a9c403dae23d6"
-  file = "model.pt"
+  weights_sha256 = "2ba030cd8c5af7513b66d70d8b76bcd70fbc2f32db553a340951f2d731f464f5"
+  file = "agent.ckpt"
+  members = [
+    "2ba030cd8c5af7513b66d70d8b76bcd70fbc2f32db553a340951f2d731f464f5  agent.ckpt",
+    "593279d1467c9faffeb8d3675669dbe24c03ed5cd2fcbcbf1b1a9c403dae23d6  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0-v2/step_000000922/"
   sidecar = true
   known_wrong = "notes.stage says 'A -- refiner only, scorer and encoder frozen', but v2 trained its scorer (the doc: all four scorers, v1 to v4, carry defect 6)"
@@ -291,8 +303,12 @@ episodes were collected under v4 and stopped, because v4 does not swerve. 0103 s
   train_run = "swerve-joint-round0-v4"
   step = 922
   step_unit = "optimizer_step"
-  weights_sha256 = "a1a835259988f268a915228803536ec01f7f1c2dcb60eb912aa71cdcc8eabfbc"
-  file = "model.pt"
+  weights_sha256 = "24a47a94da6d299dc565ed53aeebebe607453a036af0e6e13d4cba8943d3cd04"
+  file = "agent.ckpt"
+  members = [
+    "24a47a94da6d299dc565ed53aeebebe607453a036af0e6e13d4cba8943d3cd04  agent.ckpt",
+    "a1a835259988f268a915228803536ec01f7f1c2dcb60eb912aa71cdcc8eabfbc  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0-v4/step_000000922/"
   sidecar = true
   known_wrong = "notes.stage says 'A -- refiner only' for a joint run; it records no label set (labelled_round0_v2); selection_split says scene 0053, but 0103 is what chose among v1 to v4"
@@ -351,8 +367,12 @@ it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911
   train_run = "swerve-joint-round0-v4fix"
   step = 922
   step_unit = "optimizer_step"
-  weights_sha256 = "370f97e0a34e34e747fb27ffc2b00778cab077b218d272381b13c51dc2c49920"
-  file = "model.pt"
+  weights_sha256 = "410200004a7930e3545c1642be08b61a72061048af5cdbbbb61aa2960024801c"
+  file = "agent.ckpt"
+  members = [
+    "410200004a7930e3545c1642be08b61a72061048af5cdbbbb61aa2960024801c  agent.ckpt",
+    "370f97e0a34e34e747fb27ffc2b00778cab077b218d272381b13c51dc2c49920  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0-v4fix/step_000000922/"
   sidecar = true
   known_wrong = "train_git_sha says 85e1f9c, but c18f488 trained it (its chain log; 85e1f9c was committed mid-run); notes.stage says 'A -- refiner only' for a joint run"
@@ -426,8 +446,12 @@ at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
   train_run = "swerve-joint-round0-l4fix"
   step = 922
   step_unit = "optimizer_step"
-  weights_sha256 = "361a600431a78aa072e0cdddcbeee43bdb4091ab03dee7d1150aa4f65b0b68cb"
-  file = "model.pt"
+  weights_sha256 = "1ddcdc2f0224d26e6530da07cfa5f90492a56340780ec5dde69850c0a06973da"
+  file = "agent.ckpt"
+  members = [
+    "1ddcdc2f0224d26e6530da07cfa5f90492a56340780ec5dde69850c0a06973da  agent.ckpt",
+    "361a600431a78aa072e0cdddcbeee43bdb4091ab03dee7d1150aa4f65b0b68cb  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0-l4fix/step_000000922/"
   sidecar = true
   known_wrong = "claims 1,423 brake ticks where about 1,154 trained: ticks with no recorded past were then skipped silently, after counting; validation losses before and after 38690b9 are over different held-out sets"
@@ -502,8 +526,12 @@ it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-994
   train_run = "swerve-joint-round0-l5"
   step = 698
   step_unit = "optimizer_step"
-  weights_sha256 = "7473767c3a655a70102cc362398cf34f4f21955fada93d4a485647061e1fb992"
-  file = "model.pt"
+  weights_sha256 = "8ab47505de46d483f870df8990a8d396b970c893c744c7a88b07e4f32e9dbcf3"
+  file = "agent.ckpt"
+  members = [
+    "8ab47505de46d483f870df8990a8d396b970c893c744c7a88b07e4f32e9dbcf3  agent.ckpt",
+    "7473767c3a655a70102cc362398cf34f4f21955fada93d4a485647061e1fb992  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-joint-round0-l5/step_000000698/"
   sidecar = true
   known_wrong = "train_git_sha says a9ef8ba, but cdfdb64 trained it: a9ef8ba was committed 80 minutes into the epoch, and the sidecar lacks the fields a9ef8ba writes"
@@ -596,8 +624,12 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   train_run = "swerve-scorer-r0gt-s1"
   step = 2626
   step_unit = "optimizer_step"
-  weights_sha256 = "e7cda16810230d2cddd339c9b2b2de72a0bcdc36a8eeb503800c21e61314f7fd"
-  file = "model.pt"
+  weights_sha256 = "78071f68af07804468be5bc095d55cfd933d0686fbcce312ab122507e92815b5"
+  file = "agent.ckpt"
+  members = [
+    "78071f68af07804468be5bc095d55cfd933d0686fbcce312ab122507e92815b5  agent.ckpt",
+    "e7cda16810230d2cddd339c9b2b2de72a0bcdc36a8eeb503800c21e61314f7fd  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-scorer-r0gt-s1/step_000002626/"
   sidecar = true
   known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt as well (read from the sidecar; the doc does not list this)"
@@ -710,8 +742,12 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   train_run = "swerve-scorer-r0gt-s2b"
   step = 2406
   step_unit = "optimizer_step"
-  weights_sha256 = "1897b595c6eeaf688bb7104711f6565d461c8d0d34897af2b1bd9183a38875a9"
-  file = "model.pt"
+  weights_sha256 = "28a1f89eed3a05395534c2577d4d77fe12fcc524c5d76e7798c6c1efc7501687"
+  file = "agent.ckpt"
+  members = [
+    "28a1f89eed3a05395534c2577d4d77fe12fcc524c5d76e7798c6c1efc7501687  agent.ckpt",
+    "1897b595c6eeaf688bb7104711f6565d461c8d0d34897af2b1bd9183a38875a9  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-scorer-r0gt-s2b/step_000002406/"
   sidecar = true
   known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt as well (read from the sidecar; the doc does not list this)"
@@ -817,8 +853,12 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   train_run = "swerve-scorer-r0gtr1-s3b"
   step = 1655
   step_unit = "optimizer_step"
-  weights_sha256 = "4420e7384b3f64405b0029d489da8833f8510b9ab895d3e2445678aa28e5571c"
-  file = "model.pt"
+  weights_sha256 = "0678b10898ef3074e6017b7d31f2f801e63ad1e1d3a2755699471853e8d73f79"
+  file = "agent.ckpt"
+  members = [
+    "0678b10898ef3074e6017b7d31f2f801e63ad1e1d3a2755699471853e8d73f79  agent.ckpt",
+    "4420e7384b3f64405b0029d489da8833f8510b9ab895d3e2445678aa28e5571c  model.pt",
+  ]
   location = "{weights}/drivejepa_swerve/swerve-scorer-r0gtr1-s3b/step_000001655/"
   sidecar = true
   known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt and labelled_round1_s2 as well (read from the sidecar; the doc does not list this)"
