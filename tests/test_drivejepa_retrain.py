@@ -226,8 +226,14 @@ def test_the_scorer_in_the_shipped_file_is_the_first_runs_untouched_by_the_secon
 # ---------------------------------------------------------------- hygiene
 
 
-def test_no_driver_source_and_nothing_binary_is_in_the_record() -> None:
-    """The driver lives in paddock; weights, arrays and frames live nowhere in git."""
+def test_driver_source_is_only_the_paddock_copy_and_nothing_binary_is_in_the_record() -> None:
+    """The driver is the one copy taken from paddock; weights, arrays and frames live nowhere in git.
+
+    Paddock holds only the released models' checkpoints, so the driver that serves
+    this retrained one left it and is copied, as it ran, under paddock/. Driver
+    source anywhere else in the record would be a second copy that drifts.
+    """
+    driver_copy = "paddock/tools/models/drivejepa/alpasim_driver/"
     driver_files = {"planner.py", "bridge.py", "divider.py", "momentum.py", "real_model.py", "batch_fix.py"}
     banned = {
         ".ckpt",
@@ -247,6 +253,9 @@ def test_no_driver_source_and_nothing_binary_is_in_the_record() -> None:
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         rel = path.relative_to(EXP).as_posix()
+        if rel.startswith(driver_copy):
+            assert path.suffix not in banned, f"binary or derived data in the record: {rel}"
+            continue
         if path.name == "batch_fix.py":
             # The training-side original the generator was trained under: a patch
             # to the upstream refiner, not driver code.
