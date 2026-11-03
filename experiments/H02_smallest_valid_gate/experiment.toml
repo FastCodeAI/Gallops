@@ -22,8 +22,9 @@ learned = """Smallest drop each subset detects (80% power): neuroNCAP closed tie
 and 2.85 for a big one, out of 5; its quick tier 2.5 / 6.7, a pipeline check only; NAVSIM about 0.0035; \
 KITScenes 0.51 m for a big change; Bench2Drive only 17–38 points; AlpaSim about 0.23, argued. Decided \
 21 Oct: the subset sizes stay, every verdict prints its MDE, and each benchmark's own score decides. The \
-first timed run (20 Oct, released against itself) took 2 h 40 min, the quick tier 19 min, and matched its \
-baselines to the last digit: HOLD."""
+first timed run (20 Oct, released against itself) took 2 h 40 min, the quick tier 19 min. Five subsets \
+on four benchmarks reproduced their baselines exactly; Bench2Drive moved +7.0 driving score (t 0.82, MDE \
+28.7: NEUTRAL), the run-to-run noise its gate has to absorb. HOLD."""
 narrative = "experiments/H02_smallest_valid_gate/README.md"
 external = [
   "The MDE table exists only on the team page (Renesas Progress and Plan, 22 Oct 2026); paddock records Bench2Drive's 17-38 points in tools/gate_smoke/bench2drive.toml and docs/gate.md.",
@@ -44,7 +45,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 6
   unit = "scenario pair"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   headline = true
   note = "out of 5; measured from past paired runs per the page, not in either repo"
@@ -57,7 +58,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 6
   unit = "scenario pair"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   note = "out of 5"
   source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
@@ -69,7 +70,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 3
   unit = "scenario pair"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   note = "out of 5; a pipeline check only"
   source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
@@ -81,7 +82,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 3
   unit = "scenario pair"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   note = "out of 5; a pipeline check only"
   source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
@@ -93,7 +94,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 136
   unit = "log"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   note = "'about 0.0035'"
   source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
@@ -105,7 +106,7 @@ notes = "Cost: CPU, existing results. A small change is a finetune of the same m
   better = "lower"
   n = 140
   unit = "scene"
-  strength = "argued"
+  strength = "moderate"
   flags = ["no-record"]
   source = "Renesas Progress and Plan, 22 Oct 2026 (Next steps item 2; Regression gate subset table)"
 
@@ -126,7 +127,7 @@ id = "H02.timing"
 label = "first timed gate run: released Drive-JEPA against itself, --tier all, three lanes for the quick tier"
 started = 2026-10-20
 ended = 2026-10-20
-notes = "18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke (one lane, before tiers) took 7.7 h. Each run.json records paddock 340b7fa, clean, and the adapter as it then was: image_geometry native (uncropped), momentum off -- before #106 and #95 changed both defaults."
+notes = "18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke (one lane, before tiers) took 7.7 h. Five of the six candidate runs' run.json record paddock 340b7fa, clean, and the adapter as it then was: image_geometry native (uncropped), momentum off -- before #106 and #95 changed both defaults; the NAVSIM run's carries no policy block. 340b7fa is a pre-squash commit of paddock #100 that is on no remote; its squash on paddock main is ee62a6b."
 
   [runs.checkpoint]
   model = "drivejepa"
@@ -141,7 +142,7 @@ notes = "18:49–21:30 PDT on a quiet evening (box CPU 14%, NAS 65 MB/s, GPU sha
   tier = "all"
   verdict = "HOLD"
   baseline = "the released model's own earlier runs (15–16 Oct smokes; 12 Oct full nuScenes and neuroNCAP runs)"
-  paddock_commit = "340b7fa"
+  paddock_commit = "340b7fa"  # as the runs record it; on no remote. #100 squashed to ee62a6b on paddock main
   manifest = "{runs}/gate/smoke/drivejepa-released-timing-20261021/manifest.toml"
   note = "Total 2 h 40 min: quick tier 19 min, closed tier 2 h 21 min. HOLD overall, as expected for the model against itself. The page and paddock docs/gate.md record the open-loop and neuroNCAP pairs as identical to the last digit; NEUTRAL is the gate's word for a zero difference (tools/gate.py), not a word copied from the run. The first neuroNCAP row is the quick tier (0103 × 3 shapes, 1 seed), the second the closed tier (6 pairs × 3 seeds). AlpaSim was not run: Drive-JEPA had no AlpaSim baseline yet, and its model.yaml did not declare AlpaSim."
 

@@ -109,7 +109,7 @@ the 32 was clear. Every signal is dominated by plan length (the probe's risk cor
 
   [[runs.results]]
   bench = "neuroncap"
-  metric = "rescue ticks on which the collision head's safest pick is clear"
+  metric = "rescue ticks on which the collision head, as the picker, picks a clear candidate"
   subset = "7 pairs × 3 seeds, offline over candidate dumps"
   n = 322
   unit = "tick"
@@ -117,7 +117,7 @@ the 32 was clear. Every signal is dominated by plan length (the probe's risk cor
   better = "higher"
   strength = "moderate"
   flags = ["blind", "open-loop"]
-  note = "also 0 of 322 for the linear probe on proposal_feature and for the KITScenes re-ranker. The head does rank hitting candidates as riskier: 85–94% (stationary), 77–91% (frontal), blind on side"
+  note = "also 0 of 322 for the linear probe on proposal_feature and for the KITScenes re-ranker. The head does rank hitting candidates as riskier: 85–94% (stationary), 77–91% (frontal), blind on side. In the source's prose, the head's own safest candidate is clear on 0-4% of the rescue ticks; the 0 of 322 is its table's 'picks a safe one when it matters' column"
   source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (d737456, 66dddac)"
 
   [[runs.results]]
@@ -149,7 +149,7 @@ ticks). The injected swerves enter before Bev_refiner, so the scorer reads real 
   unit = "tick"
   value = 0
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "on the 248 of 314 hitting ticks where a swerve was clear, the best clear swerve scored 0.151 against 0.808 for the plan that hits. The swerves are far outside the scorer's training, so a low score may be unfamiliarity"
   source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (66dddac)"

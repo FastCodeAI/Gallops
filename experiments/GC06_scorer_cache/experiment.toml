@@ -144,7 +144,7 @@ results/v2/. The real-nuScenes conversion itself is unaffected by the camera bug
   strength = "unverified"
   flags = ["blind", "open-loop"]
   note = "and keeps only 68% of them safe; from code not on main (train/sighted-scorer)"
-  source = "experiments/GC06_scorer_cache/README.md; dj_cache/v2/probe_attngeo_realmask*"
+  source = "experiments/GC06_scorer_cache/README.md"
 
 [[runs]]
 id = "GC06.relative-0103"
@@ -189,7 +189,7 @@ seed_2 81a1813270a3…, seed_3 df4903d8cdce…, seed_4 7debbf4db701…. The abso
   baseline = "released (blind): 2.07 / 2.26 / 2.08"
   value = "4.044839"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "2.13 / 5.0 / 5.0. Not an avoidance: every switch happens in the first 3 s, identically in the frontal, stationary and side runs, and drifts the ego about 2 m left; the oncoming car misses an ego already displaced"
   source = "experiments/GC06_scorer_cache/README.md; paddock branch record/drivejepa-camera-blind, results/neuroncap/drivejepa_subscore/20261012T131011-c43ac5/metrics.json"
@@ -198,7 +198,7 @@ seed_2 81a1813270a3…, seed_3 df4903d8cdce…, seed_4 7debbf4db701…. The abso
 name = "The released scorer on cached features (v1)"
 result = "reproduces its own picks on 99.62% of ticks, max logit drift 0.0017"
 decided = "cached features stand in for the live forward pass"
-source = "experiments/GC06_scorer_cache/README.md; folds.log"
+source = "experiments/GC06_scorer_cache/README.md; folds2.log, line 25"
 
 [[checks]]
 name = "Does the scorer's answer change when only the hazard car changes?"

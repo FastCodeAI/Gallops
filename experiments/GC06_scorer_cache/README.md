@@ -53,7 +53,7 @@ python -m gallops.train.scorer_folds  --cache <cache dir> --labelled <name> <lab
 
 The cache holds 450 rendered episodes, 21,934 ticks × 64 plans (32 native, 32
 vocabulary). On cache v1, the released scorer on the cached features reproduces
-its own picks on 99.62% of ticks (max logit drift 0.0017; `folds.log`).
+its own picks on 99.62% of ticks (max logit drift 0.0017; `folds2.log`, line 25).
 
 ## What it measured
 

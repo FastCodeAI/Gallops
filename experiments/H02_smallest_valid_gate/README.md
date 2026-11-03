@@ -51,9 +51,10 @@ AlpaSim was not run: Drive-JEPA had no AlpaSim baseline yet (page). The evening 
 NAS 65 MB/s, GPU shared with one other job); the 16 Oct first smoke, one lane and before the tiers,
 took 7.7 h, and one run cannot separate the evening from the code (paddock `docs/gate.md`).
 
-Read from the run's own files, not from a document: each candidate `run.json` records paddock commit
-`340b7fa` (clean) and the Drive-JEPA adapter as it then was, `image_geometry: native` (uncropped) and
-`momentum: off`. The manifest pairs KITScenes, NAVSIM and Bench2Drive with the 15–16 Oct smoke runs and
+Read from the run's own files, not from a document: five of the six candidate `run.json` files record
+paddock commit `340b7fa` (clean; a pre-squash commit of paddock #100 on no remote, squashed to `ee62a6b`
+on paddock `main`) and the Drive-JEPA adapter as it then was, `image_geometry: native` (uncropped) and
+`momentum: off`. The NAVSIM run's carries no policy block. The manifest pairs KITScenes, NAVSIM and Bench2Drive with the 15–16 Oct smoke runs and
 nuScenes and neuroNCAP with the 12 Oct full runs. The weights it evaluated are the model's default
 checkpoint, `drive_jepa_perception_based_agent_vitl_v2.ckpt`; its sha256 was re-hashed on 3 Nov and
 matches `740335c800e2…`. The identical pairs are recorded NEUTRAL because that is what the gate's code

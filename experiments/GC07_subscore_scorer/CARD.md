@@ -33,8 +33,8 @@ On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC07.sighted-v1 ★ | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs)<br>scene 0103, 3 runs, relative rule; 0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car | released Drive-JEPA, seeing | ●○○○ argued · smoke, adapted, no-record | docs/brake-swerve-expert.md §1 (branch); paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5 |
-| GC07.sighted-v1 | neuroNCAP ncap_score, mean of 3 shapes 3.01 → 4.44 (n=9 runs)<br>scene 0103, 3 runs per shape, relative rule; frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's | released Drive-JEPA, seeing | ●○○○ argued · smoke, adapted, no-record | paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline docs/brake-swerve-expert.md §5 (branch) |
+| GC07.sighted-v1 ★ | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs)<br>scene 0103, 3 runs, relative rule; 0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | docs/brake-swerve-expert.md §1 (branch); paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5 |
+| GC07.sighted-v1 | neuroNCAP ncap_score, mean of 3 shapes 3.01 → 4.44 (n=9 runs)<br>scene 0103, 3 runs per shape, relative rule; frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline docs/brake-swerve-expert.md §5 (branch) |
 
 ## Checks that decided something
 
