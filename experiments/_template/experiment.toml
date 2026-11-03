@@ -1,0 +1,82 @@
+# {{ID}} -- <one line: what this tests>. Owner {{OWNER}}.
+# Sources: <where every number below is copied from -- a file in this folder, a paddock run, a POINTERS row>.
+# The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
+
+schema = 1
+id = "{{ID}}"
+title = "<the full title>"
+short = "<at most 40 characters, for table cells>"
+track = "{{TRACK}}"
+owner = "{{OWNER}}"
+benchmarks = []  # kitscenes, nuscenes, neuroncap, navsim, bench2drive, alpasim, hugsim, offline
+started = {{DATE}}
+status = "planned"
+verdict = "none"
+question = """<the question this experiment answers, and why it matters now>"""
+hypothesis = """<the claim; the effect you expect and its size; the result that would refute it>"""
+predictions = "experiments/{{FOLDER}}/PREDICTIONS.md"
+narrative = "experiments/{{FOLDER}}/README.md"
+parents = []  # experiments this builds on, by id
+
+# When the first run starts, uncomment and fill a [[runs]] block. One block per training or
+# evaluation run; ids are {{ID}}.r1, {{ID}}.r2, ...
+#
+# [[runs]]
+# id = "{{ID}}.r1"
+# label = "<what this run is>"
+# started = {{DATE}}
+# start_from = "<a run id, a checkpoint tag, or 'released'>"
+# trained = ["<which parts>"]
+# frozen = ["<which parts>"]
+# train_git_sha = "<the commit that trained it>"
+#
+#   [runs.code]
+#   modules = ["gallops.<the maintained code it ran>"]
+#   recipe = "recipes/<name>.toml#<stage>"
+#   as_run = ["experiments/{{FOLDER}}/scripts/"]
+#
+#   [[runs.data]]
+#   dataset = "<name>"
+#   split = "<split>"
+#   role = "train"  # train | selection | held-out | eval
+#   n = 0
+#   unit = "samples"
+#   scene_list = "<the list you read, not the tier you read it from>"
+#
+#   [runs.checkpoint]  # `gallops experiments checkpoint <step dir>` prints this block
+#   model = "<paddock adapter name>"
+#   train_run = "{{ID_LOWER}}-r1-<slug>"
+#   step = 0
+#   step_unit = "epoch"  # epoch | pass | optimizer_step
+#   weights_sha256 = "<64 hex digits>"
+#   location = "{weights}/<model>/<train_run>/step_<n, 9 digits>/"
+#   sidecar = true
+#
+#   [[runs.results]]
+#   bench = "navsim"
+#   metric = "EPDMS"
+#   baseline = "<what it is compared with>"
+#   baseline_value = 0.0
+#   value = 0.0
+#   n = 0
+#   unit = "scenario"
+#   better = "higher"
+#   strength = "moderate"  # proof | strong | moderate | argued | unverified
+#   flags = []             # adapted, blind, smoke, selected-on-report, open-loop, no-record
+#   headline = true        # exactly one per experiment
+#   source = "<the file or paddock run id the number is copied from>"
+#
+#   [[runs.gate]]  # paddock's regression gate: copy `python -m tools.gate check` verbatim
+#   date = {{DATE}}
+#   tier = "quick"  # quick | closed | all
+#   verdict = "HOLD"  # SHIP | HOLD | FAIL | INCOMPLETE
+#   manifest = "{runs}/gate/smoke/<label>/manifest.toml"
+#     [[runs.gate.pairs]]
+#     bench = "navsim"
+#     metric = "EPDMS"
+#     baseline = 0.0
+#     candidate = 0.0
+#     t = 0.0
+#     mde = 0.0
+#     units = 0
+#     verdict = "NEUTRAL"  # GAIN | NEUTRAL | REGRESSION | NO RECORDS | TOO FEW UNITS | NOT RUN

@@ -4,7 +4,7 @@ Guidance for Claude Code working in this repository.
 
 ## What this repo is
 
-Gallops trains driving policies. [Paddock](../paddock) scores them. **Neither
+Gallops trains driving policies. [Paddock](https://github.com/FastCodeAI/Paddock) scores them. **Neither
 imports the other**, and the whole interface between them is a JSON file beside
 a checkpoint — see [docs/checkpoints.md](docs/checkpoints.md).
 
@@ -38,6 +38,10 @@ gallops train-rerank <dataset.npz> --train-run <name>   # re-ranker over a froze
 python -m gallops.data.rerank keyframes -o <rows.pkl>    # its train keyframes, for paddock to dump candidates for
 python -m gallops.data.rerank dataset <dump.jsonl> --split train -o <dataset.npz>
 gallops recipe <name>       # the commands of recipes/<name>.toml on this machine; --run runs them
+gallops experiments check   # every experiment record valid, README rendered from them (make check runs it too)
+gallops experiments render --write   # re-render the README's tables and every CARD.md from experiment.toml
+gallops experiments new <ID> <slug> --owner <name>   # register an experiment before it runs
+gallops experiments checkpoint <ckpt-dir>   # the [runs.checkpoint] block, pinned by weights sha256
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.
@@ -141,6 +145,31 @@ starting weights drove (`DROVE` = `start`), and a run with none is refused.
 **Any new code that grades, labels or builds inputs gets a check here**, in the
 form "what the trainer computes equals what was recorded". Testing the parts
 separately is not enough: in defect 6 every part was right on its own.
+
+## Recording an experiment
+
+**Every experiment has a folder `experiments/<ID>_<slug>/` and an
+`experiment.toml`, and the README's tables and each folder's `CARD.md` are
+rendered from those files** — never typed. `GCnn` is phase 1 (gap closing, closed); `Hnn` is phase 2
+(hypotheses and enablers, H01–H11 being the team's list of 21 Oct). IDs are
+never reused or renumbered. The rules, and the reasons, are in
+[docs/experiments.md](docs/experiments.md); `src/gallops/experiments.py`
+enforces them and `tests/test_experiments.py` fails when the README differs from
+what the registry renders.
+
+- **Register before running**, and commit `PREDICTIONS.md` before the first
+  training step. A prediction written after the result is not one.
+- **Pin every checkpoint by its weights' sha256** (`gallops experiments
+  checkpoint <dir>`); a gated checkpoint without one fails `make check`.
+- **Copy numbers; never re-derive them**, and give each a strength from
+  paddock's ladder and its flags (`adapted`, `blind`, `smoke`,
+  `selected-on-report`, `open-loop`, `no-record`).
+- **Link the code:** each run's `[runs.code]` names the modules, recipe stage or
+  as-run scripts that produced it, and every module under `src/gallops` must be
+  claimed by some run. Maintained code stays in `src/`, named by function; one-off
+  scripts go in the experiment's `scripts/`.
+- **Record decisions** in `experiments/decisions.toml`, in date order, with
+  their evidence; a `gallops-v0.N` version is earned only by a gate SHIP.
 
 ## Before opening a PR
 

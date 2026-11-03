@@ -1,0 +1,238 @@
+# GC05 -- Drive-JEPA retrained on NVIDIA Physical AI AV (Siddesh, AlpaSim).
+# Every number below is copied from docs/drivejepa-retrain.md or the files it renders from
+# (experiments/drivejepa_retrain/), never re-derived; hashes from experiments/drivejepa_retrain/POINTERS.md.
+
+schema = 1
+id = "GC05"
+title = "Drive-JEPA retrained on NVIDIA Physical AI AV"
+short = "Physical AI AV retrain"
+track = "gap-closing"
+owner = "Siddesh"
+benchmarks = ["alpasim"]
+started = 2026-10-01
+ended = 2026-10-12
+status = "done"
+verdict = "positive"
+question = """Released Drive-JEPA scores 0.421 on AlpaSim's 30 scenes, below constant velocity (0.4876), and \
+its 8,192-path vocabulary tops out near 15 m/s. Does retraining it on in-domain NVIDIA Physical AI AV \
+driving, with a vocabulary that reaches highway speed, close that gap?"""
+learned = """In-domain data closes most of the AlpaSim gap: 0.5433 → 0.7697 on 30 scenes, one drive each \
+(moderate, adapted). The gain is the generator's; the retrained scorer failed its own pick-the-best check \
+(37.9% against a 50% bar), so the shipped checkpoint keeps the first run's scorer and retrains only the \
+generator. Two of its three at-fault collisions are new, and two scenes never move under any driver."""
+predictions = "experiments/drivejepa_retrain/12_second_training_run/PREDICTIONS_phase1.md"
+narrative = "docs/drivejepa-retrain.md"
+external = [
+  "AlpaSim runs: paddock PR #68, results/alpasim/*/legacy-*_30scenes (paddock's own record of what was driven).",
+  "Weights, training set and large tables: off-repo at the training site, each with bytes and sha256 in experiments/drivejepa_retrain/POINTERS.md.",
+]
+
+[[runs]]
+id = "GC05.run1"
+label = "first training run: generator and scorer together, 10 passes; pass 9 kept"
+started = 2026-10-07
+ended = 2026-10-07
+start_from = "released (740335c800e2)"
+trained = ["generator", "scorer"]
+frozen = ["encoder"]
+params_trained_m = 7.08
+notes = "Driven in AlpaSim as driver 0.1.6; never shipped."
+
+  [runs.code]
+  entry = "experiments/drivejepa_retrain/06_first_training_run/s4_train.py"
+  as_run = [
+    "experiments/drivejepa_retrain/01_find_clips/",
+    "experiments/drivejepa_retrain/02_build_samples/",
+    "experiments/drivejepa_retrain/03_grade_candidates/",
+    "experiments/drivejepa_retrain/04_training_set/",
+    "experiments/drivejepa_retrain/05_small_overfit_check/",
+    "experiments/drivejepa_retrain/06_first_training_run/",
+  ]
+  upstream = { repo = "Drive-JEPA", commit = "e21f474", patches = [
+    "experiments/drivejepa_retrain/05_small_overfit_check/train_patch/dataset.diff",
+    "experiments/drivejepa_retrain/05_small_overfit_check/train_patch/drive_jepa_agent.diff",
+  ] }
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "train"
+  role = "train"
+  n = 126981
+  unit = "samples"
+  scene_list = "experiments/drivejepa_retrain/04_training_set/clips.csv"
+  built_by = "experiments/drivejepa_retrain/04_training_set/s3_manifest.py"
+  manifest_sha256 = "ce834ee735fbd745e8b073f069803c7df1ebc64d86f48b6947a85f674ad7f1be"
+  note = "from 4,015 clips; AlpaSim's 913 public scenes (which hold the 30 test scenes) excluded"
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "val_full"
+  role = "selection"
+  n = 24657
+  unit = "examples"
+  manifest_sha256 = "06d4941900307fd5d7639e6b65dd824515a8d5792725afc39cbcb18c74a2bd0c"
+  note = "801 clips; chose which pass to keep"
+
+  [runs.checkpoint]
+  model = "drivejepa_physicalai"
+  train_run = "first-run"
+  step = 9
+  step_unit = "pass"
+  weights_sha256 = "8a71c3c0d84a9758de46c7b46eaf18556a62ac4837feea7271040e7a0caacdd2"
+  file = "drive_jepa_s4_pass09.ckpt"
+  location = "{weights}/drivejepa_physicalai/first-run/step_000000009/"
+  sidecar = false
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "30 scenes, one drive each"
+  n = 30
+  unit = "scene"
+  baseline = "released, driver 0.1.4b (momentum-aware selection)"
+  baseline_value = "0.5433"
+  value = "0.7032"
+  better = "higher"
+  strength = "argued"
+  flags = ["adapted"]
+  note = "at-fault collisions 4 → 2; highway and pull-outs not fixed (07_closed_loop_test/REPORT.md: MIXED)"
+  source = "experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "scorer picks the best of 32 (val)"
+  value = "37.9%"
+  baseline = "released scorer"
+  baseline_value = "34.2%"
+  better = "higher"
+  strength = "moderate"
+  note = "the run's own bar was ≥ 50%: failed, so the scorer was frozen for run 2"
+  source = "experiments/drivejepa_retrain/06_first_training_run/REPORT.md"
+
+[[runs]]
+id = "GC05.run2"
+label = "second training run: generator only, scorer frozen; 1 pilot pass + 2 passes (final_P0)"
+started = 2026-10-09
+ended = 2026-10-09
+start_from = "GC05.run1"
+trained = ["generator"]
+frozen = ["encoder", "scorer"]
+params_trained_m = 2.38
+train_git_sha = "3e8901a"
+notes = "Spacing weight lam = 0 (a tie-break, pilot_choice.json). Merged file = released encoder + run-1 scorer + run-2 generator, bit for bit (gen_ckpt.json)."
+
+  [runs.code]
+  entry = "experiments/drivejepa_retrain/12_second_training_run/s10_gen_train.py"
+  as_run = ["experiments/drivejepa_retrain/12_second_training_run/"]
+  upstream = { repo = "Drive-JEPA", commit = "e21f474", patches = [
+    "experiments/drivejepa_retrain/05_small_overfit_check/train_patch/dataset.diff",
+    "experiments/drivejepa_retrain/05_small_overfit_check/train_patch/drive_jepa_agent.diff",
+    "experiments/drivejepa_retrain/12_second_training_run/train_patch/drive_jepa_agent_s10.diff",
+  ] }
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "train"
+  role = "train"
+  unit = "samples"
+  scene_list = "experiments/drivejepa_retrain/04_training_set/clips.csv"
+  note = "run 1's training set minus 145 held-out training clips"
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "train (145 held-out clips)"
+  role = "selection"
+  n = 4400
+  unit = "examples"
+  scene_list = "experiments/drivejepa_retrain/12_second_training_run/seen_heldout_clips.csv"
+  note = "chose the arm and the pass by a rule written beforehand (PREDICTIONS_phase1.md)"
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "val"
+  role = "eval"
+  note = "the after-the-fact evaluation on clips neither run trained on (unseen_clip_evaluation.md)"
+
+  [runs.checkpoint]
+  model = "drivejepa_physicalai"
+  train_run = "second-run-generator"
+  step = 2
+  step_unit = "pass"
+  weights_sha256 = "29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916"
+  file = "drive_jepa_physicalai_generator.ckpt"
+  location = "{weights}/drivejepa_physicalai/second-run-generator/step_000000002/"
+  sidecar = true
+  known_wrong = "train_git_sha was set after the fact; `val` is missing from trained_on"
+  shipped_as = "AlpaSim driver 0.1.7"
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "30 scenes, one drive each"
+  n = 30
+  unit = "scene"
+  baseline = "released, driver 0.1.4b (momentum-aware selection)"
+  baseline_value = "0.5433"
+  value = "0.7697"
+  se = "0.069"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  headline = true
+  note = "+0.226 paired; at-fault 4 → 3, two of them new; constant velocity 0.4876 (different simulator setting)"
+  source = "experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json"
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "30 scenes, one drive each"
+  n = 30
+  unit = "scene"
+  baseline = "run 1, driver 0.1.6"
+  baseline_value = "0.7032"
+  value = "0.7697"
+  se = "0.068"
+  better = "higher"
+  strength = "unverified"
+  flags = ["adapted"]
+  note = "+0.066 paired: not a resolved difference"
+  source = "experiments/drivejepa_retrain/07_closed_loop_test/runs_017/tables/totals.json"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "scorer picks the best of 32 (val, batch 1)"
+  value = "54.6%"
+  baseline = "run 1's checkpoint"
+  baseline_value = "38.3%"
+  better = "higher"
+  strength = "moderate"
+  note = "95% interval 52.1–56.9; same scorer weights, better candidates"
+  source = "experiments/drivejepa_retrain/12_second_training_run/unseen_clip_evaluation.md"
+
+[[checks]]
+name = "Small overfit check (05)"
+date = 2026-10-07
+result = "30 epochs on 1% of the set: BROKEN by its own rule (41% against ≤ 25%), under-trained by the author's reading"
+decided = "go-ahead for the full run (Sid's call)"
+source = "experiments/drivejepa_retrain/05_small_overfit_check/REPORT.md"
+
+[[checks]]
+name = "Why the scorer did not improve (08–11)"
+date = 2026-10-09
+result = "the menu caps the pick; a replacement head on frozen features fails on unseen clips (regret 0.110): features are the ceiling"
+decided = "freeze the scorer; run 2 retrains the generator only"
+source = "experiments/drivejepa_retrain/11_scorer_head_and_pullout_grades/REPORT.md"
+
+[[checks]]
+name = "Why 0.1.6 swerves and stays stopped (14)"
+date = 2026-10-09
+result = "swerves: scorer, generator and controller together; one stuck scene is the scorer, the other both"
+decided = "a fix was tested offline only; no closed-loop check was run"
+source = "experiments/drivejepa_retrain/14_after_retraining_diagnosis/NOTE_FOR_SID.md"
+
+[[checks]]
+name = "Best possible pick (13), pre-registered"
+date = 2026-10-12
+result = "with the best candidate always driven, the car still does not pull out on d2715023 or b44a4a44"
+decided = "no training started for pull-outs"
+source = "experiments/drivejepa_retrain/13_best_possible_pick/REPORT.md"

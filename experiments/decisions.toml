@@ -1,0 +1,207 @@
+# The decision log: what the team decided, when, on what evidence, and what it led to.
+#
+# Numbered in date order and never renumbered, so "D07" always means one decision (docs/experiments.md,
+# "The decision log"). `evidence` and `next` name experiments or runs in this registry; `source` says where
+# the decision is written down. `baseline` marks a change to the model every hypothesis is measured
+# against; `version` marks a checkpoint promoted to gallops-v0.N by a gate SHIP (none yet).
+#
+# "Renesas Progress and Plan" is the team's status page of 22 Oct 2026; decisions recorded only there
+# are copied from it, and say so.
+
+[[decision]]
+id = "D01"
+date = 2026-09-19
+short = "Fix the selection, not the head"
+decision = """First target: Drive-JEPA's choice among its 32 candidates, not its trajectory head. On KITScenes \
+the best candidate is 0.37 m from the human path and the pick 2.36 m; a re-ranker over the frozen model's \
+candidates attacks that gap and proves the train → checkpoint → paddock loop on the way."""
+by = ["Naren"]
+next = ["GC01"]
+source = "docs/STRATEGY.md, \"First target — taken: Drive-JEPA's selection, not its head\""
+
+[[decision]]
+id = "D02"
+date = 2026-09-26
+short = "neuroNCAP needs both halves trained"
+decision = """Selection alone cannot fix neuroNCAP: no signal in the released model picks a clear plan on the \
+rescue ticks (0 of 322), and the scorer rates injected swerves below the colliding plan. Fine-tune both halves — \
+propose evasive swerves and choose them — on hazards inserted into scenes outside the benchmark."""
+by = ["Naren"]
+evidence = ["GC02.signals", "GC02.inject"]
+next = ["GC03"]
+source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md, \"What is left\""
+
+[[decision]]
+id = "D03"
+date = 2026-10-06
+short = "No run trains until the preflight passes"
+decision = """Defect 6: swerve runs v1–v4 graded every tick from the first tick's pose. From now on every training \
+run passes the preflight — code committed, grading reproduced, inputs rebuilt faithfully — before its first \
+step, and there is no way to skip it."""
+by = ["Naren"]
+evidence = ["GC03.v4"]
+next = ["GC03.v4fix"]
+source = "docs/swerve-finetune.md, \"The six defects\"; CLAUDE.md, \"Before any training run\""
+
+[[decision]]
+id = "D04"
+date = 2026-10-09
+short = "Train the scorer on cached features"
+decision = """s1–s3 ended at a random ranking loss. Train the scorer alone on cached features from the frozen \
+encoder and refiner, with sub-score heads, so a run takes minutes and can be checked scene by scene."""
+by = ["Naren"]
+evidence = ["GC03.s1", "GC03.s2", "GC03.s3"]
+next = ["GC06"]
+source = "docs/scorer-cache.md, \"Why a cache\""
+
+[[decision]]
+id = "D05"
+date = 2026-10-10
+short = "Ship the retrained generator as 0.1.7"
+decision = """After its 30-scene trial, the second run's merged checkpoint — released encoder, first-run scorer, \
+second-run generator — drives AlpaSim as driver 0.1.7."""
+by = ["Siddesh"]
+evidence = ["GC05.run2"]
+source = "docs/drivejepa-retrain.md"
+
+[[decision]]
+id = "D06"
+date = 2026-10-12
+short = "Everything so far was camera-blind"
+decision = """Paddock and the trainer placed the cameras relative to nuScenes' LIDAR_TOP, so no image reached the \
+model in any swerve or scorer-cache run. Those numbers stand as what they measured, not as evidence about seeing; \
+the caches are to be rebuilt, and the preflight now refuses a model a blanked camera does not move."""
+by = ["Naren"]
+evidence = ["GC03", "GC06"]
+next = ["GC07"]
+source = "docs/STRATEGY.md (the camera correction at the top); docs/scorer-cache.md"
+
+[[decision]]
+id = "D07"
+date = 2026-10-12
+short = "A closed-loop gain must be a reaction"
+decision = """A closed-loop gain counts only once the switches behind it are shown to differ between scenarios: the \
+scorer-cache model's 0103 gain was a drift that happened to clear the car, not an avoidance."""
+by = ["Naren"]
+evidence = ["GC06.relative-0103"]
+source = "docs/scorer-cache.md"
+
+[[decision]]
+id = "D08"
+date = 2026-10-13
+short = "Park the scorer; imitate expert v6"
+decision = """Park the sub-score scorer: on the seeing model it overrode the pick from 0.5 s in every scenario and \
+flipped side. Teach the manoeuvre through the model's own generator instead, with expert v6 — brake for stationary \
+and side hazards, brake then swerve onto free road for oncoming ones — as the one consistent driver to imitate."""
+by = ["Naren"]
+evidence = ["GC07.sighted-v1"]
+next = ["GC08"]
+source = "branch expert/v6-imitation, docs/brake-swerve-expert.md §1; Renesas Progress and Plan (\"approved 13 Oct\")"
+
+[[decision]]
+id = "D09"
+date = 2026-10-14
+short = "One tick per forward pass"
+decision = """The vendor model mixes ticks within a batch, so every forward pass is now one tick. The batch-8 \
+swerve runs and the batch-4 cache v1 would train differently today; a rerun is a new run."""
+by = ["Naren"]
+evidence = ["GC03", "GC06.v1"]
+source = "docs/swerve-finetune.md; README, \"How to read it\""
+
+[[decision]]
+id = "D10"
+date = 2026-10-16
+short = "Brake-then-swerve imitation: no transfer"
+decision = """Concluded negative: the swerve is learned on the five training scenes but lost on unseen streets \
+(round 2 on 0103: 2.31 against 3.01 released), and each new reconstructed scene costs about 7.5 GPU-hours."""
+by = ["Naren"]
+evidence = ["GC08.v6-r1a-loso0075", "GC08.v6-r1b-all", "GC08.v6-r2-short"]
+source = "branch expert/v6-imitation, docs/brake-swerve-expert.md, Conclusion; Renesas Progress and Plan"
+
+[[decision]]
+id = "D11"
+date = 2026-10-19
+short = "Base: Navvrat's 4-camera stack"
+decision = """The three tracks merge into one base: Navvrat's 4-camera stack — WA-JEPA's encoder over four views, \
+Drive-JEPA's planner with path reads and a global read. All three tracks found the scorer is the weak part. Still \
+open: close its NAVSIM gap before the gate, rebase its adapter onto the camera fix, repeat the LoRA on its encoder."""
+by = ["team"]
+evidence = ["H01.run2", "H07.exp1", "GC08"]
+next = ["H01", "H04", "H07"]
+baseline = "the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA"
+source = "Renesas Progress and Plan: design decision 1 and \"Status · 19 Oct\""
+
+[[decision]]
+id = "D12"
+date = 2026-10-21
+short = "One prioritised list, H01–H11"
+decision = """The hypothesis phase runs as one list in priority order, proposed 21 Oct: enablers first, then the \
+hypotheses that most directly get the base through the gate. Dropped: the scene-count curve (the imitation \
+overfits, and a scene costs about 7.5 GPU-hours) and more cameras for side crashes (the front camera already \
+sees the crossing car)."""
+by = ["team"]
+evidence = ["GC08"]
+next = ["H01", "H02", "H03", "H04", "H05", "H06", "H07", "H08", "H09", "H10", "H11"]
+source = "Renesas Progress and Plan, \"Next steps · updated 21 Oct\""
+
+[[decision]]
+id = "D13"
+date = 2026-10-21
+short = "The gate: own scores decide, MDE printed"
+decision = """Each benchmark's own score keeps deciding the gate; the PDM-style terms are shown beside it and may \
+decide later, one benchmark at a time. The subset sizes stay (20 pairs × 1 seed was not adopted), and every \
+verdict prints its minimum detectable effect."""
+by = ["Naren"]
+evidence = ["H02.mde", "H02.timing"]
+next = ["H10"]
+source = "Renesas Progress and Plan, \"Regression gate\" and \"PDM-style terms\"; paddock docs/gate.md"
+
+[[decision]]
+id = "D14"
+date = 2026-10-21
+short = "neuroNCAP stays; trial HUGSIM beside it"
+decision = """neuroNCAP stays the crash benchmark; HUGSIM is trialled beside it on a slice, checked by reproducing \
+WA-JEPA's published 0.4462, before deciding whether to adopt it."""
+by = ["team"]
+next = ["H11"]
+source = "Renesas Progress and Plan, \"HUGSIM\""
+
+[[decision]]
+id = "D15"
+date = 2026-10-23
+short = "Gate subsets redrawn at random"
+decision = """Every gate subset is drawn at random within groups of turns, speeds and places (seed 20261022), \
+replacing the hand-forced subsets of 21 Oct; neuroNCAP's closed tier becomes 15 pairs × 1 seed."""
+by = ["Naren"]
+evidence = ["H02.mde"]
+next = ["H02"]
+source = "paddock bbcbc42 (#105)"
+
+[[decision]]
+id = "D16"
+date = 2026-10-23
+short = "Drive-JEPA cropped at 2 Hz by default"
+decision = """Drive-JEPA runs with the OpenScene crop and plans twice a second on every benchmark by default, and \
+the queue's baselines are remade under it."""
+by = ["Naren"]
+evidence = ["H08.crop"]
+source = "paddock f737ae5 (#106); paddock docs/queue.md"
+
+[[decision]]
+id = "D17"
+date = 2026-10-26
+short = "Momentum-aware selection on by default"
+decision = """Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA \
+baselines from here on include it."""
+by = ["Siddesh"]
+source = "paddock 567710e and 681dc26 (#95)"
+
+[[decision]]
+id = "D18"
+date = 2026-10-28
+short = "KITScenes exp 3 fails the gate"
+decision = """The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and \
+AlpaSim regress); its checkpoints stay a research record, not for deployment."""
+by = ["Siddesh"]
+evidence = ["H07.exp3"]
+source = "branch train/drivejepa-kitscenes, docs/drivejepa-kitscenes.md"

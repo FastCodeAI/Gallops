@@ -15,17 +15,12 @@ drivejepa_b2d <stage> --run`) skips it unless it is named too. Stdlib only.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 
+from gallops.checkpoint import sha256_file
 
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 24), b""):
-            h.update(block)
-    return h.hexdigest()
+sha256 = sha256_file
 
 
 def main() -> None:
