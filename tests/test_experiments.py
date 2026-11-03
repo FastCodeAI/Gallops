@@ -38,6 +38,12 @@ def test_the_readme_is_what_the_registry_renders(registry) -> None:
     assert stale == [], f"{stale} out of date: run `gallops experiments render --write`"
 
 
+def test_the_readme_stays_a_front_page() -> None:
+    """One row per experiment and links out. Detail goes on cards and in experiments/README.md."""
+    text = (REPO_ROOT / "README.md").read_text()
+    assert len(text.splitlines()) <= 120 and len(text.encode()) <= 16 * 1024
+
+
 def test_paddocks_link_into_this_readme_still_lands() -> None:
     """Paddock's README links Gallops#training-so-far for its trained Drive-JEPA rows (paddock 9a51c15)."""
     assert '<a id="training-so-far"></a>' in (REPO_ROOT / "README.md").read_text()
@@ -184,7 +190,12 @@ def _repo(tmp_path: Path, record: str | None = RECORD, decisions: str = DECISION
 def test_the_small_repository_is_valid_and_renders(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     assert reg.errors == []
-    assert exps.write(reg) == ["README.md", "experiments/README.md", "experiments/H01_thing/CARD.md"]
+    assert exps.write(reg) == [
+        "README.md",
+        "experiments/README.md",
+        "docs/assets/experiments.svg",
+        "experiments/H01_thing/CARD.md",
+    ]
     assert exps.stale(exps.Registry.load(reg.root)) == []
     readme = (reg.root / "README.md").read_text()
     # the README links each ID to its card, and keeps one row per experiment
@@ -273,6 +284,16 @@ def test_a_hand_edited_readme_is_caught(tmp_path) -> None:
     readme = reg.root / "README.md"
     readme.write_text(readme.read_text().replace("**0.885**", "**0.950**"))
     assert exps.stale(exps.Registry.load(reg.root)) == ["README.md"]
+
+
+def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    exps.write(reg)
+    picture = reg.root / "docs" / "assets" / "experiments.svg"
+    svg = picture.read_text()
+    assert "1 hypothesis, one at a time" in svg and "1 gated so far" in svg and "none yet" in svg
+    picture.write_text(svg.replace("1 gated so far", "9 gated so far"))
+    assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
 
 def test_a_hand_edited_or_missing_card_is_caught(tmp_path) -> None:

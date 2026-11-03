@@ -5,7 +5,7 @@
 
 **Ruhan** · neuroNCAP · ⏳ running · 14 Oct 2026 · enabler
 
-[← all experiments](../../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/nuscenes-teacher-scenes/docs/data.md) (on branch ⎇) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/nuscenes-teacher-scenes/docs/data.md) (on branch ⎇) · [experiment.toml](experiment.toml)
 
 > The record is on branch `ruhan/nuscenes-teacher-scenes`, not merged yet; its links go to that branch.
 

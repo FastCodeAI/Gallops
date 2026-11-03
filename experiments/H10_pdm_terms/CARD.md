@@ -5,7 +5,7 @@
 
 **Naren** · NAVSIM, KITScenes, nuScenes, neuroNCAP, Bench2Drive, AlpaSim, nuPlan · ☑️ done · 21 Oct – 22 Oct 2026 · enabler
 
-[← all experiments](../../README.md#enablers) · [the account](README.md) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](README.md) · [experiment.toml](experiment.toml)
 
 **Priority:** 10
 

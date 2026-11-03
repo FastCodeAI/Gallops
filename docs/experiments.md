@@ -6,9 +6,9 @@ produced it, to the checkpoint by its sha256, to the data it trained on and the 
 it, to the decision the team took because of it.
 
 The mechanism is small. Every experiment has a folder `experiments/<ID>_<slug>/` holding an
-`experiment.toml`, and the README's tables, decision path and gate log — and a one-page
-`CARD.md` in each folder, which the README's IDs link to — are rendered from those files by
-`gallops experiments render --write`. `make check` fails if the README differs from what
+`experiment.toml`. Everything a reader sees is rendered from those files by
+`gallops experiments render --write`: the README's tables and picture, a one-page `CARD.md` in each
+folder that the README's IDs link to, and the gate and decision logs in `experiments/README.md`. `make check` fails if the README differs from what
 the registry renders, if a record is malformed, if it points at a file that does not exist, or if
 a module in `src/gallops` was used by no experiment. The validation is in
 [src/gallops/experiments.py](../src/gallops/experiments.py); this page explains the reasons.
@@ -151,7 +151,7 @@ Flags say what kind of number it is:
 | `no-record` | the evidence is not committed to any repository yet |
 
 Exactly one result per experiment is its `headline`: the one that best states how it came out.
-The README's table row shows it; the details show every result.
+The README's table row shows it; the card shows every result.
 
 <a id="status"></a>
 
@@ -234,7 +234,7 @@ Copy its verdict into the run that produced the checkpoint, verbatim:
     verdict = "<GAIN | NEUTRAL | REGRESSION | NO RECORDS | TOO FEW UNITS | NOT RUN>"
 ```
 
-The README's gate log has one row per gated checkpoint. The gate needs the checkpoint's sha256 in
+The gate log in `experiments/README.md` has one row per gated checkpoint. The gate needs the checkpoint's sha256 in
 the record, so the verdict can be traced to the weights it judged.
 
 <a id="decisions"></a>
@@ -245,7 +245,7 @@ the record, so the verdict can be traced to the weights it judged.
 numbered `D01`, `D02`, … and never renumbered. A decision names who took it (`by`), the runs or
 experiments that were its `evidence`, what it led to (`next`), and its `source`. Set `baseline`
 when it changes the model every hypothesis is measured against, and `version` when it promotes a
-checkpoint to `gallops-v0.N`. The README draws the log as the decision path and lists it in full.
+checkpoint to `gallops-v0.N`. `experiments/README.md` lists the log in full.
 
 <a id="how-to"></a>
 
