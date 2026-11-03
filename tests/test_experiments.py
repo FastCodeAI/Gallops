@@ -367,6 +367,20 @@ def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:
     assert "file =" not in out.output
 
 
+def test_an_ensemble_of_one_file_is_refused(tmp_path) -> None:
+    """One file gives no members, so the digest would be over nothing: the same for every such directory."""
+    out = _pin(_step(tmp_path, {"seed_0.pt": b"one seed"}), "--ensemble")
+    assert out.exit_code == 2 and "two or more" in out.output
+    assert _sha(b"") not in out.output
+
+
+def test_the_digest_of_nothing_pins_nothing(tmp_path) -> None:
+    block = f'  weights_sha256 = "{SHA}"\n'
+    empty = RECORD.replace(block, f'  weights_sha256 = "{_sha(b"")}"\n', 1)
+    reg = exps.Registry.load(_repo(tmp_path, empty))
+    assert any("SHA-256 of empty input" in e for e in reg.errors), reg.errors
+
+
 def test_a_sidecar_digest_is_checked_against_the_bytes_not_copied(tmp_path) -> None:
     d = _step(tmp_path, {"reranker.npz": b"rewritten after the sidecar"}, digest="0" * 64)
     out = _pin(d)

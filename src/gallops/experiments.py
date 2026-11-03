@@ -55,6 +55,8 @@ FOLDER_RE = re.compile(r"^((GC|H)\d{2})_[a-z0-9]+(_[a-z0-9]+)*$")
 RUN_RE = re.compile(r"^((GC|H)\d{2})\.[A-Za-z0-9][A-Za-z0-9_-]*$")
 DECISION_RE = re.compile(r"^D\d{2}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+#: What an empty file, or an ensemble of nothing, hashes to. It is valid hex and pins no weights.
+EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
@@ -553,6 +555,8 @@ def validate(reg: Registry) -> list[str]:
                 if wsha is not None:
                     if not SHA256_RE.match(wsha):
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is not 64 lower-case hex digits")
+                    elif wsha == EMPTY_SHA256:
+                        errors.append(f"{rwhere} checkpoint: weights_sha256 is the SHA-256 of empty input")
                     elif wsha in seen_sha:
                         errors.append(f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}")
                     else:
