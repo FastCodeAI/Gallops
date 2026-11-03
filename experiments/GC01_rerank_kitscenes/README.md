@@ -11,9 +11,12 @@ Sources:
 - The re-ranker row of this repo's README, "Training so far".
 - The docstrings of [src/gallops/train/rerank.py](../../src/gallops/train/rerank.py)
   and [src/gallops/data/rerank.py](../../src/gallops/data/rerank.py).
-- In paddock: `docs/models/drivejepa_rerank.md`, `docs/ROADMAP.md`,
-  `docs/models/comparison.md` and
-  `src/paddock/adapters/models/drivejepa_rerank/model.yaml`.
+- Paddock's model page and model.yaml, copied here when paddock stopped holding
+  checkpoints other than the released models:
+  [paddock/docs/models/drivejepa_rerank.md](paddock/docs/models/drivejepa_rerank.md)
+  and [paddock/src/paddock/adapters/models/drivejepa_rerank/model.yaml](paddock/src/paddock/adapters/models/drivejepa_rerank/model.yaml).
+  What else is in [paddock/](paddock/README.md), and how to run it, is in its README.
+- Paddock's `docs/ROADMAP.md` and `docs/models/comparison.md`, at paddock commit `a263819`.
 - On paddock branch `analysis/drivejepa-ncap-candidates`:
   `docs/models/drivejepa-neuroncap.md`.
 - The checkpoint's own `checkpoint.json`.
@@ -53,7 +56,8 @@ re-ranker, and not the longitudinal head the strategy first proposed.
   the benchmark "was not unseen".
 - **Checkpoint.** `{weights}/drivejepa_rerank/kitscenes-train-h128-t1/step_000000325/`,
   trained at gallops commit `dfa7459`. Its `reranker.npz` has sha256 `2050b799e8e8…`.
-  Paddock's `drivejepa_rerank` adapter pins this directory.
+  Paddock's `drivejepa_rerank` adapter pinned this directory; its model.yaml is in
+  [paddock/](paddock/README.md).
 
 ## What it measured
 
@@ -84,4 +88,4 @@ re-ranker, and not the longitudinal head the strategy first proposed.
   scorer was trained for. This has not been measured.
 - **Not tracked:** the neuroNCAP 0103 run
   (`neuroncap/drivejepa_rerank/20261012T231620-01570a`). Only its numbers are on
-  paddock's model page.
+  the model page in [paddock/](paddock/README.md).

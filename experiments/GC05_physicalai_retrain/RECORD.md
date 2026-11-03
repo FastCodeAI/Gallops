@@ -43,8 +43,9 @@ folder are unchanged.
 
 ## What is not here
 
-- **No driver source.** The code that runs these weights in the simulator lives
-  in paddock, at `tools/models/drivejepa/alpasim_driver/`. The two
+- **The driver source is not in these step folders.** The code that runs these
+  weights in the simulator was paddock's `tools/models/drivejepa/alpasim_driver/`;
+  it is copied in [paddock/](paddock/README.md). The two
   `07_closed_loop_test/adapter_*_as_built.diff` files are records of what the
   tests ran, not something to apply: 0.1.7's is written against 0.1.6's, which
   is why both are kept.

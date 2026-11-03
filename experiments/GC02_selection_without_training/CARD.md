@@ -50,7 +50,7 @@ Momentum-aware selection lifted AlpaSim from 0.4209 to 0.5433 on 30 scenes, one 
 
 ## Evidence outside this repo
 
-- No gallops code: momentum is upstream's calibrate_score, run by paddock's AlpaSim driver (tools/models/drivejepa/alpasim_driver/, tracked at 0.1.7) and by the drivejepa node (paddock #59, on by default since #95).
+- No gallops code: momentum is upstream's calibrate_score, run by paddock's AlpaSim driver (tools/models/drivejepa/alpasim_driver/ at 0.1.7, now copied in experiments/GC05_physicalai_retrain/paddock/) and by the drivejepa node (paddock #59, on by default since #95).
 - neuroNCAP momentum run 20261002T065426-a87115 and its separate adapter (drivejepa_momentum): paddock branch record/drivejepa-camera-blind, kept, not for merging.
 - Signal and injection analyses: paddock branch analysis/drivejepa-ncap-candidates (no PR); the dump and injection adapters stay outside paddock; dumps under {runs}.
 - AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/GC05_physicalai_retrain/POINTERS.md).

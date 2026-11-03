@@ -260,7 +260,8 @@ Measured in paddock (2026-09-16 to 09-19):
 So the first target became a **re-ranker**: a small MLP over the frozen model's
 candidates, trained on KITScenes train, in `gallops/train/rerank.py`. It proves
 the loop, train → checkpoint → sidecar → `drivejepa_rerank` in paddock → a row,
-and closes a measured gap on the way. Paddock's `docs/models/drivejepa_rerank.md`
+and closes a measured gap on the way. Paddock's model page, now copied in
+[experiments/GC01_rerank_kitscenes/paddock/](../experiments/GC01_rerank_kitscenes/paddock/README.md),
 has the numbers and the limits. The main limit: it is open-loop only until it
 has been through neuroNCAP.
 

@@ -82,7 +82,7 @@ with `model` the paddock adapter name. For new runs, `train_run` is `<id>-<run>-
 case, e.g. `h04-r1-subscore`, so a directory names its experiment.
 
 **A checkpoint is identified by its weights' sha256, not its path.** A path names a directory,
-which can be overwritten or copied between sites; paddock's `drivejepa_rerank` adapter records the
+which can be overwritten or copied between sites; paddock's `drivejepa_rerank` adapter recorded the
 digest for the same reason. The **tag** is the first 12 hex digits (`29d5f9517c2e`); the record
 holds all 64. `gallops experiments checkpoint <step dir>` prints the record's
 `[runs.checkpoint]` block. It hashes the weights every time and fails if the sidecar's digest

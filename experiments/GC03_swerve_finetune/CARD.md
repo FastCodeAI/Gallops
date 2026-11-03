@@ -87,7 +87,7 @@ Eleven camera-blind finetunes taught no evasion. The one run taken to the full n
 
 ## Evidence outside this repo
 
-- neuroNCAP 0103 smokes and the s1 full sweep (20261008T021909-55974f): paddock branch record/drivejepa-camera-blind, kept, not for merging. The s1 sweep is recorded valid: true there only through a runner gap the branch describes.
+- neuroNCAP 0103 smokes and the s1 full sweep (20261008T021909-55974f), and three re-scores of that sweep with PDM terms added: run records in experiments/GC03_swerve_finetune/paddock/results/, since paddock holds only the released models' results. The first eleven are also on paddock branch record/drivejepa-camera-blind, kept, not for merging. The s1 sweep is recorded valid: true only through a runner gap that branch describes.
 - Collections, candidate dumps and label sets (collect_dumps*, labelled_round0*, labelled_gt, labelled_round1_s2, rounds.json): under {runs} at the training site, not in git.
 - The grader's reference, paddock's check.json, comes from candidate_check.py on paddock branch analysis/drivejepa-ncap-candidates (no PR).
 - The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in experiments/GC03_swerve_finetune/README.md 'Reproducing'.

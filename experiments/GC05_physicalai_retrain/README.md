@@ -289,8 +289,10 @@ written straight to the training site's store and are not in this repository
 
 ## Running the weights
 
-Gallops holds no driver. The retrained checkpoint is run in the simulator by
-paddock's Drive-JEPA driver, version 0.1.7:
+The retrained checkpoint is run in the simulator by the Drive-JEPA driver,
+version 0.1.7. It was paddock's until paddock stopped holding checkpoints other
+than the released models, and is now copied in [paddock/](paddock/README.md).
+When this was written it was:
 
 > paddock, `tools/models/drivejepa/alpasim_driver/` — on the branch
 > `drivejepa/retrained-adapter` at the time of writing, with its inputs, how it
