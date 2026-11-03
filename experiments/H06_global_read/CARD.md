@@ -41,8 +41,8 @@ So far, open loop and one closed-loop benchmark: turning the global read off cos
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| H06.navsim_off ★ | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes)<br>−0.018, 95% CI −0.038 to −0.000; mostly lane keeping (0.978 → 0.946). The page does not name the metric for this pair. | global read on | ●○○○ argued · no-record, open-loop | Renesas Progress and Plan, 22 Oct 2026 (design decision 5), from Navvrat's dashboard |
-| H06.b2d_off | Bench2Drive driving score, global read off 51.1 → 50.4 (n=25 routes)<br>−0.7, 95% CI −12.6 to +11.0: no detectable effect; the same model re-run moves a route 15.8 points on average | global read on | ●○○○ argued · no-record | Renesas Progress and Plan, 22 Oct 2026 (design decision 5), from Navvrat's dashboard |
+| H06.navsim_off ★ | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes)<br>−0.018, 95% CI −0.038 to −0.000; mostly lane keeping (0.978 → 0.946). The page does not name the metric for this pair. | global read on | ●●○○ moderate · no-record, open-loop | Renesas Progress and Plan, 22 Oct 2026 (design decision 5), from Navvrat's dashboard |
+| H06.b2d_off | Bench2Drive driving score, global read off 51.1 → 50.4 (n=25 routes)<br>−0.7, 95% CI −12.6 to +11.0: no detectable effect; the same model re-run moves a route 15.8 points on average | global read on | ●●○○ moderate · no-record | Renesas Progress and Plan, 22 Oct 2026 (design decision 5), from Navvrat's dashboard |
 
 ## Checks that decided something
 

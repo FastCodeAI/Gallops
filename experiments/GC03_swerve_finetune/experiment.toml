@@ -96,7 +96,7 @@ out scene 0058, replaced by 0053 from v1 on: 0058 has 54 swerve ticks of 1,673, 
   baseline_value = "4.05"
   value = "1.22"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 1.90 / 1.90, stationary 1.30 / 0.89, side 0.81 / 0.56; recorded valid: false"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T081242-bb52e8"
@@ -155,7 +155,7 @@ The doc's table once gave its 0103 mean as 2.56; corrected to 2.50."""
   baseline_value = "4.05"
   value = "2.50"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 5.00 / 5.00, stationary 0.00 / 0.00, side 0.00 / 5.00"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T212532-af6551"
@@ -214,7 +214,7 @@ carry defect 6. 0103 smoke: 20261002T010108-5f6f80."""
   baseline_value = "4.05"
   value = "3.05"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 1.60 / 1.60, stationary 5.00 / 5.00, side 5.00 / 0.07"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T010108-5f6f80"
@@ -323,7 +323,7 @@ episodes were collected under v4 and stopped, because v4 does not swerve. 0103 s
   baseline_value = "4.05"
   value = "4.53"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke", "selected-on-report"]
   note = "frontal 2.15 / 5.00, stationary and side 5.00 ×4. Best of four checkpoints chosen on these six episodes; its whole +0.47 is frontal run_1 (5.0 where the released model averages 2.16). Lower impact speed, not an evasion"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T080920-070cd5"
@@ -387,7 +387,7 @@ it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911
   baseline_value = "4.05"
   value = "4.51"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 2.07 / 5.00, stationary and side 5.00 ×4"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T225911-49344e"
@@ -399,7 +399,7 @@ it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911
   baseline_value = "89%"
   value = "88%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -466,7 +466,7 @@ at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
   baseline_value = "4.05"
   value = "4.40"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 1.41 / 5.00, stationary and side 5.00 ×4"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T231510-5dcf05"
@@ -478,7 +478,7 @@ at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
   baseline_value = "89%"
   value = "55%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -546,7 +546,7 @@ it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-994
   baseline_value = "4.05"
   value = "2.65"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 3.05 / 3.05, stationary 2.51 / 2.44, side 2.40 / 2.45"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261007T202011-99499f"
@@ -558,7 +558,7 @@ it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-994
   baseline_value = "89%"
   value = "32%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -661,7 +661,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   baseline_value = "4.05"
   value = "4.04"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 2.02 / 2.23, stationary and side 5.00 ×4"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T020429-00e049"
@@ -673,7 +673,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   baseline_value = "89%"
   value = "8%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "disagrees with closed loop (5.0 on both stationary 0103 runs, +0.16 per pair on stationary over the full set), unexplained; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -684,7 +684,7 @@ sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowi
   subset = "scene 0053, on the released candidates"
   value = "23%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
@@ -762,7 +762,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   baseline_value = "4.05"
   value = "2.11"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 2.19 / 2.19, stationary 5.00 / 1.15, side 1.07 / 1.04"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T103801-ec9faa"
@@ -774,7 +774,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   baseline_value = "89%"
   value = "40%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -785,7 +785,7 @@ the checkpoint below. Why: frontal needs swerves the released candidates never c
   subset = "scene 0053, s2b on its own refiner's candidates"
   value = "7%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 
@@ -873,7 +873,7 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   baseline_value = "4.05"
   value = "0.80"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "smoke"]
   note = "frontal 0.56 / 0.80, stationary 1.04 / 0.83, side 0.73 / 0.86"
   source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T205424-aee62f"
@@ -885,7 +885,7 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   baseline_value = "89%"
   value = "29%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
@@ -898,7 +898,7 @@ its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smo
   baseline_value = "5.8%"
   value = "4%"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["blind", "open-loop", "smoke"]
   source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
 

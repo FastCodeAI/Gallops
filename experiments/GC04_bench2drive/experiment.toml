@@ -94,7 +94,7 @@ notes = "Stages ipad-base-start (kept epoch 17) → split-full (epoch 32, mean A
   unit = "route"
   value = "68.1"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["adapted", "selected-on-report", "no-record"]
   note = "inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz"
   source = "experiments/GC04_bench2drive/README.md"
@@ -170,7 +170,7 @@ notes = "Generator from the release with its own multimodal loss (expert winner-
   baseline_value = "57.60"
   value = "73.6"
   better = "higher"
-  strength = "argued"
+  strength = "moderate"
   flags = ["adapted", "selected-on-report", "no-record"]
   headline = true
   note = "the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes"
