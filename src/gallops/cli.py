@@ -249,8 +249,8 @@ def experiments_checkpoint(
         # One file gives no members, and a digest over no members is the same for every directory.
         raise fail(f"--ensemble needs two or more weights files; {path} has only {files[0].name}")
     if file:
-        if not (path / file).is_file():
-            raise fail(f"no {file} in {path}")
+        if file not in {p.name for p in files}:
+            raise fail(f"{file} is not a weights file in {path}: {', '.join(p.name for p in files)}")
     elif not ensemble and len(files) > 1:
         names = ", ".join(p.name for p in files)
         raise fail(

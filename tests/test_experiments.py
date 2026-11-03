@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -342,9 +343,17 @@ def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) ->
 
 def _pin(d: Path, *args: object):
     """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
-    from typer.testing import CliRunner
+    try:
+        from typer.testing import CliRunner
 
-    from gallops.cli import app
+        from gallops.cli import app
+    except (ImportError, TypeError) as exc:
+        # The preflight runs this file under Drive-JEPA's Python 3.9, where the CLI cannot load (recipe.py's
+        # tomllib, then typer on `X | None`) and is never run. Anywhere with tomllib, the interpreter
+        # make check uses, a failed import is a failure and must not turn into a skip.
+        if importlib.util.find_spec("tomllib") is not None:
+            raise
+        pytest.skip(f"gallops.cli does not load on this interpreter: {exc}")
 
     site = d.parents[3]
     config = site / "gallops.toml"
@@ -367,6 +376,16 @@ def test_pinning_refuses_to_guess_which_weights_file_is_the_checkpoint(tmp_path)
     assert out.exit_code == 0, out.output
     assert f'weights_sha256 = "{_sha(b"A" * 10)}"' in out.output and 'file = "agent.ckpt"' in out.output
     assert f'"{_sha(b"M" * 20)}  model.pt"' in out.output  # the other file is kept, with its digest
+
+
+def test_file_must_name_a_weights_file(tmp_path) -> None:
+    """A scorer.json beside the weights exists, and is not what gets pinned."""
+    d = _step(tmp_path, {"reranker.npz": b"w"})
+    (d / "scorer.json").write_text("{}")
+    for name in ("scorer.json", "nothing.pt"):
+        out = _pin(d, "--file", name)
+        assert out.exit_code == 2 and "is not a weights file" in out.output, name
+        assert out.exception is None or isinstance(out.exception, SystemExit), out.exception
 
 
 def test_an_ensemble_is_pinned_by_its_members_together(tmp_path) -> None:

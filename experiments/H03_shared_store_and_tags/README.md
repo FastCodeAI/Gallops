@@ -28,8 +28,8 @@ result traces to one" (Renesas Progress and Plan, 22 Oct 2026, "Next steps", ite
 - **The tag and its metadata, in gallops.** This registry: one `experiment.toml` per experiment, each
   checkpoint pinned by `weights_sha256` with its model, training run, step, file, location (as a
   template, never a machine path), training data and code; `gallops experiments check` refuses a digest
-  claimed by two runs; `gallops experiments checkpoint <step dir>` prints the block from the sidecar and
-  hashes the weights when the sidecar has none (`src/gallops/experiments.py`, `src/gallops/cli.py`,
+  claimed by two runs; `gallops experiments checkpoint <step dir>` prints the block, hashing the weights
+  every time and refusing a sidecar that disagrees (`src/gallops/experiments.py`, `src/gallops/cli.py`,
   `checkpoint.sha256_file` in `src/gallops/checkpoint.py`). Past checkpoints whose digest was never
   recorded say so; a checkpoint that goes through the gate must carry one.
 
