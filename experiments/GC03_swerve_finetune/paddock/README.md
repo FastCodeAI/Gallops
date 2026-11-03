@@ -39,6 +39,11 @@ and those cannot be rebuilt. Quote `20261022T234613-207714`: it is the only
 re-score made from a clean commit.
 Nothing in gallops quotes a PDM term from these runs yet.
 
+These records name their checkpoint only as `DRIVEJEPA_CHECKPOINT=<site path:…>`,
+a hash of the checkpoint's path, not of its weights. Runs that share a hash
+drove the same file (the s1 smoke and sweep share `3228ef67`). Which weights
+that was is in `experiment.toml`, not in these records.
+
 Only `run.json` and `metrics.json` are here. The per-episode records, node
 logs and videos stay in `{runs}/neuroncap/drivejepa/<run id>/` at the training
 site.
