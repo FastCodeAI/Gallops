@@ -21,7 +21,7 @@ So far: the paddock account and a paddock group holding the three of us exist on
 
 - **The shared group**: the paddock account and group exist on shakaal; the group's members are naren, navrant and siddesh
 - **A shared checkpoint store, by content (paddock #109)** (26 Oct): `gate_queue submit` copies a checkpoint file or directory into the shared store under a name made from its sha256, with the small files beside it (gallops' checkpoint.json), so a job measures what was submitted even if the original is overwritten → merged 26 Oct; anyone in the paddock group can submit
-- **Checkpoint tags in this registry** (3 Nov): a [runs.checkpoint] carries weights_sha256 where it is known (64 hex digits, each claimed by one run only; required once a checkpoint is gated), model, train_run, step, file and location as a template; `gallops experiments checkpoint <dir>` prints the block from a sidecar and hashes the weights when the sidecar has no digest (with --hash it hashes anyway and reports a sidecar that disagrees) → the tagging half of H03; the shared group is the other half
+- **Checkpoint tags in this registry** (3 Nov): a [runs.checkpoint] carries weights_sha256 where it is known (64 hex digits, each claimed by one run only; required once a checkpoint is gated), model, train_run, step, file and location as a template; `gallops experiments checkpoint <dir>` prints the block, hashing the weights every time and refusing a sidecar that disagrees (--trust-sidecar copies its digest instead); a directory with several weights files needs --file or --ensemble → the tagging half of H03; the shared group is the other half
 
 ## Evidence outside this repo
 

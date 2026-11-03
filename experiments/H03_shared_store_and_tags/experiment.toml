@@ -43,6 +43,6 @@ source = "paddock PR #109 (ef3f004), docs/queue.md"
 [[checks]]
 name = "Checkpoint tags in this registry"
 date = 2026-11-03
-result = "a [runs.checkpoint] carries weights_sha256 where it is known (64 hex digits, each claimed by one run only; required once a checkpoint is gated), model, train_run, step, file and location as a template; `gallops experiments checkpoint <dir>` prints the block from a sidecar and hashes the weights when the sidecar has no digest (with --hash it hashes anyway and reports a sidecar that disagrees)"
+result = "a [runs.checkpoint] carries weights_sha256 where it is known (64 hex digits, each claimed by one run only; required once a checkpoint is gated), model, train_run, step, file and location as a template; `gallops experiments checkpoint <dir>` prints the block, hashing the weights every time and refusing a sidecar that disagrees (--trust-sidecar copies its digest instead); a directory with several weights files needs --file or --ensemble"
 decided = "the tagging half of H03; the shared group is the other half"
 source = "src/gallops/experiments.py, src/gallops/cli.py, src/gallops/checkpoint.py (sha256_file)"
