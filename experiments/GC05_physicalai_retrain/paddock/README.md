@@ -1,9 +1,11 @@
 # What ran in paddock
 
 These files are copied from paddock commit `a263819`, at the paths they had
-there. Paddock removed them because it holds only the released models'
-checkpoints: the driver in paddock #121, the two run records in paddock
-#132.
+there. They leave paddock because it holds only the released models'
+checkpoints: paddock #121 (merged 3 Nov 2026) removed the driver, and paddock
+#132 removes the two run records. #132 was still open on 4 Nov 2026, so until
+it merges both runs are also on paddock's `main`, under the model name
+`drivejepa`.
 
 | Path | What it is |
 |---|---|
@@ -12,8 +14,8 @@ checkpoints: the driver in paddock #121, the two run records in paddock
 | `results/alpasim/drivejepa/legacy-drivejepa_017_20hz_30scenes/` | the same driver on the 30 scenes, 0.7697. |
 
 Paddock PR #68 imported both runs under the model name `drivejepa`, so
-paddock's leaderboard showed them as the released model's AlpaSim score. That
-is why they left paddock.
+paddock's leaderboard shows them as the released model's AlpaSim score. That
+is why paddock #132 takes them out.
 
 One change from paddock: the driver README's links to paddock pages point at
 those pages on GitHub, at `a263819`.

@@ -52,6 +52,6 @@ In-domain data closes most of the AlpaSim gap: 0.5433 → 0.7697 on 30 scenes, o
 
 ## Evidence outside this repo
 
-- AlpaSim runs: paddock PR #68 recorded them in results/alpasim/*/legacy-*_30scenes. The retrained checkpoint's two, legacy-drivejepa_017_20hz and legacy-drivejepa_017_20hz_30scenes, are copied in experiments/GC05_physicalai_retrain/paddock/results/, since paddock holds only the released models' (paddock #132 removed them); the other drivers' rows stay in paddock.
+- AlpaSim runs: paddock PR #68 recorded them in results/alpasim/*/legacy-*_30scenes. The retrained checkpoint's two, legacy-drivejepa_017_20hz and legacy-drivejepa_017_20hz_30scenes, are copied in experiments/GC05_physicalai_retrain/paddock/results/, since paddock holds only the released models' (paddock #132 removes them; it was still open on 4 Nov 2026, so both are on paddock's main until it merges); the other drivers' rows stay in paddock.
 - The AlpaSim driver that served the retrained checkpoint, paddock's tools/models/drivejepa/alpasim_driver/ at 0.1.7, is copied in experiments/GC05_physicalai_retrain/paddock/ (paddock #121 removed it).
 - Weights, training set and large tables: off-repo at the training site, each with bytes and sha256 in experiments/GC05_physicalai_retrain/POINTERS.md.
