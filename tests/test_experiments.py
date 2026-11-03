@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -342,9 +343,17 @@ def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) ->
 
 def _pin(d: Path, *args: object):
     """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
-    from typer.testing import CliRunner
+    try:
+        from typer.testing import CliRunner
 
-    from gallops.cli import app
+        from gallops.cli import app
+    except (ImportError, TypeError) as exc:
+        # The preflight runs this file under Drive-JEPA's Python 3.9, where the CLI cannot load (recipe.py's
+        # tomllib, then typer on `X | None`) and is never run. Anywhere with tomllib, the interpreter
+        # make check uses, a failed import is a failure and must not turn into a skip.
+        if importlib.util.find_spec("tomllib") is not None:
+            raise
+        pytest.skip(f"gallops.cli does not load on this interpreter: {exc}")
 
     site = d.parents[3]
     config = site / "gallops.toml"
