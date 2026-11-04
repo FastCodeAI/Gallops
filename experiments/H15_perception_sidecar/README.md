@@ -96,7 +96,59 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 
 ## What it showed
 
-Nothing yet: no run has trained.
+So far, phase A has started. Structured results go into `experiment.toml` when B1 gives H15 its
+headline; until then, the numbers live here.
+
+### S0.5 · the PDM labels (4 Nov, from `b46230a`)
+
+- **All 103,288 navtrain samples scored**, in 10 min on 48 workers; no metric cache missing.
+- **Re-scoring:** `check-pdm` re-scored 50 random rows and found them exactly equal.
+- **Mean final scores:** 0.798 for the release's 32 candidates, 0.967 for the best of them, and
+  0.906 for the human's plan.
+- **Collisions:** 7.51% of candidates have an at-fault collision, exactly the share whose NC is
+  below 1.
+
+### S0.8 · the release's own picks (in-sample for it)
+
+| Split | Pick EPDMS | Best of 32 | Gap | L2 at 1 / 2 / 3 s (m) |
+|---|---|---|---|---|
+| select (4,457) | 0.920 | 0.961 | 0.041 | 0.68 / 1.48 / 2.53 |
+| report (4,636) | 0.914 | 0.956 | 0.042 | 0.70 / 1.50 / 2.56 |
+
+**The release's pick, term by term (report logs):**
+
+| NC | DAC | TLC | DDC | EP | TTC | LK | HC |
+|---|---|---|---|---|---|---|---|
+| 0.996 | 0.994 | 0.979 | 0.989 | 0.919 | 0.996 | 0.860 | 0.975 |
+
+- **P6** predicted a gap of at least 5 points. It is **4.2**, less than predicted.
+- **What this means for B (*argued*, written before any B result):**
+  - The terms agents can inform, NC and TTC, are already 0.996 on the release's pick in-sample.
+    The pick loses most in lane keeping, progress and traffic lights.
+  - So on NAVSIM in-sample, an agent-aware scorer has a few tenths of a point to win from
+    collisions. P7's +0.3 to +1.0 is optimistic on this evidence.
+
+### A0 · which frozen tap carries 3D
+
+One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front view:
+
+| Tap | Recall at 2 m, ≤ 30 m | Precision | F1 | Recall 0–20 / 20–35 / 35–50 m |
+|---|---|---|---|---|
+| post-projector, 256-d | 0.225 | 0.299 | 0.257 | 0.351 / 0.172 / 0.120 |
+| **ViT output, 1024-d** | **0.313** | **0.367** | **0.338** | 0.459 / 0.251 / 0.140 |
+| block 12, 1024-d | 0.242 | 0.303 | 0.269 | 0.369 / 0.188 / 0.095 |
+
+- **P1 is supported at its lower edge.** The best tap reaches 0.313, against a predicted range of
+  0.35–0.60 and a support threshold of 0.30.
+- **The ViT output beats the projector's** by 0.088 recall, against a predicted ≥ 0.03.
+- **All three were still rising** at epoch 6.
+- **Decided:** A1 reads the ViT's own output, cached for every row by a second pass that is held
+  to the full forward's tap.
+
+### A1 · the no-camera baseline (blind arm, report logs)
+
+- Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.
+- The lead-gap reference is the train-mean prior, with an error of 8.53 m (P5's bar).
 
 ![Each hypothesis, its tests and its readout](figures/hypotheses.png)
 
