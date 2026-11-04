@@ -53,6 +53,7 @@ BATCH, EPOCHS = 64, 3
 LR, LR_REFINER = 1e-4, 2e-5
 TEACHERS = 4
 REFINER_PREFIXES = ("_trajectory_head", "init_feature", "hist_encoding")
+_BATCH_FIXED: list = []
 
 
 class RefinerAdapter(nn.Module):
@@ -95,7 +96,11 @@ def build(entered: dict, mode: str, agents: bool, rank: int = 16):
 
     from gallops.drivejepa_b2d import batch_fix
 
-    batch_fix.apply_all()
+    # apply_all replaces the vendor's forwards in place and checks the source it replaces, so a
+    # second call finds its own patch and refuses: once per process (the preflight builds first).
+    if not _BATCH_FIXED:
+        batch_fix.apply_all()
+        _BATCH_FIXED.append(True)
     agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
     agent.initialize()
     model = agent._pad_model.eval()
