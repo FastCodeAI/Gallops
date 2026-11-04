@@ -321,6 +321,85 @@ P10 and P11 are still scored on "the best mode". It is named on the **select** l
 mean over the three seeds of F − C in select pick EPDMS, each seed at its kept epoch. Every mode's
 numbers are reported beside it.
 
+### B1 · do the side-car's agents improve the pick? NEUTRAL in every mode
+
+*Measured*, report logs, 4,636 rows (in-sample for the release, which scores 0.9140). The agents
+are A1 seed 0's kept epoch (epoch 11; `agents-a1-s0`, 4.86 a row at confidence 0.5). F trained from
+`e6af85b`, O and S from `1627ebd`; the B1 code is the same in both. `b1-report`, by the rule fixed
+before any F run.
+
+F − C per seed at the kept epoch, in EPDMS points, with 2 SE clustered by log in brackets:
+
+| Mode | F − C, seeds 0 / 1 / 2 | C's seed range | O − C (true agents) | S − C (another log's) | Verdict |
+|---|---|---|---|---|---|
+| frozen (B1.1) | +0.03 (0.11) / +0.05 (0.14) / −0.04 (0.17) | 0.08 | +0.06 / +0.06 / −0.03 | +0.14 / −0.15 / −0.09 | NEUTRAL |
+| lora (B1.2) | −0.13 (0.28) / −0.21 (0.21) / +0.24 (0.25) | 0.23 | −0.08 / −0.12 / +0.21 | +0.13 / −0.03 / +0.16 | NEUTRAL |
+| full (B1.3) | −0.13 (0.19) / −0.11 (0.16) / −0.00 (0.13) | 0.06 | −0.07 / −0.02 / −0.09 | +0.10 / +0.03 / +0.04 | NEUTRAL |
+| replace (B1.4) | +0.13 (0.24) / +0.08 (0.22) / −0.10 (0.35) | 0.10 | +0.04 / +0.08 / −0.05 | +0.22 / +0.00 / +0.02 | NEUTRAL |
+
+- **Every arm against its control, in every mode, at the kept and at the last epoch, is NEUTRAL.**
+  No difference exceeds a quarter of a point, and every mode's sign changes between seeds.
+- **Ground-truth agents (O) do no better than the side-car's (F).**
+  - The limit is not the side-car's perception. With perfect agents, this scorer still has
+    nothing to gain from them here.
+  - S0.8 said as much before B ran: NC and TTC are 0.996 on the release's own pick, in-sample.
+- **No gain in the terms agents could inform.** Mean F − C over seeds, in points, by term:
+  - NC −0.10 to 0.00;
+  - TTC −0.10 to +0.02;
+  - the largest moves are in EP and LK, either sign.
+- **The pre-registered subsets show nothing.** Lead vehicle within 30 m, slowing or stopped, and an
+  agent within 10 m: none is larger than the whole beyond 2 SE.
+- **The best mode on the select logs** (P10, P11) is `full`, with a mean F − C of +0.004 points.
+
+**Against the predictions:**
+- **P7 refuted.** No mode beats its control. +0.3 to +1.0 points were predicted, "most of it in NC
+  and TTC". S0.8's measurement, read before any B run, had already called that optimistic.
+- **P8 refuted.** No subset is larger.
+- **P9 and P10 not applicable.** Their ratios divide by an F − C that is zero within noise. That O
+  equals F is itself the H-info answer: no information is being used.
+
+### B1.6 · are the scorer's reasons faithful? Yes, for what the model uses
+
+*Measured* on each F mode's seed 0, report logs, the 2,335 rows that show at least two agents. The
+named agent is the one the scorer's candidate-to-agent attention weighted most for its pick.
+
+| Mode | Pick changes, named agent deleted | …a random one | Ratio | Named agent real (≤ 2 m, same class) | AUC (output) |
+|---|---|---|---|---|---|
+| frozen | 5.9% | 1.9% | 3.1 | 86.6% | 0.919 (TTC) |
+| lora | 2.6% | 0.6% | 4.7 | 86.3% | 0.934 (TTC) |
+| **full** (best on select) | 6.9% | 1.4% | 4.9 | 86.7% | 0.965 (TTC) |
+| replace | 11.9% | 2.4% | 4.9 | 85.8% | 0.974 (NC) |
+
+- **P11's three bars are met in every mode:** ratio ≥ 3, grounding ≥ 85%, AUC ≥ 0.75. The plan
+  reads P11 only after a positive B1, and B1 is NEUTRAL. So it supports a narrower claim than the
+  plan's:
+  - An agent-aware scorer, no worse than the release, can name the agent behind its pick.
+  - The name is faithful to what the model uses: deleting that agent moves the pick three to five
+    times as often as deleting another, and the agent is real 86% of the time.
+  - It does not show that using agents makes the pick better. B1 says it does not, here.
+- *Caveat:* the TTC output is also trained in arm C. Whether agents improve the calibration needs
+  C's AUC beside F's, which `explain` does not yet compute.
+
+### B3.1 · LoRA on the ViT's last four blocks: no gain (P13 refuted)
+
+*Measured*, report logs, within 30 m, each seed at its kept epoch.
+- **Both arms** start from A1 seed 0 and train 4 epochs on the cache's 20,000 train rows (`1627ebd`).
+- **The preflight** first held the frozen branch to A1: select F1 0.66908 against its reread's
+  0.66940.
+
+| Arm | Trained | Recall, seeds 0 / 1 / 2 | Precision | Moving vehicles ≤ 20 m |
+|---|---|---|---|---|
+| A1 seed 0 (the frozen tap) | 4.39 M | 0.632 | 0.742 | 0.936 |
+| control: A1 continued, no LoRA | 4.39 M | 0.629 / 0.625 / 0.622 | 0.747–0.754 | 0.937–0.943 |
+| LoRA, rank 16, blocks 21–24 | 5.44 M | 0.633 / 0.630 / 0.629 | 0.742–0.752 | 0.939–0.942 |
+
+- **P13 refuted.** LoRA minus the frozen tap is +0.001, −0.003 and −0.003 in recall, against ≥ +0.05
+  predicted. P13 calls ≤ 0 refuted.
+- **Against its control, LoRA is +0.005 on every seed.** That is inside the control's seed range of
+  0.007, so not a result by the rule.
+- **Adapting the encoder's last four blocks buys the side-car nothing on NAVSIM.** The frozen
+  ViT output already carries what this side-car can use.
+
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
 - **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
