@@ -2,7 +2,8 @@
 
     python -m gallops.drivejepa_perception.train_sidecar overfit --tokens T --labels L --out O
     python -m gallops.drivejepa_perception.train_sidecar train --tokens T --labels L --out O --seed 0
-        [--tap post|vit_out|block12] [--layers 3] [--queries 64] [--epochs 12] [--rows train|tap] [--blind]
+        [--tap post|vit_out|block12] [--variant v1|v2|v3] [--layers 3] [--queries 64] [--epochs 12]
+        [--stop-after N] [--no-report] [--rows train|tap] [--blind]
     python -m gallops.drivejepa_perception.train_sidecar reread --tokens T --labels L --run R [--which kept]
     python -m gallops.drivejepa_perception.train_sidecar sight --tokens T --labels L --run R
 
@@ -13,7 +14,17 @@ cosine over the run per step, gradient clip 35.
 **Which epoch, and which numbers.** Every epoch is saved and read on the select logs. The kept
 epoch is the one with the best F1 at 2 m within 30 m on select. The report logs are read once,
 after training, at the kept epoch and at the fixed last epoch: the kept epoch is the best of
-several on select, so the last, which nothing chose, is quoted beside it.
+several on select, so the last, which nothing chose, is quoted beside it. `--no-report` skips
+them, so a run can be reviewed on select before any report number exists (the rerun's plan,
+docs/drivejepa-perception-sidecar-A.md).
+
+**How the run evolved.** Every LOG_EVERY steps, `steps.jsonl` gets the window's means: each loss
+term of each layer, the learning rate, the gradient norm before clipping, the AMP loss scale, the
+matched slots' centre error and class accuracy, and how long the step waited for data. Each
+epoch's line in `metrics.jsonl` adds the epoch's means and the full select readout.
+
+**The pipeline check** is `--stop-after 1`: epoch 1 of the full schedule (the learning rate follows
+`--epochs`, not the epochs run), so its curves are the first epoch of the run it stands for.
 
 **Checks.** `preflight.run` before the first step, with no way to skip it. `overfit` is H04's check
 1: 64 train samples, the same batch every step, constant LR, until the centre error of matched slots
@@ -40,6 +51,79 @@ from gallops.drivejepa_perception import targets as tg
 REPO = Path(__file__).resolve().parents[3]
 LR, WEIGHT_DECAY, BATCH, CLIP = 2e-4, 0.01, 64, 35.0
 TAP_DIMS = {"post": 256, "vit_out": 1024, "block12": 1024}
+#: The rerun's three architectures (docs/drivejepa-perception-sidecar-A.md, section 6). v1 is A1's
+#: side-car, 4.39 M on the ViT-out tap; v2 doubles its depth and its queries, 8.37 M; v3 also widens
+#: it to 384, 18.44 M, inside the plan's 30.8 M budget.
+VARIANTS = {
+    "v1": {"d_model": 256, "heads": 8, "ffn": 1024, "layers": 3, "queries": 64},
+    "v2": {"d_model": 256, "heads": 8, "ffn": 1024, "layers": 6, "queries": 128},
+    "v3": {"d_model": 384, "heads": 12, "ffn": 1536, "layers": 6, "queries": 128},
+}
+#: Steps between two lines of steps.jsonl; each line holds the means over those steps.
+LOG_EVERY = 50
+
+
+def resolve_architecture(args) -> None:
+    """Fill d_model, heads, ffn, layers and queries in place: from `--variant`, else v1's defaults.
+
+    A flag given beside a variant must agree with it: two sources for one number is how a run
+    comes to record an architecture it did not train.
+    """
+    preset = VARIANTS[args.variant] if args.variant else VARIANTS["v1"]
+    for key, value in preset.items():
+        given = getattr(args, key)
+        if given is None:
+            setattr(args, key, value)
+        elif args.variant and given != value:
+            raise SystemExit(
+                f"--{key.replace('_', '-')} {given} contradicts --variant {args.variant} ({value})"
+            )
+
+
+def build_model(run_args: dict) -> sidecar.SideCar:
+    """The side-car a run's arguments describe. Runs from before the width flags get v1's widths."""
+    return sidecar.SideCar(
+        d_in=TAP_DIMS[run_args["tap"]],
+        d=run_args.get("d_model") or 256,
+        heads=run_args.get("heads") or 8,
+        ffn=run_args.get("ffn") or 1024,
+        layers=run_args["layers"],
+        queries=run_args.get("queries") or tg.QUERIES,
+    )
+
+
+def lr_factor(step: int, total: int) -> float:
+    """The cosine schedule, per optimizer step, from 1 at step 0 to 0 at `total` (no warmup)."""
+    return 0.5 * (1 + math.cos(math.pi * min(step, total) / total))
+
+
+class Window:
+    """Running sums of per-step numbers; `means` reads them out and starts again.
+
+    A non-finite value (an AMP overflow's gradient norm) is counted apart, not averaged, so one
+    skipped step cannot make a window's mean infinite.
+    """
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self) -> None:
+        self.sums, self.counts, self.nonfinite = {}, {}, {}
+
+    def add(self, values: dict) -> None:
+        for key, value in values.items():
+            value = float(value)
+            if math.isfinite(value):
+                self.sums[key] = self.sums.get(key, 0.0) + value
+                self.counts[key] = self.counts.get(key, 0) + 1
+            else:
+                self.nonfinite[key] = self.nonfinite.get(key, 0) + 1
+
+    def means(self) -> dict:
+        out = {key: self.sums[key] / self.counts[key] for key in self.sums}
+        out.update({f"{key}_nonfinite": n for key, n in self.nonfinite.items()})
+        self.reset()
+        return out
 
 
 class Rows(torch.utils.data.Dataset):
@@ -133,6 +217,18 @@ def f1(m: dict) -> float:
     return 0.0 if not (r + p) or math.isnan(r + p) else 2 * r * p / (r + p)
 
 
+def match_numbers(out: dict, item: dict, match) -> dict:
+    """The last layer's Hungarian-matched slots on one batch: how many, their centre error (x-y, m)
+    and class accuracy. What the loss sees of the fit, read while training, not a readout."""
+    bi, pi, ti = match
+    if not len(bi):
+        return {"targets": 0.0}
+    with torch.no_grad():
+        centre = (out["box"][bi, pi, :2] - item["box"][bi, ti, :2]).norm(dim=-1).mean()
+        accuracy = (out["logits"][bi, pi].argmax(-1) == item["cls"][bi, ti]).float().mean()
+    return {"targets": float(len(bi)), "match_centre_m": float(centre), "match_class_acc": float(accuracy)}
+
+
 #: A2's draw of train logs (a learning curve): seeded, so every fraction is reproducible.
 FRACTION_SEED = 0
 
@@ -160,23 +256,25 @@ def train(cfg, args) -> None:
     if args.train_fraction < 1.0:
         train_rows = fraction_of_logs(args.labels, train_rows, args.train_fraction)
     select_rows = rows["select"]
+    stop = args.stop_after or args.epochs
+    if not 1 <= stop <= args.epochs:
+        raise SystemExit(f"--stop-after {args.stop_after} is outside 1..{args.epochs}")
     report = preflight.run(
         cfg,
         Path(args.tokens),
         Path(args.labels),
         {"train": train_rows, "select": select_rows, "report": rows["report"]},
+        vit_dir=Path(args.vit_tokens) if args.tap == "vit_out" and args.vit_tokens else None,
     )
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     device = torch.device("cuda")
-    model = sidecar.SideCar(d_in=TAP_DIMS[args.tap], layers=args.layers, queries=args.queries).to(device)
+    model = build_model(vars(args)).to(device)
     criterion = sidecar.SideCarLoss()
     optimiser = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
     steps_per_epoch = len(train_rows) // BATCH
     total = steps_per_epoch * args.epochs
-    schedule = torch.optim.lr_scheduler.LambdaLR(
-        optimiser, lambda s: 0.5 * (1 + math.cos(math.pi * min(s, total) / total))
-    )
+    schedule = torch.optim.lr_scheduler.LambdaLR(optimiser, lambda s: lr_factor(s, total))
     scaler = torch.cuda.amp.GradScaler()
     gap = prior_gap(targets, train_rows)
     generator = torch.Generator().manual_seed(args.seed)
@@ -200,36 +298,63 @@ def train(cfg, args) -> None:
         "prior_gap_m": gap,
         "train_git_sha": report["code"]["sha"],
         "rows": {k: int(len(v)) for k, v in rows.items()},
+        "steps_per_epoch": steps_per_epoch,
+        "schedule_steps": total,
     }
     (out / "run.json").write_text(json.dumps(meta, indent=1, default=str))
     print(
-        f"side-car {params / 1e6:.2f} M params; {len(train_rows)} train rows; {steps_per_epoch} steps/epoch",
+        f"side-car {params / 1e6:.2f} M params; {len(train_rows)} train rows; {steps_per_epoch} steps/epoch; "
+        f"{stop} of {args.epochs} epochs",
         flush=True,
     )
-    t0 = time.time()
-    for epoch in range(1, args.epochs + 1):
+    t0, step, window = time.time(), 0, Window()
+    for epoch in range(1, stop + 1):
         model.train()
-        sums, count = {}, 0
+        epoch_window, clipped, skipped = Window(), 0, 0
+        waited = time.time()
         for item in loader:
+            data_s = time.time() - waited
             item = {k: v.to(device, non_blocking=True) for k, v in item.items()}
             with torch.autocast("cuda", dtype=torch.float16):
                 outs = model(item["tokens"], item["projection"])
             loss, parts = criterion(outs, item)
+            if not torch.isfinite(loss):
+                raise SystemExit(f"non-finite loss at epoch {epoch}, step {step + 1}")
+            lr = optimiser.param_groups[0]["lr"]
             optimiser.zero_grad(set_to_none=True)
             scaler.scale(loss).backward()
             scaler.unscale_(optimiser)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), CLIP)
+            grad_norm = float(torch.nn.utils.clip_grad_norm_(model.parameters(), CLIP))
+            scale = scaler.get_scale()
             scaler.step(optimiser)
             scaler.update()
             schedule.step()
-            if not torch.isfinite(loss):
-                raise SystemExit(f"non-finite loss at epoch {epoch}")
-            sums["loss"] = sums.get("loss", 0.0) + float(loss)
-            count += 1
+            step += 1
+            # An overflow makes GradScaler skip the step and halve its scale; it is not a clip.
+            was_skipped = scaler.get_scale() < scale
+            was_clipped = math.isfinite(grad_norm) and grad_norm > CLIP
+            skipped, clipped = skipped + was_skipped, clipped + was_clipped
+            values = {k: v for k, v in parts.items() if not k.startswith("_")}
+            values.update(match_numbers(outs[-1], item, parts["_match"]))
+            values.update(loss=float(loss), lr=lr, grad_norm=grad_norm, data_s=data_s)
+            values["step_s"] = time.time() - waited
+            window.add(values)
+            epoch_window.add(values)
+            if step % args.log_every == 0:
+                line = {"step": step, "epoch": epoch, "amp_scale": scaler.get_scale(), **window.means()}
+                with open(out / "steps.jsonl", "a") as fh:
+                    fh.write(json.dumps(line) + "\n")
+            waited = time.time()
+        means = epoch_window.means()
         metrics = read(model, select_set, targets, select_rows, device, gap)
         record = {
             "epoch": epoch,
-            "train_loss": sums["loss"] / max(count, 1),
+            "train_loss": means["loss"],
+            "train": means,
+            "steps": steps_per_epoch,
+            "clipped_steps": clipped,
+            "skipped_steps": skipped,
+            "max_memory_gb": torch.cuda.max_memory_allocated(device) / 1e9,
             "select": metrics,
             "f1_30m": f1(metrics),
         }
@@ -252,22 +377,27 @@ def finish(model, out, args, tokens, slot, rows, projections, targets, gap, devi
     """The kept epoch (best select F1 within 30 m), then the report logs at it and at the last epoch."""
     records = [json.loads(line) for line in (out / "metrics.jsonl").read_text().splitlines()]
     kept = max(records, key=lambda r: r["f1_30m"])["epoch"]
+    last = records[-1]["epoch"]  # the schedule's last unless --stop-after ended the run early
     report_set = Rows(tokens, slot, rows["report"], projections, targets, blind=args.blind)
     select_set = Rows(tokens, slot, rows["select"], projections, targets, blind=args.blind)
     summary = {
         "kept_epoch": kept,
-        "last_epoch": args.epochs,
+        "last_epoch": last,
+        "schedule_epochs": args.epochs,
         "selection_rule": "best select F1 at 2 m within 30 m",
     }
     # A 1024-d tap exists only for A0's rows (the select logs and 10,000 train samples; tokens.py), so
     # an A0 probe on it is read on the select logs alone, as PREDICTIONS.md P1 says.
     has_report = args.tap == "post" or bool(getattr(args, "vit_tokens", ""))
-    for name, epoch in (("kept", kept), ("last", args.epochs)) if has_report else ():
+    no_report = bool(getattr(args, "no_report", False))
+    for name, epoch in (("kept", kept), ("last", last)) if has_report and not no_report else ():
         state = torch.load(out / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"]
         model.load_state_dict(state)
         summary[f"report_{name}"] = read(model, report_set, targets, rows["report"], device, gap)
     if not has_report:
         summary["report"] = "none: this tap has no report rows (A0 reads the select logs)"
+    elif no_report:
+        summary["report"] = "not read: --no-report (read once, later, after the run is reviewed on select)"
     model.load_state_dict(torch.load(out / f"epoch_{kept:02d}.pt", map_location="cpu")["state_dict"])
     summary["sight_select"] = {
         "with_tokens": read(model, select_set, targets, rows["select"], device, gap)["detections_per_sample"],
@@ -296,15 +426,14 @@ def reread(cfg, args) -> None:
     vit_tokens = meta.get("vit_tokens", "")
     tokens, slot, rows, projections, targets = load(args.tokens, args.labels, meta["tap"], vit_tokens)
     has_report = meta["tap"] == "post" or bool(vit_tokens)
+    last = summary.get("last_epoch", meta["epochs"])
     epochs = {
         "kept": [summary["kept_epoch"]],
-        "last": [meta["epochs"]],
-        "all": list(range(1, meta["epochs"] + 1)),
+        "last": [last],
+        "all": list(range(1, last + 1)),
     }
     device = torch.device("cuda")
-    model = sidecar.SideCar(d_in=TAP_DIMS[meta["tap"]], layers=meta["layers"], queries=meta["queries"]).to(
-        device
-    )
+    model = build_model(meta).to(device)
     train_rows = rows["tap"] if meta["rows"] == "tap" else rows["train"]
     gap = prior_gap(targets, train_rows)
     blind = bool(meta.get("blind"))
@@ -390,10 +519,16 @@ def overfit(cfg, args) -> None:
 
     tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap, args.vit_tokens)
     picked = np.random.default_rng(0).choice(rows["train"], 64, replace=False)
-    preflight.run(cfg, Path(args.tokens), Path(args.labels), {"train": picked, "select": rows["select"][:64]})
+    preflight.run(
+        cfg,
+        Path(args.tokens),
+        Path(args.labels),
+        {"train": picked, "select": rows["select"][:64]},
+        vit_dir=Path(args.vit_tokens) if args.tap == "vit_out" and args.vit_tokens else None,
+    )
     device = torch.device("cuda")
     torch.manual_seed(0)
-    model = sidecar.SideCar(d_in=TAP_DIMS[args.tap], layers=args.layers).to(device)
+    model = build_model(vars(args)).to(device)
     criterion, optimiser = (
         sidecar.SideCarLoss(),
         torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY),
@@ -429,9 +564,7 @@ def load_run(run: Path) -> tuple:
     run = Path(run)
     run_args = json.loads((run / "run.json").read_text())["args"]
     epoch = json.loads((run / "summary.json").read_text())["kept_epoch"]
-    model = sidecar.SideCar(
-        d_in=TAP_DIMS[run_args["tap"]], layers=run_args["layers"], queries=run_args["queries"]
-    )
+    model = build_model(run_args)
     model.load_state_dict(torch.load(run / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"])
     return model.eval(), epoch
 
@@ -528,7 +661,7 @@ def refinish(cfg, args) -> None:
         run_args.tokens, run_args.labels, run_args.tap, run_args.vit_tokens
     )
     train_rows = rows["tap"] if run_args.rows == "tap" else rows["train"]
-    model = sidecar.SideCar(d_in=TAP_DIMS[run_args.tap], layers=run_args.layers, queries=run_args.queries)
+    model = build_model(vars(run_args))
     device = torch.device("cuda")
     finish(
         model.to(device),
@@ -555,9 +688,20 @@ def main(argv=None) -> None:
     parser.add_argument("--out", default="")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--tap", choices=tuple(TAP_DIMS), default="post")
-    parser.add_argument("--layers", type=int, default=3)
-    parser.add_argument("--queries", type=int, default=tg.QUERIES)
-    parser.add_argument("--epochs", type=int, default=12)
+    parser.add_argument(
+        "--variant", choices=tuple(VARIANTS), default=None, help="one of the plan's architectures"
+    )
+    parser.add_argument("--d-model", type=int, default=None, help="width (v1: 256)")
+    parser.add_argument("--heads", type=int, default=None, help="attention heads (v1: 8)")
+    parser.add_argument("--ffn", type=int, default=None, help="feed-forward width (v1: 1024)")
+    parser.add_argument("--layers", type=int, default=None, help="decoder layers (v1: 3)")
+    parser.add_argument("--queries", type=int, default=None, help="agent queries (v1: 64)")
+    parser.add_argument("--epochs", type=int, default=12, help="the schedule's length")
+    parser.add_argument(
+        "--stop-after", type=int, default=0, help="stop after this many epochs of the --epochs schedule"
+    )
+    parser.add_argument("--no-report", action="store_true", help="read no report row (select only)")
+    parser.add_argument("--log-every", type=int, default=LOG_EVERY, help="steps per line of steps.jsonl")
     parser.add_argument("--rows", choices=("train", "tap"), default="train")
     parser.add_argument(
         "--train-fraction", type=float, default=1.0, help="A2: a seeded share of the train logs"
@@ -570,6 +714,7 @@ def main(argv=None) -> None:
         "--vit-tokens", default="", help="a ViT-out pass over every row (tokens --vit-out-all)"
     )
     args = parser.parse_args(argv)
+    resolve_architecture(args)
     cfg = SiteConfig.load()
     {
         "train": train,

@@ -207,3 +207,71 @@ def test_a2s_fraction_keeps_whole_logs_and_is_reproducible(tmp_path):
     assert len(half) == 15 and np.array_equal(half, train_sidecar.fraction_of_logs(tmp_path, rows, 0.5))
     kept = np.unique(log_id[half])
     assert len(kept) == 5 and all((log_id[half] == k).sum() == 3 for k in kept)  # whole logs only
+
+
+def test_build_model_reads_old_runs_and_each_variant_has_its_planned_size():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar
+
+    def size(run_args):
+        return sum(p.numel() for p in train_sidecar.build_model(run_args).parameters()) / 1e6
+
+    # A first-pass run.json has no width keys: it must rebuild as the model it trained (A1, 4.39 M).
+    assert round(size({"tap": "vit_out", "layers": 3, "queries": 64}), 2) == 4.39
+    for name, expected in (("v1", 4.39), ("v2", 8.37), ("v3", 18.44)):
+        assert round(size({"tap": "vit_out", **train_sidecar.VARIANTS[name]}), 2) == expected, name
+
+
+def test_a_variant_fills_the_architecture_and_refuses_a_contradicting_flag():
+    pytest.importorskip("torch")
+    import argparse
+
+    from gallops.drivejepa_perception import train_sidecar
+
+    def args(**given):
+        keys = ("d_model", "heads", "ffn", "layers", "queries")
+        return argparse.Namespace(variant=given.pop("variant", None), **{k: given.get(k) for k in keys})
+
+    a = args(variant="v2")
+    train_sidecar.resolve_architecture(a)
+    assert (a.layers, a.queries, a.d_model) == (6, 128, 256)
+    a = args(layers=1)  # A0's probe: no variant, one layer, the rest v1's
+    train_sidecar.resolve_architecture(a)
+    assert (a.layers, a.queries, a.d_model, a.heads, a.ffn) == (1, 64, 256, 8, 1024)
+    with pytest.raises(SystemExit):
+        train_sidecar.resolve_architecture(args(variant="v3", layers=3))
+
+
+def test_stopping_after_one_epoch_keeps_the_full_schedules_learning_rate():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar
+
+    per_epoch, epochs = 1471, 12
+    total = per_epoch * epochs
+    assert train_sidecar.lr_factor(0, total) == 1.0 and train_sidecar.lr_factor(total, total) == 0.0
+    # The pipeline check ends epoch 1 of 12 at cos-schedule 0.983, not at 0 as a 1-epoch run would.
+    assert np.isclose(train_sidecar.lr_factor(per_epoch, total), 0.5 * (1 + np.cos(np.pi / 12)))
+
+
+def test_window_means_skip_nonfinite_values_and_start_again():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar
+
+    w = train_sidecar.Window()
+    w.add({"loss": 2.0, "grad_norm": 10.0})
+    w.add({"loss": 4.0, "grad_norm": float("inf")})  # an AMP overflow's norm
+    assert w.means() == {"loss": 3.0, "grad_norm": 10.0, "grad_norm_nonfinite": 1}
+    assert w.means() == {}
+
+
+def test_match_numbers_measure_the_matched_slots():
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar
+
+    out = {"box": torch.zeros(1, 4, 8), "logits": torch.zeros(1, 4, 4)}
+    out["box"][0, 2, :2] = torch.tensor([3.0, 4.0])
+    out["logits"][0, 2, 1] = 5.0  # slot 2 says pedestrian
+    item = {"box": torch.zeros(1, 2, 7), "cls": torch.tensor([[1, 0]])}
+    match = (torch.tensor([0, 0]), torch.tensor([2, 0]), torch.tensor([0, 1]))
+    numbers = train_sidecar.match_numbers(out, item, match)
+    assert numbers == {"targets": 2.0, "match_centre_m": 2.5, "match_class_acc": 1.0}

@@ -72,9 +72,7 @@ def a1_sidecar(run: Path) -> tuple:
     """
     meta = json.loads((run / "run.json").read_text())["args"]
     kept = json.loads((run / "summary.json").read_text())["kept_epoch"]
-    car = sidecar.SideCar(
-        d_in=train_sidecar.TAP_DIMS[meta["tap"]], layers=meta["layers"], queries=meta["queries"]
-    )
+    car = train_sidecar.build_model(meta)
     car.load_state_dict(torch.load(run / f"epoch_{kept:02d}.pt", map_location="cpu")["state_dict"])
     reread = run / "reread.json"
     if not reread.exists():

@@ -10,7 +10,9 @@ building its data and before its first optimizer step; a failure lists every pro
   same order; the run's rows fall in the splits they claim.
 - **labels:** `navsim_data.check_labels` on a few windows, held to NAVSIM's and nuPlan's own code.
 - **inputs:** a live batch-1 forward of a few select rows, inputs built by the vendor's code, equals
-  the cache: tokens to fp16 rounding, and the release's pick exactly.
+  the cache: tokens to fp16 rounding, and the release's pick exactly. With `vit_dir` (a side-car
+  on the ViT's own output), the same forward's ViT output equals that cache too, within
+  tokens.VIT_LIMITS: it is the tap the side-car reads, so it is the one held to the live model.
 - **projection:** a point 20 m straight ahead lands near the token image's centre column through
   the cached CAM_F0 projection; a wrong camera slot or a wrong TO_512 puts it elsewhere.
 """
@@ -27,10 +29,11 @@ REPO = Path(__file__).resolve().parents[3]
 TOKEN_ATOL = 1e-2
 
 
-def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6) -> dict:
+def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6, vit_dir=None) -> dict:
     """All checks; returns the report for the run's files or raises SystemExit listing every problem.
 
-    `rows` maps the split names a run uses (train, select, report, tap) to the row arrays it reads.
+    `rows` maps the split names a run uses (train, select, report, tap) to the row arrays it reads;
+    `vit_dir`, the ViT-out cache (tokens.py --vit-out-all) when that is what the run reads.
     """
     from gallops.drivejepa_perception import env, navsim_data, targets
     from gallops.train.preflight import code_checks
@@ -55,6 +58,15 @@ def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6)
         problems.append(f"the token cache has {tmanifest['rows']} rows, the labels {len(labels['token'])}")
     if Path(tmanifest["labels"]).resolve() != Path(labels_dir).resolve():
         problems.append(f"the token cache was built from {tmanifest['labels']}, not {labels_dir}")
+    if vit_dir is not None:
+        vmanifest = json.loads((Path(vit_dir) / "manifest.json").read_text())
+        data["vit_rows"] = vmanifest["rows"]
+        if vmanifest["rows"] != len(labels["token"]):
+            problems.append(
+                f"the ViT-out cache has {vmanifest['rows']} rows, the labels {len(labels['token'])}"
+            )
+        if Path(vmanifest["labels"]).resolve() != Path(labels_dir).resolve():
+            problems.append(f"the ViT-out cache was built from {vmanifest['labels']}, not {labels_dir}")
     for name, picked in rows.items():
         allowed = set(splits["train"]) if name in ("train", "tap") else set(splits[name])
         if name == "tap":
@@ -72,7 +84,7 @@ def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6)
     sample = (
         select_rows[np.linspace(0, len(select_rows) - 1, live_rows).astype(int)] if len(select_rows) else []
     )
-    report["inputs"], found = _live_equals_cache(entered, tokens_dir, labels, token_logs, sample)
+    report["inputs"], found = _live_equals_cache(entered, tokens_dir, labels, token_logs, sample, vit_dir)
     problems += found
 
     l2i = np.load(Path(tokens_dir) / "lidar2img.npy", mmap_mode="r")
@@ -90,7 +102,7 @@ def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6)
     return report
 
 
-def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, sample) -> tuple:
+def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, sample, vit_dir=None) -> tuple:
     """Rebuild `sample` rows live (vendor inputs, batch 1) and compare them with the cache."""
     import torch
     from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
@@ -98,14 +110,23 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
     from navsim.agents.drive_jepa_perception_based.drive_jepa_features import DriveJEPAFeatureBuilder
     from navsim.common.dataclasses import AgentInput
 
-    from gallops.drivejepa_perception import navsim_data
+    from gallops.drivejepa_perception import navsim_data, tokens
 
     cache = {k: np.load(Path(tokens_dir) / f"{k}.npy", mmap_mode="r") for k in ("tokens", "pick")}
+    if vit_dir is not None:
+        cache["vit_out"] = np.load(Path(vit_dir) / "vit_out.npy", mmap_mode="r")
     agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
     agent.initialize()
     model = agent._pad_model.cuda().eval()
     captured = {}
-    hook = model._backbone.register_forward_hook(lambda m, i, o: captured.__setitem__("tokens", o[0]))
+    hooks = [model._backbone.register_forward_hook(lambda m, i, o: captured.__setitem__("tokens", o[0]))]
+    if vit_dir is not None:
+        hooks.append(
+            model._backbone.img_backbone.register_forward_hook(
+                lambda m, i, o: captured.__setitem__("vit_out", o)
+            )
+        )
+    vit_diff = []
     builder = DriveJEPAFeatureBuilder(config=DriveJEPAConfig())
     sensors = DriveJEPAAgent.get_sensor_config(None)
     logs_dir = Path(entered["navsim_root"]) / "navsim_logs/trainval"
@@ -121,14 +142,24 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
             live = captured["tokens"][0, :, 0].float().cpu().numpy()
             worst = max(worst, float(np.abs(live - np.asarray(cache["tokens"][r], dtype=np.float32)).max()))
             picks += int(int(out["pdm_score"][0].argmax()) == int(cache["pick"][r]))
-    hook.remove()
+            if vit_dir is not None:
+                live_vit = captured["vit_out"].reshape(512, 1024).float().cpu().numpy()
+                vit_diff.append(np.abs(live_vit - np.asarray(cache["vit_out"][r], dtype=np.float32)))
+    for hook in hooks:
+        hook.remove()
     del model, agent
     torch.cuda.empty_cache()
+    found = {"rows": [int(r) for r in sample], "token_max_diff": worst, "picks_equal": picks}
     if worst > TOKEN_ATOL:
         problems.append(f"live tokens differ from the cache by {worst:.3g} (limit {TOKEN_ATOL})")
     if picks != len(sample):
         problems.append(f"the live pick equals the cached one on {picks} of {len(sample)} rows")
-    return {"rows": [int(r) for r in sample], "token_max_diff": worst, "picks_equal": picks}, problems
+    if vit_diff:
+        diff = np.stack(vit_diff)
+        found["vit_out"] = {"max_abs": float(diff.max()), "mean_abs": float(diff.mean())}
+        if diff.max() > tokens.VIT_LIMITS["max_abs"] or diff.mean() > tokens.VIT_LIMITS["mean_abs"]:
+            problems.append(f"the live ViT output differs from the ViT-out cache: {found['vit_out']}")
+    return found, problems
 
 
 def run_scorer(cfg, args, data: dict, model_factory) -> dict:

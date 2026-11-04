@@ -94,6 +94,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.train_scorer` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood | experiment |
 | `gallops.drivejepa_perception.train_sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood | experiment |
 | `gallops.drivejepa_perception.train_vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood | experiment |
+| `gallops.drivejepa_perception.views` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood | experiment |
 | `gallops.drivejepa_perception.vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
