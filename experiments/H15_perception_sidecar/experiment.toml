@@ -77,3 +77,232 @@ notes = "Nothing trains here. Labels: every annotated agent within 60 m at the c
   unit = "samples"
   scene_list = "recipes/drivejepa_perception/splits.json"
   built_by = "gallops.drivejepa_perception.navsim_data"
+
+[[runs]]
+id = "H15.a0"
+label = "A0: which frozen tap carries 3D -- one-layer probes on the post-projector tokens, the ViT's output and block 12"
+started = 2026-11-04
+start_from = "released"
+trained = ["one-layer side-car probe"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+train_git_sha = "80f4181"
+notes = "10,000 train rows, 6 epochs each, read on the select logs at the kept epoch (6). Read again with the fixed readout (f2b6570): the as-run 'within 30 m' counted to 35 m (README). The ViT's output was chosen for A1."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#a0-vit-out"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, select logs (H04's 51 held-out)"
+  role = "selection"
+  unit = "samples"
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "recall at 2 m within 30 m, front view, all classes (ViT output, 1024-d)"
+  subset = "select logs"
+  n = 32375
+  unit = "target"
+  baseline = "post-projector tokens, 256-d"
+  baseline_value = "0.249"
+  value = "0.343"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "one seed per tap; block 12: 0.269. P1 (best tap >= 0.30) supported. Precision 0.383 against 0.318"
+
+[[runs]]
+id = "H15.a1"
+label = "A1: the side-car on the ViT's output, three seeds and 128 queries on seed 0"
+started = 2026-11-04
+start_from = "released"
+trained = ["side-car"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+params_trained_m = 4.39
+train_git_sha = "f05e2ff"
+notes = "12 epochs over 94,195 train rows, kept epoch chosen on the select logs with the as-run readout, then read again with the fixed one (a1-*-reread). Sight check: zeroed tokens give 27 detections a sample on seed 0 (0 on the others); with another log's real tokens every run's recall falls to 0.046-0.047 (a1-*-sight). Seed 0's kept epoch (11) made the agents phase B reads."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#a1-s0"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, train logs (1,071)"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, report logs (70, seeded draw)"
+  role = "held-out"
+  unit = "samples"
+  n = 4636
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "recall at 2 m within 30 m, front view, all classes"
+  subset = "report logs"
+  n = 24216
+  unit = "target"
+  baseline = "no camera (blind arm, trained identically)"
+  baseline_value = "0"
+  value = "0.631"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "mean of three seeds (0.6300-0.6323); precision 0.736-0.742. P2 supported on all three seeds; 128 queries (seed 0): recall 0.647, precision 0.802"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "recall at 2 m, moving vehicles within 20 m"
+  subset = "report logs"
+  value = "0.935"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "mean of three seeds (0.935-0.936); P3 supported (>= 0.65)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "lead-vehicle gap error, m"
+  subset = "report logs, samples with a vehicle ahead in the ego lane"
+  n = 1807
+  unit = "sample"
+  baseline = "no-camera prior (train mean gap)"
+  baseline_value = "8.53"
+  value = "2.28"
+  better = "lower"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "mean of three seeds (2.14-2.36); P5 supported"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "path FDE at 1 s, matched moving agents, m"
+  subset = "report logs"
+  n = 4231
+  unit = "agent"
+  baseline = "constant velocity from the side-car's own velocity"
+  baseline_value = "1.268"
+  value = "1.216"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "mean of three seeds; paired difference -0.049 (SE 0.013), -0.048 (SE 0.014), -0.059 (SE 0.012), beyond 2 SE clustered by log on every seed: P4's support rule met, but 4-5% against the predicted 10%"
+
+[[runs]]
+id = "H15.b1"
+label = "B1: the side-car's agents as scorer inputs -- four modes (adapter, + LoRA, + full scorer, replacement) x arms C, F, O, S x three seeds"
+started = 2026-11-04
+start_from = "released"
+trained = ["scorer adapter, LoRA, the scorer MLP or a replacement scorer, by mode"]
+frozen = ["encoder", "projector", "refiner", "side-car"]
+train_git_sha = "e6af85b"
+notes = "Loss bce (chosen on the select logs, arm C, before any arm read an agent; the plan's imitation term made every control worse than the release). F trained from e6af85b, O and S from 1627ebd; the B1 code is the same. Agents: A1 seed 0, epoch 11, 4.86 a row. Verdict by the pre-registered rule (b1-report): NEUTRAL for every arm in every mode, kept and last epoch. B1.6, every F mode at seed 0: deleting the named agent changes the pick 3.1-4.9x as often as a random one, the agent is real 86% of the time, AUC 0.92-0.97."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#b1-full-F"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, report logs (70, seeded draw)"
+  role = "held-out"
+  unit = "samples"
+  n = 4636
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full)"
+  subset = "report logs"
+  n = 4636
+  unit = "sample"
+  baseline = "H15.b1 full C"
+  baseline_value = "0.9150"
+  value = "0.9142"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  headline = true
+  note = "NEUTRAL in all four modes. F - C per seed -0.13, -0.11, -0.00 points (2 SE 0.19, 0.16, 0.13); ground-truth agents (O) NEUTRAL too, so the limit is not perception: NC and TTC are 0.996 on the release's pick in-sample (S0.8). The release scores 0.9140 on these rows (in-sample for it). P7, P8 refuted"
+
+[[runs]]
+id = "H15.b3"
+label = "B3.1: rank-16 LoRA on the ViT's last four blocks in a branch only the side-car reads, against A1 continued without it"
+started = 2026-11-04
+start_from = "H15.a1"
+trained = ["LoRA on blocks 21-24 (1.05 M)", "side-car"]
+frozen = ["encoder blocks 1-20", "projector", "refiner", "scorer"]
+params_trained_m = 5.44
+train_git_sha = "1627ebd"
+notes = "From a block-20 cache (30 GB, 20,000 train rows + select + report), 4 epochs, three seeds per arm; both arms start from A1 seed 0's kept epoch. The preflight held the frozen branch to A1: select F1 0.66908 against 0.66940."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#b3-lora"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "recall at 2 m within 30 m, front view, all classes"
+  subset = "report logs"
+  baseline = "H15.a1 seed 0 (the frozen tap)"
+  baseline_value = "0.632"
+  value = "0.631"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "mean of three seeds (0.6290-0.6330); the control (A1 continued, no LoRA) 0.6215-0.6285. P13 (>= +0.05) refuted"
+
+[[runs]]
+id = "H15.ood"
+label = "OOD: the side-car zero-shot and every B1 model on nuScenes, H14's 102 held-out train scenes"
+started = 2026-11-04
+start_from = "released"
+trained = []
+frozen = ["everything"]
+train_git_sha = "5635f7f"
+notes = "Nothing trains. The release at batch 1 on 2,996 keyframes (inputs through H14's TablesTickDataset); the projection held to the calibration's own on every scene (1.4e-5 px). The release's picked L2 at 3 s, 3.788 m, equals H14's on the same keyframes."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#ood-read-v2"
+
+  [[runs.data]]
+  dataset = "nuscenes"
+  split = "train, H14's 102 held-out scenes"
+  role = "held-out"
+  unit = "keyframes"
+  n = 2996
+  scene_list = "recipes/drivejepa_aux/heldout_scenes.json"
+  built_by = "gallops.drivejepa_perception.ood"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "side-car zero-shot recall at 2 m within 30 m, vehicles"
+  subset = "102 held-out train scenes"
+  value = "0.480"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "A1 seed 0, never trained on nuScenes; all classes 0.380 at precision 0.608 (navtrain report: 0.632 / 0.742). P15's recall part (>= 0.30) holds"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "picked-plan L2 at 3 s, m, B1 full F (best mode on select)"
+  subset = "102 held-out train scenes"
+  n = 2996
+  unit = "keyframe"
+  baseline = "R, the released model"
+  baseline_value = "3.788"
+  value = "4.050"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "mean of three seeds; minus R +0.234, +0.239, +0.313 m, each beyond 2 SE clustered by scene: P15 refuted. full C (no agents) is as much worse (+0.282, +0.438, +0.352), so the cost is fitting the scorer to navtrain, not the agents; collision rate not lower"
