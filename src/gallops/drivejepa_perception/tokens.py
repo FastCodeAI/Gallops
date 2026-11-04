@@ -25,8 +25,13 @@ select logs' samples plus a seeded 10,000 of the train logs'.
 
 The inputs are built by the vendor's own code -- its windows (`filter_scenes`), `AgentInput` and
 feature builder -- in loader workers sharded by log, so a log's pickle is read once. The workers
-never build the model. The pass resumes: rows already written are skipped (`done.npy`), and the
-staging directory becomes `--out` only when every row is done.
+never build the model. One part is swapped: `fast_bev_feature` replaces the builder's
+`_get_bev_feature`, which spends most of a sample normalising four full-size camera images into a
+tensor the model never reads; the swap is held to the vendor's exact output before the pass starts
+(`check_fast_features`), and the manifest records it.
+
+The pass resumes: rows already written are skipped (`done.npy`), and the staging directory becomes
+`--out` only when every row is done.
 """
 
 from __future__ import annotations
@@ -68,6 +73,101 @@ def tap_rows(token_logs: list, splits: dict) -> np.ndarray:
         in_train, min(TAP_TRAIN_ROWS, len(in_train)), replace=False
     )
     return np.sort(np.concatenate([np.flatnonzero(in_select), picked])).astype(np.int64)
+
+
+#: Rows on which the fast input path is held to the vendor's before the pass starts.
+FAST_CHECK_ROWS = 12
+#: The vendor's image pipeline: RandomScaleImageMultiViewImage(scales=[0.4]), then padding to a
+#: multiple of 32 (bev_feature_build.py).
+SCALE, PAD_DIVISOR = 0.4, 32
+
+
+def fast_bev_feature(agent_input, training: bool = False) -> dict:
+    """`bev_feature_build._get_bev_feature`'s geometry, without its pixel work.
+
+    The vendor's function loads, normalises, rescales and pads all four cameras into a
+    `camera_feature` tensor that nothing in the model reads (it is built in bev_feature_build.py and
+    read nowhere else). Profiled, that pixel work is most of building an input: 1.3 to 5 s of a
+    sample's 1.5 to 5.5 s on this host. The model reads `lidar2img` and `img_shape` from it, and
+    both are pure geometry of each camera's calibration and image size. Computed here with the
+    vendor's arithmetic, line for line; `check_fast_features` holds the result to the vendor's
+    function exactly, on real samples, before a pass uses it.
+    """
+    lidar2img, shapes = [], []
+    cameras = agent_input.cameras[-1]
+    for cam in [cameras.cam_b0, cameras.cam_f0, cameras.cam_l0, cameras.cam_r0]:
+        if cam.image is None:
+            continue
+        lidar2cam_r = np.linalg.inv(cam.sensor2lidar_rotation)
+        lidar2cam_t = cam.sensor2lidar_translation @ lidar2cam_r.T
+        lidar2cam_rt = np.eye(4)
+        lidar2cam_rt[:3, :3] = lidar2cam_r.T
+        lidar2cam_rt[3, :3] = -lidar2cam_t
+        viewpad = np.eye(4)
+        viewpad[: cam.intrinsics.shape[0], : cam.intrinsics.shape[1]] = cam.intrinsics
+        scale = np.eye(4)
+        scale[0, 0] *= SCALE
+        scale[1, 1] *= SCALE
+        lidar2img.append(scale @ (viewpad @ lidar2cam_rt.T))
+        height, width = int(cam.image.shape[0] * SCALE), int(cam.image.shape[1] * SCALE)
+        shapes.append(
+            (
+                int(np.ceil(height / PAD_DIVISOR)) * PAD_DIVISOR,
+                int(np.ceil(width / PAD_DIVISOR)) * PAD_DIVISOR,
+                cam.image.shape[2],
+            )
+        )
+    return {
+        "img_shape": torch.FloatTensor(np.stack(shapes)),
+        "lidar2img": torch.FloatTensor(np.stack(lidar2img)),
+    }
+
+
+def use_fast_geometry():
+    """Point the vendor's feature builder at `fast_bev_feature`; return what it pointed at before."""
+    from navsim.agents.drive_jepa_perception_based import drive_jepa_features
+
+    original = drive_jepa_features._get_bev_feature
+    drive_jepa_features._get_bev_feature = fast_bev_feature
+    return original
+
+
+def check_fast_features(samples: list, navsim_root: Path) -> dict:
+    """Every input the model reads is the same, exactly, with the fast path and with the vendor's.
+
+    The only key allowed to differ is `camera_feature`, the tensor the fast path does not build.
+    Refuses the pass (SystemExit) on any difference.
+    """
+    from navsim.agents.drive_jepa_perception_based import drive_jepa_features
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+    from navsim.common.dataclasses import AgentInput
+
+    from gallops.drivejepa_perception import navsim_data
+
+    builder = drive_jepa_features.DriveJEPAFeatureBuilder(config=DriveJEPAConfig())
+    sensors = DriveJEPAAgent.get_sensor_config(None)
+    problems = []
+    for log, token in samples:
+        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs/trainval", {token})[token]
+        agent_input = AgentInput.from_scene_dict_list(
+            frames, navsim_root / "sensor_blobs/trainval", navsim_data.HISTORY, sensors
+        )
+        vendor = builder.compute_features(agent_input)
+        original = use_fast_geometry()
+        try:
+            fast = builder.compute_features(agent_input)
+        finally:
+            drive_jepa_features._get_bev_feature = original
+        if set(vendor) - set(fast) != {"camera_feature"} or set(fast) - set(vendor):
+            problems.append(f"{token}: keys differ: vendor {sorted(vendor)}, fast {sorted(fast)}")
+            continue
+        for key, value in fast.items():
+            if not torch.equal(value, vendor[key]):
+                problems.append(f"{token}: `{key}` differs from the vendor's")
+    if problems:
+        raise SystemExit("the fast input path differs from the vendor's:\n- " + "\n- ".join(problems))
+    return {"rows": len(samples), "equal": True}
 
 
 def _sha256(path: Path) -> str:
@@ -119,6 +219,13 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
     done_path = staging / "done.npy"
     done = np.load(done_path) if done_path.exists() else np.zeros(n, dtype=bool)
     print(f"{n} rows, {int(done.sum())} already done, {len(taps)} tap rows", flush=True)
+
+    # The fast input path must equal the vendor's on real samples before any row is built with it.
+    fast_check = check_fast_features(
+        [(token_logs[r], tokens[r]) for r in np.linspace(0, n - 1, FAST_CHECK_ROWS).astype(int)],
+        Path(entered["navsim_root"]),
+    )
+    print(f"fast inputs equal the vendor's on {fast_check['rows']} rows", flush=True)
 
     # The loader first, so its workers fork from a process that holds no model and no CUDA context.
     plan: dict = {}
@@ -203,6 +310,8 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
         "tap_rule": f"select-log rows + default_rng({TAP_SEED}) choice of {TAP_TRAIN_ROWS} train-log rows",
         "batch": 1,
         "mode": "eval",
+        "inputs": "the vendor's builder with `fast_bev_feature` for its unread 4-camera tensor",
+        "fast_inputs_check": fast_check,
         "seconds": round(time.time() - t0),
     }
     (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
@@ -226,6 +335,8 @@ class _Samples(torch.utils.data.IterableDataset):
 
         info = torch.utils.data.get_worker_info()
         worker, workers = (info.id, info.num_workers) if info else (0, 1)
+        torch.set_num_threads(1)  # 24 workers x torch's default 128 threads only slowed each one down
+        use_fast_geometry()
         builder = DriveJEPAFeatureBuilder(config=DriveJEPAConfig())
         sensors = DriveJEPAAgent.get_sensor_config(None)  # uses no instance state; imported, not restated
         for i, (log, rows) in enumerate(self.plan):
