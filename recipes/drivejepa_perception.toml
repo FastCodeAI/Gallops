@@ -667,3 +667,12 @@ module = "drivejepa_perception.ood"
 env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
         "--out", "{out}/ood/ood-v2.json"]
+
+# B2's refiners on the same keyframes: the frozen scorer's pick and the best of 32 (after B2 finishes).
+[[stage]]
+name = "ood-read-b2"
+python = "drivejepa"
+module = "drivejepa_perception.ood"
+env = { PYTHONPATH = "{code.paddock}/src" }
+args = ["read-b2", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b2", "{out}/b2",
+        "--out", "{out}/ood/ood-b2.json"]

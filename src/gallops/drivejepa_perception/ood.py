@@ -4,6 +4,8 @@
     python -m gallops.drivejepa_perception.ood pass --extract {out}/nusc-extract --out {out}/nusc-v1
     python -m gallops.drivejepa_perception.ood read --nusc {out}/nusc-v1 --sidecar {out}/runs/a1-s0 \
         --b1 {out}/b1 --out {out}/ood.json
+    python -m gallops.drivejepa_perception.ood read-b2 --nusc {out}/nusc-v1 --sidecar {out}/runs/a1-s0 \
+        --b2 {out}/b2 --out {out}/ood-b2.json
 
 **Rows.** Every trainable keyframe (H14's `nusc.ticks`: the keyframe 0.5 s back and 4 s of future
 keyframes exist) of H14's 102 held-out nuScenes train scenes, the list `drivejepa_aux.split` drew
@@ -426,23 +428,138 @@ def read(cfg, args) -> None:
     out.write_text(json.dumps(result, indent=1, default=str))
 
 
+def read_b2(cfg, args) -> None:
+    """B2's refiners on nuScenes: every run under --b2, every seed at its last epoch, against the
+    release on the same keyframes. The refiner runs from the pass's post-projector tokens, the
+    frozen release scorer picks, and the plans are read as `read` reads them: the pick's L2 at
+    1, 2 and 3 s and its collisions within 3 s, plus the best of 32 by ADE over 3 s (H14's minADE).
+    F and S read the side-car's agents on these keyframes (S: another scene's).
+    """
+    import pickle
+
+    import torch
+
+    from gallops.drivejepa_aux import metrics as aux_metrics
+    from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
+    from gallops.drivejepa_b2d.train_generator import refine_from_cache
+    from gallops.drivejepa_perception import b_report, env, train_refiner, train_scorer, train_sidecar
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a readout never overwrites one")
+    entered = env.enter(cfg)
+    nusc = Path(args.nusc)
+    labels = dict(np.load(nusc / "labels.npz"))
+    outputs = dict(np.load(nusc / "outputs.npz"))
+    vit = np.load(nusc / "vit_out.npy", mmap_mode="r")
+    with open(nusc / "future_boxes.pkl", "rb") as fh:
+        future = pickle.load(fh)
+    rows = np.flatnonzero(outputs["built"])
+    scenes = outputs["scene"]
+    front = outputs["lidar2img"][:, tg.FRONT_SLOT].astype(np.float64)
+    projections = (tg.to_512(*NUSC_SIZE) @ front).astype(np.float32)
+    device = torch.device("cuda")
+    car, _ = train_sidecar.load_run(Path(args.sidecar))
+    agents_f = train_sidecar.agent_arrays(car, vit, int, np.arange(len(scenes)), projections, device)
+    by_arm = {"F": agents_f, "S": {k: v[train_scorer.shuffled_rows(scenes)] for k, v in agents_f.items()}}
+    by_arm["O"] = train_scorer.truth_agents_projected(labels, projections)
+    expert = labels["ego_future"]
+    boxes = [future[r] for r in rows]
+    head = Head()
+    head.load_state_dict(head_tensors_from_checkpoint(Path(entered["release"])))
+    head = head.to(device).eval()
+    spatial, level = torch.tensor([[16, 32]], dtype=torch.long), torch.tensor([0], dtype=torch.long)
+
+    def numbers(proposals, pick):
+        plans = proposals[np.arange(len(rows)), pick]
+        gap = np.linalg.norm(plans[:, :, :2] - expert[rows][:, :, :2], axis=-1)
+        return {
+            "l2_1s": gap[:, 1],
+            "l2_2s": gap[:, 3],
+            "l2_3s": gap[:, 5],
+            "collision_3s": aux_metrics.collided(plans, boxes, steps=6).astype(np.float64),
+            "min_ade_3s": aux_metrics.min_ade(proposals, expert[rows], steps=6),
+        }
+
+    release = numbers(outputs["proposals"][rows], outputs["pick"][rows])
+    result = {"rows": int(len(rows)), "release": {k: float(v.mean()) for k, v in release.items()}, "b2": {}}
+    for run_dir in sorted(p for p in Path(args.b2).iterdir() if (p / "summary.json").exists()):
+        mode, arm = run_dir.name.rsplit("-", 1)
+        summary = json.loads((run_dir / "summary.json").read_text())
+        epochs = summary["args"]["epochs"]
+        seeds = {}
+        for key in sorted(k for k in summary if k.startswith("seed")):
+            _, model, adapter = train_refiner.build(entered, mode, arm != "C")
+            state = torch.load(run_dir / key / f"epoch_{epochs:02d}.pt", map_location="cpu")
+            adapter.load_state_dict(state["adapter"])
+            model.load_state_dict(state["refiner"], strict=False)
+            model, adapter = model.to(device).eval(), adapter.to(device).eval()
+            model._backbone = model._backbone.cpu()
+            proposals = np.zeros((len(rows), 32, 8, 3), np.float32)
+            pick = np.zeros(len(rows), np.int64)
+            with torch.no_grad():
+                for i in range(0, len(rows), train_refiner.BATCH):
+                    chunk = rows[i : i + train_refiner.BATCH]
+                    if arm != "C":
+                        adapter.context = {
+                            k: torch.from_numpy(np.asarray(v[chunk])).to(device)
+                            for k, v in by_arm[arm].items()
+                        }
+                        adapter.context["mask"] = adapter.context["mask"].bool()
+                    props, bev = refine_from_cache(
+                        model,
+                        torch.from_numpy(outputs["tokens"][chunk].astype(np.float32)),
+                        torch.from_numpy(outputs["lidar2img"][chunk][:, 1:2]),
+                        torch.from_numpy(outputs["img_shape"][chunk]),
+                        torch.from_numpy(outputs["ego_status"][chunk]),
+                        spatial,
+                        level,
+                    )
+                    proposals[i : i + len(chunk)] = props[-1].float().cpu().numpy()
+                    pick[i : i + len(chunk)] = (
+                        head(bev.reshape(len(chunk), 32, 8, -1).amax(2))[..., -1].argmax(1).cpu().numpy()
+                    )
+            mine = numbers(proposals, pick)
+            seeds[key] = {
+                **{k: float(v.mean()) for k, v in mine.items()},
+                "minus_release": {
+                    k: {
+                        "mean": float((mine[k] - release[k]).mean()),
+                        "se": b_report.clustered_se(mine[k] - release[k], scenes[rows]),
+                    }
+                    for k in mine
+                },
+            }
+            del model, adapter
+            torch.cuda.empty_cache()
+        result["b2"][run_dir.name] = seeds
+        print(
+            json.dumps({run_dir.name: {k: round(v["min_ade_3s"], 3) for k, v in seeds.items()}}), flush=True
+        )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, indent=1, default=str))
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.ood")
-    parser.add_argument("command", choices=("extract", "pass", "read"))
+    parser.add_argument("command", choices=("extract", "pass", "read", "read-b2"))
     parser.add_argument("--out", required=True)
     parser.add_argument("--extract", default="", help="pass: the extract directory")
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--nusc", default="", help="read: the pass's output")
     parser.add_argument("--sidecar", default="", help="read: the A1 run whose side-car is read")
     parser.add_argument("--b1", default="", help="read: the B1 runs' directory")
+    parser.add_argument("--b2", default="", help="read-b2: the B2 runs' directory")
     args = parser.parse_args(argv)
     cfg = SiteConfig.load()
     if args.command == "extract":
         run_extract(cfg, Path(args.out))
     elif args.command == "pass":
         run_pass(cfg, Path(args.extract), Path(args.out), args.workers)
+    elif args.command == "read-b2":
+        read_b2(cfg, args)
     else:
         read(cfg, args)
 
