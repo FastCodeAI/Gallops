@@ -20,7 +20,7 @@ We are building a JEPA-based driving model, and this page is its evidence: every
 experiment, who ran it, and what it showed. Click an ID for that experiment's card,
 with its data, code, checkpoint sha256, results and gate verdicts.
 
-![Gap closing leads to an agreed base. Hypotheses are then tested one at a time through the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
+![Gap closing leads to an agreed base. Hypotheses of one change each are then judged by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
 
 ## Where we are
 
@@ -52,7 +52,7 @@ Each of us took some benchmarks and tried to close released Drive-JEPA's gap on 
 
 ## Hypothesis experiments
 
-One structural change at a time, on the agreed base, decided by paddock's regression gate.
+One structural change each, on the agreed base, decided by paddock's regression gate.
 
 <!-- experiments:hypotheses -->
 | ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |

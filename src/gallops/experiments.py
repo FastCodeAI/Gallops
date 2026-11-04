@@ -947,7 +947,7 @@ def render_picture(reg: Registry) -> str:
     grey = "#768390"
     parts = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
-        'aria-label="Gap closing leads to an agreed base, then hypotheses tested one at a time through the '
+        'aria-label="Gap closing leads to an agreed base, then hypotheses of one change each, judged by the '
         'regression gate, until the gate ships a version" '
         "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\">",
         "  <title>How the work flows</title>",
@@ -966,7 +966,7 @@ def render_picture(reg: Registry) -> str:
             200,
             "#1F5FBF",
             "Phase 2: hypotheses",
-            [f"{hypotheses} one at a time", f"{len(tracks['enabler'])} enablers"],
+            [f"{hypotheses} one change each", f"{len(tracks['enabler'])} enablers"],
         ),
         _box(710, 136, "#57606A", "Regression gate", [f"{gated} gated so far"]),
         _box(
@@ -990,7 +990,7 @@ def render_picture(reg: Registry) -> str:
         f'  <path d="M778 132 V176 H570 V136" fill="none" stroke="{grey}" stroke-width="2" '
         'marker-end="url(#a)"/>',
         f'  <text x="674" y="196" text-anchor="middle" font-size="13" fill="{grey}">'
-        "FAIL or HOLD: recorded, then the next hypothesis</text>",
+        "FAIL or HOLD: recorded, back to the hypotheses</text>",
         "</svg>",
     ]
     return "\n".join(parts) + "\n"

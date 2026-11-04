@@ -291,7 +291,7 @@ def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
     exps.write(reg)
     picture = reg.root / "docs" / "assets" / "experiments.svg"
     svg = picture.read_text()
-    assert "1 hypothesis, one at a time" in svg and "1 gated so far" in svg and "none yet" in svg
+    assert "1 hypothesis, one change each" in svg and "1 gated so far" in svg and "none yet" in svg
     picture.write_text(svg.replace("1 gated so far", "9 gated so far"))
     assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
