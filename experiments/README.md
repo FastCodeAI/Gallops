@@ -77,8 +77,13 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_perception.env` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.evaluate` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.navsim_data` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.preflight` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.sidecar` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.targets` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.tokens` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.train_sidecar` | H15.s0 | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |

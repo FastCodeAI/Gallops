@@ -49,3 +49,38 @@ module = "drivejepa_perception.tokens"
 # One GPU (set CUDA_VISIBLE_DEVICES), batch 1, eval mode; ~27 GB of fp16 tokens plus ~29 GB of A0 taps.
 # Resumes from its staging directory if interrupted; rows already written are skipped.
 args = ["--labels", "{out}/labels-v1", "--out", "{out}/tokens-v1", "--workers", "24"]
+
+# ---------------------------------------------------------------------------------------------
+# Phase A: the side-car alone. One GPU; ~4 M parameters on cached tokens. Every stage runs the
+# preflight (train_sidecar -> preflight.run) before its first step.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "overfit"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+# H04's check 1: 64 train samples to centre error < 0.5 m and class accuracy > 95% within 4,000 steps.
+args = ["overfit", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1"]
+
+# A0: which frozen tap carries 3D? One-layer probes, 6 epochs on the 10,000 tap train rows, read on
+# the select logs (the taps exist only there). PREDICTIONS.md P1.
+[[stage]]
+name = "a0-post"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a0-post",
+        "--tap", "post", "--layers", "1", "--rows", "tap", "--epochs", "6"]
+
+[[stage]]
+name = "a0-vit-out"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a0-vit-out",
+        "--tap", "vit_out", "--layers", "1", "--rows", "tap", "--epochs", "6"]
+
+[[stage]]
+name = "a0-block12"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a0-block12",
+        "--tap", "block12", "--layers", "1", "--rows", "tap", "--epochs", "6"]

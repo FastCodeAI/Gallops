@@ -25,7 +25,7 @@ came first; a prediction written after the result is not one.
 
 | # | Benchmark / subset | Metric | Baseline | Predicted | Counts as support if | Counts as refuted if |
 |---|---|---|---|---|---|---|
-| P1 | A0 · report logs, front view, ≤ 30 m, 10k-sample probe | recall at 2 m (all classes), best of 3 taps | no-camera prior (0) | 0.45 (0.35–0.60); ViT-out 1024-d beats post-projector 256-d by ≥ 0.03 | the best tap ≥ 0.30 | every tap < 0.20 |
+| P1 | A0 · **select** logs, front view, ≤ 30 m, 10k-sample probe (A0 chooses the tap, and its taps exist only for the select logs and 10k train samples; amended 3 Nov, before any run) | recall at 2 m (all classes), best of 3 taps | no-camera prior (0) | 0.45 (0.35–0.60); ViT-out 1024-d beats post-projector 256-d by ≥ 0.03 | the best tap ≥ 0.30 | every tap < 0.20 |
 | P2 | A1 · report logs, front view, ≤ 30 m | recall / precision at 2 m | no-camera prior | recall 0.50 (0.40–0.60), precision ≥ 0.60 | recall ≥ 0.40 and precision ≥ 0.50, on all 3 seeds | recall < 0.30 on any seed |
 | P3 | A1 · moving vehicles within 20 m | recall at 2 m | — | ≥ 0.75 | ≥ 0.65 | < 0.50 |
 | P4 | A1 · matched moving agents | path FDE at 1 s, m | constant velocity from the predicted velocity | ≥ 10% lower than that baseline | lower beyond 2 SE | not lower |
