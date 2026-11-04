@@ -1,0 +1,39 @@
+// How H15's results decide what is claimed. Diamonds are tests; boxes are outcomes.
+digraph decisions {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.3, ranksep=0.38, pad=0.3, bgcolor="white"];
+  node  [fontname="Helvetica", fontsize=10, penwidth=1.2, margin="0.12,0.06"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  node [shape=diamond, style=filled, color="#d97706", fillcolor="#fef3c7"];
+  A0  [label="A0 · does a frozen\ntap carry 3D?"];
+  A1  [label="A1 · side-car beats\nits baselines?"];
+  G   [label="per mode · F beats C\nbeyond seed range\nand 2 SE, every seed?"];
+  I   [label="S ≤ 20% of F − C\nand O ≥ F?"];
+  EXP [label="B1.6 · explanations\nfaithful?\n(scorer modes)"];
+  OOD [label="nuScenes · holds\nout of domain?"];
+
+  node [shape=box, style="rounded,filled", color="#4b5563", fillcolor="#f9fafb"];
+  V    [label="go to B3\nno B1 or B2 claims"];
+  FIX  [label="fix labels or loss, or B3"];
+  B    [label="B1, B2, B3\nindependent tests", color="#2563eb", fillcolor="#dbeafe"];
+  N    [label="record NEUTRAL or no gain"];
+  CAP  [label="capacity or regularisation\nno perception claim"];
+  GAIN [label="the gain stands\nthe explanation claim does not"];
+  D    [label="D · compare with prior work"];
+  C    [label="C · adapter and gate (later)", style="rounded,dashed", fillcolor="white"];
+
+  A0 -> V   [label=" no "];
+  A0 -> A1  [label=" yes "];
+  A1 -> FIX [label=" no "];
+  A1 -> B   [label=" yes "];
+  B  -> G;
+  G  -> N   [label=" no "];
+  G  -> I   [label=" yes "];
+  I  -> CAP [label=" no "];
+  I  -> EXP [label=" yes "];
+  EXP -> GAIN [label=" no "];
+  EXP -> OOD  [label=" yes "];
+  GAIN -> OOD;
+  OOD -> D;
+  OOD -> C [style=dashed];
+}

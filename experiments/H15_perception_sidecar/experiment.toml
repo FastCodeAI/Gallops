@@ -1,0 +1,33 @@
+# H15 -- a perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), tested as an
+# input to the scorer, as an input to the refiner, and against LoRA on the ViT. Owner Shreedhar.
+# Sources: the plan, docs/drivejepa-perception-sidecar.md; every number below will be copied from the
+# run files this folder names, never re-derived.
+# The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
+
+schema = 1
+id = "H15"
+title = "A perception side-car on frozen Drive-JEPA: 3D boxes and each agent's 1 s path, tested as an input to the scorer, to the refiner, and against LoRA on the ViT"
+short = "Side-car: scorer, refiner, ViT LoRA"
+track = "hypothesis"
+owner = "Shreedhar"
+benchmarks = ["navsim", "nuscenes"]
+started = 2026-11-03
+status = "running"
+verdict = "none"
+question = """Drive-JEPA's planner reads image tokens but no explicit account of the other agents. Can a \
+small network trained on the frozen ViT's tokens detect them in 3D and predict each one's next second, \
+and when its decoded agents are handed to the scorer or the refiner, does the plan improve, how much of \
+the scorer or refiner must change to use them, and does LoRA on the ViT do better than the frozen tap? \
+The scorer's use of named agents is also the route to explanations that can be checked."""
+hypothesis = """H-A: a side-car of about 4 M parameters on the frozen tokens beats no-camera and \
+kinematic baselines at detecting agents (recall and precision at 2 m) and at their 1 s paths. H-B1: given \
+its decoded agents, a scorer picks better plans (EPDMS of the pick on held-out navtrain logs) than the \
+identical scorer adaptation without them (arm C), by more than C's seed range and twice the paired, \
+log-clustered SE on every seed; tested with the scorer frozen behind an adapter, with LoRA, fully \
+fine-tuned, and replaced. H-B2: the same for the refiner's proposals (best-of-32 EPDMS). H-B3: LoRA on \
+the ViT beats the frozen tap. H-info: shuffled agents (S) do not recover the gain and ground-truth agents \
+(O) are at least as good. Refuted per question if F does not beat C under any mode; the side-car claim \
+is refuted if it does not beat its baselines."""
+predictions = "experiments/H15_perception_sidecar/PREDICTIONS.md"
+narrative = "experiments/H15_perception_sidecar/README.md"
+parents = ["H14", "H04"]

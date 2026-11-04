@@ -1,0 +1,29 @@
+// H15 at a glance: one training step (A), then three independent questions (B1-B3).
+// Render: dot -Tsvg overview.dot -o overview.svg && rsvg-convert -z 2 overview.svg -o overview.png
+digraph overview {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.35, ranksep=0.55, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, penwidth=1.3,
+         color="#4b5563", fillcolor="#f9fafb", margin="0.18,0.10"];
+  edge  [color="#6b7280", arrowsize=0.7, penwidth=1.1, fontname="Helvetica", fontsize=10];
+
+  S0  [label=<<B>S0 · setup</B><BR/><FONT POINT-SIZE="9">gallops.toml · Drive-JEPA-ext<BR/>NAVSIM splits · agent labels<BR/>PDM labels · token cache</FONT>>];
+  A   [label=<<B>A · train the side-car only</B><BR/><FONT POINT-SIZE="9">3D boxes + each agent's 1 s path<BR/>ViT and planner frozen</FONT>>,
+       color="#2563eb", fillcolor="#dbeafe"];
+  B1  [label=<<B>B1 · scorer</B><BR/><FONT POINT-SIZE="9">do agents as inputs improve the pick?<BR/>frozen + adapter · LoRA · full · replacement</FONT>>,
+       color="#d97706", fillcolor="#fef3c7"];
+  B2  [label=<<B>B2 · refiner</B><BR/><FONT POINT-SIZE="9">do agents as inputs improve the proposals?<BR/>frozen + adapter · LoRA · full</FONT>>,
+       color="#d97706", fillcolor="#fef3c7"];
+  B3  [label=<<B>B3 · encoder</B><BR/><FONT POINT-SIZE="9">does LoRA on the ViT beat the frozen tap?<BR/>late branch · shared</FONT>>,
+       color="#d97706", fillcolor="#fef3c7"];
+  X   [label=<<B>explanations</B><BR/><FONT POINT-SIZE="9">are the named reasons faithful?</FONT>>];
+  OOD [label=<<B>nuScenes</B><BR/><FONT POINT-SIZE="9">out-of-domain check</FONT>>];
+  D   [label=<<B>D · compare with prior work</B><BR/><FONT POINT-SIZE="9">agrees · disagrees · complements</FONT>>];
+  C   [label=<<B>C · Paddock adapter + gate</B><BR/><FONT POINT-SIZE="9">later</FONT>>, style="rounded,dashed", fillcolor="white"];
+
+  S0 -> A;
+  A -> B1; A -> B2; A -> B3;
+  B1 -> X;
+  B1 -> OOD; B2 -> OOD; B3 -> OOD;
+  OOD -> D;
+  OOD -> C [style=dashed, label=" later "];
+}

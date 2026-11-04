@@ -1,0 +1,37 @@
+// Each H15 hypothesis, the experiments that test it, and what decides it.
+digraph hypotheses {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.25, ranksep=0.5, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2, margin="0.15,0.08"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0];
+
+  node [color="#2563eb", fillcolor="#dbeafe"];
+  HA  [label=<<B>H-A · perception</B><BR/><FONT POINT-SIZE="9">the side-car beats no-camera<BR/>and kinematic baselines</FONT>>];
+  HB1 [label=<<B>H-B1 · scorer</B><BR/><FONT POINT-SIZE="9">agents as inputs improve the pick</FONT>>];
+  HB2 [label=<<B>H-B2 · refiner</B><BR/><FONT POINT-SIZE="9">agents as inputs improve the proposals</FONT>>];
+  HB3 [label=<<B>H-B3 · encoder</B><BR/><FONT POINT-SIZE="9">ViT LoRA beats the frozen tap</FONT>>];
+  HI  [label=<<B>H-info</B><BR/><FONT POINT-SIZE="9">it is the agents' content</FONT>>];
+  HX  [label=<<B>H-expl</B><BR/><FONT POINT-SIZE="9">the named reasons are faithful</FONT>>];
+
+  node [color="#d97706", fillcolor="#fef3c7"];
+  TA  [label=<<B>A0, A1</B><BR/><FONT POINT-SIZE="9">tap probe · side-car, 3 seeds</FONT>>];
+  TB1 [label=<<B>B1.1 to B1.4</B>&nbsp;· C vs F<BR/><FONT POINT-SIZE="9">frozen + adapter · LoRA · full · replacement</FONT>>];
+  TB2 [label=<<B>B2.1 to B2.3</B>&nbsp;· C vs F<BR/><FONT POINT-SIZE="9">frozen + adapter · LoRA · full</FONT>>];
+  TB3 [label=<<B>B3.1 · B3.2</B><BR/><FONT POINT-SIZE="9">late branch · shared</FONT>>];
+  TI  [label=<<B>B1.5 · B2.4</B><BR/><FONT POINT-SIZE="9">O and S on the best modes</FONT>>];
+  TX  [label=<<B>B1.6</B><BR/><FONT POINT-SIZE="9">deletion · grounding · calibration</FONT>>];
+
+  node [color="#4b5563", fillcolor="#f9fafb"];
+  RA  [label=<<FONT POINT-SIZE="9">recall and precision at 2 m<BR/>centre and velocity error · path FDE at 1 s</FONT>>];
+  RB1 [label=<<FONT POINT-SIZE="9">the pick's EPDMS and its terms<BR/>pick-vs-best-of-32 gap</FONT>>];
+  RB2 [label=<<FONT POINT-SIZE="9">best-of-32 EPDMS<BR/>the pick's EPDMS</FONT>>];
+  RB3 [label=<<FONT POINT-SIZE="9">A's metrics · the pick's EPDMS<BR/>nuScenes</FONT>>];
+  RI  [label=<<FONT POINT-SIZE="9">S − C ≤ 20% of F − C<BR/>O ≥ F</FONT>>];
+  RX  [label=<<FONT POINT-SIZE="9">deleting the named agent changes the pick<BR/>≥ 3× as often as a random one</FONT>>];
+
+  HA -> TA -> RA;
+  HB1 -> TB1 -> RB1;
+  HB2 -> TB2 -> RB2;
+  HB3 -> TB3 -> RB3;
+  HI -> TI -> RI;
+  HX -> TX -> RX;
+}

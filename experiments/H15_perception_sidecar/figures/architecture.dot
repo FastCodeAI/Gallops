@@ -1,0 +1,55 @@
+// H15's architecture with the key sizes. Grey: the released model, frozen. Blue: new in phase A.
+// Amber, dashed: what phase B adds, one question at a time.
+digraph architecture {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.3, ranksep=0.42, pad=0.3, bgcolor="white", newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.16,0.08"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  subgraph cluster_enc {
+    label=<<B>Released encoder · frozen, no gradient</B>>; fontsize=11; style="rounded,filled";
+    color="#9ca3af"; fillcolor="#f9fafb";
+    CAM  [label=<<B>CAM_F0</B>&nbsp;· 2 frames 0.5 s apart<BR/><FONT POINT-SIZE="9">1920×1080 · crop rows 28 to −28 · resize 512×256</FONT>>];
+    VIT  [label=<<B>V-JEPA ViT-L/16</B>&nbsp;· 303.9 M<BR/><FONT POINT-SIZE="9">24 blocks · d 1024 · tubelet 2 · RoPE</FONT>>];
+    PROJ [label=<<B>projector</B>&nbsp;1024 → 256 · 0.26 M>];
+    CAM -> VIT -> PROJ;
+  }
+
+  TOK [label=<<B>image tokens</B>&nbsp;· 512 = 16×32 · d 256<BR/><FONT POINT-SIZE="9">cached once, fp16 · 27 GB for navtrain</FONT>>, fillcolor="#e5e7eb"];
+  PROJ -> TOK;
+
+  subgraph cluster_side {
+    label=<<B>NEW · side-car (phase A) · about 4.2 M</B>>; fontsize=11; style="rounded,filled";
+    color="#2563eb"; fillcolor="#eff6ff";
+    node [color="#2563eb", fillcolor="#dbeafe"];
+    RAY [label=<<B>ray position embedding</B><BR/><FONT POINT-SIZE="9">lidar2img × TO_512 · 16 depths 1–60 m<BR/>MLP 48 → 256 → 256</FONT>>];
+    QRY [label=<<B>64 agent queries</B><BR/><FONT POINT-SIZE="9">+ 64 learned 3D reference points</FONT>>];
+    DEC [label=<<B>3 decoder layers</B>&nbsp;· d 256 · 8 heads · FFN 1024<BR/><FONT POINT-SIZE="9">self-attn · cross-attn over 512 tokens · reference refinement</FONT>>];
+    OUT [label=<<B>per slot</B><BR/><FONT POINT-SIZE="9">class veh / ped / cyc / none · confidence<BR/>3D box x y z · log l w h · sin cos yaw<BR/>velocity vx vy · path x y at 0.5 s and 1.0 s</FONT>>];
+    RAY -> DEC; QRY -> DEC; DEC -> OUT;
+  }
+  TOK -> DEC;
+  AG [label=<<B>decoded agents</B>&nbsp;· up to 64<BR/><FONT POINT-SIZE="9">the list a person can read</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  OUT -> AG;
+
+  subgraph cluster_plan {
+    label=<<B>Released planner · frozen in phase A</B>>; fontsize=11; style="rounded,filled";
+    color="#9ca3af"; fillcolor="#f9fafb";
+    EGO  [label=<<B>ego status</B>&nbsp;11 → 256 · 3 K<BR/><FONT POINT-SIZE="9">32×8 learned queries · 65 K</FONT>>];
+    REF  [label=<<B>refiner</B>&nbsp;· one module run 4× · 2.32 M<BR/><FONT POINT-SIZE="9">deformable self-attn + image cross-attn</FONT>>];
+    CAND [label=<<B>32 candidates</B><BR/><FONT POINT-SIZE="9">8 poses x y yaw · 0.5 s apart</FONT>>];
+    SCR  [label=<<B>scorer</B>&nbsp;· max-pool per candidate<BR/><FONT POINT-SIZE="9">MLP 256 → 1024 → 6 · 1.32 M</FONT>>];
+    PICK [label=<<B>pick</B><BR/><FONT POINT-SIZE="9">argmax of sigmoid(last logit)<BR/>momentum rescoring in closed loop</FONT>>];
+    EGO -> REF; REF -> CAND; REF -> SCR [label=" pass 4 "]; SCR -> PICK; CAND -> PICK;
+  }
+  TOK -> REF;
+
+  edge [style=dashed, color="#d97706", fontcolor="#92400e", penwidth=1.3];
+  AG  -> SCR [label=" B1 · input adapter ~0.5 M,\n or replacement scorer ~1.5 M "];
+  AG  -> REF [label=" B2 · agent-read adapter ~0.8 M "];
+  VIT -> DEC [label=" B3 · LoRA on the last 4 blocks ~1.05 M "];
+
+  BUD [shape=note, style="filled", fillcolor="white", color="#9ca3af", fontsize=9,
+       label=<<B>Budget</B>: ≤ 10% of 307.86 M = 30.8 M<BR ALIGN="LEFT"/>largest combination ≈ 7.5 M (2.4%)<BR ALIGN="LEFT"/>>];
+  edge [style=invis]; PICK -> BUD;
+}
