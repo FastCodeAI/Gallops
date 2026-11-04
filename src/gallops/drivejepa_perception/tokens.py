@@ -19,9 +19,14 @@ A0's taps, for the rows in `tap_rows.npy` only: `tap_vit_out.npy` (the ViT's own
 projector) and `tap_block12.npy` (block 12 of 24), both (512, 1024) fp16. The rows are all the
 select logs' samples plus a seeded 10,000 of the train logs'.
 
-**Batch 1, eval mode, a fresh feature dict per forward.** The vendor mixes samples within a batch
-(drivejepa_b2d/batch_fix.py; a median 1.49 m off at batch 64, measured in GC04) and slices
-`lidar2img` inside the dict it is given (drive_jepa_model.py). GridMask is a no-op in eval mode.
+**Batched with batch_fix, held to batch 1; eval mode; a fresh feature dict per forward.** The vendor
+mixes samples within a batch (drivejepa_b2d/batch_fix.py; a median 1.49 m off at batch 64 without
+the fix, measured in GC04) and slices `lidar2img` inside the dict it is given (drive_jepa_model.py).
+The plan cached at batch 1 for that reason. On this shared GPU a batch-1 forward took 158 ms, half
+of it the refiner's small kernels, so a batch-1 pass would take 4.6 h. The pass instead runs
+batched with batch_fix and refuses to start unless, on 32 real rows, batched equals batch 1: every
+pick equal, candidates and logits within 1e-3 (`check_batched`; the manifest records the
+differences). GridMask is a no-op in eval mode.
 
 The inputs are built by the vendor's own code -- its windows (`filter_scenes`), `AgentInput` and
 feature builder -- in loader workers sharded by log, so a log's pickle is read once. The workers
@@ -170,6 +175,93 @@ def check_fast_features(samples: list, navsim_root: Path) -> dict:
     return {"rows": len(samples), "equal": True}
 
 
+#: Rows on which the batched forward is held to batch 1 before the pass starts, and its limits.
+PARITY_ROWS = 32
+PARITY_LIMITS = {"proposals": 1e-3, "logits": 1e-3}
+
+
+def _features(samples: list, navsim_root: Path) -> list:
+    """The model inputs of (log, token) samples, built by the vendor's code (fast geometry on)."""
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_features import DriveJEPAFeatureBuilder
+    from navsim.common.dataclasses import AgentInput
+
+    from gallops.drivejepa_perception import navsim_data
+
+    builder = DriveJEPAFeatureBuilder(config=DriveJEPAConfig())
+    sensors = DriveJEPAAgent.get_sensor_config(None)
+    out = []
+    for log, token in samples:
+        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs/trainval", {token})[token]
+        agent_input = AgentInput.from_scene_dict_list(
+            frames, navsim_root / "sensor_blobs/trainval", navsim_data.HISTORY, sensors
+        )
+        out.append(builder.compute_features(agent_input))
+    return out
+
+
+def _forward(model, captured: dict, items: list, tap_slot=None) -> list:
+    """One forward of (row, features) items as a batch; per-item numpy outputs, taps for tap rows."""
+    features = [f for _, f in items]
+    keys = [k for k, v in features[0].items() if torch.is_tensor(v)]
+    batch = {k: torch.stack([f[k] for f in features]).cuda() for k in keys}  # a fresh dict per forward
+    out = model(batch)
+    size = len(items)
+    if tuple(captured["tokens"].shape) != (1, 512, size, 256):
+        raise SystemExit(f"unexpected token shape {tuple(captured['tokens'].shape)}")
+    arrays = {
+        "tokens": captured["tokens"][0].permute(1, 0, 2).half().cpu().numpy(),
+        "pooled": captured["pooled"].half().cpu().numpy(),
+        "proposals": out["proposals"].float().cpu().numpy(),
+        "logits": out["pred_logit"].float().cpu().numpy(),
+        "pick": out["pdm_score"].argmax(1).cpu().numpy(),
+    }
+    results = [{key: value[b] for key, value in arrays.items()} for b in range(size)]
+    tapped = [b for b, (row, _) in enumerate(items) if tap_slot is not None and int(row) in tap_slot]
+    if tapped:
+        index = torch.as_tensor(tapped, device=captured["vit_out"].device)
+        for key in TAPS:
+            values = captured[key].reshape(size, 512, 1024).index_select(0, index).half().cpu().numpy()
+            for b, value in zip(tapped, values):  # noqa: B905 -- Python 3.9
+                results[b][key] = value
+    return results
+
+
+def check_batched(model, captured: dict, items: list, batch: int) -> dict:
+    """The batched forward (batch_fix on) against batch 1 on real rows; refuses on any material change.
+
+    The plan cached the release's outputs at batch 1 because the vendor mixes samples within a batch.
+    batch_fix removes that mixing (H14 measured 4.6e-5 m against batch 1, every pick equal); at batch
+    1 on this shared GPU a forward took 158 ms, half of it the refiner's small kernels, so the pass
+    runs batched and holds itself to batch 1 here: every pick equal, candidates and logits within
+    PARITY_LIMITS. The measured differences go into the manifest.
+    """
+    with torch.no_grad():
+        ones = [_forward(model, captured, [item])[0] for item in items]
+        many = []
+        for i in range(0, len(items), batch):
+            many += _forward(model, captured, items[i : i + batch])
+    worst = {
+        key: max(
+            float(np.abs(a[key].astype(np.float64) - b[key].astype(np.float64)).max())
+            for a, b in zip(ones, many)  # noqa: B905 -- Python 3.9
+        )
+        for key in ("tokens", "pooled", "proposals", "logits")
+    }
+    picks = sum(int(a["pick"] == b["pick"]) for a, b in zip(ones, many))  # noqa: B905 -- Python 3.9
+    problems = [
+        f"{key} differ by {worst[key]:.3g} (limit {limit})"
+        for key, limit in PARITY_LIMITS.items()
+        if worst[key] > limit
+    ]
+    if picks != len(items):
+        problems.append(f"the pick differs on {len(items) - picks} of {len(items)} rows")
+    if problems:
+        raise SystemExit("the batched forward differs from batch 1:\n- " + "\n- ".join(problems))
+    return {"rows": len(items), "batch": batch, "max_abs_diff": worst, "picks_equal": picks}
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -178,7 +270,7 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
+def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) -> None:
     from gallops.drivejepa_b2d.provenance import git_sha
     from gallops.drivejepa_perception import env, navsim_data
 
@@ -246,6 +338,9 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
     from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
     from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
 
+    from gallops.drivejepa_b2d import batch_fix
+
+    batch_fix.apply_all()  # the refiner mixes samples within a batch without it (batch_fix.py)
     agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
     agent.initialize()
     model = agent._pad_model.cuda().eval()
@@ -258,29 +353,44 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
         raise SystemExit(f"expected one ViT block {TAP_BLOCK}, found {len(blocks)}")
     blocks[0].register_forward_hook(lambda m, i, o: captured.__setitem__("block12", o))
 
-    t0, written = time.time(), 0
-    with torch.no_grad():
-        for row, features in loader:
-            batch = {k: v.unsqueeze(0).cuda() for k, v in features.items() if torch.is_tensor(v)}
-            output = model(batch)
-            tok = captured["tokens"]
-            if tok.shape != (1, 512, 1, 256):
-                raise SystemExit(f"unexpected token shape {tuple(tok.shape)}")
-            mm["tokens"][row] = tok[0, :, 0].half().cpu().numpy()
-            mm["pooled"][row] = captured["pooled"][0].half().cpu().numpy()
-            mm["proposals"][row] = output["proposals"][0].float().cpu().numpy()
-            mm["logits"][row] = output["pred_logit"][0].float().cpu().numpy()
-            mm["pick"][row] = int(output["pdm_score"][0].argmax())
+    # Batched with batch_fix must equal batch 1 on real rows before any row is written batched.
+    use_fast_geometry()
+    parity_rows = np.linspace(0, n - 1, PARITY_ROWS).astype(int)
+    parity = check_batched(
+        model,
+        captured,
+        list(
+            zip(  # noqa: B905 -- Python 3.9
+                parity_rows,
+                _features([(token_logs[r], tokens[r]) for r in parity_rows], Path(entered["navsim_root"])),
+            )
+        ),
+        batch,
+    )
+    print(f"batch {batch} equals batch 1 on {parity['rows']} rows: {parity['max_abs_diff']}", flush=True)
+
+    t0, written, pending = time.time(), 0, []
+
+    def write(items):
+        for (row, features), result in zip(items, _forward(model, captured, items, tap_slot)):  # noqa: B905
+            for key in ("tokens", "pooled", "proposals", "logits", "pick"):
+                mm[key][row] = result[key]
             for key in ("lidar2img", "img_shape", "ego_status"):
                 mm[key][row] = features[key].float().numpy()
-            if row in tap_slot:
-                for key in TAPS:
-                    value = captured[key]
-                    value = value[0] if value.dim() == 3 else value
-                    tap_mm[key][tap_slot[row]] = value.reshape(512, 1024).half().cpu().numpy()
+            for key in TAPS:
+                if key in result:
+                    tap_mm[key][tap_slot[int(row)]] = result[key]
             done[row] = True
-            written += 1
-            if written % 2000 == 0:
+        return len(items)
+
+    with torch.no_grad():
+        for item in loader:
+            pending.append(item)
+            if len(pending) < batch:
+                continue
+            before, written = written, written + write(pending)
+            pending = []
+            if written // 2000 > before // 2000:
                 for array in [*mm.values(), *tap_mm.values()]:
                     array.flush()
                 np.save(done_path, done)
@@ -289,6 +399,8 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
                     f"{int(done.sum())}/{n} rows, {rate:.1f}/s, eta {(n - done.sum()) / rate / 60:.0f} min",
                     flush=True,
                 )
+        if pending:
+            written += write(pending)
     for array in [*mm.values(), *tap_mm.values()]:
         array.flush()
     np.save(done_path, done)
@@ -308,7 +420,9 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int) -> None:
         "taps": {key: [list(shape), np.dtype(dtype).name] for key, (shape, dtype) in TAPS.items()},
         "tap_rows": int(len(taps)),
         "tap_rule": f"select-log rows + default_rng({TAP_SEED}) choice of {TAP_TRAIN_ROWS} train-log rows",
-        "batch": 1,
+        "batch": batch,
+        "batch_fix": True,
+        "batched_equals_batch1": parity,
         "mode": "eval",
         "inputs": "the vendor's builder with `fast_bev_feature` for its unread 4-camera tensor",
         "fast_inputs_check": fast_check,
@@ -361,8 +475,9 @@ def main(argv=None) -> None:
     parser.add_argument("--out", required=True)
     parser.add_argument("--workers", type=int, default=24)
     parser.add_argument("--limit", type=int, default=0, help="the first N rows only (smoke runs)")
+    parser.add_argument("--batch", type=int, default=16)
     args = parser.parse_args(argv)
-    run(SiteConfig.load(), Path(args.labels), Path(args.out), args.workers, args.limit)
+    run(SiteConfig.load(), Path(args.labels), Path(args.out), args.workers, args.limit, args.batch)
 
 
 if __name__ == "__main__":
