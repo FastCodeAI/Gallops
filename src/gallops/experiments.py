@@ -68,6 +68,8 @@ EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
+#: The picture's base box: how wide a line of a baseline's `short` can run, and how many fit.
+BASE_WIDTH, BASE_LINES = 22, 2
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -649,6 +651,12 @@ def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> lis
         for ref in [*d.get("evidence", []), *d.get("next", [])]:
             if ref not in known:
                 errors.append(f"{where}: {ref} is not an experiment or run")
+        if d.get("baseline") and len(_base_lines(str(d.get("short", "")))) > BASE_LINES:
+            # Refused, not cut: a box that drops words names a different model and nothing fails.
+            errors.append(
+                f"{where}: a baseline's `short` names it in the picture, which has room for "
+                f"{BASE_LINES} lines of {BASE_WIDTH} characters"
+            )
     return errors
 
 
@@ -916,6 +924,10 @@ def render_status(reg: Registry) -> str:
     return "\n".join(lines)
 
 
+def _base_lines(short: str) -> list[str]:
+    return textwrap.wrap(short, BASE_WIDTH)
+
+
 def _box(x: int, w: int, fill: str, title: str, lines: list[str], dashed: bool = False) -> str:
     """One stage of the picture. White text on a solid fill reads on GitHub's light and dark pages alike."""
     ink = "#768390" if dashed else "#FFFFFF"
@@ -966,7 +978,7 @@ def render_picture(reg: Registry) -> str:
             164,
             "#B4560A",
             _date(base["date"]) if base else "Base",
-            textwrap.wrap(base["short"], 22)[:2] if base else [],
+            _base_lines(base["short"]) if base else [],
         ),
         _box(
             470,

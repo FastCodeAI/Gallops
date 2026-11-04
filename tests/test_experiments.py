@@ -296,6 +296,16 @@ def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
     assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
 
+def test_a_baseline_the_picture_cannot_hold_is_refused(tmp_path) -> None:
+    """The box took two lines and dropped the rest, so it named a different model and nothing failed."""
+    long = "Base: the 4-camera stack with state-space memory and the sub-score scorer"
+    decisions = DECISIONS.replace(
+        'short = "try the thing"\n', f'short = "{long}"\nbaseline = "the 4-camera stack"\n'
+    )
+    errors = exps.Registry.load(_repo(tmp_path, decisions=decisions)).errors
+    assert any("baseline's `short`" in e for e in errors)
+
+
 def test_a_count_of_one_is_singular(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     reg.experiments[0].data["status"] = "running"
