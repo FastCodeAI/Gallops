@@ -19,7 +19,8 @@ The planner never runs and its tokens never change: the branch is the side-car's
 
 **Preflight** (`preflight.run_vit_lora`): code; the frozen branch on the cache reproduces the
 ViT-out cache on 32 rows; and the A1 run read through the frozen branch on the select logs
-reproduces the select F1 it recorded at that epoch, within F1_LIMIT.
+reproduces its select F1 at that epoch, read with the same readout (its reread.json), within
+preflight.VIT_LORA_F1_LIMIT.
 """
 
 from __future__ import annotations
@@ -63,15 +64,22 @@ def release_vit(entered: dict) -> nn.Module:
 
 
 def a1_sidecar(run: Path) -> tuple:
-    """The A1 run's side-car at its kept epoch, and that epoch's recorded select F1."""
+    """The A1 run's side-car at its kept epoch, and that epoch's select F1 under the current readout.
+
+    The F1 is the run's `reread.json` (train_sidecar reread), not its metrics.jsonl: the readout
+    changed after A1 trained ("within 30 m" counted to 35 m), and the first B3 preflight, comparing
+    the new readout's 0.669 with the old one's 0.618, refused a branch that was in fact exact.
+    """
     meta = json.loads((run / "run.json").read_text())["args"]
     kept = json.loads((run / "summary.json").read_text())["kept_epoch"]
     car = sidecar.SideCar(
         d_in=train_sidecar.TAP_DIMS[meta["tap"]], layers=meta["layers"], queries=meta["queries"]
     )
     car.load_state_dict(torch.load(run / f"epoch_{kept:02d}.pt", map_location="cpu")["state_dict"])
-    records = [json.loads(line) for line in (run / "metrics.jsonl").read_text().splitlines()]
-    f1 = [r["f1_30m"] for r in records if r["epoch"] == kept][0]
+    reread = run / "reread.json"
+    if not reread.exists():
+        raise SystemExit(f"{reread} is missing: read the A1 run again with the current readout first")
+    f1 = json.loads(reread.read_text())[f"epoch_{kept:02d}"]["select_f1_30m"]
     return car, kept, f1, meta
 
 
