@@ -52,7 +52,6 @@ The work has had two phases:
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
 - **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar).
 - **Enablers in progress:** [H03](experiments/H03_shared_store_and_tags/CARD.md) Shared store and checkpoint tags (Naren), [H09](experiments/H09_shared_runner/CARD.md) Shared gate runner (Naren), [H11](experiments/H11_hugsim/CARD.md) HUGSIM trial (Navvrat), [H12](experiments/H12_nuscenes_teacher_scenes/CARD.md) nuScenes teacher-scene selector (Ruhan), [H13](experiments/H13_alpamayo_teacher/CARD.md) Alpamayo teacher (reuses draw.teach) (Ruhan).
-- **Next, by priority:** [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
 <!-- /experiments:status -->
 
 ## The decision path
@@ -85,7 +84,7 @@ flowchart TD
     H02["<b>H02</b> · Smallest valid gate<br/>☑️ done · Naren"]
     H03["<b>H03</b> · Shared store and checkpoint tags<br/>⏳ running · Naren"]
     H04["<b>H04</b> · Sub-score scorer, NAVSIM gap<br/>⏳ running · Navvrat"]
-    H05["<b>H05</b> · State-space memory<br/>📝 planned · Naren"]
+    H05["<b>H05</b> · State-space memory<br/>⏸ parked (inconclusive) · Naren"]
     H06["<b>H06</b> · Global read and side braking<br/>⏳ running · Navvrat"]
     H07["<b>H07</b> · Encoder LoRA, domain gap<br/>⏳ running · Siddesh"]
     H08["<b>H08</b> · Sideways velocity and camera FOV<br/>⏳ running · Naren"]
@@ -162,7 +161,7 @@ flowchart TD
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
   class GC04,GC05 positive
   class GC08 negative
-  class H01,H03,H04,H05,H06,H07,H08,H09,H11,H12,H13,H14 open
+  class H01,H03,H04,H06,H07,H08,H09,H11,H12,H13,H14 open
 ```
 <!-- /experiments:flow -->
 
@@ -221,7 +220,7 @@ written down before it runs and its checkpoint put through the
 |---|---|---|:-:|---|---|---|---|---|
 | [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera base (WA-JEPA + DJ planner) | Navvrat | 1 | ⏳ running | `run2` | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | 4 | ⏳ running | `agent-decoder`, `run3a` | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren | 5 | 📝 planned | — | — | — | — |
+| [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren, Siddesh | 5 | ⏸ parked (inconclusive) | `r1`, `r2` | offline human speed at +2 s, RMSE, events slice: camera history k = 4 vs k = 2 with the car state now only (control V3) 0.5001 → **0.4992** (n=3,302 moments) | ●●○○ moderate · open-loop | — |
 | [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | 6 | ⏳ running | `navsim_off`, `b2d_off` | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |

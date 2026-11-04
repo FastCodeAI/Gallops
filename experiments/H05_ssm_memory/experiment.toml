@@ -1,6 +1,9 @@
 # H05 -- a state-space memory layer makes plans steadier and reactions earlier. Owner Naren.
 # Source: "Renesas Progress and Plan", 22 Oct 2026 (Next steps item 5, and "Naren · hypothesis to test"
-# with steps 0-4). No run has started: nothing in gallops or paddock touches it as of 3 Nov 2026.
+# with steps 0-4). Step 0 (feature cache, probe, control) ran 3-5 Nov 2026 (Siddesh); its numbers are
+# copied from MEMORY_STEP1_LAUNCH.md, MEMORY_STEP2_PROBE.md and MEMORY_STEP2C_CONTROL.md (paddock-sid/memory)
+# and from {data}/memory_cache/probe/{probe.json, c/control_c.json, k1/refit_k1.json}. Parked 5 Nov: the
+# new design (carry the planner's outputs, not the camera) is H15.
 
 schema = 1
 id = "H05"
@@ -9,9 +12,11 @@ short = "State-space memory"
 track = "hypothesis"
 owner = "Naren"
 benchmarks = ["navsim", "neuroncap", "bench2drive", "alpasim"]
+contributors = ["Siddesh"]
 started = 2026-10-21
-status = "planned"
-verdict = "none"
+ended = 2026-11-04
+status = "parked"
+verdict = "inconclusive"
 priority = 5
 question = """Does a planner that carries a running state across ticks drive better than one that sees \
 only the last 0.5 s? Extended comfort is the base's biggest NAVSIM gap (−0.077); neuroNCAP's side \
@@ -27,3 +32,136 @@ k = 2 (little for memory to add: the layer is not built); at step 2 unless the a
 across ticks beats the same layer reset every tick (else the gain is capacity, not memory); at step 3 \
 unless it beats that control in closed loop, nothing regresses, and reactions come no later."""
 narrative = "experiments/H05_ssm_memory/README.md"
+predictions = "none: the step-0 rule was fixed in this record's hypothesis (committed 3 Nov, 4cf7c95) and in the 27 Oct plan, not in a PREDICTIONS.md"
+learned = """Against the model's own view (one moment: now and 0.5 s ago), one extra moment improved a ridge \
+probe of human speed at +2 s by 0.021 m/s [0.014, 0.028] (4%, events slice, 176 val logs); 0.013 [0.008, 0.019] \
+of it is the camera frame from 1 s ago, possibly just the extra 128 numbers. Beyond 1 s only the car state's \
+past helped (0.007 m/s); camera history added nothing (CI includes 0). Braking was never better than one \
+moment; the rise with longer camera windows is likely overfitting. Limits: 128-number pooled summaries, \
+ordinary driving, no crossing-car events; the probe could not see what a trained memory could. The \
+registered step-0 refutation ("stops improving at k = 2") was not met by ridge speed, which still improved \
+from k = 2 to k = 4 (0.0070 m/s [0.0023, 0.0120]); control (c) puts that gain on the car state's past."""
+
+[[runs]]
+id = "H05.r1"
+label = "feature cache: released Drive-JEPA's outputs at every moment of navtrain"
+started = 2026-11-03
+ended = 2026-11-03
+start_from = "released"
+frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
+train_git_sha = "731129f"
+notes = """126,694 moments (0 failures, 10.1 h, 4 decode workers on cores 0-3) into \
+{data}/memory_cache/release: encoder map (512, 256), scorer input (32, 256), proposals (32, 8, 3), logits \
+(32, 6), ego (11), float32, 71 GB. Released checkpoint sha256 740335c8...2d30d05. Ran at d48b35a; rebased \
+onto b2d2c59 as 731129f with src/gallops/memory and gallops.compat unchanged (empty diff)."""
+
+  [runs.code]
+  modules = ["gallops.memory.ticks", "gallops.memory.inputs", "gallops.memory.cache", "gallops.memory.checks", "gallops.compat"]
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain (vendor log split: 978 train / 214 val logs)"
+  role = "eval"
+  n = 126694
+  unit = "moments"
+  note = "every moment with both front images; 91,977 of them are graded tokens (train 76,657 / val 15,320)"
+
+[[runs]]
+id = "H05.r2"
+label = "step-0 probe (k = 1, 2, 4, 8), control (c) camera past vs car-state past, and the k = 1 refit"
+started = 2026-11-04
+ended = 2026-11-05
+start_from = "H05.r1"
+trained = ["ridge and logistic probes, a one-hidden-layer MLP (offline, CPU)"]
+frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
+train_git_sha = "ecfaaa9"
+notes = """Probe ran at af3d58e (54 min), control (c) and the k = 1 refit at 8e3bf5a (25 min, 2 min); \
+rebased onto b2d2c59 as 2c3a94b / ecfaaa9 with src/gallops/memory unchanged (empty diff). The refit \
+reproduced all 80 stored values and CIs exactly before computing differences. Pooled encoder map (mean + 4x8) \
+-> PCA 128 fitted on train moments, plus ego 11, per moment; windows of k moments along chains. Paired, \
+log-clustered bootstrap, 2,000 draws, seed 0. k = 1 is the model's own view (now and 0.5 s ago)."""
+
+  [runs.code]
+  modules = ["gallops.memory.probe", "gallops.memory.probe_control"]
+  as_run = ["experiments/H05_ssm_memory/scripts/"]
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "vendor train logs, graded, chain_pos >= 8, 3 s of log ahead"
+  role = "train"
+  n = 35230
+  unit = "moments"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "vendor val logs, graded, chain_pos >= 8, 3 s of log ahead"
+  role = "held-out"
+  n = 7942
+  unit = "moments"
+  note = "176 of the 214 val logs have such a moment; events slice (|dv| > 1 m/s within 2 s) 3,302"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "human speed at +2 s, RMSE, events slice: camera history k = 4 vs k = 2 with the car state now only (control V3)"
+  baseline = "V3 at k = 2"
+  baseline_value = 0.5001
+  value = 0.4992
+  n = 3302
+  unit = "moment"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  headline = true
+  source = "{data}/memory_cache/probe/c/control_c.json; paired difference -0.0009 [-0.0045, +0.0025]"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "human speed at +2 s, RMSE, events slice: one extra moment (camera + car) vs the model's own view, k = 2 vs k = 1"
+  baseline = "k = 1"
+  baseline_value = 0.5117
+  value = 0.4909
+  n = 3302
+  unit = "moment"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  source = "{data}/memory_cache/probe/probe.json; paired difference -0.0208 [-0.0279, -0.0135]"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "human speed at +2 s, RMSE, events slice: camera frame from 1 s ago on top of 1 s of car history (V1 - V2 at k = 2)"
+  baseline = "V2 at k = 2"
+  baseline_value = 0.5043
+  value = 0.4909
+  n = 3302
+  unit = "moment"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  source = "{data}/memory_cache/probe/c/control_c.json; paired difference -0.0134 [-0.0186, -0.0082]; may be the extra 128 numbers"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "human speed at +2 s, RMSE, events slice: car history k = 4 vs k = 2 with the camera now only (control V2)"
+  baseline = "V2 at k = 2"
+  baseline_value = 0.5043
+  value = 0.4971
+  n = 3302
+  unit = "moment"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  source = "{data}/memory_cache/probe/c/control_c.json; paired difference -0.0072 [-0.0103, -0.0043]"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "braking onset within 2 s, log-loss, events slice: camera + car k = 2 vs k = 1"
+  baseline = "k = 1"
+  baseline_value = 0.1988
+  value = 0.2085
+  n = 3302
+  unit = "moment"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  source = "{data}/memory_cache/probe/probe.json; paired difference +0.0098 [+0.0049, +0.0151]; likely overfitting"

@@ -1,6 +1,6 @@
 # H05 — State-space memory
 
-**Owner:** Naren · **Priority:** 5 of 11 · **Started:** 21 Oct 2026 (planned) · **Status:** planned (hypothesis)
+**Owner:** Naren · **Priority:** 5 of 11 · **Started:** 21 Oct 2026 (planned) · **Status:** parked, inconclusive (hypothesis) · step 0 run by Siddesh, 3–5 Nov 2026
 
 The facts are in [experiment.toml](experiment.toml). Everything below is transcribed from Renesas
 Progress and Plan, 22 Oct 2026 ("Next steps", item 5, and "Naren · hypothesis to test"); nothing has run.
@@ -49,17 +49,43 @@ What could make it fail, as the page lists it:
 Training lives in gallops; paddock only runs the checkpoint. Momentum-aware selection (AlpaSim 0.421 →
 0.543) is the cheap no-training baseline to beat.
 
-## Where it stands (3 Nov 2026)
+## What step 0 did (3–5 Nov 2026)
 
-Step 0 has not started: no commit in gallops or paddock since 21 Oct touches a state-space layer, a
-feature cache for it or the probe. Two things the plan relies on have changed in paddock since: the
-gate's NAVSIM subset is now 1,018 tokens drawn within groups (#105, merged 23 Oct), and momentum-aware
-selection is on by default for Drive-JEPA (#95, merged 26 Oct), so the released arm (c) is now the
-momentum-on model. On the page's third risk: paddock's AlpaSim bridge on `main` says "Every scene
-starts with /reset" (`adapters/benchmarks/alpasim/bridge.py`, from #93, merged 21 Oct); whether that
-covers the path the page meant was not checked.
+These runs are recorded as H05.r1 and H05.r2 in [experiment.toml](experiment.toml). All numbers are
+open loop, on the 176 vendor val logs that have 4 s of history, for the events slice (moments where the
+human's speed changes by more than 1 m/s within 2 s), with paired, log-clustered 95% intervals.
+
+- **The cache (r1).** The released model was run over every navtrain moment: 126,694 moments, 0
+  failures. A *moment* is the pair of front frames the model reads, now and 0.5 s ago. Everything the
+  model computes at a moment is stored, from the encoder map through the 32 plans and their scores.
+- **The probe (r2).** A ridge model, a logistic model and a small MLP predict the human's speed and
+  braking over the next 3 s. Each reads the last k moments, as a 128-number summary of the encoder map
+  plus the 11 ego numbers. k = 1 is what the model sees today.
+  - **One extra moment helps speed** (it adds the frame from 1 s ago and the ego state 0.5 s ago):
+    −0.021 m/s RMSE [−0.028, −0.014] on 0.512. Of that, −0.013 [−0.019, −0.008] is the camera frame.
+    That part may be the extra 128 numbers, not the past.
+  - **Further back, only the car's own past helps.** Camera history beyond 1 s adds nothing (−0.0009
+    [−0.0045, +0.0025]); ego history adds −0.007 [−0.010, −0.004].
+  - **No window predicts braking better than k = 1.** The rise with longer camera windows is likely
+    overfitting: the MLP shows the same rise.
+- **Against the registered rule.** "Refuted at step 0 if a probe on the last k ticks stops improving
+  at k = 2" was not met: ridge speed still improved from k = 2 to k = 4. The control puts that gain on
+  the ego state, not the camera.
+
+## Where it stands (5 Nov 2026)
+
+Parked, verdict inconclusive. The probe reads ordinary driving through a lossy 128-number summary and
+cannot see a crossing car, so it neither supports nor rules out a trained scene memory. The follow-on
+design carries the planner's own outputs forward instead of the camera; that is a different claim, so
+it is recorded as H15. Any later "more or longer camera history" work stays here as a new run.
+
+Before step 0 (3 Nov), two things the plan relies on had changed in paddock: the gate's NAVSIM subset
+is now 1,018 tokens drawn within groups (#105, merged 23 Oct), and momentum-aware selection is on by
+default for Drive-JEPA (#95, merged 26 Oct), so the released arm (c) is the momentum-on model. On the page's third risk: paddock's AlpaSim bridge
+on `main` says "Every scene starts with /reset" (`adapters/benchmarks/alpasim/bridge.py`, from #93,
+merged 21 Oct); whether that covers the path the page meant was not checked.
 
 ## How it will be decided
 
-Step 0 decides whether to build it; steps 2 and 3 decide whether to keep it, through paddock's
-regression gate, with (b) as the control that separates memory from capacity.
+Step 0 decided not to build the camera layer now. If H05 is resumed, steps 2 and 3 decide whether to
+keep it, through paddock's regression gate, with (b) as the control that separates memory from capacity.
