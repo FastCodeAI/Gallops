@@ -4,6 +4,7 @@
     python -m gallops.drivejepa_perception.train_sidecar train --tokens T --labels L --out O --seed 0
         [--tap post|vit_out|block12] [--layers 3] [--queries 64] [--epochs 12] [--rows train|tap] [--blind]
     python -m gallops.drivejepa_perception.train_sidecar reread --tokens T --labels L --run R [--which kept]
+    python -m gallops.drivejepa_perception.train_sidecar sight --tokens T --labels L --run R
 
 Only the side-car trains; the ViT, the projector and the whole planner are not even loaded. The
 recipe is H04's (train_agent_decoder.py): AdamW 2e-4, weight decay 0.01, batch 64, fp16 autocast,
@@ -327,6 +328,44 @@ def reread(cfg, args) -> None:
     np.savez(run / "reread_detail.npz", **details)
 
 
+def sight(cfg, args) -> None:
+    """The sight check in distribution: each report row read with another log's real tokens.
+
+    The pre-registered check zeroes the tokens, an input no run ever saw, and seed 0 answered it with
+    27 detections a sample. Here every row keeps its own camera geometry and its own targets, but its
+    tokens come from a row of another log (train_scorer.shuffled_rows, the S arm's draw). A side-car
+    that sees should lose its recall: detections that still hit the row's agents were not made from
+    its image. Writes `sight.json` in the run: the same readout with its own tokens and with another's.
+    """
+    from gallops.drivejepa_perception.train_scorer import shuffled_rows
+
+    run = Path(args.run)
+    target = run / "sight.json"
+    if target.exists():
+        raise SystemExit(f"{target} exists; a sight check never overwrites one")
+    meta = json.loads((run / "run.json").read_text())
+    run_args = meta["args"]
+    tokens, slot, rows, projections, targets = load(
+        args.tokens, args.labels, run_args["tap"], run_args.get("vit_tokens", "")
+    )
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    other = shuffled_rows(logs)
+    model, kept = load_run(run)
+    device = torch.device("cuda")
+    model = model.to(device)
+    out = {
+        "kept_epoch": kept,
+        "rows": int(len(rows["report"])),
+        "other_log_share": float((logs[other] != logs).mean()),
+    }
+    for name, slot_of in (("own_tokens", slot), ("another_logs_tokens", lambda r: slot(int(other[r])))):
+        dataset = Rows(tokens, slot_of, rows["report"], projections, targets)
+        out[name] = read(model, dataset, targets, rows["report"], device, meta["prior_gap_m"])
+        print(json.dumps({name: out[name]["recall_2m_within_30m"]}), flush=True)
+    target.write_text(json.dumps(out, indent=1))
+
+
 def overfit(cfg, args) -> None:
     """H04's check 1 on 64 train samples; exits 1 if it does not pass."""
     from gallops.drivejepa_perception import preflight
@@ -491,7 +530,7 @@ def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
-    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish", "reread"))
+    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish", "reread", "sight"))
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
@@ -511,9 +550,14 @@ def main(argv=None) -> None:
     )
     args = parser.parse_args(argv)
     cfg = SiteConfig.load()
-    {"train": train, "overfit": overfit, "agents": agents, "finish": refinish, "reread": reread}[args.cmd](
-        cfg, args
-    )
+    {
+        "train": train,
+        "overfit": overfit,
+        "agents": agents,
+        "finish": refinish,
+        "reread": reread,
+        "sight": sight,
+    }[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":
