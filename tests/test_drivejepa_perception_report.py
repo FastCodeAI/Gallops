@@ -46,3 +46,15 @@ def test_b2s_rule_reads_each_arms_own_values_by_the_same_rule():
     assert result["verdict"] == "F beats C" and np.isclose(result["c_seed_range"], 0.002)
     assert np.isclose(result["per_seed"][0]["f_minus_c"], 0.01)
     assert b_report.compare_values(c, c, logs)["verdict"] == "NEUTRAL"
+
+
+def test_the_report_says_which_terms_the_difference_lands_in():
+    n = 200
+    logs = np.repeat(np.arange(20), 10)
+    pdm = np.zeros((n, 32, 9))
+    pdm[:, 0, 0] = 0.0  # C's pick collides
+    pdm[:, 1, 0] = 1.0  # F's does not
+    masks = {name: np.ones(n, bool) for name in b_report.SUBSETS}
+    result = b_report.compare(_picks(1), _picks(0), pdm, np.arange(n), logs, masks, "kept")
+    terms = result["per_seed"][0]["terms_f_minus_c"]
+    assert terms["nc"] == 1.0 and all(v == 0.0 for k, v in terms.items() if k != "nc")

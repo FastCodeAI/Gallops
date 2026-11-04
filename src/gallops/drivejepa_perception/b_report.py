@@ -30,6 +30,8 @@ from pathlib import Path
 import numpy as np
 
 SUBSETS = ("lead_30m", "slowing_or_stopped", "agent_within_10m")
+#: The PDM label's first eight columns (pdm_labels.COLUMNS); the ninth is the final score.
+TERMS = ("nc", "dac", "tlc", "ddc", "ep", "ttc", "lk", "hc")
 
 
 def clustered_se(diff: np.ndarray, clusters: np.ndarray) -> float:
@@ -59,6 +61,9 @@ def compare(f: dict, c: dict, pdm, rows, logs, subsets, which: str) -> dict:
     for s in seeds:
         d = pick_scores(f, f"{s}_{which}", pdm, rows) - pick_scores(c, f"{s}_{which}", pdm, rows)
         entry = {"seed": s, "f_minus_c": float(d.mean()), "se": clustered_se(d, logs)}
+        # P7: where the difference lands, term by term (the pick's PDM sub-scores).
+        f_terms, c_terms = pdm[rows, f[f"{s}_{which}"], :8], pdm[rows, c[f"{s}_{which}"], :8]
+        entry["terms_f_minus_c"] = dict(zip(TERMS, (f_terms - c_terms).mean(0).round(5).tolist()))  # noqa: B905 -- Python 3.9
         for name in SUBSETS:
             m = subsets[name]
             entry[f"f_minus_c_{name}"] = float(d[m].mean()) if m.any() else float("nan")
