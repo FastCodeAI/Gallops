@@ -433,6 +433,134 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
     print(json.dumps({k: v for k, v in manifest.items() if k != "entered"}, indent=1))
 
 
+#: The ViT-out pass is held to the tap captured inside the full forward on these many tap rows.
+VIT_PARITY_ROWS = 32
+VIT_LIMITS = {"max_abs": 0.1, "mean_abs": 1e-3}
+
+
+def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int, batch: int) -> None:
+    """The tap A0 chose -- the ViT's own output, before the projector -- for every row (A1 onward).
+
+    Only the backbone runs. Its input is assembled as DriveJEPAModel.forward assembles it (both frames
+    ImageNet-normalised, previous frame first). Before any row is written, the result is held to the
+    `tap_vit_out` the full forward captured in `tokens_dir` on VIT_PARITY_ROWS of its rows.
+    """
+    from gallops.drivejepa_b2d.provenance import git_sha
+    from gallops.drivejepa_perception import env
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    started, sha = time.strftime("%Y-%m-%dT%H:%M:%S"), git_sha()
+    entered = env.enter(cfg)
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"]
+    token_logs = [logs[i] for i in labels["log_id"]]
+    tokens = [str(t) for t in labels["token"]]
+    n = len(tokens)
+    staging = out.with_name(out.name + ".staging")
+    fresh = not staging.exists()
+    staging.mkdir(parents=True, exist_ok=True)
+    vit = np.lib.format.open_memmap(
+        staging / "vit_out.npy", mode="w+" if fresh else "r+", dtype=np.float16, shape=(n, 512, 1024)
+    )
+    done_path = staging / "done.npy"
+    done = np.load(done_path) if done_path.exists() else np.zeros(n, dtype=bool)
+    plan: dict = {}
+    for row in range(n):
+        if not done[row]:
+            plan.setdefault(token_logs[row], []).append((row, tokens[row]))
+    dataset = _Samples(
+        sorted(plan.items()),
+        Path(entered["navsim_root"]) / "navsim_logs/trainval",
+        Path(entered["navsim_root"]) / "sensor_blobs/trainval",
+    )
+    loader = iter(
+        torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=workers, prefetch_factor=4)
+    )
+
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+
+    agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
+    agent.initialize()
+    model = agent._pad_model.cuda().eval()
+    captured: dict = {}
+    model._backbone.img_backbone.register_forward_hook(lambda m, i, o: captured.__setitem__("vit_out", o))
+
+    def vit_of(features: list) -> np.ndarray:
+        cam_1 = torch.stack([f["camera_feature_1"] for f in features]).cuda()
+        cam_2 = torch.stack([f["camera_feature_2"] for f in features]).cuda()
+        camera = torch.cat([model.transform(cam_2)[:, None], model.transform(cam_1)[:, None]], dim=1)
+        model._backbone(camera, img_metas={})
+        return captured["vit_out"].reshape(len(features), 512, 1024).half().cpu().numpy()
+
+    use_fast_geometry()
+    tap_rows = np.load(Path(tokens_dir) / "tap_rows.npy")
+    reference = np.load(Path(tokens_dir) / "tap_vit_out.npy", mmap_mode="r")
+    picked = np.linspace(0, len(tap_rows) - 1, VIT_PARITY_ROWS).astype(int)
+    feats = _features(
+        [(token_logs[int(tap_rows[i])], tokens[int(tap_rows[i])]) for i in picked],
+        Path(entered["navsim_root"]),
+    )
+    with torch.no_grad():
+        mine = np.concatenate([vit_of(feats[i : i + batch]) for i in range(0, len(feats), batch)]).astype(
+            np.float32
+        )
+    diff = np.abs(mine - np.asarray(reference[picked], dtype=np.float32))
+    parity = {"rows": int(len(picked)), "max_abs": float(diff.max()), "mean_abs": float(diff.mean())}
+    if parity["max_abs"] > VIT_LIMITS["max_abs"] or parity["mean_abs"] > VIT_LIMITS["mean_abs"]:
+        raise SystemExit(f"the ViT-out pass differs from the full forward's tap: {parity}")
+    print(f"ViT-out equals the full forward's tap on {parity['rows']} rows: {parity}", flush=True)
+
+    t0, written, pending = time.time(), 0, []
+
+    def write(items):
+        for (row, _), value in zip(items, vit_of([f for _, f in items])):  # noqa: B905 -- Python 3.9
+            vit[row] = value
+            done[row] = True
+        return len(items)
+
+    with torch.no_grad():
+        for item in loader:
+            pending.append(item)
+            if len(pending) < batch:
+                continue
+            before, written = written, written + write(pending)
+            pending = []
+            if written // 4000 > before // 4000:
+                vit.flush()
+                np.save(done_path, done)
+                rate = written / (time.time() - t0)
+                print(
+                    f"{int(done.sum())}/{n} rows, {rate:.1f}/s, eta {(n - done.sum()) / rate / 60:.0f} min",
+                    flush=True,
+                )
+        if pending:
+            written += write(pending)
+    vit.flush()
+    np.save(done_path, done)
+    if not done.all():
+        raise SystemExit(f"{int((~done).sum())} rows not written; rerun to resume")
+    manifest = {
+        "pass": "vit_out",
+        "started": started,
+        "ended": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "gallops_sha": sha,
+        "entered": entered,
+        "labels": str(labels_dir),
+        "reference_tokens": str(tokens_dir),
+        "rows": n,
+        "array": [[512, 1024], "float16"],
+        "batch": batch,
+        "parity_with_full_forward_tap": parity,
+        "seconds": round(time.time() - t0),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(json.dumps({k: v for k, v in manifest.items() if k != "entered"}, indent=1))
+
+
 class _Samples(torch.utils.data.IterableDataset):
     """(row, features) for the planned rows, built by the vendor's code; workers shard by log."""
 
@@ -476,8 +604,17 @@ def main(argv=None) -> None:
     parser.add_argument("--workers", type=int, default=24)
     parser.add_argument("--limit", type=int, default=0, help="the first N rows only (smoke runs)")
     parser.add_argument("--batch", type=int, default=16)
+    parser.add_argument(
+        "--vit-out-all", action="store_true", help="only the ViT's own output, every row (A1)"
+    )
+    parser.add_argument("--tokens", default="", help="--vit-out-all: the token pass whose taps it is held to")
     args = parser.parse_args(argv)
-    run(SiteConfig.load(), Path(args.labels), Path(args.out), args.workers, args.limit, args.batch)
+    if args.vit_out_all:
+        run_vit_out(
+            SiteConfig.load(), Path(args.labels), Path(args.tokens), Path(args.out), args.workers, args.batch
+        )
+    else:
+        run(SiteConfig.load(), Path(args.labels), Path(args.out), args.workers, args.limit, args.batch)
 
 
 if __name__ == "__main__":

@@ -110,3 +110,55 @@ python = "drivejepa"
 module = "drivejepa_perception.train_sidecar"
 args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a1-blind",
         "--blind", "--seed", "0"]
+
+# A0's two 1024-d probes trained fully; their summaries are written from the saved epochs (select logs only:
+# a 1024-d tap exists only for A0's rows).
+[[stage]]
+name = "a0-vit-out-finish"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["finish", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a0-vit-out"]
+
+[[stage]]
+name = "a0-block12-finish"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["finish", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a0-block12"]
+
+# A0 chose the ViT's own output (before the projector): select F1 0.338 against 0.257 post-projector and 0.269
+# at block 12 (PREDICTIONS.md P1). It is cached here for every row, held to the full forward's tap first.
+[[stage]]
+name = "tokens-vit"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--vit-out-all", "--labels", "{out}/labels-v1", "--tokens", "{out}/tokens-v1", "--out", "{out}/tokens-vit-v1",
+        "--workers", "24", "--batch", "16"]
+
+# A1: the side-car on A0's tap, 3 seeds, and 128 queries on seed 0. PREDICTIONS.md P2-P5.
+[[stage]]
+name = "a1-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a1-s0", "--seed", "0"]
+
+[[stage]]
+name = "a1-s1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a1-s1", "--seed", "1"]
+
+[[stage]]
+name = "a1-s2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a1-s2", "--seed", "2"]
+
+[[stage]]
+name = "a1-q128"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a1-q128", "--seed", "0", "--queries", "128"]

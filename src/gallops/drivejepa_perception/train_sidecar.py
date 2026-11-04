@@ -60,8 +60,12 @@ class Rows(torch.utils.data.Dataset):
         return item
 
 
-def load(tokens_dir: Path, labels_dir: Path, tap: str):
-    """The cache, the splits' rows, and the side-car's targets for every row."""
+def load(tokens_dir: Path, labels_dir: Path, tap: str, vit_tokens=None):
+    """The cache, the splits' rows, and the side-car's targets for every row.
+
+    `vit_tokens`, when given, is a ViT-out pass over every row (tokens.py --vit-out-all): the tap A0
+    chose, for A1 and everything after it. Without it, a 1024-d tap exists only for A0's rows.
+    """
     tokens_dir, labels_dir = Path(tokens_dir), Path(labels_dir)
     labels = dict(np.load(labels_dir / "labels.npz"))
     logs = json.loads((labels_dir / "manifest.json").read_text())["logs"]
@@ -70,8 +74,9 @@ def load(tokens_dir: Path, labels_dir: Path, tap: str):
     rows = {name: np.flatnonzero(np.isin(token_logs, splits[name])) for name in ("train", "select", "report")}
     tap_rows = np.load(tokens_dir / "tap_rows.npy")
     rows["tap"] = np.intersect1d(tap_rows, rows["train"])
-    if tap == "post":
-        tokens = np.load(tokens_dir / "tokens.npy", mmap_mode="r")
+    if tap == "post" or (tap == "vit_out" and vit_tokens):
+        source = Path(vit_tokens) / "vit_out.npy" if tap == "vit_out" else tokens_dir / "tokens.npy"
+        tokens = np.load(source, mmap_mode="r")
 
         def slot(row):
             return row
@@ -132,7 +137,7 @@ def train(cfg, args) -> None:
     out = Path(args.out)
     if out.exists():
         raise SystemExit(f"{out} exists; a run never overwrites one")
-    tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap)
+    tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap, args.vit_tokens)
     train_rows = rows["tap"] if args.rows == "tap" else rows["train"]
     select_rows = rows["select"]
     report = preflight.run(
@@ -234,10 +239,15 @@ def finish(model, out, args, tokens, slot, rows, projections, targets, gap, devi
         "last_epoch": args.epochs,
         "selection_rule": "best select F1 at 2 m within 30 m",
     }
-    for name, epoch in (("kept", kept), ("last", args.epochs)):
+    # A 1024-d tap exists only for A0's rows (the select logs and 10,000 train samples; tokens.py), so
+    # an A0 probe on it is read on the select logs alone, as PREDICTIONS.md P1 says.
+    has_report = args.tap == "post" or bool(getattr(args, "vit_tokens", ""))
+    for name, epoch in (("kept", kept), ("last", args.epochs)) if has_report else ():
         state = torch.load(out / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"]
         model.load_state_dict(state)
         summary[f"report_{name}"] = read(model, report_set, targets, rows["report"], device, gap)
+    if not has_report:
+        summary["report"] = "none: this tap has no report rows (A0 reads the select logs)"
     model.load_state_dict(torch.load(out / f"epoch_{kept:02d}.pt", map_location="cpu")["state_dict"])
     summary["sight_select"] = {
         "with_tokens": read(model, select_set, targets, rows["select"], device, gap)["detections_per_sample"],
@@ -253,7 +263,7 @@ def overfit(cfg, args) -> None:
     """H04's check 1 on 64 train samples; exits 1 if it does not pass."""
     from gallops.drivejepa_perception import preflight
 
-    tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap)
+    tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap, args.vit_tokens)
     picked = np.random.default_rng(0).choice(rows["train"], 64, replace=False)
     preflight.run(cfg, Path(args.tokens), Path(args.labels), {"train": picked, "select": rows["select"][:64]})
     device = torch.device("cuda")
@@ -304,7 +314,9 @@ def agents(cfg, args) -> None:
     meta = json.loads((run / "run.json").read_text())
     epoch = json.loads((run / "summary.json").read_text())["kept_epoch"]
     run_args = meta["args"]
-    tokens, slot, rows, projections, _ = load(args.tokens, args.labels, run_args["tap"])
+    tokens, slot, rows, projections, _ = load(
+        args.tokens, args.labels, run_args["tap"], run_args.get("vit_tokens", "")
+    )
     device = torch.device("cuda")
     model = sidecar.SideCar(
         d_in=TAP_DIMS[run_args["tap"]], layers=run_args["layers"], queries=run_args["queries"]
@@ -361,11 +373,38 @@ def agents(cfg, args) -> None:
     print(json.dumps(manifest, indent=1))
 
 
+def refinish(cfg, args) -> None:
+    """Write a trained run's summary from its saved epochs, without retraining (its own args)."""
+    out = Path(args.out)
+    if (out / "summary.json").exists():
+        raise SystemExit(f"{out}/summary.json exists")
+    run_args = argparse.Namespace(**json.loads((out / "run.json").read_text())["args"])
+    run_args.vit_tokens = getattr(run_args, "vit_tokens", "")
+    tokens, slot, rows, projections, targets = load(
+        run_args.tokens, run_args.labels, run_args.tap, run_args.vit_tokens
+    )
+    train_rows = rows["tap"] if run_args.rows == "tap" else rows["train"]
+    model = sidecar.SideCar(d_in=TAP_DIMS[run_args.tap], layers=run_args.layers, queries=run_args.queries)
+    device = torch.device("cuda")
+    finish(
+        model.to(device),
+        out,
+        run_args,
+        tokens,
+        slot,
+        rows,
+        projections,
+        targets,
+        prior_gap(targets, train_rows),
+        device,
+    )
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
-    parser.add_argument("cmd", choices=("train", "overfit", "agents"))
+    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish"))
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
@@ -377,9 +416,12 @@ def main(argv=None) -> None:
     parser.add_argument("--epochs", type=int, default=12)
     parser.add_argument("--rows", choices=("train", "tap"), default="train")
     parser.add_argument("--blind", action="store_true")
+    parser.add_argument(
+        "--vit-tokens", default="", help="a ViT-out pass over every row (tokens --vit-out-all)"
+    )
     args = parser.parse_args(argv)
     cfg = SiteConfig.load()
-    {"train": train, "overfit": overfit, "agents": agents}[args.cmd](cfg, args)
+    {"train": train, "overfit": overfit, "agents": agents, "finish": refinish}[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":
