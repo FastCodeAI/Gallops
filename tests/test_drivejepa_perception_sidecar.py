@@ -191,3 +191,19 @@ def test_readout_detail_gives_each_hit_agents_row_and_the_means_it_averages():
     assert d["path_row"].tolist() == [1] and d["path_moving"].tolist() == [True]
     assert d["fde_model"].tolist() == [0.0] and np.isclose(d["fde_cv_pred"][0], 2.0)
     assert np.isclose(out["path_fde_1s_cv_pred_moving"], d["fde_cv_pred"][d["path_moving"]].mean())
+
+
+def test_a2s_fraction_keeps_whole_logs_and_is_reproducible(tmp_path):
+    pytest.importorskip("torch")
+    import json
+
+    from gallops.drivejepa_perception import train_sidecar
+
+    log_id = np.repeat(np.arange(10), 3).astype(np.int16)  # 10 logs, 3 samples each
+    np.savez(tmp_path / "labels.npz", log_id=log_id)
+    (tmp_path / "manifest.json").write_text(json.dumps({"logs": [f"log{i}" for i in range(10)]}))
+    rows = np.arange(30)
+    half = train_sidecar.fraction_of_logs(tmp_path, rows, 0.5)
+    assert len(half) == 15 and np.array_equal(half, train_sidecar.fraction_of_logs(tmp_path, rows, 0.5))
+    kept = np.unique(log_id[half])
+    assert len(kept) == 5 and all((log_id[half] == k).sum() == 3 for k in kept)  # whole logs only

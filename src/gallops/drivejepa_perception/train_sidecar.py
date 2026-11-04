@@ -133,6 +133,22 @@ def f1(m: dict) -> float:
     return 0.0 if not (r + p) or math.isnan(r + p) else 2 * r * p / (r + p)
 
 
+#: A2's draw of train logs (a learning curve): seeded, so every fraction is reproducible.
+FRACTION_SEED = 0
+
+
+def fraction_of_logs(labels_dir, train_rows: np.ndarray, fraction: float) -> np.ndarray:
+    """The train rows of a seeded `fraction` of the train logs (A2). By log, not by row: half the
+    data is half the scenes, not every scene thinned, since a log's samples are 0.5 s apart."""
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = np.array(json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    names = np.unique(logs[train_rows])
+    picked = np.random.default_rng(FRACTION_SEED).choice(
+        names, int(round(fraction * len(names))), replace=False
+    )
+    return train_rows[np.isin(logs[train_rows], picked)]
+
+
 def train(cfg, args) -> None:
     from gallops.drivejepa_perception import preflight
 
@@ -141,6 +157,8 @@ def train(cfg, args) -> None:
         raise SystemExit(f"{out} exists; a run never overwrites one")
     tokens, slot, rows, projections, targets = load(args.tokens, args.labels, args.tap, args.vit_tokens)
     train_rows = rows["tap"] if args.rows == "tap" else rows["train"]
+    if args.train_fraction < 1.0:
+        train_rows = fraction_of_logs(args.labels, train_rows, args.train_fraction)
     select_rows = rows["select"]
     report = preflight.run(
         cfg,
@@ -541,6 +559,9 @@ def main(argv=None) -> None:
     parser.add_argument("--queries", type=int, default=tg.QUERIES)
     parser.add_argument("--epochs", type=int, default=12)
     parser.add_argument("--rows", choices=("train", "tap"), default="train")
+    parser.add_argument(
+        "--train-fraction", type=float, default=1.0, help="A2: a seeded share of the train logs"
+    )
     parser.add_argument("--blind", action="store_true")
     parser.add_argument(
         "--which", choices=("kept", "last", "all"), default="kept", help="reread: which epochs"

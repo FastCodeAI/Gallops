@@ -201,6 +201,34 @@ module = "drivejepa_perception.train_scorer"
 args = ["--release-only", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1",
         "--out", "{out}/release"]
 
+# A2 (optional): is the side-car data-limited? Seed 0 on a seeded 25% and 50% of the train logs; 100% is a1-s0.
+
+[[stage]]
+name = "a2-25"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a2-25", "--seed", "0", "--train-fraction", "0.25"]
+
+[[stage]]
+name = "a2-25-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a2-25"]
+
+[[stage]]
+name = "a2-50"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--out", "{out}/runs/a2-50", "--seed", "0", "--train-fraction", "0.5"]
+
+[[stage]]
+name = "a2-50-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a2-50"]
+
 # A1's runs chose their kept epochs with the 35 m readout (README); read again at those epochs.
 
 [[stage]]
