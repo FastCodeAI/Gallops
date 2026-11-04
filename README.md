@@ -16,7 +16,7 @@
 <!-- /experiments:badges -->
 </p>
 
-We are building a JEPA-based driving model, and this page is its evidence: every
+We are building a JEPA-based driving model, and this repo is its evidence: every
 experiment, who ran it, and what it showed. Click an ID for that experiment's card,
 with its data, code, checkpoint sha256, results and gate verdicts.
 

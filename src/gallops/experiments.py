@@ -4,8 +4,8 @@ Gallops exists to produce evidence that a model is better, and evidence that liv
 hand-written table drifts: a number is copied, the run behind it is retrained, and nobody can say
 which checkpoint the row was about. So each experiment carries its facts in one machine-readable
 file -- who ran it, what it started from, what it trained on, which checkpoint it wrote (by weights
-sha256), what it measured and how strongly -- and the README's tables, decision path and gate log
-are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
+sha256), what it measured and how strongly -- and the README's tables, the experiments index and
+each card are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
 what this module renders, so the README cannot say something the registry does not.
 
 Layout (docs/experiments.md has the rules and the reasons):
@@ -1013,7 +1013,7 @@ def render_gap_closing(reg: Registry) -> str:
 
 
 def first_sentence(text: str) -> str:
-    """A table cell's worth: up to the first full stop that ends a sentence; the details keep the rest."""
+    """A table cell's worth: up to the first full stop that ends a sentence; the card keeps the rest."""
     m = re.search(r"[.!?](?=\s+[A-Z(])", text)
     return text[: m.end()] if m else text
 
@@ -1181,7 +1181,7 @@ def _code_text(d: dict[str, Any], run: dict[str, Any], base: str = "") -> str:
     return "<br>".join(bits) or "—"
 
 
-#: Where a card's "back" link lands in the README, by track.
+#: Where a card's "back" link lands, by track: the README's tables, or the index for enablers.
 _BACK = {
     "gap-closing": "README.md#gap-closing-experiments",
     "hypothesis": "README.md#hypothesis-experiments",
