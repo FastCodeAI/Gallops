@@ -76,6 +76,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
+| `gallops.drivejepa_perception.b_report` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.env` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.evaluate` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.geometry` | H15.s0 | experiment |

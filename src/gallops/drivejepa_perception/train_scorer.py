@@ -221,6 +221,7 @@ def train(cfg, args) -> None:
         "release": {s: readout(data["pick_release"][rows[s]], data, rows[s]) for s in ("select", "report")},
     }
     picks = {"rows": rows["report"], "release": data["pick_release"][rows["report"]]}
+    picks.update({f"subset_{k}": v[rows["report"]] for k, v in data["subsets"].items()})
     for seed in [int(s) for s in args.seeds.split(",")]:
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -292,6 +293,20 @@ def train(cfg, args) -> None:
     np.savez(out / "report_picks.npz", **picks)
 
 
+def release_only(args) -> None:
+    """S0.8: the release's own picks read on the select and report logs; nothing trains."""
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a readout never overwrites one")
+    data = load(Path(args.tokens), Path(args.labels), Path(args.pdm), "C", None)
+    rows = data["rows"]
+    result = {s: readout(data["pick_release"][rows[s]], data, rows[s]) for s in ("select", "report")}
+    result["note"] = "in-sample for the release: it trained on all of navtrain"
+    out.mkdir(parents=True)
+    (out / "release.json").write_text(json.dumps(result, indent=1))
+    print(json.dumps(result, indent=1))
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
@@ -300,12 +315,16 @@ def main(argv=None) -> None:
     parser.add_argument("--labels", required=True)
     parser.add_argument("--pdm", required=True)
     parser.add_argument("--agents", default="")
-    parser.add_argument("--mode", choices=scorers.MODES, required=True)
-    parser.add_argument("--arm", choices=ARMS, required=True)
+    parser.add_argument("--mode", choices=scorers.MODES, default="frozen")
+    parser.add_argument("--arm", choices=ARMS, default="C")
+    parser.add_argument("--release-only", action="store_true", help="S0.8: read the release's own picks")
     parser.add_argument("--seeds", default="0,1,2")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    if args.release_only:
+        release_only(args)
+        return
     if args.arm in ("F", "S") and not args.agents:
         parser.error("arms F and S read the side-car's agents: pass --agents")
     train(SiteConfig.load(), args)
