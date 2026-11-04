@@ -400,6 +400,58 @@ named agent is the one the scorer's candidate-to-agent attention weighted most f
 - **Adapting the encoder's last four blocks buys the side-car nothing on NAVSIM.** The frozen
   ViT output already carries what this side-car can use.
 
+### OOD · nuScenes (P15): the side-car transfers; the scorers do not gain, and `full` loses
+
+*Measured*, out of sample for every model here (the release trained on NAVSIM, H15 on navtrain).
+- **Rows:** 2,996 keyframes of H14's 102 held-out nuScenes train scenes (`ood-pass`, `5635f7f`).
+  That is the count H14 reported.
+- **Geometry:** on every scene, the vendor's lidar2img through `to_512(1600, 900)` equals the
+  calibration's own projection to 0.00001 px. NAVSIM's `TO_512` would be 20+ px off here.
+- **Readout:** `ood-read-v2`, `40511ca`.
+
+**The side-car zero-shot** (A1 seed 0, epoch 11; within 30 m unless stated):
+
+| | nuScenes | navtrain report logs |
+|---|---|---|
+| Recall, vehicles | **0.480** | — |
+| Recall / precision, all classes | 0.380 / 0.608 | 0.632 / 0.742 |
+| Recall 0–20 / 20–30 / 30–50 m | 0.563 / 0.249 / 0.089 | 0.807 / 0.512 / 0.228 |
+| Pedestrians, two-wheelers | 0.165, 0.024 | — |
+| Moving vehicles ≤ 20 m | 0.732 | 0.936 |
+| Lead-gap error (prior) | 6.28 m (10.74) | 2.35 m (8.53) |
+
+**B1's scorers against the release** (picked L2 at 3 s 3.788 m; collision within 3 s 4.04%). Each
+seed's difference from the release, paired per keyframe; * marks a difference beyond 2 SE, clustered
+by scene.
+
+| Run | L2 at 3 s − release (m), seeds 0 / 1 / 2 | Collision − release (points) |
+|---|---|---|
+| frozen C | +0.07 / +0.16* / −0.01 | −0.1 / +0.1 / +0.0 |
+| frozen F | +0.13* / +0.20* / +0.05 | −0.7 / −0.6 / −0.3 |
+| lora C | +0.16* / +0.14* / −0.00 | −0.2 / +0.5 / −0.4 |
+| lora F | −0.22* / +0.27* / +0.05 | −0.4 / −0.6 / +0.2 |
+| full C | +0.28* / +0.44* / +0.35* | −0.2 / −0.1 / +0.5 |
+| **full F** (best on select) | **+0.23* / +0.24* / +0.31*** | −0.5 / −0.5 / +0.6 |
+| full O, S | +0.22* / +0.28* / +0.31*; +0.33* / +0.16* / +0.30* | within ±0.6 |
+| replace C | −0.14 / +0.04 / −0.12 | +0.5 / −0.1 / −0.6 |
+| replace F | −0.24* / +0.01 / −0.17* | −1.2* / −0.6 / −0.3 |
+| replace O, S | −0.34* / −0.04 / −0.16*; −0.41* / −0.01 / −0.12 | within ±0.9 |
+
+- **P15 refuted, by its own rule.**
+  - The side-car's part holds: vehicle recall 0.480 against ≥ 0.30.
+  - The best B1 model, `full` F, plans worse than the release at 3 s on every seed, beyond 2 SE:
+    +0.23 to +0.31 m. P15 calls exactly that refutation.
+  - Its collision rate is not lower.
+- **The cost is the fine-tune, not the agents.** `full` C, with no agents, is as much worse
+  (+0.28 to +0.44 m), and O and S match F. Fitting the whole scorer to navtrain's PDM labels costs
+  out of domain; adding agents neither causes it nor repairs it.
+- **The replacement scorer transfers best** in every arm (−0.41 to +0.04 m), C and S included, so
+  that is the new scorer's doing, not the agents'.
+  - Its one collision difference beyond 2 SE is −1.2 points, on F seed 0. S seed 0 is close behind
+    (−0.9), so it is not evidence that the agents help.
+- *Context:* B1's scorers change the release's pick on 48–64% of the navtrain report logs too, at
+  equal EPDMS. Many candidates score alike. A changed pick is the norm, not a sign of drift.
+
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
 - **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
