@@ -243,3 +243,53 @@ def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
     if problems:
         raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
     return report
+
+
+#: B3.1: how far A1's select F1, read through the frozen branch on the fp16 block-20 cache, may sit
+#: from the F1 it recorded on the fp16 ViT-out cache. One point; the measured gap is recorded.
+VIT_LORA_F1_LIMIT = 0.01
+
+
+def run_vit_lora(cfg, args, d: dict, vit, car, f1_recorded: float) -> dict:
+    """B3.1's preflight: code, the cache through the frozen branch, and A1 reproduced through it.
+
+    - The frozen branch (vit_lora.LateBranch without LoRA) run on 32 rows of the block-20 cache
+      gives the ViT-out cache that A1 trained on, within tokens.VIT_LIMITS.
+    - A1's side-car read through it on the select logs gives the select F1 A1 recorded at that
+      epoch, within VIT_LORA_F1_LIMIT.
+    """
+    import torch
+
+    from gallops.drivejepa_perception import tokens, train_sidecar, train_vit_lora, vit_lora
+    from gallops.train.preflight import code_checks
+
+    report, problems = {}, []
+    report["code"], found = code_checks(REPO)
+    problems += found
+    manifest = json.loads((Path(args.block20) / "manifest.json").read_text())
+    reference = np.load(Path(manifest["reference_vit_out"]) / "vit_out.npy", mmap_mode="r")
+    device = torch.device("cuda")
+    branch = vit_lora.LateBranch(vit, lora=False).to(device).eval()
+    rows = d["rows"]["select"][np.linspace(0, len(d["rows"]["select"]) - 1, 32).astype(int)]
+    with torch.no_grad():
+        x = torch.from_numpy(np.stack([np.asarray(d["cache"][d["slot"](int(r))]) for r in rows])).to(device)
+        tail = branch(x.float()).cpu().numpy()
+    diff = np.abs(tail - np.asarray(reference[rows], dtype=np.float32))
+    report["frozen_branch"] = {"rows": 32, "max_abs": float(diff.max()), "mean_abs": float(diff.mean())}
+    if diff.max() > tokens.VIT_LIMITS["max_abs"] or diff.mean() > tokens.VIT_LIMITS["mean_abs"]:
+        problems.append(f"the frozen branch does not give the ViT-out cache: {report['frozen_branch']}")
+    model = train_vit_lora.Tail(branch, car).to(device)
+    select = train_sidecar.Rows(d["cache"], d["slot"], d["rows"]["select"], d["projections"], d["targets"])
+    metrics = train_sidecar.read(model, select, d["targets"], d["rows"]["select"], device, 25.0)
+    f1 = train_sidecar.f1(metrics)
+    report["a1_through_branch"] = {"select_f1": f1, "recorded": f1_recorded, "gap": abs(f1 - f1_recorded)}
+    if abs(f1 - f1_recorded) > VIT_LORA_F1_LIMIT:
+        problems.append(
+            f"A1 through the frozen branch does not reproduce its select F1: {report['a1_through_branch']}"
+        )
+    del model, branch
+    torch.cuda.empty_cache()
+    report["problems"] = problems
+    if problems:
+        raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
+    return report

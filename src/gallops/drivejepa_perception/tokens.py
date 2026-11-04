@@ -37,6 +37,11 @@ tensor the model never reads; the swap is held to the vendor's exact output befo
 
 The pass resumes: rows already written are skipped (`done.npy`), and the staging directory becomes
 `--out` only when every row is done.
+
+Two more passes run the backbone alone, each held to an earlier cache before it writes a row:
+- `--vit-out-all` (A1 onward): the ViT's own output for every row, held to `tap_vit_out`;
+- `--block20` (B3): blocks 1-20's output for B3's rows (`block20_rows`), held to the ViT-out cache
+  through the frozen last four blocks (vit_lora.py).
 """
 
 from __future__ import annotations
@@ -561,6 +566,152 @@ def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int
     print(json.dumps({k: v for k, v in manifest.items() if k != "entered"}, indent=1))
 
 
+#: B3's cache rows: a seeded draw of train rows, then every select and report row (vit_lora.py).
+B3_TRAIN_ROWS, B3_SEED = 20_000, 0
+
+
+def block20_rows(labels_dir: Path) -> np.ndarray:
+    """B3's rows, in cache order: B3_TRAIN_ROWS train rows drawn with B3_SEED, then select and report."""
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"]
+    token_logs = np.array([logs[i] for i in labels["log_id"]])
+    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+    train = np.flatnonzero(np.isin(token_logs, splits["train"]))
+    picked = np.sort(np.random.default_rng(B3_SEED).choice(train, B3_TRAIN_ROWS, replace=False))
+    held = np.flatnonzero(np.isin(token_logs, splits["select"] + splits["report"]))
+    return np.concatenate([picked, held])
+
+
+def run_block20(cfg, labels_dir: Path, vit_dir: Path, out: Path, workers: int, batch: int) -> None:
+    """B3's cache: the output of the ViT's first vit_lora.BRANCH_FROM blocks, for `block20_rows`.
+
+    Only the backbone runs, as in `run_vit_out`. Before any row is written, the frozen ViT's last
+    blocks and norm (`vit_lora.LateBranch` without LoRA), run on this pass's fp16 output, are held to
+    the ViT-out cache in `vit_dir` on VIT_PARITY_ROWS rows, within VIT_LIMITS: the cache plus the
+    branch is the tap A1 trained on.
+    """
+    from gallops.drivejepa_b2d.provenance import git_sha
+    from gallops.drivejepa_perception import env, vit_lora
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    started, sha = time.strftime("%Y-%m-%dT%H:%M:%S"), git_sha()
+    entered = env.enter(cfg)
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"]
+    token_logs = [logs[i] for i in labels["log_id"]]
+    tokens = [str(t) for t in labels["token"]]
+    rows = block20_rows(labels_dir)
+    n = len(rows)
+    staging = out.with_name(out.name + ".staging")
+    fresh = not staging.exists()
+    staging.mkdir(parents=True, exist_ok=True)
+    np.save(staging / "rows.npy", rows)
+    cache = np.lib.format.open_memmap(
+        staging / "block20.npy", mode="w+" if fresh else "r+", dtype=np.float16, shape=(n, 512, 1024)
+    )
+    done_path = staging / "done.npy"
+    done = np.load(done_path) if done_path.exists() else np.zeros(n, dtype=bool)
+    plan: dict = {}
+    for slot, row in enumerate(rows):
+        if not done[slot]:
+            plan.setdefault(token_logs[row], []).append((slot, tokens[row]))
+    dataset = _Samples(
+        sorted(plan.items()),
+        Path(entered["navsim_root"]) / "navsim_logs/trainval",
+        Path(entered["navsim_root"]) / "sensor_blobs/trainval",
+    )
+    loader = iter(
+        torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=workers, prefetch_factor=4)
+    )
+
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
+    from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+
+    agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
+    agent.initialize()
+    model = agent._pad_model.cuda().eval()
+    vit = model._backbone.img_backbone
+    captured: dict = {}
+    vit.blocks[vit_lora.BRANCH_FROM - 1].register_forward_hook(lambda m, i, o: captured.__setitem__("x", o))
+
+    def block20_of(features: list) -> np.ndarray:
+        cam_1 = torch.stack([f["camera_feature_1"] for f in features]).cuda()
+        cam_2 = torch.stack([f["camera_feature_2"] for f in features]).cuda()
+        camera = torch.cat([model.transform(cam_2)[:, None], model.transform(cam_1)[:, None]], dim=1)
+        model._backbone(camera, img_metas={})
+        return captured["x"].reshape(len(features), 512, 1024).half().cpu().numpy()
+
+    use_fast_geometry()
+    reference = np.load(Path(vit_dir) / "vit_out.npy", mmap_mode="r")
+    picked = np.linspace(0, n - 1, VIT_PARITY_ROWS).astype(int)
+    feats = _features(
+        [(token_logs[int(rows[i])], tokens[int(rows[i])]) for i in picked], Path(entered["navsim_root"])
+    )
+    branch = vit_lora.LateBranch(vit, lora=False).cuda().eval()
+    with torch.no_grad():
+        mine = np.concatenate([block20_of(feats[i : i + batch]) for i in range(0, len(feats), batch)])
+        tail = branch(torch.from_numpy(mine).cuda().float()).cpu().numpy()
+    diff = np.abs(tail - np.asarray(reference[rows[picked]], dtype=np.float32))
+    parity = {"rows": int(len(picked)), "max_abs": float(diff.max()), "mean_abs": float(diff.mean())}
+    if parity["max_abs"] > VIT_LIMITS["max_abs"] or parity["mean_abs"] > VIT_LIMITS["mean_abs"]:
+        raise SystemExit(f"the frozen tail on this cache differs from the ViT-out cache: {parity}")
+    print(
+        f"frozen tail on the block-20 cache equals the ViT-out cache on {parity['rows']} rows: {parity}",
+        flush=True,
+    )
+
+    t0, written, pending = time.time(), 0, []
+
+    def write(items):
+        for (slot, _), value in zip(items, block20_of([f for _, f in items])):  # noqa: B905 -- Python 3.9
+            cache[slot] = value
+            done[slot] = True
+        return len(items)
+
+    with torch.no_grad():
+        for item in loader:
+            pending.append(item)
+            if len(pending) < batch:
+                continue
+            before, written = written, written + write(pending)
+            pending = []
+            if written // 4000 > before // 4000:
+                cache.flush()
+                np.save(done_path, done)
+                rate = written / (time.time() - t0)
+                print(
+                    f"{int(done.sum())}/{n} rows, {rate:.1f}/s, eta {(n - done.sum()) / rate / 60:.0f} min",
+                    flush=True,
+                )
+        if pending:
+            written += write(pending)
+    cache.flush()
+    np.save(done_path, done)
+    if not done.all():
+        raise SystemExit(f"{int((~done).sum())} rows not written; rerun to resume")
+    manifest = {
+        "pass": "block20",
+        "branch_from": vit_lora.BRANCH_FROM,
+        "started": started,
+        "ended": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "gallops_sha": sha,
+        "entered": entered,
+        "labels": str(labels_dir),
+        "reference_vit_out": str(vit_dir),
+        "rows": n,
+        "train_rows": B3_TRAIN_ROWS,
+        "train_seed": B3_SEED,
+        "array": [[512, 1024], "float16"],
+        "batch": batch,
+        "parity_frozen_tail_with_vit_out": parity,
+        "seconds": round(time.time() - t0),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+
+
 class _Samples(torch.utils.data.IterableDataset):
     """(row, features) for the planned rows, built by the vendor's code; workers shard by log."""
 
@@ -608,7 +759,14 @@ def main(argv=None) -> None:
         "--vit-out-all", action="store_true", help="only the ViT's own output, every row (A1)"
     )
     parser.add_argument("--tokens", default="", help="--vit-out-all: the token pass whose taps it is held to")
+    parser.add_argument("--block20", action="store_true", help="B3: blocks 1-20's output, B3's rows only")
+    parser.add_argument("--vit-dir", default="", help="--block20: the ViT-out pass it is held to")
     args = parser.parse_args(argv)
+    if args.block20:
+        run_block20(
+            SiteConfig.load(), Path(args.labels), Path(args.vit_dir), Path(args.out), args.workers, args.batch
+        )
+        return
     if args.vit_out_all:
         run_vit_out(
             SiteConfig.load(), Path(args.labels), Path(args.tokens), Path(args.out), args.workers, args.batch

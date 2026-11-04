@@ -91,6 +91,8 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.train_refiner` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.train_scorer` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.train_sidecar` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.train_vit_lora` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.vit_lora` | H15.s0 | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |

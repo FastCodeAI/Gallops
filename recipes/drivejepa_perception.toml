@@ -400,3 +400,41 @@ python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
         "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b2/full-S", "--agents", "{out}/agents-a1-s0"]
+
+# ---------------------------------------------------------------------------------------------
+# B3: LoRA on the ViT's last four blocks (vit_lora.py). Blocks 1-20 are frozen in every variant, so
+# their output is cached once for B3's rows -- a seeded 20,000 train rows plus the select and report
+# logs, 30 GB -- and neither images nor the first 20 blocks run while B3 trains. The pass is held to
+# the ViT-out cache through the frozen tail before it writes a row.
+#
+# B3.1: both arms start from A1 seed 0's kept epoch and train the same steps on the same rows; they
+# differ only in LoRA. B3.2 (reduced; README): B3.1 seed 0's LoRA in the trunk, the planner unchanged.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "block20"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--block20", "--labels", "{out}/labels-v1", "--vit-dir", "{out}/tokens-vit-v1", "--out", "{out}/block20-v1",
+        "--workers", "24", "--batch", "16"]
+
+[[stage]]
+name = "b3-lora"
+python = "drivejepa"
+module = "drivejepa_perception.train_vit_lora"
+args = ["train", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--run", "{out}/runs/a1-s0", "--arm", "lora", "--seeds", "0,1,2", "--out", "{out}/b3/lora"]
+
+[[stage]]
+name = "b3-control"
+python = "drivejepa"
+module = "drivejepa_perception.train_vit_lora"
+args = ["train", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--run", "{out}/runs/a1-s0", "--arm", "control", "--seeds", "0,1,2", "--out", "{out}/b3/control"]
+
+[[stage]]
+name = "b3-shared"
+python = "drivejepa"
+module = "drivejepa_perception.train_vit_lora"
+args = ["shared", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--from-run", "{out}/b3/lora", "--seed", "0", "--out", "{out}/b3/shared-s0"]
