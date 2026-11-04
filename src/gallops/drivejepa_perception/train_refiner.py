@@ -122,7 +122,9 @@ def build(entered: dict, mode: str, agents: bool, rank: int = 16):
     return agent, model, adapter
 
 
-#: The longest good-anchor list a row may have (every file read so far holds exactly 256).
+#: The longest good-anchor list a row may have: Drive-JEPA's convert_to_index.py keeps the anchors
+#: whose score is at least 0.95 and samples 256 when there are more. Measured on navtrain: 52% of
+#: rows hold 256, 8.4% have no file, the rest between 1 and 255.
 MAX_ANCHORS = 256
 
 
@@ -186,14 +188,23 @@ def anchors_root(cfg) -> Path:
     return Path(cfg.resolve("{data.navsim_metric_cache}")).parent / "anchors_scores_index_v2"
 
 
-def teachers(rows, anchors: np.ndarray, count: np.ndarray, vocabulary: np.ndarray, rng) -> torch.Tensor:
-    """Up to TEACHERS of each row's good anchors, drawn as the release's training drew them."""
+def teachers(rows, anchors: np.ndarray, count: np.ndarray, vocabulary: np.ndarray, rng) -> tuple:
+    """Each row's teachers, drawn as the release's training drew them.
+
+    DriveJEPAAgent.trajectory_loss_anchors takes four of a row's good anchors without replacement,
+    all of them when it has four or fewer, and none when it has none. Returns the teachers
+    (B, TEACHERS, 8, 3), zero-padded, and how many each row has: `mtd_loss` averages over exactly
+    those, so a row without anchors adds no teacher term (not four all-zero ones, which are a stop).
+    """
     out = np.zeros((len(rows), TEACHERS, 8, 3), np.float32)
+    n = np.zeros(len(rows), np.int64)
     for i, row in enumerate(rows):
         good = anchors[row, : count[row]]
-        if len(good):
-            out[i] = vocabulary[rng.choice(good, TEACHERS, replace=len(good) < TEACHERS)]
-    return torch.from_numpy(out)
+        if len(good) > TEACHERS:
+            good = rng.choice(good, TEACHERS, replace=False)
+        out[i, : len(good)] = vocabulary[good]
+        n[i] = len(good)
+    return torch.from_numpy(out), torch.from_numpy(n)
 
 
 def forward(model, data, rows, device):
@@ -268,8 +279,8 @@ def train(cfg, args) -> None:
                     adapter.context["mask"] = adapter.context["mask"].bool()
                 props, _ = forward(model, data, chunk, device)
                 target = torch.from_numpy(data["human"][chunk]).to(device)
-                teach = teachers(chunk, data["anchors"], data["anchor_count"], vocabulary, rng).to(device)
-                tn = torch.full((len(chunk),), TEACHERS, device=device)
+                teach, tn = teachers(chunk, data["anchors"], data["anchor_count"], vocabulary, rng)
+                teach, tn = teach.to(device), tn.to(device)
                 loss = mtd_loss(props, target, teach, tn, prev_weight=0.1)
                 optimiser.zero_grad(set_to_none=True)
                 loss.backward()
