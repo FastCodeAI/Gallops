@@ -1,7 +1,8 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
 **Status (2026-11-04): steps 1–3 done and waiting for the owner's review. Step 3's pipeline check
-passed (§9). Nothing past step 3 has run, and no report-log number exists.**
+passed (§9). Step 7's nuScenes data is prepared (§8.2); no model has read it. Nothing else past step 3
+has run, and no report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -17,7 +18,11 @@ steps. The owner reviews each block before the next one starts.
 | 2 · the model and its loss | [notebooks/02_loss.ipynb](../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §4–5 |
 | 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
 | the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
+| step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
 
+- **Rerunning the notebooks:** use the `drive-jepa-v2` kernel at this site, which starts
+  `[python] drivejepa` (Python 3.9, torch 2.1). The kernels to avoid, and a headless runner, are listed
+  in the experiment's README.
 - **Labels on numbers:**
   - *counted*: on disk at this site;
   - *measured*: from a run;
@@ -555,29 +560,52 @@ the one clean out-of-sample check H15 has.
   - human labels against auto-labels.
 - NAVSIM already has Boston and Singapore one-north logs. Singapore drives on the left in both.
 
-**Steps:**
-1. **Site root** (gitignored config, the owner's OK).
-   - `[datasets.nuscenes]` must name a folder holding `v1.0-trainval/`, `samples/` and `can_bus/`.
-   - At this site the configured folder no longer exists.
-   - A complete copy of the tables and the CAM_FRONT keyframes (40,157) is on the shared disk, with
-     its CAN bus beside it, not inside it (*counted*). A folder of three links to it is enough.
-2. **`ood-draw --n 100 --seed 0`**, committed once (`nuscenes_data`). It draws 100 nuScenes **train**
-   scenes:
-   - only scenes with CAN-bus poses;
-   - no scene behind a neuroNCAP scenario or a reconstructed one;
-   - not val, which paddock's nuScenes benchmark reads.
-3. **`ood-extract`** (CPU): keyframes, poses, calibration and annotations of the drawn scenes.
-4. **`ood-pass`** (GPU, the release at batch 1): every usable keyframe's ViT output, and its labels
-   in H15's layout.
-   - Before it writes a row, the vendor's projection × `to_512(1600, 900)` is held to the one built
-     from the calibration, within 0.5 px.
-   - *Estimate*: about 3,000 keyframes. The first pass's 102 scenes gave 2,996.
+**Steps** (1–4 done on 4 Nov, at the owner's request, while steps 1–3 are reviewed; *counted* unless
+marked):
+1. **Site root: done.**
+   - `gallops.toml` and paddock's site config both name a folder that had been deleted.
+   - Paddock's config describes it as a view, not a copy: links to the shared download, plus its CAN
+     bus, which sits beside the download rather than inside it.
+   - That view was recreated at the same path, so neither config changed and nothing was copied.
+2. **The draw: done, committed** in `recipes/drivejepa_perception/ood_scenes.json` (`bd7b577`).
+   - It draws 100 nuScenes **train** scenes, seed 0:
+     - only scenes with CAN-bus poses (685 of the devkit's 700);
+     - no scene behind a neuroNCAP scenario or a reconstructed one (679 candidates left);
+     - not val, which paddock's nuScenes benchmark reads.
+   - **It runs in two interpreters.** It imports the official split from the nuScenes devkit and the
+     neuroNCAP scenes from paddock's harness. Paddock needs Python ≥ 3.11 (`tomllib`), and no
+     interpreter with the devkit here is that new.
+     - So `ood-train-scenes` runs in Drive-JEPA's interpreter, and `ood-draw` in paddock's own
+       (`[python] paddock`).
+     - The record names devkit 1.1.11, paddock `a1dd55e` and the 20 scenes kept out.
+   - **What was drawn:**
+     - Boston seaport 64 scenes; Singapore one-north 17, Holland Village 10, Queenstown 9;
+     - 11 at night and 21 in rain, by their descriptions.
+3. **`ood-extract`: done** (CPU, 62 s, *measured*).
+   - It saved keyframes, poses, calibration, annotations and scene descriptions.
+   - 2,917 of the drawn scenes' 4,019 keyframes have the 0.5 s of history and 4 s of future the rule
+     asks for.
+4. **`ood-pass`: done** (the release at batch 1 on GPU, 177 s, *measured*, from `bd7b577`; the
+   manifest marks it `-dirty` because notebooks and documents were being edited; `src/`, `tests/` and
+   `recipes/` equal that commit).
+   - All 2,917 kept keyframes were built: each one's ViT output (the side-car's input, 3.1 GB), its
+     geometry and its labels.
+   - The vendor's projection equals the one built from each scene's calibration to 1.4e-5 px, against
+     the 0.5 px limit.
+   - **Labels:** 82,718 agents. Targets by the side-car's rule:
+     - 3.8 a keyframe (5.2 on the NAVSIM report logs);
+     - vehicles 69.5%, pedestrians 28.3%, cyclists 2.3%;
+     - 47% within 30 m.
+   - **Notebook 05** draws the keyframes with their targets through the side-car's own projection.
+     The boxes sit on the agents.
 5. **A side-car-only readout**, written at step 7. The existing `ood read` also reads every B1 run,
    which Part A has none of. It reports:
    - every §8.1 metric;
    - by location (Boston seaport, Singapore one-north, Queenstown, Holland Village);
    - night and rain apart, from the scene descriptions (99 night and 165 rain scenes of the 850,
      *counted*).
+     - In this draw, all 11 night scenes are in Singapore and all 21 rain scenes in Boston. So night
+       and rain cannot be told apart from place on these scenes, and the breakdown says so.
 
 **Labels on nuScenes** (`ood.keyframe_agents`, *read*):
 - **Classes:** `vehicle.*` (car, truck, bus, trailer, construction, emergency) → vehicle; bicycle and
@@ -693,7 +721,8 @@ interpreters):
    - recommended only after step 6, if velocity error is the weak point.
 - **11.4 · Proposed metrics (§8.1):** AP, box errors, displacement error, calibration, breakdowns.
   Adopt all, some or none.
-- **11.5 · nuScenes site root (§8.2, step 1):** links to the shared copy, or another location.
+- **11.5 · nuScenes site root (§8.2, step 1):** settled on 4 Nov, at the owner's request ("prepare
+  nuscenes"): the view at the configured path was recreated.
 - **11.6 · Budget:** the step-5 runs as listed (§6.6), or fewer.
 
 ## 12. Risks

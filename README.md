@@ -232,7 +232,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | 🗑 dropped | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood`, `r1` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
+| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood`, `r1`, `r2` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
 <!-- /experiments:hypotheses -->
 
 ### Enablers
