@@ -147,6 +147,8 @@ One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front 
 - **All three were still rising** at epoch 6.
 - **Decided:** A1 reads the ViT's own output, cached for every row by a second pass that is held
   to the full forward's tap.
+- **That pass (`tokens-vit-v1`, from `30b9fdb`), *measured*:** 103,288 rows in 38 min at batch 16,
+  102 GB fp16. On 32 rows it equals the full forward's tap exactly (largest difference 0.0).
 
 ### A1 · the no-camera baseline (blind arm, report logs)
 
@@ -230,6 +232,15 @@ scores 0.9140 on the same 4,636 rows (in-sample for it).
 B1.6's explanation test runs on every F mode at seed 0. Each costs minutes. The plan's wording
 needed a best mode to be chosen, and choosing it on the report logs would have flagged every O, S
 and B1.6 number `selected-on-report`.
+
+### B2 · cost, and which mode gets O and S (written before any F result)
+
+- **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
+  `b2-frozen-C`, seed 0, shared GPU). A seed's 3 epochs then take about 15 min, plus about 2 min
+  to PDM-score its new candidates. The 18 C and F runs come to about 5 GPU-h.
+- **O and S run on one mode, chosen on the select logs:** the mode with the largest mean F − C in
+  select best-of-32 EPDMS. That is P12's readout, read on the split meant for choices. B2's O and
+  S cost hours, not minutes, so they do not run on every mode as B1's do.
 
 ### B3 · how it runs, and where it departs from the plan (written before any B3 run)
 
