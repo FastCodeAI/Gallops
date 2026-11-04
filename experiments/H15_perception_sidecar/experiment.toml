@@ -29,6 +29,14 @@ the ViT beats the frozen tap. H-info: shuffled agents (S) do not recover the gai
 (O) are at least as good. Refuted per question if F does not beat C under any mode; the side-car claim \
 is refuted if it does not beat its baselines."""
 predictions = "experiments/H15_perception_sidecar/PREDICTIONS.md"
+learned = """So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-car on Drive-JEPA's \
+frozen ViT output detects agents ahead (recall 0.63, precision 0.74 within 30 m, three seeds), follows them \
+for a second a little better than constant velocity, transfers to nuScenes untrained (vehicle recall 0.48), \
+and is still data-limited. Its agents, handed to the scorer (four modes) or to the refiner (three), change \
+nothing beyond noise, and ground-truth agents neither: the release's pick already scores NC and TTC 0.996 on \
+these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to navtrain costs 0.2-0.4 m at \
+3 s on nuScenes, with or without agents. The agent a scorer names for its pick is faithful (deleting it moves \
+the pick 3-5x as often as a random one). No closed loop, no gate."""
 narrative = "experiments/H15_perception_sidecar/README.md"
 parents = ["H14", "H04"]
 

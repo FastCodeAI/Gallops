@@ -21,6 +21,10 @@ H-A: a side-car of about 4 M parameters on the frozen tokens beats no-camera and
 
 [PREDICTIONS.md](PREDICTIONS.md), written before the run.
 
+## What we learned
+
+So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-car on Drive-JEPA's frozen ViT output detects agents ahead (recall 0.63, precision 0.74 within 30 m, three seeds), follows them for a second a little better than constant velocity, transfers to nuScenes untrained (vehicle recall 0.48), and is still data-limited. Its agents, handed to the scorer (four modes) or to the refiner (three), change nothing beyond noise, and ground-truth agents neither: the release's pick already scores NC and TTC 0.996 on these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to navtrain costs 0.2-0.4 m at 3 s on nuScenes, with or without agents. The agent a scorer names for its pick is faithful (deleting it moves the pick 3-5x as often as a random one). No closed loop, no gate.
+
 ## Runs
 
 | Run | Started from | Trained | Data | Code | Checkpoint |
