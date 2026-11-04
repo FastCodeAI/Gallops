@@ -39,6 +39,9 @@ these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to na
 the pick 3-5x as often as a random one). No closed loop, no gate."""
 narrative = "experiments/H15_perception_sidecar/README.md"
 parents = ["H14", "H04"]
+external = [
+  "Run outputs (checkpoints, per-epoch metrics, reports, logs) were deleted on 4 Nov 2026 at the owner's request, ahead of a rerun after review; every number in this record was copied from them before. The caches the runs read are kept under {runs}/drivejepa_perception.",
+]
 
 [[runs]]
 id = "H15.s0"

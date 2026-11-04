@@ -3,9 +3,11 @@
 
 # H14 · Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train
 
-**Shreedhar** · nuScenes · ⏳ running · 20 Oct 2026 · hypothesis
+**Shreedhar** · nuScenes · 🗑 dropped · 20 Oct 2026 · hypothesis
 
-[← all experiments](../../README.md#hypothesis-experiments) · [the account](../../docs/drivejepa-aux-heads.md) · [experiment.toml](experiment.toml)
+[← all experiments](../../README.md#hypothesis-experiments) · [experiment.toml](experiment.toml)
+
+**Evidence for:** D19 ([decision log](../../README.md#decision-log))
 
 ## Question
 
@@ -21,7 +23,7 @@ H-gain: fine-tuning the planner with auxiliary losses (T) gives better plans tha
 
 ## What we learned
 
-So far, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train scenes, epoch 10): the heads move the plan the frozen scorer picks, not the proposals. T2's picked L2 at 3 s is 2.934 m against C's 3.760 and the release's 3.788, beyond C's seed range and two paired SE on every seed; best of 32 is the same in every arm. The lane-change and lane-divider heads learned nothing. Inputs not checked against paddock's, no shuffled-label arm, no gate: nothing here speaks to NAVSIM, closed loop or H-safe.
+Cancelled 4 Nov 2026 (D19): the results and their analysis are inconclusive, and future experiments do not build on this one. What it had recorded, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train scenes, epoch 10): the heads move the plan the frozen scorer picks, not the proposals. T2's picked L2 at 3 s is 2.934 m against C's 3.760 and the release's 3.788, beyond C's seed range and two paired SE on every seed; best of 32 is the same in every arm. The lane-change and lane-divider heads learned nothing. Inputs not checked against paddock's, no shuffled-label arm, no gate: nothing here speaks to NAVSIM, closed loop or H-safe.
 
 ## Runs
 

@@ -46,7 +46,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H12](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selection for the privileged teacher's data collection | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H12_nuscenes_teacher_scenes/](H12_nuscenes_teacher_scenes/) |
 | [H13](H13_alpamayo_teacher/CARD.md) | Alpamayo privileged teacher on neuroNCAP, reusing the tested expert solver | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H13_alpamayo_teacher/](H13_alpamayo_teacher/) |
-| [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
+| [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | 🗑 dropped | [H14_aux_heads/](H14_aux_heads/) |
 | [H15](H15_perception_sidecar/CARD.md) | A perception side-car on frozen Drive-JEPA: 3D boxes and each agent's 1 s path, tested as an input to the scorer, to the refiner, and against LoRA on the ViT | hypothesis | Shreedhar | 3 Nov 2026 | ⏳ running | [H15_perception_sidecar/](H15_perception_sidecar/) |
 <!-- /experiments:index -->
 

@@ -1,3 +1,5 @@
+# CANCELLED (H14, decision D19, 4 Nov 2026): inconclusive. Do not run, extend or build on this recipe.
+#
 # Drive-JEPA's refiner fine-tuned on nuScenes train, with and without auxiliary heads: arms C, T1, T2.
 #
 #   gallops recipe drivejepa_aux                       print every command for this machine

@@ -55,6 +55,8 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 4 Nov | B3 | B3.1, both arms and three seeds; B3.2, refused once by its identity check, measured, then run |
 | 4 Nov | OOD | The nuScenes pass (2,996 keyframes) and readouts for the side-car, B1 and B2 |
 | 4 Nov | B2 | Every mode's F; `full`'s O and S; the report, NEUTRAL throughout |
+| 4 Nov | — | **Run outputs deleted, ahead of a rerun after review (the owner's call):** every checkpoint, per-epoch metrics file, report and run log. Every number in this account and in `experiment.toml` was copied from them first. **Kept:** the caches the runs read (`tokens-v1`, `tokens-vit-v1`, `labels-v1`, `pdm-v1`, `anchors-v1`, `block20-v1`, `nusc-extract`, `nusc-v1`) with their manifests and build logs, and `agents-a1-s0`, whose source checkpoint is gone |
+| 4 Nov | — | The metric cache and its sibling `anchors_scores_index_v2` moved from NAVSIM's `exp/` to its root (`{data.navsim_metric_cache}` updated); the two downloaded archives deleted, their sha256 list and logs kept beside the data |
 
 **Code written ahead of the data:**
 - **Side-car and phase A:** the side-car, its targets and metrics, and the phase-A trainer.
@@ -609,6 +611,9 @@ nuScenes keyframes.
 ### D · against earlier work (*argued*, from recorded numbers)
 
 The plan kept earlier results as reference only (plan §10). Read against them afterwards:
+
+**H14 was cancelled on 4 Nov (D19: inconclusive).** Its rows below are history, not evidence. H15's rerun
+does not build on it, including its nuScenes code and held-out scene list, which this run's OOD step imported.
 
 | Earlier result | What H15 found | Reading |
 |---|---|---|

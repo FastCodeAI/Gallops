@@ -205,3 +205,15 @@ AlpaSim regress); its checkpoints stay a research record, not for deployment."""
 by = ["Siddesh"]
 evidence = ["H07.exp3"]
 source = "branch train/drivejepa-kitscenes, docs/drivejepa-kitscenes.md"
+
+[[decision]]
+id = "D19"
+date = 2026-11-04
+short = "H14 cancelled: inconclusive"
+decision = """H14 (auxiliary heads on Drive-JEPA's refiner, fine-tuned on nuScenes) is cancelled: its results and \
+their analysis are inconclusive. Future experiments do not build on it -- not its code (gallops.drivejepa_aux), \
+recipe, held-out scene list, checkpoints, numbers or account; its docs and figures were removed the same day."""
+by = ["Shreedhar"]
+evidence = ["H14.C", "H14.T1", "H14.T2"]
+source = "the owner, 4 Nov 2026"
+

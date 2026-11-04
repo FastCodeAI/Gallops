@@ -50,7 +50,7 @@ The work has had two phases:
 - **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA — since D11, 19 Oct 2026.
 - **Shipped version:** none yet. `gallops-v0.1` is the first checkpoint the gate says SHIP to against the base ([how versions are earned](docs/experiments.md#versions)).
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
-- **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar), [H15](experiments/H15_perception_sidecar/CARD.md) Side-car: scorer, refiner, ViT LoRA (Shreedhar).
+- **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H15](experiments/H15_perception_sidecar/CARD.md) Side-car: scorer, refiner, ViT LoRA (Shreedhar).
 - **Enablers in progress:** [H03](experiments/H03_shared_store_and_tags/CARD.md) Shared store and checkpoint tags (Naren), [H09](experiments/H09_shared_runner/CARD.md) Shared gate runner (Naren), [H11](experiments/H11_hugsim/CARD.md) HUGSIM trial (Navvrat), [H12](experiments/H12_nuscenes_teacher_scenes/CARD.md) nuScenes teacher-scene selector (Ruhan), [H13](experiments/H13_alpamayo_teacher/CARD.md) Alpamayo teacher (reuses draw.teach) (Ruhan).
 - **Next, by priority:** [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
 <!-- /experiments:status -->
@@ -94,7 +94,7 @@ flowchart TD
     H11["<b>H11</b> · HUGSIM trial<br/>⏳ running · Navvrat"]
     H12["<b>H12</b> · nuScenes teacher-scene selector<br/>⏳ running · Ruhan"]
     H13["<b>H13</b> · Alpamayo teacher (reuses draw.teach)<br/>⏳ running · Ruhan"]
-    H14["<b>H14</b> · Aux heads on the refiner<br/>⏳ running · Shreedhar"]
+    H14["<b>H14</b> · Aux heads on the refiner<br/>🗑 dropped · Shreedhar"]
     H15["<b>H15</b> · Side-car: scorer, refiner, ViT LoRA<br/>⏳ running · Shreedhar"]
   end
   D01{{"<b>D01</b> · 19 Sep<br/>Fix the selection, not the head"}}
@@ -115,7 +115,8 @@ flowchart TD
   D16{{"<b>D16</b> · 23 Oct<br/>Drive-JEPA cropped at 2 Hz by default"}}
   D17{{"<b>D17</b> · 26 Oct<br/>Momentum-aware selection on by default"}}
   D18{{"<b>D18</b> · 28 Oct<br/>KITScenes exp 3 fails the gate"}}
-  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18
+  D19{{"<b>D19</b> · 4 Nov<br/>H14 cancelled: inconclusive"}}
+  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19
   D01 -.-> GC01
   GC02 --> D02
   D02 -.-> GC03
@@ -158,6 +159,7 @@ flowchart TD
   D15 -.-> H02
   H08 --> D16
   H07 --> D18
+  H14 --> D19
   H14 --> H15
   H04 --> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
@@ -165,7 +167,7 @@ flowchart TD
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
   class GC04,GC05 positive
   class GC08 negative
-  class H01,H03,H04,H05,H06,H07,H08,H09,H11,H12,H13,H14,H15 open
+  class H01,H03,H04,H05,H06,H07,H08,H09,H11,H12,H13,H15 open
 ```
 <!-- /experiments:flow -->
 
@@ -228,7 +230,7 @@ written down before it runs and its checkpoint put through the
 | [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | 6 | ⏳ running | `navsim_off`, `b2d_off` | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
-| [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | ⏳ running | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | 🗑 dropped | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
 <!-- /experiments:hypotheses -->
 
@@ -287,6 +289,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | **D16** | 23 Oct 2026 | Drive-JEPA runs with the OpenScene crop and plans twice a second on every benchmark by default, and the queue's baselines are remade under it. | Naren | [H08.crop](experiments/H08_sideways_velocity_fov/CARD.md) | — |
 | **D17** | 26 Oct 2026 | Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA baselines from here on include it. | Siddesh | — | — |
 | **D18** | 28 Oct 2026 | The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](experiments/H07_encoder_lora/CARD.md) | — |
+| **D19** | 4 Nov 2026 | H14 (auxiliary heads on Drive-JEPA's refiner, fine-tuned on nuScenes) is cancelled: its results and their analysis are inconclusive. Future experiments do not build on it -- not its code (gallops.drivejepa_aux), recipe, held-out scene list, checkpoints, numbers or account; its docs and figures were removed the same day. | Shreedhar | [H14.C](experiments/H14_aux_heads/CARD.md), [H14.T1](experiments/H14_aux_heads/CARD.md), [H14.T2](experiments/H14_aux_heads/CARD.md) | — |
 <!-- /experiments:decisions -->
 
 ## How to read these tables

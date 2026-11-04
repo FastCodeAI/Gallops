@@ -1,5 +1,8 @@
 """Auxiliary prediction heads for Drive-JEPA: labels from nuScenes, the heads, one training step.
 
+CANCELLED (H14, decision D19, 4 Nov 2026): inconclusive. Future experiments do not build on this
+package; it stays only for H14's record and for H15's first run, which imported its nuScenes code.
+
 docs/drivejepa-aux-heads.md is the plan. The modules split by what they need:
 
     bev, targets   numpy only -- the label grid and the label rules, tested by `make check`

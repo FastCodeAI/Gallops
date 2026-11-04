@@ -6,6 +6,9 @@
 # Restored on drivejepa/auxilliary-head-02 from that head (1c60e59, tag h14-pr20-head) for H15's nuScenes
 # step, which imports its extract and inputs; the record's `branch` field went in the same commit.
 # Numbers copied, never re-derived.
+# Cancelled on 4 Nov 2026 by its owner (decision D19): results and analysis inconclusive. Its docs and
+# figures were removed then. Future experiments do not build on H14: not its code, recipe, held-out
+# scene list, checkpoints, numbers or account. The record stays because an ID is never reused.
 
 schema = 1
 id = "H14"
@@ -15,8 +18,8 @@ track = "hypothesis"
 owner = "Shreedhar"
 benchmarks = ["nuscenes"]
 started = 2026-10-20
-status = "running"
-verdict = "none"
+status = "dropped"
+verdict = "inconclusive"
 question = """Does training Drive-JEPA's refiner with auxiliary heads (BEV map, objects, lead vehicle, lane \
 change; dropped at inference) give better plans than the identical fine-tune without them, and does it cost \
 the released model anything it already does well?"""
@@ -26,12 +29,12 @@ range across its three seeds and by more than twice the scene-clustered SE of th
 passes, and (if run) shuffled labels S do not match T. H-safe: T does not regress against the released model \
 (R) on any benchmark where R is measured; supported only if the gate's T-vs-R check shows no REGRESSION."""
 predictions = "none: the doc cites experiments/drivejepa_aux/PREDICTIONS.md, which was never written; the decision rules the runs are read against are docs/drivejepa-aux-heads.md step 4, committed at 1ec1823 before any run, unchanged"
-learned = """So far, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train scenes, epoch 10): \
+learned = """Cancelled 4 Nov 2026 (D19): the results and their analysis are inconclusive, and future \
+experiments do not build on this one. What it had recorded, open loop and in domain (2,996 keyframes of 102 held-out nuScenes train scenes, epoch 10): \
 the heads move the plan the frozen scorer picks, not the proposals. T2's picked L2 at 3 s is 2.934 m against \
 C's 3.760 and the release's 3.788, beyond C's seed range and two paired SE on every seed; best of 32 is the \
 same in every arm. The lane-change and lane-divider heads learned nothing. Inputs not checked against \
 paddock's, no shuffled-label arm, no gate: nothing here speaks to NAVSIM, closed loop or H-safe."""
-narrative = "docs/drivejepa-aux-heads.md"
 external = [
   "PR #20 was closed unmerged on 28 Oct 2026 and its branch train/drivejepa-auxilliary deleted. The account, recipe and code are at that PR's head, 1c60e59 (refs/pull/20/head), which is where this record links.",
   "Served checkpoints at {weights}/drivejepa_aux/aux-<arm>-s<seed>/step_<n>/ with sidecars, and reports at {runs}/drivejepa_aux/ (report.md, report-epoch10.md, picks-epoch10.md), at the training site (one H200); no sha256 is recorded on the branch.",
