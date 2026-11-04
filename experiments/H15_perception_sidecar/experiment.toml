@@ -261,6 +261,34 @@ notes = "Loss bce (chosen on the select logs, arm C, before any arm read an agen
   note = "NEUTRAL in all four modes. F - C per seed -0.13, -0.11, -0.00 points (2 SE 0.19, 0.16, 0.13); ground-truth agents (O) NEUTRAL too, so the limit is not perception: NC and TTC are 0.996 on the release's pick in-sample (S0.8). The release scores 0.9140 on these rows (in-sample for it). P7, P8 refuted"
 
 [[runs]]
+id = "H15.b2"
+label = "B2: the side-car's agents as refiner inputs -- three modes (adapter, + LoRA, + the refiner path) x arms C and F x three seeds"
+started = 2026-11-04
+start_from = "released"
+trained = ["refiner adapter, LoRA on the refiner or the refiner path, by mode"]
+frozen = ["encoder", "projector", "scorer", "side-car"]
+train_git_sha = "e6af85b"
+notes = "The release's planning loss (winner-takes-all to the human plus 0.5 x up to four good anchors, drawn as its training drew them), 3 epochs over 94,195 train rows, read at the last epoch; new candidates PDM-scored offline, picked by the frozen release scorer. C trained from 6b0736a, F from e6af85b (the refiner code is the same). Verdict by the pre-registered rule (b2-report): NEUTRAL in every mode, in best of 32 and in the pick. The best mode on select is full; its O and S are recorded when they finish."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#b2-full-F"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "best-of-32 EPDMS, refiner with the side-car's agents (F) against the same refiner without (C), best mode on select (full)"
+  subset = "report logs"
+  n = 4636
+  unit = "sample"
+  baseline = "H15.b2 full C"
+  baseline_value = "0.9589"
+  value = "0.9589"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "NEUTRAL in all three modes. F - C per seed +0.004, -0.013, +0.001 points (2 SE 0.019, 0.015, 0.010); P12 (+0.2 to +0.5) refuted. The release scores 0.9564 on these rows (in-sample for it); retraining the refiner without agents already raises best of 32 to 0.9575-0.9590"
+
+[[runs]]
 id = "H15.b3"
 label = "B3.1: rank-16 LoRA on the ViT's last four blocks in a branch only the side-car reads, against A1 continued without it"
 started = 2026-11-04
