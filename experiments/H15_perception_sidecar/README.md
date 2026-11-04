@@ -226,6 +226,11 @@ scores 0.9140 on the same 4,636 rows (in-sample for it).
 - **The seed ranges are small, 0.0006–0.0023.** They are one half of the decision rule's bar for F;
   the other half is 2× the paired SE, which needs F.
 
+**Decided before any F result:** O and S run on **every** mode, not only on "the best" one, and
+B1.6's explanation test runs on every F mode at seed 0. Each costs minutes. The plan's wording
+needed a best mode to be chosen, and choosing it on the report logs would have flagged every O, S
+and B1.6 number `selected-on-report`.
+
 ### B3 · how it runs, and where it departs from the plan (written before any B3 run)
 
 **A cache, not the online ViT.**

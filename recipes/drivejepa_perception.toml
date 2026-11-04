@@ -313,6 +313,43 @@ module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "replace",
         "--arm", "S", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/replace-S", "--agents", "{out}/agents-a1-s0"]
 
+# B1's verdicts by the pre-registered rule, from every <mode>-<arm> run under {out}/b1; then B1.6's
+# explanation test on every F mode at seed 0 (decided before any F result: no mode is chosen).
+
+[[stage]]
+name = "b1-report"
+python = "drivejepa"
+module = "drivejepa_perception.b_report"
+args = ["--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--runs", "{out}/b1", "--out", "{out}/b1/report.json"]
+
+[[stage]]
+name = "b1-explain-frozen"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--run", "{out}/b1/frozen-F", "--seed", "0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--agents", "{out}/agents-a1-s0", "--out", "{out}/b1/explain-frozen.json"]
+
+[[stage]]
+name = "b1-explain-lora"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--run", "{out}/b1/lora-F", "--seed", "0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--agents", "{out}/agents-a1-s0", "--out", "{out}/b1/explain-lora.json"]
+
+[[stage]]
+name = "b1-explain-full"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--run", "{out}/b1/full-F", "--seed", "0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--agents", "{out}/agents-a1-s0", "--out", "{out}/b1/explain-full.json"]
+
+[[stage]]
+name = "b1-explain-replace"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--run", "{out}/b1/replace-F", "--seed", "0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--agents", "{out}/agents-a1-s0", "--out", "{out}/b1/explain-replace.json"]
+
 # ---------------------------------------------------------------------------------------------
 # B2: three refiner modes x arms, the release's own planning loss. Read at the last epoch; the new
 # candidates are PDM-scored offline. Same arms and agents as B1. The teachers are gathered into one
