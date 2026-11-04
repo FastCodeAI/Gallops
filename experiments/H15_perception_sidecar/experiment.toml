@@ -38,7 +38,7 @@ these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to na
 3 s on nuScenes, with or without agents. The agent a scorer names for its pick is faithful (deleting it moves \
 the pick 3-5x as often as a random one). No closed loop, no gate."""
 narrative = "experiments/H15_perception_sidecar/README.md"
-parents = ["H14", "H04"]
+parents = ["H04"]
 external = [
   "Run outputs (checkpoints, per-epoch metrics, reports, logs) were deleted on 4 Nov 2026 at the owner's request, ahead of a rerun after review; every number in this record was copied from them before. The caches the runs read are kept under {runs}/drivejepa_perception.",
 ]
@@ -358,25 +358,25 @@ notes = "The frozen branch first reproduces the release (pick on every row withi
 
 [[runs]]
 id = "H15.ood"
-label = "OOD: the side-car zero-shot and every B1 model on nuScenes, H14's 102 held-out train scenes"
+label = "OOD: the side-car zero-shot and every B1 and B2 model on nuScenes, 102 train scenes"
 started = 2026-11-04
 start_from = "released"
 trained = []
 frozen = ["everything"]
 train_git_sha = "5635f7f"
-notes = "Nothing trains. The release at batch 1 on 2,996 keyframes (inputs through H14's TablesTickDataset); the projection held to the calibration's own on every scene (1.4e-5 px). The release's picked L2 at 3 s, 3.788 m, equals H14's on the same keyframes."
+notes = "Nothing trains. The release at batch 1 on 2,996 keyframes; the projection held to the calibration's own on every scene (1.4e-5 px). The scenes and the nuScenes reader of this first pass came from H14 (cancelled, D19) and were deleted with it; the rerun uses H15's own (nuscenes_data)."
 
   [runs.code]
   modules = ["gallops.drivejepa_perception"]
-  recipe = "recipes/drivejepa_perception.toml#ood-read-v2"
+  recipe = "recipes/drivejepa_perception.toml#ood-read"
 
   [[runs.data]]
   dataset = "nuscenes"
-  split = "train, H14's 102 held-out scenes"
+  split = "train, 102 scenes"
+  note = "the first pass read nuScenes through H14's code and held-out list (H14 since cancelled, D19); both were deleted, and the rerun draws its own scenes with H15's own reader (nuscenes_data)"
   role = "held-out"
   unit = "keyframes"
   n = 2996
-  scene_list = "recipes/drivejepa_aux/heldout_scenes.json"
   built_by = "gallops.drivejepa_perception.ood"
 
   [[runs.results]]

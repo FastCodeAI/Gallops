@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#hypothesis-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [H14](../H14_aux_heads/CARD.md), [H04](../H04_subscore_scorer_navsim/CARD.md)
+**Builds on:** [H04](../H04_subscore_scorer_navsim/CARD.md)
 
 ## Question
 
@@ -37,7 +37,7 @@ So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-
 | **H15.b2**<br>B2: the side-car's agents as refiner inputs -- three modes (adapter, + LoRA, + the refiner path) x arms C and F x three seeds | released | refiner adapter, LoRA on the refiner or the refiner path, by mode; frozen: encoder, projector, scorer, side-car | — | [drivejepa_perception.toml#b2-full-F](../../recipes/drivejepa_perception.toml)<br>commit `e6af85b` | — |
 | **H15.b3**<br>B3.1: rank-16 LoRA on the ViT's last four blocks in a branch only the side-car reads, against A1 continued without it | H15.a1 | LoRA on blocks 21-24 (1.05 M), side-car (5.44 M); frozen: encoder blocks 1-20, projector, refiner, scorer | — | [drivejepa_perception.toml#b3-lora](../../recipes/drivejepa_perception.toml)<br>commit `1627ebd` | — |
 | **H15.b32**<br>B3.2, reduced: B3.1 seed 0's LoRA shared with the release's planner, which is not retrained | H15.b3 | —; frozen: everything | — | [drivejepa_perception.toml#b3-shared](../../recipes/drivejepa_perception.toml)<br>commit `307a44d` | — |
-| **H15.ood**<br>OOD: the side-car zero-shot and every B1 model on nuScenes, H14's 102 held-out train scenes | released | —; frozen: everything | nuscenes `train, H14's 102 held-out scenes` 2,996 keyframes (held-out) | [drivejepa_perception.toml#ood-read-v2](../../recipes/drivejepa_perception.toml)<br>commit `5635f7f` | — |
+| **H15.ood**<br>OOD: the side-car zero-shot and every B1 and B2 model on nuScenes, 102 train scenes | released | —; frozen: everything | nuscenes `train, 102 scenes` 2,996 keyframes (held-out) — the first pass read nuScenes through H14's code and held-out list (H14 since cancelled, D19); both were deleted, and the rerun draws its own scenes with H15's own reader (nuscenes_data) | [drivejepa_perception.toml#ood-read](../../recipes/drivejepa_perception.toml)<br>commit `5635f7f` | — |
 
 - **H15.s0:** Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`.
 - **H15.a0:** 10,000 train rows, 6 epochs each, read on the select logs at the kept epoch (6). Read again with the fixed readout (f2b6570): the as-run 'within 30 m' counted to 35 m (README). The ViT's output was chosen for A1.
@@ -47,7 +47,7 @@ So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-
 - **H15.b2:** The release's planning loss (winner-takes-all to the human plus 0.5 x up to four good anchors, drawn as its training drew them), 3 epochs over 94,195 train rows, read at the last epoch; new candidates PDM-scored offline, picked by the frozen release scorer. C trained from 6b0736a, F from e6af85b (the refiner code is the same). Verdict by the pre-registered rule (b2-report): NEUTRAL in every mode, in best of 32 and in the pick. The best mode on select is full; its O and S are recorded when they finish.
 - **H15.b3:** From a block-20 cache (30 GB, 20,000 train rows + select + report), 4 epochs, three seeds per arm; both arms start from A1 seed 0's kept epoch. The preflight held the frozen branch to A1: select F1 0.66908 against 0.66940.
 - **H15.b32:** The frozen branch first reproduces the release (pick on every row within 1.1 mm, 99.9% of rows within 4.4 mm, picks equal; its first run was refused by one non-picked candidate 0.75 m off, measured by scripts/b3_identity.py). The plan's B3.2 retrains the planner on the adapted tokens; that was not run.
-- **H15.ood:** Nothing trains. The release at batch 1 on 2,996 keyframes (inputs through H14's TablesTickDataset); the projection held to the calibration's own on every scene (1.4e-5 px). The release's picked L2 at 3 s, 3.788 m, equals H14's on the same keyframes.
+- **H15.ood:** Nothing trains. The release at batch 1 on 2,996 keyframes; the projection held to the calibration's own on every scene (1.4e-5 px). The scenes and the nuScenes reader of this first pass came from H14 (cancelled, D19) and were deleted with it; the rerun uses H15's own (nuscenes_data).
 
 ## Results
 

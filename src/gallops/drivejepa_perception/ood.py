@@ -1,5 +1,6 @@
 """OOD (PREDICTIONS.md P15): the side-car and the B1 scorers on nuScenes, which nothing here saw.
 
+    python -m gallops.drivejepa_perception.nuscenes_data draw --n N --seed S       # once, committed
     python -m gallops.drivejepa_perception.ood extract --out {out}/nusc-extract          # CPU, once
     python -m gallops.drivejepa_perception.ood pass --extract {out}/nusc-extract --out {out}/nusc-v1
     python -m gallops.drivejepa_perception.ood read --nusc {out}/nusc-v1 --sidecar {out}/runs/a1-s0 \
@@ -7,25 +8,25 @@
     python -m gallops.drivejepa_perception.ood read-b2 --nusc {out}/nusc-v1 --sidecar {out}/runs/a1-s0 \
         --b2 {out}/b2 --out {out}/ood-b2.json
 
-**Rows.** Every trainable keyframe (H14's `nusc.ticks`: the keyframe 0.5 s back and 4 s of future
-keyframes exist) of H14's 102 held-out nuScenes train scenes, the list `drivejepa_aux.split` drew
-and H14 committed. The release trained on NAVSIM and H15 on navtrain, so every number here is out
-of sample for all of them: the comparison with the release that navtrain cannot give fairly.
+**Rows.** Every usable keyframe (`nuscenes_data.ticks`: the keyframe 0.5 s back and 4 s of future
+keyframes exist) of H15's own seeded draw of nuScenes train scenes (`nuscenes_data.OOD_SCENES`).
+The release trained on NAVSIM and H15 on navtrain, so every number here is out of sample for all
+of them: the comparison with the release that navtrain cannot give fairly.
 
-**Inputs** are H14's: `drivejepa_aux.inputs.TablesTickDataset`, which is swerve_data's TickDataset
-fed from the extract (the vendor's feature builder, nuScenes' cameras on the ego frame, the 28-row
-crop). The release runs at batch 1 in eval mode, so no batch_fix is involved, and the pass keeps
-what H15's readers read: the ViT's output (the side-car's tap), the scorer's pooled input, the 32
-proposals, the 6 logits and the pick, and lidar2img, img_shape and the ego status.
+**Inputs** are swerve_data's TickDataset fed from the extract (`nuscenes_data.keyframe_dataset`:
+the vendor's feature builder, nuScenes' cameras on the ego frame, the 28-row crop). The release
+runs at batch 1 in eval mode, so no batch_fix is involved, and the pass keeps what H15's readers
+read: the ViT's output (the side-car's tap), the scorer's pooled input, the 32 proposals, the 6
+logits and the pick, and lidar2img, img_shape and the ego status.
 
 **Labels**, in H15's layout (`navsim_data.pack`), from the annotations at the keyframe:
 - vehicles, pedestrians and two-wheelers (`class_of`), each with at least one lidar point:
   nuScenes' detection convention, since an annotation no sensor saw is no target for a camera;
-- boxes in the keyframe's ego frame and ground velocity in its axes, as H14's `nusc._boxes`;
+- boxes in the keyframe's ego frame and ground velocity in its axes (`nuscenes_data.boxes`);
 - each agent's path at +0.5 s and +1.0 s: its instance at the next two keyframes, which are 0.5 s
   apart, in this keyframe's frame.
-Every annotated box at the next 8 keyframes (H14's `nusc.future_boxes`) gives the collision rate
-(H14's `metrics.collided`: the ego's footprint at a waypoint overlaps a box, within 3 s).
+Every annotated box at the next 8 keyframes (`nuscenes_data.future_boxes`) gives the collision
+rate (`nuscenes_data.collided`: the ego's footprint at a waypoint overlaps a box, within 3 s).
 
 **The projection.** The vendor's lidar2img maps ego points to 0.4x the camera's pixels; the tokens
 see the image after a 28-row crop, resized to 512x256. `targets.to_512(width, height)` composes
@@ -44,6 +45,7 @@ from pathlib import Path
 import numpy as np
 
 from gallops.drivejepa_perception import navsim_data
+from gallops.drivejepa_perception import nuscenes_data as nd
 from gallops.drivejepa_perception import targets as tg
 
 #: nuScenes category prefix -> H15's class (navsim_data.CLASSES). Two-wheelers are the cyclist class,
@@ -79,8 +81,6 @@ def _to_frame(ego2global: np.ndarray, points: np.ndarray) -> np.ndarray:
 
 def keyframe_agents(scene: dict, tick: dict, annotations: dict) -> dict:
     """One keyframe's agents in H15's label layout (navsim_data.AGENT_KEYS)."""
-    from gallops.drivejepa_aux import nusc
-
     frames = scene["keyframes"]
     k = tick["keyframe"]
     ego2global = np.asarray(frames[k]["ego"])
@@ -102,13 +102,13 @@ def keyframe_agents(scene: dict, tick: dict, annotations: dict) -> dict:
     }
     if not n:
         return out
-    boxes, centres, velocity = nusc._boxes(chosen, ego2global, ("",))
-    height = np.array([a["size_wlh"][2] for a in chosen])
+    b = nd.boxes(chosen, ego2global)
     # box: x, y, z, length, width, height, yaw (navsim_data's order)
     out["box"] = np.stack(
-        [boxes[:, 0], boxes[:, 1], centres[:, 2], boxes[:, 3], boxes[:, 4], height, boxes[:, 2]], axis=1
+        [b["xyz"][:, 0], b["xyz"][:, 1], b["xyz"][:, 2], b["length"], b["width"], b["height"], b["yaw"]],
+        axis=1,
     ).astype(np.float32)
-    out["velocity"] = np.nan_to_num(velocity).astype(np.float32)
+    out["velocity"] = np.nan_to_num(b["vel"]).astype(np.float32)
     for j, step in enumerate(PATH_KEYFRAMES):
         later = {a["instance"]: a for a in annotations.get(frames[k + step]["sample"], [])}
         for i, a in enumerate(chosen):
@@ -144,30 +144,25 @@ def projection_gap(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.abs(pixels[0] - pixels[1])[inside].max()) if inside.any() else float("nan")
 
 
-def heldout_ticks(extract: dict) -> list:
-    """Every trainable keyframe of H14's held-out scenes, scenes sorted, keyframes in order."""
-    from gallops.drivejepa_aux import split
-
-    held = split.load()["held_out"]
-    return [t for name in sorted(held) for t in extract["ticks"].get(name, [])]
+def ood_ticks(extract: dict) -> list:
+    """Every usable keyframe of H15's scenes, scenes sorted, keyframes in order."""
+    return [t for name in sorted(nd.load_scenes()) for t in extract["ticks"].get(name, [])]
 
 
 def run_extract(cfg, out: Path) -> None:
-    """H14's extract of the held-out scenes alone, with their calibration (nusc extract's layout)."""
+    """H15's scenes from the nuScenes tables, with their calibration in swerve_data's layout."""
     import pickle
-
-    from gallops.drivejepa_aux import nusc, split
 
     out = Path(out)
     if (out / "extract.pkl").exists():
         raise SystemExit(f"{out}/extract.pkl exists; an extract is written once")
     root = Path(cfg.resolve("{data.nuscenes}"))
-    names = sorted(split.load()["held_out"])
+    names = nd.load_scenes()
     started = time.time()
-    data = nusc.extract(root, names)
-    data["ticks"] = {name: nusc.ticks(name, scene, root) for name, scene in data["scenes"].items()}
+    data = nd.extract(root, names)
+    data["ticks"] = {name: nd.ticks(name, scene, root / "can_bus") for name, scene in data["scenes"].items()}
     out.mkdir(parents=True, exist_ok=True)
-    nusc.write_calibration(data["scenes"], out / "calib")
+    nd.write_calibration(data["scenes"], out / "calib")
     with open(out / "extract.pkl", "wb") as fh:
         pickle.dump(data, fh, protocol=4)
     counts = {"scenes": len(names), "keyframes": sum(len(v) for v in data["ticks"].values())}
@@ -175,14 +170,13 @@ def run_extract(cfg, out: Path) -> None:
 
 
 def run_pass(cfg, extract_dir: Path, out: Path, workers: int) -> None:
-    """The release at batch 1 over every held-out keyframe, and the keyframes' labels."""
+    """The release at batch 1 over every keyframe of H15's scenes, and the keyframes' labels."""
     import pickle
     from collections import deque
     from concurrent.futures import ThreadPoolExecutor
 
     import torch
 
-    from gallops.drivejepa_aux import inputs, nusc
     from gallops.drivejepa_b2d.provenance import git_sha
     from gallops.drivejepa_perception import env
 
@@ -193,9 +187,8 @@ def run_pass(cfg, extract_dir: Path, out: Path, workers: int) -> None:
     entered = env.enter(cfg)
     with open(Path(extract_dir) / "extract.pkl", "rb") as fh:
         data = pickle.load(fh)
-    inputs.use_calibration(Path(extract_dir) / "calib")
     root = Path(cfg.resolve("{data.nuscenes}"))
-    ticks = heldout_ticks(data)
+    ticks = ood_ticks(data)
     n = len(ticks)
     first: dict = {}
     for i, t in enumerate(ticks):
@@ -231,7 +224,9 @@ def run_pass(cfg, extract_dir: Path, out: Path, workers: int) -> None:
     projection_gaps = {}
 
     def build_scene(name: str) -> list:
-        dataset = inputs.TablesTickDataset(data["ticks"][name], "cpu", data["scenes"], str(root))
+        dataset = nd.keyframe_dataset(
+            data["ticks"][name], data["scenes"], str(root), Path(extract_dir) / "calib"
+        )
         return [dataset.batch([j])[0] for j in range(len(dataset))]
 
     names = sorted({t["scene"] for t in ticks})
@@ -284,12 +279,12 @@ def run_pass(cfg, extract_dir: Path, out: Path, workers: int) -> None:
         s["ego_speed"] = np.full(5, t["speed"], np.float32)
     labels = navsim_data.pack(samples)
     np.savez(staging / "labels.npz", sample=np.array([t["sample"] for t in ticks]), **labels)
-    future = [nusc.future_boxes(data["scenes"][t["scene"]], t, data["annotations"]) for t in ticks]
+    future = [nd.future_boxes(data["scenes"][t["scene"]], t["keyframe"], data["annotations"]) for t in ticks]
     with open(staging / "future_boxes.pkl", "wb") as fh:
         pickle.dump(future, fh, protocol=4)
     np.savez(staging / "outputs.npz", scene=np.array([t["scene"] for t in ticks]), **arrays)
     manifest = {
-        "pass": "nuScenes held-out keyframes, the release at batch 1 (H15 OOD)",
+        "pass": "nuScenes keyframes of H15's scenes, the release at batch 1 (H15 OOD)",
         "gallops_sha": sha,
         "entered": entered,
         "extract": str(extract_dir),
@@ -311,7 +306,6 @@ def read(cfg, args) -> None:
 
     import torch
 
-    from gallops.drivejepa_aux import metrics as aux_metrics
     from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
     from gallops.drivejepa_perception import b_report, env, scorers, train_scorer, train_sidecar
 
@@ -374,7 +368,7 @@ def read(cfg, args) -> None:
             "l2_1s": gap[:, 1],
             "l2_2s": gap[:, 3],
             "l2_3s": gap[:, 5],
-            "collision_3s": aux_metrics.collided(plans, boxes, steps=6).astype(np.float64),
+            "collision_3s": nd.collided(plans, boxes, steps=6).astype(np.float64),
         }
 
     def summary(numbers):
@@ -432,14 +426,13 @@ def read_b2(cfg, args) -> None:
     """B2's refiners on nuScenes: every run under --b2, every seed at its last epoch, against the
     release on the same keyframes. The refiner runs from the pass's post-projector tokens, the
     frozen release scorer picks, and the plans are read as `read` reads them: the pick's L2 at
-    1, 2 and 3 s and its collisions within 3 s, plus the best of 32 by ADE over 3 s (H14's minADE).
+    1, 2 and 3 s and its collisions within 3 s, plus the best of 32 by ADE over 3 s (`nd.min_ade`).
     F and S read the side-car's agents on these keyframes (S: another scene's).
     """
     import pickle
 
     import torch
 
-    from gallops.drivejepa_aux import metrics as aux_metrics
     from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
     from gallops.drivejepa_b2d.train_generator import refine_from_cache
     from gallops.drivejepa_perception import b_report, env, train_refiner, train_scorer, train_sidecar
@@ -477,8 +470,8 @@ def read_b2(cfg, args) -> None:
             "l2_1s": gap[:, 1],
             "l2_2s": gap[:, 3],
             "l2_3s": gap[:, 5],
-            "collision_3s": aux_metrics.collided(plans, boxes, steps=6).astype(np.float64),
-            "min_ade_3s": aux_metrics.min_ade(proposals, expert[rows], steps=6),
+            "collision_3s": nd.collided(plans, boxes, steps=6).astype(np.float64),
+            "min_ade_3s": nd.min_ade(proposals, expert[rows], steps=6),
         }
 
     release = numbers(outputs["proposals"][rows], outputs["pick"][rows])

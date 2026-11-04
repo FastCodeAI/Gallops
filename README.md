@@ -160,7 +160,6 @@ flowchart TD
   H08 --> D16
   H07 --> D18
   H14 --> D19
-  H14 --> H15
   H04 --> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
   classDef negative stroke:#C0392B,stroke-width:2px

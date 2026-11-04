@@ -12,8 +12,8 @@ cosine over the run per step, gradient clip 35.
 
 **Which epoch, and which numbers.** Every epoch is saved and read on the select logs. The kept
 epoch is the one with the best F1 at 2 m within 30 m on select. The report logs are read once,
-after training, at the kept epoch and at the fixed last epoch -- H14 found that the kept epoch
-flatters every arm, so the fixed one is quoted beside it.
+after training, at the kept epoch and at the fixed last epoch: the kept epoch is the best of
+several on select, so the last, which nothing chose, is quoted beside it.
 
 **Checks.** `preflight.run` before the first step, with no way to skip it. `overfit` is H04's check
 1: 64 train samples, the same batch every step, constant LR, until the centre error of matched slots

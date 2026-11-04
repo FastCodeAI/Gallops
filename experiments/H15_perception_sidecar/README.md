@@ -57,6 +57,7 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 4 Nov | B2 | Every mode's F; `full`'s O and S; the report, NEUTRAL throughout |
 | 4 Nov | — | **Run outputs deleted, ahead of a rerun after review (the owner's call):** every checkpoint, per-epoch metrics file, report and run log. Every number in this account and in `experiment.toml` was copied from them first. **Kept:** the caches the runs read (`tokens-v1`, `tokens-vit-v1`, `labels-v1`, `pdm-v1`, `anchors-v1`, `block20-v1`, `nusc-extract`, `nusc-v1`) with their manifests and build logs, and `agents-a1-s0`, whose source checkpoint is gone |
 | 4 Nov | — | The metric cache and its sibling `anchors_scores_index_v2` moved from NAVSIM's `exp/` to its root (`{data.navsim_metric_cache}` updated); the two downloaded archives deleted, their sha256 list and logs kept beside the data |
+| 4 Nov | — | **H15 made independent of H14:** its own nuScenes reader and scene draw (`nuscenes_data`, tested); H14's code, recipe and scene list deleted; the nuScenes caches built through them (`nusc-extract`, `nusc-v1`) deleted, to be rebuilt from H15's own draw |
 
 **Code written ahead of the data:**
 - **Side-car and phase A:** the side-car, its targets and metrics, and the phase-A trainer.
@@ -488,8 +489,9 @@ planner reads; the projector, refiner and scorer are the release's, unchanged.
 ### OOD · nuScenes (P15): the side-car transfers; the scorers do not gain, and `full` loses
 
 *Measured*, out of sample for every model here (the release trained on NAVSIM, H15 on navtrain).
-- **Rows:** 2,996 keyframes of H14's 102 held-out nuScenes train scenes (`ood-pass`, `5635f7f`).
-  That is the count H14 reported.
+- **Rows:** 2,996 keyframes of 102 nuScenes train scenes (`ood-pass`, `5635f7f`). This first pass
+  took the scene list and the nuScenes reader from H14; both were deleted with H14's code on 4 Nov,
+  and the rerun draws its own scenes with H15's own reader (`nuscenes_data`).
 - **Geometry:** on every scene, the vendor's lidar2img through `to_512(1600, 900)` equals the
   calibration's own projection to 0.00001 px. NAVSIM's `TO_512` would be 20+ px off here.
 - **Readout:** `ood-read-v2`, `40511ca`.
@@ -612,17 +614,15 @@ nuScenes keyframes.
 
 The plan kept earlier results as reference only (plan §10). Read against them afterwards:
 
-**H14 was cancelled on 4 Nov (D19: inconclusive).** Its rows below are history, not evidence. H15's rerun
-does not build on it, including its nuScenes code and held-out scene list, which this run's OOD step imported.
+**H14 was cancelled on 4 Nov (D19: inconclusive),** so its rows are gone from this comparison. H15 no
+longer uses its code or scenes either (below).
 
 | Earlier result | What H15 found | Reading |
 |---|---|---|
 | **H04:** an agent decoder on frozen WA-JEPA tokens; recall 0.497, precision 0.748 at 2 m; moving vehicles within 20 m 0.849 (`selected-on-report`) | A side-car on Drive-JEPA's frozen ViT output, front camera: recall 0.630, precision 0.739, moving vehicles 0.935 (3 seeds, report logs, epoch chosen on select) | **Agrees.** A frozen JEPA encoder carries enough 3D for a 4 M decoder. Different encoders, cameras and splits, so the numbers are not a ranking |
 | **H04:** NAVSIM 85.27 → 87.30 with agent look and sub-score heads | B1: agents as scorer inputs are NEUTRAL in every mode, and so are ground-truth agents | **Complements.** H04's base had collision headroom. Drive-JEPA's pick already scores NC and TTC 0.996 in-sample (S0.8), so there is nothing for agents to fix on these logs |
 | **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates, with or without agents (C 0.92–0.97) | **Agrees.** The release's sub-score logits were never trained (`sub_score_weight = 0`). Training them on PDM labels is what calibrates them; agents add nothing to it |
-| **H14:** training-only heads moved the nuScenes pick (T2 L2 at 3 s 3.76 → 2.93 m, adapted on nuScenes) | On nuScenes, out of domain, the navtrain-fitted `full` scorer is 0.23–0.31 m worse than the release; the replacement scorer up to 0.41 m better on some seeds, in every arm | **Complements.** H14 adapted on nuScenes; H15 trained on navtrain only. Fitting the whole scorer to one domain's PDM labels costs in the other |
 | **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
-| **H14:** the refiner fine-tuned on nuScenes itself without heads (its C) picked 3.760 m at 3 s against the release's 3.788 | B2 on nuScenes: the refiner retrained on navtrain only, without agents (`full` C), picks 3.47 m against 3.788, beyond 2 SE on every seed | **Unexpected.** Retraining on navtrain helps nuScenes more than H14's retraining on nuScenes did. Neither H15 nor H14 tested why; the training differs in more than domain |
 | **H04:** agents in the planner helped on NAVSIM | B2: agents as refiner inputs are NEUTRAL in every mode, ground-truth agents too | **Complements**, as for B1: no collision headroom on these logs |
 | **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
 

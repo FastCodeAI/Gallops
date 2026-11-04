@@ -18,6 +18,8 @@ this document stays the plan.
 - **Unexpected:** retraining the refiner on navtrain, without agents, makes the release plan better
   on nuScenes. That is proposed as its own experiment.
 
+**H14 was cancelled on 4 Nov (D19).** Where this plan leans on H14 (its code, its nuScenes scenes, its numbers as reference), the rerun does not: H15 has its own nuScenes reader and scene draw.
+
 **Departures from this plan, each recorded in the README before the result it could bias:**
 - **B1's loss:** its imitation term made every control worse than the release, so the listwise
   term was chosen again on the select logs with the control arm only (`bce`).

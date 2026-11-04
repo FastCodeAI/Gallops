@@ -237,7 +237,7 @@ def check_batched(model, captured: dict, items: list, batch: int) -> dict:
     """The batched forward (batch_fix on) against batch 1 on real rows; refuses on any material change.
 
     The plan cached the release's outputs at batch 1 because the vendor mixes samples within a batch.
-    batch_fix removes that mixing (H14 measured 4.6e-5 m against batch 1, every pick equal); at batch
+    batch_fix removes that mixing (this pass measured 4.6e-5 m against batch 1, every pick equal); at batch
     1 on this shared GPU a forward took 158 ms, half of it the refiner's small kernels, so the pass
     runs batched and holds itself to batch 1 here: every pick equal, candidates and logits within
     PARITY_LIMITS. The measured differences go into the manifest.

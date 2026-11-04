@@ -658,12 +658,20 @@ args = ["shared", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1"
         "--pdm", "{out}/pdm-v1", "--from-run", "{out}/b3/lora", "--seed", "0", "--out", "{out}/b3/shared-s0"]
 
 # ---------------------------------------------------------------------------------------------
-# OOD (P15): nuScenes, which nothing in H15 or the release saw. H14's 102 held-out train scenes
-# (recipes/drivejepa_aux/heldout_scenes.json), inputs through H14's TablesTickDataset, the release at
-# batch 1; the side-car zero-shot and every B1 run against the release's pick (ood.py).
-# Site config: [datasets.nuscenes] (v1.0-trainval tables, samples/, can_bus/), and [code] paddock: H14's
-# nuScenes code imports paddock's command rule and neuroNCAP scene list (gallops.data.nuscenes_real).
+# OOD (P15): nuScenes, which nothing in H15 or the release saw. H15's own seeded draw of nuScenes train
+# scenes (nuscenes_data.OOD_SCENES, drawn once by ood-draw and committed before any OOD run: the plan
+# fixes --n and --seed), inputs through swerve_data's TickDataset, the release at batch 1; the side-car
+# zero-shot, and every B1 and B2 run against the release's pick (ood.py).
+# Site config: [datasets.nuscenes] (v1.0-trainval tables, samples/, can_bus/), and [code] paddock:
+# gallops.data.nuscenes_real imports paddock's command rule and neuroNCAP scene list.
 # ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "ood-draw"
+python = "drivejepa"
+module = "drivejepa_perception.nuscenes_data"
+env = { PYTHONPATH = "{code.paddock}/src" }
+args = ["draw", "--n", "100", "--seed", "0"]
 
 [[stage]]
 name = "ood-extract"
@@ -686,15 +694,6 @@ module = "drivejepa_perception.ood"
 env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
         "--out", "{out}/ood/ood.json"]
-
-# The same readout with recall by class within 30 m (P15 reads vehicles within 30 m), after 8be6994.
-[[stage]]
-name = "ood-read-v2"
-python = "drivejepa"
-module = "drivejepa_perception.ood"
-env = { PYTHONPATH = "{code.paddock}/src" }
-args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
-        "--out", "{out}/ood/ood-v2.json"]
 
 # B2's refiners on the same keyframes: the frozen scorer's pick and the best of 32 (after B2 finishes).
 [[stage]]
