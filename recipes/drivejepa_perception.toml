@@ -190,7 +190,8 @@ args = ["agents", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", 
 #
 # The loss is chosen first, on the select logs and the C arm only, before any arm reads an agent: the
 # first C runs (84fd73e, loss `imitation`, kept as {out}/b1-imitation) picked the candidate nearest the
-# human and lost 2.5-2.7 points of select pick EPDMS to the release. The README records it.
+# human and lost 2.5-2.7 points of select pick EPDMS to the release. b1-choose-loss (977bb56) chose
+# `bce` by its fixed rule: mean over modes 0.9199, against imitation 0.8948 and best 0.8644.
 # ---------------------------------------------------------------------------------------------
 
 [[stage]]
@@ -205,112 +206,112 @@ name = "b1-frozen-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
-        "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-C"]
+        "--arm", "C", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-C"]
 
 [[stage]]
 name = "b1-frozen-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
-        "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-F", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "F", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-frozen-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
-        "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-O"]
+        "--arm", "O", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-O"]
 
 [[stage]]
 name = "b1-frozen-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
-        "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-S", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "S", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/frozen-S", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-lora-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
-        "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b1/lora-C"]
+        "--arm", "C", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/lora-C"]
 
 [[stage]]
 name = "b1-lora-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
-        "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b1/lora-F", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "F", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/lora-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-lora-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
-        "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b1/lora-O"]
+        "--arm", "O", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/lora-O"]
 
 [[stage]]
 name = "b1-lora-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
-        "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b1/lora-S", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "S", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/lora-S", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-full-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
-        "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b1/full-C"]
+        "--arm", "C", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/full-C"]
 
 [[stage]]
 name = "b1-full-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
-        "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b1/full-F", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "F", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/full-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-full-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
-        "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b1/full-O"]
+        "--arm", "O", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/full-O"]
 
 [[stage]]
 name = "b1-full-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
-        "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b1/full-S", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "S", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/full-S", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-replace-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "replace",
-        "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b1/replace-C"]
+        "--arm", "C", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/replace-C"]
 
 [[stage]]
 name = "b1-replace-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "replace",
-        "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b1/replace-F", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "F", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/replace-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b1-replace-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "replace",
-        "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b1/replace-O"]
+        "--arm", "O", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/replace-O"]
 
 [[stage]]
 name = "b1-replace-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_scorer"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "replace",
-        "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b1/replace-S", "--agents", "{out}/agents-a1-s0"]
+        "--arm", "S", "--loss", "bce", "--seeds", "0,1,2", "--out", "{out}/b1/replace-S", "--agents", "{out}/agents-a1-s0"]
 
 # ---------------------------------------------------------------------------------------------
 # B2: three refiner modes x arms, the release's own planning loss. Read at the last epoch; the new

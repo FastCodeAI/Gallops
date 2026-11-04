@@ -188,6 +188,26 @@ The fourth mode, `replace`, did not run: its preflight refused uncommitted code.
   loss is used in every mode and arm.
 - The imitation runs are kept, apart, as `{runs}/drivejepa_perception/b1-imitation/`.
 
+**The choice (`b1-choose-loss`, `977bb56`), *measured*:** select logs, arm C, seed 0, each run's
+kept epoch. The release's own pick scores 0.9201.
+
+| Loss | frozen | lora | full | replace | Mean | NC / TTC of the pick, frozen | L2 at 1 s, frozen |
+|---|---|---|---|---|---|---|---|
+| imitation | 0.8947 | 0.8943 | 0.8930 | 0.8974 | 0.8948 | 0.998 / 0.996 | 0.15 m |
+| **bce** | **0.9202** | **0.9200** | **0.9202** | **0.9192** | **0.9199** | 0.996 / 0.994 | 0.86 m |
+| best | 0.8635 | 0.8669 | 0.8633 | 0.8637 | 0.8644 | 0.972 / 0.967 | 1.35 m |
+
+- **Chosen: `bce`.** Every mode's control then sits within 0.001 of the release.
+- **Ranking toward the PDM-best candidate made the control worse than imitation did.** Its pick
+  moved away from the human (1.35 m at 1 s) and into collisions: NC 0.972 and TTC 0.967, against
+  0.995 and 0.994 for the release.
+  - *Argued:* the best candidate is often the fastest safe one. Without agents the control cannot
+    tell safe from unsafe, so it learns "faster" and pays in collisions.
+  - That is the gap the F arm is meant to fill. It is also why `best` is not a fair control:
+    under it, F could beat C by repairing damage the loss did, not by adding a reason.
+- **The replacement scorer** (B1.4: a new network, trained from scratch on the control's own
+  inputs) reaches 0.9192, within 0.001 of the release, in two epochs.
+
 ![Each hypothesis, its tests and its readout](figures/hypotheses.png)
 
 ![How the results decide what is claimed](figures/decisions.png)
