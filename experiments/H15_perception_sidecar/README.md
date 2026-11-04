@@ -217,8 +217,21 @@ log):
 - *Argued:* all-zero tokens never occur in real input, and on real input seed 0's recall and
   precision match the seeds that pass. So this is more likely the model's answer to an input
   outside anything it saw than detections made without the image.
-- That argument is not a measurement, though. An in-distribution check comes next: every row read
-  with another log's real tokens should lose its recall.
+- **The in-distribution check (`a1-*-sight`, `158f49c`), *measured*.** Each report row was read
+  with its own geometry and targets but the real tokens of a row from another log (the S arm's
+  draw):
+
+  | Run | Recall, own tokens | Recall, another log's | Precision, own / another's | Lead-gap error, own / another's |
+  |---|---|---|---|---|
+  | seed 0 | 0.632 | 0.046 | 0.742 / 0.034 | 2.35 / 19.9 m |
+  | seed 1 | 0.630 | 0.047 | 0.736 / 0.036 | 2.36 / 20.0 m |
+  | seed 2 | 0.630 | 0.045 | 0.742 / 0.034 | 2.14 / 20.0 m |
+  | 128 queries | 0.647 | 0.046 | 0.802 / 0.037 | 2.27 / 20.0 m |
+
+- **Every run, seed 0 included, loses its recall without its own image.** It still detects about
+  five agents a sample, those of the other image, and they miss this row's.
+- So seed 0's detections on real input are made from the image. Its zeroed-token failure is its
+  answer to an input it never saw, and is recorded as such.
 
 ### A1 · the no-camera baseline (blind arm, report logs)
 
