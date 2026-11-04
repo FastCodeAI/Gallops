@@ -104,7 +104,7 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 
 ## What it showed
 
-**In short (4 Nov; B2 still training):**
+**In short (4 Nov):**
 - **The side-car works (H-A supported).** 4.39 M parameters on the frozen ViT's output find agents
   ahead: recall 0.63 and precision 0.74 within 30 m, moving vehicles near the ego 0.94, the lead
   gap within 2.1–2.4 m. Its 1 s paths beat constant velocity, if only by 4–5%.
@@ -119,7 +119,16 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 - **Out of domain, fitting the scorer to navtrain costs.** On nuScenes the `full` scorer plans
   0.23–0.31 m worse at 3 s than the release, with or without agents. The replacement scorer
   transfers best.
-- **B2** (agents for the refiner) is training. Its first seed matches its control.
+- **Its agents do not improve the refiner's proposals either (B2 NEUTRAL in every mode).** Neither
+  do ground-truth agents.
+- **A finding nobody predicted:** retraining the refiner on navtrain, with or without agents, makes
+  the release plan better on nuScenes. Its pick lands 0.3 m closer to the human at 3 s, with
+  fewer collisions. Why is untested.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="figures/verdicts-dark.png">
+  <img alt="B1 and B2: every arm against its control, per seed, with 2 SE intervals and the predicted gain shaded; no arm beats its control on every seed" src="figures/verdicts-light.png">
+</picture>
 
 The numbers behind each line follow; the structured record is `experiment.toml`.
 
@@ -554,7 +563,56 @@ release scores 0.9564 best of 32 and 0.9140 for its pick on these rows, in-sampl
   most in `full`.** The frozen scorer's pick moves down by 0.1–0.25 points. It was trained on the
   release's candidates, not on these.
 - **The best mode on select** (the rule written before any F result) is `full`: mean F − C in select
-  best of 32 −0.006 points. Its O and S arms are training.
+  best of 32 −0.006 points.
+
+**O and S on `full`, the best mode on select** (`b2-report` after them):
+
+| Arm against C | Best of 32, points (2 SE), seeds 0 / 1 / 2 | Verdict | The pick | Verdict |
+|---|---|---|---|---|
+| F, the side-car's agents | +0.004 (0.019) / -0.013 (0.015) / +0.001 (0.010) | NEUTRAL | -0.019 (0.148) / -0.051 (0.146) / +0.146 (0.147) | NEUTRAL |
+| O, ground-truth agents | -0.003 (0.015) / +0.000 (0.017) / +0.000 (0.015) | NEUTRAL | -0.051 (0.138) / +0.115 (0.118) / +0.111 (0.105) | NEUTRAL |
+| S, another log's agents | -0.022 (0.033) / -0.028 (0.033) / +0.001 (0.017) | NEUTRAL | -0.106 (0.191) / +0.107 (0.142) / +0.137 (0.172) | NEUTRAL |
+
+- **Ground-truth agents give the refiner nothing either:** −0.003, 0.000 and 0.000 points in best of
+  32. As in B1, the limit is not the side-car's perception.
+- **P10 is not applicable here either.** Its ratios divide by an F − C of zero.
+
+### B2 on nuScenes · retraining the refiner plans better out of domain, with or without agents
+
+*Measured* (`ood-read-b2`, `2349622`). Every B2 run, every seed at its last epoch, on the 2,996
+nuScenes keyframes.
+- **Setup:** the refiner runs from the pass's tokens, and the frozen release scorer picks.
+- **The release:** min ADE over 3 s 0.268 m, picked L2 at 3 s 3.788 m, collisions within 3 s 4.04%.
+- **Reading the table:** each run's difference from the release, seeds 0 / 1 / 2; * marks beyond
+  2 SE, clustered by scene.
+
+| Run | Best of 32 by ADE − release (m) | Picked L2 at 3 s − release (m) | Collisions − release (points) |
+|---|---|---|---|
+| frozen C | -0.019* / -0.020* / -0.020* | -0.08 / -0.04 / -0.09 | -0.4* / -0.4 / -0.4* |
+| frozen F | -0.020* / -0.021* / -0.019* | -0.10 / +0.00 / -0.14* | -0.6* / -0.6* / -0.5* |
+| lora C | -0.019* / -0.018* / -0.018* | -0.17* / -0.17* / -0.27* | -0.5* / -0.6* / -0.4 |
+| lora F | -0.019* / -0.019* / -0.018* | -0.18* / -0.16* / -0.28* | -0.7* / -0.7* / -0.7* |
+| full C | -0.016* / -0.017* / -0.015* | -0.28* / -0.32* / -0.34* | -0.7* / -0.7* / -0.7* |
+| full F | -0.018* / -0.017* / -0.019* | -0.34* / -0.35* / -0.36* | -0.6* / -0.5 / -0.6 |
+| full O | -0.018* / -0.018* / -0.015* | -0.35* / -0.33* / -0.36* | -0.8* / -0.6* / -0.8* |
+| full S | -0.017* / -0.017* / -0.016* | -0.32* / -0.35* / -0.33* | -0.8* / -0.7* / -0.6* |
+
+- **Every retrained refiner makes better candidates out of domain**: −0.015 to −0.021 m of min
+  ADE on every seed, against a release at 0.268 m.
+- **The `full` refiner's pick lands 0.28–0.36 m closer to the human at 3 s, and collides 0.5–0.8
+  points less**, on every seed, mostly beyond 2 SE.
+- **C does it too, and F, O and S match C.** So the gain comes from retraining the refiner on
+  navtrain, not from the agents. H15 did not hypothesise it, and it is reported as found, not as
+  a test.
+- *Argued, not measured:* why should retraining on the release's own training logs, with the
+  release's own loss, generalise better than the release?
+  - One candidate: the release trained before `batch_fix` existed, with its refiner mixing
+    samples within a batch, and these runs trained with the fix.
+  - Another: H15's draw of the good-anchor teachers differs from the release's for rows with few
+    anchors.
+  - Neither is tested here. In-domain the same retraining raised best of 32 slightly and lowered
+    the frozen scorer's pick slightly; the gate has not seen it.
+
 
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
@@ -598,4 +656,44 @@ release scores 0.9564 best of 32 and 0.9140 for its pick on these rows, in-sampl
 
 ## Decision
 
-None yet.
+By the decision rules PREDICTIONS.md fixed before any run, read on 4 Nov:
+
+- **H-A holds, so B's claims are allowed** (PREDICTIONS.md: "if H-A is refuted, no B claim is
+  made").
+- **B1 and B2: no mode beats its control.**
+  - Every arm against its control is NEUTRAL: the side-car's agents (F), ground-truth agents (O)
+    and another log's agents (S), in every mode where each ran (B2's O and S ran on `full`), at
+    every epoch read.
+  - P7 and P12, the gains predicted, are refuted.
+  - The rule for this case: "record it. The side-car's agents do not help this planner on
+    NAVSIM." Recorded.
+- **B3: P13 is refuted.** LoRA on the ViT's last four blocks adds no recall over the frozen tap.
+  Shared with the planner, it does not move the plan.
+- **nuScenes: P15 is refuted by its own rule.** The best B1 model plans 0.23–0.31 m worse than the
+  release at 3 s. The cost comes from fitting the scorer to navtrain; arm C pays it too.
+- **The explanation route.**
+  - The rule falls back to the release's collision head when B1 and B2 are refuted. That is what
+    H15 recommends for now.
+  - B1.6 found more than the rule anticipated: a scorer that reads agents, no worse than the
+    release in-domain, names the agent behind its pick faithfully (deletion 3–5× a random agent's
+    effect; 86% grounded).
+  - Whether to adopt such a scorer for explanations is the owner's call, and it has a cost to
+    weigh. The `full` mode loses out of domain; the replacement scorer does not.
+
+**What this leaves open (*argued*):**
+- **Why nothing helped.** On navtrain, in-sample, the release's pick already scores NC and TTC
+  0.996: there is no collision headroom for agents to close.
+  - Where the release does collide is where agents could matter: neuroNCAP's closed-loop
+    scenarios, and navtest.
+  - Any further B work belongs there, behind the gate, not on navtrain.
+- **The side-car is worth keeping as a perception module.** It finds agents from the frozen tap
+  with no change to the planner (1.4% of the parameters), transfers to nuScenes, and is
+  data-limited: more labelled scenes would still improve it.
+- **The refiner finding is worth a test of its own.** Retraining the refiner on navtrain, with no
+  agents, makes the release plan better on nuScenes (0.3 m at 3 s, fewer collisions).
+  - It was not hypothesised. Two causes are candidates, neither tested: training with `batch_fix`,
+    or H15's draw of the teachers.
+  - A new experiment would pre-register it, and take it through the gate's closed loop before any
+    claim.
+- **The gate (C)** was deferred by the owner and has not run. Nothing here changes the shipped
+  model; no `gallops-v0.N` is earned.

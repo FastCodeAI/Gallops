@@ -399,3 +399,17 @@ notes = "Nothing trains. The release at batch 1 on 2,996 keyframes (inputs throu
   strength = "moderate"
   flags = ["open-loop"]
   note = "mean of three seeds; minus R +0.234, +0.239, +0.313 m, each beyond 2 SE clustered by scene: P15 refuted. full C (no agents) is as much worse (+0.282, +0.438, +0.352), so the cost is fitting the scorer to navtrain, not the agents; collision rate not lower"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "picked-plan L2 at 3 s, m, B2 full C (the refiner retrained on navtrain without agents; frozen release scorer)"
+  subset = "102 held-out train scenes"
+  n = 2996
+  unit = "keyframe"
+  baseline = "R, the released model"
+  baseline_value = "3.788"
+  value = "3.474"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "mean of three seeds; minus R -0.277, -0.325, -0.340 m, each beyond 2 SE clustered by scene; collisions 0.7 points lower. F, O and S match C, so it is the retraining, not the agents (ood-read-b2, 2349622). Not hypothesised; why is untested"
