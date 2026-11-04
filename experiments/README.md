@@ -87,6 +87,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.sidecar` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.targets` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.tokens` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.train_refiner` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.train_scorer` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.train_sidecar` | H15.s0 | experiment |
 | `gallops.experiments` | — | shared |

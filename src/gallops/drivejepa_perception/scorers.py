@@ -145,6 +145,14 @@ class LoRALinear(nn.Module):
         self.b = nn.Parameter(torch.zeros(base.out_features, rank))
         self.scale = alpha / rank
 
+    @property
+    def weight(self):  # code that reads a layer's weight directly still finds the base's
+        return self.base.weight
+
+    @property
+    def bias(self):
+        return self.base.bias
+
     def forward(self, x):
         return self.base(x) + (x @ self.a.t() @ self.b.t()) * self.scale
 

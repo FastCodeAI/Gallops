@@ -188,3 +188,58 @@ def run_scorer(cfg, args, data: dict, model_factory) -> dict:
     if problems:
         raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
     return report
+
+
+#: B2's identity limits: the refiner run from fp16 cached tokens against the cached release
+#: proposals (computed from fp32 tokens in the live forward).
+REFINER_LIMITS = {"proposals_m": 0.05, "picks_share": 0.95}
+
+
+def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
+    """B2's preflight: code, splits, and the untrained model reproducing the release from the cache.
+
+    With the adapter at zero, the refiner run from the fp16 token cache must give the cached release
+    proposals to within REFINER_LIMITS on 64 select rows, and the frozen scorer's pick on at least
+    95% of them. The measured differences go into the run's files.
+    """
+    import torch
+
+    from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
+    from gallops.drivejepa_perception import env, navsim_data
+    from gallops.train.preflight import code_checks
+
+    report, problems = {}, []
+    report["code"], found = code_checks(REPO)
+    problems += found
+    entered = env.enter(cfg)
+    navsim_data.load_splits(
+        REPO / "recipes/drivejepa_perception/splits.json",
+        navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
+    )
+    rows = data["rows"]["select"][:64]
+    agent, model, adapter = build_fn()
+    device = torch.device("cuda")
+    model, adapter = model.to(device), adapter.to(device)
+    model._backbone = model._backbone.cpu()
+    if args.arm != "C":
+        adapter.context = {
+            k: torch.from_numpy(np.asarray(v[rows])).to(device) for k, v in data["agents"].items()
+        }
+        adapter.context["mask"] = adapter.context["mask"].bool()
+    head = Head()
+    head.load_state_dict(head_tensors_from_checkpoint(Path(entered["release"])))
+    head = head.to(device).eval()
+    with torch.no_grad():
+        props, bev = forward_fn(model, data, rows, device)
+        pick = head(bev.reshape(len(rows), 32, 8, -1).amax(2))[..., -1].argmax(1).cpu().numpy()
+    gap = float(np.abs(props[-1].float().cpu().numpy() - data["proposals"][rows]).max())
+    share = float((pick == data["pick_release"][rows]).mean())
+    report["identity"] = {"rows": int(len(rows)), "proposals_max_m": gap, "picks_equal_share": share}
+    if gap > REFINER_LIMITS["proposals_m"] or share < REFINER_LIMITS["picks_share"]:
+        problems.append(f"the untrained refiner does not reproduce the release: {report['identity']}")
+    del model, agent
+    torch.cuda.empty_cache()
+    report["problems"] = problems
+    if problems:
+        raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
+    return report
