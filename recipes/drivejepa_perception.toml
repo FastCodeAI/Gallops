@@ -102,3 +102,11 @@ python = "drivejepa"
 module = "drivejepa_perception.pdm_labels"
 # Re-scores 50 random rows; exits 1 unless every one equals the stored labels exactly.
 args = ["check", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/pdm-v1", "--rows", "50"]
+
+# A1's no-camera baseline: the same side-car, trained identically, on zeroed tokens (H-A's reference).
+[[stage]]
+name = "a1-blind"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--out", "{out}/runs/a1-blind",
+        "--blind", "--seed", "0"]
