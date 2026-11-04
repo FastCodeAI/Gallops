@@ -14,7 +14,7 @@
 <p align="center">
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
-  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-7_open_or_tested-1F6FEB.svg" alt="hypotheses: 7 open or tested"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-8_open_or_tested-1F6FEB.svg" alt="hypotheses: 8 open or tested"></a>
   <a href="#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-2-B4560A.svg" alt="gated checkpoints: 2"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
@@ -52,6 +52,7 @@ The work has had two phases:
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
 - **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar).
 - **Enablers in progress:** [H03](experiments/H03_shared_store_and_tags/CARD.md) Shared store and checkpoint tags (Naren), [H09](experiments/H09_shared_runner/CARD.md) Shared gate runner (Naren), [H11](experiments/H11_hugsim/CARD.md) HUGSIM trial (Navvrat), [H12](experiments/H12_nuscenes_teacher_scenes/CARD.md) nuScenes teacher-scene selector (Ruhan), [H13](experiments/H13_alpamayo_teacher/CARD.md) Alpamayo teacher (reuses draw.teach) (Ruhan).
+- **Next, by priority:** [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory.
 <!-- /experiments:status -->
 
 ## The decision path
@@ -94,6 +95,7 @@ flowchart TD
     H12["<b>H12</b> · nuScenes teacher-scene selector<br/>⏳ running · Ruhan"]
     H13["<b>H13</b> · Alpamayo teacher (reuses draw.teach)<br/>⏳ running · Ruhan"]
     H14["<b>H14</b> · Aux heads on the refiner<br/>⏳ running · Shreedhar"]
+    H15["<b>H15</b> · Prediction memory<br/>📝 planned · Naren"]
   end
   D01{{"<b>D01</b> · 19 Sep<br/>Fix the selection, not the head"}}
   D02{{"<b>D02</b> · 26 Sep<br/>neuroNCAP needs both halves trained"}}
@@ -156,12 +158,13 @@ flowchart TD
   D15 -.-> H02
   H08 --> D16
   H07 --> D18
+  H05 --> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
   classDef negative stroke:#C0392B,stroke-width:2px
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
   class GC04,GC05 positive
   class GC08 negative
-  class H01,H03,H04,H06,H07,H08,H09,H11,H12,H13,H14 open
+  class H01,H03,H04,H06,H07,H08,H09,H11,H12,H13,H14,H15 open
 ```
 <!-- /experiments:flow -->
 
@@ -225,6 +228,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | ⏳ running | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | — | 📝 planned | — | — | — | — |
 <!-- /experiments:hypotheses -->
 
 ### Enablers
