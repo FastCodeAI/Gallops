@@ -3,6 +3,8 @@
 # arm as its seeds' mean with their range); per-seed T - C differences are in the notes.
 # Sources: docs/drivejepa-aux-heads.md (+ drivejepa-aux-next.md), recipes/drivejepa_aux.toml and
 # src/gallops/drivejepa_aux/ at the head of closed PR #20; its branch, train/drivejepa-auxilliary, is deleted.
+# Restored on drivejepa/auxilliary-head-02 from that head (1c60e59, tag h14-pr20-head) for H15's nuScenes
+# step, which imports its extract and inputs; the record's `branch` field went in the same commit.
 # Numbers copied, never re-derived.
 
 schema = 1
@@ -30,7 +32,6 @@ C's 3.760 and the release's 3.788, beyond C's seed range and two paired SE on ev
 same in every arm. The lane-change and lane-divider heads learned nothing. Inputs not checked against \
 paddock's, no shuffled-label arm, no gate: nothing here speaks to NAVSIM, closed loop or H-safe."""
 narrative = "docs/drivejepa-aux-heads.md"
-branch = "1c60e59df49114e314b525987561023bb6ad5c7b"
 external = [
   "PR #20 was closed unmerged on 28 Oct 2026 and its branch train/drivejepa-auxilliary deleted. The account, recipe and code are at that PR's head, 1c60e59 (refs/pull/20/head), which is where this record links.",
   "Served checkpoints at {weights}/drivejepa_aux/aux-<arm>-s<seed>/step_<n>/ with sidecars, and reports at {runs}/drivejepa_aux/ (report.md, report-epoch10.md, picks-epoch10.md), at the training site (one H200); no sha256 is recorded on the branch.",

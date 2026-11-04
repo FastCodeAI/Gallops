@@ -1,0 +1,167 @@
+# Drive-JEPA's refiner fine-tuned on nuScenes train, with and without auxiliary heads: arms C, T1, T2.
+#
+#   gallops recipe drivejepa_aux                       print every command for this machine
+#   gallops recipe drivejepa_aux labels tokens --run   run the named stages
+#
+# The plan, the hypotheses and the arms: docs/drivejepa-aux-heads.md. The held-out scenes are tracked
+# (drivejepa_aux/heldout_scenes.json, drawn once by `python -m gallops.drivejepa_aux.split`), so no stage
+# draws them. Every stage refuses to write over what an earlier run wrote: a rerun goes to a fresh {out}
+# or a fresh --train-run.
+#
+# Every stage runs in Drive-JEPA's own interpreter, which `step.enter` gives the environment paddock's
+# drivejepa model.yaml gives its node (cwd navsim_v2/, NAVSIM_* variables), so no stage sets them here.
+#
+# Site config this needs (gallops.toml):
+#   [python] drivejepa      Drive-JEPA's interpreter (Python 3.9) with mmcv, mmdet and nuscenes-devkit
+#   [code]   drivejepa      Drive-JEPA with paddock's patches applied (0001 is required on sm_90)
+#   [code]   paddock        paddock's checkout: its src/ supplies Command and neuroNCAP's scene list
+#   [datasets.nuscenes]     nuScenes v1.0-trainval, with the CAN-bus and map expansions
+#   [datasets.navsim]       path + exp, as in paddock.toml: exp holds the released checkpoint
+
+description = "Drive-JEPA's refiner fine-tuned on nuScenes train with auxiliary heads: arms C, T1, T2"
+
+[vars]
+out = "{runs}/drivejepa_aux"
+extract = "{runs}/drivejepa_aux/extract-v1"
+cache = "{runs}/drivejepa_aux/cache-v1"
+
+[[stage]]
+name = "extract"
+python = "drivejepa"
+module = "drivejepa_aux.nusc"
+args = ["extract", "--out", "{extract}"]
+
+[[stage]]
+name = "labels"
+python = "drivejepa"
+module = "drivejepa_aux.cache"
+after = ["extract"]
+args = ["labels", "--extract", "{extract}", "--out", "{cache}", "--workers", "48"]
+
+[[stage]]
+name = "tokens"
+python = "drivejepa"
+module = "drivejepa_aux.cache"
+after = ["extract"]
+args = ["tokens", "--extract", "{extract}", "--out", "{cache}", "--workers", "24"]
+
+# Three seeds of each arm. For one seed the arms see the same batches in the same order.
+
+[[stage]]
+name = "c-s0"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "none", "--seed", "0", "--train-run", "aux-c-s0"]
+
+[[stage]]
+name = "c-s1"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "none", "--seed", "1", "--train-run", "aux-c-s1"]
+
+[[stage]]
+name = "c-s2"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "none", "--seed", "2", "--train-run", "aux-c-s2"]
+
+[[stage]]
+name = "t1-s0"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "upstream", "--seed", "0", "--train-run", "aux-t1-s0"]
+
+[[stage]]
+name = "t1-s1"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "upstream", "--seed", "1", "--train-run", "aux-t1-s1"]
+
+[[stage]]
+name = "t1-s2"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "upstream", "--seed", "2", "--train-run", "aux-t1-s2"]
+
+[[stage]]
+name = "t2-s0"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "all", "--seed", "0", "--train-run", "aux-t2-s0"]
+
+[[stage]]
+name = "t2-s1"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "all", "--seed", "1", "--train-run", "aux-t2-s1"]
+
+[[stage]]
+name = "t2-s2"
+python = "drivejepa"
+module = "drivejepa_aux.train"
+after = ["labels", "tokens"]
+args = ["--cache", "{cache}", "--extract", "{extract}", "--heads", "all", "--seed", "2", "--train-run", "aux-t2-s2"]
+
+[[stage]]
+name = "report"
+python = "drivejepa"
+module = "drivejepa_aux.report"
+after = ["c-s0", "c-s1", "c-s2", "t1-s0", "t1-s1", "t1-s2", "t2-s0", "t2-s1", "t2-s2"]
+args = [
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+  "-o", "{out}/report.md",
+]
+
+# The kept epochs were chosen on the held-out scenes the report above then measures them on. Every run
+# again at the recipe's last epoch, which nothing chose: the numbers to quote.
+
+[[stage]]
+name = "evaluate-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.evaluate"
+after = ["c-s0", "c-s1", "c-s2", "t1-s0", "t1-s1", "t1-s2", "t2-s0", "t2-s1", "t2-s2"]
+args = [
+  "--cache", "{cache}", "--extract", "{extract}", "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+]
+
+[[stage]]
+name = "report-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.report"
+after = ["evaluate-epoch10"]
+args = [
+  "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+  "-o", "{out}/report-epoch10.md",
+]
+
+# What the frozen scorer picks at that epoch: where the picked plan's change comes from, and whether a
+# pick has gone degenerate.
+
+[[stage]]
+name = "diagnose-epoch10"
+python = "drivejepa"
+module = "drivejepa_aux.diagnose"
+after = ["c-s0", "c-s1", "c-s2", "t1-s0", "t1-s1", "t1-s2", "t2-s0", "t2-s1", "t2-s2"]
+args = [
+  "--cache", "{cache}", "--epoch", "10",
+  "{out}/runs/aux-c-s0", "{out}/runs/aux-c-s1", "{out}/runs/aux-c-s2",
+  "{out}/runs/aux-t1-s0", "{out}/runs/aux-t1-s1", "{out}/runs/aux-t1-s2",
+  "{out}/runs/aux-t2-s0", "{out}/runs/aux-t2-s1", "{out}/runs/aux-t2-s2",
+  "-o", "{out}/picks-epoch10.md",
+]

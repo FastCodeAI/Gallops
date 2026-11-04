@@ -65,6 +65,21 @@ command line serve every experiment and are listed as shared.
 | `gallops.config` | — | shared |
 | `gallops.data.nuscenes_real` | GC06.v3_nusc | experiment |
 | `gallops.data.rerank` | GC01.kitscenes-train-h128-t1 | experiment |
+| `gallops.drivejepa_aux.bev` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.cache` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.diagnose` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.evaluate` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.heads` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.inputs` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.metrics` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.nusc` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.preflight` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.publish` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.report` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.split` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.step` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.targets` | H14.C, H14.T1, H14.T2 | experiment |
+| `gallops.drivejepa_aux.train` | H14.C, H14.T1, H14.T2 | experiment |
 | `gallops.drivejepa_b2d.batch_fix` | GC04.final | experiment |
 | `gallops.drivejepa_b2d.check_data` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.head` | GC04.split-v4, GC04.final | experiment |
@@ -82,6 +97,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.explain` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.geometry` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.navsim_data` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.ood` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.pdm_labels` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.preflight` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.scorers` | H15.s0 | experiment |
