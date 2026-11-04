@@ -171,6 +171,55 @@ targets to 35 m (see "a readout bug" below) and are kept in brackets.
   saved weights again with the fixed readout, beside the as-run files. A0 and A1 are reported on
   both definitions, each labelled.
 
+### A1 · the side-car (`f05e2ff`; report logs, front view, within 30 m)
+
+Trained on the ViT's own output, 12 epochs over the 94,195 train rows, 4.39 M parameters (1.4% of
+the inference path). Each run's kept epoch was chosen on the select logs by the as-run readout;
+the numbers below are those epochs read again with the fixed one (`a1-*-reread`).
+
+| Run | Kept | Recall | Precision | F1 | Recall 0–20 / 20–30 / 30–50 m | Moving vehicles ≤ 20 m | Lead-gap error (prior 8.53 m) |
+|---|---|---|---|---|---|---|---|
+| seed 0 | 11 | 0.632 | 0.742 | 0.683 | 0.807 / 0.512 / 0.228 | 0.936 | 2.35 m |
+| seed 1 | 11 | 0.630 | 0.736 | 0.679 | 0.795 / 0.517 / 0.231 | 0.935 | 2.36 m |
+| seed 2 | 12 | 0.630 | 0.742 | 0.682 | 0.801 / 0.513 / 0.235 | 0.935 | 2.14 m |
+| seed 0, 128 queries | 12 | 0.647 | 0.802 | 0.716 | 0.816 / 0.530 / 0.222 | 0.948 | 2.27 m |
+| no camera (blind) | 1 | 0 | — | 0 | 0 / 0 / 0 | 0 | — |
+
+**Each agent's next second** (matched moving agents, FDE at 1 s, paired per agent, SE clustered by
+log):
+
+| Run | Side-car's path | Constant velocity, its own velocity | Difference (SE) | Constant velocity, the label's | Stationary |
+|---|---|---|---|---|---|
+| seed 0 | 1.219 m | 1.268 m | −0.049 (0.013) | 0.396 m | 4.84 m |
+| seed 1 | 1.224 m | 1.272 m | −0.048 (0.014) | 0.400 m | 4.76 m |
+| seed 2 | 1.205 m | 1.263 m | −0.059 (0.012) | 0.399 m | 4.87 m |
+
+**Against the predictions (*measured*):**
+- **P2 supported.** Recall 0.630–0.632 and precision 0.736–0.742 on all three seeds, against a
+  bar of 0.40 and 0.50. Recall is above the predicted 0.40–0.60.
+- **P3 supported.** 0.935–0.936 against a bar of 0.65; ≥ 0.75 was predicted.
+- **P4 supported, more weakly than predicted.** The side-car's paths beat constant velocity from its
+  own velocity by 0.048–0.059 m, beyond 2 SE on every seed. That is 4–5%, not the predicted ≥ 10%.
+  Most of the path error is where it puts the agent now, not where it sends it: its centre error
+  is 0.90 m, and constant velocity from the label's own centre and velocity reaches 0.40 m.
+- **P5 supported.** 2.14–2.36 m against the prior's 8.53 m: under half of it, and under the
+  predicted 3 m.
+- **H-A is supported.**
+- **By class (all ranges):** vehicles 0.47, pedestrians 0.24–0.25, cyclists 0.13–0.18. The side-car
+  is mainly a vehicle detector.
+- **128 queries, one seed:** +0.06 precision and +0.03 F1 over 64. Phase B reads seed 0 with 64
+  queries, as fixed before any A1 result.
+
+**The sight check fails on seed 0.**
+- **The check (pre-registered):** with the tokens zeroed, the detections should all but vanish.
+- **Seeds 1 and 2 and the 128-query run pass:** 0 per sample, against 5.2–5.3 with the image.
+- **Seed 0 makes 27 detections per sample from zeroed tokens.** That is the seed phase B reads.
+- *Argued:* all-zero tokens never occur in real input, and on real input seed 0's recall and
+  precision match the seeds that pass. So this is more likely the model's answer to an input
+  outside anything it saw than detections made without the image.
+- That argument is not a measurement, though. An in-distribution check comes next: every row read
+  with another log's real tokens should lose its recall.
+
 ### A1 · the no-camera baseline (blind arm, report logs)
 
 - Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.
