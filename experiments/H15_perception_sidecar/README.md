@@ -46,10 +46,15 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 4 Nov | A0, A1 | The three taps probed; the ViT's own output chosen, and its cache pass started; the blind baseline trained |
 | 4 Nov | B1 | The first C runs (loss `imitation`, `84fd73e`) lost to the release in every mode. The loss is now chosen on the select logs, C arm only, before any arm reads an agent (below) |
 | 4 Nov | B1 | Loss chosen (`bce`); the four controls trained, 3 seeds each, at the release's level (below) |
-| 4 Nov | B2 | Teachers gathered into one array (21 s; 33 ms a row from NFS before). Two bugs caught before any B2 run trained: rows without anchors were pulled toward a stop, and `batch_fix` was applied twice. The three controls are training |
+| 4 Nov | B2 | Teachers gathered into one array (21 s; 33 ms a row from NFS before). Two bugs caught before any B2 run trained: rows without anchors were pulled toward a stop, and `batch_fix` was applied twice. The three controls trained |
 | 4 Nov | B3 | Code written (`6b51492`); the block-20 cache pass passed its parity check (largest difference 0.029 against the ViT-out cache) |
 | 4 Nov | A | A readout bug found and fixed: "within 30 m" counted to 35 m. A0 read again (below). A1's three seeds and 128-query run training on the ViT output |
 | 4 Nov | OOD | H14's package restored from its PR head for its nuScenes code; H15's nuScenes pass and readout written and tested (`0d1ac0f`); the extract of H14's 102 held-out scenes running |
+| 4 Nov | A1, A2 | Four A1 runs, read again with the fixed readout; the sight check in distribution; A2's learning curve (below) |
+| 4 Nov | B1 | Every arm (F, O, S) in every mode; the report, NEUTRAL throughout; B1.6 on every F mode; the controls' calibration |
+| 4 Nov | B3 | B3.1, both arms and three seeds; B3.2, refused once by its identity check, measured, then run |
+| 4 Nov | OOD | The nuScenes pass (2,996 keyframes) and readouts for the side-car, B1 and B2 |
+| 4 Nov | B2 | Every mode's F; `full`'s O and S; the report, NEUTRAL throughout |
 
 **Code written ahead of the data:**
 - **Side-car and phase A:** the side-car, its targets and metrics, and the phase-A trainer.
@@ -530,19 +535,6 @@ by scene.
 - *Context:* B1's scorers change the release's pick on 48–64% of the navtrain report logs too, at
   equal EPDMS. Many candidates score alike. A changed pick is the norm, not a sign of drift.
 
-### D · against earlier work (*argued*, from recorded numbers; B2 to follow)
-
-The plan kept earlier results as reference only (plan §10). Read against them afterwards:
-
-| Earlier result | What H15 found | Reading |
-|---|---|---|
-| **H04:** an agent decoder on frozen WA-JEPA tokens; recall 0.497, precision 0.748 at 2 m; moving vehicles within 20 m 0.849 (`selected-on-report`) | A side-car on Drive-JEPA's frozen ViT output, front camera: recall 0.630, precision 0.739, moving vehicles 0.935 (3 seeds, report logs, epoch chosen on select) | **Agrees.** A frozen JEPA encoder carries enough 3D for a 4 M decoder. Different encoders, cameras and splits, so the numbers are not a ranking |
-| **H04:** NAVSIM 85.27 → 87.30 with agent look and sub-score heads | B1: agents as scorer inputs are NEUTRAL in every mode, and so are ground-truth agents | **Complements.** H04's base had collision headroom. Drive-JEPA's pick already scores NC and TTC 0.996 in-sample (S0.8), so there is nothing for agents to fix on these logs |
-| **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates, with or without agents (C 0.92–0.97) | **Agrees.** The release's sub-score logits were never trained (`sub_score_weight = 0`). Training them on PDM labels is what calibrates them; agents add nothing to it |
-| **H14:** training-only heads moved the nuScenes pick (T2 L2 at 3 s 3.76 → 2.93 m, adapted on nuScenes) | On nuScenes, out of domain, the navtrain-fitted `full` scorer is 0.23–0.31 m worse than the release; the replacement scorer up to 0.41 m better on some seeds, in every arm | **Complements.** H14 adapted on nuScenes; H15 trained on navtrain only. Fitting the whole scorer to one domain's PDM labels costs in the other |
-| **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
-| **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
-
 ### B2 · do the side-car's agents improve the refiner's proposals? NEUTRAL in every mode
 
 *Measured*, report logs, 4,636 rows. Each run trained the refiner with the release's planning loss
@@ -613,6 +605,21 @@ nuScenes keyframes.
   - Neither is tested here. In-domain the same retraining raised best of 32 slightly and lowered
     the frozen scorer's pick slightly; the gate has not seen it.
 
+
+### D · against earlier work (*argued*, from recorded numbers)
+
+The plan kept earlier results as reference only (plan §10). Read against them afterwards:
+
+| Earlier result | What H15 found | Reading |
+|---|---|---|
+| **H04:** an agent decoder on frozen WA-JEPA tokens; recall 0.497, precision 0.748 at 2 m; moving vehicles within 20 m 0.849 (`selected-on-report`) | A side-car on Drive-JEPA's frozen ViT output, front camera: recall 0.630, precision 0.739, moving vehicles 0.935 (3 seeds, report logs, epoch chosen on select) | **Agrees.** A frozen JEPA encoder carries enough 3D for a 4 M decoder. Different encoders, cameras and splits, so the numbers are not a ranking |
+| **H04:** NAVSIM 85.27 → 87.30 with agent look and sub-score heads | B1: agents as scorer inputs are NEUTRAL in every mode, and so are ground-truth agents | **Complements.** H04's base had collision headroom. Drive-JEPA's pick already scores NC and TTC 0.996 in-sample (S0.8), so there is nothing for agents to fix on these logs |
+| **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates, with or without agents (C 0.92–0.97) | **Agrees.** The release's sub-score logits were never trained (`sub_score_weight = 0`). Training them on PDM labels is what calibrates them; agents add nothing to it |
+| **H14:** training-only heads moved the nuScenes pick (T2 L2 at 3 s 3.76 → 2.93 m, adapted on nuScenes) | On nuScenes, out of domain, the navtrain-fitted `full` scorer is 0.23–0.31 m worse than the release; the replacement scorer up to 0.41 m better on some seeds, in every arm | **Complements.** H14 adapted on nuScenes; H15 trained on navtrain only. Fitting the whole scorer to one domain's PDM labels costs in the other |
+| **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
+| **H14:** the refiner fine-tuned on nuScenes itself without heads (its C) picked 3.760 m at 3 s against the release's 3.788 | B2 on nuScenes: the refiner retrained on navtrain only, without agents (`full` C), picks 3.47 m against 3.788, beyond 2 SE on every seed | **Unexpected.** Retraining on navtrain helps nuScenes more than H14's retraining on nuScenes did. Neither H15 nor H14 tested why; the training differs in more than domain |
+| **H04:** agents in the planner helped on NAVSIM | B2: agents as refiner inputs are NEUTRAL in every mode, ground-truth agents too | **Complements**, as for B1: no collision headroom on these logs |
+| **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
 
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
