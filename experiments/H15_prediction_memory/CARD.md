@@ -20,3 +20,11 @@ A selective state-space memory per path, fed that path's planner output embeddin
 ## Predictions
 
 [PREDICTIONS.md](PREDICTIONS.md), written before the run.
+
+## Runs
+
+| Run | Started from | Trained | Data | Code | Checkpoint |
+|---|---|---|---|---|---|
+| **H15.r1**<br>true grades of the 32 released proposals at every graded navtrain moment (built and timed; not run) | H05.r1 | —; frozen: all of Drive-JEPA: encoder, generator and scorer | — | — | — |
+
+- **H15.r1:** The vendor's training-time grader (compute_navsim_score: simulate, score_proposals, after_score_proposals) on H05.r1's cached proposals with the train metric cache, without the anchors load; states keep x, y relative to a float64 origin. Timed 5 Nov on 200 random train moments, cores 0-3, 4 workers: 0.065 s per moment wall (worker p50 0.22 s), 361 KB of metric cache read per moment, all values finite; projected 17 min for the 15,320 val moments and 1.7 h for all 91,977. Navtest check (200 picks of navsim/drivejepa/20261023T202240-de2f00 against its CSV): collisions, drivable area, direction, time to collision and history comfort agree exactly on 200/200; progress within 1e-3 on 199; lane keeping differs on 33 and traffic light on 3, always ours 0 against the CSV's 1, 30 of them explained by the evaluator's human filter (the human also fails), which the training grader does not apply.

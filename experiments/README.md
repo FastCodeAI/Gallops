@@ -89,6 +89,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.expert.scenarios` | GC03.stageA | experiment |
 | `gallops.memory.cache` | H05.r1 | experiment |
 | `gallops.memory.checks` | H05.r1 | experiment |
+| `gallops.memory.grade` | H15.r1 | experiment |
 | `gallops.memory.inputs` | H05.r1 | experiment |
 | `gallops.memory.probe` | H05.r2 | experiment |
 | `gallops.memory.probe_control` | H05.r2 | experiment |
