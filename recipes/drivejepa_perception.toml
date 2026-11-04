@@ -499,6 +499,14 @@ module = "drivejepa_perception.train_refiner"
 args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "full",
         "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b2/full-S", "--agents", "{out}/agents-a1-s0"]
 
+# B2's verdicts (P12): F - C per row on each run's own re-scored candidates.
+
+[[stage]]
+name = "b2-report"
+python = "drivejepa"
+module = "drivejepa_perception.b_report"
+args = ["--b2", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--runs", "{out}/b2", "--out", "{out}/b2/report.json"]
+
 # ---------------------------------------------------------------------------------------------
 # B3: LoRA on the ViT's last four blocks (vit_lora.py). Blocks 1-20 are frozen in every variant, so
 # their output is cached once for B3's rows -- a seeded 20,000 train rows plus the select and report

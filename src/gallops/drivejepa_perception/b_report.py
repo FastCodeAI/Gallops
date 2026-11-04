@@ -15,6 +15,10 @@ summary.json). For each mode, on the report logs:
 
 Seed k of F is paired with seed k of C, at the kept epoch, which each run chose on the select logs.
 The last epoch is reported beside it.
+
+`--b2` reads B2's runs instead (P12): the refiner makes new candidates in each arm, so F - C is
+taken per row on each run's own re-scored candidates, in best-of-32 EPDMS and in the frozen
+scorer's pick, by the same rule.
 """
 
 from __future__ import annotations
@@ -71,13 +75,76 @@ def compare(f: dict, c: dict, pdm, rows, logs, subsets, which: str) -> dict:
     }
 
 
+def compare_values(f: dict, c: dict, logs: np.ndarray) -> dict:
+    """F - C per seed from per-row values (seed name -> (N,) array, the same rows): B2's readouts,
+    whose candidates differ by arm, so each arm brings its own scores. The rule is `compare`'s."""
+    seeds = sorted(set(f) & set(c))
+    c_means = [float(c[s].mean()) for s in seeds]
+    c_range = float(max(c_means) - min(c_means)) if c_means else float("nan")
+    per_seed = []
+    for s in seeds:
+        d = f[s] - c[s]
+        per_seed.append({"seed": s, "f_minus_c": float(d.mean()), "se": clustered_se(d, logs)})
+    beats = bool(per_seed) and all(e["f_minus_c"] > max(c_range, 2 * e["se"]) for e in per_seed)
+    loses = bool(per_seed) and all(-e["f_minus_c"] > max(c_range, 2 * e["se"]) for e in per_seed)
+    return {
+        "seeds": seeds,
+        "c_means": c_means,
+        "c_seed_range": c_range,
+        "per_seed": per_seed,
+        "verdict": "F beats C" if beats else ("C beats F" if loses else "NEUTRAL"),
+    }
+
+
+def b2_values(run: Path) -> dict:
+    """A B2 run's per-row report readouts, per seed: best-of-32 and the frozen scorer's pick."""
+    out = {"best_of_32": {}, "pick": {}}
+    for path in sorted(Path(run).glob("seed*_report_candidates.npz")):
+        seed = path.name.split("_")[0]
+        z = np.load(path)
+        final = z["pdm"][..., -1]
+        out["best_of_32"][seed] = final.max(1)
+        out["pick"][seed] = final[np.arange(len(final)), z["pick"]]
+    return out
+
+
+def b2_main(args) -> None:
+    """B2's verdicts (P12): per mode, F - C in best-of-32 EPDMS and in the frozen scorer's pick."""
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs_all = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[
+        labels["log_id"]
+    ]
+    runs = {p.name: p for p in sorted(Path(args.runs).iterdir()) if (p / "report_picks.npz").exists()}
+    out = {"runs": sorted(runs)}
+    for mode in sorted({name.rsplit("-", 1)[0] for name in runs}):
+        arms = {name.rsplit("-", 1)[1]: runs[name] for name in runs if name.rsplit("-", 1)[0] == mode}
+        if "C" not in arms:
+            continue
+        rows = np.load(arms["C"] / "report_picks.npz")["rows"]
+        values = {arm: b2_values(path) for arm, path in arms.items()}
+        result = {}
+        for arm in ("F", "O", "S"):
+            if arm in values:
+                for key in ("best_of_32", "pick"):
+                    result[f"{arm}_vs_C_{key}"] = compare_values(
+                        values[arm][key], values["C"][key], logs_all[rows]
+                    )
+        out[mode] = result
+    Path(args.out).write_text(json.dumps(out, indent=1))
+    print(json.dumps(out, indent=1))
+
+
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.b_report")
     parser.add_argument("--labels", required=True)
     parser.add_argument("--pdm", required=True)
     parser.add_argument("--runs", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--b2", action="store_true", help="B2's runs: each arm brings its own candidates")
     args = parser.parse_args(argv)
+    if args.b2:
+        b2_main(args)
+        return
     labels = np.load(Path(args.labels) / "labels.npz")
     logs_all = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[
         labels["log_id"]

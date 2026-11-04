@@ -36,3 +36,13 @@ def test_the_rule_needs_a_gain_beyond_seed_range_and_two_se_on_every_seed():
     assert np.isclose(result["per_seed"][0]["f_minus_c"], 0.10)
     same = b_report.compare(_picks(0), _picks(0), pdm, np.arange(n), logs, masks, "kept")
     assert same["verdict"] == "NEUTRAL"
+
+
+def test_b2s_rule_reads_each_arms_own_values_by_the_same_rule():
+    logs = np.repeat(np.arange(20), 10)
+    c = {f"seed{s}": np.full(200, 0.95) + 0.001 * s for s in range(3)}
+    f = {f"seed{s}": np.full(200, 0.96) + 0.001 * s for s in range(3)}
+    result = b_report.compare_values(f, c, logs)
+    assert result["verdict"] == "F beats C" and np.isclose(result["c_seed_range"], 0.002)
+    assert np.isclose(result["per_seed"][0]["f_minus_c"], 0.01)
+    assert b_report.compare_values(c, c, logs)["verdict"] == "NEUTRAL"
