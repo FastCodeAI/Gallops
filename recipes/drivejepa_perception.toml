@@ -429,6 +429,64 @@ module = "drivejepa_perception.explain"
 args = ["--run", "{out}/b1/replace-F", "--seed", "0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
         "--pdm", "{out}/pdm-v1", "--agents", "{out}/agents-a1-s0", "--out", "{out}/b1/explain-replace.json"]
 
+# B1.6's AUC for the controls too, every seed: whether the agents improve the sub-scores' calibration.
+
+[[stage]]
+name = "b1-calibration-frozen-C"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/frozen-C", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-frozen-C.json"]
+
+[[stage]]
+name = "b1-calibration-frozen-F"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/frozen-F", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-frozen-F.json"]
+
+[[stage]]
+name = "b1-calibration-lora-C"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/lora-C", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-lora-C.json"]
+
+[[stage]]
+name = "b1-calibration-lora-F"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/lora-F", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-lora-F.json"]
+
+[[stage]]
+name = "b1-calibration-full-C"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/full-C", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-full-C.json"]
+
+[[stage]]
+name = "b1-calibration-full-F"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/full-F", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-full-F.json"]
+
+[[stage]]
+name = "b1-calibration-replace-C"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/replace-C", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-replace-C.json"]
+
+[[stage]]
+name = "b1-calibration-replace-F"
+python = "drivejepa"
+module = "drivejepa_perception.explain"
+args = ["--calibration-only", "--run", "{out}/b1/replace-F", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--pdm", "{out}/pdm-v1", "--out", "{out}/b1/calibration-replace-F.json"]
+
 # ---------------------------------------------------------------------------------------------
 # B2: three refiner modes x arms, the release's own planning loss. Read at the last epoch; the new
 # candidates are PDM-scored offline. Same arms and agents as B1. The teachers are gathered into one

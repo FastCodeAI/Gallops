@@ -139,12 +139,65 @@ def run(args) -> dict:
     return report
 
 
+@torch.no_grad()
+def calibration(args) -> dict:
+    """The calibration part alone, for any arm: C has the same trained sub-score outputs as F.
+
+    B1.6's AUC is F's; whether the agents improve it needs C's beside it. Every seed at its kept
+    epoch, every report candidate: the AUC of the TTC output (residual modes) or the NC output
+    (replace) against the PDM label, as `run` computes it.
+    """
+    from gallops.config import SiteConfig
+    from gallops.drivejepa_b2d.head import Head, auc, head_tensors_from_checkpoint
+    from gallops.drivejepa_perception import env
+
+    entered = env.enter(SiteConfig.load())
+    summary = json.loads((Path(args.run) / "summary.json").read_text())
+    run_args = summary["args"]
+    arm = run_args["arm"]
+    data = load(Path(args.tokens), Path(args.labels), Path(args.pdm), arm, run_args.get("agents") or None)
+    head = Head()
+    head.load_state_dict(head_tensors_from_checkpoint(Path(entered["release"])))
+    device = torch.device("cuda")
+    rows = data["rows"]["report"]
+    out = {"run": str(args.run), "arm": arm, "mode": run_args["mode"]}
+    for key in sorted(k for k in summary if k.startswith("seed")):
+        kept = summary[key]["kept_epoch"]
+        model = scorers.B1Model(run_args["mode"], arm != "C", head)
+        state = torch.load(Path(args.run) / key / f"epoch_{kept:02d}.pt", map_location="cpu")
+        model.load_state_dict(state["state_dict"], strict=False)
+        model = model.to(device).eval()
+        scores_all, truth_all = [], []
+        for i in range(0, len(rows), 256):
+            batch = batch_of(data, rows[i : i + 256], device)
+            result = model(batch)
+            if "logits" in result:
+                scores_all.append(torch.sigmoid(result["logits"][..., HEAD_TTC]).cpu().numpy().ravel())
+                truth_all.append(batch["pdm"][..., 5].cpu().numpy().ravel() >= 0.5)
+            else:
+                scores_all.append(result["sub"][..., 0].cpu().numpy().ravel())
+                truth_all.append(batch["pdm"][..., 0].cpu().numpy().ravel() >= 0.5)
+        out[key] = {"kept_epoch": kept, "auc": auc(np.concatenate(scores_all), np.concatenate(truth_all))}
+        print(json.dumps({key: out[key]}), flush=True)
+    out["calibrated_output"] = "TTC head" if run_args["mode"] != "replace" else "NC head"
+    Path(args.out).write_text(json.dumps(out, indent=1))
+    return out
+
+
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.explain")
-    for flag in ("--run", "--tokens", "--labels", "--pdm", "--agents", "--out"):
+    parser.add_argument("--calibration-only", action="store_true", help="any arm: the AUC part alone")
+    for flag in ("--run", "--tokens", "--labels", "--pdm", "--out"):
         parser.add_argument(flag, required=True)
+    parser.add_argument("--agents", default="")
     parser.add_argument("--seed", type=int, default=0)
-    run(parser.parse_args(argv))
+    args = parser.parse_args(argv)
+    if args.calibration_only:
+        calibration(args)
+        return
+    if not args.agents:
+        parser.error("the deletion test reads the side-car's agents: pass --agents")
+    run(args)
 
 
 if __name__ == "__main__":
