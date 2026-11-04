@@ -1,18 +1,22 @@
 # H15 · A perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), then tested as an input to the scorer, as an input to the refiner, and against LoRA on the ViT
 
-**Status (2026-11-04): running.** H15 is registered, its predictions were committed before the
-first training step, and phases A and B are training. The account of what ran, what it showed and
-every departure from this plan is
+**Status (2026-11-04): every planned run done except the gate (C), which the owner deferred.**
+H15 is registered, and its predictions were committed before the first training step. The account
+of what ran, what it showed, the decision and every departure from this plan is
 [experiments/H15_perception_sidecar/README.md](../experiments/H15_perception_sidecar/README.md);
 this document stays the plan.
 
-**Where it stands (4 Nov):**
-- **S0 is done.** Labels, the token cache, the ViT-out cache (exact against the full forward), PDM
-  labels for all 103,288 samples (re-scored exactly), and the release read on select and report.
-- **A0 is done.** The ViT's own output carries the most 3D (recall within 30 m 0.343 on select).
-  P1 is supported. A1 (three seeds and 128 queries) is training on it.
-- **B1's controls are done.** B2's controls and the B3 cache are running. B1's agent arms, B2's,
-  B3.1 and the nuScenes step start when A1 seed 0 finishes.
+**Where it came out (4 Nov, open loop):**
+- **H-A supported.** The side-car (4.39 M) on the frozen ViT's output: recall 0.63, precision 0.74
+  within 30 m (three seeds). It transfers to nuScenes (vehicle recall 0.48), and is data-limited
+  (A2).
+- **H-B1 and H-B2: no gain.** Agents as scorer or refiner inputs are NEUTRAL in every mode, and so
+  are ground-truth agents. P7, P8 and P12 are refuted.
+- **H-B3: no gain.** P13 is refuted. P15 is refuted too: on nuScenes the navtrain-fitted `full`
+  scorer plans worse, with or without agents.
+- **B1.6:** a scorer's named agents are faithful (deletion 3–5× a random agent's effect).
+- **Unexpected:** retraining the refiner on navtrain, without agents, makes the release plan better
+  on nuScenes. That is proposed as its own experiment.
 
 **Departures from this plan, each recorded in the README before the result it could bias:**
 - **B1's loss:** its imitation term made every control worse than the release, so the listwise
