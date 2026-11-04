@@ -1124,7 +1124,8 @@ def render_decisions(reg: Registry) -> str:
         by = ", ".join(d.get("by", []))
         evidence = _refs(reg, d.get("evidence", []), "experiments")
         rows.append(
-            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | {_cell(d['decision'])} | {by} | "
+            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | **{_cell(d['short'])}.** "
+            f"{_cell(d['decision'])} | {by} | "
             f"{evidence} | {_refs(reg, d.get('next', []), 'experiments')} |"
         )
     return "\n".join(rows)

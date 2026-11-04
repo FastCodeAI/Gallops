@@ -312,6 +312,11 @@ def test_a_count_of_one_is_singular(tmp_path) -> None:
     assert "**In progress:** 1 hypothesis, 0 enablers." in exps.render_status(reg)
 
 
+def test_each_decision_leads_with_its_short_name(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    assert "| **try the thing.** Try the thing. |" in exps.render_decisions(reg)
+
+
 def test_a_hand_edited_or_missing_card_is_caught(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     exps.write(reg)
