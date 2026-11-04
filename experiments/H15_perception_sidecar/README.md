@@ -69,6 +69,11 @@ also asks whether LoRA on the ViT does better than the frozen tap.
   - Measured on the smoke run: every pick equal, candidates within 3.8e-5 m, tokens within one fp16
     step.
 - **Result:** 23.7 rows/s, about 70 min for the 103,288 rows.
+- **Done (4 Nov), from `a2c5255`:** 103,288 rows and 14,457 A0 tap rows in 63 min (56 GB), against
+  the release whose sha256 is `740335c8`.
+  - The startup check, batch 16 against batch 1 on 32 rows: every pick equal; candidates within
+    4.6e-5 m, logits within 1.8e-5, tokens within 0.004.
+  - The fast inputs equalled the vendor's on 12 rows.
 
 **The labels pass (S0.4), *measured*:**
 - **Agents within 60 m:** 7,104,100, of which 1,812,167 vehicles, 1,533,271 pedestrians, 16,245
