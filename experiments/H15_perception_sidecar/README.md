@@ -534,6 +534,28 @@ The plan kept earlier results as reference only (plan §10). Read against them a
 | **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
 | **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
 
+### B2 · do the side-car's agents improve the refiner's proposals? NEUTRAL in every mode
+
+*Measured*, report logs, 4,636 rows. Each run trained the refiner with the release's planning loss
+for 3 epochs and was read at the last. Its new candidates were PDM-scored offline, and the release's
+frozen scorer picked among them. C trained from `a372b31`, F from `e6af85b`; the refiner code is the same.
+Verdicts are `b2-report`'s, each arm's own candidates against C's, by the pre-registered rule. The
+release scores 0.9564 best of 32 and 0.9140 for its pick on these rows, in-sample.
+
+| Mode | Best of 32, C (seeds 0 / 1 / 2) | Best of 32, F | F − C, points (2 SE) | C's range | Best of 32 | The pick |
+|---|---|---|---|---|---|---|
+| frozen (B2.1) | 0.9577 / 0.9575 / 0.9577 | 0.9576 / 0.9576 / 0.9579 | -0.004 (0.032) / +0.007 (0.045) / +0.013 (0.048) | 0.021 | NEUTRAL | NEUTRAL |
+| lora (B2.2) | 0.9583 / 0.9580 / 0.9584 | 0.9582 / 0.9585 / 0.9585 | -0.013 (0.029) / +0.051 (0.078) / +0.011 (0.044) | 0.040 | NEUTRAL | NEUTRAL |
+| full (B2.3) | 0.9589 / 0.9590 / 0.9589 | 0.9589 / 0.9588 / 0.9589 | +0.004 (0.019) / -0.013 (0.015) / +0.001 (0.010) | 0.009 | NEUTRAL | NEUTRAL |
+
+- **P12 refuted.** +0.2 to +0.5 points were predicted, and no seed of any mode reaches +0.06. The
+  agents change neither the candidates the refiner makes nor the pick among them.
+- **Without agents, retraining the refiner moves best of 32 up by 0.1–0.25 points over the release,
+  most in `full`.** The frozen scorer's pick moves down by 0.1–0.25 points. It was trained on the
+  release's candidates, not on these.
+- **The best mode on select** (the rule written before any F result) is `full`: mean F − C in select
+  best of 32 −0.006 points. Its O and S arms are training.
+
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
 - **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
