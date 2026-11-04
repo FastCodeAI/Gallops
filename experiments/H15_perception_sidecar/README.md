@@ -133,17 +133,19 @@ headline; until then, the numbers live here.
 
 ### A0 · which frozen tap carries 3D
 
-One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front view:
+One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front view, at the kept
+epoch (6). Read again with the fixed readout (`*-reread`, `f2b6570`); the as-run numbers counted
+targets to 35 m (see "a readout bug" below) and are kept in brackets.
 
-| Tap | Recall at 2 m, ≤ 30 m | Precision | F1 | Recall 0–20 / 20–35 / 35–50 m |
-|---|---|---|---|---|
-| post-projector, 256-d | 0.225 | 0.299 | 0.257 | 0.351 / 0.172 / 0.120 |
-| **ViT output, 1024-d** | **0.313** | **0.367** | **0.338** | 0.459 / 0.251 / 0.140 |
-| block 12, 1024-d | 0.242 | 0.303 | 0.269 | 0.369 / 0.188 / 0.095 |
+| Tap | Recall at 2 m, ≤ 30 m | Precision | F1 | Recall 0–20 / 20–30 / 30–50 m | As run (≤ 35 m): recall / precision / F1 |
+|---|---|---|---|---|---|
+| post-projector, 256-d | 0.249 | 0.318 | 0.280 | 0.351 / 0.184 / 0.127 | (0.225 / 0.299 / 0.257) |
+| **ViT output, 1024-d** | **0.343** | **0.383** | **0.362** | 0.459 / 0.268 / 0.160 | (0.313 / 0.367 / 0.338) |
+| block 12, 1024-d | 0.269 | 0.311 | 0.289 | 0.369 / 0.205 / 0.110 | (0.242 / 0.303 / 0.269) |
 
-- **P1 is supported at its lower edge.** The best tap reaches 0.313, against a predicted range of
-  0.35–0.60 and a support threshold of 0.30.
-- **The ViT output beats the projector's** by 0.088 recall, against a predicted ≥ 0.03.
+- **P1 is supported.** The best tap reaches 0.343 within 30 m, above the support threshold of 0.30
+  and just under the predicted range of 0.35–0.60.
+- **The ViT output beats the projector's** by 0.094 recall, against a predicted ≥ 0.03.
 - **All three were still rising** at epoch 6.
 - **Decided:** A1 reads the ViT's own output, cached for every row by a second pass that is held
   to the full forward's tap.
@@ -167,7 +169,8 @@ One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front 
 ### A1 · the no-camera baseline (blind arm, report logs)
 
 - Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.
-- The lead-gap reference is the train-mean prior, with an error of 8.53 m (P5's bar).
+- The lead-gap reference is the train-mean prior, with an error of 8.53 m (P5's bar). The reread
+  confirms both.
 
 ### B1 · the first loss pulled the scorer toward the human (a deviation, before any agent arm)
 
