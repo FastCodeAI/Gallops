@@ -289,11 +289,84 @@ def overfit(cfg, args) -> None:
     raise SystemExit("overfit check failed: 4,000 steps without centre < 0.5 m and class accuracy > 95%")
 
 
+def agents(cfg, args) -> None:
+    """The agents pass: an A1 run's kept epoch decoded on every row, for phase B's arms F and S.
+
+    Stored in the format arm O builds from the labels (train_scorer.truth_agents), with the slots
+    under THR masked out: the scorer reads only agents a person would be shown (plan A3).
+    """
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    run = Path(args.run)
+    meta = json.loads((run / "run.json").read_text())
+    epoch = json.loads((run / "summary.json").read_text())["kept_epoch"]
+    run_args = meta["args"]
+    tokens, slot, rows, projections, _ = load(args.tokens, args.labels, run_args["tap"])
+    device = torch.device("cuda")
+    model = sidecar.SideCar(
+        d_in=TAP_DIMS[run_args["tap"]], layers=run_args["layers"], queries=run_args["queries"]
+    )
+    model.load_state_dict(torch.load(run / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"])
+    model = model.to(device).eval()
+    n = len(projections)
+    q = run_args["queries"]
+    keys = {
+        "cls": ((q,), np.int64),
+        "conf": ((q,), np.float32),
+        "xyz": ((q, 3), np.float32),
+        "lwh": ((q, 3), np.float32),
+        "yaw": ((q,), np.float32),
+        "vel": ((q, 2), np.float32),
+        "path": ((q, tg.PATH_STEPS, 2), np.float32),
+        "mask": ((q,), bool),
+    }
+    arrays = {k: np.zeros((n, *shape), dtype) for k, (shape, dtype) in keys.items()}
+    every = np.arange(n)
+    with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16):
+        for i in range(0, n, 256):
+            chunk = every[i : i + 256]
+            tok = torch.from_numpy(
+                np.stack([np.asarray(tokens[slot(int(r))], dtype=np.float16) for r in chunk])
+            ).to(device)
+            out_last = model(tok, torch.from_numpy(projections[chunk]).to(device))[-1]
+            o = {k: v.float().cpu().numpy() for k, v in out_last.items()}
+            prob = np.exp(o["logits"] - o["logits"].max(-1, keepdims=True))
+            prob /= prob.sum(-1, keepdims=True)
+            conf = 1.0 - prob[..., tg.NONE]
+            arrays["conf"][chunk] = conf
+            arrays["cls"][chunk] = prob[..., : tg.NUM_CLASSES].argmax(-1)
+            arrays["xyz"][chunk] = o["box"][..., :3]
+            arrays["lwh"][chunk] = np.exp(o["box"][..., 3:6])
+            arrays["yaw"][chunk] = np.arctan2(o["box"][..., 6], o["box"][..., 7])
+            arrays["vel"][chunk] = o["vel"]
+            arrays["path"][chunk] = o["path"]
+            arrays["mask"][chunk] = conf >= evaluate.THR
+    staging = out.with_name(out.name + ".staging")
+    staging.mkdir(parents=True)
+    np.savez(staging / "agents.npz", **arrays)
+    manifest = {
+        "run": str(run),
+        "epoch": epoch,
+        "gallops_sha": git_sha(),
+        "rows": n,
+        "train_git_sha": meta["train_git_sha"],
+        "threshold": evaluate.THR,
+        "agents_per_row": float(arrays["mask"].sum(1).mean()),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(json.dumps(manifest, indent=1))
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
-    parser.add_argument("cmd", choices=("train", "overfit"))
+    parser.add_argument("cmd", choices=("train", "overfit", "agents"))
+    parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
     parser.add_argument("--out", default="")
@@ -306,7 +379,7 @@ def main(argv=None) -> None:
     parser.add_argument("--blind", action="store_true")
     args = parser.parse_args(argv)
     cfg = SiteConfig.load()
-    (train if args.cmd == "train" else overfit)(cfg, args)
+    {"train": train, "overfit": overfit, "agents": agents}[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":

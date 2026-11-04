@@ -129,3 +129,62 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
     if picks != len(sample):
         problems.append(f"the live pick equals the cached one on {picks} of {len(sample)} rows")
     return {"rows": [int(r) for r in sample], "token_max_diff": worst, "picks_equal": picks}, problems
+
+
+def run_scorer(cfg, args, data: dict, model_factory) -> dict:
+    """B1's preflight: code, data, the PDM labels re-scored, and the release reproduced at step 0.
+
+    Everything B1 reads is cached, so the checks hold the caches to what produced them:
+    - the PDM labels it trains on equal a re-scoring by the vendored scorer, exactly (5 rows);
+    - in the residual modes, the untrained model's logits and picks equal the release's cached ones
+      exactly on 512 select rows: the identity the arms' comparison starts from;
+    - an agents file (arms F, S) covers every row and names the side-car run that made it.
+    """
+    import torch
+
+    from gallops.drivejepa_perception import env, navsim_data, pdm_labels
+    from gallops.train.preflight import code_checks
+
+    report, problems = {}, []
+    report["code"], found = code_checks(REPO)
+    problems += found
+    entered = env.enter(cfg)
+    navsim_data.load_splits(
+        REPO / "recipes/drivejepa_perception/splits.json",
+        navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
+    )
+    rows = data["rows"]
+    report["data"] = {k: int(len(v)) for k, v in rows.items()}
+    if any(len(v) == 0 for v in rows.values()):
+        problems.append(f"a split has no scored rows: {report['data']}")
+    if len(data["pdm"]) != len(data["logits"]):
+        problems.append("the PDM labels and the token cache hold different numbers of rows")
+    report["pdm_recheck"] = pdm_labels.check(cfg, Path(args.pdm), Path(args.tokens), Path(args.labels), 5)
+    problems += report["pdm_recheck"]
+    if args.arm in ("F", "S"):
+        manifest = json.loads((Path(args.agents) / "manifest.json").read_text())
+        report["agents"] = {k: manifest[k] for k in ("run", "epoch", "gallops_sha", "rows")}
+        if manifest["rows"] != len(data["logits"]):
+            problems.append(
+                f"the agents file covers {manifest['rows']} rows, the cache {len(data['logits'])}"
+            )
+    if args.mode != "replace":
+        from gallops.drivejepa_perception.train_scorer import batch_of
+
+        model = model_factory().cuda().eval()
+        sample = rows["select"][:512]
+        with torch.no_grad():
+            out = model(batch_of(data, sample, torch.device("cuda")))["logits"].cpu()
+        cached = torch.from_numpy(data["logits"][sample])
+        picks_equal = int((out[..., -1].argmax(1).numpy() == data["pick_release"][sample]).sum())
+        report["identity"] = {
+            "rows": int(len(sample)),
+            "logits_equal": bool(torch.equal(out, cached)),
+            "picks_equal": picks_equal,
+        }
+        if not torch.equal(out, cached) or picks_equal != len(sample):
+            problems.append(f"the untrained model is not the release: {report['identity']}")
+    report["problems"] = problems
+    if problems:
+        raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
+    return report
