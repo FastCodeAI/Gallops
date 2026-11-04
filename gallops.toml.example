@@ -59,6 +59,9 @@ runs = "/path/to/gallops-runs"
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
 
+# [datasets.navsim_metric_cache]
+# path = "/path/to/navsim/exp/train_metric_cache_v2_pruned"   # Drive-JEPA's pruned v2 train metric cache (docs/drivejepa-perception-sidecar.md, S0.5)
+
 # [datasets.drivejepa_b2d]
 # path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (experiments/GC04_bench2drive/README.md)
 
@@ -73,4 +76,4 @@ runs = "/path/to/gallops-runs"
 # drivejepa = "/path/to/drive-jepa-env/bin/python"     # Drive-JEPA's own env (Python 3.9, navsim installed)
 
 # [code]
-# drivejepa = "/path/to/Drive-JEPA"
+# drivejepa = "/path/to/Drive-JEPA-ext"   # upstream e21f474 + paddock's patches 0001-0003 as commits; on GPUs above sm_86, 0001 is required (docs/drivejepa-perception-sidecar.md, S0.2)

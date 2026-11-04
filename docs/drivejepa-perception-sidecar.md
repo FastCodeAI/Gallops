@@ -1,7 +1,22 @@
 # H15 (proposed) · A perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), then tested as an input to the scorer, as an input to the refiner, and against LoRA on the ViT
 
-**Status (2026-11-03): plan, approved by the owner (Shreedhar). Nothing has run, and H15 is not
-registered yet (S0.9).**
+**Status (2026-11-03): plan, approved by the owner (Shreedhar). Nothing has trained, and H15
+is not registered yet (S0.9).**
+
+**Progress:**
+- **S0.1 done (3 Nov).** The site's `gallops.toml` points `navsim` at the real NAVSIM root and
+  names the metric cache, which is not downloaded yet. `gallops.toml.example` carries both keys.
+- **S0.2 done (3 Nov), except the release's forward on NAVSIM samples,** which comes with the
+  token pass.
+  - `Drive-JEPA-ext` is `e21f474` plus Paddock's 0001–0003 as commits `c92b06c`, `7f29654` and
+    `afab5fc`, taken from Paddock `c6597a9`.
+  - *Measured* on an H200 NVL (sm_90):
+    - `use_compiled_msda` under `auto` returns False;
+    - the PyTorch path agrees between CUDA and CPU to 1.8e-7 (max |diff|);
+    - the compiled kernel printed "no kernel image is available", **did not raise**, and
+      returned output 0.989 off a reference whose largest value is 0.989. All of the signal is
+      lost.
+- **`1c60e59` is tagged locally** as `h14-pr20-head` (§7).
 
 - **Branch:** `drivejepa/auxilliary-head-02`.
 - **History:** revision 2, after the owner's review comments and an independent review of the
