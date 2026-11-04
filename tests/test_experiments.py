@@ -296,6 +296,12 @@ def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
     assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
 
+def test_a_count_of_one_is_singular(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    reg.experiments[0].data["status"] = "running"
+    assert "**In progress:** 1 hypothesis, 0 enablers." in exps.render_status(reg)
+
+
 def test_a_hand_edited_or_missing_card_is_caught(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     exps.write(reg)

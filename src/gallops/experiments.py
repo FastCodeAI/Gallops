@@ -871,6 +871,10 @@ def render_badges(reg: Registry) -> str:
     )
 
 
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
 def render_status(reg: Registry) -> str:
     lines = []
     baselines = [d for d in reg.decisions if d.get("baseline")]
@@ -897,7 +901,10 @@ def render_status(reg: Registry) -> str:
         t: sum(e.data.get("status") == "running" and e.data.get("track") == t for e in reg.experiments)
         for t in ("hypothesis", "enabler")
     }
-    now = f"- **In progress:** {counts['hypothesis']} hypotheses, {counts['enabler']} enablers."
+    now = (
+        f"- **In progress:** {_count(counts['hypothesis'], 'hypothesis', 'hypotheses')}, "
+        f"{_count(counts['enabler'], 'enabler', 'enablers')}."
+    )
     planned = sorted(
         (e for e in reg.experiments if e.data.get("status") == "planned"),
         key=lambda e: e.data.get("priority", 99),
@@ -942,8 +949,8 @@ def render_picture(reg: Registry) -> str:
     bases = [d for d in reg.decisions if d.get("baseline")]
     base = bases[-1] if bases else None
     versions = [d["version"] for d in reg.decisions if d.get("version")]
-    n = len(tracks["hypothesis"])
-    hypotheses = f"{n} {'hypothesis' if n == 1 else 'hypotheses'},"
+    hypotheses = _count(len(tracks["hypothesis"]), "hypothesis", "hypotheses")
+    enablers = _count(len(tracks["enabler"]), "enabler", "enablers")
     grey = "#768390"
     parts = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
@@ -953,7 +960,7 @@ def render_picture(reg: Registry) -> str:
         "  <title>How the work flows</title>",
         f'  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
         f'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="{grey}"/></marker></defs>',
-        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [f"{len(gc)} experiments", span]),
+        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [_count(len(gc), "experiment", "experiments"), span]),
         _box(
             266,
             164,
@@ -966,7 +973,7 @@ def render_picture(reg: Registry) -> str:
             200,
             "#1F5FBF",
             "Phase 2: hypotheses",
-            [f"{hypotheses} one change each", f"{len(tracks['enabler'])} enablers"],
+            [f"{hypotheses}, one change each", enablers],
         ),
         _box(710, 136, "#57606A", "Regression gate", [f"{gated} gated so far"]),
         _box(
