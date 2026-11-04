@@ -1,7 +1,8 @@
 """B2: give the refiner the side-car's agents, in three modes, against the arm that withholds them.
 
-    python -m gallops.drivejepa_perception.train_refiner --tokens T --labels L --mode frozen --arm C \
-        --seeds 0,1,2 --out O [--agents AGENTS_DIR]
+    python -m gallops.drivejepa_perception.train_refiner --gather-anchors --labels L --out A
+    python -m gallops.drivejepa_perception.train_refiner --tokens T --labels L --pdm P --anchors A \
+        --mode frozen --arm C --seeds 0,1,2 --out O [--agents AGENTS_DIR]
 
 The refiner runs from cached tokens (`drivejepa_b2d.train_generator.refine_from_cache`), batched with
 `batch_fix`.
@@ -121,12 +122,75 @@ def build(entered: dict, mode: str, agents: bool, rank: int = 16):
     return agent, model, adapter
 
 
-def teachers(rows, logs, tokens, anchors_root: Path, vocabulary: np.ndarray, rng) -> torch.Tensor:
+#: The longest good-anchor list a row may have (every file read so far holds exactly 256).
+MAX_ANCHORS = 256
+
+
+def _anchor_file(root: Path, log: str, token: str) -> Path:
+    return root / log / "unknown" / token / "metric_cache.pkl.npy"
+
+
+def _read_anchors(path: Path):
+    return np.load(path) if path.exists() else np.zeros(0, np.int64)
+
+
+def gather_anchors(cfg, labels_dir: Path, out: Path, workers: int = 48) -> None:
+    """B2's teachers, gathered once: every row's good anchors (anchors_scores_index_v2), one array.
+
+    Read per row from NFS they took 33 ms each, 2.1 s per batch of 64 (measured), which would
+    dominate a B2 step. `anchors.npy` (n, MAX_ANCHORS) int16 holds each row's indices into
+    8192.npy, padded with -1; `count.npy` how many (0 for a missing file: the row gets no teacher,
+    as before). `preflight.run_refiner` holds the array to the files on random rows.
+    """
+    from multiprocessing import get_context
+
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"]
+    root = anchors_root(cfg)
+    paths = [_anchor_file(root, logs[i], str(t)) for i, t in zip(labels["log_id"], labels["token"])]  # noqa: B905 -- Python 3.9
+    t0 = time.time()
+    with get_context("fork").Pool(workers) as pool:
+        lists = pool.map(_read_anchors, paths, chunksize=64)
+    longest = max(len(a) for a in lists)
+    if longest > MAX_ANCHORS:
+        raise SystemExit(f"a row has {longest} good anchors, more than MAX_ANCHORS = {MAX_ANCHORS}")
+    anchors = np.full((len(lists), MAX_ANCHORS), -1, np.int16)
+    count = np.array([len(a) for a in lists], np.int16)
+    for i, a in enumerate(lists):
+        anchors[i, : len(a)] = a
+    staging = out.with_name(out.name + ".staging")
+    staging.mkdir(parents=True)
+    np.save(staging / "anchors.npy", anchors)
+    np.save(staging / "count.npy", count)
+    manifest = {
+        "pass": "anchors",
+        "gallops_sha": git_sha(),
+        "root": str(root),
+        "rows": len(lists),
+        "rows_without_a_file": int((count == 0).sum()),
+        "counts": {str(k): int(v) for k, v in zip(*np.unique(count, return_counts=True))},  # noqa: B905 -- Python 3.9
+        "seconds": round(time.time() - t0),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(json.dumps(manifest))
+
+
+def anchors_root(cfg) -> Path:
+    """Drive-JEPA's good-anchor index, extracted beside the metric cache (S0.5)."""
+    return Path(cfg.resolve("{data.navsim_metric_cache}")).parent / "anchors_scores_index_v2"
+
+
+def teachers(rows, anchors: np.ndarray, count: np.ndarray, vocabulary: np.ndarray, rng) -> torch.Tensor:
     """Up to TEACHERS of each row's good anchors, drawn as the release's training drew them."""
     out = np.zeros((len(rows), TEACHERS, 8, 3), np.float32)
     for i, row in enumerate(rows):
-        path = anchors_root / logs[row] / "unknown" / tokens[row] / "metric_cache.pkl.npy"
-        good = np.load(path) if path.exists() else np.zeros(0, np.int64)
+        good = anchors[row, : count[row]]
         if len(good):
             out[i] = vocabulary[rng.choice(good, TEACHERS, replace=len(good) < TEACHERS)]
     return torch.from_numpy(out)
@@ -159,11 +223,10 @@ def train(cfg, args) -> None:
     data["img_shape"] = np.load(Path(args.tokens) / "img_shape.npy")
     data["spatial"] = torch.tensor([[16, 32]], dtype=torch.long)
     data["level"] = torch.tensor([0], dtype=torch.long)
-    labels = np.load(Path(args.labels) / "labels.npz")
-    tokens_list = [str(t) for t in labels["token"]]
+    data["anchors"] = np.load(Path(args.anchors) / "anchors.npy")
+    data["anchor_count"] = np.load(Path(args.anchors) / "count.npy")
     entered = env.enter(cfg)
     vocabulary = np.load(Path(entered["code"]) / "navsim_v2/data/8192.npy")[:, 4::5].astype(np.float32)
-    anchors_root = Path(cfg.resolve("{data.navsim_metric_cache}")).parent / "anchors_scores_index_v2"
     device = torch.device("cuda")
     head = Head()
     head.load_state_dict(head_tensors_from_checkpoint(Path(entered["release"])))
@@ -205,9 +268,7 @@ def train(cfg, args) -> None:
                     adapter.context["mask"] = adapter.context["mask"].bool()
                 props, _ = forward(model, data, chunk, device)
                 target = torch.from_numpy(data["human"][chunk]).to(device)
-                teach = teachers(chunk, data["token_logs"], tokens_list, anchors_root, vocabulary, rng).to(
-                    device
-                )
+                teach = teachers(chunk, data["anchors"], data["anchor_count"], vocabulary, rng).to(device)
                 tn = torch.full((len(chunk),), TEACHERS, device=device)
                 loss = mtd_loss(props, target, teach, tn, prev_weight=0.1)
                 optimiser.zero_grad(set_to_none=True)
@@ -301,16 +362,23 @@ def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_refiner")
-    parser.add_argument("--tokens", required=True)
+    parser.add_argument("--gather-anchors", action="store_true", help="gather B2's teachers into one array")
+    parser.add_argument("--tokens", default="")
     parser.add_argument("--labels", required=True)
-    parser.add_argument("--pdm", required=True)
+    parser.add_argument("--pdm", default="")
+    parser.add_argument("--anchors", default="", help="the --gather-anchors output")
     parser.add_argument("--agents", default="")
-    parser.add_argument("--mode", choices=("frozen", "lora", "full"), required=True)
-    parser.add_argument("--arm", choices=ARMS, required=True)
+    parser.add_argument("--mode", choices=("frozen", "lora", "full"))
+    parser.add_argument("--arm", choices=ARMS)
     parser.add_argument("--seeds", default="0,1,2")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    if args.gather_anchors:
+        gather_anchors(SiteConfig.load(), Path(args.labels), Path(args.out))
+        return
+    if not (args.tokens and args.pdm and args.anchors and args.mode and args.arm):
+        parser.error("training needs --tokens, --pdm, --anchors, --mode and --arm")
     if args.arm in ("F", "S") and not args.agents:
         parser.error("arms F and S read the side-car's agents: pass --agents")
     train(SiteConfig.load(), args)

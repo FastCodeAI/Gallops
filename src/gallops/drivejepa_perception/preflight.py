@@ -196,7 +196,10 @@ REFINER_LIMITS = {"proposals_m": 0.05, "picks_share": 0.95}
 
 
 def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
-    """B2's preflight: code, splits, and the untrained model reproducing the release from the cache.
+    """B2's preflight: code, splits, the gathered teachers, and the untrained model reproducing the release.
+
+    The gathered good anchors (`train_refiner.gather_anchors`) must equal their files on 16 random
+    rows.
 
     With the adapter at zero, the refiner run from the fp16 token cache must give the cached release
     proposals to within REFINER_LIMITS on 64 select rows, and the frozen scorer's pick on at least
@@ -216,6 +219,21 @@ def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
         REPO / "recipes/drivejepa_perception/splits.json",
         navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
     )
+    from gallops.drivejepa_perception import train_refiner
+
+    picked = np.random.default_rng(0).choice(len(data["anchor_count"]), 16, replace=False)
+    labels = np.load(Path(args.labels) / "labels.npz")
+    unequal = []
+    for row in picked:
+        path = train_refiner._anchor_file(
+            train_refiner.anchors_root(cfg), data["token_logs"][row], str(labels["token"][row])
+        )
+        stored = data["anchors"][row, : data["anchor_count"][row]]
+        if not np.array_equal(stored, train_refiner._read_anchors(path)):
+            unequal.append(int(row))
+    report["anchors"] = {"rows": 16, "unequal": unequal}
+    if unequal:
+        problems.append(f"the gathered anchors differ from their files on rows {unequal}")
     rows = data["rows"]["select"][:64]
     agent, model, adapter = build_fn()
     device = torch.device("cuda")

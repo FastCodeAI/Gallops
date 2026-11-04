@@ -208,6 +208,33 @@ kept epoch. The release's own pick scores 0.9201.
 - **The replacement scorer** (B1.4: a new network, trained from scratch on the control's own
   inputs) reaches 0.9192, within 0.001 of the release, in two epochs.
 
+### B3 · how it runs, and where it departs from the plan (written before any B3 run)
+
+**A cache, not the online ViT.**
+- Blocks 1–20 are frozen in every B3 variant, so their output for a row is a constant.
+  `tokens.py --block20` caches it once (fp16, 30 GB) for a seeded 20,000 train rows plus the
+  select and report logs.
+- Training then runs only blocks 21–24 and the norm. No image is decoded, and the first 20 blocks
+  never run.
+- The plan's S0.7 assumed B3 needed the online ViT. It needs it only for augmentation, which no
+  H15 arm uses.
+- The pass is held to the ViT-out cache through the frozen tail before it writes a row; the
+  B3.1 preflight holds A1, read through that tail, to its recorded select F1.
+
+**B3.1 gains a control.**
+- P13 compares the LoRA branch with A1's side-car. Both B3.1 arms start from A1 seed 0's kept
+  epoch and train the same steps on the same 20,000 rows. They differ only in LoRA.
+- Against A1 alone, a gain could be A1's own extra training; against the control, it cannot.
+  Both comparisons are reported.
+
+**B3.2 is reduced.**
+- The plan's B3.2 retrains the planner on the adapted tokens. That is B2's cost again.
+- What runs: B3.1 seed 0's LoRA put in the trunk the planner reads, with the planner unchanged
+  (`train_vit_lora shared`). The frozen branch must first reproduce the release's proposals and
+  picks.
+- It answers the half of the question that needs no training: does tuning the ViT's tail for
+  perception move the release's plan, and by how much?
+
 ![Each hypothesis, its tests and its readout](figures/hypotheses.png)
 
 ![How the results decide what is claimed](figures/decisions.png)

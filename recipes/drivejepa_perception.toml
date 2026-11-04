@@ -315,91 +315,98 @@ args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "
 
 # ---------------------------------------------------------------------------------------------
 # B2: three refiner modes x arms, the release's own planning loss. Read at the last epoch; the new
-# candidates are PDM-scored offline. Same arms and agents as B1.
+# candidates are PDM-scored offline. Same arms and agents as B1. The teachers are gathered into one
+# array first: read per row from NFS they cost 2.1 s per batch of 64.
 # ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "anchors"
+python = "drivejepa"
+module = "drivejepa_perception.train_refiner"
+args = ["--gather-anchors", "--labels", "{out}/labels-v1", "--out", "{out}/anchors-v1"]
 
 [[stage]]
 name = "b2-frozen-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "frozen",
         "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b2/frozen-C"]
 
 [[stage]]
 name = "b2-frozen-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "frozen",
         "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b2/frozen-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b2-frozen-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "frozen",
         "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b2/frozen-O"]
 
 [[stage]]
 name = "b2-frozen-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "frozen",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "frozen",
         "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b2/frozen-S", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b2-lora-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "lora",
         "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b2/lora-C"]
 
 [[stage]]
 name = "b2-lora-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "lora",
         "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b2/lora-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b2-lora-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "lora",
         "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b2/lora-O"]
 
 [[stage]]
 name = "b2-lora-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "lora",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "lora",
         "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b2/lora-S", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b2-full-C"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "full",
         "--arm", "C", "--seeds", "0,1,2", "--out", "{out}/b2/full-C"]
 
 [[stage]]
 name = "b2-full-F"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "full",
         "--arm", "F", "--seeds", "0,1,2", "--out", "{out}/b2/full-F", "--agents", "{out}/agents-a1-s0"]
 
 [[stage]]
 name = "b2-full-O"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "full",
         "--arm", "O", "--seeds", "0,1,2", "--out", "{out}/b2/full-O"]
 
 [[stage]]
 name = "b2-full-S"
 python = "drivejepa"
 module = "drivejepa_perception.train_refiner"
-args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--mode", "full",
+args = ["--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1", "--anchors", "{out}/anchors-v1", "--mode", "full",
         "--arm", "S", "--seeds", "0,1,2", "--out", "{out}/b2/full-S", "--agents", "{out}/agents-a1-s0"]
 
 # ---------------------------------------------------------------------------------------------
