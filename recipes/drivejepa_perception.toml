@@ -666,12 +666,22 @@ args = ["shared", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1"
 # gallops.data.nuscenes_real imports paddock's command rule and neuroNCAP scene list.
 # ---------------------------------------------------------------------------------------------
 
+# The draw takes the official train split from the nuScenes devkit and the neuroNCAP scenes from paddock's
+# harness, both imported. No interpreter here has both: paddock needs Python >= 3.11 (tomllib), and the devkit
+# is installed only in older ones. So the devkit's half runs in Drive-JEPA's interpreter, paddock's in
+# paddock's own (`[python] paddock`), and the record names both sources (nuscenes_data's docstring).
 [[stage]]
-name = "ood-draw"
+name = "ood-train-scenes"
 python = "drivejepa"
 module = "drivejepa_perception.nuscenes_data"
+args = ["train-scenes", "--out", "{out}/nusc-train-scenes.json"]
+
+[[stage]]
+name = "ood-draw"
+python = "paddock"
+module = "drivejepa_perception.nuscenes_data"
 env = { PYTHONPATH = "{code.paddock}/src" }
-args = ["draw", "--n", "100", "--seed", "0"]
+args = ["draw", "--train-scenes", "{out}/nusc-train-scenes.json", "--n", "100", "--seed", "0"]
 
 [[stage]]
 name = "ood-extract"

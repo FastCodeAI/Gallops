@@ -98,6 +98,25 @@ def test_the_scene_draw_is_reproducible_and_an_edited_list_is_refused(tmp_path):
         nd.load_scenes(path)
 
 
+def test_candidates_need_can_bus_poses_and_leave_out_scenes_by_number(tmp_path):
+    for name in ("scene-0001", "scene-0061", "scene-0103"):
+        (tmp_path / f"{name}_pose.json").write_text("[]")
+    train = ["scene-0001", "scene-0002", "scene-0061", "scene-0103"]  # 0002 has no CAN-bus poses
+    readable = nd.readable_train_scenes(train, tmp_path)
+    assert readable == ["scene-0001", "scene-0061", "scene-0103"]
+    # neuroNCAP's and the reconstructed scenes are kept out by their number, as nuscenes_real names them
+    assert nd.candidate_scenes(readable, {"0061", "0103"}) == ["scene-0001"]
+
+
+def test_the_draw_keeps_its_sources_and_still_redraws_exactly(tmp_path):
+    candidates = [f"scene-{i:04d}" for i in range(20)]
+    sources = {"devkit": "1.1.11", "kept_out": ["0061"], "paddock_commit": "abc"}
+    path = tmp_path / "scenes.json"
+    record = nd.write_scenes(path, candidates, n=5, seed=0, sources=sources)
+    assert json.loads(path.read_text())["sources"] == sources
+    assert nd.load_scenes(path) == record["scenes"] == nd.draw_scenes(candidates, 5, 0)
+
+
 def test_a_box_in_the_egos_path_is_a_collision_and_one_beside_it_is_not():
     plan = np.zeros((8, 3))
     plan[:, 0] = np.arange(1, 9) * 2.0  # straight ahead, 2 m a step

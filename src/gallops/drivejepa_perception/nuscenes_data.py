@@ -1,11 +1,20 @@
 """H15's nuScenes: its own scenes, keyframes, labels and inputs for the out-of-domain step (ood.py).
 
-    python -m gallops.drivejepa_perception.nuscenes_data draw --n 100 --seed 0     # once, then committed
+    <devkit python> -m gallops.drivejepa_perception.nuscenes_data train-scenes --out T.json
+    <paddock python> -m gallops.drivejepa_perception.nuscenes_data draw --train-scenes T.json --n 100 --seed 0
 
 **The scenes** are H15's own seeded draw (`draw_scenes`), committed as OOD_SCENES and re-drawn on
 every load, which refuses an edited list. Candidates are nuScenes train scenes (the devkit's official
 split) that have CAN-bus poses, without any scene behind a neuroNCAP scenario or a reconstructed one.
 Val is never a candidate, because paddock's nuScenes benchmark reads val.
+
+**Two interpreters, one draw.** The official split comes from the nuScenes devkit and the neuroNCAP
+scenes from paddock's harness, both imported, never restated. At this site no interpreter has both:
+paddock's config needs Python >= 3.11 (`tomllib`), and the devkit is installed only in older ones
+(Drive-JEPA's 3.9, the ncap env's 3.10). So `train-scenes` runs where the devkit is and writes the
+readable train scenes; `draw` runs where paddock imports, drops the neuroNCAP and reconstructed scenes,
+and draws. The committed record names both sources: the devkit's version, paddock's commit and the
+scenes it kept out.
 
 **One definition each, imported:** poses, the command rule, the exclusions and the keyframe timing
 from `gallops.data.nuscenes_real`; the model's inputs from `gallops.train.swerve_data`'s TickDataset;
@@ -43,14 +52,14 @@ HORIZON_WAYPOINTS = 6
 # --------------------------------------------------------------------------------------- scenes
 
 
-def candidate_scenes(train: list, can_bus: Path) -> list:
-    """Train scenes that can be read: CAN-bus poses exist, and no neuroNCAP or reconstructed scene."""
-    kept_out = nr.neuroncap_scenes() | nr.RECONSTRUCTED
-    return sorted(
-        name
-        for name in set(train)
-        if name.split("-")[1] not in kept_out and (Path(can_bus) / f"{name}_pose.json").exists()
-    )
+def readable_train_scenes(train: list, can_bus: Path) -> list:
+    """The train scenes the ticks can read: their CAN-bus poses exist (speed and acceleration)."""
+    return sorted(name for name in set(train) if (Path(can_bus) / f"{name}_pose.json").exists())
+
+
+def candidate_scenes(readable: list, kept_out: set) -> list:
+    """The readable train scenes without any whose number is in `kept_out` (neuroNCAP's, reconstructed)."""
+    return sorted(name for name in set(readable) if name.split("-")[1] not in kept_out)
 
 
 def draw_scenes(candidates: list, n: int, seed: int) -> list:
@@ -66,7 +75,8 @@ def _sha256(names: list) -> str:
     return hashlib.sha256("\n".join(sorted(names)).encode()).hexdigest()
 
 
-def write_scenes(path: Path, candidates: list, n: int, seed: int) -> dict:
+def write_scenes(path: Path, candidates: list, n: int, seed: int, sources=None) -> dict:
+    """Draw and write the record; `sources` says where the candidates came from (kept as given)."""
     record = {
         "rule": "numpy default_rng(seed).choice over the sorted candidates, n of them, without replacement",
         "candidates_are": (
@@ -74,6 +84,7 @@ def write_scenes(path: Path, candidates: list, n: int, seed: int) -> dict:
         ),
         "n": n,
         "seed": seed,
+        **({"sources": sources} if sources else {}),
         "candidates_sha256": _sha256(candidates),
         "candidates": sorted(candidates),
         "scenes": draw_scenes(candidates, n, seed),
@@ -172,6 +183,8 @@ def extract(root: Path, names: list) -> dict:
             }
         out["scenes"][name] = {
             "location": logs[scenes[name]["log_token"]]["location"],
+            # the scene's own words ("Night, rain, ..."): step 7 reads night and rain apart
+            "description": scenes[name]["description"],
             "keyframes": [
                 {
                     "sample": token,
@@ -344,21 +357,66 @@ def keyframe_dataset(rows: list, scenes: dict, nuscenes_root: str, calibration_d
     return KeyframeDataset(rows, "cpu", nuscenes_root)
 
 
+def _git_head(repo: Path) -> str:
+    import subprocess
+
+    out = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True, text=True)
+    return out.stdout.strip() or "unknown"
+
+
+def write_train_scenes(path: Path, can_bus: Path) -> dict:
+    """The devkit's official train split, kept where CAN-bus poses exist (run where the devkit is)."""
+    from importlib.metadata import version
+
+    from nuscenes.utils.splits import create_splits_scenes
+
+    train = create_splits_scenes()["train"]
+    readable = readable_train_scenes(train, can_bus)
+    record = {
+        "rule": "the devkit's create_splits_scenes()['train'], kept where can_bus/<scene>_pose.json exists",
+        "devkit": version("nuscenes-devkit"),
+        "train_scenes": len(train),
+        "readable_sha256": _sha256(readable),
+        "readable": readable,
+    }
+    Path(path).write_text(json.dumps(record, indent=1) + "\n")
+    return record
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.nuscenes_data")
-    parser.add_argument("command", choices=("draw",))
-    parser.add_argument("--n", type=int, required=True)
-    parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument("command", choices=("train-scenes", "draw"))
+    parser.add_argument("--out", help="train-scenes: where to write the readable train scenes")
+    parser.add_argument("--train-scenes", help="draw: train-scenes' output")
+    parser.add_argument("--n", type=int)
+    parser.add_argument("--seed", type=int)
     args = parser.parse_args(argv)
-    from nuscenes.utils.splits import create_splits_scenes
-
+    cfg = SiteConfig.load()
+    if args.command == "train-scenes":
+        if not args.out:
+            parser.error("train-scenes needs --out")
+        record = write_train_scenes(Path(args.out), Path(cfg.resolve("{data.nuscenes}")) / "can_bus")
+        print(f"{len(record['readable'])} of {record['train_scenes']} train scenes have CAN-bus poses")
+        return
+    if not (args.train_scenes and args.n is not None and args.seed is not None):
+        parser.error("draw needs --train-scenes, --n and --seed")
     if OOD_SCENES.exists():
         raise SystemExit(f"{OOD_SCENES} exists; the draw is made once and committed")
-    root = Path(SiteConfig.load().resolve("{data.nuscenes}"))
-    candidates = candidate_scenes(create_splits_scenes()["train"], root / "can_bus")
-    record = write_scenes(OOD_SCENES, candidates, args.n, args.seed)
+    train = json.loads(Path(args.train_scenes).read_text())
+    if _sha256(train["readable"]) != train["readable_sha256"]:
+        raise SystemExit(f"{args.train_scenes}: the scene list was edited")
+    kept_out = nr.neuroncap_scenes() | nr.RECONSTRUCTED
+    candidates = candidate_scenes(train["readable"], kept_out)
+    sources = {
+        "train_scenes": {k: train[k] for k in ("rule", "devkit", "train_scenes", "readable_sha256")},
+        "readable": len(train["readable"]),
+        "kept_out": sorted(kept_out),
+        "kept_out_from": "gallops.data.nuscenes_real.neuroncap_scenes() (paddock's harness) | RECONSTRUCTED",
+        "paddock_commit": _git_head(Path(cfg.resolve("{code.paddock}"))),
+    }
+    record = write_scenes(OOD_SCENES, candidates, args.n, args.seed, sources)
     print(f"{len(record['scenes'])} of {len(candidates)} candidate train scenes -> {OOD_SCENES}")
 
 

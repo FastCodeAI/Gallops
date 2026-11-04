@@ -75,6 +75,7 @@ runs = "/path/to/gallops-runs"
 # [python]
 # train     = "/path/to/env-with-torch/bin/python"     # Python >= 3.11 with torch
 # drivejepa = "/path/to/drive-jepa-env/bin/python"     # Drive-JEPA's own env (Python 3.9, navsim installed)
+# paddock   = "/path/to/Paddock/.venv/bin/python"       # Python >= 3.11 where paddock imports (H15's nuScenes draw)
 
 # [code]
 # drivejepa = "/path/to/Drive-JEPA-ext"   # upstream e21f474 + paddock's patches 0001-0003 as commits; on GPUs above sm_86, 0001 is required (docs/drivejepa-perception-sidecar.md, S0.2)
