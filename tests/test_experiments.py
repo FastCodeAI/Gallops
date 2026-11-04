@@ -19,6 +19,10 @@ import pytest
 
 from gallops import experiments as exps
 
+#: This tests code that runs only in gallops' own interpreter (Python 3.11: it uses zip(strict=)).
+#: A trainer's preflight runs the suite under Drive-JEPA's 3.9, which never imports that code.
+pytestmark = pytest.mark.skipif(sys.version_info < (3, 11), reason="3.11-only code (zip(strict=))")
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # ---------------------------------------------------------------- the real registry

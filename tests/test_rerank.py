@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 
 import numpy as np
 import pytest
@@ -12,6 +13,10 @@ from gallops.checkpoint import SidecarError, read
 from gallops.cli import app
 from gallops.config import SiteConfig
 from gallops.train import rerank
+
+#: This tests code that runs only in gallops' own interpreter (Python 3.11: it uses zip(strict=)).
+#: A trainer's preflight runs the suite under Drive-JEPA's 3.9, which never imports that code.
+pytestmark = pytest.mark.skipif(sys.version_info < (3, 11), reason="3.11-only code (zip(strict=))")
 
 FEATURES = ("signal", "noise_a", "noise_b")
 

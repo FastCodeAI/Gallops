@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import json
 import pickle
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,10 @@ from gallops.checkpoint import read
 from gallops.config import SiteConfig
 from gallops.data import rerank as data
 from gallops.train import rerank
+
+#: This tests code that runs only in gallops' own interpreter (Python 3.11: it uses zip(strict=)).
+#: A trainer's preflight runs the suite under Drive-JEPA's 3.9, which never imports that code.
+pytestmark = pytest.mark.skipif(sys.version_info < (3, 11), reason="3.11-only code (zip(strict=))")
 
 
 def golden_input():
