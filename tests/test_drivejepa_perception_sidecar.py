@@ -140,6 +140,7 @@ def test_within_30m_means_30_metres():
     }
     out = evaluate.readout([pred], [gt], prior_gap=30.0)
     assert out["recall_2m_within_30m"] == 0.0  # the 28 m agent is within 30 m, and missed
+    assert out["recall_2m_within_30m_by_class"][0] == 0.0  # both are vehicles: P15 reads this one
     assert out["recall_by_range"][1] == 0.0 and out["recall_by_range"][2] == 1.0
 
 

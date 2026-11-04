@@ -600,3 +600,12 @@ module = "drivejepa_perception.ood"
 env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
         "--out", "{out}/ood/ood.json"]
+
+# The same readout with recall by class within 30 m (P15 reads vehicles within 30 m), after 8be6994.
+[[stage]]
+name = "ood-read-v2"
+python = "drivejepa"
+module = "drivejepa_perception.ood"
+env = { PYTHONPATH = "{code.paddock}/src" }
+args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
+        "--out", "{out}/ood/ood-v2.json"]

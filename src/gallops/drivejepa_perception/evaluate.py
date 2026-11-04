@@ -139,6 +139,9 @@ def readout(preds: list, gts: list, prior_gap: float, detail: bool = False) -> d
         "precision_2m_within_30m": ratio(det_tp[within_30], det_n[within_30]),
         "recall_by_range": [ratio(gt_hit[b], gt_n[b]) for b in range(n_bins)],
         "recall_by_class": [ratio(gt_hit[:, c], gt_n[:, c]) for c in range(NUM_CLASSES)],
+        "recall_2m_within_30m_by_class": [
+            ratio(gt_hit[within_30, c], gt_n[within_30, c]) for c in range(NUM_CLASSES)
+        ],
         "targets": int(gt_n.sum()),
         "centre_error_m": float(np.mean(centre_err)) if centre_err else float("nan"),
         "velocity_error_mps": float(np.mean(vel_err)) if vel_err else float("nan"),
