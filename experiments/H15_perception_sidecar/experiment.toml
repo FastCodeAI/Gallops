@@ -197,6 +197,33 @@ notes = "12 epochs over 94,195 train rows, kept epoch chosen on the select logs 
   note = "mean of three seeds; paired difference -0.049 (SE 0.013), -0.048 (SE 0.014), -0.059 (SE 0.012), beyond 2 SE clustered by log on every seed: P4's support rule met, but 4-5% against the predicted 10%"
 
 [[runs]]
+id = "H15.a2"
+label = "A2 (optional): the side-car on a seeded 25% and 50% of the train logs, seed 0 -- is it data-limited?"
+started = 2026-11-04
+start_from = "released"
+trained = ["side-car"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+params_trained_m = 4.39
+train_git_sha = "f3934bf"
+notes = "Whole logs drawn with seed 0 (train_sidecar.fraction_of_logs): 25,120 and 49,276 rows; 100% is H15.a1 seed 0. Read with the fixed readout at each run's kept epoch (11 and 12)."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#a2-50"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, on half the train logs"
+  subset = "report logs"
+  baseline = "H15.a1 seed 0, all the train logs"
+  baseline_value = "0.683"
+  value = "0.638"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "one seed per fraction; 25% of the logs: 0.567. Each doubling adds 0.045-0.07 F1: still rising, so the side-car is data-limited"
+
+[[runs]]
 id = "H15.b1"
 label = "B1: the side-car's agents as scorer inputs -- four modes (adapter, + LoRA, + full scorer, replacement) x arms C, F, O, S x three seeds"
 started = 2026-11-04

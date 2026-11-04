@@ -249,6 +249,21 @@ log):
 - So seed 0's detections on real input are made from the image. Its zeroed-token failure is its
   answer to an input it never saw, and is recorded as such.
 
+### A2 (optional) · the side-car is data-limited (`f3934bf`, seed 0, report logs, within 30 m)
+
+Trained identically on a seeded 25% and 50% of the train logs (whole logs, `--train-fraction`), read
+with the fixed readout at the epoch each kept.
+
+| Train logs (rows) | Recall | Precision | F1 | Moving vehicles ≤ 20 m | Lead-gap error |
+|---|---|---|---|---|---|
+| 25% (25,120) | 0.530 | 0.609 | 0.567 | 0.880 | 3.51 m |
+| 50% (49,276) | 0.590 | 0.695 | 0.638 | 0.909 | 2.80 m |
+| 100% (94,195; A1 seed 0) | 0.632 | 0.742 | 0.683 | 0.936 | 2.35 m |
+
+- **Every doubling still adds 0.045–0.07 F1.** The steps shrink but have not stopped, so more
+  labelled scenes would still improve the side-car. One seed per fraction.
+- The zeroed-token sight check is no more stable here: 52 detections a sample at 25%, 3 at 50%.
+
 ### A1 · the no-camera baseline (blind arm, report logs)
 
 - Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.
