@@ -78,3 +78,21 @@ set on those same 200 tokens. Batches: val (214 logs), selection (100), rest (87
   [runs.code]
   modules = ["gallops.memory.grade"]
   as_run = ["experiments/H15_prediction_memory/scripts/"]
+
+[[runs]]
+id = "H15.r2"
+label = "matching each path to the previous moment's closest path (built; statistics on the val logs)"
+started = 2026-11-05
+start_from = "H05.r1"
+frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
+notes = """The previous moment's waypoints 2-8 moved into the current ego frame (logged poses), \
+compared with the current waypoints 1-7 by mean distance; each new path takes its closest old path, \
+or none beyond 2 m. Reproduces Naren's slot-stability numbers on the same 40 val logs exactly (3,927 \
+pairs; closest 0.397 m, same slot 38.47%, pick unchanged 46.88%). On all 214 val logs (18,798 pairs), \
+from the new path's side: closest 0.344 m median, same slot 29.1%, no old path within 2 m for 0.60% of \
+paths, the pick 0.18%; not concentrated in turns. Chain starts are 11.2% of val moments but 6 of the \
+15,320 graded ones."""
+
+  [runs.code]
+  modules = ["gallops.memory.align"]
+  as_run = ["experiments/H15_prediction_memory/scripts/"]
