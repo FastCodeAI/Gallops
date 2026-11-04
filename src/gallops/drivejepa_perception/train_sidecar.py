@@ -120,9 +120,9 @@ def predict(model, dataset, device, batch=128, blind=False):
     return preds
 
 
-def read(model, dataset, targets, rows, device, gap, blind=False) -> dict:
+def read(model, dataset, targets, rows, device, gap, blind=False, detail=False) -> dict:
     preds = predict(model, dataset, device, blind=blind)
-    result = evaluate.readout(preds, [targets[r] for r in rows], gap)
+    result = evaluate.readout(preds, [targets[r] for r in rows], gap, detail=detail)
     result["detections_per_sample"] = float(np.mean([(p["conf"] >= evaluate.THR).sum() for p in preds]))
     return result
 
@@ -290,19 +290,41 @@ def reread(cfg, args) -> None:
     gap = prior_gap(targets, train_rows)
     blind = bool(meta.get("blind"))
     out = {"evaluate_range_bins": [list(b) for b in evaluate.RANGE_BINS], "kept_epoch": summary["kept_epoch"]}
+    from gallops.drivejepa_perception.b_report import clustered_se
+
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    details = {}
     for epoch in epochs[args.which]:
         model.load_state_dict(torch.load(run / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"])
         entry = {}
         for split in ("select", "report") if has_report else ("select",):
             dataset = Rows(tokens, slot, rows[split], projections, targets, blind=blind)
-            entry[split] = read(model, dataset, targets, rows[split], device, gap, blind=blind)
+            entry[split] = read(model, dataset, targets, rows[split], device, gap, blind=blind, detail=True)
             entry[f"{split}_f1_30m"] = f1(entry[split])
+            d = entry[split].pop("detail")
+            # P4: the 1 s path against constant velocity from the predicted velocity, moving agents,
+            # paired per agent, SE clustered by log.
+            moving = d["path_moving"]
+            diff = (d["fde_model"] - d["fde_cv_pred"])[moving]
+            clusters = logs[rows[split][d["path_row"][moving]]]
+            entry[f"{split}_p4"] = {
+                "agents": int(moving.sum()),
+                "fde_model_moving": float(d["fde_model"][moving].mean()) if moving.any() else float("nan"),
+                "fde_cv_pred_moving": float(d["fde_cv_pred"][moving].mean())
+                if moving.any()
+                else float("nan"),
+                "model_minus_cv_pred": float(diff.mean()) if len(diff) else float("nan"),
+                "se_by_log": clustered_se(diff, clusters) if len(diff) > 1 else float("nan"),
+            }
+            details.update({f"epoch_{epoch:02d}_{split}_{k}": v for k, v in d.items()})
         out[f"epoch_{epoch:02d}"] = entry
         print(
             json.dumps({"epoch": epoch, **{k: v for k, v in entry.items() if k.endswith("f1_30m")}}),
             flush=True,
         )
     target.write_text(json.dumps(out, indent=1))
+    np.savez(run / "reread_detail.npz", **details)
 
 
 def overfit(cfg, args) -> None:

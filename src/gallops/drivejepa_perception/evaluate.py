@@ -68,8 +68,13 @@ def lead(xy: np.ndarray, cls: np.ndarray):
     return float(xy[ahead, 0].min()) if ahead.any() else None
 
 
-def readout(preds: list, gts: list, prior_gap: float) -> dict:
-    """Phase A's numbers over samples. `preds` from `decode`; `gts` from `targets.build`."""
+def readout(preds: list, gts: list, prior_gap: float, detail: bool = False) -> dict:
+    """Phase A's numbers over samples. `preds` from `decode`; `gts` from `targets.build`.
+
+    With `detail`, also `out["detail"]`: per hit agent with a full path, its sample's index in
+    `preds`, whether it moves and each guess's FDE at 1 s; per sample with a lead vehicle, its
+    index and both gap errors. Paired SEs need these; the means above do not.
+    """
     n_bins = len(RANGE_BINS)
     gt_n, gt_hit = np.zeros((n_bins, NUM_CLASSES)), np.zeros((n_bins, NUM_CLASSES))
     det_n, det_tp = np.zeros((n_bins, NUM_CLASSES)), np.zeros((n_bins, NUM_CLASSES))
@@ -78,7 +83,8 @@ def readout(preds: list, gts: list, prior_gap: float) -> dict:
     paths = {k: [] for k in ("model", "stationary", "cv_pred", "cv_label")}
     path_moving = []
     lead_err, lead_prior_err = [], []
-    for pred, gt in zip(preds, gts):  # noqa: B905 -- Python 3.9
+    path_rows, lead_rows = [], []
+    for index, (pred, gt) in enumerate(zip(preds, gts)):  # noqa: B905 -- Python 3.9
         m = gt["mask"]
         gxyz, gcls, gvel = gt["box"][m, :3].astype(np.float64), gt["cls"][m], gt["vel"][m].astype(np.float64)
         gpath = gt["box"][m, None, :2] + gt["path"][m]
@@ -113,12 +119,14 @@ def readout(preds: list, gts: list, prior_gap: float) -> dict:
                     error = np.hypot(*(guess - truth).T)
                     paths[key].append((float(error.mean()), float(error[-1])))
                 path_moving.append(bool(speed[g] > MOVING_MPS))
+                path_rows.append(index)
         true_gap = lead(gxyz[:, :2], gcls)
         if true_gap is not None:
             shown = pred["conf"] >= THR
             guess = lead(pred["xyz"][shown, :2], pred["cls"][shown])
             lead_err.append(abs((guess if guess is not None else 50.0) - true_gap))
             lead_prior_err.append(abs(prior_gap - true_gap))
+            lead_rows.append(index)
 
     def ratio(a, b):
         return float(a.sum() / b.sum()) if b.sum() else float("nan")
@@ -148,4 +156,13 @@ def readout(preds: list, gts: list, prior_gap: float) -> dict:
             out[f"path_ade_1s_{key}_{name}"] = float(picked[:, 0].mean()) if len(picked) else float("nan")
     out["path_hits_moving"] = int(moving.sum())
     out["path_hits_static"] = int((~moving).sum())
+    if detail:
+        out["detail"] = {
+            "path_row": np.asarray(path_rows, np.int64),
+            "path_moving": moving,
+            **{f"fde_{k}": np.array(v).reshape(-1, 2)[:, 1] for k, v in paths.items()},
+            "lead_row": np.asarray(lead_rows, np.int64),
+            "lead_err": np.asarray(lead_err),
+            "lead_prior_err": np.asarray(lead_prior_err),
+        }
     return out

@@ -164,3 +164,29 @@ def test_agent_arrays_mask_the_slots_under_threshold_and_leave_other_rows_empty(
     assert arrays["xyz"].shape == (3, 8, 3) and arrays["path"].shape == (3, 8, tg.PATH_STEPS, 2)
     assert np.array_equal(arrays["mask"], arrays["conf"] >= evaluate.THR)
     assert not arrays["mask"][1].any() and not arrays["conf"][1].any()  # row 1 was not asked for
+
+
+def test_readout_detail_gives_each_hit_agents_row_and_the_means_it_averages():
+    projection = tg.front_projection(_pinhole_lidar2img())
+    agents = {
+        "cls": np.array([0], dtype=np.int8),
+        "box": np.array([[15.0, 0.0, 0.5, 4, 2, 1.5, 0]], dtype=np.float32),
+        "velocity": np.array([[2.0, 0.0]], dtype=np.float32),
+        "path": np.array([[[16.0, 0.0], [17.0, 0.0]]], dtype=np.float32),
+        "path_ok": np.ones((1, 2), bool),
+    }
+    gt = tg.build(agents, projection)
+    empty = {k: np.zeros_like(v) for k, v in gt.items()}
+    pred = {
+        "conf": np.where(gt["mask"], 0.9, 0.1),
+        "cls": gt["cls"],
+        "xyz": gt["box"][:, :3].astype(np.float64),
+        "vel": np.zeros_like(gt["vel"], dtype=np.float64),  # a stationary guess: cv_pred misses by 2 m
+        "path": gt["box"][:, None, :2] + gt["path"],
+    }
+    none = {**pred, "conf": np.zeros_like(pred["conf"])}
+    out = evaluate.readout([none, pred], [empty, gt], prior_gap=30.0, detail=True)
+    d = out["detail"]
+    assert d["path_row"].tolist() == [1] and d["path_moving"].tolist() == [True]
+    assert d["fde_model"].tolist() == [0.0] and np.isclose(d["fde_cv_pred"][0], 2.0)
+    assert np.isclose(out["path_fde_1s_cv_pred_moving"], d["fde_cv_pred"][d["path_moving"]].mean())
