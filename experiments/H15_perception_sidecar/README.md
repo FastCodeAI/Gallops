@@ -104,8 +104,24 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 
 ## What it showed
 
-So far, phase A has started. Structured results go into `experiment.toml` when B1 gives H15 its
-headline; until then, the numbers live here.
+**In short (4 Nov; B2 still training):**
+- **The side-car works (H-A supported).** 4.39 M parameters on the frozen ViT's output find agents
+  ahead: recall 0.63 and precision 0.74 within 30 m, moving vehicles near the ego 0.94, the lead
+  gap within 2.1–2.4 m. Its 1 s paths beat constant velocity, if only by 4–5%.
+  - It transfers to nuScenes without training: vehicle recall 0.48.
+- **Its agents do not improve the scorer's pick on NAVSIM (B1 NEUTRAL in every mode).** Neither do
+  ground-truth agents: on these logs the release's pick already avoids collisions (NC and TTC
+  0.996), so there is nothing for agents to fix.
+- **The scorer's reasons are faithful (B1.6).** The agent it names moves its pick three to five
+  times as often as a random one, and is real 86% of the time.
+- **LoRA on the ViT's last blocks adds nothing (B3).** Not to perception, and shared, not to the
+  plan either.
+- **Out of domain, fitting the scorer to navtrain costs.** On nuScenes the `full` scorer plans
+  0.23–0.31 m worse at 3 s than the release, with or without agents. The replacement scorer
+  transfers best.
+- **B2** (agents for the refiner) is training. Its first seed matches its control.
+
+The numbers behind each line follow; the structured record is `experiment.toml`.
 
 ### S0.5 · the PDM labels (4 Nov, from `b46230a`)
 
