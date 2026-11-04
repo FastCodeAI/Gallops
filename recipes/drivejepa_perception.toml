@@ -127,6 +127,33 @@ args = ["finish", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", 
 
 # A0 chose the ViT's own output (before the projector): select F1 0.338 against 0.257 post-projector and 0.269
 # at block 12 (PREDICTIONS.md P1). It is cached here for every row, held to the full forward's tap first.
+# The readout's "within 30 m" ran to 35 m until ad778cf (README). These read A0's probes and the blind
+# arm again at the epochs they kept, with the fixed readout, beside their as-run files.
+
+[[stage]]
+name = "a0-post-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a0-post"]
+
+[[stage]]
+name = "a0-vit-out-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a0-vit-out"]
+
+[[stage]]
+name = "a0-block12-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a0-block12"]
+
+[[stage]]
+name = "a1-blind-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a1-blind"]
+
 [[stage]]
 name = "tokens-vit"
 python = "drivejepa"
