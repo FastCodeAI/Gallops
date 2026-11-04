@@ -515,24 +515,28 @@ args = ["shared", "--block20", "{out}/block20-v1", "--tokens", "{out}/tokens-v1"
 # OOD (P15): nuScenes, which nothing in H15 or the release saw. H14's 102 held-out train scenes
 # (recipes/drivejepa_aux/heldout_scenes.json), inputs through H14's TablesTickDataset, the release at
 # batch 1; the side-car zero-shot and every B1 run against the release's pick (ood.py).
-# Site config: [datasets.nuscenes] (v1.0-trainval tables, samples/, can_bus/).
+# Site config: [datasets.nuscenes] (v1.0-trainval tables, samples/, can_bus/), and [code] paddock: H14's
+# nuScenes code imports paddock's command rule and neuroNCAP scene list (gallops.data.nuscenes_real).
 # ---------------------------------------------------------------------------------------------
 
 [[stage]]
 name = "ood-extract"
 python = "drivejepa"
 module = "drivejepa_perception.ood"
+env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["extract", "--out", "{out}/nusc-extract"]
 
 [[stage]]
 name = "ood-pass"
 python = "drivejepa"
 module = "drivejepa_perception.ood"
+env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["pass", "--extract", "{out}/nusc-extract", "--out", "{out}/nusc-v1", "--workers", "16"]
 
 [[stage]]
 name = "ood-read"
 python = "drivejepa"
 module = "drivejepa_perception.ood"
+env = { PYTHONPATH = "{code.paddock}/src" }
 args = ["read", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "--b1", "{out}/b1",
         "--out", "{out}/ood/ood.json"]
