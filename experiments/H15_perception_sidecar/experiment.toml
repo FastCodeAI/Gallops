@@ -29,7 +29,9 @@ the ViT beats the frozen tap. H-info: shuffled agents (S) do not recover the gai
 (O) are at least as good. Refuted per question if F does not beat C under any mode; the side-car claim \
 is refuted if it does not beat its baselines."""
 predictions = "experiments/H15_perception_sidecar/PREDICTIONS.md"
-learned = """So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-car on Drive-JEPA's \
+learned = """The first pass (3-4 Nov) is judged inconclusive by its owner and is being redone from a revised plan, \
+Part A first, one reviewed step at a time (D20); what it reported, open loop: on NAVSIM navtrain (in-sample for \
+the release) a 4.39 M side-car on Drive-JEPA's \
 frozen ViT output detects agents ahead (recall 0.63, precision 0.74 within 30 m, three seeds), follows them \
 for a second a little better than constant velocity, transfers to nuScenes untrained (vehicle recall 0.48), \
 and is still data-limited. Its agents, handed to the scorer (four modes) or to the refiner (three), change \
@@ -416,3 +418,46 @@ notes = "Nothing trains. The release at batch 1 on 2,996 keyframes; the projecti
   strength = "moderate"
   flags = ["open-loop"]
   note = "mean of three seeds; minus R -0.277, -0.325, -0.340 m, each beyond 2 SE clustered by scene; collisions 0.7 points lower. F, O and S match C, so it is the retraining, not the agents (ood-read-b2, 2349622). Not hypothesised; why is untested"
+
+[[runs]]
+id = "H15.r1"
+label = "Rerun, Part A, step 3: the pipeline check -- v1 for epoch 1 of its 12-epoch schedule, select logs only"
+started = 2026-11-04
+start_from = "released"
+trained = ["side-car"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+params_trained_m = 4.39
+train_git_sha = "d1bacdc"
+notes = "The rerun's plan is docs/drivejepa-perception-sidecar-A.md; its success criteria (section 7) were committed in d1bacdc, before this run. --epochs 12 --stop-after 1 --no-report: the first epoch of the schedule a real run uses, no report row read. Overfit check passed first (step 1,300 of 4,000; centre 0.49 m). Preflight: the live ViT output equals the ViT-out cache (largest 0.0156, mean 3.6e-4; new in the rerun). 46 s for the epoch with the readout; 3 steps skipped by the loss scaler, 16 clipped. Curves and checks: notebooks 03 and 04 under experiments/H15_perception_sidecar/notebooks/."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-a-pipeline"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, train logs (1,071)"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, select logs (H04's 51 held-out)"
+  role = "selection"
+  unit = "samples"
+  n = 4457
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, after epoch 1 of 12"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  value = "0.477"
+  better = "higher"
+  strength = "moderate"
+  flags = ["smoke", "open-loop"]
+  note = "a pipeline reading, not a result: recall 0.405, precision 0.578; recall 0.64 / 0.26 / 0.08 by range; zeroed tokens give 0 detections a sample, another log's tokens recall 0.031 (notebook 04). For orientation, the first pass's v1 seed 0 read 0.669 at its kept epoch 11"

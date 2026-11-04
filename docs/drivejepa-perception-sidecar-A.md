@@ -1,7 +1,7 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
-**Status (2026-11-04): steps 1–3 written for review; step 3's pipeline check is in §9. Nothing past
-step 3 has run.**
+**Status (2026-11-04): steps 1–3 done and waiting for the owner's review. Step 3's pipeline check
+passed (§9). Nothing past step 3 has run, and no report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -13,10 +13,10 @@ steps. The owner reviews each block before the next one starts.
 
 | Step | Artifact |
 |---|---|
-| 1 · the data | `notebooks/01_dataset.ipynb` (written next), §3 |
-| 2 · the model and its loss | `notebooks/02_loss.ipynb` (written next), §4–5 |
-| 3 · the training recipe and the pipeline check | `notebooks/03_training.ipynb` (written next), §6 and §9 |
-| the plan for steps 4–8 | `notebooks/04_evaluation.ipynb` (written next), §7–8 and §11 |
+| 1 · the data | [notebooks/01_dataset.ipynb](../experiments/H15_perception_sidecar/notebooks/01_dataset.ipynb), §3 |
+| 2 · the model and its loss | [notebooks/02_loss.ipynb](../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §4–5 |
+| 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
+| the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
 
 - **Labels on numbers:**
   - *counted*: on disk at this site;
@@ -149,6 +149,12 @@ centre.
   decide nothing.
 - **The 64-target cap almost never binds** (166 of 94,195 train samples), so 64 queries are not
   short of targets.
+- **Beyond about 20 m, every agent sits in two token rows** (*read* through the projection, notebook
+  01 §4):
+  - the top half of the 16 × 32 grid looks above the horizon;
+  - token row 9's centre meets the road 20 m ahead, row 8's at 46 m.
+  - So an agent's distance there rests on where within one or two rows it meets the road, and on its
+    apparent size. This is the reason for the range bins.
 
 ### 3.5 The splits
 
@@ -187,13 +193,22 @@ No new data pass is needed for steps 1–6.
   their keys are boxes, names, velocities and two token lists).
   - An agent fully hidden behind a truck is still a target. Recall cannot reach 1 for a camera,
     least of all at range.
+  - A rough measure (notebook 01 §7) is the share of targets whose image box is at least 90% covered
+    by nearer targets' boxes. It is 6% / 19% / 30% on report and 11% / 26% / 38% on select, for
+    0–20 / 20–30 / 30–50 m (*counted*).
+  - The measure errs both ways: it ignores occluders that are not targets, and it compares
+    rectangles, not silhouettes.
   - nuScenes keeps only boxes some lidar point hit (§8.2), so the two datasets' recalls are not
     measured against the same kind of target.
 - **"Seen" is decided by the centre alone.** A truck half in view with its centre outside the image
   is not a target. A detection of it counts against precision.
+  - There are 0.48 such agents a sample on report and 0.63 on select, against 5.2 and 7.3 targets
+    (*counted*).
 - **Box height (z).** Vehicle z varies by log: medians 0.23–0.95 m on four logs, for heights near
-  1.8 m (*counted*). Notebook 01 projects the boxes onto the image to show whether z is the box's
-  centre, as `views.box_corners` assumes.
+  1.8 m (*counted*).
+  - Projected onto the image with z as the box's centre, the boxes sit on the road and reach the
+    roofs, on every split and city drawn (notebook 01 §3).
+  - So z is the centre, as `views.box_corners` assumes.
 - **Auto-labels.** NAVSIM's boxes are machine-made. Box size drifts along a track (0.33% of joins by
   more than 0.5 m), and yaw is noisy for pedestrians.
 
@@ -219,8 +234,8 @@ No new data pass is needed for steps 1–6.
 - The "none" logit's bias is 2.0, so every slot starts at p(none) ≈ 0.71: few false alarms at the
   start.
 - The reference points start uniform over x 2–50 m, |y| < 30 m, z 0.
-  - About half of that rectangle is outside the camera's view (*estimate*: the view is ±32° wide
-    and starts about 6 m ahead on the ground). Notebook 02 counts it for the seeded start.
+  - **32 of v1's 64 points start outside the camera's view, and 63 of v2's 128** (*counted* at seed
+    0, notebook 02 §2).
   - With AdamW at 2e-4 a reference point moves at most about 2 m over training (*argued*). A slot
     is still not stuck: its first layer's Δcentre can move its centre anywhere.
   - Kept as is in v1 for comparability with the first pass. A better start inside the view is a
@@ -403,9 +418,25 @@ first pass):
 
 ### 6.9 Cost
 
-Step 3 measures the time of one epoch (§9). The step-5 budget is that time multiplied out: 4 runs
-in 5a, then 3–4 in 5b. The GPUs are shared and run at near-full load, so wall time is quoted, not
-GPU-hours.
+**v1's epoch.** One epoch of v1 took **46 s, including the select readout** (*measured* by step 3, on
+a GPU other jobs kept at full load).
+- Data waits were about 1 ms a step against 20–30 ms of compute: the token cache sits in the page
+  cache.
+- A 12-epoch v1 run is therefore about 9 minutes.
+
+**v2 and v3** were not run. Notebook 03 §6 times their training step against v1's on one batch:
+2.5 and 2.8 times as long (*measured*; the absolute step times move with the other jobs' load).
+
+| Step 5 | Wall clock, one GPU (*estimate*) |
+|---|---|
+| 5a: v1, v2, v3 at 12 epochs and v1 at 24 | about 1.3 h |
+| 5b, if v1 at 12 epochs is chosen: seeds 1, 2 and the blind control | about 0.5 h |
+| 5b, if v3 at 24 epochs is chosen: seeds 0, 1, 2 and the blind control | about 3.5 h |
+
+**Memory and disk.**
+- Peak GPU memory: 3.7 GB for v1 in the run; 0.8, 1.8 and 2.7 GB for the three in notebook 03's
+  timing, without the readout.
+- A checkpoint is 18, 33 or 74 MB.
 
 ## 7. How success is measured (a draft, for step 4)
 
@@ -578,11 +609,60 @@ owner's call (§11, Q2).
 
 ## 9. Step 3's pipeline check
 
-*To be filled in from the run* (`part-a-overfit`, `part-a-pipeline`).
+Run `H15.r1`, from `d1bacdc`, on the full train split. It wrote to
+`{runs}/drivejepa_perception/part-a/r1-pipeline-v1-s0/` with `--epochs 12 --stop-after 1 --no-report`.
+All numbers *measured*; notebook 03 holds every curve.
+
+**The overfit check** (`part-a-overfit`, before the run) passed at step 1,300 of 4,000: matched centre
+error 0.49 m, class accuracy 1.00.
+
+**The preflight** (in the run's `run.json`):
+
+| Check | Measured | Limit |
+|---|---|---|
+| code | committed; 238 passed, 95 skipped under Drive-JEPA's 3.9 | no failure |
+| rows | labels = token cache = ViT-out cache = 103,288 | equal |
+| labels against NAVSIM's code, 8 windows | no problem (path points 1.9e-6 m off) | — |
+| live post-projector tokens − cache | 0.0038 | ≤ 0.01 |
+| live picks = cache | 6 of 6 | all |
+| **live ViT output − ViT-out cache** (new) | largest 0.0156, mean 3.6e-4 | ≤ 0.1, ≤ 1e-3 |
+| a point 20 m ahead | u = 252.6–257.2 | within 64 of 256 |
+
+**The epoch** (1,471 steps, 46 s with the readout):
+- **Loss:** 17.9 over steps 1–50, 8.4 over the last 50, still falling. Every term, by the last 50
+  steps, is lower in layers 1–2 than in layer 0.
+- **Gradients:** the norm started near the clip and settled near 12; 16 steps clipped, all early.
+- **Precision:** the loss scaler backed off 3 times in the first 50 steps (65,536 → 8,192), 0.2% of
+  steps (G3 allows 1%), then held.
+- **Data:** about 1 ms a step; peak memory 3.7 GB.
+- **The logged learning rate** follows the 12-epoch schedule to 2e-9.
+
+**The select readout after epoch 1 of 12** (`smoke`: a pipeline reading, not a result):
+- recall 0.405 and precision 0.578 within 30 m (F1 0.477);
+- recall by range: 0.64 / 0.26 / 0.08;
+- vehicles 0.53, pedestrians 0.24;
+- 3.3 detections a sample against 7.3 targets;
+- 1 s paths not yet better than constant velocity (1.472 against 1.470 m);
+- zeroed tokens: 0 detections a sample.
+
+For orientation only: the first pass's v1 seed 0 read select F1 0.669 at its kept epoch 11 (gate G5's
+reference).
+
+**Notebook 04, on this checkpoint:**
+- It recomputes the run's select readout from the saved weights and gets the same numbers to 1e-9.
+- It prototypes every proposed metric: AP at 2 m is 0.58 for vehicles and 0.30 for pedestrians.
+- It runs the sight check on select: with another log's tokens, recall falls from 0.405 to 0.031.
+
+**What step 3 changes in the plan:**
+- Step 5's runs are cheap (§6.9).
+- Nothing blocks step 5.
+- What one epoch cannot show is the shape of the later epochs' select curves, which is what step 5a
+  is for.
 
 ## 10. Code
 
-**For steps 1–3** (`8da23d6`; tests in both interpreters):
+**For steps 1–3** (`8da23d6`, plus `views`' palette in the notebooks' commit; tests in both
+interpreters):
 - **`train_sidecar`:**
   - the variants (`--variant`);
   - `--stop-after`;

@@ -1,13 +1,38 @@
 # H15 — A perception side-car on frozen Drive-JEPA: 3D boxes and each agent's 1 s path, tested as an input to the scorer, to the refiner, and against LoRA on the ViT
 
-**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running (setup, S0)
+**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running: the rerun, Part A, steps 1–3 done
+and waiting for the owner's review (D20)
 
 The facts — runs, data, checkpoints, results, gate verdicts — live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. This page is the
 account: why, what was done, what it showed, and what was decided.
 
-- **The plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar.md](../../docs/drivejepa-perception-sidecar.md).
+- **The rerun's plan**, Part A alone, in reviewed steps: [docs/drivejepa-perception-sidecar-A.md](../../docs/drivejepa-perception-sidecar-A.md).
+- **The first pass's plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar.md](../../docs/drivejepa-perception-sidecar.md).
 - **The predictions**, committed before anything trained: [PREDICTIONS.md](PREDICTIONS.md).
+
+## The rerun: Part A, one reviewed step at a time (from 4 Nov)
+
+**Why.** The owner judged the first pass inconclusive (D20). It ran the side-car and every phase-B
+question in a day and a half, more than could be reviewed or debugged. H15 is redone from a revised
+plan: Part A alone (train the side-car, measure it), in eight steps, each reviewed before the next.
+Phases B and C wait. Everything from "Why" down is the first pass's account, kept as it was.
+
+![The rerun's eight steps, with the owner's reviews](figures/part-a-steps.png)
+
+**Steps 1–3 (4 Nov), for the owner's review:**
+
+| Step | Review it in | What it established (*counted* or *measured*) |
+|---|---|---|
+| 1 · the data | [notebooks/01_dataset.ipynb](notebooks/01_dataset.ipynb) | **The labels line up with the images.** Boxes drawn through the side-car's own projection sit on the agents, so z is the box's centre. **The report logs are easier than select:** 5.2 targets a sample against 7.3, and 35% pedestrians against 44%. **Beyond 20 m every agent sits in two token rows.** Velocity labels are ground velocity, which the side-car must infer without the ego's speed |
+| 2 · the model and its loss | [notebooks/02_loss.ipynb](notebooks/02_loss.ipynb) | **The loss rebuilt by hand equals `SideCarLoss`.** Matching trades 8 m of distance against full class certainty. 32 of the 64 reference points start outside the camera's view. Every term falls on a fixed batch |
+| 3 · the pipeline check (`H15.r1`) | [notebooks/03_training.ipynb](notebooks/03_training.ipynb) | **The pipeline runs end to end.** The overfit check passed. The preflight passed, now with the live ViT output held to its cache. One epoch takes 46 s. Select F1 is 0.477 after epoch 1 of 12 (`smoke`). No report number was read |
+| the evaluation plan (steps 6–7) | [notebooks/04_evaluation.ipynb](notebooks/04_evaluation.ipynb) | **The readout reproduces the run's numbers from its checkpoint.** The proposed metrics (AP, box errors, motion apart from position, calibration, by city) are prototyped. nuScenes needs its site root first |
+
+- **The success criteria** (plan §7) were committed before the pipeline check ran. Step 4 moves them
+  into PREDICTIONS.md once the owner approves them.
+- **The decisions asked of the owner** are in plan §11.
+- **Figures:** [the model](figures/part-a-sidecar.png) and [one training run](figures/part-a-training.png).
 
 ## Why
 

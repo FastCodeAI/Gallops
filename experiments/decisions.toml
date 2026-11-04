@@ -217,3 +217,16 @@ by = ["Shreedhar"]
 evidence = ["H14.C", "H14.T1", "H14.T2"]
 source = "the owner, 4 Nov 2026"
 
+
+[[decision]]
+id = "D20"
+date = 2026-11-04
+short = "H15 redone: Part A first, step by step"
+decision = """H15's first pass (the side-car and then every phase-B question, run in a day and a half) is judged \
+inconclusive by its owner: more ran than could be reviewed or debugged. H15 is redone from a revised plan, \
+docs/drivejepa-perception-sidecar-A.md: Part A alone, the side-car trained and measured, in eight steps, each \
+reviewed by the owner before the next; phases B and C wait until Part A closes."""
+by = ["Shreedhar"]
+evidence = ["H15.a1", "H15.b1", "H15.b2", "H15.b3", "H15.ood"]
+next = ["H15"]
+source = "the owner, 4 Nov 2026"

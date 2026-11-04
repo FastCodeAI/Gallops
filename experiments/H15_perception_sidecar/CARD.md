@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#hypothesis-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [H04](../H04_subscore_scorer_navsim/CARD.md)
+**Builds on:** [H04](../H04_subscore_scorer_navsim/CARD.md) · **Evidence for:** D20 ([decision log](../../README.md#decision-log))
 
 ## Question
 
@@ -23,7 +23,7 @@ H-A: a side-car of about 4 M parameters on the frozen tokens beats no-camera and
 
 ## What we learned
 
-So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-car on Drive-JEPA's frozen ViT output detects agents ahead (recall 0.63, precision 0.74 within 30 m, three seeds), follows them for a second a little better than constant velocity, transfers to nuScenes untrained (vehicle recall 0.48), and is still data-limited. Its agents, handed to the scorer (four modes) or to the refiner (three), change nothing beyond noise, and ground-truth agents neither: the release's pick already scores NC and TTC 0.996 on these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to navtrain costs 0.2-0.4 m at 3 s on nuScenes, with or without agents. The agent a scorer names for its pick is faithful (deleting it moves the pick 3-5x as often as a random one). No closed loop, no gate.
+The first pass (3-4 Nov) is judged inconclusive by its owner and is being redone from a revised plan, Part A first, one reviewed step at a time (D20); what it reported, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-car on Drive-JEPA's frozen ViT output detects agents ahead (recall 0.63, precision 0.74 within 30 m, three seeds), follows them for a second a little better than constant velocity, transfers to nuScenes untrained (vehicle recall 0.48), and is still data-limited. Its agents, handed to the scorer (four modes) or to the refiner (three), change nothing beyond noise, and ground-truth agents neither: the release's pick already scores NC and TTC 0.996 on these logs. LoRA on the ViT's last blocks adds nothing. Fitting the scorer to navtrain costs 0.2-0.4 m at 3 s on nuScenes, with or without agents. The agent a scorer names for its pick is faithful (deleting it moves the pick 3-5x as often as a random one). No closed loop, no gate.
 
 ## Runs
 
@@ -38,6 +38,7 @@ So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-
 | **H15.b3**<br>B3.1: rank-16 LoRA on the ViT's last four blocks in a branch only the side-car reads, against A1 continued without it | H15.a1 | LoRA on blocks 21-24 (1.05 M), side-car (5.44 M); frozen: encoder blocks 1-20, projector, refiner, scorer | — | [drivejepa_perception.toml#b3-lora](../../recipes/drivejepa_perception.toml)<br>commit `1627ebd` | — |
 | **H15.b32**<br>B3.2, reduced: B3.1 seed 0's LoRA shared with the release's planner, which is not retrained | H15.b3 | —; frozen: everything | — | [drivejepa_perception.toml#b3-shared](../../recipes/drivejepa_perception.toml)<br>commit `307a44d` | — |
 | **H15.ood**<br>OOD: the side-car zero-shot and every B1 and B2 model on nuScenes, 102 train scenes | released | —; frozen: everything | nuscenes `train, 102 scenes` 2,996 keyframes (held-out) — the first pass read nuScenes through H14's code and held-out list (H14 since cancelled, D19); both were deleted, and the rerun draws its own scenes with H15's own reader (nuscenes_data) | [drivejepa_perception.toml#ood-read](../../recipes/drivejepa_perception.toml)<br>commit `5635f7f` | — |
+| **H15.r1**<br>Rerun, Part A, step 3: the pipeline check -- v1 for epoch 1 of its 12-epoch schedule, select logs only | released | side-car (4.39 M); frozen: encoder, projector, refiner, scorer | navsim `navtrain, train logs (1,071)` 94,195 samples (train)<br>navsim `navtrain, select logs (H04's 51 held-out)` 4,457 samples (selection) | [drivejepa_perception.toml#part-a-pipeline](../../recipes/drivejepa_perception.toml)<br>commit `d1bacdc` | — |
 
 - **H15.s0:** Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`.
 - **H15.a0:** 10,000 train rows, 6 epochs each, read on the select logs at the kept epoch (6). Read again with the fixed readout (f2b6570): the as-run 'within 30 m' counted to 35 m (README). The ViT's output was chosen for A1.
@@ -48,6 +49,7 @@ So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-
 - **H15.b3:** From a block-20 cache (30 GB, 20,000 train rows + select + report), 4 epochs, three seeds per arm; both arms start from A1 seed 0's kept epoch. The preflight held the frozen branch to A1: select F1 0.66908 against 0.66940.
 - **H15.b32:** The frozen branch first reproduces the release (pick on every row within 1.1 mm, 99.9% of rows within 4.4 mm, picks equal; its first run was refused by one non-picked candidate 0.75 m off, measured by scripts/b3_identity.py). The plan's B3.2 retrains the planner on the adapted tokens; that was not run.
 - **H15.ood:** Nothing trains. The release at batch 1 on 2,996 keyframes; the projection held to the calibration's own on every scene (1.4e-5 px). The scenes and the nuScenes reader of this first pass came from H14 (cancelled, D19) and were deleted with it; the rerun uses H15's own (nuscenes_data).
+- **H15.r1:** The rerun's plan is docs/drivejepa-perception-sidecar-A.md; its success criteria (section 7) were committed in d1bacdc, before this run. --epochs 12 --stop-after 1 --no-report: the first epoch of the schedule a real run uses, no report row read. Overfit check passed first (step 1,300 of 4,000; centre 0.49 m). Preflight: the live ViT output equals the ViT-out cache (largest 0.0156, mean 3.6e-4; new in the rerun). 46 s for the epoch with the readout; 3 steps skipped by the loss scaler, 16 clipped. Curves and checks: notebooks 03 and 04 under experiments/H15_perception_sidecar/notebooks/.
 
 ## Results
 
@@ -68,6 +70,7 @@ So far, open loop: on NAVSIM navtrain (in-sample for the release) a 4.39 M side-
 | H15.ood | nuScenes side-car zero-shot recall at 2 m within 30 m, vehicles 0.480<br>102 held-out train scenes; A1 seed 0, never trained on nuScenes; all classes 0.380 at precision 0.608 (navtrain report: 0.632 / 0.742). P15's recall part (>= 0.30) holds | — | ●●○○ moderate · open-loop | — |
 | H15.ood | nuScenes picked-plan L2 at 3 s, m, B1 full F (best mode on select) 3.788 → 4.050 (n=2,996 keyframes)<br>102 held-out train scenes; mean of three seeds; minus R +0.234, +0.239, +0.313 m, each beyond 2 SE clustered by scene: P15 refuted. full C (no agents) is as much worse (+0.282, +0.438, +0.352), so the cost is fitting the scorer to navtrain, not the agents; collision rate not lower | R, the released model | ●●○○ moderate · open-loop | — |
 | H15.ood | nuScenes picked-plan L2 at 3 s, m, B2 full C (the refiner retrained on navtrain without agents; frozen release scorer) 3.788 → 3.474 (n=2,996 keyframes)<br>102 held-out train scenes; mean of three seeds; minus R -0.277, -0.325, -0.340 m, each beyond 2 SE clustered by scene; collisions 0.7 points lower. F, O and S match C, so it is the retraining, not the agents (ood-read-b2, 2349622). Not hypothesised; why is untested | R, the released model | ●●○○ moderate · open-loop | — |
+| H15.r1 | NAVSIM F1 at 2 m within 30 m, front view, all classes, after epoch 1 of 12 0.477 (n=14,601 targets)<br>select logs; a pipeline reading, not a result: recall 0.405, precision 0.578; recall 0.64 / 0.26 / 0.08 by range; zeroed tokens give 0 detections a sample, another log's tokens recall 0.031 (notebook 04). For orientation, the first pass's v1 seed 0 read 0.669 at its kept epoch 11 | — | ●●○○ moderate · smoke, open-loop | — |
 
 ## Evidence outside this repo
 

@@ -116,7 +116,8 @@ flowchart TD
   D17{{"<b>D17</b> · 26 Oct<br/>Momentum-aware selection on by default"}}
   D18{{"<b>D18</b> · 28 Oct<br/>KITScenes exp 3 fails the gate"}}
   D19{{"<b>D19</b> · 4 Nov<br/>H14 cancelled: inconclusive"}}
-  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19
+  D20{{"<b>D20</b> · 4 Nov<br/>H15 redone: Part A first, step by step"}}
+  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19 ==> D20
   D01 -.-> GC01
   GC02 --> D02
   D02 -.-> GC03
@@ -160,7 +161,8 @@ flowchart TD
   H08 --> D16
   H07 --> D18
   H14 --> D19
-  H04 --> H15
+  H15 --> D20
+  D20 -.-> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
   classDef negative stroke:#C0392B,stroke-width:2px
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
@@ -230,7 +232,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | 🗑 dropped | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
+| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood`, `r1` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
 <!-- /experiments:hypotheses -->
 
 ### Enablers
@@ -289,6 +291,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | **D17** | 26 Oct 2026 | Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA baselines from here on include it. | Siddesh | — | — |
 | **D18** | 28 Oct 2026 | The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](experiments/H07_encoder_lora/CARD.md) | — |
 | **D19** | 4 Nov 2026 | H14 (auxiliary heads on Drive-JEPA's refiner, fine-tuned on nuScenes) is cancelled: its results and their analysis are inconclusive. Future experiments do not build on it -- not its code (gallops.drivejepa_aux), recipe, held-out scene list, checkpoints, numbers or account; its docs and figures were removed the same day. | Shreedhar | [H14.C](experiments/H14_aux_heads/CARD.md), [H14.T1](experiments/H14_aux_heads/CARD.md), [H14.T2](experiments/H14_aux_heads/CARD.md) | — |
+| **D20** | 4 Nov 2026 | H15's first pass (the side-car and then every phase-B question, run in a day and a half) is judged inconclusive by its owner: more ran than could be reviewed or debugged. H15 is redone from a revised plan, docs/drivejepa-perception-sidecar-A.md: Part A alone, the side-car trained and measured, in eight steps, each reviewed by the owner before the next; phases B and C wait until Part A closes. | Shreedhar | [H15.a1](experiments/H15_perception_sidecar/CARD.md), [H15.b1](experiments/H15_perception_sidecar/CARD.md), [H15.b2](experiments/H15_perception_sidecar/CARD.md), [H15.b3](experiments/H15_perception_sidecar/CARD.md), [H15.ood](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
 <!-- /experiments:decisions -->
 
 ## How to read these tables

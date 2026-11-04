@@ -31,6 +31,68 @@ from gallops.drivejepa_perception import targets as tg
 #: The vendor's crop and the ViT's input size (drive_jepa_features._get_camera_feature).
 CROP_ROWS, MODEL_W, MODEL_H = tg.CROP_ROWS, 512, 256
 PATCH = 16
+
+#: One colour per side-car class, and per split, in every review picture. The first three slots of
+#: the dataviz reference palette; each triple passes its validator all-pairs (scatter and bird's-eye
+#: views put any two side by side). Grey is anything that is not a target.
+CLASS_NAMES = ("vehicle", "pedestrian", "cyclist")
+CLASS_COLOURS = ("#2a78d6", "#eb6834", "#1baf7a")
+SPLIT_COLOURS = {"train": "#6250d6", "select": "#008300", "report": "#e87ba4"}
+GREY, INK, INK_2, GRID, AXIS, SURFACE = "#898781", "#0b0b0b", "#52514e", "#e1e0d9", "#c3c2b7", "#fcfcfb"
+#: A hit and a miss (or a false alarm): the reference palette's status colours, always with a legend.
+HIT, MISS = "#0ca30c", "#d03b3b"
+
+
+def use_style() -> None:
+    """matplotlib defaults for the review notebooks: hairline solid grids, no top or right spine,
+    ink-coloured text, 2 px lines."""
+    import matplotlib as mpl
+
+    mpl.rcParams.update(
+        {
+            "figure.facecolor": SURFACE,
+            "axes.facecolor": SURFACE,
+            "savefig.facecolor": SURFACE,
+            "axes.edgecolor": AXIS,
+            "axes.linewidth": 0.8,
+            "axes.grid": True,
+            "grid.color": GRID,
+            "grid.linewidth": 0.7,
+            "grid.linestyle": "-",
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.titlesize": 10,
+            "axes.titlecolor": INK,
+            "axes.labelcolor": INK_2,
+            "axes.labelsize": 9,
+            "xtick.color": INK_2,
+            "ytick.color": INK_2,
+            "xtick.labelsize": 8,
+            "ytick.labelsize": 8,
+            "text.color": INK,
+            "font.size": 9,
+            "legend.fontsize": 8,
+            "legend.frameon": False,
+            "lines.linewidth": 1.5,
+            "figure.dpi": 110,
+        }
+    )
+
+
+def show_jpeg(fig, quality: int = 85, dpi: int = 100) -> None:
+    """Show a figure of camera images as a JPEG: about a quarter of a PNG's bytes in a committed
+    notebook. Charts stay PNG (JPEG blurs thin lines and text)."""
+    import io
+
+    import matplotlib.pyplot as plt
+    from IPython.display import Image, display
+
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format="jpeg", dpi=dpi, pil_kwargs={"quality": quality}, bbox_inches="tight")
+    plt.close(fig)
+    display(Image(buffer.getvalue()))
+
+
 #: The 12 edges of a box, as pairs of `box_corners` indices: bottom face, top face, verticals.
 EDGES = ((0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7))
 
