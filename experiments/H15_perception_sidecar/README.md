@@ -400,6 +400,33 @@ named agent is the one the scorer's candidate-to-agent attention weighted most f
 - **Adapting the encoder's last four blocks buys the side-car nothing on NAVSIM.** The frozen
   ViT output already carries what this side-car can use.
 
+### B3.2 (reduced) · B3.1's LoRA shared with the planner: the plan does not move
+
+*Measured* (`b3-shared`, `307a44d`). B3.1 seed 0's LoRA (kept epoch 3) was put in the trunk the
+planner reads; the projector, refiner and scorer are the release's, unchanged.
+
+**The identity check comes first.** The frozen branch must reproduce the release.
+- Its first run was refused: the largest gap over all 148,352 report candidates was 0.75 m.
+- `scripts/b3_identity.py` measured why. That gap and one of 0.061 m were the only two candidates
+  over 0.05 m, and neither was the release's pick or its best.
+- Every report pick was equal. The pick's candidate stayed within 1.1 mm on every row, and the
+  per-row largest gap had a median of 0.3 mm and a 99.9th percentile of 4.4 mm.
+- The check now holds the release's pick on every row, 99.9% of rows and the picks
+  (`307a44d`). The frozen branch then scores exactly the release: 0.92010 on select, 0.91405 on
+  report.
+
+| Report logs | Pick EPDMS | Best of 32 | NC / TTC of the pick | L2 at 3 s |
+|---|---|---|---|---|
+| frozen branch (= the release) | 0.9140 | 0.9564 | 0.996 / 0.996 | 2.563 m |
+| B3.1's LoRA shared | 0.9139 | 0.9567 | 0.997 / 0.996 | 2.563 m |
+
+- **LoRA minus frozen: −0.02 points of pick EPDMS, SE 0.09.** Tuning the ViT's last four blocks for
+  the side-car neither helps nor harms the release's plan.
+- P14 predicted it would not beat the best B1 or B2 model. It does not; nothing here beats the
+  release.
+- The plan's B3.2, which retrains the planner on the adapted tokens, and B3.2 on nuScenes were not
+  run.
+
 ### OOD · nuScenes (P15): the side-car transfers; the scorers do not gain, and `full` loses
 
 *Measured*, out of sample for every model here (the release trained on NAVSIM, H15 on navtrain).

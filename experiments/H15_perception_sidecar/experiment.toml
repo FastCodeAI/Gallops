@@ -261,6 +261,36 @@ notes = "From a block-20 cache (30 GB, 20,000 train rows + select + report), 4 e
   note = "mean of three seeds (0.6290-0.6330); the control (A1 continued, no LoRA) 0.6215-0.6285. P13 (>= +0.05) refuted"
 
 [[runs]]
+id = "H15.b32"
+label = "B3.2, reduced: B3.1 seed 0's LoRA shared with the release's planner, which is not retrained"
+started = 2026-11-04
+start_from = "H15.b3"
+trained = []
+frozen = ["everything"]
+train_git_sha = "307a44d"
+notes = "The frozen branch first reproduces the release (pick on every row within 1.1 mm, 99.9% of rows within 4.4 mm, picks equal; its first run was refused by one non-picked candidate 0.75 m off, measured by scripts/b3_identity.py). The plan's B3.2 retrains the planner on the adapted tokens; that was not run."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#b3-shared"
+  as_run = ["experiments/H15_perception_sidecar/scripts/b3_identity.py"]
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "pick EPDMS with B3.1's LoRA in the shared trunk, planner unchanged"
+  subset = "report logs"
+  n = 4636
+  unit = "sample"
+  baseline = "the frozen branch (= R)"
+  baseline_value = "0.9140"
+  value = "0.9139"
+  better = "higher"
+  se = "0.0009"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "paired difference -0.0002 (SE 0.0009, clustered by log); best of 32 0.9567 against 0.9564; in-sample for R"
+
+[[runs]]
 id = "H15.ood"
 label = "OOD: the side-car zero-shot and every B1 model on nuScenes, H14's 102 held-out train scenes"
 started = 2026-11-04
