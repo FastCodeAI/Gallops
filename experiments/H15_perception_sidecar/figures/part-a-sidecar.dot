@@ -1,0 +1,60 @@
+// H15 Part A: the side-car (sidecar.py), its inputs, one decoder layer, its heads, its loss and its readout.
+// Grey: frozen or cached. Blue: trained. Green: the loss (training only). Sizes are v1's (d = 256, 3 layers,
+// 64 queries); v2 and v3 change only d, the number of layers and the number of queries.
+// Render: dot -Tsvg part-a-sidecar.dot -o part-a-sidecar.svg && dot -Tpng:cairo -Gdpi=192 part-a-sidecar.dot -o part-a-sidecar.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph part_a_sidecar {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.28, ranksep=0.36, pad=0.3, bgcolor="white", newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.06"];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0, fontname="Helvetica", fontsize=8.5];
+
+  subgraph cluster_in {
+    label=<<B>Inputs · frozen, cached once</B>>; fontsize=10.5; style="rounded,filled"; color="#9ca3af"; fillcolor="#f9fafb";
+    IMG [label=<<B>CAM_F0</B>&nbsp;at t − 0.5 s and t<BR/><FONT POINT-SIZE="8.5">1920×1080 · rows 28–1052 · resized to 512×256</FONT>>];
+    VIT [label=<<B>V-JEPA ViT-L/16</B>&nbsp;· released, frozen<BR/><FONT POINT-SIZE="8.5">tubelet 2: the two frames make one 16×32 grid</FONT>>];
+    TOK [label=<<B>ViT-out tokens</B>&nbsp;· 512 × 1024 · fp16<BR/><FONT POINT-SIZE="8.5">tokens-vit-v1 · 1 MB a sample · 108 GB for navtrain</FONT>>];
+    PRJ [label=<<B>CAM_F0 projection</B>&nbsp;· 4×4<BR/><FONT POINT-SIZE="8.5">lidar2img[slot 1] × TO_512 · ego → token image</FONT>>];
+    IMG -> VIT -> TOK;
+  }
+
+  subgraph cluster_car {
+    label=<<B>Side-car · trained · v1 4.39 M</B>>; fontsize=10.5; style="rounded,filled"; color="#2563eb"; fillcolor="#eff6ff";
+    node [color="#2563eb", fillcolor="#dbeafe"];
+    MEM [label=<<B>memory</B>&nbsp;= LayerNorm(Linear 1024 → d)<BR/><FONT POINT-SIZE="8.5">0.26 M · the values of cross-attention</FONT>>];
+    RAY [label=<<B>token rays</B>&nbsp;→ position embedding<BR/><FONT POINT-SIZE="8.5">each token's ray at 16 depths, 1–60 m log-spaced<BR/>48 numbers → MLP 48 → 256 → d · 0.08 M · added to the keys</FONT>>];
+    QRY [label=<<B>N queries</B>&nbsp;(d) +&nbsp;<B>N reference points</B>&nbsp;(x y z, m)<BR/><FONT POINT-SIZE="8.5">learned · points start uniform in x 2–50, |y| &lt; 30, z 0</FONT>>];
+    POS [label=<<B>query position</B>&nbsp;= MLP(reference · (1/64, 1/64, 1/8))<BR/><FONT POINT-SIZE="8.5">3 → 256 → d · 0.07 M</FONT>>];
+    subgraph cluster_layer {
+      label=<<B>decoder layer × L</B>&nbsp;· 1.32 M each at d 256>; fontsize=10; style="rounded,filled"; color="#1d4ed8"; fillcolor="#e0ecff";
+      SA  [label=<<B>self-attention</B>&nbsp;among the N queries<BR/><FONT POINT-SIZE="8.5">q = k = a + pos · v = a · pre-LayerNorm</FONT>>];
+      CA  [label=<<B>cross-attention</B>&nbsp;to the 512 tokens<BR/><FONT POINT-SIZE="8.5">q = a + pos · k = memory + rays · v = memory</FONT>>];
+      FFN [label=<<B>FFN</B>&nbsp;d → 1024 → d · dropout 0.1>];
+      HD  [label=<<B>heads</B>&nbsp;on every slot<BR/><FONT POINT-SIZE="8.5">class: veh · ped · cyc · none (bias: p(none) ≈ 0.7)<BR/>Δreference → centre x y z (zero-init: starts at the reference)<BR/>box: log l, log w, log h, sin yaw, cos yaw<BR/>velocity vx vy (m/s, ego axes) · path: offsets at +0.5 s, +1.0 s</FONT>>];
+      SA -> CA -> FFN -> HD;
+    }
+    QRY -> POS;
+    POS -> SA [label=" pos "];
+    HD -> POS [label=" next layer's reference = this centre, detached ", style=dashed, constraint=false];
+  }
+  TOK -> MEM;
+  PRJ -> RAY;
+  MEM -> CA [label=" values, keys "];
+  RAY -> CA [label=" keys "];
+  QRY -> SA [label=" a "];
+
+  subgraph cluster_loss {
+    label=<<B>Loss · every layer, summed</B>>; fontsize=10.5; style="rounded,filled"; color="#15803d"; fillcolor="#f0fdf4";
+    node [color="#15803d", fillcolor="#dcfce7"];
+    HUN [label=<<B>Hungarian matching</B>&nbsp;per sample, per layer<BR/><FONT POINT-SIZE="8.5">cost = 2 · (− p(true class)) + 0.25 · L1(centre, m)<BR/>each target gets one slot; the other slots learn "none"</FONT>>];
+    LOS [label=<<B>2 · focal</B>&nbsp;(γ 2, all slots) +&nbsp;<B>0.25 · L1 box</B>&nbsp;(8 terms)<BR/>+&nbsp;<B>0.25 · L1 velocity</B>&nbsp;+&nbsp;<B>0.25 · L1 path</B>&nbsp;(where the track lasted)<BR/><FONT POINT-SIZE="8.5">each divided by the batch's targets (path: by its valid steps)</FONT>>];
+    HUN -> LOS;
+  }
+  TGT [label=<<B>targets</B>&nbsp;(targets.build)<BR/><FONT POINT-SIZE="8.5">veh · ped · cyc within 50 m whose centre projects into the image<BR/>nearest first, at most 64 · padded, with a mask</FONT>>];
+  HD -> HUN;
+  TGT -> HUN;
+
+  OUT [label=<<B>readout</B>&nbsp;· last layer only (evaluate.decode)<BR/><FONT POINT-SIZE="8.5">confidence = 1 − p(none) · a detection when ≥ 0.5<BR/>class = most likely of the three · path = centre + offsets</FONT>>,
+       color="#2563eb", fillcolor="#dbeafe"];
+  HD -> OUT;
+}

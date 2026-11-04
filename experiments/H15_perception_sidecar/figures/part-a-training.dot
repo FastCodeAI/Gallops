@@ -1,0 +1,55 @@
+// H15 Part A: how one training run moves data, and what it writes (train_sidecar train).
+// Grey: caches and committed lists. Blue: the run. Amber: what a run writes. Red: the gate before step 1.
+// Render: dot -Tsvg part-a-training.dot -o part-a-training.svg && dot -Tpng:cairo -Gdpi=192 part-a-training.dot -o part-a-training.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph part_a_training {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.3, ranksep=0.42, pad=0.3, bgcolor="white", newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.06"];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0, fontname="Helvetica", fontsize=8.5];
+
+  subgraph cluster_data {
+    label=<<B>On disk · built once by the first pass, reused</B>>; fontsize=10.5; style="rounded,filled"; color="#9ca3af"; fillcolor="#f9fafb";
+    LAB [label=<<B>labels-v1</B><BR/><FONT POINT-SIZE="8.5">every agent within 60 m · 103,288 samples</FONT>>];
+    VIT [label=<<B>tokens-vit-v1</B><BR/><FONT POINT-SIZE="8.5">ViT-out 512 × 1024 fp16 · memory-mapped</FONT>>];
+    GEO [label=<<B>tokens-v1 / lidar2img</B><BR/><FONT POINT-SIZE="8.5">each sample's camera projections</FONT>>];
+    SPL [label=<<B>splits.json</B>&nbsp;(committed)<BR/><FONT POINT-SIZE="8.5">train 1,071 logs · 94,195 samples<BR/>select 51 · 4,457 · report 70 · 4,636</FONT>>];
+  }
+
+  PRE [label=<<B>preflight</B>&nbsp;(cannot be skipped)<BR/><FONT POINT-SIZE="8.5">code committed, tests green under 3.9<BR/>splits unedited · labels held to NAVSIM<BR/>live ViT output = the cache · projection</FONT>>,
+       color="#b91c1c", fillcolor="#fee2e2"];
+
+  subgraph cluster_run {
+    label=<<B>The run · one GPU</B>>; fontsize=10.5; style="rounded,filled"; color="#2563eb"; fillcolor="#eff6ff";
+    node [color="#2563eb", fillcolor="#dbeafe"];
+    TG  [label=<<B>targets.build</B>&nbsp;per sample<BR/><FONT POINT-SIZE="8.5">≤ 64 targets, padded</FONT>>];
+    DL  [label=<<B>DataLoader</B><BR/><FONT POINT-SIZE="8.5">batch 64 · shuffled (seeded) · 8 workers<BR/>drop_last · 1,471 steps an epoch</FONT>>];
+    FWD [label=<<B>side-car</B>&nbsp;forward<BR/><FONT POINT-SIZE="8.5">fp16 autocast</FONT>>];
+    LS  [label=<<B>loss</B>&nbsp;(fp32)<BR/><FONT POINT-SIZE="8.5">Hungarian · focal · L1</FONT>>];
+    OPT [label=<<B>AdamW</B>&nbsp;2e-4 · wd 0.01<BR/><FONT POINT-SIZE="8.5">GradScaler · clip 35<BR/>cosine to 0 per step · no warmup</FONT>>];
+    SEL [label=<<B>select readout</B><BR/><FONT POINT-SIZE="8.5">after every epoch · 4,457 samples</FONT>>];
+    TG -> DL -> FWD -> LS -> OPT;
+    OPT -> FWD [label=" next step ", style=dashed, constraint=false];
+  }
+
+  subgraph cluster_out {
+    label=<<B>What a run writes · {runs}/drivejepa_perception/part-a/&lt;run&gt;/</B>>; fontsize=10.5; style="rounded,filled"; color="#d97706"; fillcolor="#fffbeb";
+    node [color="#d97706", fillcolor="#fef3c7"];
+    RJ  [label=<<B>run.json</B><BR/><FONT POINT-SIZE="8.5">arguments · preflight report · git sha</FONT>>];
+    STP [label=<<B>steps.jsonl</B><BR/><FONT POINT-SIZE="8.5">every 50 steps: loss terms per layer, lr,<BR/>gradient norm, AMP scale, data wait</FONT>>];
+    MET [label=<<B>metrics.jsonl</B><BR/><FONT POINT-SIZE="8.5">every epoch: train means + select readout</FONT>>];
+    CK  [label=<<B>epoch_NN.pt</B><BR/><FONT POINT-SIZE="8.5">every epoch</FONT>>];
+    SUM [label=<<B>summary.json</B><BR/><FONT POINT-SIZE="8.5">kept epoch = best select F1 within 30 m<BR/>sight check on select</FONT>>];
+  }
+
+  REP [label=<<B>report logs</B><BR/><FONT POINT-SIZE="8.5">read once, later (step 6),<BR/>at the kept and the last epoch</FONT>>, style="rounded,dashed", color="#9ca3af", fillcolor="white"];
+
+  LAB -> TG; GEO -> TG; VIT -> DL; SPL -> DL; SPL -> SEL;
+  PRE -> TG [label=" passes "];
+  OPT -> STP;
+  FWD -> SEL [style=dashed, label=" each epoch "];
+  SEL -> MET; SEL -> CK;
+  MET -> SUM;
+  SUM -> REP [style=dashed, color="#9ca3af", label=" step 6 "];
+  RJ -> STP [style=invis];
+}
