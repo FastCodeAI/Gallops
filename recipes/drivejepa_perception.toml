@@ -201,6 +201,32 @@ module = "drivejepa_perception.train_scorer"
 args = ["--release-only", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1",
         "--out", "{out}/release"]
 
+# A1's runs chose their kept epochs with the 35 m readout (README); read again at those epochs.
+
+[[stage]]
+name = "a1-s0-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a1-s0"]
+
+[[stage]]
+name = "a1-s1-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a1-s1"]
+
+[[stage]]
+name = "a1-s2-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a1-s2"]
+
+[[stage]]
+name = "a1-q128-reread"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["reread", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--run", "{out}/runs/a1-q128"]
+
 # ---------------------------------------------------------------------------------------------
 # The agents phase B reads: A1 seed 0's kept epoch (fixed before any A1 result) on every row.
 # ---------------------------------------------------------------------------------------------
