@@ -267,6 +267,19 @@ def test_a_recipe_stage_claims_the_module_it_runs(tmp_path) -> None:
     assert exps.module_claims(reg)["gallops.train.thing"] == ["H01.r1"]
 
 
+def test_a_finished_hypothesis_was_gated_and_decided(tmp_path) -> None:
+    i = RECORD.index("  [[runs.gate]]")
+    reg = exps.Registry.load(_repo(tmp_path / "a", RECORD[:i]))
+    assert any("has a gate verdict" in e for e in reg.errors), reg.errors
+    reg = exps.Registry.load(_repo(tmp_path / "b", decisions=""))
+    assert any("cited as evidence by a decision" in e for e in reg.errors), reg.errors
+
+
+def test_an_unfinished_hypothesis_needs_neither(tmp_path) -> None:
+    running = RECORD[: RECORD.index("  [[runs.gate]]")].replace('status = "done"', 'status = "running"')
+    assert exps.Registry.load(_repo(tmp_path, running, decisions="")).errors == []
+
+
 def test_decisions_are_numbered_in_date_order(tmp_path) -> None:
     swapped = DECISIONS.replace("date = 2026-10-29", "date = 2026-10-19")
     reg = exps.Registry.load(_repo(tmp_path, decisions=swapped))

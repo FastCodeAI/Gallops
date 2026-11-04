@@ -624,7 +624,22 @@ def validate(reg: Registry) -> list[str]:
                 errors.append(f"{run.get('id')}: start_from {start} is not a run")
 
     errors.extend(_validate_decisions(reg, ids | seen_runs, owners))
+    errors.extend(_undecided(reg))
     errors.extend(_unclaimed_modules(reg))
+    return errors
+
+
+def _undecided(reg: Registry) -> list[str]:
+    """A finished hypothesis was judged by the gate, and the team said what follows from it."""
+    errors = []
+    cited = {ref.split(".", 1)[0] for d in reg.decisions for ref in d.get("evidence", [])}
+    for e in reg.experiments:
+        if e.data.get("track") != "hypothesis" or e.data.get("status") != "done":
+            continue
+        if not any(run.get("gate") for run in e.runs):
+            errors.append(f"{e.id}: a done hypothesis has a gate verdict on one of its runs")
+        if e.id not in cited:
+            errors.append(f"{e.id}: a done hypothesis is cited as evidence by a decision in decisions.toml")
     return errors
 
 

@@ -26,8 +26,10 @@ a module in `src/gallops` was used by no experiment. The validation is in
 - [Data](#data)
 - [Where code goes](#code)
 - [The regression gate](#gate)
+- [Deciding a hypothesis](#deciding)
 - [The decision log](#decisions)
 - [Recording an experiment, step by step](#how-to)
+- [What a results PR contains](#results-pr)
 - [Moving an open branch onto the registry](#open-branches)
 
 <a id="tracks"></a>
@@ -72,6 +74,14 @@ the order they start.
 Each run records what it started from (another run's ID, a checkpoint tag, or `released`), which
 parts it trained and which it froze, the commit that trained it (`train_git_sha`), the code and
 the data (below), the checkpoint it wrote, its results, and any gate verdict.
+
+**A secondary run stays under its hypothesis when it tests the same claim:** another seed, an
+ablation, a fix after a FAIL, the same change on another benchmark. Add it as the next `[[runs]]`,
+add what you expect to `PREDICTIONS.md` first, and keep one `headline` for the experiment. **A run
+that tests a different claim gets its own `Hnn`,** with `parents` naming where it came from. The
+test: if its result would change this hypothesis's verdict, it belongs here; if it needs a verdict
+of its own, it does not. A diagnostic that wrote no checkpoint and only informed a choice is a
+`[[checks]]` entry, not a run.
 
 <a id="checkpoints"></a>
 
@@ -211,8 +221,21 @@ and the commands quoted in each account all name their current modules, and the 
 
 ## The regression gate
 
-Paddock's gate (`python -m tools.gate`, paddock `docs/gate.md`) decides every hypothesis.
-Copy its verdict into the run that produced the checkpoint, verbatim:
+Paddock's gate decides every hypothesis. Submit the checkpoint from a paddock checkout (paddock
+`docs/queue.md`); one worker runs the jobs in turn, against the queue's own baselines:
+
+```bash
+python -m tools.gate_queue submit --model <adapter> --env <ADAPTER>_CHECKPOINT=<path> --note "H07.r1"
+python -m tools.gate_queue submit ... --tier all --note "H07.r1"
+python -m tools.gate_queue ls
+```
+
+The default **quick** tier takes about 40 minutes: run it on every checkpoint you would keep. `--tier
+all` adds the closed-loop subsets: run it on the two or three you would ship. A checkpoint needs a
+paddock adapter, and `--env` must name a key that adapter's `model.yaml` sets. Paddock `docs/gate.md`
+says what each subset measures and how to read a verdict.
+
+Copy the verdict into the run that produced the checkpoint, verbatim:
 
 ```toml
   [[runs.gate]]
@@ -236,6 +259,23 @@ Copy its verdict into the run that produced the checkpoint, verbatim:
 
 The gate log in `experiments/README.md` has one row per gated checkpoint. The gate needs the checkpoint's sha256 in
 the record, so the verdict can be traced to the weights it judged.
+
+<a id="deciding"></a>
+
+## Deciding a hypothesis
+
+The gate gives a checkpoint one verdict (paddock `docs/gate.md` owns the exact rule). Each verdict
+has one next step, and it is written down, so a hypothesis never just goes quiet.
+
+| Gate says | Means | What you do |
+|---|---|---|
+| **FAIL** | a benchmark regressed beyond chance | Do not build on this checkpoint. Add a decision row. Either run a fix as the next run, or close the hypothesis: `status = "done"`, `verdict = "negative"`. |
+| **HOLD** | nothing regressed, and no closed-loop benchmark gained | Read each NEUTRAL with its MDE: it may only mean the subset is too small. Add a decision row: run the closed tier, run a stronger version as the next run, or close it as `inconclusive`. |
+| **SHIP** | every pair decided, none regressed, a closed-loop benchmark gained | Add a decision row with `version` set, and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
+| **INCOMPLETE** | a subset did not finish | No verdict yet. Finish the run. |
+
+`make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
+it. Work that never reached a checkpoint ends as `parked` or `dropped`, with what it `learned`.
 
 <a id="decisions"></a>
 
@@ -268,6 +308,24 @@ checkpoint to `gallops-v0.N`. `experiments/README.md` lists the log in full.
 9. `gallops experiments render --write` (the README and the cards; never edit `CARD.md` by hand), then
    `make check`, then open the PR.
 
+<a id="results-pr"></a>
+
+## What a results PR contains
+
+One PR per experiment, or one per run if it is large. Reviewers check each of these:
+
+- [ ] `experiment.toml` is complete: owner, question, hypothesis, data with split and counts, code.
+- [ ] `PREDICTIONS.md` was committed before the run, or `predictions = "none: <why>"` says why not.
+- [ ] Every checkpoint is pinned by sha256; off-repo files are listed in `POINTERS.md` with their sha256.
+- [ ] Every result has a `source`, a `strength` and its flags, and one is the `headline`.
+- [ ] The gate verdict is copied in, or the PR says why the gate has not run yet.
+- [ ] `README.md` says why, what was done, what it showed and what was decided.
+- [ ] A decision row is in `experiments/decisions.toml` if this result changes what the team does next.
+- [ ] `gallops experiments render --write` was run, and `make check` passes.
+
+Merge with a merge commit, never a squash, when another PR is stacked on this one: a squash records
+the same files under a new commit, and every file the two share then conflicts.
+
 <a id="open-branches"></a>
 
 ## Moving an open branch onto the registry
@@ -278,9 +336,15 @@ with `branch` set so the README links to the record on that branch. If a branch 
 merging, set `branch` to the full commit its closed PR keeps (`refs/pull/<n>/head`), so the links
 still work. When one merges:
 
-1. Take main's README when resolving the conflict; do not keep the branch's hand-written row.
+1. Merge `main` into the branch; do not rebase, because other PRs may sit on it. Take main's README
+   when resolving the conflict (`git checkout --theirs README.md`): your row is generated now.
 2. Move the branch's record into its ID folder (`git mv`), and its account to that folder's
-   `README.md`.
+   `README.md`. If the folder had a README of its own, it becomes `RECORD.md`. Keep the renames in
+   their own commit, so history follows them.
 3. In `experiment.toml`, clear `branch` and point `narrative`, `code` and `scene_list` paths at
-   their new places; `make check` now verifies that they exist.
-4. `gallops experiments render --write` and `make check`.
+   their new places; `make check` now verifies that they exist. Update paths in the branch's tests
+   and links.
+4. Maintained code stays in `src/`. Every new module under `src/gallops` must be named in some run's
+   `[runs.code]`, or `make check` fails.
+5. `gallops experiments render --write` and `make check`, then check the PR against
+   [What a results PR contains](#results-pr).
