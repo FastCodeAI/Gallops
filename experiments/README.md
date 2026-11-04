@@ -79,6 +79,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.env` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.evaluate` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.navsim_data` | H15.s0 | experiment |
+| `gallops.drivejepa_perception.pdm_labels` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.preflight` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.sidecar` | H15.s0 | experiment |
 | `gallops.drivejepa_perception.targets` | H15.s0 | experiment |
