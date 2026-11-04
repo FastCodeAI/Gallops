@@ -117,3 +117,27 @@ def test_the_side_car_is_about_the_planned_size_and_learns():
     tgt = {k: torch.from_numpy(v)[None] for k, v in tg.build(agents, projection[0].numpy()).items()}
     loss, parts = sidecar.SideCarLoss()(outs, tgt)
     assert torch.isfinite(loss) and "path2" in parts
+
+
+def test_within_30m_means_30_metres():
+    projection = tg.front_projection(_pinhole_lidar2img())
+    agents = {
+        "cls": np.array([0, 0], dtype=np.int8),
+        "box": np.array([[28.0, 0.0, 0.5, 4, 2, 1.5, 0], [32.0, 0.0, 0.5, 4, 2, 1.5, 0]], dtype=np.float32),
+        "velocity": np.zeros((2, 2), np.float32),
+        "path": np.array([[[28.0, 0.0]] * 2, [[32.0, 0.0]] * 2], dtype=np.float32),
+        "path_ok": np.ones((2, 2), bool),
+    }
+    gt = tg.build(agents, projection)
+    assert gt["mask"].sum() == 2
+    found = gt["box"][:, 0] > 30  # detect only the agent beyond 30 m
+    pred = {
+        "conf": np.where(gt["mask"] & found, 0.9, 0.1),
+        "cls": gt["cls"],
+        "xyz": gt["box"][:, :3].astype(np.float64),
+        "vel": gt["vel"].astype(np.float64),
+        "path": gt["box"][:, None, :2] + gt["path"],
+    }
+    out = evaluate.readout([pred], [gt], prior_gap=30.0)
+    assert out["recall_2m_within_30m"] == 0.0  # the 28 m agent is within 30 m, and missed
+    assert out["recall_by_range"][1] == 0.0 and out["recall_by_range"][2] == 1.0

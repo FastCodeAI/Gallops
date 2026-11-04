@@ -3,6 +3,7 @@
     python -m gallops.drivejepa_perception.train_sidecar overfit --tokens T --labels L --out O
     python -m gallops.drivejepa_perception.train_sidecar train --tokens T --labels L --out O --seed 0
         [--tap post|vit_out|block12] [--layers 3] [--queries 64] [--epochs 12] [--rows train|tap] [--blind]
+    python -m gallops.drivejepa_perception.train_sidecar reread --tokens T --labels L --run R [--which kept]
 
 Only the side-car trains; the ViT, the projector and the whole planner are not even loaded. The
 recipe is H04's (train_agent_decoder.py): AdamW 2e-4, weight decay 0.01, batch 64, fp16 autocast,
@@ -259,6 +260,51 @@ def finish(model, out, args, tokens, slot, rows, projections, targets, gap, devi
     print(json.dumps({k: summary[k] for k in ("kept_epoch", "sight_select")}), flush=True)
 
 
+def reread(cfg, args) -> None:
+    """A run's saved epochs read again with the current readout, beside the run's as-run files.
+
+    For runs read with an earlier `evaluate.readout` ("within 30 m" ran to 35 m until 4 Nov). The
+    epoch a run kept is not chosen again: `--which kept` reads the one its summary names. Writes
+    `reread.json` in the run: per epoch, the select readout, and the report readout where the tap
+    has report rows.
+    """
+    run = Path(args.run)
+    target = run / "reread.json"
+    if target.exists():
+        raise SystemExit(f"{target} exists; a reread never overwrites one")
+    meta = json.loads((run / "run.json").read_text())["args"]
+    summary = json.loads((run / "summary.json").read_text())
+    vit_tokens = meta.get("vit_tokens", "")
+    tokens, slot, rows, projections, targets = load(args.tokens, args.labels, meta["tap"], vit_tokens)
+    has_report = meta["tap"] == "post" or bool(vit_tokens)
+    epochs = {
+        "kept": [summary["kept_epoch"]],
+        "last": [meta["epochs"]],
+        "all": list(range(1, meta["epochs"] + 1)),
+    }
+    device = torch.device("cuda")
+    model = sidecar.SideCar(d_in=TAP_DIMS[meta["tap"]], layers=meta["layers"], queries=meta["queries"]).to(
+        device
+    )
+    train_rows = rows["tap"] if meta["rows"] == "tap" else rows["train"]
+    gap = prior_gap(targets, train_rows)
+    blind = bool(meta.get("blind"))
+    out = {"evaluate_range_bins": [list(b) for b in evaluate.RANGE_BINS], "kept_epoch": summary["kept_epoch"]}
+    for epoch in epochs[args.which]:
+        model.load_state_dict(torch.load(run / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"])
+        entry = {}
+        for split in ("select", "report") if has_report else ("select",):
+            dataset = Rows(tokens, slot, rows[split], projections, targets, blind=blind)
+            entry[split] = read(model, dataset, targets, rows[split], device, gap, blind=blind)
+            entry[f"{split}_f1_30m"] = f1(entry[split])
+        out[f"epoch_{epoch:02d}"] = entry
+        print(
+            json.dumps({"epoch": epoch, **{k: v for k, v in entry.items() if k.endswith("f1_30m")}}),
+            flush=True,
+        )
+    target.write_text(json.dumps(out, indent=1))
+
+
 def overfit(cfg, args) -> None:
     """H04's check 1 on 64 train samples; exits 1 if it does not pass."""
     from gallops.drivejepa_perception import preflight
@@ -404,7 +450,7 @@ def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
-    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish"))
+    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish", "reread"))
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
@@ -417,11 +463,16 @@ def main(argv=None) -> None:
     parser.add_argument("--rows", choices=("train", "tap"), default="train")
     parser.add_argument("--blind", action="store_true")
     parser.add_argument(
+        "--which", choices=("kept", "last", "all"), default="kept", help="reread: which epochs"
+    )
+    parser.add_argument(
         "--vit-tokens", default="", help="a ViT-out pass over every row (tokens --vit-out-all)"
     )
     args = parser.parse_args(argv)
     cfg = SiteConfig.load()
-    {"train": train, "overfit": overfit, "agents": agents, "finish": refinish}[args.cmd](cfg, args)
+    {"train": train, "overfit": overfit, "agents": agents, "finish": refinish, "reread": reread}[args.cmd](
+        cfg, args
+    )
 
 
 if __name__ == "__main__":

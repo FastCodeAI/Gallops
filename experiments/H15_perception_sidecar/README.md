@@ -150,6 +150,20 @@ One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front 
 - **That pass (`tokens-vit-v1`, from `30b9fdb`), *measured*:** 103,288 rows in 38 min at batch 16,
   102 GB fp16. On 32 rows it equals the full forward's tap exactly (largest difference 0.0).
 
+### A readout bug: "within 30 m" was within 35 m (found 4 Nov, during A1)
+
+- **What:** `evaluate.readout`'s range bins were 0–20, 20–35 and 35–50 m. "Within 30 m" summed the
+  first two, so it counted targets out to 35 m. The plan, P1 and P2 mean 30 m, as H04 did: its
+  seen rule kept targets to 30 m.
+- **What it touched:**
+  - A0's numbers above, and their range bins. The choice of tap stands: all three taps were read
+    the same way, and the gap between them is 0.07–0.09 in recall.
+  - A1's kept epochs, chosen by F1 "within 30 m" while A1 trained. They are kept as chosen, not
+    chosen again.
+- **Fixed** (bins 0–20, 20–30, 30–50, tested at 28 and 32 m). `train_sidecar reread` reads a run's
+  saved weights again with the fixed readout, beside the as-run files. A0 and A1 are reported on
+  both definitions, each labelled.
+
 ### A1 · the no-camera baseline (blind arm, report logs)
 
 - Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.

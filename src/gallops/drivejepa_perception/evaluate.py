@@ -21,7 +21,10 @@ import numpy as np
 from gallops.drivejepa_perception.targets import NONE, NUM_CLASSES
 
 THR, HIT_M = 0.5, 2.0
-RANGE_BINS = ((0.0, 20.0), (20.0, 35.0), (35.0, 50.0))
+#: Range bins, metres. "Within 30 m" is the first two: the plan's limit and H04's (its seen rule kept
+#: targets to 30 m). Until 4 Nov the middle bin ran to 35 m, so the number named "within 30 m" was
+#: within 35 m; A0's as-run numbers and A1's epoch choice used it (README, "a readout bug").
+RANGE_BINS = ((0.0, 20.0), (20.0, 30.0), (30.0, 50.0))
 LANE_HALF_M = 1.75
 MOVING_MPS = 1.0
 DT = (0.5, 1.0)
@@ -120,7 +123,7 @@ def readout(preds: list, gts: list, prior_gap: float) -> dict:
     def ratio(a, b):
         return float(a.sum() / b.sum()) if b.sum() else float("nan")
 
-    within_30 = slice(0, 2)
+    within_30 = slice(0, 2)  # 0-20 and 20-30 m
     out = {
         "recall_2m": ratio(gt_hit, gt_n),
         "precision_2m": ratio(det_tp, det_n),
