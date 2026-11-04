@@ -59,19 +59,22 @@ parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 
 [[runs]]
 id = "H15.r1"
-label = "true grades of the 32 released proposals at every graded navtrain moment (built and timed; not run)"
+label = "true grades of the 32 released proposals at every graded navtrain moment"
 started = 2026-11-05
 start_from = "H05.r1"
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 notes = """The vendor's training-time grader (compute_navsim_score: simulate, score_proposals, \
 after_score_proposals) on H05.r1's cached proposals with the train metric cache, without the anchors \
-load; states keep x, y relative to a float64 origin. Timed 5 Nov on 200 random train moments, cores 0-3, \
-4 workers: 0.065 s per moment wall (worker p50 0.22 s), 361 KB of metric cache read per moment, all \
-values finite; projected 17 min for the 15,320 val moments and 1.7 h for all 91,977. Navtest check \
-(200 picks of navsim/drivejepa/20261023T202240-de2f00 against its CSV): collisions, drivable area, \
-direction, time to collision and history comfort agree exactly on 200/200; progress within 1e-3 on \
-199; lane keeping differs on 33 and traffic light on 3, always ours 0 against the CSV's 1, 30 of them \
-explained by the evaluator's human filter (the human also fails), which the training grader does not apply."""
+load: the strict grade H15 trains on (Sid D22). Also stored per path: lane keeping and traffic light \
+the benchmark's way (lane keeping checked every 0.1 s, not 0.5 s; either set to 1 where the human \
+driver's own path fails it), and the human path's own scores. States keep x, y relative to a float64 \
+origin. Navtest check (200 picks of navsim/drivejepa/20261023T202240-de2f00 against its CSV): the \
+five gates-and-comfort sub-scores and the forgiving lane keeping and traffic light agree exactly on \
+200/200, progress within 1e-4 on 199; strict lane keeping (33) and traffic light (3) differ only \
+ours 0 against the CSV's 1, all explained: 30 by the human filter, 6 by the coarse 0.5 s lane check, \
+and the progress case by the human filter (the human fails driving direction). Tolerance (Sid D23) \
+set on those same 200 tokens. Batches: val (214 logs), selection (100), rest (878)."""
 
   [runs.code]
   modules = ["gallops.memory.grade"]
+  as_run = ["experiments/H15_prediction_memory/scripts/"]

@@ -54,18 +54,40 @@ def test_graded_rows_need_a_grade_and_a_built_row():
     assert grade.graded_rows(table).tolist() == [0, 3]
 
 
+def test_log_groups_are_the_three_batches():
+    logs = np.array(["t3", "v2", "t1", "v1", "s2", "s1"])
+    split = np.array(["train", "val", "train", "val", "train", "train"])
+    groups = grade.log_groups(logs, split, selection=["s1", "s2", "v2"])
+    assert groups == {"val": ["v1", "v2"], "selection": ["s1", "s2"], "rest": ["t1", "t3"]}
+    assert grade.log_order(logs, split, ["s1", "s2", "v2"]) == ["v1", "v2", "s1", "s2", "t1", "t3"]
+
+
+def test_forgive_sets_a_metric_to_one_only_where_the_human_fails_it():
+    lane_fine, light = np.array([0.0, 1.0, 0.0]), np.array([1.0, 0.0, 0.0])
+    # the human passes both: nothing is forgiven
+    assert grade.forgive(lane_fine, light, 1.0, 1.0).tolist() == [[0, 1], [1, 0], [0, 0]]
+    # the human fails lane keeping only: every path's lane keeping becomes 1, traffic light unchanged
+    assert grade.forgive(lane_fine, light, 0.0, 1.0).tolist() == [[1, 1], [1, 0], [1, 0]]
+    # the human fails traffic light only
+    assert grade.forgive(lane_fine, light, 1.0, 0.0).tolist() == [[0, 1], [1, 1], [0, 1]]
+    assert grade.forgive(lane_fine, light, 1.0, 1.0).dtype == np.float32
+
+
 def test_arrays_survive_a_restart(tmp_path):
     a = grade.open_arrays(tmp_path, 3, "w+")
     assert a["scores"].shape == (3, 32, 9) and a["states"].shape == (3, 32, 41, 11)
+    assert a["forgiving"].shape == (3, 32, 2) and a["human"].shape == (3, 10)
     assert a["origin"].dtype == np.float64
     a["scores"][1] = 0.5
+    a["forgiving"][1] = 1.0
     a["origin"][1] = [664885.123456, 3999644.987654]
     a["done"][1] = True
     for v in a.values():
         v.flush()
     del a
     b = grade.open_arrays(tmp_path, 3, "w+")  # a resumed build reopens, never recreates
-    assert (b["scores"][1] == 0.5).all() and b["done"].tolist() == [False, True, False]
+    assert (b["scores"][1] == 0.5).all() and (b["forgiving"][1] == 1.0).all()
+    assert b["done"].tolist() == [False, True, False]
     assert b["origin"][1].tolist() == [664885.123456, 3999644.987654]
 
 
@@ -80,19 +102,28 @@ def test_grade_rows_keeps_row_order_and_counts_bytes(tmp_path, monkeypatch):
 
     def fake(path, poses):
         seen.append((path.parent.name, float(poses[0, 0, 0])))
-        return np.full((32, 9), poses[0, 0, 0], np.float32), np.zeros((32, 41, 11), np.float32), np.ones(2)
+        v = float(poses[0, 0, 0])
+        return {
+            "scores": np.full((32, 9), v, np.float32),
+            "forgiving": np.ones((32, 2), np.float32),
+            "human": np.zeros(10, np.float32),
+            "states": np.zeros((32, 41, 11), np.float32),
+            "origin": np.ones(2),
+        }
 
     monkeypatch.setattr(grade, "grade_poses", fake)
-    log, rows, scores, states, origins, _seconds, nbytes = grade._grade_rows(
-        ("log", [3, 1], ["a", "b"], tmp_path / "mc", tmp_path / "proposals.npy")
-    )
-    assert (log, rows, nbytes) == ("log", [3, 1], 20)
+    out = grade._grade_rows(("log", [3, 1], ["a", "b"], tmp_path / "mc", tmp_path / "proposals.npy"))
+    assert (out["log"], out["rows"], out["bytes"]) == ("log", [3, 1], 20)
     assert seen == [("a", float(proposals[3, 0, 0, 0])), ("b", float(proposals[1, 0, 0, 0]))]
-    assert scores[0, 0, 0] == proposals[3, 0, 0, 0] and scores[1, 0, 0] == proposals[1, 0, 0, 0]
-    assert states.shape == (2, 32, 41, 11) and origins.shape == (2, 2)
+    assert out["scores"][0, 0, 0] == proposals[3, 0, 0, 0] and out["scores"][1, 0, 0] == proposals[1, 0, 0, 0]
+    assert out["states"].shape == (2, 32, 41, 11) and out["origin"].shape == (2, 2)
+    assert out["forgiving"].shape == (2, 32, 2) and out["human"].shape == (2, 10)
 
 
 def test_score_names_match_the_vendor_columns():
     # after_score_proposals stacks the four gates, the four weighted metrics, then the final score
     assert len(grade.SCORE_NAMES) == 9 and grade.SCORE_NAMES[-1] == "final"
     assert grade.SHARED_WITH_CSV == grade.SCORE_NAMES[:8]
+    assert grade.SCORE_NAMES[grade.LANE] == "lane_keeping"
+    assert grade.SCORE_NAMES[grade.LIGHT] == "traffic_light_compliance"
+    assert grade.HUMAN_NAMES[-1] == "lane_keeping_fine" and len(grade.HUMAN_NAMES) == 10
