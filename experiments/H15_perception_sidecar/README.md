@@ -208,6 +208,24 @@ kept epoch. The release's own pick scores 0.9201.
 - **The replacement scorer** (B1.4: a new network, trained from scratch on the control's own
   inputs) reaches 0.9192, within 0.001 of the release, in two epochs.
 
+### B1 · the controls, with `bce` (`ccde355`, report logs)
+
+*Measured.* The pick's EPDMS, at each seed's kept epoch and at the last (10). The release's pick
+scores 0.9140 on the same 4,636 rows (in-sample for it).
+
+| Mode | Trained | Seed 0 | Seed 1 | Seed 2 | Seed range, kept |
+|---|---|---|---|---|---|
+| frozen (B1.1) | 0.21 M | 0.9139 / 0.9142 | 0.9141 / 0.9140 | 0.9133 / 0.9138 | 0.0008 |
+| lora (B1.2) | 0.28 M | 0.9131 / 0.9147 | 0.9149 / 0.9146 | 0.9126 / 0.9131 | 0.0023 |
+| full (B1.3) | 1.53 M | 0.9150 / 0.9150 | 0.9148 / 0.9149 | 0.9154 / 0.9149 | 0.0006 |
+| replace (B1.4) | 0.27 M | 0.9103 / 0.9110 | 0.9111 / 0.9120 | 0.9113 / 0.9121 | 0.0010 |
+
+- **The residual controls hold the release's level, within 0.002.** Fine-tuning the scorer on
+  in-sample PDM labels, without agents, neither gains nor loses.
+- **The replacement control sits 0.003 below.**
+- **The seed ranges are small, 0.0006–0.0023.** They are one half of the decision rule's bar for F;
+  the other half is 2× the paired SE, which needs F.
+
 ### B3 · how it runs, and where it departs from the plan (written before any B3 run)
 
 **A cache, not the online ViT.**
