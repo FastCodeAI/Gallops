@@ -37,6 +37,30 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 3 Nov | S0.3 | Splits committed: [splits.json](../../recipes/drivejepa_perception/splits.json). Select is H04's 51 held-out logs; report is a seeded draw of 70; train is the other 1,071 of navtrain's 1,192 logs |
 | 3 Nov | S0.4 | The labels pass ran from `6efd8e6` on all 103,288 navtrain samples in 2 min (numbers below) |
 | 3 Nov | S0.5 | Downloads verified against their LFS sha256s, then extracted into NAVSIM's `exp/` |
+| 3 Nov | S0.5 | `pdm_labels` written and smoke-run (details below) |
+| 3 Nov | S0.6 | The explainer: [docs/navsim-metric-cache.md](../../docs/navsim-metric-cache.md), with worked examples and figures |
+| 3 Nov | S0 | The token pass rebuilt twice to make it affordable, each change held to the vendor's exact output (details below) |
+
+**`pdm_labels` (S0.5) in detail:**
+- **Measured:** a metric cache exists for 103,288 of 103,288 navtrain samples. "Pruned" removed
+  three detection fields the scorer does not read.
+- **A bug the smoke run caught:** the vendor's `after_score_proposals` already drops the PDM-Closed
+  reference, so a second `[1:]` would have shifted every label by one candidate. The code now
+  asserts one row per plan.
+
+**The token pass (S0), and its two changes:**
+- **First run:** 6.4 rows/s, an ETA of 4.4 h.
+- **Inputs:** profiled, the vendor's feature builder spent most of a sample normalising four
+  full-size camera images into a tensor the model never reads.
+  - `fast_bev_feature` computes the geometry the model does read, held exactly equal to the
+    vendor's on 12 rows.
+  - The cache it builds is bit-identical to the vendor-path cache.
+- **Still GPU-bound** at 6.2 rows/s: a batch-1 forward took 158 ms on the shared GPU, half of it
+  the refiner's small kernels.
+  - The pass now runs batched with `batch_fix`, held to batch 1 on 32 rows before it starts.
+  - Measured on the smoke run: every pick equal, candidates within 3.8e-5 m, tokens within one fp16
+    step.
+- **Result:** 23.7 rows/s, about 70 min for the 103,288 rows.
 
 **The labels pass (S0.4), *measured*:**
 - **Agents within 60 m:** 7,104,100, of which 1,812,167 vehicles, 1,533,271 pedestrians, 16,245
