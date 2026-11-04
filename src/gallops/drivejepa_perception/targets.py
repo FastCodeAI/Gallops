@@ -23,6 +23,22 @@ RANGE_M = 50.0
 PATH_STEPS = 2
 #: The vendor's padded-frame projection -> the 512x256 token image (see the module docstring).
 TO_512 = np.array([[2 / 3, 0, 0, 0], [0, 0.625, -7, 0], [0, 0, 1, 0], [0, 0, 0, 1]], dtype=np.float64)
+#: The vendor's lidar2img scales a camera's pixels by this (tokens.SCALE), and the camera feature
+#: drops this many rows top and bottom before its resize to 512x256 (drive_jepa_features.py).
+VENDOR_SCALE, CROP_ROWS = 0.4, 28
+
+
+def to_512(width: int, height: int) -> np.ndarray:
+    """TO_512 for a `width` x `height` camera: x by 512 / (0.4 width), y by 256 / (0.4 (height - 56))
+    after the 28-row crop. NAVSIM's 1920x1080 gives TO_512; nuScenes' 1600x900 does not."""
+    rows = height - 2 * CROP_ROWS
+    out = np.eye(4)
+    out[0, 0] = 512 / (VENDOR_SCALE * width)
+    out[1, 1] = 256 / (VENDOR_SCALE * rows)
+    out[1, 2] = -CROP_ROWS * 256 / rows
+    return out
+
+
 H_TOK, W_TOK = 16, 32
 #: The release's lidar2img slot for CAM_F0 (drive_jepa_model.py keeps [:, 1:2]).
 FRONT_SLOT = 1

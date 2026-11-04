@@ -141,3 +141,26 @@ def test_within_30m_means_30_metres():
     out = evaluate.readout([pred], [gt], prior_gap=30.0)
     assert out["recall_2m_within_30m"] == 0.0  # the 28 m agent is within 30 m, and missed
     assert out["recall_by_range"][1] == 0.0 and out["recall_by_range"][2] == 1.0
+
+
+def test_to_512_is_navsims_matrix_at_navsims_size_and_maps_any_camera_the_same_way():
+    assert np.allclose(tg.to_512(1920, 1080), tg.TO_512, atol=1e-12)
+    # nuScenes' front camera: (u, v) full-size is (0.4 u, 0.4 v) padded, and on the token image
+    # (u * 512 / 1600, (v - 28) * 256 / 844).
+    for u, v in ((0.0, 28.0), (1600.0, 872.0), (800.0, 450.0)):
+        pad = tg.to_512(1600, 900) @ np.array([0.4 * u, 0.4 * v, 1.0, 1.0])
+        assert np.allclose(pad[:2], [u * 512 / 1600, (v - 28) * 256 / 844])
+
+
+def test_agent_arrays_mask_the_slots_under_threshold_and_leave_other_rows_empty():
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception import evaluate, sidecar, train_sidecar
+
+    torch.manual_seed(0)
+    model = sidecar.SideCar(d_in=16, layers=1, queries=8)
+    tokens = np.random.default_rng(0).standard_normal((3, 512, 16)).astype(np.float16)
+    projections = np.repeat(tg.front_projection(_pinhole_lidar2img())[None], 3, axis=0).astype(np.float32)
+    arrays = train_sidecar.agent_arrays(model, tokens, int, [0, 2], projections, torch.device("cpu"))
+    assert arrays["xyz"].shape == (3, 8, 3) and arrays["path"].shape == (3, 8, tg.PATH_STEPS, 2)
+    assert np.array_equal(arrays["mask"], arrays["conf"] >= evaluate.THR)
+    assert not arrays["mask"][1].any() and not arrays["conf"][1].any()  # row 1 was not asked for

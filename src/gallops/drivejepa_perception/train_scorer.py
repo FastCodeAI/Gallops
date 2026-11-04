@@ -70,11 +70,7 @@ def load(tokens_dir: Path, labels_dir: Path, pdm_dir: Path, arm: str, agents_dir
         "ade": np.linalg.norm(proposals[..., :2] - human[:, None, :, :2], axis=-1)
         .mean(-1)
         .astype(np.float32),
-        "shape": np.concatenate(
-            [proposals[..., 0:1] / 40.0, proposals[..., 1:2] / 10.0, proposals[..., 2:3]], axis=-1
-        )
-        .reshape(len(proposals), 32, 24)
-        .astype(np.float32),
+        "shape": shape_of(proposals),
         "subsets": subsets(labels, proposals),
     }
     if arm in ("F", "S"):
@@ -87,10 +83,23 @@ def load(tokens_dir: Path, labels_dir: Path, pdm_dir: Path, arm: str, agents_dir
     return data
 
 
+def shape_of(proposals: np.ndarray) -> np.ndarray:
+    """(N, 32, 8, 3) candidates -> (N, 32, 24) the scorer adapter's view of their shape, scaled."""
+    return (
+        np.concatenate([proposals[..., 0:1] / 40.0, proposals[..., 1:2] / 10.0, proposals[..., 2:3]], axis=-1)
+        .reshape(len(proposals), 32, 24)
+        .astype(np.float32)
+    )
+
+
 def truth_agents(labels: dict, lidar2img: np.ndarray) -> dict:
     """Arm O: the labels' agents the camera sees, in the side-car's decoded format, confidence 1."""
-    projections = tg.front_projection(lidar2img)
-    n = len(labels["token"])
+    return truth_agents_projected(labels, tg.front_projection(lidar2img))
+
+
+def truth_agents_projected(labels: dict, projections: np.ndarray) -> dict:
+    """`truth_agents` through given token-image projections (nuScenes' differ from NAVSIM's)."""
+    n = len(labels["count"])
     out = {
         "cls": np.zeros((n, tg.QUERIES), np.int64),
         "conf": np.zeros((n, tg.QUERIES), np.float32),

@@ -345,32 +345,28 @@ def overfit(cfg, args) -> None:
     raise SystemExit("overfit check failed: 4,000 steps without centre < 0.5 m and class accuracy > 95%")
 
 
-def agents(cfg, args) -> None:
-    """The agents pass: an A1 run's kept epoch decoded on every row, for phase B's arms F and S.
-
-    Stored in the format arm O builds from the labels (train_scorer.truth_agents), with the slots
-    under THR masked out: the scorer reads only agents a person would be shown (plan A3).
-    """
-    from gallops.drivejepa_b2d.provenance import git_sha
-
-    out = Path(args.out)
-    if out.exists():
-        raise SystemExit(f"{out} exists; a pass never overwrites one")
-    run = Path(args.run)
-    meta = json.loads((run / "run.json").read_text())
+def load_run(run: Path) -> tuple:
+    """An A1 run's side-car at its kept epoch (on the CPU), and that epoch."""
+    run = Path(run)
+    run_args = json.loads((run / "run.json").read_text())["args"]
     epoch = json.loads((run / "summary.json").read_text())["kept_epoch"]
-    run_args = meta["args"]
-    tokens, slot, rows, projections, _ = load(
-        args.tokens, args.labels, run_args["tap"], run_args.get("vit_tokens", "")
-    )
-    device = torch.device("cuda")
     model = sidecar.SideCar(
         d_in=TAP_DIMS[run_args["tap"]], layers=run_args["layers"], queries=run_args["queries"]
     )
     model.load_state_dict(torch.load(run / f"epoch_{epoch:02d}.pt", map_location="cpu")["state_dict"])
+    return model.eval(), epoch
+
+
+@torch.no_grad()
+def agent_arrays(model, tokens, slot, rows, projections, device) -> dict:
+    """The side-car's last-layer output on `rows`, decoded into the agents format phase B reads.
+
+    The format arm O builds from the labels (train_scorer.truth_agents): class, confidence, centre,
+    size, yaw, velocity, path offsets, and a mask of the slots at or over THR, so the scorer reads
+    only agents a person would be shown (plan A3). Rows not in `rows` stay zero and masked.
+    """
     model = model.to(device).eval()
-    n = len(projections)
-    q = run_args["queries"]
+    n, q = len(projections), model.query.shape[0]
     keys = {
         "cls": ((q,), np.int64),
         "conf": ((q,), np.float32),
@@ -382,13 +378,18 @@ def agents(cfg, args) -> None:
         "mask": ((q,), bool),
     }
     arrays = {k: np.zeros((n, *shape), dtype) for k, (shape, dtype) in keys.items()}
-    every = np.arange(n)
-    with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16):
-        for i in range(0, n, 256):
-            chunk = every[i : i + 256]
-            tok = torch.from_numpy(
-                np.stack([np.asarray(tokens[slot(int(r))], dtype=np.float16) for r in chunk])
-            ).to(device)
+    rows = np.asarray(rows)
+    with torch.autocast("cuda", dtype=torch.float16):
+        for i in range(0, len(rows), 256):
+            chunk = rows[i : i + 256]
+            # fp32 in, so the CPU runs it too; on the GPU autocast casts back to fp16 exactly.
+            tok = (
+                torch.from_numpy(
+                    np.stack([np.asarray(tokens[slot(int(r))], dtype=np.float16) for r in chunk])
+                )
+                .to(device)
+                .float()
+            )
             out_last = model(tok, torch.from_numpy(projections[chunk]).to(device))[-1]
             o = {k: v.float().cpu().numpy() for k, v in out_last.items()}
             prob = np.exp(o["logits"] - o["logits"].max(-1, keepdims=True))
@@ -402,6 +403,24 @@ def agents(cfg, args) -> None:
             arrays["vel"][chunk] = o["vel"]
             arrays["path"][chunk] = o["path"]
             arrays["mask"][chunk] = conf >= evaluate.THR
+    return arrays
+
+
+def agents(cfg, args) -> None:
+    """The agents pass: an A1 run's kept epoch decoded on every row, for phase B's arms F and S."""
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    run = Path(args.run)
+    meta = json.loads((run / "run.json").read_text())
+    run_args = meta["args"]
+    tokens, slot, rows, projections, _ = load(
+        args.tokens, args.labels, run_args["tap"], run_args.get("vit_tokens", "")
+    )
+    model, epoch = load_run(run)
+    arrays = agent_arrays(model, tokens, slot, np.arange(len(projections)), projections, torch.device("cuda"))
     staging = out.with_name(out.name + ".staging")
     staging.mkdir(parents=True)
     np.savez(staging / "agents.npz", **arrays)
@@ -409,7 +428,7 @@ def agents(cfg, args) -> None:
         "run": str(run),
         "epoch": epoch,
         "gallops_sha": git_sha(),
-        "rows": n,
+        "rows": len(projections),
         "train_git_sha": meta["train_git_sha"],
         "threshold": evaluate.THR,
         "agents_per_row": float(arrays["mask"].sum(1).mean()),
