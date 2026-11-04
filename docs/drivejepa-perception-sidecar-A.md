@@ -89,7 +89,7 @@ Everything here is reviewed in notebook 01, which draws real samples and every d
   - A parked car has velocity zero while the ego drives past it.
   - So the side-car must infer the ego's motion from the two frames. Ego speed is cached
     (`ego_status`, 4 × 11 per sample), so adding it is cheap.
-  - Whether it should be added is an open question (§11, Q4). Notebook 01 shows how far labelled
+  - Whether it should be added is an open question (§11.3). Notebook 01 shows how far labelled
     velocity and image motion differ.
 
 ### 3.3 The labels (`labels-v1`, built by `navsim_data` from `6efd8e6`)
@@ -145,7 +145,7 @@ centre.
   - so all-class recall on report sits above select from the class mix alone (*argued*).
   - Per-class numbers are reported beside every all-class one, and nothing compares select and
     report all-class numbers directly.
-- **Cyclists are 0.5% of targets** (about 170 on report): their numbers carry wide intervals and
+- **Cyclists are 0.5–0.7% of targets** (about 170 on report): their numbers carry wide intervals and
   decide nothing.
 - **The 64-target cap almost never binds** (166 of 94,195 train samples), so 64 queries are not
   short of targets.
@@ -209,8 +209,11 @@ No new data pass is needed for steps 1–6.
   - Projected onto the image with z as the box's centre, the boxes sit on the road and reach the
     roofs, on every split and city drawn (notebook 01 §3).
   - So z is the centre, as `views.box_corners` assumes.
-- **Auto-labels.** NAVSIM's boxes are machine-made. Box size drifts along a track (0.33% of joins by
-  more than 0.5 m), and yaw is noisy for pedestrians.
+- **Auto-labels.** NAVSIM's boxes are machine-made.
+  - Box size drifts along a track: 0.43% of joined steps change by more than 0.5 m and 3.9% by more
+    than 0.2 m (*counted*, notebook 01 §7).
+  - Yaw means little for pedestrians: even the pipeline check's hits are 72° off for them, against
+    7° for vehicles (notebook 04 §4b).
 
 ## 4. The model (step 2)
 
@@ -605,7 +608,7 @@ training and the first pass's reading.
 
 **Why not by default.** The plan so far reserved navtest for the gate (planning EPDMS). Reading
 perception metrics there chooses nothing about planning, but whether to touch navtest at all is the
-owner's call (§11, Q2).
+owner's call (§11.2).
 
 ## 9. Step 3's pipeline check
 
@@ -682,16 +685,16 @@ interpreters):
 
 ## 11. Decisions for the owner at the review of steps 1–3
 
-1. **Success criteria (§7):** approve as written, or edit, before step 4 commits them.
-2. **Test set:** the report logs only (the default), or navtest as well (§8.3).
-3. **Ego motion as an input:**
+- **11.1 · Success criteria (§7):** approve as written, or edit, before step 4 commits them.
+- **11.2 · Test set:** the report logs only (the default), or navtest as well (§8.3).
+- **11.3 · Ego motion as an input:**
    - velocity labels are ground velocity, which the side-car must infer from two frames (§3.2);
    - adding the cached ego speed as one more token is a fourth, separate variant;
    - recommended only after step 6, if velocity error is the weak point.
-4. **Proposed metrics (§8.1):** AP, box errors, displacement error, calibration, breakdowns. Adopt
-   all, some or none.
-5. **nuScenes site root (§8.2, step 1):** links to the shared copy, or another location.
-6. **Budget:** the step-5 runs as listed (§6.6), or fewer.
+- **11.4 · Proposed metrics (§8.1):** AP, box errors, displacement error, calibration, breakdowns.
+  Adopt all, some or none.
+- **11.5 · nuScenes site root (§8.2, step 1):** links to the shared copy, or another location.
+- **11.6 · Budget:** the step-5 runs as listed (§6.6), or fewer.
 
 ## 12. Risks
 
