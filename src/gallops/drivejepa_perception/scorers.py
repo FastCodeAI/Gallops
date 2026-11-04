@@ -241,10 +241,22 @@ class B1Model(nn.Module):
         return {"logits": logits, "score": logits[..., -1], "attention": attention, "nearest": nearest}
 
 
-def loss(out: dict, batch: dict, w_sub: float = 0.5, w_imitation: float = 0.5, tau: float = 1.0):
-    """BCE on the PDM labels plus listwise CE toward the human, the same in every mode and arm."""
+#: The B1 loss's listwise term, the same in every mode and arm (`loss`). `imitation` ran first, at
+#: 84fd73e; trained with it, every control arm picked the candidate nearest the human and lost 2.5-2.7
+#: points of select pick EPDMS against the release. `bce` and `best` were then compared with it on
+#: the select logs, C arm only, before any arm read an agent (train_scorer's --choose-loss).
+LOSSES = ("imitation", "bce", "best")
+
+
+def loss(out: dict, batch: dict, kind: str, w_sub: float = 0.5, w_list: float = 0.5, tau: float = 1.0):
+    """BCE on the PDM labels, plus a listwise CE on the ranking score whose target is `kind`'s:
+    - `imitation`: softmax(-ADE / tau), the candidates nearest the human;
+    - `bce`: none;
+    - `best`: the PDM-best candidates, uniform over ties. That is the choice the readout scores.
+    """
+    if kind not in LOSSES:
+        raise ValueError(kind)
     labels = batch["pdm"]  # B, K, 9
-    target = F.softmax(-batch["ade"] / tau, dim=-1)
     if "logits" in out:
         logits = out["logits"]
         heads = labels[..., list(HEAD_COLUMNS)]
@@ -256,6 +268,16 @@ def loss(out: dict, batch: dict, w_sub: float = 0.5, w_imitation: float = 0.5, t
         bce_sub = F.binary_cross_entropy(sub, labels[..., list(SUB_COLUMNS)])
         bce_final = F.binary_cross_entropy(out["final"].clamp(1e-6, 1 - 1e-6), labels[..., -1])
         ranking = torch.logit(out["final"].clamp(1e-6, 1 - 1e-6))
-    imitation = -(target * F.log_softmax(ranking, dim=-1)).sum(-1).mean()
-    total = bce_final + w_sub * bce_sub + w_imitation * imitation
-    return total, {"bce_final": float(bce_final), "bce_sub": float(bce_sub), "imitation": float(imitation)}
+    total = bce_final + w_sub * bce_sub
+    parts = {"bce_final": float(bce_final), "bce_sub": float(bce_sub)}
+    if kind != "bce":
+        if kind == "imitation":
+            target = F.softmax(-batch["ade"] / tau, dim=-1)
+        else:
+            final = labels[..., -1]
+            target = (final >= final.max(-1, keepdim=True).values - 1e-6).float()
+            target = target / target.sum(-1, keepdim=True)
+        listwise = -(target * F.log_softmax(ranking, dim=-1)).sum(-1).mean()
+        total = total + w_list * listwise
+        parts["listwise"] = float(listwise)
+    return total, parts

@@ -42,6 +42,9 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 3 Nov | S0 | The token pass rebuilt twice to make it affordable, each change held to the vendor's exact output (details below) |
 | 3 Nov | A, B | Code written and tested ahead of the data, all under `gallops.drivejepa_perception` (list below) |
 | 3 Nov | — | The test suite passes under Drive-JEPA's 3.9 again, so 3.9 trainers' preflights can pass (`e959b06`) |
+| 4 Nov | S0 | Token pass done (63 min); PDM labels for all 103,288 rows, re-scored exactly; the release read on select and report (S0.8) |
+| 4 Nov | A0, A1 | The three taps probed; the ViT's own output chosen, and its cache pass started; the blind baseline trained |
+| 4 Nov | B1 | The first C runs (loss `imitation`, `84fd73e`) lost to the release in every mode. The loss is now chosen on the select logs, C arm only, before any arm reads an agent (below) |
 
 **Code written ahead of the data:**
 - **Side-car and phase A:** the side-car, its targets and metrics, and the phase-A trainer.
@@ -149,6 +152,41 @@ One-layer probes, 6 epochs on 10,000 train rows, read on the select logs, front 
 
 - Trained identically on zeroed tokens, it detects nothing: recall 0 over 24,216 targets.
 - The lead-gap reference is the train-mean prior, with an error of 8.53 m (P5's bar).
+
+### B1 · the first loss pulled the scorer toward the human (a deviation, before any agent arm)
+
+The plan's B1 loss was BCE on the PDM labels plus a listwise CE toward the human,
+`softmax(−ADE/τ)`, weight 0.5, τ = 1 m. The first control runs (arm C, no agents; `84fd73e`)
+trained with it in three modes, three seeds each (frozen at `84fd73e`; lora and full at `3e666e1`,
+whose code is the same). *Measured*, select logs, each seed's kept epoch:
+
+| Mode | Pick EPDMS, seeds 0 / 1 / 2 | L2 at 1 s (m) | EP of the pick |
+|---|---|---|---|
+| release, untrained | 0.9201 | 0.681 | 0.937 |
+| frozen | 0.8947 / 0.8947 / 0.8955 | 0.150 / 0.149 / 0.157 | 0.879 / 0.882 / 0.879 |
+| lora | 0.8943 / 0.8932 / 0.8944 | 0.167 / 0.157 / 0.167 | 0.877 / 0.875 / 0.879 |
+| full | 0.8930 / 0.8941 / 0.8941 | 0.155 / 0.162 / 0.153 | 0.875 / 0.877 / 0.878 |
+
+The fourth mode, `replace`, did not run: its preflight refused uncommitted code.
+
+- **Every control lost 2.5–2.7 points to the release.** The kept epoch was 1 or 2 in every run.
+- **Its L2 to the human fell from 0.68 m to 0.15 m at 1 s.** The scorer had learnt to pick the
+  candidate nearest the human. Its progress fell with it, because the human's own plan scores
+  0.906 against the release pick's 0.920 (S0.5, S0.8).
+- *Argued:* an F-against-C comparison under that loss would ask whether agents help an imitation
+  picker, which is not B1's question.
+
+**What changed, and what did not:**
+- **Changed:** the loss's listwise term is now chosen, by `train_scorer --choose-loss`, among three:
+  - `imitation`: the first runs';
+  - `bce`: none;
+  - `best`: toward the PDM-best candidates, the choice the readout scores.
+- **The rule, fixed before the choice ran:** seed 0 of every mode trains with each loss; the
+  highest mean over the four modes of the select pick EPDMS at the kept epoch wins.
+- **What the choice reads:** select logs, arm C only. Report logs and agents are not read.
+- **Unchanged:** the arms, the modes, the seeds, the decision rule and every prediction. The chosen
+  loss is used in every mode and arm.
+- The imitation runs are kept, apart, as `{runs}/drivejepa_perception/b1-imitation/`.
 
 ![Each hypothesis, its tests and its readout](figures/hypotheses.png)
 

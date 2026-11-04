@@ -92,7 +92,26 @@ def test_clearance_finds_the_parked_car_ahead_when_the_ego_reaches_it():
 
 def test_the_loss_runs_in_every_mode():
     for mode in scorers.MODES:
-        model = scorers.B1Model(mode, True, Head())
-        total, parts = scorers.loss(model(_batch()), _batch())
-        assert torch.isfinite(total), mode
-        total.backward()
+        for kind in scorers.LOSSES:
+            model = scorers.B1Model(mode, True, Head())
+            total, parts = scorers.loss(model(_batch()), _batch(), kind)
+            assert torch.isfinite(total), (mode, kind)
+            total.backward()
+
+
+def test_the_best_loss_targets_the_pdm_best_candidates_and_shares_ties():
+    batch = _batch()
+    batch["pdm"] = torch.zeros(1, 4, 9)
+    batch["pdm"][0, :, -1] = torch.tensor([0.5, 1.0, 1.0, 0.2])
+    # The human is nearest candidate 0, which is not among the best: the two targets disagree.
+    batch["ade"] = torch.tensor([[0.1, 3.0, 4.0, 5.0]])
+    ranking = torch.tensor([[0.0, 2.0, 2.0, 0.0]])
+    out = {"logits": torch.zeros(1, 4, 6)}
+    out["logits"][..., -1] = ranking
+    _, best = scorers.loss(out, batch, "best")
+    log_p = torch.log_softmax(ranking, -1)[0]
+    assert abs(best["listwise"] + float((log_p[1] + log_p[2]) / 2)) < 1e-6
+    _, imitation = scorers.loss(out, batch, "imitation")
+    assert imitation["listwise"] > best["listwise"]
+    _, bce = scorers.loss(out, batch, "bce")
+    assert "listwise" not in bce

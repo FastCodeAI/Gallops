@@ -1,7 +1,8 @@
 """B1: train one scorer mode on one arm, every seed, and read the pick (PREDICTIONS.md P7-P11).
 
     python -m gallops.drivejepa_perception.train_scorer --tokens T --labels L --pdm P --mode frozen --arm C \
-        --seeds 0,1,2 --out O [--agents AGENTS_DIR]
+        --loss best --seeds 0,1,2 --out O [--agents AGENTS_DIR]
+    python -m gallops.drivejepa_perception.train_scorer --tokens T --labels L --pdm P --choose-loss --out O
 
 Everything is cached:
 - the release's pooled scorer input, candidates, logits and picks (tokens pass);
@@ -198,6 +199,62 @@ def readout(pick: np.ndarray, data: dict, rows: np.ndarray) -> dict:
     return out
 
 
+def _fit(model, data: dict, seed: int, epochs: int, kind: str, run_dir: Path, device) -> tuple:
+    """Train one seed with loss `kind`, reading the select logs and saving the weights every epoch.
+
+    Returns the epoch records and the number of trained parameters.
+    """
+    rows = data["rows"]
+    groups = [
+        {
+            "params": [p for n, p in model.named_parameters() if p.requires_grad and n.startswith("head.")],
+            "lr": LR_HEAD,
+        },
+        {
+            "params": [
+                p for n, p in model.named_parameters() if p.requires_grad and not n.startswith("head.")
+            ],
+            "lr": LR,
+        },
+    ]
+    trainable = sum(p.numel() for g in groups for p in g["params"])
+    optimiser = torch.optim.AdamW([g for g in groups if g["params"]], weight_decay=0.01)
+    steps = (len(rows["train"]) // BATCH) * epochs
+    schedule = torch.optim.lr_scheduler.LambdaLR(
+        optimiser, lambda s, steps=steps: 0.5 * (1 + math.cos(math.pi * min(s, steps) / steps))
+    )
+    rng = np.random.default_rng(seed)
+    run_dir.mkdir(parents=True)
+    t0, records = time.time(), []
+    for epoch in range(1, epochs + 1):
+        model.train()
+        order = rng.permutation(rows["train"])
+        for i in range(0, len(order) - BATCH + 1, BATCH):
+            batch = batch_of(data, order[i : i + BATCH], device)
+            total, _ = scorers.loss(model(batch), batch, kind)
+            optimiser.zero_grad(set_to_none=True)
+            total.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+            optimiser.step()
+            schedule.step()
+        pick = scores(model, data, rows["select"], device).argmax(1)
+        record = {
+            "epoch": epoch,
+            "select": readout(pick, data, rows["select"]),
+            "seconds": round(time.time() - t0),
+        }
+        records.append(record)
+        with open(run_dir / "metrics.jsonl", "a") as fh:
+            fh.write(json.dumps(record) + "\n")
+        state = {k: v for k, v in model.state_dict().items() if not k.startswith("reference.")}
+        torch.save({"state_dict": state, "epoch": epoch}, run_dir / f"epoch_{epoch:02d}.pt")
+        print(
+            f"{run_dir.name} epoch {epoch}: select pick EPDMS {record['select']['pick_epdms']:.4f}",
+            flush=True,
+        )
+    return records, trainable
+
+
 def train(cfg, args) -> None:
     from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
     from gallops.drivejepa_perception import env, preflight
@@ -226,56 +283,8 @@ def train(cfg, args) -> None:
         torch.manual_seed(seed)
         np.random.seed(seed)
         model = scorers.B1Model(args.mode, args.arm != "C", head).to(device)
-        groups = [
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if p.requires_grad and n.startswith("head.")
-                ],
-                "lr": LR_HEAD,
-            },
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if p.requires_grad and not n.startswith("head.")
-                ],
-                "lr": LR,
-            },
-        ]
-        trainable = sum(p.numel() for g in groups for p in g["params"])
-        optimiser = torch.optim.AdamW([g for g in groups if g["params"]], weight_decay=0.01)
-        steps = (len(rows["train"]) // BATCH) * args.epochs
-        schedule = torch.optim.lr_scheduler.LambdaLR(
-            optimiser, lambda s, steps=steps: 0.5 * (1 + math.cos(math.pi * min(s, steps) / steps))
-        )
-        rng = np.random.default_rng(seed)
+        records, trainable = _fit(model, data, seed, args.epochs, args.loss, out / f"seed{seed}", device)
         run_dir = out / f"seed{seed}"
-        run_dir.mkdir()
-        t0 = time.time()
-        for epoch in range(1, args.epochs + 1):
-            model.train()
-            order = rng.permutation(rows["train"])
-            for i in range(0, len(order) - BATCH + 1, BATCH):
-                batch = batch_of(data, order[i : i + BATCH], device)
-                total, _ = scorers.loss(model(batch), batch)
-                optimiser.zero_grad(set_to_none=True)
-                total.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 10.0)
-                optimiser.step()
-                schedule.step()
-            pick = scores(model, data, rows["select"], device).argmax(1)
-            record = {
-                "epoch": epoch,
-                "select": readout(pick, data, rows["select"]),
-                "seconds": round(time.time() - t0),
-            }
-            with open(run_dir / "metrics.jsonl", "a") as fh:
-                fh.write(json.dumps(record) + "\n")
-            state = {k: v for k, v in model.state_dict().items() if not k.startswith("reference.")}
-            torch.save({"state_dict": state, "epoch": epoch}, run_dir / f"epoch_{epoch:02d}.pt")
-            print(
-                f"seed {seed} epoch {epoch}: select pick EPDMS {record['select']['pick_epdms']:.4f}",
-                flush=True,
-            )
-        records = [json.loads(line) for line in (run_dir / "metrics.jsonl").read_text().splitlines()]
         kept = max(records, key=lambda r: r["select"]["pick_epdms"])["epoch"]
         result = {"kept_epoch": kept, "trainable_params": trainable}
         for name, epoch in (("kept", kept), ("last", args.epochs)):
@@ -291,6 +300,60 @@ def train(cfg, args) -> None:
         )
     (out / "summary.json").write_text(json.dumps(summary, indent=1, default=str))
     np.savez(out / "report_picks.npz", **picks)
+
+
+def choose_loss(cfg, args) -> None:
+    """Choose B1's loss (scorers.LOSSES) on the select logs, C arm only, before any arm reads an agent.
+
+    Seed 0 of every mode trains with each loss. A loss scores the mean, over the four modes, of the
+    select pick EPDMS at each run's kept epoch; the highest is chosen. The report logs are not read.
+    """
+    from gallops.drivejepa_b2d.head import Head, head_tensors_from_checkpoint
+    from gallops.drivejepa_perception import env, preflight
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a run never overwrites one")
+    data = load(Path(args.tokens), Path(args.labels), Path(args.pdm), "C", None)
+    device = torch.device("cuda")
+    entered = env.enter(cfg)
+    head = Head()
+    head.load_state_dict(head_tensors_from_checkpoint(Path(entered["release"])))
+    rows = data["rows"]
+    result = {
+        "args": vars(args),
+        "rule": "max over losses of the mean over modes of seed 0's select pick EPDMS at its kept epoch",
+        "release_select_pick_epdms": readout(data["pick_release"][rows["select"]], data, rows["select"])[
+            "pick_epdms"
+        ],
+        "preflight": {},
+        "select": {},
+    }
+    out.mkdir(parents=True)
+    for mode in scorers.MODES:
+        mode_args = argparse.Namespace(**{**vars(args), "mode": mode, "arm": "C"})
+        result["preflight"][mode] = preflight.run_scorer(
+            cfg, mode_args, data, lambda mode=mode: scorers.B1Model(mode, False, head)
+        )
+        for kind in scorers.LOSSES:
+            torch.manual_seed(0)
+            np.random.seed(0)
+            model = scorers.B1Model(mode, False, head).to(device)
+            records, _ = _fit(model, data, 0, args.epochs, kind, out / kind / f"{mode}-C", device)
+            kept = max(records, key=lambda r: r["select"]["pick_epdms"])
+            result["select"].setdefault(kind, {})[mode] = {
+                "kept_epoch": kept["epoch"],
+                "pick_epdms": kept["select"]["pick_epdms"],
+                "l2_1s": kept["select"]["l2_1s"],
+                "pick_terms": kept["select"]["pick_terms"],
+            }
+    result["mean_over_modes"] = {
+        kind: float(np.mean([v["pick_epdms"] for v in result["select"][kind].values()]))
+        for kind in scorers.LOSSES
+    }
+    result["chosen"] = max(result["mean_over_modes"], key=result["mean_over_modes"].get)
+    (out / "choice.json").write_text(json.dumps(result, indent=1, default=str))
+    print(json.dumps({k: result[k] for k in ("mean_over_modes", "chosen", "release_select_pick_epdms")}))
 
 
 def release_only(args) -> None:
@@ -318,6 +381,8 @@ def main(argv=None) -> None:
     parser.add_argument("--mode", choices=scorers.MODES, default="frozen")
     parser.add_argument("--arm", choices=ARMS, default="C")
     parser.add_argument("--release-only", action="store_true", help="S0.8: read the release's own picks")
+    parser.add_argument("--choose-loss", action="store_true", help="choose the loss: select logs, C arm")
+    parser.add_argument("--loss", choices=scorers.LOSSES, default="", help="required to train")
     parser.add_argument("--seeds", default="0,1,2")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
     parser.add_argument("--out", required=True)
@@ -325,6 +390,11 @@ def main(argv=None) -> None:
     if args.release_only:
         release_only(args)
         return
+    if args.choose_loss:
+        choose_loss(SiteConfig.load(), args)
+        return
+    if not args.loss:
+        parser.error("training needs --loss (scorers.LOSSES; choose it with --choose-loss)")
     if args.arm in ("F", "S") and not args.agents:
         parser.error("arms F and S read the side-car's agents: pass --agents")
     train(SiteConfig.load(), args)

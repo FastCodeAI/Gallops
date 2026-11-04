@@ -187,7 +187,18 @@ args = ["agents", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", 
 
 # ---------------------------------------------------------------------------------------------
 # B1: four scorer modes x arms. C needs no agents; F reads the side-car's, S another log's, O the labels'.
+#
+# The loss is chosen first, on the select logs and the C arm only, before any arm reads an agent: the
+# first C runs (84fd73e, loss `imitation`, kept as {out}/b1-imitation) picked the candidate nearest the
+# human and lost 2.5-2.7 points of select pick EPDMS to the release. The README records it.
 # ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "b1-choose-loss"
+python = "drivejepa"
+module = "drivejepa_perception.train_scorer"
+args = ["--choose-loss", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--pdm", "{out}/pdm-v1",
+        "--out", "{out}/b1-choose-loss"]
 
 [[stage]]
 name = "b1-frozen-C"
