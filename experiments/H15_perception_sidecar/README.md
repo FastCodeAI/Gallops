@@ -377,8 +377,19 @@ named agent is the one the scorer's candidate-to-agent attention weighted most f
   - The name is faithful to what the model uses: deleting that agent moves the pick three to five
     times as often as deleting another, and the agent is real 86% of the time.
   - It does not show that using agents makes the pick better. B1 says it does not, here.
-- *Caveat:* the TTC output is also trained in arm C. Whether agents improve the calibration needs
-  C's AUC beside F's, which `explain` does not yet compute.
+- **The AUC does not credit the agents** (`b1-calibration-*`, `5f9e02f`, every seed at its kept
+  epoch). The controls, which never see an agent, rank risk as well:
+
+  | Mode (output) | C, seeds 0 / 1 / 2 | F, seeds 0 / 1 / 2 |
+  |---|---|---|
+  | frozen (TTC) | 0.923 / 0.928 / 0.919 | 0.919 / 0.920 / 0.915 |
+  | lora (TTC) | 0.944 / 0.954 / 0.933 | 0.934 / 0.955 / 0.944 |
+  | full (TTC) | 0.961 / 0.965 / 0.961 | 0.965 / 0.965 / 0.961 |
+  | replace (NC) | 0.970 / 0.970 / 0.973 | 0.974 / 0.971 / 0.966 |
+
+  The calibration comes from training the sub-score outputs at all, which the release never did
+  (`sub_score_weight = 0`). B1.6's claim about agents rests on the deletion test and the
+  grounding, which only an arm with agents can pass.
 
 ### B3.1 · LoRA on the ViT's last four blocks: no gain (P13 refuted)
 
@@ -487,7 +498,7 @@ The plan kept earlier results as reference only (plan §10). Read against them a
 |---|---|---|
 | **H04:** an agent decoder on frozen WA-JEPA tokens; recall 0.497, precision 0.748 at 2 m; moving vehicles within 20 m 0.849 (`selected-on-report`) | A side-car on Drive-JEPA's frozen ViT output, front camera: recall 0.630, precision 0.739, moving vehicles 0.935 (3 seeds, report logs, epoch chosen on select) | **Agrees.** A frozen JEPA encoder carries enough 3D for a 4 M decoder. Different encoders, cameras and splits, so the numbers are not a ranking |
 | **H04:** NAVSIM 85.27 → 87.30 with agent look and sub-score heads | B1: agents as scorer inputs are NEUTRAL in every mode, and so are ground-truth agents | **Complements.** H04's base had collision headroom. Drive-JEPA's pick already scores NC and TTC 0.996 in-sample (S0.8), so there is nothing for agents to fix on these logs |
-| **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates | **Agrees in direction.** The release's sub-score logits were never trained (`sub_score_weight = 0`); trained ones rank risk well. C's own AUC is not yet measured, so this does not credit the agents |
+| **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates, with or without agents (C 0.92–0.97) | **Agrees.** The release's sub-score logits were never trained (`sub_score_weight = 0`). Training them on PDM labels is what calibrates them; agents add nothing to it |
 | **H14:** training-only heads moved the nuScenes pick (T2 L2 at 3 s 3.76 → 2.93 m, adapted on nuScenes) | On nuScenes, out of domain, the navtrain-fitted `full` scorer is 0.23–0.31 m worse than the release; the replacement scorer up to 0.41 m better on some seeds, in every arm | **Complements.** H14 adapted on nuScenes; H15 trained on navtrain only. Fitting the whole scorer to one domain's PDM labels costs in the other |
 | **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
 | **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
