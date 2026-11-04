@@ -40,6 +40,14 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 3 Nov | S0.5 | `pdm_labels` written and smoke-run (details below) |
 | 3 Nov | S0.6 | The explainer: [docs/navsim-metric-cache.md](../../docs/navsim-metric-cache.md), with worked examples and figures |
 | 3 Nov | S0 | The token pass rebuilt twice to make it affordable, each change held to the vendor's exact output (details below) |
+| 3 Nov | A, B | Code written and tested ahead of the data, all under `gallops.drivejepa_perception` (list below) |
+| 3 Nov | — | The test suite passes under Drive-JEPA's 3.9 again, so 3.9 trainers' preflights can pass (`e959b06`) |
+
+**Code written ahead of the data:**
+- **Side-car and phase A:** the side-car, its targets and metrics, and the phase-A trainer.
+- **B1 and B2:** the scorer modes and the B1 trainer; the refiner trainer (B2).
+- **Shared by phase B:** the verdict rule (`b_report`) and the explanation test (B1.6).
+- **Checks:** every trainer's preflight.
 
 **`pdm_labels` (S0.5) in detail:**
 - **Measured:** a metric cache exists for 103,288 of 103,288 navtrain samples. "Pruned" removed
