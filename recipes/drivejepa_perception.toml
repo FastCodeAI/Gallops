@@ -1,0 +1,43 @@
+# H15: a perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), tested as an input to
+# the scorer, to the refiner, and against LoRA on the ViT.
+#
+#   gallops recipe drivejepa_perception                    print every command for this machine
+#   gallops recipe drivejepa_perception labels --run       run one stage
+#
+# The plan, its rules and the reasons for them: docs/drivejepa-perception-sidecar.md. The record:
+# experiments/H15_perception_sidecar/. Every pass refuses to write into an output that already exists.
+#
+# Site config this needs (gallops.toml):
+#   [python] drivejepa               Drive-JEPA's interpreter (Python 3.9, torch 2.1, mmcv-full 1.7.2)
+#   [code]   drivejepa               upstream Drive-JEPA e21f474 with the three patches in
+#                                    recipes/drivejepa_perception/patches/ applied as commits (paddock's,
+#                                    copied at paddock c6597a9). 0001 is required on GPUs above sm_86.
+#   [datasets.navsim]                NAVSIM's root (navsim_logs/, sensor_blobs/, maps/), with exp = where
+#                                    Drive-JEPA-cache/ holds the released checkpoint
+#   [datasets.navsim_metric_cache]   Drive-JEPA's train_metric_cache_v2_pruned (phase B's PDM labels)
+#
+# The splits are committed in recipes/drivejepa_perception/splits.json: select = H04's 51 held-out navtrain
+# logs (branch drivejepa-wajepa/run3a, e5ca907, recipes/drivejepa_wajepa/heldout_logs.txt), report = the
+# seeded draw `navsim_data.draw_splits` makes, train = the rest. Every pass re-draws them and refuses an edit.
+
+description = "H15: perception side-car on frozen Drive-JEPA"
+
+[vars]
+out = "{runs}/drivejepa_perception"
+
+# ---------------------------------------------------------------------------------------------
+# S0: the data passes. CPU for the labels; the token pass needs one GPU at batch 1.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "labels"
+python = "drivejepa"
+module = "drivejepa_perception.navsim_data"
+args = ["labels", "--out", "{out}/labels-v1", "--workers", "24"]
+
+[[stage]]
+name = "check-labels"
+python = "drivejepa"
+module = "drivejepa_perception.navsim_data"
+# Held to NAVSIM's and nuPlan's own code on 60 windows; exits 1 on any problem.
+args = ["check", "--labels", "{out}/labels-v1", "--windows", "60"]

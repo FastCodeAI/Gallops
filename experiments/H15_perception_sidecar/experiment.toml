@@ -31,3 +31,49 @@ is refuted if it does not beat its baselines."""
 predictions = "experiments/H15_perception_sidecar/PREDICTIONS.md"
 narrative = "experiments/H15_perception_sidecar/README.md"
 parents = ["H14", "H04"]
+
+[[runs]]
+id = "H15.s0"
+label = "S0: the data passes on NAVSIM navtrain: splits, agent labels with each agent's 1 s path, the token cache and the release's outputs"
+started = 2026-11-03
+start_from = "released"
+trained = []
+frozen = ["encoder", "projector", "refiner", "scorer"]
+notes = "Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#labels"
+
+  [runs.code.upstream]
+  repo = "Drive-JEPA (linhanwang/Drive-JEPA)"
+  commit = "e21f474"
+  patches = [
+    "recipes/drivejepa_perception/patches/0001-msda-compat-for-newer-gpus.patch",
+    "recipes/drivejepa_perception/patches/0002-score-runs-with-failed-scenarios.patch",
+    "recipes/drivejepa_perception/patches/0003-navsim-v1-camera-path.patch",
+  ]
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, train logs (1,071)"
+  role = "train"
+  unit = "samples"
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, select logs (H04's 51 held-out)"
+  role = "selection"
+  unit = "samples"
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, report logs (70, seeded draw)"
+  role = "held-out"
+  unit = "samples"
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"

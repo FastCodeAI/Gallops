@@ -20,3 +20,11 @@ H-A: a side-car of about 4 M parameters on the frozen tokens beats no-camera and
 ## Predictions
 
 [PREDICTIONS.md](PREDICTIONS.md), written before the run.
+
+## Runs
+
+| Run | Started from | Trained | Data | Code | Checkpoint |
+|---|---|---|---|---|---|
+| **H15.s0**<br>S0: the data passes on NAVSIM navtrain: splits, agent labels with each agent's 1 s path, the token cache and the release's outputs | released | —; frozen: encoder, projector, refiner, scorer | navsim `navtrain, train logs (1,071)` (train)<br>navsim `navtrain, select logs (H04's 51 held-out)` (selection)<br>navsim `navtrain, report logs (70, seeded draw)` (held-out) | [drivejepa_perception.toml#labels](../../recipes/drivejepa_perception.toml)<br>Drive-JEPA (linhanwang/Drive-JEPA) @ `e21f474` + patches | — |
+
+- **H15.s0:** Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`.
