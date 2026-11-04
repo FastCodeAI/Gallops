@@ -33,6 +33,20 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 | 3 Nov | S0.5 | Download started: Drive-JEPA's `train_metric_cache_v2_pruned.tar` (33.5 GB) and `anchors_scores_index_v2.tar` (0.4 GB). Source: the Hugging Face dataset repo `LinhanWang/Drive-JEPA` at `9d435e12`, checked against its LFS sha256s |
 | 3 Nov | S0.9 | H15 registered; predictions written |
 | 3 Nov | S0.10 | The plan's diagrams rendered from Graphviz sources in [figures/](figures/) |
+| 3 Nov | S0.2 | The release's forward on navtrain samples through Drive-JEPA-ext: finite, and bit-identical over two passes |
+| 3 Nov | S0.3 | Splits committed: [splits.json](../../recipes/drivejepa_perception/splits.json). Select is H04's 51 held-out logs; report is a seeded draw of 70; train is the other 1,071 of navtrain's 1,192 logs |
+| 3 Nov | S0.4 | The labels pass ran from `6efd8e6` on all 103,288 navtrain samples in 2 min (numbers below) |
+| 3 Nov | S0.5 | Downloads verified against their LFS sha256s, then extracted into NAVSIM's `exp/` |
+
+**The labels pass (S0.4), *measured*:**
+- **Agents within 60 m:** 7,104,100, of which 1,812,167 vehicles, 1,533,271 pedestrians, 16,245
+  cyclists and 3,742,417 static.
+- **Path joins:** 96.6% at t + 0.5 s and 93.4% at t + 1.0 s.
+- **`check`, on 60 random windows:**
+  - the ego future is 1.9e-6 off NAVSIM's `get_future_trajectory`;
+  - path points are 3.7e-6 m off nuPlan's and NAVSIM's transforms;
+  - re-runs equal the stored labels;
+  - 27 of 8,208 joins (0.33%) change box size by more than 0.5 m.
 
 **S0.2 in detail.**
 - `Drive-JEPA-ext` is `e21f474` plus Paddock's patches 0001–0003, as commits `c92b06c`, `7f29654`
