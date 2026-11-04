@@ -206,7 +206,8 @@ _WEIGHTS = (".safetensors", ".ckpt", ".pt", ".pth", ".npz", ".bin")
 def experiments_checkpoint(
     directory: Annotated[str, typer.Argument(help="a step directory holding checkpoint.json")],
     file: Annotated[
-        str | None, typer.Option("--file", help="the weights file paddock loads, when there are several")
+        Optional[str],  # noqa: UP045 -- typer evaluates hints at run time; see `recipe` above
+        typer.Option("--file", help="the weights file paddock loads, when there are several"),
     ] = None,
     ensemble: Annotated[
         bool, typer.Option("--ensemble", help="the weights files are one checkpoint together (seeds)")
