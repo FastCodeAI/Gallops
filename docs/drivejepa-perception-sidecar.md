@@ -1,22 +1,28 @@
-# H15 (proposed) · A perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), then tested as an input to the scorer, as an input to the refiner, and against LoRA on the ViT
+# H15 · A perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), then tested as an input to the scorer, as an input to the refiner, and against LoRA on the ViT
 
-**Status (2026-11-03): plan, approved by the owner (Shreedhar). Nothing has trained, and H15
-is not registered yet (S0.9).**
+**Status (2026-11-04): running.** H15 is registered, its predictions were committed before the
+first training step, and phases A and B are training. The account of what ran, what it showed and
+every departure from this plan is
+[experiments/H15_perception_sidecar/README.md](../experiments/H15_perception_sidecar/README.md);
+this document stays the plan.
 
-**Progress:**
-- **S0.1 done (3 Nov).** The site's `gallops.toml` points `navsim` at the real NAVSIM root and
-  names the metric cache, which is not downloaded yet. `gallops.toml.example` carries both keys.
-- **S0.2 done (3 Nov), except the release's forward on NAVSIM samples,** which comes with the
-  token pass.
-  - `Drive-JEPA-ext` is `e21f474` plus Paddock's 0001–0003 as commits `c92b06c`, `7f29654` and
-    `afab5fc`, taken from Paddock `c6597a9`.
-  - *Measured* on an H200 NVL (sm_90):
-    - `use_compiled_msda` under `auto` returns False;
-    - the PyTorch path agrees between CUDA and CPU to 1.8e-7 (max |diff|);
-    - the compiled kernel printed "no kernel image is available", **did not raise**, and
-      returned output 0.989 off a reference whose largest value is 0.989. All of the signal is
-      lost.
-- **`1c60e59` is tagged locally** as `h14-pr20-head` (§7).
+**Where it stands (4 Nov):**
+- **S0 is done.** Labels, the token cache, the ViT-out cache (exact against the full forward), PDM
+  labels for all 103,288 samples (re-scored exactly), and the release read on select and report.
+- **A0 is done.** The ViT's own output carries the most 3D (recall within 30 m 0.343 on select).
+  P1 is supported. A1 (three seeds and 128 queries) is training on it.
+- **B1's controls are done.** B2's controls and the B3 cache are running. B1's agent arms, B2's,
+  B3.1 and the nuScenes step start when A1 seed 0 finishes.
+
+**Departures from this plan, each recorded in the README before the result it could bias:**
+- **B1's loss:** its imitation term made every control worse than the release, so the listwise
+  term was chosen again on the select logs with the control arm only (`bce`).
+- **B2's teachers:** they are drawn as the release's training drew them; a row without good
+  anchors gets no teacher term.
+- **B3:** it runs from a cache of blocks 1–20 rather than the online ViT. B3.1 gains a control,
+  and B3.2 is reduced to sharing the LoRA with the planner unchanged.
+- **The readout:** "within 30 m" counted to 35 m until 4 Nov. It is fixed, and A0 was read again.
+- **O, S and B1.6** run on every scorer mode, so no best mode is chosen.
 
 - **Branch:** `drivejepa/auxilliary-head-02`.
 - **History:** revision 2, after the owner's review comments and an independent review of the
