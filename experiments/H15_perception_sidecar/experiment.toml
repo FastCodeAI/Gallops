@@ -204,7 +204,7 @@ start_from = "released"
 trained = ["scorer adapter, LoRA, the scorer MLP or a replacement scorer, by mode"]
 frozen = ["encoder", "projector", "refiner", "side-car"]
 train_git_sha = "e6af85b"
-notes = "Loss bce (chosen on the select logs, arm C, before any arm read an agent; the plan's imitation term made every control worse than the release). F trained from e6af85b, O and S from 1627ebd; the B1 code is the same. Agents: A1 seed 0, epoch 11, 4.86 a row. Verdict by the pre-registered rule (b1-report): NEUTRAL for every arm in every mode, kept and last epoch. B1.6, every F mode at seed 0: deleting the named agent changes the pick 3.1-4.9x as often as a random one, the agent is real 86% of the time, AUC 0.92-0.97."
+notes = "Loss bce (chosen on the select logs, arm C, before any arm read an agent; the plan's imitation term made every control worse than the release). F trained from e6af85b, O and S from 1627ebd; the B1 code is the same. Agents: A1 seed 0, epoch 11, 4.86 a row. Verdict by the pre-registered rule (b1-report): NEUTRAL for every arm in every mode, kept and last epoch. B1.6, every F mode at seed 0: deleting the named agent changes the pick 3.1-4.9x as often as a random one, the agent is real 86% of the time; AUC 0.92-0.97, but the controls reach the same (b1-calibration-*), so the calibration is the trained sub-scores', not the agents'."
 
   [runs.code]
   modules = ["gallops.drivejepa_perception"]
