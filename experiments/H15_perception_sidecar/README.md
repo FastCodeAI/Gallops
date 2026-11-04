@@ -255,6 +255,10 @@ B1.6's explanation test runs on every F mode at seed 0. Each costs minutes. The 
 needed a best mode to be chosen, and choosing it on the report logs would have flagged every O, S
 and B1.6 number `selected-on-report`.
 
+P10 and P11 are still scored on "the best mode". It is named on the **select** logs: the largest
+mean over the three seeds of F − C in select pick EPDMS, each seed at its kept epoch. Every mode's
+numbers are reported beside it.
+
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
 - **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
