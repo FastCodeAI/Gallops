@@ -479,6 +479,19 @@ by scene.
 - *Context:* B1's scorers change the release's pick on 48–64% of the navtrain report logs too, at
   equal EPDMS. Many candidates score alike. A changed pick is the norm, not a sign of drift.
 
+### D · against earlier work (*argued*, from recorded numbers; B2 to follow)
+
+The plan kept earlier results as reference only (plan §10). Read against them afterwards:
+
+| Earlier result | What H15 found | Reading |
+|---|---|---|
+| **H04:** an agent decoder on frozen WA-JEPA tokens; recall 0.497, precision 0.748 at 2 m; moving vehicles within 20 m 0.849 (`selected-on-report`) | A side-car on Drive-JEPA's frozen ViT output, front camera: recall 0.630, precision 0.739, moving vehicles 0.935 (3 seeds, report logs, epoch chosen on select) | **Agrees.** A frozen JEPA encoder carries enough 3D for a 4 M decoder. Different encoders, cameras and splits, so the numbers are not a ranking |
+| **H04:** NAVSIM 85.27 → 87.30 with agent look and sub-score heads | B1: agents as scorer inputs are NEUTRAL in every mode, and so are ground-truth agents | **Complements.** H04's base had collision headroom. Drive-JEPA's pick already scores NC and TTC 0.996 in-sample (S0.8), so there is nothing for agents to fix on these logs |
+| **GC06:** a scorer on cached features reached collision AUC 0.66–0.83, against the release's 0.50–0.59 | B1.6: the trained TTC and NC outputs reach AUC 0.92–0.97 on report candidates | **Agrees in direction.** The release's sub-score logits were never trained (`sub_score_weight = 0`); trained ones rank risk well. C's own AUC is not yet measured, so this does not credit the agents |
+| **H14:** training-only heads moved the nuScenes pick (T2 L2 at 3 s 3.76 → 2.93 m, adapted on nuScenes) | On nuScenes, out of domain, the navtrain-fitted `full` scorer is 0.23–0.31 m worse than the release; the replacement scorer up to 0.41 m better on some seeds, in every arm | **Complements.** H14 adapted on nuScenes; H15 trained on navtrain only. Fitting the whole scorer to one domain's PDM labels costs in the other |
+| **H07 / D18:** one-domain encoder and planner fine-tuning failed the gate (NAVSIM 0.857 → 0.753) | B3.1: LoRA on the ViT's last blocks adds no recall (+0.005 over its control). B3.2: shared with the planner it does not move the plan | **Agrees.** Adapting the encoder buys little here, and in this reduced form costs nothing either |
+| **D08 / GC07:** a sub-score scorer alone flipped sides in closed loop | The replacement scorer changes the release's pick on 55–64% of report rows at equal EPDMS | **A warning for the gate (C).** Equal open-loop scores do not show equal closed-loop behaviour |
+
 ### B2 · cost, and which mode gets O and S (written before any F result)
 
 - **Measured step time:** 0.20 s per batch of 64 (refiner forward and backward from cached tokens,
