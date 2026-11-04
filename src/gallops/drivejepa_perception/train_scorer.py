@@ -329,12 +329,15 @@ def choose_loss(cfg, args) -> None:
         "preflight": {},
         "select": {},
     }
-    out.mkdir(parents=True)
+    # Every mode's preflight before any training: the code check then names the commit that runs
+    # all twelve, whatever is edited while they train (a mid-run check refused one, 913b671).
     for mode in scorers.MODES:
         mode_args = argparse.Namespace(**{**vars(args), "mode": mode, "arm": "C"})
         result["preflight"][mode] = preflight.run_scorer(
             cfg, mode_args, data, lambda mode=mode: scorers.B1Model(mode, False, head)
         )
+    out.mkdir(parents=True)
+    for mode in scorers.MODES:
         for kind in scorers.LOSSES:
             torch.manual_seed(0)
             np.random.seed(0)

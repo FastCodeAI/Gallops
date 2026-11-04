@@ -215,6 +215,13 @@ def train(cfg, args) -> None:
                 torch.nn.utils.clip_grad_norm_([p for g in groups for p in g["params"]], 10.0)
                 optimiser.step()
                 schedule.step()
+                step = i // BATCH + 1
+                if step % 200 == 0:
+                    rate = (time.time() - t0) / ((epoch - 1) * (len(order) // BATCH) + step)
+                    print(
+                        f"seed {seed} epoch {epoch} step {step}: loss {float(loss):.4f}, {rate:.2f} s/step",
+                        flush=True,
+                    )
             print(f"seed {seed} epoch {epoch}: loss {float(loss):.4f} ({time.time() - t0:.0f} s)", flush=True)
         state = {
             "adapter": adapter.state_dict(),
