@@ -892,7 +892,9 @@ training and the first pass's reading.
 perception metrics there chooses nothing about planning, but whether to touch navtest at all is the
 owner's call (§11.2).
 
-## 9. Step 3's pipeline check
+## 9. What has run
+
+### 9.1 Step 3's pipeline check
 
 Run `H15.r1`, from `d1bacdc`, on the full train split. It wrote to
 `{runs}/drivejepa_perception/part-a/r1-pipeline-v1-s0/` with `--epochs 12 --stop-after 1 --no-report`.

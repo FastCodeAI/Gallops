@@ -314,3 +314,10 @@ def test_recall_of_reads_only_the_chosen_targets():
     )
     assert out["recall_near"] == 1.0 and out["targets_near"] == 1
     assert out["recall_all"] == 0.5 and out["targets_all"] == 2
+
+
+def test_match_takes_a_looser_radius_when_asked():
+    conf, cls = np.array([0.9]), np.array([0])
+    xy, gxy, gcls = np.array([[10.0, 0.0]]), np.array([[13.0, 0.0]]), np.array([0])
+    assert evaluate.match(conf, cls, xy, gxy, gcls)[2].tolist() == [-1]  # 3 m: beyond the readout's 2 m
+    assert evaluate.match(conf, cls, xy, gxy, gcls, radius=5.0)[2].tolist() == [0]

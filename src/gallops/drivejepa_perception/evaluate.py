@@ -46,8 +46,9 @@ def decode(out: dict) -> dict:
     }
 
 
-def match(conf, cls, xy, gxy, gcls):
-    """H04's greedy match: detections by confidence, each to the nearest free target of its class."""
+def match(conf, cls, xy, gxy, gcls, radius: float = HIT_M):
+    """H04's greedy match: detections by confidence, each to the nearest free target of its class
+    within `radius` (the readout's HIT_M unless an analysis asks for a looser pairing)."""
     det = np.flatnonzero(conf >= THR)
     det = det[np.argsort(-conf[det], kind="stable")]
     hit_of_gt = np.full(len(gxy), -1)
@@ -59,7 +60,7 @@ def match(conf, cls, xy, gxy, gcls):
         d = np.hypot(gxy[:, 0] - xy[q, 0], gxy[:, 1] - xy[q, 1])
         d[~free] = np.inf
         g = int(np.argmin(d))
-        if d[g] <= HIT_M:
+        if d[g] <= radius:
             hit_of_gt[g], tp[k] = q, True
     return det, tp, hit_of_gt
 

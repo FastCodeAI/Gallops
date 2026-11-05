@@ -792,3 +792,38 @@ module = "drivejepa_perception.train_sidecar"
 args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
         "--tap", "vit_out", "--variant", "v1", "--seed", "0", "--epochs", "24", "--no-report",
         "--out", "{out}/part-a/5a-v1-e24-s0"]
+
+# Step 5b: the variant and schedule 5a chose by section 6.5's rules (v3, 24 epochs): its other seeds,
+# and the same side-car trained with its tokens zeroed (--blind), the no-camera control. Select only.
+
+[[stage]]
+name = "part-a-5b-v3-e24-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--out", "{out}/part-a/5b-v3-e24-s0"]
+
+[[stage]]
+name = "part-a-5b-v3-e24-s1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "1", "--epochs", "24", "--no-report",
+        "--out", "{out}/part-a/5b-v3-e24-s1"]
+
+[[stage]]
+name = "part-a-5b-v3-e24-s2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "2", "--epochs", "24", "--no-report",
+        "--out", "{out}/part-a/5b-v3-e24-s2"]
+
+[[stage]]
+name = "part-a-5b-v3-e24-blind-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report", "--blind",
+        "--out", "{out}/part-a/5b-v3-e24-blind-s0"]
