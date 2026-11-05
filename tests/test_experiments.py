@@ -480,12 +480,10 @@ def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) ->
     return d
 
 
-def _cli(args: list[str], env: dict[str, str] | None = None):
-    """Invoke the CLI, or skip where it cannot load."""
+def _cli_module():
+    """gallops.cli, or skip where it cannot load."""
     try:
-        from typer.testing import CliRunner
-
-        from gallops.cli import app
+        from gallops import cli
     except (ImportError, TypeError) as exc:
         # The preflight runs this file under Drive-JEPA's Python 3.9, where the CLI cannot load (recipe.py's
         # tomllib, then typer on `X | None`) and is never run. Anywhere with tomllib, the interpreter
@@ -493,6 +491,14 @@ def _cli(args: list[str], env: dict[str, str] | None = None):
         if importlib.util.find_spec("tomllib") is not None:
             raise
         pytest.skip(f"gallops.cli does not load on this interpreter: {exc}")
+    return cli
+
+
+def _cli(args: list[str], env: dict[str, str] | None = None):
+    """Invoke the CLI, or skip where it cannot load."""
+    app = _cli_module().app
+    from typer.testing import CliRunner
+
     return CliRunner().invoke(app, args, env=env)
 
 
@@ -787,21 +793,21 @@ def test_a_folder_that_moves_reports_nothing_new(tmp_path) -> None:
     assert exps.changed_results(exps.Registry.load(root), "HEAD") == []
 
 
-def test_pr_prints_the_title_then_the_body_and_pr_check_reads_the_environment() -> None:
-    printed = _cli(["experiments", "pr", "H07.exp1"])
+def test_pr_prints_the_title_then_the_body_and_pr_check_reads_the_environment(tmp_path, monkeypatch) -> None:
+    """On a repository of its own: the real one holds uncommitted results while someone records them."""
+    root = _with_base(tmp_path)
+    monkeypatch.setattr(_cli_module(), "_registry", lambda: exps.Registry.load(root))
+    printed = _cli(["experiments", "pr", "H01.r1"])
     assert printed.exit_code == 0
-    lines = printed.output.splitlines()
-    assert lines[0].startswith("H07.exp1: ") and lines[1] == "" and lines[2] == "<!-- gallops:pr H07.exp1 -->"
+    assert printed.output.splitlines()[:3] == [_TITLE, "", "<!-- gallops:pr H01.r1 -->"]
     assert _cli(["experiments", "pr", "H99"]).exit_code == 2
 
     def check(title: str, body: str):
-        env = {"PR_TITLE": title, "PR_BODY": body}
-        return _cli(["experiments", "pr-check", "--base", "HEAD"], env)
+        return _cli(["experiments", "pr-check", "--base", "HEAD"], {"PR_TITLE": title, "PR_BODY": body})
 
-    title, body = printed.output.partition("\n\n")[0], printed.output.partition("\n\n")[2]
-    written = body.replace(exps.PR_TODO, "Written:")
-    assert check(title, written).exit_code == 0
-    assert check("H07.exp1: better", written).exit_code == 1
+    written = printed.output.partition("\n\n")[2].replace(exps.PR_TODO, "Written:")
+    assert check(_TITLE, written).exit_code == 0
+    assert check("H01.r1: better", written).exit_code == 1
     assert _cli(["experiments", "pr-check", "--base", "no-such-commit"]).exit_code == 2
 
 
