@@ -128,7 +128,10 @@ refuses an episode with no `lane_reference.json`.
 ## 3. Trainer changes
 
 - `--accumulate N`: every forward pass is one tick (`TICKS_PER_PASS`), so the
-  batch is N single-tick passes with gradients summed.
+  batch is N single-tick passes with gradients summed. In these runs a group was
+  counted by position, so a tick that could not be built cost about 6% of groups
+  each way in 1B's first epoch (276 dropped, 267 applied twice, of 4,592). The
+  "batch 1 × 8" below is that recipe; it now counts ticks built.
 - Frozen modules stay in eval mode, so GridMask no longer runs inside the frozen
   encoder while the heads train.
 - Real nuScenes driving as a `human` source: the target is the human's path;

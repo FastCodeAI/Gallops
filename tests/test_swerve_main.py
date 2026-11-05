@@ -245,6 +245,35 @@ def test_a_bad_subsample_stops_before_the_model_loads(tmp_path, monkeypatch, spe
         swerve.main()
 
 
+@pytest.mark.parametrize("unbuilt", range(5))
+def test_accumulation_counts_the_ticks_it_built(tmp_path, monkeypatch, unbuilt):
+    """#17 review, 🟡 8: counted by position, a skipped tick wiped one group and stepped another twice.
+
+    Replayed on the real runs: 276 groups dropped and 267 applied twice, of 4,592, in 1B's first epoch.
+    """
+    ticks = [tick("0053", i) for i in range(5)]
+    ticks[unbuilt]["unbuilt"] = True
+    h = harness(
+        monkeypatch,
+        tmp_path,
+        {"r0": ticks},
+        *("--epochs", "1", "--held-out", "0075", "--accumulate", "2"),
+    )
+    swerve.main()
+    assert groups_of(h.events) == [2, 2]
+
+
+def test_a_short_last_group_still_steps(tmp_path, monkeypatch):
+    h = harness(
+        monkeypatch,
+        tmp_path,
+        {"r0": [tick("0053", i) for i in range(5)]},
+        *("--epochs", "1", "--held-out", "0075", "--accumulate", "2"),
+    )
+    swerve.main()
+    assert groups_of(h.events) == [2, 2, 1]
+
+
 def test_the_stage_note_says_gridmask_is_off(tmp_path, monkeypatch):
     """#17 review, 🟠 4: the note said GridMask was on while `training_mode` turned it off."""
     h = harness(monkeypatch, tmp_path, {"r0": [tick("0053", 0)]}, "--epochs", "1", "--held-out", "0075")

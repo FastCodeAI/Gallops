@@ -824,6 +824,10 @@ def main() -> None:
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
 
+    def apply_gradients() -> None:
+        torch.nn.utils.clip_grad_norm_(parameters, 1.0)
+        optimiser.step()
+
     out_root.mkdir(parents=True, exist_ok=True)
     # One JSON line per 25 training steps and per held-out check, beside the
     # checkpoints, so curves can be drawn from the run itself. "x": a second fit
@@ -865,6 +869,11 @@ def main() -> None:
         losses = []
         recent_parts: list[dict] = []
         started = time.time()
+        # Counted in ticks built, not positions in `order`: a skipped tick then shifts nothing. By
+        # position, one skipped last in a group wiped it unstepped, and one skipped first stepped
+        # the group before it twice. Replayed, 1B's first epoch dropped 276 of 4,592 groups that way
+        # and doubled 267, before `keep_rebuildable` removed nearly all such ticks.
+        built = 0
         for start in range(0, len(order), args.batch):
             chunk = order[start : start + args.batch]
             features, target, ticks_used = timed("data", lambda c=chunk: dataset.batch(c))
@@ -876,13 +885,12 @@ def main() -> None:
                 output, target, ticks_used, referee, torch, **loss_options
             )
             loss = args.trajectory_weight * trajectory + args.score_weight * scored
-            micro = (start // args.batch) % args.accumulate
-            if micro == 0:
+            if built % args.accumulate == 0:
                 optimiser.zero_grad(set_to_none=True)
             timed("backward", lambda lo=loss: (lo / args.accumulate).backward())
-            if micro == args.accumulate - 1 or start + args.batch >= len(order):
-                torch.nn.utils.clip_grad_norm_(parameters, 1.0)
-                optimiser.step()
+            built += 1
+            if built % args.accumulate == 0:
+                apply_gradients()
             losses.append(
                 (
                     None if scorer_only else float(trajectory.detach()),
@@ -920,6 +928,9 @@ def main() -> None:
                     f"regret {held_out.get('pick_regret', nan):.4f}",
                     flush=True,
                 )
+
+        if built % args.accumulate:
+            apply_gradients()  # the epoch's short last group
 
         mean_trajectory, mean_score = epoch_means(losses)
         entry = {
