@@ -1552,12 +1552,15 @@ def check_pr(reg: Registry, title: str, body: str, changed: list[str]) -> list[s
         e, run, res = pr_subject(reg, ref)
     except ValueError as exc:
         return [str(exc)]
-    fix = f"re-run `gallops experiments pr {ref}`"
     problems = []
     if title.strip() != pr_title(run, res):
         problems.append(f"the title must be `{pr_title(run, res)}`, not `{title}`")
     if text != pr_block(reg, e, run, res):
-        problems.append(f"the rendered block differs from the record: {fix}")
+        # CI reads the merge, so a change on the base shows here and not on the branch.
+        problems.append(
+            f"the rendered block differs from the record: merge the base, then re-run "
+            f"`gallops experiments pr {ref}`"
+        )
     others = sorted({x.split(".")[0] for x in changed} - {e.id})
     if others:
         problems.append(f"it also changes results in {', '.join(others)}: one PR per experiment")

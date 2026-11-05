@@ -358,7 +358,8 @@ longer belongs in the experiment's `README.md`.
 The `results-pr` check in CI re-renders both, from the PR merged into its base. It fails a PR when:
 
 - it changes a result or a gate verdict and has no rendered block;
-- its title or block differs from the record, which is fixed by re-running the command;
+- its title or block differs from the record, which is fixed by merging the base and re-running the
+  command, because the record it is compared with is the merged one;
 - a `TODO(author):` is left in it;
 - it also changes the results of a second experiment;
 - the run it reports is not one it changed;

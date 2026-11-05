@@ -606,6 +606,15 @@ def test_members_agree_with_the_pinned_digest(tmp_path, members, file, error) ->
 
 _TITLE = "H01.r1: NAVSIM EPDMS 0.875 → 0.885, gate HOLD"
 _NO_GATE = RECORD.split("  [[runs.gate]]")[0]
+_LATER_DECISION = """
+[[decision]]
+id = "D03"
+date = 2026-10-30
+short = "drop the thing"
+decision = "Drop the thing."
+by = ["Naren"]
+evidence = ["H01"]
+"""
 _SECOND_RUN = """
 [[runs]]
 id = "H01.r2"
@@ -705,6 +714,17 @@ def test_a_results_pr_that_differs_from_its_record_is_refused(tmp_path, break_it
     title, body = break_it(*_rendered(reg))
     problems = exps.check_pr(reg, title, body, ["H01.r1"])
     assert any(error in p for p in problems), problems
+
+
+def test_a_block_left_behind_by_the_base_says_to_merge_it(tmp_path) -> None:
+    """A decision on main citing the run changes the merge; re-running on the branch prints the old block."""
+    reg = exps.Registry.load(_repo(tmp_path))
+    title, body = _rendered(reg)
+    (reg.root / "experiments" / "decisions.toml").write_text(DECISIONS + _LATER_DECISION)
+    assert exps.check_pr(exps.Registry.load(reg.root), title, body, ["H01.r1"]) == [
+        "the rendered block differs from the record: merge the base, then re-run "
+        "`gallops experiments pr H01.r1`"
+    ]
 
 
 def test_one_results_pr_reports_one_experiment(tmp_path) -> None:
