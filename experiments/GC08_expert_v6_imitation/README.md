@@ -139,7 +139,9 @@ refuses an episode with no `lane_reference.json`.
 - Frozen modules stay in eval mode, so GridMask no longer runs inside the frozen
   encoder while the heads train.
 - Real nuScenes driving as a `human` source: the target is the human's path;
-  there are no dumps, so grading and fidelity skip it.
+  there are no dumps, so grading and fidelity skip it, and a logged path is not
+  held to the limits of a drawn target. The preflight checks the claim: a source
+  says `human` only if every tick is `expert_kind = human`.
 - `--subsample-source I=F` keeps a random fraction of a source each epoch.
 - The held-out scene is matched by exact id.
 - **Frame cache** (`train/frame_cache.py`, `GALLOPS_FRAME_CACHE`): each episode's
@@ -227,6 +229,34 @@ Left as written, not hand-edited:
 - `--accumulate` and `--subsample-source` are not recorded, so `trained_on` reads as
   all of a source kept at 33% an epoch. The trainer now records both and counts the
   ticks each source gave it; these sidecars stay as they are.
+
+### Labels that predate today's checks
+
+These runs trained before the preflight checked every target: `drivable_checks` reached
+this branch in `ae23ef6`, after the last training commit, `b4f3930`. So the labels pinned
+in [POINTERS.md](POINTERS.md) were never held to it, and they cannot pass it now.
+
+| Label set | Usable targets | Too tight a turn | Harder braking than the car has |
+|---|---:|---:|---:|
+| `labelled_r0cam_v6` | 7,932 | 507 | 134 |
+| `labelled_expert_v6` | 9,234 | 58 | 90 |
+| `labelled_r2_v6` | 2,402 | 20 | 70 |
+
+The braking column is a defect in v6, found in review. Past its stop point the room left
+went negative and capped every distance at zero, so the plan stopped dead at full speed:
+`side-0070/run_8` is labelled `brake`, clear, at 11.24 m/s, with 0.0 m at every waypoint.
+The 294 sit in 35 episodes, 254 of them `brake` ticks, which trained at 2×, and 204 usable
+ticks above 1 m/s are all-zero. They grade clear because they never move. What they
+taught the model is unmeasured.
+
+v6 no longer draws them: a stop that is too late is now the hardest one there is. On 33
+relabelled episodes (the 21 of round 0 and round 2 holding such a plan, and 12 without),
+targets refused by either limit went from 255 to 0 and all-zero plans from 164 to 0, and
+138 `brake` ticks became `least-impact`, which is what they were. The 12 controls kept
+771 of 772 kinds, with plans within 0.24 m. Gate B, before and after on the 22 of round 0
+among them, gave the same collisions on all 22 and the same scores to two places: the
+engine stops following a plan that ends within a metre, so this is a label defect, not a
+driving one, and the gates above stand. Training on these sets again needs a relabel.
 
 ## 5. Round 2, a short DAgger round
 
