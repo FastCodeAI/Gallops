@@ -263,7 +263,7 @@ label for paddock's site folder; gallops does not resolve it.
     t = <t>
     mde = <the MDE it printed>
     units = <scenes, pairs or routes>
-    verdict = "<GAIN | NEUTRAL | REGRESSION | NO RECORDS | TOO FEW UNITS | NOT RUN>"
+    verdict = "<GAIN | NEUTRAL | REGRESSION | an undecided verdict, as printed | NOT RUN>"
 ```
 
 The gate log in `experiments/README.md` has one row per gated checkpoint. The gate needs the checkpoint's sha256 in

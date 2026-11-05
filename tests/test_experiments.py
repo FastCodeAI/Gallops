@@ -351,6 +351,14 @@ label = "a code change on the same weights"
     assert (errors == []) if shared else any("is also claimed by H01.r1" in e for e in errors), errors
 
 
+@pytest.mark.parametrize("verdict", ["NO UNIT", "CONFIG DIFFERS", "INCOMPLETE", "SUBSET DIFFERS"])
+def test_every_undecided_pair_paddock_prints_can_be_copied_in(tmp_path, verdict) -> None:
+    """A HOLD caused by one of these has to be recordable, or "copy it verbatim" fails `make check`."""
+    reg = exps.Registry.load(_repo(tmp_path, RECORD.replace('verdict = "NEUTRAL"', f'verdict = "{verdict}"')))
+    assert reg.errors == []
+    assert verdict in exps.render_card(reg, reg.experiments[0])
+
+
 def test_an_unfinished_hypothesis_needs_neither(tmp_path) -> None:
     running = RECORD[: RECORD.index("  [[runs.gate]]")].replace('status = "done"', 'status = "running"')
     assert exps.Registry.load(_repo(tmp_path, running, decisions="")).errors == []

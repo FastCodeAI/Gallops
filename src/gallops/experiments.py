@@ -96,7 +96,19 @@ DATA_ROLES = ("train", "selection", "held-out", "eval")
 GATE_TIERS = ("quick", "closed", "all")
 #: What paddock's `overall()` returns. An unfinished subset is a HOLD that says so, not a verdict of its own.
 GATE_VERDICTS = ("SHIP", "HOLD", "FAIL")
-PAIR_VERDICTS = ("GAIN", "NEUTRAL", "REGRESSION", "NO RECORDS", "TOO FEW UNITS", "NOT RUN")
+#: Paddock's nine, then `NOT RUN`, which is ours: a benchmark the job's tier left out.
+PAIR_VERDICTS = (
+    "GAIN",
+    "NEUTRAL",
+    "REGRESSION",
+    "NO RECORDS",
+    "TOO FEW UNITS",
+    "NO UNIT",
+    "CONFIG DIFFERS",
+    "INCOMPLETE",
+    "SUBSET DIFFERS",
+    "NOT RUN",
+)
 
 #: Modules that serve every experiment: the contract, the site config, the CLI. Every other module
 #: under src/gallops must be claimed by an experiment's `[runs.code]`, so no trainer exists in the
@@ -775,6 +787,10 @@ PAIR_MARK = {
     "REGRESSION": "🔴",
     "NO RECORDS": "▫️",
     "TOO FEW UNITS": "▫️",
+    "NO UNIT": "▫️",
+    "CONFIG DIFFERS": "▫️",
+    "INCOMPLETE": "▫️",
+    "SUBSET DIFFERS": "▫️",
     "NOT RUN": "—",
 }
 GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**"}
