@@ -119,6 +119,28 @@ def parse_oversample(specs: list[str], ticks: list[dict]) -> dict[str, int]:
     return factors
 
 
+def parse_subsample(specs: list[str], ticks: list[dict]) -> dict[int, float]:
+    """`--subsample-source I=FRACTION` specs, refused unless source I has ticks and F keeps some.
+
+    Parsed inside the epoch loop, a typo surfaced after the model had loaded, and `9=0.1`
+    silently did nothing, as `swerv=4` once did for `parse_oversample`.
+    """
+    present = {t.get("source", 0) for t in ticks}
+    shares = {}
+    for spec in specs:
+        index, _, value = spec.partition("=")
+        try:
+            source, share = int(index), float(value)
+        except ValueError:
+            raise SystemExit(f"--subsample-source {spec}: expected I=FRACTION, e.g. 2=0.33") from None
+        if source not in present:
+            raise SystemExit(f"--subsample-source {spec}: no training tick is from source {source}")
+        if not 0 < share <= 1:
+            raise SystemExit(f"--subsample-source {spec}: FRACTION must be above 0 and at most 1")
+        shares[source] = share
+    return shares
+
+
 def epoch_means(losses: list[tuple]) -> tuple:
     """Mean of each loss over an epoch, None for one the stage skips (never 0.0, a perfect fit)."""
     # by index, not zip: this runs in the 3.9 training interpreter, and ruff wants strict=
@@ -203,20 +225,26 @@ def labelled_digest(directory: Path) -> str:
 
 
 def declared_training(
-    train: list[dict], labelled: list[str], read_share: float, inherited=()
+    train: list[dict], labelled: list[str], read_share: float, inherited=(), read: list[dict] | None = None
 ) -> tuple[sidecar.TrainedOn, ...]:
     """`trained_on`: the nuScenes scenes read, each labelled set, and what `--init` saw.
 
     `read_share` is the share of the loaded ticks kept (below 1 for a `--limit`
-    smoke), so a smoke checkpoint does not claim the whole round.
+    smoke), so a smoke checkpoint does not claim the whole round. `read` is the ticks
+    the model has been through so far, when that is not all of `train`:
+    `--subsample-source` draws afresh each epoch, so a source kept at 33% an epoch has
+    been read at about 70% after three, and a sidecar saying all of it claims more
+    than the model saw. Counted, not worked out from the flags, so it is what happened.
     """
-    scenes = {scene_of(t["episode"]) for t in train}
+    read = train if read is None else read
+    scenes = {scene_of(t["episode"]) for t in read}
     fraction = round(len(scenes) / NUSCENES_TRAIN_SCENES * read_share, 6)
     own = [sidecar.TrainedOn("nuscenes", "train", fraction)]
-    own += [
-        sidecar.TrainedOn(RENDERED, Path(path).name, None if read_share >= 1 else read_share)
-        for path in dict.fromkeys(labelled)
-    ]
+    for i, path in enumerate(labelled):
+        whole = sum(1 for t in train if t.get("source", 0) == i)
+        seen = sum(1 for t in read if t.get("source", 0) == i)
+        share = read_share * (seen / whole if whole else 1.0)
+        own.append(sidecar.TrainedOn(RENDERED, Path(path).name, None if share >= 1 else round(share, 6)))
     out = list(dict.fromkeys(own))
     out += [t for t in inherited if t not in out]
     return tuple(out)
@@ -694,14 +722,15 @@ def main() -> None:
     scorer_only = args.train_only == "scorer"
     refiner_only = args.train_only == "refiner"
     factors = parse_oversample(args.oversample, train)
+    shares = parse_subsample(args.subsample_source, train)
     agent, model, torch = build_model(
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
         train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE_REFINER if refiner_only else TRAINABLE,
     )
-    # The anchor term draws from numpy's global RNG and the vendor's GridMask from it
-    # too; unseeded, no run could be rebuilt from its sidecar.
+    # The anchor term draws from numpy's global RNG; unseeded, no run could be rebuilt
+    # from its sidecar.
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -713,15 +742,12 @@ def main() -> None:
     # Held-out checks still grade the candidates when training skips it: how the frozen
     # scorer picks among the refiner's new plans is the thing to watch.
     eval_options = {**loss_options, "with_score": True}
-    # In train mode the frozen encoder still applies the vendor's GridMask(prob 0.7):
-    # its weights do not move, but the frames the trained parts learn from are masked.
-    gridmask = "; the frozen encoder runs in train mode, so the vendor's GridMask augmentation is on"
     if scorer_only:
         stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen and in eval mode"
     elif refiner_only:
-        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped" + gridmask
+        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped"
     else:
-        stage_note = "joint -- refiner and scorer train, encoder frozen" + gridmask
+        stage_note = "joint -- refiner and scorer train, encoder frozen"
     loss_note = "vendor trajectory_loss_anchors (winner + good anchors)" if not scorer_only else ""
     if not refiner_only:
         loss_note += (" + " if loss_note else "") + "scorer BCE against score_target"
@@ -828,10 +854,10 @@ def main() -> None:
         interim = sorted({int(i) for i in np.linspace(0, len(validation) - 1, n).round()})
     history = []
     step = 0
+    seen: set[int] = set()  # indices of `dataset.ticks` the model has been through
     for epoch in range(args.epochs):
         training_mode()
         order = oversampled(dataset.ticks, factors) if factors else list(range(len(dataset)))
-        shares = {int(k): float(v) for k, v in (spec.split("=", 1) for spec in args.subsample_source)}
         if shares:
             keep = random.Random(1000 + epoch)
             order = [i for i in order if keep.random() < shares.get(dataset.ticks[i].get("source", 0), 1.0)]
@@ -844,6 +870,7 @@ def main() -> None:
             features, target, ticks_used = timed("data", lambda c=chunk: dataset.batch(c))
             if features is None:
                 continue
+            seen.update(chunk)
             output = timed("forward", lambda f=features: model(f))
             trajectory, scored, parts = combined_loss(
                 output, target, ticks_used, referee, torch, **loss_options
@@ -937,7 +964,13 @@ def main() -> None:
             train_run=args.train_run,
             # Built from what this run read, not a literal: the literal said
             # "round0, 5 scenes" for runs on three data sets and three scenes.
-            trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
+            trained_on=declared_training(
+                train,
+                [s.labelled for s in sources],
+                read_share,
+                inherited,
+                [dataset.ticks[i] for i in sorted(seen)],
+            ),
             selection_split=f"held-out scene {args.held_out}",
             params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
             precision="fp32",
@@ -948,6 +981,10 @@ def main() -> None:
                 "loss": loss_note,
                 "init": str(args.init) if args.init else "released checkpoint",
                 "oversample": factors,
+                # Ticks per optimiser step, and each source's share per epoch: two runs differing
+                # only in these read as the same recipe when neither was recorded.
+                "accumulate": args.accumulate,
+                "subsample_source": shares,
                 "excluded_episodes": args.exclude_episodes,
                 # Which label set and which dumps: v4 could only be traced to
                 # its labels by file timestamps.

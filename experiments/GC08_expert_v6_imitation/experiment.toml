@@ -340,7 +340,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   ]
   location = "{weights}/drivejepa_swerve/v6-r2-short/step_000011377/"
   sidecar = true
-  known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only"
+  known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only. --accumulate and --subsample-source are not recorded: round 2 kept a quarter of round 0 and of the expert-driven set and a tenth of the real driving each epoch, and the sidecar reads as all of each"
 
   [[runs.results]]
   bench = "neuroncap"

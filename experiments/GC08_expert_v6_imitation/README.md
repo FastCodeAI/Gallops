@@ -214,7 +214,9 @@ Left as written, not hand-edited:
   ran 048d49c. Main has since fixed the trainer to record the starting commit.
 - `trained_on` names only the rendered round-0 collection. Both runs also read
   real nuScenes, and 1B the expert-driven collection; `notes.sources` lists them.
-- `--accumulate` and `--subsample-source` are not recorded.
+- `--accumulate` and `--subsample-source` are not recorded, so `trained_on` reads as
+  all of a source kept at 33% an epoch. The trainer now records both and counts the
+  ticks each source gave it; these sidecars stay as they are.
 
 ## 5. Round 2, a short DAgger round
 

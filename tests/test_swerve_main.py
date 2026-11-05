@@ -7,6 +7,7 @@ no test could have said so. What these pin down is the loop and what it writes, 
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -186,3 +187,67 @@ def test_a_step_is_published_whole_or_not_at_all(tmp_path, monkeypatch):
     with pytest.raises(KeyboardInterrupt):
         swerve.main()
     assert steps(h.run) == []
+
+
+def test_the_sidecar_says_what_the_recipe_did(tmp_path, monkeypatch):
+    """#17 review, 🟠 4: neither flag reached the sidecar, and a source kept at 50% an epoch read as all."""
+    sources = {
+        "kept": [tick("0053", i) for i in range(40)],
+        "thinned": [tick("0058", i) for i in range(400)],
+    }
+    h = harness(
+        monkeypatch,
+        tmp_path,
+        sources,
+        *("--epochs", "2", "--held-out", "0075", "--accumulate", "4", "--subsample-source", "1=0.25"),
+    )
+    swerve.main()
+    first, second = (sidecar.read(p) for p in steps(h.run))
+    assert first.notes["accumulate"] == 4
+    assert first.notes["subsample_source"] == {"1": 0.25}
+
+    by_split = {t.split: t.fraction for t in first.trained_on}
+    assert by_split["kept"] is None  # all of it: None, not 1.0
+    assert 0.17 < by_split["thinned"] < 0.33
+
+    # a second epoch draws again, so more of the source has been seen, not the same quarter
+    later = {t.split: t.fraction for t in second.trained_on}
+    assert by_split["thinned"] < later["thinned"] < 2 * by_split["thinned"]
+
+
+def test_a_subsample_that_drops_a_whole_scene_does_not_claim_it(tmp_path, monkeypatch):
+    sources = {"a": [tick("0053", 0), tick("0058", 1)]}
+    h = harness(monkeypatch, tmp_path, sources, "--epochs", "1", "--held-out", "0075")
+    sources["a"][1]["unbuilt"] = True
+    swerve.main()
+    nuscenes = sidecar.read(steps(h.run)[0]).trained_on[0]
+    assert nuscenes.fraction == round(1 / swerve.NUSCENES_TRAIN_SCENES, 6)
+
+
+@pytest.mark.parametrize(
+    "spec, why",
+    [("9=0.1", "no training tick"), ("0=0", "above 0"), ("0=1.5", "at most 1"), ("x=0.1", "I=FRACTION")],
+)
+def test_a_bad_subsample_stops_before_the_model_loads(tmp_path, monkeypatch, spec, why):
+    """#17 review, 🟡 12: parsed inside the epoch loop, a typo surfaced after the model loaded."""
+    harness(
+        monkeypatch,
+        tmp_path,
+        {"r0": [tick("0053", 0)]},
+        *("--epochs", "1", "--held-out", "0075", "--subsample-source", spec),
+    )
+
+    def never(*args, **kwargs):
+        raise AssertionError("the model was built")
+
+    monkeypatch.setattr(swerve, "build_model", never)
+    with pytest.raises(SystemExit, match=why):
+        swerve.main()
+
+
+def test_the_stage_note_says_gridmask_is_off(tmp_path, monkeypatch):
+    """#17 review, 🟠 4: the note said GridMask was on while `training_mode` turned it off."""
+    h = harness(monkeypatch, tmp_path, {"r0": [tick("0053", 0)]}, "--epochs", "1", "--held-out", "0075")
+    swerve.main()
+    written = sidecar.read(steps(h.run)[0])
+    assert "GridMask" not in json.dumps(written.notes["stage"])
