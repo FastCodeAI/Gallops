@@ -63,7 +63,7 @@ runs = "/path/to/gallops-runs"
 # metric_cache = "/path/to/navtest/metric_cache"  # navsim's navtest metric cache, for run_pdm_score
 
 # [datasets.drivejepa_b2d]
-# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (docs/drivejepa_b2d.md)
+# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (experiments/GC04_bench2drive/README.md)
 
 # [datasets.wajepa_tokens]
 # path = "/path/to/wajepa_tokens_v2"          # frozen WA-JEPA tokens over navtrain, ~420 GB (recipes/drivejepa_wajepa.toml)

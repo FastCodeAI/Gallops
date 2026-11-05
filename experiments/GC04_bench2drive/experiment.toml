@@ -1,0 +1,213 @@
+# GC04 -- Drive-JEPA retrained on the Bench2Drive base set: Split-v4, then the Final (Navvrat).
+# Every number below is copied from experiments/GC04_bench2drive/README.md, recipes/drivejepa_b2d.toml and the module docstrings
+# in src/gallops/drivejepa_b2d/, never re-derived. The released baseline (57.60 at 2 Hz) is paddock's record:
+# results/bench2drive/drivejepa/native50-2hz-40c29d24c37d542a-447e23 and docs/benchmarks/bench2drive-native-rate.md.
+# manifest_sha256 is the sha256 of the tracked data manifest named in each run's note. No checkpoint of either
+# model is under this machine's weights root, so no weights sha256 is recorded.
+
+schema = 1
+id = "GC04"
+title = "Drive-JEPA retrained on the Bench2Drive base set: Split-v4 and the Final"
+short = "Bench2Drive retrain (Split-v4, Final)"
+track = "gap-closing"
+owner = "Navvrat"
+benchmarks = ["bench2drive"]
+started = 2026-09-29
+ended = 2026-10-13
+status = "done"
+verdict = "positive"
+question = """Released Drive-JEPA (NAVSIM-v2, ViT-L) drives paddock's 50 Bench2Drive routes to a mean driving \
+score of 57.60 at its native 2 Hz. Does retraining parts of it on the Bench2Drive base set, with the backbone \
+never trained, raise that: first only the scorer head, split into yes/no safety heads (Split-v4), then also \
+the proposal generator with MTD-H teacher paths and an area head (the Final)?"""
+learned = """Split-v4 reached a mean DS of 68.1 and the Final 73.6 on 50 routes, against 57.60 for the released \
+model, but each is one run per route on routes that also chose the variant, with no run record committed and \
+same-spot twins of 26 eval routes in the training set. Split-v4's head stages reproduce bitwise from this repo; \
+the Final's three training stages have not been rerun."""
+narrative = "experiments/GC04_bench2drive/README.md"
+external = [
+  "Bench2Drive runs behind 68.1 (30 Sep) and 73.6 (6 Oct): no run record in any repository. paddock's drivejepa_scorer_b2d adapter that drove them existed on 13 Oct only as uncommitted files in one local paddock worktree (rerank-native), on no paddock branch.",
+  "Baseline: paddock results/bench2drive/drivejepa/native50-2hz-40c29d24c37d542a-447e23 (released Drive-JEPA, 2 Hz, DS 57.60; 31.71 at 20 Hz), paddock docs/benchmarks/bench2drive-native-rate.md.",
+  "Training data: the frozen dump drivejepa_b2d-v1 ([datasets.drivejepa_b2d]), made 13 Oct by copying the files the stages read; every file's bytes and sha256 in recipes/drivejepa_b2d/data_split_v4.json and data_final.json. The tooling that built the rows, features, labels and teachers is paddock-side and not in this repo.",
+  "Deployed checkpoints: written by paddock-ops' writers (scorer-retrain/write_scorer_checkpoint.py, generator-ft/step4_write_ckpt.py) with a hand-written sidecar; not under this machine's weights root.",
+  "What still fails on the Final (left turns 0/7, right turns 0/3, ambulance 0/5, road works and two-way accidents 0/5, a stall after a first stop): the team's status page, citing Navvrat's Bench2Drive write-up; in no repository.",
+]
+
+[[runs]]
+id = "GC04.split-v4"
+label = "Split-v4: the scorer head retrained as yes/no heads (collision, lane, TTC, red light); three head stages, split-v4aug kept"
+start_from = "released Drive-JEPA (NAVSIM-v2, ViT-L)"
+trained = ["scorer head (scorer.pred_score)"]
+frozen = ["encoder", "generator"]
+params_trained_m = 1.32
+notes = "Stages ipad-base-start (kept epoch 17) → split-full (epoch 32, mean AUC 0.940) → split-v4aug (epoch 20, mean AUC 0.940), each initialised from the one before. The 32 proposals are unchanged; only the pick changes. Driven with DRIVEJEPA_PICK=split, DRIVEJEPA_SPLIT_MODE=exponent, DRIVEJEPA_SPLIT_K=4, which are part of the model. The deployed file (release + split-v4aug head, checked tensor by tensor) was written by paddock-ops' writer; this repo's write_checkpoint has never been run on the release."
+
+  [runs.code]
+  recipe = "recipes/drivejepa_b2d.toml#split-v4aug"
+  modules = [
+    "gallops.drivejepa_b2d.check_data",
+    "gallops.drivejepa_b2d.train_ipad_head",
+    "gallops.drivejepa_b2d.train_split_head",
+    "gallops.drivejepa_b2d.write_checkpoint",
+    "gallops.drivejepa_b2d.head",
+    "gallops.drivejepa_b2d.provenance",
+    "gallops.drivejepa_b2d.sidecar",
+  ]
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base less the 150 held-out clips, + route-start frames"
+  role = "train"
+  n = 19950
+  unit = "frames"
+  manifest_sha256 = "64a5337d08080a0fcdf99eb2fcfcb6f73bba92c060d4c6acc7f73a88eb6ac8c1"
+  note = "base 20,449 + route-start 3,000 rows less the 150 held-out clips; labels iPad v2, col/lane/ttc v3, red v4 (Bench2Drive's stop-line rule); split-v4aug adds 8,316 speed-randomised copies of training light frames. manifest: recipes/drivejepa_b2d/data_split_v4.json"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, 150 held-out clips"
+  role = "selection"
+  n = 3499
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d/heldout_150.json"
+  note = "chose every kept epoch; list recovered 29 Sep from the feature cache, confirmed by the bitwise rerun"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "50 eval routes"
+  role = "eval"
+  n = 50
+  unit = "routes"
+  note = "the same routes chose which head and which selection rule to keep: selection on the test set"
+
+  [runs.checkpoint]
+  model = "drivejepa_scorer_b2d"
+  train_run = "split-v4"
+  step = 8840
+  step_unit = "optimizer_step"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "50 routes, one run each, 30 Sep 2026"
+  n = 50
+  unit = "route"
+  value = "68.1"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted", "selected-on-report", "no-record"]
+  note = "inference rate not recorded for these runs; released Drive-JEPA on paddock's 50 routes is 57.60 at 2 Hz and 31.71 at 20 Hz"
+  source = "experiments/GC04_bench2drive/README.md"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "split-v4aug mean AUC, 150 held-out clips"
+  value = "0.940"
+  better = "higher"
+  strength = "moderate"
+  flags = ["selected-on-report"]
+  note = "kept epoch 20, chosen on the same clips; split-full also 0.940"
+  source = "experiments/GC04_bench2drive/README.md"
+
+[[runs]]
+id = "GC04.final"
+label = "the Final: generator fine-tuned with MTD-H teachers (batch-fixed), split head on its candidates (m05b labels), area head, progress guard"
+start_from = "GC04.split-v4"
+trained = ["generator (init_feature, hist_encoding, shared refiner)", "split head", "area head (scorer.pred_area)"]
+frozen = ["encoder"]
+notes = "Generator from the release with its own multimodal loss (expert winner-takes-all + 0.5 × MTD-H pseudo-teachers, up to 4 per frame): Adam 2e-5, batch 32, 10 epochs, seed 0, kept epoch 10 by held-out objective, with the batch fix; holds ~26 GB of feature cache in RAM. Split head from split-v4aug on the new generator's candidates and m05b labels (0.5 m margin on moving actors, expert-masked), kept epoch 25. Area head from the release on v6 step labels, kept epoch 40, shipped beside the weights as area_head.pt. Progress guard (DRIVEJEPA_SPLIT_GUARD=1). Policy env from tags/final-73.6. Deployed file = release + generator + m05b split head, checked tensor by tensor 13 Oct; none of the three stages rerun from this repo."
+
+  [runs.code]
+  recipe = "recipes/drivejepa_b2d.toml#final-generator"
+  modules = [
+    "gallops.drivejepa_b2d.check_data",
+    "gallops.drivejepa_b2d.train_generator",
+    "gallops.drivejepa_b2d.batch_fix",
+    "gallops.drivejepa_b2d.host",
+    "gallops.drivejepa_b2d.train_split_head",
+    "gallops.drivejepa_b2d.train_area_head",
+    "gallops.drivejepa_b2d.write_checkpoint",
+    "gallops.drivejepa_b2d.head",
+    "gallops.drivejepa_b2d.provenance",
+    "gallops.drivejepa_b2d.sidecar",
+  ]
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base less the 150 held-out clips, + route-start frames"
+  role = "train"
+  manifest_sha256 = "f6b77585fd7b19eab21a45cc76d89d45954cb814d7f924a20c622ccd1d910814"
+  note = "as Split-v4, plus the backbone-feature cache, the MTD-H teacher set (Bench2Drive frames only) and the new generator's relabelled candidates. manifest: recipes/drivejepa_b2d/data_final.json (the split head also reads data_split_v4.json)"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, 150 held-out clips"
+  role = "selection"
+  n = 3499
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d/heldout_150.json"
+  note = "chose the kept epoch of all three stages"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "50 eval routes"
+  role = "eval"
+  n = 50
+  unit = "routes"
+  note = "the same routes chose which head and which selection rule to keep: selection on the test set"
+
+  [runs.checkpoint]
+  model = "drivejepa_scorer_b2d"
+  train_run = "final"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "50 routes, one run each, 6 Oct 2026"
+  n = 50
+  unit = "route"
+  baseline = "released Drive-JEPA at 2 Hz (paddock native50-2hz-40c29d24c37d542a-447e23)"
+  baseline_value = "57.60"
+  value = "73.6"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted", "selected-on-report", "no-record"]
+  headline = true
+  note = "the Final is driven at PADDOCK_INFER_HZ=2, as the baseline was; no significance test; the base set holds same-scenario, same-location twins of 26 eval routes"
+  source = "experiments/GC04_bench2drive/README.md"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "50 routes, one run each"
+  n = 50
+  unit = "route"
+  baseline = "Split-v4"
+  baseline_value = "68.1"
+  value = "73.6"
+  better = "higher"
+  strength = "unverified"
+  flags = ["adapted", "selected-on-report", "no-record"]
+  note = "Bench2Drive runs are not repeatable here (rain and foliage render differently), so a single-run difference of a few points is not a result"
+  source = "experiments/GC04_bench2drive/README.md"
+
+[[checks]]
+name = "Batch fix: the refiner mixes batch elements"
+date = 2026-10-05
+result = "a dump at batch 64 was a median 1.49 m off the same frames at batch 1; upstream mixes elements in three places (batch_fix.py). Deployment runs batch 1, so closed-loop numbers are unaffected"
+decided = "every generator run behind the Final trains with the fix"
+source = "src/gallops/drivejepa_b2d/batch_fix.py"
+
+[[checks]]
+name = "Split-v4's head stages rerun from this repo"
+date = 2026-10-13
+result = "ipad-base-start, split-full and split-v4aug rerun on the recorded data, each from the previous rerun's output: every head_best.pt bitwise identical (same GPU and torch build); so the held-out list is the original"
+decided = "the recipe stands for Split-v4's training (verified); the dump holds its files (strong: copied ~30 min after the rerun read the same paths)"
+source = "experiments/GC04_bench2drive/README.md"
+
+[[checks]]
+name = "Deployed checkpoints against the release"
+date = 2026-10-13
+result = "Split-v4: its 10 head tensors equal split-v4aug's head_best.pt and its other 495 equal the release. Final: its 10 head tensors equal the m05b head, the generator's 45 tensors its 171, nothing else differs"
+decided = "the recipe's writer replaces the same tensors (argued: never run on the release)"
+source = "experiments/GC04_bench2drive/README.md"

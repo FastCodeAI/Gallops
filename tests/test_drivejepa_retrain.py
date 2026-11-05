@@ -1,6 +1,6 @@
 """The Drive-JEPA retrain record: what can be checked with no GPU and no data.
 
-The experiment under experiments/drivejepa_retrain/ needs a GPU, a 1.3 GB
+The experiment under experiments/GC05_physicalai_retrain/ needs a GPU, a 1.3 GB
 checkpoint and an access-restricted dataset to run, so nothing here runs it. What is tested
 is the part of its claims that the committed files can prove on their own:
 
@@ -29,7 +29,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXP = REPO_ROOT / "experiments" / "drivejepa_retrain"
+EXP = REPO_ROOT / "experiments" / "GC05_physicalai_retrain"
 TRIAL = EXP / "07_closed_loop_test" / "runs_017" / "tables"
 SECOND_RUN = EXP / "12_second_training_run"
 CHECKPOINT_SHA256 = "29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916"
@@ -72,7 +72,7 @@ def test_the_training_set_is_the_train_split_and_nothing_else(training_clips) ->
     assert len({row["uuid"] for row in training_clips}) == 4018
     checks = _json(EXP / "04_training_set" / "checks.json")
     assert checks["clips"] == 4015
-    for name in ("docs/data.md", "docs/drivejepa-retrain.md"):
+    for name in ("docs/data.md", "experiments/GC05_physicalai_retrain/README.md"):
         text = (REPO_ROOT / name).read_text()
         assert "4,015 clips" in text, name
         assert "from 4,018 clips" not in text, name
@@ -105,8 +105,8 @@ TABLES = ["results", "trial_017", "second_run_pilot", "second_run_choice", "seco
 @pytest.mark.parametrize("name", TABLES)
 def test_the_experiment_doc_quotes_each_recorded_table_exactly(tables, name: str) -> None:
     """Two steps have tables and no report, so the doc's copy is the report."""
-    doc = (REPO_ROOT / "docs" / "drivejepa-retrain.md").read_text()
-    assert tables.block(name) in doc, f"docs/drivejepa-retrain.md is out of step with doc_tables.py {name}"
+    doc = (EXP / "README.md").read_text()
+    assert tables.block(name) in doc, f"GC05's README.md is out of step with doc_tables.py {name}"
 
 
 def test_the_headline_is_what_totals_json_says() -> None:
@@ -156,7 +156,7 @@ def test_the_figures_the_docs_state_outside_the_rendered_tables_are_the_recorded
         for arm in ("014b", "016", "017")
     }
     assert whole_clip == {"014b": (11, 6), "016": (9, 3), "017": (6, 4)}
-    doc = (REPO_ROOT / "docs" / "drivejepa-retrain.md").read_text()
+    doc = (EXP / "README.md").read_text()
     for needle in (
         "0.066 above 0.1.6 with a standard error of 0.068",
         "0.226 above with a standard error of 0.069",
@@ -226,8 +226,14 @@ def test_the_scorer_in_the_shipped_file_is_the_first_runs_untouched_by_the_secon
 # ---------------------------------------------------------------- hygiene
 
 
-def test_no_driver_source_and_nothing_binary_is_in_the_record() -> None:
-    """The driver lives in paddock; weights, arrays and frames live nowhere in git."""
+def test_driver_source_is_only_the_paddock_copy_and_nothing_binary_is_in_the_record() -> None:
+    """The driver is the one copy taken from paddock; weights, arrays and frames live nowhere in git.
+
+    Paddock holds only the released models' checkpoints, so the driver that serves
+    this retrained one left it and is copied, as it ran, under paddock/. Driver
+    source anywhere else in the record would be a second copy that drifts.
+    """
+    driver_copy = "paddock/tools/models/drivejepa/alpasim_driver/"
     driver_files = {"planner.py", "bridge.py", "divider.py", "momentum.py", "real_model.py", "batch_fix.py"}
     banned = {
         ".ckpt",
@@ -247,6 +253,9 @@ def test_no_driver_source_and_nothing_binary_is_in_the_record() -> None:
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         rel = path.relative_to(EXP).as_posix()
+        if rel.startswith(driver_copy):
+            assert path.suffix not in banned, f"binary or derived data in the record: {rel}"
+            continue
         if path.name == "batch_fix.py":
             # The training-side original the generator was trained under: a patch
             # to the upstream refiner, not driver code.
@@ -288,7 +297,7 @@ def test_every_script_still_tokenizes_after_its_paths_were_replaced() -> None:
 
 def _original_folders() -> dict[str, str]:
     """Original working folder -> folder here, read from the one table that records it."""
-    doc = (REPO_ROOT / "docs" / "drivejepa-retrain.md").read_text()
+    doc = (EXP / "README.md").read_text()
     table = doc.split("## Where this came from", 1)[1]
     pairs = re.findall(r"^\| `([^`{]+)/` \| `([^`]+)/` \|$", table, flags=re.M)
     assert len(pairs) == 19
@@ -314,7 +323,7 @@ def test_the_working_folder_names_appear_only_in_that_table() -> None:
     old_names = {old.split("/")[-1] for old in _original_folders()}
     for path in EXP.iterdir():
         assert path.name not in old_names, path.name
-    for name in ("README.md", "docs/data.md", "experiments/drivejepa_retrain/README.md"):
+    for name in ("README.md", "docs/data.md", "experiments/GC05_physicalai_retrain/RECORD.md"):
         text = (REPO_ROOT / name).read_text()
         for old in old_names:
             assert old not in text, f"{old} in {name}"

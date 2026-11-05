@@ -43,6 +43,7 @@ tolerant of unknown keys so a newer trainer does not break an older scorer.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 
@@ -295,6 +296,20 @@ def read(directory: Path | str) -> Checkpoint:
     if not isinstance(raw, dict):
         raise SidecarError(f"{path} must contain a JSON object, got {type(raw).__name__}")
     return Checkpoint.from_dict(raw)
+
+
+def sha256_file(path: Path | str) -> str:
+    """The sha256 of a file, read in 16 MB blocks: what `weights_sha256` records.
+
+    The digest, not the directory, is what identifies a checkpoint: `train_run` and `step` name a
+    path, and a path can be overwritten or copied between sites. The experiment registry pins every
+    checkpoint by this value (`gallops experiments checkpoint`).
+    """
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 24), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 def _now() -> str:

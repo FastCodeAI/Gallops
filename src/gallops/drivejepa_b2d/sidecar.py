@@ -8,22 +8,15 @@ writes used to leave -- would look like a usable checkpoint.
 from __future__ import annotations
 
 import contextlib
-import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-from gallops.checkpoint import Checkpoint, staged, write
+from gallops.checkpoint import Checkpoint, sha256_file, staged, write
 
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(1 << 22), b""):
-            h.update(block)
-    return h.hexdigest()
+sha256 = sha256_file  # one digest for every checkpoint, so the registry and a sidecar agree
 
 
 def optimizer_step(head_metrics: dict[str, Any]) -> int:
