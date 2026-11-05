@@ -25,7 +25,7 @@ with its data, code, checkpoint sha256, results and gate verdicts.
 ## Where we are
 
 <!-- experiments:status -->
-- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and Navvrat runs it next.
+- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
 - **In progress:** 6 hypotheses, 3 enablers. Next by priority: [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.

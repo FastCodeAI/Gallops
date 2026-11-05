@@ -226,5 +226,5 @@ Records from before this decision say `the base` for that stack."""
 by = ["Naren"]
 evidence = ["H02.timing", "H07.exp3"]
 next = ["H01"]
-baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and Navvrat runs it next"
+baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first"
 source = "Naren, 6 Nov 2026"
