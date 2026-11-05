@@ -94,7 +94,8 @@ GATE_BENCHES = ("navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "
 STEP_UNITS = ("epoch", "pass", "optimizer_step")
 DATA_ROLES = ("train", "selection", "held-out", "eval")
 GATE_TIERS = ("quick", "closed", "all")
-GATE_VERDICTS = ("SHIP", "HOLD", "FAIL", "INCOMPLETE")
+#: What paddock's `overall()` returns. An unfinished subset is a HOLD that says so, not a verdict of its own.
+GATE_VERDICTS = ("SHIP", "HOLD", "FAIL")
 PAIR_VERDICTS = ("GAIN", "NEUTRAL", "REGRESSION", "NO RECORDS", "TOO FEW UNITS", "NOT RUN")
 
 #: Modules that serve every experiment: the contract, the site config, the CLI. Every other module
@@ -754,7 +755,7 @@ PAIR_MARK = {
     "TOO FEW UNITS": "▫️",
     "NOT RUN": "—",
 }
-GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**", "INCOMPLETE": "… INCOMPLETE"}
+GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**"}
 
 
 def _cell(text: Any) -> str:

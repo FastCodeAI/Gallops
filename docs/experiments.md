@@ -244,7 +244,7 @@ Copy the verdict into the run that produced the checkpoint, verbatim:
   baseline = "<what the candidate was paired against>"
   paddock_commit = "<the paddock sha the gate ran at>"
   manifest = "{runs}/gate/smoke/<label>/manifest.toml"
-  verdict = "<SHIP | HOLD | FAIL | INCOMPLETE>"
+  verdict = "<SHIP | HOLD | FAIL>"
 
     [[runs.gate.pairs]]           # one per benchmark, copied from `tools.gate check`
     bench = "<navsim | kitscenes | nuscenes | neuroncap | bench2drive | alpasim>"
@@ -264,15 +264,18 @@ the record, so the verdict can be traced to the weights it judged.
 
 ## Deciding a hypothesis
 
-The gate gives a checkpoint one verdict (paddock `docs/gate.md` owns the exact rule). Each verdict
-has one next step, and it is written down, so a hypothesis never just goes quiet.
+The gate gives a checkpoint one of three verdicts: SHIP, HOLD or FAIL (paddock `docs/gate.md` owns
+the exact rule). Each has a next step, and it is written down, so a hypothesis never just goes quiet.
+HOLD has four causes, and the job's output says which.
 
 | Gate says | Means | What you do |
 |---|---|---|
-| **FAIL** | a benchmark regressed beyond chance | Do not build on this checkpoint. Add a decision row. Either run a fix as the next run, or close the hypothesis: `status = "done"`, `verdict = "negative"`. |
-| **HOLD** | nothing regressed, and no closed-loop benchmark gained | Read each NEUTRAL with its MDE: it may only mean the subset is too small. Add a decision row: run the closed tier, run a stronger version as the next run, or close it as `inconclusive`. |
-| **SHIP** | every pair decided, none regressed, a closed-loop benchmark gained | Add a decision row with `version` set, and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
-| **INCOMPLETE** | a subset did not finish | No verdict yet. Finish the run. |
+| **FAIL** | a pair REGRESSED. On one pair alone that is a reason to look, not proof: an unchanged model FAILs about 10% of the time on the quick tier and 16% on `--tier all` | Read the failing pair's numbers first. If the regression stands, do not build on this checkpoint. Add a decision row, then either run a fix as the next run, or close the hypothesis: `status = "done"`, `verdict = "negative"`. |
+| **HOLD**, `not finished: <subset>` | a subset did not finish | No verdict yet. `python -m tools.gate_queue retry <job>`; finished runs are kept. |
+| **HOLD**, a pair undecided | a pair did not reach GAIN, NEUTRAL or REGRESSION (a clean crash check's TOO FEW UNITS is normal) | No verdict yet. Fix that pair, then run it again. Paddock `docs/gate.md` says what each verdict means. |
+| **HOLD**, on the quick tier | every pair decided, and this is the best quick can do: its closed-loop pairs may not ship | The expected good result. Run `--tier all` if you would ship this checkpoint. |
+| **HOLD**, on the closed tier | every pair decided, nothing regressed, and no closed-loop pair that may ship gained | Read each NEUTRAL with its MDE: it may only mean the subset is too small. Add a decision row: run a stronger version as the next run, or close it as `inconclusive`. |
+| **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row with `version` set, and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
 
 `make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
 it. Work that never reached a checkpoint ends as `parked` or `dropped`, with what it `learned`.

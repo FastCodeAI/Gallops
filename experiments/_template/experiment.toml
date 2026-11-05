@@ -69,7 +69,7 @@ parents = []  # experiments this builds on, by id
 #   [[runs.gate]]  # paddock's regression gate: copy `python -m tools.gate check` verbatim
 #   date = {{DATE}}
 #   tier = "quick"  # quick | closed | all
-#   verdict = "HOLD"  # SHIP | HOLD | FAIL | INCOMPLETE
+#   verdict = "HOLD"  # SHIP | HOLD | FAIL
 #   manifest = "{runs}/gate/smoke/<label>/manifest.toml"
 #     [[runs.gate.pairs]]
 #     bench = "navsim"

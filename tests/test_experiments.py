@@ -243,6 +243,7 @@ def test_the_small_repository_is_valid_and_renders(tmp_path) -> None:
             "pins its checkpoint's weights_sha256",
         ),
         ("a parent that does not exist", "learned =", 'parents = ["GC09"]\nlearned =', "parent GC09 is not"),
+        ("a gate verdict paddock never prints", 'verdict = "HOLD"', 'verdict = "INCOMPLETE"', "INCOMPLETE"),
         (
             "a module that does not exist",
             '"gallops.train.thing"',
