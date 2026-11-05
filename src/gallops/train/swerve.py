@@ -992,6 +992,8 @@ def main() -> None:
                 "loss": loss_note,
                 "init": str(args.init) if args.init else "released checkpoint",
                 "oversample": factors,
+                # Where the pixels came from: a cache is a recording, and it can be stale.
+                "frame_cache": os.environ.get("GALLOPS_FRAME_CACHE") or None,
                 # Ticks per optimiser step, and each source's share per epoch: two runs differing
                 # only in these read as the same recipe when neither was recorded.
                 "accumulate": args.accumulate,

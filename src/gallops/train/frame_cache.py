@@ -7,8 +7,8 @@ epoch, and across 733 episodes it would grow to about 20 GB of RAM.
 
 This does the same crop and resize ahead of time, in parallel, into one uint8 array per episode
 (`<root>/<episode key>.npy`, frames in timestamp order, with `<key>.stamps.npy` beside it).
-`TickDataset.frame` memory-maps them when GALLOPS_FRAME_CACHE is set, and falls back to decoding
-otherwise. The crop and resize are `TickDataset.frame`'s own (the vendor's `_get_camera_feature`), and
+`TickDataset.frame` reads them through `FrameCache` when GALLOPS_FRAME_CACHE is set, and decodes
+otherwise. `crop_resize` here is the one crop both paths use (the vendor's `_get_camera_feature`), and
 the training preflight's fidelity check compares what the trainer rebuilds against what the model saw.
 
     python -m gallops.train.frame_cache --labelled <dir> [--labelled <dir> ...] --out <root> --jobs 4
@@ -27,11 +27,21 @@ import numpy as np
 
 
 def key(episode_dir: Path) -> str:
-    """A stable file name for an episode directory."""
-    return hashlib.sha1(str(episode_dir).encode()).hexdigest()[:20]
+    """A file name for an episode directory as it is now: its path and each frame's size and mtime.
+
+    By path alone, an episode collected again at the same path was served its old pixels and
+    `build_episode` said `cached`. A cache built before this keys differently, so it reads as
+    absent and the trainer decodes; it is never trusted.
+    """
+    digest = hashlib.sha1(str(episode_dir).encode())
+    for frame in sorted(Path(episode_dir, "CAM_FRONT").glob("*.jpg")):
+        stat = frame.stat()
+        digest.update(f"{frame.name}:{stat.st_size}:{stat.st_mtime_ns}".encode())
+    return digest.hexdigest()[:20]
 
 
 def crop_resize(path: Path) -> np.ndarray:
+    """One frame as the model reads it, whether a run decodes it now or the cache did earlier."""
     import cv2
     from PIL import Image
 
@@ -41,20 +51,21 @@ def crop_resize(path: Path) -> np.ndarray:
 
 def build_episode(args: tuple[str, str]) -> str:
     directory, root = Path(args[0]), Path(args[1])
-    out = root / f"{key(directory)}.npy"
+    name = key(directory)
+    out = root / f"{name}.npy"
     if out.exists():
         return f"cached {directory}"
     frames = sorted((directory / "CAM_FRONT").glob("*.jpg"), key=lambda p: int(p.stem))
     stamps = np.asarray([int(p.stem) for p in frames], dtype=np.int64)
     stack = np.stack([crop_resize(p) for p in frames]) if frames else np.zeros((0, 256, 512, 3), np.uint8)
-    partial = root / f"{key(directory)}.partial.npy"
+    partial = root / f"{name}.partial.npy"
     np.save(partial, stack)
-    np.save(root / f"{key(directory)}.stamps.npy", stamps)
+    np.save(root / f"{name}.stamps.npy", stamps)
     partial.rename(out)  # written last: a present .npy is always complete
     return f"wrote {directory} ({len(frames)} frames)"
 
 
-#: Attempts at reading one cached file. Round 1B died at 93% of its last epoch on one
+#: Attempts at reading one cached file. Round 1B died 93% of the way through its run on one
 #: `OSError: [Errno 5] Input/output error` from the NAS; the same file read cleanly minutes later.
 READ_ATTEMPTS = 5
 
@@ -85,11 +96,15 @@ class FrameCache:
 
         self.root = Path(root)
         self.keep = keep
+        self._names: dict[Path, str] = {}  # once per episode: `key` lists a NAS directory
         self._open: OrderedDict[str, tuple[dict[int, int], np.ndarray] | None] = OrderedDict()
 
     def get(self, path) -> np.ndarray | None:
         path = Path(path)
-        name = key(path.parent.parent)
+        episode = path.parent.parent
+        if episode not in self._names:
+            self._names[episode] = key(episode)
+        name = self._names[episode]
         if name in self._open:
             self._open.move_to_end(name)
         else:

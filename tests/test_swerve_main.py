@@ -280,3 +280,11 @@ def test_the_stage_note_says_gridmask_is_off(tmp_path, monkeypatch):
     swerve.main()
     written = sidecar.read(steps(h.run)[0])
     assert "GridMask" not in json.dumps(written.notes["stage"])
+
+
+def test_a_frame_cache_is_declared(tmp_path, monkeypatch):
+    """#17 review, 🟠 5: a run read frames from a cache and its sidecar did not say so."""
+    h = harness(monkeypatch, tmp_path, {"r0": [tick("0053", 0)]}, "--epochs", "1", "--held-out", "0075")
+    monkeypatch.setenv("GALLOPS_FRAME_CACHE", "/frames")
+    swerve.main()
+    assert sidecar.read(steps(h.run)[0]).notes["frame_cache"] == "/frames"

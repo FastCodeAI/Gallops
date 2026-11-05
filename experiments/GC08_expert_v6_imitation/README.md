@@ -142,7 +142,10 @@ refuses an episode with no `lane_reference.json`.
   frames, cropped and resized as the model reads them, one array per episode,
   read whole into a 64-episode LRU. A round-1A step spent 1.4–2.4 s of 2.5–3 s
   decoding lossless PNGs. Reads retry on `OSError`, after round 1B died on one
-  transient NAS read error.
+  transient NAS read error. Its key now holds each frame's size and mtime as well as
+  the path, so an episode collected again is not served its old pixels, and the
+  sidecar records `notes.frame_cache`. A cache built by these runs keys differently,
+  so it reads as absent until rebuilt, and the trainer decodes instead.
 - **`init` sources:** a DAgger round driven by the `--init` weights is
   fidelity-checked against those weights once they load, with the same limits
   as the start-of-run check.

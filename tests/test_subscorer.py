@@ -279,3 +279,36 @@ def test_a_second_fit_into_a_scorer_run_is_refused(tmp_path, monkeypatch):
     with pytest.raises(SystemExit, match="already holds a fit"):
         scorer_train.main()
     assert sorted(p.name for p in out.iterdir()) == before
+
+
+def test_a_relabelled_file_is_not_served_from_the_reduction(tmp_path):
+    """#17 review, 🟠 5: keyed on episode names, `reduce` kept returning the old labels.
+
+    The preflight's `labels_check` reads `.labels.npz`, so it passed while the run trained on old
+    ones. In a repo whose history is relabelling, that is the likely path.
+    """
+    import os
+
+    _episode(tmp_path, "gt", "frontal-0070__run_0", 2, 0.5, np.random.default_rng(2))
+    assert np.allclose(subscorer.reduce(tmp_path)["travel"], 10.0)
+
+    labels = tmp_path / "gt" / "frontal-0070__run_0.labels.npz"
+    kept = dict(np.load(labels))
+    kept["travel"] = np.full_like(kept["travel"], 5.0)
+    np.savez(labels, **kept)
+    reduced = tmp_path / "probe_input.npz"
+    stamp = reduced.stat().st_mtime_ns + 1_000_000_000  # a coarse clock cannot hide this one
+    os.utime(labels, ns=(stamp, stamp))
+    assert np.allclose(subscorer.reduce(tmp_path)["travel"], 5.0)
+
+
+def test_an_untouched_cache_reuses_its_reduction(tmp_path):
+    import os
+
+    _episode(tmp_path, "gt", "frontal-0070__run_0", 2, 0.5, np.random.default_rng(3))
+    subscorer.reduce(tmp_path)
+    reduced = tmp_path / "probe_input.npz"
+    stamp = reduced.stat().st_mtime_ns + 1_000_000_000
+    os.utime(reduced, ns=(stamp, stamp))
+    subscorer.reduce(tmp_path)
+    assert reduced.stat().st_mtime_ns == stamp

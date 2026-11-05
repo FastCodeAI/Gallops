@@ -122,14 +122,18 @@ def reduce(cache: Path) -> dict:
     Reading a few hundred cache files from the NAS takes minutes; the reduced arrays are what the
     folds and the trainer read. A cache file without its labels is skipped, so a cache still being
     built reduces to what is finished. The kept file is reused only while it covers exactly the
-    labelled episodes on disk: a reduction made mid-build would otherwise be read forever after.
+    labelled episodes on disk, and nothing under it is newer: a reduction made mid-build would
+    otherwise be read forever after, and one made before a relabel would train on the old labels
+    while the preflight, which reads `.labels.npz`, passed.
     """
     reduced = cache / "probe_input.npz"
     files = labelled_files(cache)
     wanted = {f"{f.parent.name}/{f.stem}" for f in files}
     if reduced.exists():
         kept = np.load(reduced)
-        if set(np.unique(kept["episode"]).tolist()) == wanted:
+        inputs = [p for f in files for p in (f, f.with_name(f.name.replace(".npz", ".labels.npz")))]
+        newest = max((p.stat().st_mtime_ns for p in inputs), default=0)
+        if newest < reduced.stat().st_mtime_ns and set(np.unique(kept["episode"]).tolist()) == wanted:
             return dict(kept)
     acc: dict[str, list] = {
         k: []
