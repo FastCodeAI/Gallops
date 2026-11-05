@@ -623,7 +623,7 @@ def main() -> None:
         for labelled, dumps, drove in args.source
     ]
     out_root = fresh_run(cfg, args.train_run)  # before any of the minutes below
-    loaded = git_sha(REPO_ROOT)  # the commit whose modules this process imported
+    imported = git_sha(REPO_ROOT)  # the commit whose modules this process imported
     # The agent reads these at construction, exactly as paddock's model.yaml
     # supplies them to its node. NAVSIM_EXP_ROOT in particular is where it looks
     # for the V-JEPA weights the encoder is built on.
@@ -775,9 +775,9 @@ def main() -> None:
         args.device,
     )
 
-    if checked["code"]["sha"] != loaded:
+    if checked["code"]["sha"] != imported:
         raise SystemExit(
-            f"HEAD moved from {loaded} to {checked['code']['sha']} while the model loaded; the "
+            f"HEAD moved from {imported} to {checked['code']['sha']} while the model loaded; the "
             "preflight checked a tree this process did not import -- start again"
         )
 
@@ -927,60 +927,57 @@ def main() -> None:
             flush=True,
         )
 
-        directory = cfg.checkpoint_dir(MODEL, args.train_run, step)
-        directory.mkdir(parents=True, exist_ok=True)
-        torch.save({k: v for k, v in model.state_dict().items()}, directory / "model.pt")
         moved = head_moved(checked["code"]["sha"], REPO_ROOT)
         if moved:
             print(f"  HEAD moved during the run to {moved['git_head_at_save']}; recorded beside", flush=True)
-        sidecar.write(
-            directory,
-            sidecar.Checkpoint(
-                model=MODEL,
-                step=step,
-                train_git_sha=checked["code"]["sha"],
-                train_run=args.train_run,
-                # Built from what this run read, not a literal: the literal said
-                # "round0, 5 scenes" for runs on three data sets and three scenes.
-                trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
-                selection_split=f"held-out scene {args.held_out}",
-                params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
-                precision="fp32",
-                notes={
-                    # These two read "stage A -- refiner only" and "L1 to the expert"
-                    # long after the trainer became joint; they now say what runs.
-                    "stage": stage_note,
-                    "loss": loss_note,
-                    "init": str(args.init) if args.init else "released checkpoint",
-                    "oversample": factors,
-                    "excluded_episodes": args.exclude_episodes,
-                    # Which label set and which dumps: v4 could only be traced to
-                    # its labels by file timestamps.
-                    "sources": [
-                        {**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)
-                    ],
-                    # the scenes actually read, which `trained_on` counts but cannot name
-                    "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
-                    "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
-                    "limit": args.limit or None,
-                    "preflight": checked,
-                    "history": history,
-                    # every 25-step mean and held-out check of this run, beside the checkpoints
-                    "metrics_file": "../metrics.jsonl",
-                    "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
-                    "off_camera_targets": "kept" if args.keep_blind else "dropped",
-                    "excluded_scenes": args.exclude_scene,
-                    # dropped before training because their input cannot be rebuilt
-                    "unrebuildable": unrebuildable,
-                    "seed": args.seed,
-                    "val_every": args.val_every,
-                    "val_sample": args.val_sample,
-                    # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
-                    "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
-                    **moved,
-                },
-            ),
+        checkpoint = sidecar.Checkpoint(
+            model=MODEL,
+            step=step,
+            train_git_sha=checked["code"]["sha"],
+            train_run=args.train_run,
+            # Built from what this run read, not a literal: the literal said
+            # "round0, 5 scenes" for runs on three data sets and three scenes.
+            trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
+            selection_split=f"held-out scene {args.held_out}",
+            params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
+            precision="fp32",
+            notes={
+                # These two read "stage A -- refiner only" and "L1 to the expert"
+                # long after the trainer became joint; they now say what runs.
+                "stage": stage_note,
+                "loss": loss_note,
+                "init": str(args.init) if args.init else "released checkpoint",
+                "oversample": factors,
+                "excluded_episodes": args.exclude_episodes,
+                # Which label set and which dumps: v4 could only be traced to
+                # its labels by file timestamps.
+                "sources": [{**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)],
+                # the scenes actually read, which `trained_on` counts but cannot name
+                "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
+                "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
+                "limit": args.limit or None,
+                "preflight": checked,
+                "history": history,
+                # every 25-step mean and held-out check of this run, beside the checkpoints
+                "metrics_file": "../metrics.jsonl",
+                "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
+                "off_camera_targets": "kept" if args.keep_blind else "dropped",
+                "excluded_scenes": args.exclude_scene,
+                # dropped before training because their input cannot be rebuilt
+                "unrebuildable": unrebuildable,
+                "seed": args.seed,
+                "val_every": args.val_every,
+                "val_sample": args.val_sample,
+                # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
+                "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
+                **moved,
+            },
         )
+        # Staged: a job stopped between these two writes left weights with no sidecar, which is
+        # worse than no checkpoint, because it looks usable.
+        with sidecar.staged(cfg.checkpoint_dir(MODEL, args.train_run, step)) as staging:
+            torch.save({k: v for k, v in model.state_dict().items()}, staging / "model.pt")
+            sidecar.write(staging, checkpoint)
     metrics.close()
     print(f"  wrote checkpoints and {metrics_path.name} under {out_root}")
 
