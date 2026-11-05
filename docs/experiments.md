@@ -88,7 +88,7 @@ of its own, it does not. A diagnostic that wrote no checkpoint and only informed
 ## Checkpoints and tags
 
 A checkpoint lives where [docs/checkpoints.md](checkpoints.md) says, `{weights}/<model>/<train_run>/step_<n>/`,
-with `model` the paddock adapter name. For new runs, `train_run` is `<id>-<run>-<slug>` in lower
+with `model` the model family: a paddock adapter, or a variant of one. For new runs, `train_run` is `<id>-<run>-<slug>` in lower
 case, e.g. `h04-r1-subscore`, so a directory names its experiment.
 
 **A checkpoint is identified by its weights' sha256, not its path.** A path names a directory,
@@ -236,10 +236,15 @@ python -m tools.gate_queue ls
 
 The default **quick** tier takes about 40 minutes: run it on every checkpoint you would keep. `--tier
 all` adds the closed-loop subsets: run it on the two or three you would ship. A checkpoint needs a
-paddock adapter, and `--env` must name a key that adapter's `model.yaml` sets. Paddock `docs/gate.md`
-says what each subset measures and how to read a verdict.
+paddock adapter, and `--env` must name a key that adapter's `model.yaml` sets. `--model` takes that
+adapter, not the record's `model`: `H07.exp3` is recorded as `drivejepa_kitscenes` and ran as `--model
+drivejepa`. `submit` refuses a model with no queue baselines, so a new adapter needs a `--baseline`
+job first (paddock `docs/queue.md`). Paddock `docs/gate.md` says what each subset measures and how
+to read a verdict.
 
-Copy the verdict into the run that produced the checkpoint, verbatim:
+A finished job writes `<queue root>/jobs/<job>/verdict.json`, with the gate's manifest in `smoke/`.
+Copy the verdict into the run that produced the checkpoint, verbatim. `{paddock_site}` below is a
+label for paddock's site folder; gallops does not resolve it.
 
 ```toml
   [[runs.gate]]
@@ -247,10 +252,10 @@ Copy the verdict into the run that produced the checkpoint, verbatim:
   tier = "<quick | closed | all>"
   baseline = "<what the candidate was paired against>"
   paddock_commit = "<the paddock sha the gate ran at>"
-  manifest = "{runs}/gate/smoke/<label>/manifest.toml"
+  manifest = "{paddock_site}/queue/jobs/<job>/smoke/manifest.toml"
   verdict = "<SHIP | HOLD | FAIL>"
 
-    [[runs.gate.pairs]]           # one per benchmark, copied from `tools.gate check`
+    [[runs.gate.pairs]]           # one per benchmark, copied from the job's verdict.json
     bench = "<navsim | kitscenes | nuscenes | neuroncap | bench2drive | alpasim>"
     metric = "<the benchmark's own score>"
     baseline = <baseline value>
