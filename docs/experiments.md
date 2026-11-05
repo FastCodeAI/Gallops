@@ -341,7 +341,7 @@ One PR per experiment, or one per run if it is large. Reviewers check each of th
 - [ ] `gallops experiments render --write` was run, and `make check` passes.
 - [ ] The title and description come from `gallops experiments pr`, with every `TODO(author):` replaced.
 
-A results PR is any PR that adds or changes a result or a gate verdict. Its title and the top of its
+A results PR is any PR that adds, changes or removes a result or a gate verdict. Its title and the top of its
 description are rendered from the record, like the README, so the ID and the numbers are copied, never
 typed:
 
@@ -361,6 +361,7 @@ The `results-pr` check in CI re-renders both, from the PR merged into its base. 
 - its title or block differs from the record, which is fixed by re-running the command;
 - a `TODO(author):` is left in it;
 - it also changes the results of a second experiment;
+- the run it reports is not one it changed;
 - it has more than 30 lines written by hand.
 
 A PR that changes a result without reporting one, such as a correction across several records, says so

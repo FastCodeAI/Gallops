@@ -1502,34 +1502,34 @@ def _reported(record: dict[str, Any]) -> dict[str, Any]:
     """What a record reports, by run: its results and gate verdicts. A run with neither reports nothing."""
     runs = record.get("runs", [])
     return {
-        r.get("id"): (r.get("results", []), r.get("gate", []))
+        r.get("id", ""): (r.get("results", []), r.get("gate", []))
         for r in runs
         if r.get("results") or r.get("gate")
     }
 
 
 def changed_results(reg: Registry, base: str) -> list[str]:
-    """The experiments whose results or gate verdicts differ from those at commit `base`.
+    """The runs whose results or gate verdicts differ from those at commit `base`, removed ones included.
 
-    Records are matched by id, not path, so a folder that moves reports nothing new, and compared as
-    parsed TOML, so a reworded comment is no change.
+    Compared by run id, not path, so a folder that moves reports nothing new, and as parsed TOML, so a
+    reworded comment is no change.
     """
 
     def git(*args: str) -> str:
         cmd = ["git", "-C", str(reg.root), *args]
         return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
 
-    then: dict[str, dict[str, Any]] = {}
+    then: dict[str, Any] = {}
     for path in git("ls-tree", "-r", "--name-only", base, "--", "experiments").splitlines():
         # _template's dates are placeholders, so it is not TOML until `experiments new` fills it in.
         if path.endswith("/experiment.toml") and not path.startswith("experiments/_"):
-            record = tomllib.loads(git("show", f"{base}:{path}"))
-            then[record.get("id", path)] = record
-    return [e.id for e in reg.experiments if _reported(e.data) != _reported(then.get(e.id, {}))]
+            then.update(_reported(tomllib.loads(git("show", f"{base}:{path}"))))
+    now = {run: told for e in reg.experiments for run, told in _reported(e.data).items()}
+    return sorted(run for run in {*then, *now} if then.get(run) != now.get(run))
 
 
 def check_pr(reg: Registry, title: str, body: str, changed: list[str]) -> list[str]:
-    """What is wrong with a PR's title and body, given the experiments whose results it changes.
+    """What is wrong with a PR's title and body, given the runs whose results it changes.
 
     A PR with a rendered block is held to the record whether or not it changed a result: it claims to
     report one. A PR with none is only asked to say why, and only when it changed one.
@@ -1558,9 +1558,11 @@ def check_pr(reg: Registry, title: str, body: str, changed: list[str]) -> list[s
         problems.append(f"the title must be `{pr_title(run, res)}`, not `{title}`")
     if text != pr_block(reg, e, run, res):
         problems.append(f"the rendered block differs from the record: {fix}")
-    others = [x for x in changed if x != e.id]
+    others = sorted({x.split(".")[0] for x in changed} - {e.id})
     if others:
         problems.append(f"it also changes results in {', '.join(others)}: one PR per experiment")
+    if changed and run["id"] not in changed:
+        problems.append(f"it reports {run['id']} but changes {', '.join(changed)}: report a run it changed")
     if PR_TODO in prose:
         problems.append(f"`{PR_TODO}` is still in the body: replace each one")
     lines = sum(1 for line in prose.splitlines() if line.strip())

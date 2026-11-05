@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import importlib.util
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -605,6 +606,22 @@ def test_members_agree_with_the_pinned_digest(tmp_path, members, file, error) ->
 
 _TITLE = "H01.r1: NAVSIM EPDMS 0.875 → 0.885, gate HOLD"
 _NO_GATE = RECORD.split("  [[runs.gate]]")[0]
+_SECOND_RUN = """
+[[runs]]
+id = "H01.r2"
+label = "second run"
+start_from = "released"
+
+  [runs.code]
+  modules = ["gallops.train.thing"]
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS"
+  value = "0.890"
+  better = "higher"
+  strength = "argued"
+"""
 
 
 def _rendered(reg: exps.Registry, ref: str = "H01.r1") -> tuple[str, str]:
@@ -627,7 +644,7 @@ def test_a_results_pr_is_rendered_from_its_record(tmp_path) -> None:
     assert "- **Record:** `experiments/H01_thing/CARD.md`" in body
     assert "Why the gate has not run" not in body
     assert exps.render_pr(reg, "H01") == exps.render_pr(reg, "H01.r1"), "an experiment means its headline"
-    assert exps.check_pr(reg, title, body, ["H01"]) == []
+    assert exps.check_pr(reg, title, body, ["H01.r1"]) == []
 
 
 def test_a_run_with_no_gate_says_so_and_asks_why(tmp_path) -> None:
@@ -648,23 +665,7 @@ def test_a_run_with_a_gate_and_no_result_can_be_reported(tmp_path) -> None:
 
 
 def test_a_run_reports_its_own_result_when_the_headline_is_elsewhere(tmp_path) -> None:
-    second = """
-[[runs]]
-id = "H01.r2"
-label = "second run"
-start_from = "released"
-
-  [runs.code]
-  modules = ["gallops.train.thing"]
-
-  [[runs.results]]
-  bench = "navsim"
-  metric = "EPDMS"
-  value = "0.890"
-  better = "higher"
-  strength = "argued"
-"""
-    reg = exps.Registry.load(_repo(tmp_path, RECORD + second))
+    reg = exps.Registry.load(_repo(tmp_path, RECORD + _SECOND_RUN))
     assert exps.render_pr(reg, "H01.r2").splitlines()[0] == "H01.r2: NAVSIM EPDMS 0.890, gate not run"
     assert exps.render_pr(reg, "H01").splitlines()[0] == _TITLE
 
@@ -702,23 +703,24 @@ def test_a_record_with_nothing_to_report_has_no_results_pr(tmp_path) -> None:
 def test_a_results_pr_that_differs_from_its_record_is_refused(tmp_path, break_it, error) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     title, body = break_it(*_rendered(reg))
-    problems = exps.check_pr(reg, title, body, ["H01"])
+    problems = exps.check_pr(reg, title, body, ["H01.r1"])
     assert any(error in p for p in problems), problems
 
 
 def test_one_results_pr_reports_one_experiment(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
-    problems = exps.check_pr(reg, *_rendered(reg), ["H01", "H02"])
+    problems = exps.check_pr(reg, *_rendered(reg), ["H01.r1", "H02.r1"])
     assert problems == ["it also changes results in H02: one PR per experiment"]
 
 
 def test_a_result_with_no_rendered_block_is_refused_until_it_says_why(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
-    assert "gallops experiments pr <ID>" in exps.check_pr(reg, "any title", "any body", ["H01"])[0]
+    assert "gallops experiments pr <ID>" in exps.check_pr(reg, "any title", "any body", ["H01.r1"])[0]
     assert (
-        exps.check_pr(reg, "any title", "Fixes a flag.\nNot a results PR: a flag was wrong.", ["H01"]) == []
+        exps.check_pr(reg, "any title", "Fixes a flag.\nNot a results PR: a flag was wrong.", ["H01.r1"])
+        == []
     )
-    assert exps.check_pr(reg, "any title", "Not a results PR: ", ["H01"]) != [], "a reason is required"
+    assert exps.check_pr(reg, "any title", "Not a results PR: ", ["H01.r1"]) != [], "a reason is required"
 
 
 def test_a_pr_that_changes_no_result_is_left_alone(tmp_path) -> None:
@@ -730,16 +732,16 @@ def test_a_body_saved_by_the_web_editor_still_matches(tmp_path) -> None:
     """GitHub's editor saves CRLF, which would otherwise fail every PR someone touched up in the browser."""
     reg = exps.Registry.load(_repo(tmp_path))
     title, body = _rendered(reg)
-    assert exps.check_pr(reg, title, body.replace("\n", "\r\n"), ["H01"]) == []
+    assert exps.check_pr(reg, title, body.replace("\n", "\r\n"), ["H01.r1"]) == []
 
 
 def test_the_pr_template_does_not_pass_for_a_results_pr(tmp_path) -> None:
     """Leaving the template in place says nothing, and neither does a reason hidden in a comment."""
     reg = exps.Registry.load(_repo(tmp_path))
     template = (REPO_ROOT / ".github" / "pull_request_template.md").read_text()
-    assert exps.check_pr(reg, "any title", template, ["H01"]) != []
+    assert exps.check_pr(reg, "any title", template, ["H01.r1"]) != []
     hidden = "<!--\nNot a results PR: hidden from the reviewer\n-->"
-    assert exps.check_pr(reg, "any title", hidden, ["H01"]) != [], "the reason has to be visible"
+    assert exps.check_pr(reg, "any title", hidden, ["H01.r1"]) != [], "the reason has to be visible"
 
 
 def _commit(root: Path, message: str) -> None:
@@ -764,7 +766,7 @@ def test_changing_a_result_or_a_gate_is_what_makes_a_results_pr(tmp_path) -> Non
     record = root / "experiments" / "H01_thing" / "experiment.toml"
     for old, new in [('value = "0.885"', 'value = "0.886"'), ('verdict = "HOLD"', 'verdict = "FAIL"')]:
         record.write_text(RECORD.replace(old, new))
-        assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01"], new
+        assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"], new
 
 
 def test_registering_an_experiment_is_not_a_results_pr_until_it_reports_something(tmp_path) -> None:
@@ -775,7 +777,29 @@ def test_registering_an_experiment_is_not_a_results_pr_until_it_reports_somethin
     (folder / "experiment.toml").write_text(RECORD[: RECORD.index("  [[runs.results]]")])
     assert exps.changed_results(exps.Registry.load(root), "HEAD") == []
     (folder / "experiment.toml").write_text(RECORD)
-    assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01"]
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"]
+
+
+def test_a_result_that_is_removed_is_a_change_too(tmp_path) -> None:
+    """IDs are marked `dropped`, not freed, so a record that vanishes needs a reason someone can read."""
+    root = _with_base(tmp_path)
+    shutil.rmtree(root / "experiments" / "H01_thing")
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"]
+
+
+def test_a_results_pr_reports_a_run_it_changed(tmp_path) -> None:
+    """A title that names H01.r1 must not stand for a PR that only moved H01.r2's number."""
+    root = _with_base(tmp_path, RECORD + _SECOND_RUN)
+    record = root / "experiments" / "H01_thing" / "experiment.toml"
+    record.write_text((RECORD + _SECOND_RUN).replace('value = "0.890"', 'value = "0.891"'))
+    reg = exps.Registry.load(root)
+    changed = exps.changed_results(reg, "HEAD")
+    assert changed == ["H01.r2"]
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r2"), changed) == []
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r1"), changed) == [
+        "it reports H01.r1 but changes H01.r2: report a run it changed"
+    ]
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r1"), ["H01.r1", "H01.r2"]) == [], "one of several is fine"
 
 
 def test_what_a_record_says_around_its_results_is_no_change(tmp_path) -> None:

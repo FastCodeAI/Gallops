@@ -184,7 +184,7 @@ than piping to `tail`. `make typecheck` is the deliberate exception — advisory
 absent from `make check`, blocking nowhere — for the same reason paddock keeps
 it advisory: a check that reddens unrelated work is one people learn to ignore.
 
-**A PR that adds or changes a result or a gate verdict takes its title and
+**A PR that adds, changes or removes a result or a gate verdict takes its title and
 description from `gallops experiments pr <ID>`,** never typed; see
 [docs/experiments.md](docs/experiments.md#results-pr). `gh pr create --body`
 skips `.github/pull_request_template.md`, so this line is what reaches a PR
