@@ -50,9 +50,8 @@ The work has had two phases:
 - **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA — since D11, 19 Oct 2026.
 - **Shipped version:** none yet. `gallops-v0.1` is the first checkpoint the gate says SHIP to against the base ([how versions are earned](docs/experiments.md#versions)).
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
-- **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar).
+- **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar), [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory (Naren, Siddesh).
 - **Enablers in progress:** [H03](experiments/H03_shared_store_and_tags/CARD.md) Shared store and checkpoint tags (Naren), [H09](experiments/H09_shared_runner/CARD.md) Shared gate runner (Naren), [H11](experiments/H11_hugsim/CARD.md) HUGSIM trial (Navvrat), [H12](experiments/H12_nuscenes_teacher_scenes/CARD.md) nuScenes teacher-scene selector (Ruhan), [H13](experiments/H13_alpamayo_teacher/CARD.md) Alpamayo teacher (reuses draw.teach) (Ruhan).
-- **Next, by priority:** [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory.
 <!-- /experiments:status -->
 
 ## The decision path
@@ -95,7 +94,7 @@ flowchart TD
     H12["<b>H12</b> · nuScenes teacher-scene selector<br/>⏳ running · Ruhan"]
     H13["<b>H13</b> · Alpamayo teacher (reuses draw.teach)<br/>⏳ running · Ruhan"]
     H14["<b>H14</b> · Aux heads on the refiner<br/>⏳ running · Shreedhar"]
-    H15["<b>H15</b> · Prediction memory<br/>📝 planned · Naren"]
+    H15["<b>H15</b> · Prediction memory<br/>⏳ running · Naren"]
   end
   D01{{"<b>D01</b> · 19 Sep<br/>Fix the selection, not the head"}}
   D02{{"<b>D02</b> · 26 Sep<br/>neuroNCAP needs both halves trained"}}
@@ -228,7 +227,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | ⏳ running | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | — | 📝 planned | `r1`, `r2`, `r3` | — | — | — |
+| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | — | ⏳ running | `r1`, `r2`, `r3`, `r3-a-s0`, `r3-a-s1`, `r3-a-s2`, `r3-b-s0`, `r3-b-s1`, `r3-b-s2` | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●●○ strong · open-loop | — |
 <!-- /experiments:hypotheses -->
 
 ### Enablers

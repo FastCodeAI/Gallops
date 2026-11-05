@@ -47,7 +47,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H12](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selection for the privileged teacher's data collection | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H12_nuscenes_teacher_scenes/](H12_nuscenes_teacher_scenes/) |
 | [H13](H13_alpamayo_teacher/CARD.md) | Alpamayo privileged teacher on neuroNCAP, reusing the tested expert solver | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H13_alpamayo_teacher/](H13_alpamayo_teacher/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
-| [H15](H15_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | 📝 planned | [H15_prediction_memory/](H15_prediction_memory/) |
+| [H15](H15_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | ⏳ running | [H15_prediction_memory/](H15_prediction_memory/) |
 <!-- /experiments:index -->
 
 ## Code map
