@@ -33,6 +33,7 @@ external = [
   "nuScenes open loop of 1B epoch 2: paddock run dir nuscenes/drivejepa/20261015T074632-198187, committed to no repository.",
   "Round 1A on 0075 (10 runs per shape): the gallops collection collect_r1a_eval under {runs}; which 1A epoch drove it is not recorded.",
   "Labelled data (labelled_r0cam_v6, labelled_expert_v6, labelled_r2_v6, labelled_nusc) and candidate dumps: under {runs}, listed per run in each sidecar's notes.sources, and with bytes and sha256 in POINTERS.md.",
+  "Paddock's dump adapter drivejepa_ncapdump: on branch analysis/drivejepa-ncap-candidates (b1c5779), not on main. Its DRIVEJEPA_DRIVE=expert mode, which made the expert-driven collection, is in no commit; POINTERS.md pins the file.",
 ]
 
 [[runs]]
@@ -100,6 +101,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   model = "drivejepa_swerve"
   train_run = "v6-r1a-loso0075"
   step = 15684
+  step_unit = "pass"
   weights_sha256 = "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5"
   file = "agent.ckpt"
   members = [
@@ -164,7 +166,7 @@ start_from = "released Drive-JEPA (seeing)"
 trained = ["refiner", "scorer"]
 frozen = ["encoder"]
 train_git_sha = "048d49c"
-notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading one frame-cache file from the NAS; the epoch-2 checkpoint is the one evaluated. Training curves: nearest-candidate distance to the v6 plan 1.03 → 0.40 m. On 0103 frontal one run braked to 2.6 m/s and moved 3.3 m left (the intended manoeuvre), one swerved 3 m right without braking, one was hit; one stationary run veered 3.1 m left with no need. Every tick stayed on the drivable area. Step counts one-tick forward passes, not optimizer steps."
+notes = "Recipe as 1A. Stopped about 78% of the way through epoch 3 (last logged step 96,075) on OSError [Errno 5] reading one frame-cache file from the NAS; the epoch-2 checkpoint is the one evaluated. Training curves: nearest-candidate distance to the v6 plan 1.03 → 0.40 m. On 0103 frontal one run braked to 2.6 m/s and moved 3.3 m left (the intended manoeuvre), one swerved 3 m right without braking, one was hit; one stationary run veered 3.1 m left with no need. Every tick stayed on the drivable area. Step counts one-tick forward passes, not optimizer steps."
 
   [runs.code]
   entry = "gallops.train.swerve"
@@ -230,6 +232,7 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   model = "drivejepa_swerve"
   train_run = "v6-r1b-all"
   step = 69186
+  step_unit = "pass"
   weights_sha256 = "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e"
   file = "agent.ckpt"
   members = [
@@ -332,6 +335,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   model = "drivejepa_swerve"
   train_run = "v6-r2-short"
   step = 11377
+  step_unit = "pass"
   weights_sha256 = "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e"
   file = "agent.ckpt"
   members = [
@@ -371,12 +375,12 @@ source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Expert v6 in the real engine"
-result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
+result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert, a mode in no commit: see POINTERS.md) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
 source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Probe: does the frozen encoder see what v6 decides?"
-result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. Strong on the Boston scenes, weak on Singapore"
+result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075, and trails ego state on 0070. No script or report was kept"
 source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]

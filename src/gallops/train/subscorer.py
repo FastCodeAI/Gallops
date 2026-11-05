@@ -1,7 +1,8 @@
 """The sub-score scorer over cached features: what it reads, how it is built, how it trains.
 
 One definition, used by the leave-one-scene-out folds (`scorer_folds --variant probe-geo`) and by
-`scorer_train`, which writes weights paddock's `drivejepa_subscore` adapter loads. The repos do
+`scorer_train`, which writes weights paddock's `drivejepa_subscore` adapter loads. That adapter is
+not on paddock's `main`: it is on paddock's branch `model/drivejepa-subscore` (027bc9f). The repos do
 not import each other, so `layout()` is the contract: the adapter's `build_scorer` must produce
 exactly these state_dict keys and shapes, and `tests/test_subscorer.py` pins them.
 

@@ -39,3 +39,13 @@ Committed to no repository, which is what the results' `no-record` flag says.
 |---|---|---:|---|
 | `neuroncap/drivejepa_subscore/20261013T202318-c43ac5` | 0103, relative rule, the account's table | 2,219 | `7887998e6104c17cec0d8dc2f2845a8fc5aabc4e5b72e0b3a8178c3605733cff` |
 | `neuroncap/drivejepa_subscore/20261013T205827-fff68a` | 0103, `DRIVEJEPA_SUBSCORE_RULE=absolute` | 2,219 | `ec2825340076b5680ec4c257d0e1da8d253337eb1e736c38508bf8c71a7c92e0` |
+
+## Paddock code
+
+Neither repository imports the other, so what ran on paddock's side has to be named here. Without
+these branches another site can train this scorer but cannot load it.
+
+| Code | Where it is | Pin |
+|---|---|---|
+| the `drivejepa_subscore` adapter | branch `model/drivejepa-subscore`, not on `main` or any PR | `027bc9f82996d0ee4f824eee76425d6ef973e09c` |
+| the adapter and its result records | branch `record/drivejepa-camera-blind`, not on `main` or any PR | `779214431d452510743647d0d60d0647dbf79e91` |

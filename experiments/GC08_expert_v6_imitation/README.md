@@ -41,7 +41,8 @@ What was tried:
   override rule (relative or absolute) chooses when to leave the model's pick.
 - **Code:** `train/subscorer.py` (the module, inputs, targets, rules and the
   `layout()` contract with paddock's `drivejepa_subscore`), `train/scorer_train.py`
-  (trainer and its preflight), `train/scorer_folds.py --variant probe-geo`.
+  (trainer and its preflight), `train/scorer_folds.py --variant probe-geo`. That
+  adapter is not on paddock's `main`; see [POINTERS.md](../GC07_subscore_scorer/POINTERS.md#paddock-code).
 - **Run:** `{weights}/drivejepa_subscore/sighted-v1`, 5 seeds × 20 epochs, on the
   seeing round-0 collection plus cache v4, 23,777 usable ticks over the 5 scenes.
   Preflight passed (fidelity 99.3% after the switch to lossless frames).
@@ -116,11 +117,14 @@ evaluator and collision checker without the renderer.
 - **The real engine agrees.** Expert-driven collection (paddock's analysis
   adapter, `DRIVEJEPA_DRIVE=expert`) replays v6 through neuroNCAP with the
   renderer and asserts the pose stays within 2 cm of the offline rollout; the
-  first smoke differed by 0.000 mm over 70 ticks and scored the same.
+  first smoke differed by 0.000 mm over 70 ticks and scored the same. **That mode
+  is in no commit,** so the collection cannot be remade from any repository yet;
+  see [POINTERS.md](POINTERS.md#paddock-code).
 - **Probe:** a linear probe on the frozen encoder's pooled tokens, predicting
   v6's decision on a held-out scene, balanced accuracy with the image against
   ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070
-  0.53/0.61, 0075 0.93/0.58. Strong on the Boston scenes, weak on Singapore.
+  0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075,
+  and trails ego state on 0070. No script or report for this was kept.
 
 `expert/label.py --expert v6 --packs <dir>` labels a collection with v6 and
 refuses an episode with no `lane_reference.json`.
@@ -161,9 +165,9 @@ lr 1e-4, brake ticks 2×, brake-then-swerve ticks 4×, 3 epochs.
 | `{weights}/drivejepa_swerve/v6-r1a-loso0075` | 4, 0075 held out | round 0 driven by the released seeing model and relabelled by v6 (8,402 ticks over 150 episodes), real nuScenes at 33% |
 | `{weights}/drivejepa_swerve/v6-r1b-all` | all 5 | as 1A, plus the expert-driven collection (150 episodes, 9,234 ticks) |
 
-1B stopped at 93% of epoch 3 on `OSError: [Errno 5] Input/output error` reading
-one frame-cache file from the NAS; the epoch-2 checkpoint (`step_000069186`) is
-the one evaluated.
+1B stopped about 78% of the way through epoch 3 (last logged step 96,075, 93% of the
+run) on `OSError: [Errno 5] Input/output error` reading one frame-cache file from the
+NAS; the epoch-2 checkpoint (`step_000069186`) is the one evaluated.
 
 Tick counts above are labelled ticks, except the expert-driven 9,234, which counts
 usable ones. The trainer read the usable ticks: 7,932 of round 0's 8,402, 9,234 of the

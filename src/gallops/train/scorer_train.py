@@ -7,7 +7,9 @@
 
 Writes `{weights}/drivejepa_subscore/<train-run>/step_<epochs>/`: `seed_<k>.pt` per seed,
 `scorer.json` (the seeds and the input layout) and the `checkpoint.json` sidecar. Paddock's
-`drivejepa_subscore` adapter averages the seeds' sigmoids. The model is `subscorer.build`.
+`drivejepa_subscore` adapter averages the seeds' sigmoids; it is on paddock's branch
+`model/drivejepa-subscore` (027bc9f), not `main`, so a site with only `main` cannot load these.
+The model is `subscorer.build`.
 
 **Preflight runs first, every run, and has no skip flag.** A cache is a recording too, and the
 camera-frame bug lived for six weeks because every check compared one recording with another.

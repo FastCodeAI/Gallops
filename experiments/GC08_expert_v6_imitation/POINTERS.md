@@ -43,6 +43,16 @@ the trainer read.
 | `{runs}/collect_dumps_r2/` | candidate dumps, round 2 | 40 | 59,338,008 | — | `fdbc44d76bd6f6928ed72b2e06756132dbe34bb8b04ea6873ed2d89507f92cdb` |
 | `{runs}/collect_dumps_r1a_eval/` | candidate dumps, round 1A on 0075 | 30 | 44,183,857 | — | `bf541865c4e64d7996ac906faf5be4e8d0fc8f3b31a95eea95d881fb04b17f47` |
 
+## Inputs every v6 label read
+
+The routes come from the scene packs and the road from the rasters. `drivable_all/` holds symbolic
+links, so its digest takes `find -L` in the command above.
+
+| Location | What it is | Files | Bytes | Folder digest |
+|---|---|---:|---:|---|
+| `{runs}/scene_packs/` | the 5 scenes' logged data and routes, from `rollout pack` and `routes` | 5 | 988,922 | `2ad03270617702b5a73ff4116466734ea5abbebdbfdf114711f05c1d9ef8f4df` |
+| `{runs}/drivable_all/` | a road raster per scene, as links into `drivable/` and `drivable_nusc/` | 684 | 6,115,314 | `73ed14df14ad8c6736ffd63e3e41da70ad34fbe4b35634a097d2bd2e6ec20bf6` |
+
 ## Collections
 
 Rendered episodes. **These are not hashed:** most of their bytes are camera frames, and the folders above
@@ -68,3 +78,32 @@ the results' `no-record` flag says.
 | `neuroncap/drivejepa/20261015T055256-49c277` | 1B epoch 2 on 0103 | 2,274 | `681ce77a7d99cf4b1267a434657136d4472347ddc2d4c0c11a4d218cb666caa2` |
 | `neuroncap/drivejepa/20261016T180740-bf1796` | round 2 on 0103 | 2,366 | `bd5126723b3e757c871d8d94dcc8333a59a2740e63af32df7a41f5432b151903` |
 | `nuscenes/drivejepa/20261015T074632-198187` | 1B epoch 2, nuScenes open loop | 6,662,200 | `5846a2b64b70b665e14a5a8e5a41cc3a1d2cd247f1600b772ec30306e7ce34af` |
+
+## Paddock code
+
+Neither repository imports the other, so what ran on paddock's side has to be named here.
+
+| Code | Where it is | Pin |
+|---|---|---|
+| `drivejepa_ncapdump` with `DRIVEJEPA_DRIVE` = `model` or `gt` | branch `analysis/drivejepa-ncap-candidates`, not on `main` or any PR | `b1c57796b80c568167e1859134d4eeb7e024879d` |
+| the same, with the camera-frame fix | branch `drivejepa-ncapdump-camfix`, never pushed | `f4f5efc0acd7fee592aab0198407dc09a6c2aba1` |
+| the same, with `DRIVEJEPA_DRIVE=expert` | **uncommitted**, on that branch, in the worktree `paddock-dj-ncapdump-camfix` at the training site | `policy.py`, 18,573 bytes, sha256 `ecd6641be8256a2ed78dbfdb39534ab3700c289275667763e466467866249375` |
+
+The last row made the expert-driven collection that 1B and round 2 trained on. It exists in one
+working tree, and until it is committed and pushed on paddock's side the collection cannot be remade.
+
+## Evidence with no file
+
+Searched for and not found: the top of `{runs}`, the top two levels of the weights store and of the
+training site's workspace, and `/tmp`, by name, and the sibling checkouts for a probe script. A
+deeper copy may exist.
+
+| Claim in the account | What exists |
+|---|---|
+| Gate A, 150/150 episodes | no report. `rollout replay --out` writes one; it was not kept |
+| Gate B, the table and the agreement figures | no report. The figures are in the commit messages of `ed2e7ab`, `4d606bd` and `22b5083` |
+| the engine's 2 cm agreement | no log. The adapter asserts it at run time, so a finished collection passed it |
+| the probe table | no script, no report, and no way to rerun it from here |
+
+The review of #17 reran samples at `67ad95f`: Gate A on 6 episodes, worst 0.049 mm, and Gate B on 48
+of the 50 frontal episodes, 8 hits, all 0058 at 1.56.
