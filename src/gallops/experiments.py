@@ -4,8 +4,8 @@ Gallops exists to produce evidence that a model is better, and evidence that liv
 hand-written table drifts: a number is copied, the run behind it is retrained, and nobody can say
 which checkpoint the row was about. So each experiment carries its facts in one machine-readable
 file -- who ran it, what it started from, what it trained on, which checkpoint it wrote (by weights
-sha256), what it measured and how strongly -- and the README's tables, decision path and gate log
-are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
+sha256), what it measured and how strongly -- and the README's tables, the experiments index and
+each card are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
 what this module renders, so the README cannot say something the registry does not.
 
 Layout (docs/experiments.md has the rules and the reasons):
@@ -68,6 +68,8 @@ EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
+#: The picture's base box: how wide a line of a baseline's `short` can run, and how many fit.
+BASE_WIDTH, BASE_LINES = 22, 2
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -664,6 +666,12 @@ def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> lis
         for ref in [*d.get("evidence", []), *d.get("next", [])]:
             if ref not in known:
                 errors.append(f"{where}: {ref} is not an experiment or run")
+        if d.get("baseline") and len(_base_lines(str(d.get("short", "")))) > BASE_LINES:
+            # Refused, not cut: a box that drops words names a different model and nothing fails.
+            errors.append(
+                f"{where}: a baseline's `short` names it in the picture, which has room for "
+                f"{BASE_LINES} lines of {BASE_WIDTH} characters"
+            )
     return errors
 
 
@@ -886,6 +894,10 @@ def render_badges(reg: Registry) -> str:
     )
 
 
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
 def render_status(reg: Registry) -> str:
     lines = []
     baselines = [d for d in reg.decisions if d.get("baseline")]
@@ -912,7 +924,10 @@ def render_status(reg: Registry) -> str:
         t: sum(e.data.get("status") == "running" and e.data.get("track") == t for e in reg.experiments)
         for t in ("hypothesis", "enabler")
     }
-    now = f"- **In progress:** {counts['hypothesis']} hypotheses, {counts['enabler']} enablers."
+    now = (
+        f"- **In progress:** {_count(counts['hypothesis'], 'hypothesis', 'hypotheses')}, "
+        f"{_count(counts['enabler'], 'enabler', 'enablers')}."
+    )
     planned = sorted(
         (e for e in reg.experiments if e.data.get("status") == "planned"),
         key=lambda e: e.data.get("priority", 99),
@@ -922,6 +937,10 @@ def render_status(reg: Registry) -> str:
         now += f" Next by priority: {items}."
     lines.append(now)
     return "\n".join(lines)
+
+
+def _base_lines(short: str) -> list[str]:
+    return textwrap.wrap(short, BASE_WIDTH)
 
 
 def _box(x: int, w: int, fill: str, title: str, lines: list[str], dashed: bool = False) -> str:
@@ -957,31 +976,31 @@ def render_picture(reg: Registry) -> str:
     bases = [d for d in reg.decisions if d.get("baseline")]
     base = bases[-1] if bases else None
     versions = [d["version"] for d in reg.decisions if d.get("version")]
-    n = len(tracks["hypothesis"])
-    hypotheses = f"{n} {'hypothesis' if n == 1 else 'hypotheses'},"
+    hypotheses = _count(len(tracks["hypothesis"]), "hypothesis", "hypotheses")
+    enablers = _count(len(tracks["enabler"]), "enabler", "enablers")
     grey = "#768390"
     parts = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
-        'aria-label="Gap closing leads to an agreed base, then hypotheses tested one at a time through the '
+        'aria-label="Gap closing leads to an agreed base, then hypotheses of one change each, judged by the '
         'regression gate, until the gate ships a version" '
         "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\">",
         "  <title>How the work flows</title>",
         f'  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
         f'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="{grey}"/></marker></defs>',
-        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [f"{len(gc)} experiments", span]),
+        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [_count(len(gc), "experiment", "experiments"), span]),
         _box(
             266,
             164,
             "#B4560A",
             _date(base["date"]) if base else "Base",
-            textwrap.wrap(base["short"], 22)[:2] if base else [],
+            _base_lines(base["short"]) if base else [],
         ),
         _box(
             470,
             200,
             "#1F5FBF",
             "Phase 2: hypotheses",
-            [f"{hypotheses} one at a time", f"{len(tracks['enabler'])} enablers"],
+            [f"{hypotheses}, one change each", enablers],
         ),
         _box(710, 136, "#57606A", "Regression gate", [f"{gated} gated so far"]),
         _box(
@@ -1005,7 +1024,7 @@ def render_picture(reg: Registry) -> str:
         f'  <path d="M778 132 V176 H570 V136" fill="none" stroke="{grey}" stroke-width="2" '
         'marker-end="url(#a)"/>',
         f'  <text x="674" y="196" text-anchor="middle" font-size="13" fill="{grey}">'
-        "FAIL or HOLD: recorded, then the next hypothesis</text>",
+        "FAIL or HOLD: recorded, back to the hypotheses</text>",
         "</svg>",
     ]
     return "\n".join(parts) + "\n"
@@ -1028,7 +1047,7 @@ def render_gap_closing(reg: Registry) -> str:
 
 
 def first_sentence(text: str) -> str:
-    """A table cell's worth: up to the first full stop that ends a sentence; the details keep the rest."""
+    """A table cell's worth: up to the first full stop that ends a sentence; the card keeps the rest."""
     m = re.search(r"[.!?](?=\s+[A-Z(])", text)
     return text[: m.end()] if m else text
 
@@ -1120,7 +1139,8 @@ def render_decisions(reg: Registry) -> str:
         by = ", ".join(d.get("by", []))
         evidence = _refs(reg, d.get("evidence", []), "experiments")
         rows.append(
-            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | {_cell(d['decision'])} | {by} | "
+            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | **{_cell(d['short'])}.** "
+            f"{_cell(d['decision'])} | {by} | "
             f"{evidence} | {_refs(reg, d.get('next', []), 'experiments')} |"
         )
     return "\n".join(rows)
@@ -1196,7 +1216,7 @@ def _code_text(d: dict[str, Any], run: dict[str, Any], base: str = "") -> str:
     return "<br>".join(bits) or "—"
 
 
-#: Where a card's "back" link lands in the README, by track.
+#: Where a card's "back" link lands, by track: the README's tables, or the index for enablers.
 _BACK = {
     "gap-closing": "README.md#gap-closing-experiments",
     "hypothesis": "README.md#hypothesis-experiments",

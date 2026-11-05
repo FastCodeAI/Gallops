@@ -344,7 +344,7 @@ Four reasons, in increasing order of importance:
 | [src/gallops/data/](../src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
 | [src/gallops/drivejepa_b2d/](../src/gallops/drivejepa_b2d/), [recipes/](../recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
 | [checkpoint.py](../src/gallops/checkpoint.py), [config.py](../src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
-| [experiments.py](../src/gallops/experiments.py) | the experiment registry: validates every record and renders this README |
+| [experiments.py](../src/gallops/experiments.py) | the experiment registry: validates every record and renders the README |
 
 The names: a paddock is the enclosure where a horse is paraded and judged
 before a race. The gallops is the training ground where it is made fast.

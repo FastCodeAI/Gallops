@@ -180,7 +180,7 @@ will be measured, the effect expected, what counts as support and as refutation,
 next in each case, and which split selects versus which reports. Its commit date is the evidence
 that the prediction came first. `make check` refuses a hypothesis with results and no
 `predictions`; work that ran before this rule existed says so honestly, as
-`predictions = "none: <why>"`, and the README marks it ⚠️ not pre-registered.
+`predictions = "none: <why>"`, and its card marks it ⚠️ not pre-registered.
 
 <a id="data"></a>
 
@@ -332,7 +332,7 @@ the same files under a new commit, and every file the two share then conflicts.
 
 Several branches were opened before the registry existed; each adds a row to the old README table,
 and they conflict with each other there. The registry already holds an `experiment.toml` for each,
-with `branch` set so the README links to the record on that branch. If a branch is deleted without
+with `branch` set so the card links to the record on that branch. If a branch is deleted without
 merging, set `branch` to the full commit its closed PR keeps (`refs/pull/<n>/head`), so the links
 still work. When one merges:
 
