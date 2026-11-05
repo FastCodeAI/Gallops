@@ -189,6 +189,12 @@ def test_a_plan_is_undrivable_if_no_car_could_brake_that_hard():
 
     dead_stop = np.zeros((8, 3))
     assert undrivable(dead_stop) is None  # waypoints alone cannot say how fast the car is going
+    # ...and asked nothing about braking, it says nothing: a loop variable once shadowed `speed`, so
+    # every caller got this test on the last chord's speed, and the expert refused swerves it needed
+    assert undrivable(_hard_stop(11.24, 12.0)) is None
+    # the speed given is the one tested, not the last chord's
+    assert undrivable(_hard_stop(8.0, 4.0), speed=8.0) is None
+    assert undrivable(_hard_stop(8.0, 4.0), speed=16.0) is not None
     assert "brakes at" in undrivable(dead_stop, speed=11.24)
     assert undrivable(dead_stop, speed=0.3) is None  # a car this slow can do that
 

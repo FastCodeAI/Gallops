@@ -208,8 +208,8 @@ def undrivable(
         if turn > allowed:
             radius = (previous_step + length) / (2 * max(turn, 1e-9))
             return f"turns at a {radius:.1f} m radius into waypoint {i} (limit {min_radius:.0f} m)"
-        speed = length / WAYPOINT_DT
-        lateral = speed**2 * 2 * turn / (previous_step + length)
+        chord_speed = length / WAYPOINT_DT
+        lateral = chord_speed**2 * 2 * turn / (previous_step + length)
         if lateral > tolerance * accel_max:
             return f"turns at {lateral:.1f} m/s^2 into waypoint {i} (limit {accel_max:.0f} m/s^2)"
         previous_heading, previous_step = heading, length
