@@ -7,6 +7,7 @@ adapter rebuilds the module from these shapes and loads `seed_<k>.pt` into it.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -177,3 +178,104 @@ def test_choose_switches_only_when_the_rule_says_so():
     assert list(subscorer.choose(s, rel, "relative", margin=0.2)) == [2, 0]
     with pytest.raises(ValueError):
         subscorer.choose(s, rel, "sometimes")
+
+
+class _FakeTensor:
+    def __init__(self, shape):
+        self.shape = shape
+
+    def cpu(self):
+        return self
+
+
+class _FakeModel:
+    """Enough of a module for `scorer_train.main`: what it writes, not what it learns."""
+
+    def to(self, device):
+        return self
+
+    def state_dict(self):
+        return {k: _FakeTensor(v) for k, v in subscorer.layout().items()}
+
+    def parameters(self):
+        return []
+
+
+def _train(monkeypatch, tmp_path, argv=(), fit=lambda *a, **k: None):
+    """`scorer_train.main` on a synthetic cache: torch stubbed, a temporary weights root, the real
+    file handling. Returns the config and the run's first checkpoint directory."""
+    import sys
+    import types
+
+    from gallops.config import SiteConfig
+
+    cache = tmp_path / "cache"
+    if not cache.exists():
+        rng = np.random.default_rng(0)
+        _episode(cache, "round0_cam", "frontal-0070__run_0", 3, 0.5, rng)
+        _episode(cache, "nusc", "real-0020__run_0", 2, 0.5, rng)
+        _episode(cache, "nusc_holdout", "real-0030__run_0", 2, 0.5, rng)
+    cfg = SiteConfig(site="test", weights=tmp_path / "weights", runs=tmp_path / "runs")
+    torch = types.SimpleNamespace(
+        from_numpy=lambda a: a,
+        manual_seed=lambda s: None,
+        save=lambda state, path: Path(path).write_bytes(b"weights"),
+    )
+    monkeypatch.setitem(sys.modules, "torch", torch)
+    monkeypatch.setattr(SiteConfig, "load", classmethod(lambda cls: cfg))
+    monkeypatch.setattr(scorer_train, "preflight", lambda *a: {"code": {"sha": "checked-at-the-start"}})
+    monkeypatch.setattr(scorer_train, "released_state", lambda *a: {})
+    monkeypatch.setattr(subscorer, "build", lambda *a: _FakeModel())
+    monkeypatch.setattr(subscorer, "fit", fit)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["scorer_train", "--cache", str(cache), "--drivable", "d", "--checkpoint", "c"]
+        + ["--train-run", "r", "--seeds", "0", "1", "--device", "cpu", *argv],
+    )
+    return cfg, cfg.checkpoint_dir("drivejepa_subscore", "r", 20)
+
+
+def test_a_finished_run_is_whole_and_says_what_it_read(tmp_path, monkeypatch):
+    """#17 review, 🟠 3: the sha is the one checked before the fits, and `trained_on` the scenes read."""
+    from gallops import checkpoint as sidecar
+
+    _, out = _train(monkeypatch, tmp_path)
+    scorer_train.main()
+    assert sorted(p.name for p in out.iterdir()) == [
+        "checkpoint.json",
+        "scorer.json",
+        "seed_0.pt",
+        "seed_1.pt",
+    ]
+    written = sidecar.read(out)
+    assert written.train_git_sha == "checked-at-the-start"
+    rendered, real = written.trained_on
+    assert "1 " in rendered.split and "0070" in rendered.split and "0053" not in rendered.split
+    assert real.dataset == "nuscenes" and real.fraction == round(1 / 700, 6)  # not the held-out scene
+
+
+def test_a_killed_fit_leaves_no_checkpoint(tmp_path, monkeypatch):
+    """#17 review, 🟠 3: seeds written straight into `{weights}` stayed there with no sidecar."""
+    fits = []
+
+    def dies_on_the_second_seed(*args, **kwargs):
+        fits.append(kwargs["seed"])
+        if len(fits) == 2:
+            raise KeyboardInterrupt
+
+    cfg, out = _train(monkeypatch, tmp_path, fit=dies_on_the_second_seed)
+    with pytest.raises(KeyboardInterrupt):
+        scorer_train.main()
+    assert not out.exists()
+    assert [p for p in out.parent.iterdir() if not p.name.startswith(".")] == []
+
+
+def test_a_second_fit_into_a_scorer_run_is_refused(tmp_path, monkeypatch):
+    """#17 review, 🟠 3: a rerun left the old seeds beside the new one, under a sidecar naming only it."""
+    _, out = _train(monkeypatch, tmp_path)
+    scorer_train.main()
+    before = sorted(p.name for p in out.iterdir())
+    with pytest.raises(SystemExit, match="already holds a fit"):
+        scorer_train.main()
+    assert sorted(p.name for p in out.iterdir()) == before

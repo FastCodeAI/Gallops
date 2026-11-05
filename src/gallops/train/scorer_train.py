@@ -37,15 +37,15 @@ from pathlib import Path
 import numpy as np
 
 from gallops import checkpoint as sidecar
-from gallops.config import SiteConfig
+from gallops.config import REPO_ROOT, SiteConfig
 from gallops.data.nuscenes_real import neuroncap_scenes
 from gallops.train import subscorer
 from gallops.train.preflight import FIDELITY_VERDICT_TOLERANCE, PreflightFailed, code_checks
 from gallops.train.scorer_folds import released_state
 from gallops.train.scorer_labels import compute_labels
-from gallops.train.swerve import git_sha
+from gallops.train.swerve import NUSCENES_TRAIN_SCENES, RENDERED, fresh_run
 
-REPO = Path(__file__).resolve().parents[3]
+MODEL = "drivejepa_subscore"
 LABEL_CHECK_FILES = 3
 
 
@@ -149,7 +149,7 @@ def preflight(args, caches: list[Path], d: dict) -> dict:
     labelled = {name: Path(p) for name, p in args.labelled}
     report, problems = {}, []
     for name, (part, found) in (
-        ("code", code_checks(REPO)),
+        ("code", code_checks(REPO_ROOT)),
         ("labels", labels_check(caches, args.drivable)),
         ("fidelity", fidelity_check(d, labelled, args.start)),
         ("sight", subscorer.sight_from_cache(d)),
@@ -161,6 +161,26 @@ def preflight(args, caches: list[Path], d: dict) -> dict:
     if problems:
         raise PreflightFailed(problems)
     return report
+
+
+def declared_training(scene: np.ndarray, source: np.ndarray) -> tuple[sidecar.TrainedOn, ...]:
+    """`trained_on`, from the ticks trained on: a literal names five scenes whatever the cache holds."""
+    is_real = np.isin(source, subscorer.REAL_SOURCES)
+    rendered = sorted(set(scene[~is_real].tolist()))
+    real = set(scene[is_real].tolist())
+    out = []
+    if rendered:
+        split = f"{len(rendered)} non-benchmark nuScenes train scenes ({' '.join(rendered)}), "
+        out.append(sidecar.TrainedOn(RENDERED, split + "rendered with an inserted car"))
+    if real:
+        out.append(
+            sidecar.TrainedOn(
+                "nuscenes",
+                "train minus neuroNCAP and reconstructed scenes, minus 10% held out",
+                round(len(real) / NUSCENES_TRAIN_SCENES, 6),
+            )
+        )
+    return tuple(out)
 
 
 def load(caches: list[Path]) -> dict:
@@ -186,6 +206,9 @@ def main() -> None:
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
 
+    cfg = SiteConfig.load()
+    fresh_run(cfg, args.train_run, MODEL)  # before the minutes below, and before any fit
+    out = cfg.checkpoint_dir(MODEL, args.train_run, args.epochs)
     started = time.time()
     d = load(args.cache)
     print(
@@ -206,92 +229,79 @@ def main() -> None:
         torch.from_numpy(subscorer.channel_weights(source, args.real)),
     )
     state = released_state(args.checkpoint, torch)
-    out = (
-        Path(SiteConfig.load().resolve("{weights}"))
-        / "drivejepa_subscore"
-        / args.train_run
-        / f"step_{args.epochs:09d}"
-    )
-    out.mkdir(parents=True, exist_ok=True)
     params = 0
-    for seed in args.seeds:
-        t0 = time.time()
-        torch.manual_seed(seed)
-        model = subscorer.build(torch, state).to(args.device)
-        layout = {k: tuple(v.shape) for k, v in model.state_dict().items()}
-        if layout != subscorer.layout():
-            raise SystemExit(f"model layout drifted from subscorer.layout(): {layout}")
-        subscorer.fit(
-            model,
-            arrays,
-            train_idx,
-            epochs=args.epochs,
-            batch=args.batch,
-            lr=args.lr,
-            seed=seed,
-            device=args.device,
-            torch=torch,
-        )
-        torch.save({k: v.cpu() for k, v in model.state_dict().items()}, out / f"seed_{seed}.pt")
-        params = sum(p.numel() for p in model.parameters())
-        print(
-            f"  seed {seed}: {len(train_idx)} ticks x {args.epochs} epochs in {time.time() - t0:.0f} s",
-            flush=True,
-        )
-    (out / "scorer.json").write_text(
-        json.dumps(
-            {
-                "seeds": args.seeds,
-                "channels": list(subscorer.CHANNELS),
-                "layout": {k: list(v) for k, v in subscorer.layout().items()},
-                "inputs": {
-                    "own": "per plan, max over its 8 last-stage refiner tokens; "
-                    "32 native + 32 swerves (second pass)",
-                    "probe": "32 probe paths x 8 waypoint tokens, probe-major, from the second pass",
-                    "geo": "plan (x, y) / 20 m (16), headings (8), ego speed / 10 m/s (1)",
+    # Staged, because the seeds take minutes each and a reader must see all of them with their
+    # sidecar or none: a job killed between two seeds left weights in `{weights}` with no sidecar.
+    with sidecar.staged(out) as staging:
+        for seed in args.seeds:
+            t0 = time.time()
+            torch.manual_seed(seed)
+            model = subscorer.build(torch, state).to(args.device)
+            layout = {k: tuple(v.shape) for k, v in model.state_dict().items()}
+            if layout != subscorer.layout():
+                raise SystemExit(f"model layout drifted from subscorer.layout(): {layout}")
+            subscorer.fit(
+                model,
+                arrays,
+                train_idx,
+                epochs=args.epochs,
+                batch=args.batch,
+                lr=args.lr,
+                seed=seed,
+                device=args.device,
+                torch=torch,
+            )
+            torch.save({k: v.cpu() for k, v in model.state_dict().items()}, staging / f"seed_{seed}.pt")
+            params = sum(p.numel() for p in model.parameters())
+            print(
+                f"  seed {seed}: {len(train_idx)} ticks x {args.epochs} epochs in {time.time() - t0:.0f} s",
+                flush=True,
+            )
+        (staging / "scorer.json").write_text(
+            json.dumps(
+                {
+                    "seeds": args.seeds,
+                    "channels": list(subscorer.CHANNELS),
+                    "layout": {k: list(v) for k, v in subscorer.layout().items()},
+                    "inputs": {
+                        "own": "per plan, max over its 8 last-stage refiner tokens; "
+                        "32 native + 32 swerves (second pass)",
+                        "probe": "32 probe paths x 8 waypoint tokens, probe-major, from the second pass",
+                        "geo": "plan (x, y) / 20 m (16), headings (8), ego speed / 10 m/s (1)",
+                    },
+                    "vocab": "swerves = vocab_v1, probes = probe_v1 (gallops branch "
+                    "record/blind-scorer-experiments, experiments/2026-10-blind-scorer/ops/dj_cache)",
+                    "pick": "nc^4 * on_road * (5 progress + 5 no_ttc + 2 in_lane) / 12 "
+                    "over the seeds' mean sigmoids",
                 },
-                "vocab": "swerves = vocab_v1, probes = probe_v1 "
-                "(gallops experiments/2026-10-blind-scorer/ops/dj_cache)",
-                "pick": "nc^4 * on_road * (5 progress + 5 no_ttc + 2 in_lane) / 12 "
-                "over the seeds' mean sigmoids",
-            },
-            indent=1,
-        )
-    )
-    real = bool(np.isin(source[train_idx], subscorer.REAL_SOURCES).any())
-    trained_on = [
-        sidecar.TrainedOn(
-            dataset="neuroncap-actor-insertion",
-            split="5 non-benchmark nuScenes train scenes (0053 0058 0064 0070 0075), "
-            "rendered with an inserted car",
-        )
-    ]
-    if real:
-        trained_on.append(
-            sidecar.TrainedOn(
-                dataset="nuscenes", split="train minus neuroNCAP and reconstructed scenes, minus 10% held out"
+                indent=1,
             )
         )
-    sidecar.write(
-        out,
-        sidecar.Checkpoint(
-            model="drivejepa_subscore",
-            step=args.epochs,
-            train_git_sha=git_sha(REPO),
-            train_run=args.train_run,
-            trained_on=tuple(trained_on),
-            params_m=round(params / 1e6, 3),
-            precision="fp32",
-            notes={
-                "preflight": checked,
-                "caches": [str(c) for c in args.cache],
-                "real": args.real,
-                "recipe": {"epochs": args.epochs, "batch": args.batch, "lr": args.lr, "seeds": args.seeds},
-                "init": "released Drive-JEPA scorer MLP for the own-token columns; "
-                "probe and geometry columns at zero",
-            },
-        ),
-    )
+        sidecar.write(
+            staging,
+            sidecar.Checkpoint(
+                model=MODEL,
+                step=args.epochs,
+                train_git_sha=checked["code"]["sha"],
+                train_run=args.train_run,
+                trained_on=declared_training(d["scene"][train_idx], source[train_idx]),
+                params_m=round(params / 1e6, 3),
+                precision="fp32",
+                notes={
+                    "preflight": checked,
+                    "caches": [str(c) for c in args.cache],
+                    "real": args.real,
+                    "recipe": {
+                        "epochs": args.epochs,
+                        "batch": args.batch,
+                        "lr": args.lr,
+                        "seeds": args.seeds,
+                    },
+                    "init": "released Drive-JEPA scorer MLP for the own-token columns; "
+                    "probe and geometry columns at zero",
+                },
+            ),
+        )
     print(f"  wrote {out}", flush=True)
 
 

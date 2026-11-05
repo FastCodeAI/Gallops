@@ -232,14 +232,14 @@ def inherited_training(init: Path | None) -> tuple:
         raise SystemExit(f"--init {init}: {error}; its training cannot be carried forward") from error
 
 
-def fresh_run(cfg: SiteConfig, train_run: str) -> Path:
+def fresh_run(cfg: SiteConfig, train_run: str, model: str = MODEL) -> Path:
     """The run directory for `train_run`, refused if a fit is already in it.
 
     One fit is one run. Rerun into an existing one and the new fit starts again from
     the released weights, overwrites step directories it reaches and lands new ones
     beside the old fit's -- which paddock then groups as one sweep.
     """
-    run = cfg.checkpoint_dir(MODEL, train_run, 0).parent
+    run = cfg.checkpoint_dir(model, train_run, 0).parent
     if run.exists() and any(run.iterdir()):
         raise SystemExit(f"{run} already holds a fit; one fit is one run -- choose a new --train-run")
     return run
