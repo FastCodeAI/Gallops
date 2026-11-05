@@ -638,8 +638,7 @@ class Teacher:
         if not verdict.clear and verdict.hit_at is not None:
             # Nothing clears: the gentlest contact on the committed side. For an oncoming car that is
             # the hardest braking. A parked or crossing car keeps its stop point, which sets the rate
-            # in `_plan`, so `decel` changes nothing there: `least-impact` ticks on the expert-driven
-            # set brake at a median 0.9 m/s^2. Left so, because that is what Gate B measured.
+            # in `_plan`, so `decel` changes nothing there. Left so, because Gate B measured that.
             hardest = replace(man, decel=BRAKE_MAX, floor_mps=0.0, released=False)
             plan = self._plan(ego2world, speed, hardest)
             return Taught(plan, "least-impact", self._judge(plan, ego2world, t0, near), man, px)
