@@ -340,8 +340,9 @@ One PR per experiment, or one per run if it is large. Reviewers check each of th
 - [ ] A decision row is in `experiments/decisions.toml` if this result changes what the team does next.
 - [ ] `gallops experiments render --write` was run, and `make check` passes.
 
-Merge with a merge commit, never a squash, when another PR is stacked on this one: a squash records
-the same files under a new commit, and every file the two share then conflicts.
+Merge with a merge commit, never a squash, when another PR is stacked on this one. A squash lands
+the PR as one new commit, so whatever it gained after the upper PR was cut conflicts there, even in
+files the upper PR never touched. If it must be squashed, merge its head into the upper PR first.
 
 <a id="open-branches"></a>
 
@@ -354,7 +355,8 @@ merging, set `branch` to the full commit its closed PR keeps (`refs/pull/<n>/hea
 still work. When one merges:
 
 1. Merge `main` into the branch; do not rebase, because other PRs may sit on it. Take main's README
-   when resolving the conflict (`git checkout --theirs README.md`): your row is generated now.
+   when resolving the conflict (`git checkout --theirs README.md && git add README.md`): your row is
+   generated now.
 2. Move the branch's record into its ID folder (`git mv`), and its account to that folder's
    `README.md`. If the folder had a README of its own, it becomes `RECORD.md`. Keep the renames in
    their own commit, so history follows them.
