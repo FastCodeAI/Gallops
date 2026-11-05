@@ -132,6 +132,10 @@ says SHIP against the current base, and each later SHIP against the then-current
 `N`. The promotion is a row in the decision log with `version` set, and the README's "Where we
 are" reads it from there. Until the first SHIP there is no gallops version, and the README says so.
 
+The queue compares with its own baselines, and today those are released Drive-JEPA only: a
+`--baseline` job takes no `--env`. So a SHIP from the queue beats the released model, not the base,
+and earns no version. Record it and decide on it; `version` waits until the base has baselines there.
+
 Paddock's driver versions (`0.1.4b`, `0.1.7`) name the driver that feeds a model in AlpaSim, not
 a checkpoint. A record names them in `shipped_as`.
 
@@ -275,7 +279,7 @@ HOLD has four causes, and the job's output says which.
 | **HOLD**, a pair undecided | a pair did not reach GAIN, NEUTRAL or REGRESSION (a clean crash check's TOO FEW UNITS is normal) | No verdict yet. Fix that pair, then run it again. Paddock `docs/gate.md` says what each verdict means. |
 | **HOLD**, on the quick tier | every pair decided, and this is the best quick can do: its closed-loop pairs may not ship | The expected good result. Run `--tier all` if you would ship this checkpoint. |
 | **HOLD**, on the closed tier | every pair decided, nothing regressed, and no closed-loop pair that may ship gained | Read each NEUTRAL with its MDE: it may only mean the subset is too small. Add a decision row: run a stronger version as the next run, or close it as `inconclusive`. |
-| **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row with `version` set, and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
+| **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row, with `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. Set `version` only for a SHIP against the current base: see [Versions](#versions). |
 
 `make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
 it dated on or after its last gate. It also refuses `verdict = "none"`, and `positive` without a SHIP.
