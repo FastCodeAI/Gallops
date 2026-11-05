@@ -75,9 +75,10 @@ TRIGGER_S = 3.5
 #: (16-px patches): at v5's first reaction a frontal car was a median 15 px.
 MIN_PX = 16.0
 #: Below this time to contact, act on any part of it in frame: too late to wait for 16 px. A hazard
-#: wholly outside the frame is never acted on (user, 2026-10-13: brake when it appears). A crossing
-#: car on a collision course holds a constant bearing, 36-45 deg in our scenes, outside the camera's
-#: 32.6 deg half-field until the last second; reacting earlier would teach reacting to the unseen.
+#: wholly outside the frame is not acted on (user, 2026-10-13: brake when it appears), unless the car
+#: is out of its lane (`OFF_LANE_M`), which is rare: 10 of 6,901 reactive ticks on rounds 0 and 2. A
+#: crossing car on a collision course holds a constant bearing, 36-45 deg in our scenes, outside the
+#: camera's 32.6 deg half-field until the last second; reacting earlier would teach the unseen.
 EMERGENCY_S = 1.5
 #: ...or the car is already this far out of its lane, i.e. partway through a manoeuvre the camera
 #: shows by the road itself; the hazard can be at the frame's edge by then.
@@ -635,7 +636,10 @@ class Teacher:
             self.manoeuvre = man
 
         if not verdict.clear and verdict.hit_at is not None:
-            # Nothing clears: the gentlest contact on the committed side -- brake as hard as the car can.
+            # Nothing clears: the gentlest contact on the committed side. For an oncoming car that is
+            # the hardest braking. A parked or crossing car keeps its stop point, which sets the rate
+            # in `_plan`, so `decel` changes nothing there: `least-impact` ticks on the expert-driven
+            # set brake at a median 0.9 m/s^2. Left so, because that is what Gate B measured.
             hardest = replace(man, decel=BRAKE_MAX, floor_mps=0.0, released=False)
             plan = self._plan(ego2world, speed, hardest)
             return Taught(plan, "least-impact", self._judge(plan, ego2world, t0, near), man, px)

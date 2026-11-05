@@ -566,3 +566,30 @@ def test_a_stop_no_car_could_make_is_refused():
     report, problems = preflight.drivable_checks([tick])
     assert report["undrivable"] == "1/1" and "brakes at" in problems[0]
     assert preflight.drivable_checks([{**tick, "speed": 0.0}])[1] == []
+
+
+def test_the_init_check_holds_each_episodes_earliest_tick_too(tmp_path, monkeypatch):
+    """#17 review, 🟡 12: the account says "same limits", and the start-of-run check adds these."""
+    ticks = [
+        {
+            "episode": f"e{e}",
+            "timestamp": t,
+            "frame": f"/c/e{e}/run_0/CAM_FRONT/{t}.jpg",
+            "source": 0,
+            "expert_kind": "continue",
+            "speed": 5.0,
+            "driven_hits": None,
+        }
+        for e in range(3)
+        for t in range(5, 40)
+    ]
+    seen = {}
+
+    def fidelity(model, dataset_cls, own, *args):
+        seen["stamps"] = sorted(t["timestamp"] for t in own if t["episode"] == "e0")
+        return {}, []
+
+    monkeypatch.setattr(preflight, "fidelity_check", fidelity)
+    sources = [preflight.Source("r2", "d2", preflight.INIT)]
+    preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")
+    assert seen["stamps"][0] == 5, seen

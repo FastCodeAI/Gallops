@@ -488,7 +488,7 @@ def init_fidelity(
     group = [t for t in train if sources[t.get("source", 0)].drove == INIT]
     if not group:
         return {}
-    sample = sample_ticks(group, episodes=max(3, sample_size // 4), per_episode=4)
+    sample = with_earliest(sample_ticks(group, episodes=max(3, sample_size // 4), per_episode=4), group)
     report, problems = fidelity_check(model, dataset_cls, sample, referee, sources, torch, device)
     print("  preflight, --init weights: " + json.dumps(report), flush=True)
     if problems:
@@ -533,6 +533,16 @@ def earliest_per_episode(ticks: list[dict], episodes: set[str]) -> list[dict]:
         if key in episodes and (key not in first or int(tick["timestamp"]) < int(first[key]["timestamp"])):
             first[key] = tick
     return [first[k] for k in sorted(first)]
+
+
+def with_earliest(sample: list[dict], ticks: list[dict]) -> list[dict]:
+    """`sample`, plus the earliest tick in `ticks` of each episode it touches."""
+    chosen = {(episode_key(t), int(t["timestamp"])) for t in sample}
+    return sample + [
+        t
+        for t in earliest_per_episode(ticks, {episode_key(t) for t in sample})
+        if (episode_key(t), int(t["timestamp"])) not in chosen
+    ]
 
 
 def describe(ticks: list[dict]) -> dict:
@@ -589,15 +599,7 @@ def run(
     problems += found
     own = [t for t in sample if sources[t.get("source", 0)].drove == START]
     if own:
-        chosen = {(episode_key(t), int(t["timestamp"])) for t in own}
-        own += [
-            t
-            for t in earliest_per_episode(
-                [t for t in train if sources[t.get("source", 0)].drove == START],
-                {episode_key(t) for t in own},
-            )
-            if (episode_key(t), int(t["timestamp"])) not in chosen
-        ]
+        own = with_earliest(own, [t for t in train if sources[t.get("source", 0)].drove == START])
         report["fidelity"], found = fidelity_check(model, dataset_cls, own, referee, sources, torch, device)
         problems += found
     else:
