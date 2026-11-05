@@ -30,16 +30,26 @@ seed's value is shown beside it.
 
 | # | Role | Benchmark / subset | Metric | Baseline | Predicted | Counts as support if | Counts as refuted if |
 |---|---|---|---|---|---|---|---|
-| P1 | **primary** | offline, 214 val logs, every graded moment (n = 15,320) | mean true PDM grade of the pick (vendor `get_sub_score` final score) | (b) | (a) − (b) > 0; magnitude to be stated after the val logs are graded, before training | (a) − (b) > 0 and its CI excludes 0 | the CI includes 0, or (a) − (b) < 0 |
+| P1 | **primary** | offline, 214 val logs, every graded moment (n = 15,320) | mean true PDM grade of the pick (vendor `get_sub_score` final score) | (b) | **(a) − (b) = +0.01** (strict grade) | (a) − (b) > 0 and its CI excludes 0 | the CI includes 0, or (a) − (b) < 0 |
 | P2a | secondary | the same logs, every back-to-back pair (n = 18,798) | flip rate: pick-to-pick distance > 1 m (mean waypoint distance over the 3.5 s two plans share, ego-motion aligned) | (b) | (a) better than (b) | reported with its CI; not required to exclude 0 | — |
 | P2b | secondary | the same logs, pairs where both moments are graded (n = 12,768) | two-frame extended comfort of the picks | (b) | (a) better than (b) | reported with its CI; not required to exclude 0 | — |
 | P3 | gate | paddock's regression gate, every benchmark, quick tier then closed tier | each benchmark's own score | released (`/srv/paddock/queue/baselines/drivejepa.toml`) | no change | no REGRESSION on any benchmark | any REGRESSION |
 | P4 | gate | neuroNCAP closed tier, side pairs 0103 and 0110 | score; when braking starts; speed at impact | (b) | (a) above (b) | (a) > (b) and (a) brakes no later | (a) ≤ (b), or (a) brakes later |
 
-**Why P1 has no number yet.** No true grades exist: the 32 proposals at each moment have not been
-graded. The only spread measured so far is between the released model's own predicted scores
-(0.003 between the top two, momentum off), which is not the scale of the true grade. The magnitude
-will be written here, and committed, after the 214 val logs are graded and before any training step.
+**P1's magnitude** (pinned 5 Nov 2026 by Sid, after the val logs were graded and before any training step).
+- **Predicted:** (a) − (b) = **+0.01** in mean strict grade of the pick, on the 15,320 graded val moments.
+- **Support:** (a) − (b) > 0 with the 95% CI excluding 0.
+- **Supported but not useful:** a supported difference **below +0.005**.
+- **The scale when this was written** (the released pick, momentum off, strict grades; no memory output seen):
+  - the pick averages 0.869 against 0.955 for the best of the 32, a headroom of 0.086 (median 0.022);
+  - the pick is already a best path on 35.8% of moments;
+  - the top two paths tie exactly on 57.5%.
+- **Also reported, not tested:** the same P1 on the forgiving grade (lane keeping and traffic light the benchmark's way).
+
+**R1, a named read-out (not a pass/fail test).** The moments of the 15,320 where a best path brakes and the released pick neither brakes nor is a best path: 3.6% of them on the released pick.
+- **A braking path:** its simulated longitudinal acceleration falls below −1.5 m/s² within its first 2 s.
+- **Reported:** how often each of (a), (b) and (c) picks a braking path there, with n.
+- **No prediction is attached.**
 
 ## Fixed before training
 
@@ -52,8 +62,18 @@ will be written here, and committed, after the 214 val logs are graded and befor
 - **Grading:** the vendor's training-time scorer (`get_sub_score`) on the 32 cached proposals, train
   metric cache, without the anchors load. Rate measured on 200 moments first; 4 cores.
 - **Navtest re-grade check:** the released pick of run `navsim/drivejepa/20261023T202240-de2f00`,
-  re-graded on 200 navtest tokens; the sub-scores both sides share must agree within a tolerance
-  set from the 200-token timing run, and that tolerance is written here before training.
+  re-graded on 200 navtest tokens, against that run's CSV. The tolerance (Sid D23) was set on those
+  same 200 tokens, so it is a sanity check, not independent evidence:
+  - collisions, drivable area, driving direction, time to collision and history comfort exact;
+  - progress within 1e-4 on at least 99% of tokens;
+  - lane keeping and traffic light, the benchmark's way, exact.
+
+  Measured 5 Nov: exact on 200/200 for every gate-and-comfort sub-score; progress within 1e-4 on 199/200; lane keeping and traffic light 200/200.
+- **Epoch and length rule** (with the selection set below):
+  - each run trains a fixed 8 epochs and is scored on the selection logs after each;
+  - L is the length whose best epoch has the lowest selection loss for (a);
+  - the epoch count is the one that minimises the mean of (a)'s selection loss at that L and (b)'s, so that one count serves both arms without favouring either;
+  - ties go to the shorter L and the earlier epoch.
 
 ## Controls
 
@@ -62,6 +82,9 @@ will be written here, and committed, after the 214 val logs are graded and befor
   zero nudge reproduces (checked in the preflight: 100% of picks).
 
 ## Decision rules (plan, :217-218)
+
+"Beats" means the paired difference on P1 is above 0 with its 95% CI excluding 0. "≈" means the paired
+CI includes 0. "Worse than (c)" means below (c) with the CI excluding 0.
 
 - (a) beats (b), and (b) ≈ (c): memory helps; go on to the gate.
 - (a) ≈ (b), and both beat (c): capacity or training; rethink.
