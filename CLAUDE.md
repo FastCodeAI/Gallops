@@ -170,7 +170,8 @@ what the registry renders.
   scripts go in the experiment's `scripts/`.
 - **Record decisions** in `experiments/decisions.toml`, in date order, with
   their evidence; a `gallops-v0.N` version is earned only by a gate SHIP. A
-  `done` hypothesis needs a gate verdict and a decision citing it.
+  `done` hypothesis needs a gate verdict, and a decision citing it dated on or after
+  that gate.
 - **A secondary run** that tests the same claim is the next `[[runs]]` under its
   hypothesis; a different claim gets its own `Hnn`.
 

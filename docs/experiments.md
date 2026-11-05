@@ -278,7 +278,8 @@ HOLD has four causes, and the job's output says which.
 | **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row with `version` set, and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
 
 `make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
-it. Work that never reached a checkpoint ends as `parked` or `dropped`, with what it `learned`.
+it dated on or after its last gate. It also refuses `verdict = "none"`, and `positive` without a SHIP.
+Work that never reached a checkpoint ends as `parked` or `dropped`, with what it `learned`.
 
 <a id="decisions"></a>
 

@@ -633,17 +633,34 @@ def validate(reg: Registry) -> list[str]:
 
 
 def _undecided(reg: Registry) -> list[str]:
-    """A finished hypothesis was judged by the gate, and the team said what follows from it."""
+    """A finished hypothesis was judged by the gate, and the team said what follows from that verdict."""
     errors = []
-    cited = {ref.split(".", 1)[0] for d in reg.decisions for ref in d.get("evidence", [])}
     for e in reg.experiments:
         if e.data.get("track") != "hypothesis" or e.data.get("status") != "done":
             continue
-        if not any(run.get("gate") for run in e.runs):
+        gates = [gate for run in e.runs for gate in run.get("gate", [])]
+        if not gates:
             errors.append(f"{e.id}: a done hypothesis has a gate verdict on one of its runs")
-        if e.id not in cited:
-            errors.append(f"{e.id}: a done hypothesis is cited as evidence by a decision in decisions.toml")
+        verdict = e.data.get("verdict")
+        if verdict == "none":
+            errors.append(f"{e.id}: a done hypothesis says how it came out (`verdict` is not none)")
+        if verdict == "positive" and not any(gate.get("verdict") == "SHIP" for gate in gates):
+            errors.append(f"{e.id}: a positive hypothesis has a gate SHIP")
+        # Any older decision will not do: D11 names H01 as the base, and cannot have said what follows
+        # from a gate run after it. The same day counts, since a team decides on the day's verdict.
+        last = max((g["date"] for g in gates if isinstance(g.get("date"), dt.date)), default=dt.date.min)
+        if not any(_cites(d, e.id) and d["date"] >= last for d in reg.decisions):
+            errors.append(
+                f"{e.id}: a done hypothesis is cited as evidence by a decision "
+                "dated on or after its last gate"
+            )
     return errors
+
+
+def _cites(decision: dict[str, Any], experiment: str) -> bool:
+    # A non-string is `_validate_decisions`' to report, with a message; it must not raise here first.
+    refs = [ref for ref in decision.get("evidence", []) if isinstance(ref, str)]
+    return isinstance(decision.get("date"), dt.date) and experiment in {r.split(".", 1)[0] for r in refs}
 
 
 def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> list[str]:

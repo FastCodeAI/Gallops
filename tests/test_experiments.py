@@ -132,7 +132,7 @@ owner = "Naren"
 benchmarks = ["navsim"]
 started = 2026-10-21
 status = "done"
-verdict = "positive"
+verdict = "inconclusive"
 question = "Does the thing help?"
 hypothesis = "It raises EPDMS by 0.01; a NEUTRAL with MDE under 0.01 refutes it."
 learned = "It did."
@@ -243,6 +243,13 @@ def test_the_small_repository_is_valid_and_renders(tmp_path) -> None:
             "pins its checkpoint's weights_sha256",
         ),
         ("a parent that does not exist", "learned =", 'parents = ["GC09"]\nlearned =', "parent GC09 is not"),
+        (
+            "a done hypothesis with no verdict",
+            'verdict = "inconclusive"',
+            'verdict = "none"',
+            "how it came out",
+        ),
+        ("positive with no SHIP", 'verdict = "inconclusive"', 'verdict = "positive"', "has a gate SHIP"),
         ("a gate verdict paddock never prints", 'verdict = "HOLD"', 'verdict = "INCOMPLETE"', "INCOMPLETE"),
         (
             "a module that does not exist",
@@ -300,6 +307,27 @@ def test_a_finished_hypothesis_was_gated_and_decided(tmp_path) -> None:
     assert any("has a gate verdict" in e for e in reg.errors), reg.errors
     reg = exps.Registry.load(_repo(tmp_path / "b", decisions=""))
     assert any("cited as evidence by a decision" in e for e in reg.errors), reg.errors
+
+
+def test_the_decision_that_closes_a_hypothesis_came_after_its_gate(tmp_path) -> None:
+    """An older decision cannot have said what follows from a gate run after it, as D11 could not for H01."""
+    before = DECISIONS.replace("date = 2026-10-29", "date = 2026-10-27")
+    reg = exps.Registry.load(_repo(tmp_path / "a", decisions=before))
+    assert any("cited as evidence by a decision" in e for e in reg.errors), reg.errors
+    same_day = DECISIONS.replace("date = 2026-10-29", "date = 2026-10-28")
+    assert exps.Registry.load(_repo(tmp_path / "b", decisions=same_day)).errors == []
+
+
+def test_one_gated_run_is_enough_among_several(tmp_path) -> None:
+    earlier = '[[runs]]\nid = "H01.r0"\nlabel = "an earlier run, never gated"\n\n'
+    record = RECORD.replace("[[runs]]\n", earlier + "[[runs]]\n", 1)
+    assert exps.Registry.load(_repo(tmp_path, record)).errors == []
+
+
+def test_a_bad_evidence_entry_is_an_error_and_not_a_traceback(tmp_path) -> None:
+    decisions = DECISIONS.replace('evidence = ["H01.r1"]', "evidence = [1]")
+    reg = exps.Registry.load(_repo(tmp_path, decisions=decisions))
+    assert any("1 is not an experiment or run" in e for e in reg.errors), reg.errors
 
 
 def test_an_unfinished_hypothesis_needs_neither(tmp_path) -> None:
