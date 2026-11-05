@@ -1,5 +1,5 @@
 # GC07 -- the sub-score scorer over inserted swerve paths, on the seeing (camera-fixed) model (Naren). Parked.
-# On branch expert/v6-imitation: every number is copied from section 1 of docs/brake-swerve-expert.md there,
+# Every number is copied from section 1 of the account in GC08's folder, which tells both stories,
 # except the 9-run mean (4.44), which is the team's status page's and matches the nine ncap_scores in paddock run
 # neuroncap/drivejepa_subscore/20261013T202318-c43ac5/samples.jsonl. Checkpoint block from
 # `gallops experiments checkpoint` on {weights}/drivejepa_subscore/sighted-v1/step_000000020/.
@@ -20,16 +20,16 @@ question = """After the camera fix, none of the seeing model's 32 candidates swe
 neuroNCAP 0103 frontal; the only clear plans are hard braking, and braking alone still gets hit. Can a scorer \
 with six sub-score heads, choosing among 32 inserted swerve paths passed through the model's own refiner, \
 avoid the car?"""
+predictions = "none: run before the registry asked for predictions, and none were written down first"
 learned = """On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs a shape and by \
 overriding the model from 0.5 s in every scenario, stationary and side included, flipping side 0–16 times an \
 episode. Parked: labels graded each plan as if followed for 4 s, progress is 5/12 of the formula and the \
 choice has no memory, so fast early swerves win; what carried forward is that the manoeuvre must come from \
 the model's own generator, taught by one consistent driver (GC08)."""
-narrative = "docs/brake-swerve-expert.md"
-branch = "expert/v6-imitation"
+narrative = "experiments/GC08_expert_v6_imitation/README.md#1-sub-score-scorer-with-inserted-swerves-parked"
 external = [
   "neuroNCAP runs on 0103 (3 per shape): paddock run dirs neuroncap/drivejepa_subscore/20261013T202318-c43ac5 (relative rule, the doc's table) and 20261013T205827-fff68a (DRIVEJEPA_SUBSCORE_RULE=absolute, the same nine scores); under the site's paddock runs root, committed to no repository.",
-  "Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes.",
+  "Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes and in POINTERS.md.",
 ]
 
 [[runs]]
@@ -102,7 +102,7 @@ notes = "Each tick, 32 hand-built paths (the pick or straight ahead shifted 1–
   flags = ["smoke", "adapted", "no-record"]
   headline = true
   note = "0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car"
-  source = "docs/brake-swerve-expert.md §1 (branch); paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5"
+  source = "experiments/GC08_expert_v6_imitation/README.md §1; paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -117,10 +117,10 @@ notes = "Each tick, 32 hand-built paths (the pick or straight ahead shifted 1–
   strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's"
-  source = "paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline docs/brake-swerve-expert.md §5 (branch)"
+  source = "paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline experiments/GC08_expert_v6_imitation/README.md §5"
 
 [[checks]]
 name = "Why the sub-score scorer was parked"
 result = "it overrode the model from 0.5 s in every scenario and flipped side 0–16 times an episode: plans were labelled as if followed for the full 4 s (so the released braking plan graded as a crash), progress is 5/12 of the formula, each tick chose with no memory, and after the first swerve the car was in states no training data covered"
 decided = "parked; code and caches kept as diagnostics; the manoeuvre must come from the model's own plan generator, taught by one consistent driver (expert v6, GC08)"
-source = "docs/brake-swerve-expert.md §1 (branch expert/v6-imitation)"
+source = "experiments/GC08_expert_v6_imitation/README.md §1"

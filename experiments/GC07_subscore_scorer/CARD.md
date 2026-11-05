@@ -5,15 +5,17 @@
 
 **Naren** · neuroNCAP · ⏸ parked (mixed) · 13 Oct 2026 · gap-closing
 
-[← all experiments](../../README.md#gap-closing-experiments) · [the account](https://github.com/FastCodeAI/Gallops/blob/expert/v6-imitation/docs/brake-swerve-expert.md) (on branch ⎇) · [experiment.toml](experiment.toml)
-
-> The record is on branch `expert/v6-imitation`, not merged yet; its links go to that branch.
+[← all experiments](../../README.md#gap-closing-experiments) · [the account](../GC08_expert_v6_imitation/README.md#1-sub-score-scorer-with-inserted-swerves-parked) · [experiment.toml](experiment.toml)
 
 **Builds on:** [GC06](../GC06_scorer_cache/CARD.md) · **Evidence for:** D08 ([decision log](../README.md#decision-log))
 
 ## Question
 
 After the camera fix, none of the seeing model's 32 candidates swerves round the oncoming car on neuroNCAP 0103 frontal; the only clear plans are hard braking, and braking alone still gets hit. Can a scorer with six sub-score heads, choosing among 32 inserted swerve paths passed through the model's own refiner, avoid the car?
+
+## Predictions
+
+⚠️ Not pre-registered: run before the registry asked for predictions, and none were written down first
 
 ## What we learned
 
@@ -33,8 +35,8 @@ On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs
 
 | Run | Result | Baseline | Strength | Source |
 |---|---|---|---|---|
-| GC07.sighted-v1 ★ | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs)<br>scene 0103, 3 runs, relative rule; 0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | docs/brake-swerve-expert.md §1 (branch); paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5 |
-| GC07.sighted-v1 | neuroNCAP ncap_score, mean of 3 shapes 3.01 → 4.44 (n=9 runs)<br>scene 0103, 3 runs per shape, relative rule; frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline docs/brake-swerve-expert.md §5 (branch) |
+| GC07.sighted-v1 ★ | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs)<br>scene 0103, 3 runs, relative rule; 0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | experiments/GC08_expert_v6_imitation/README.md §1; paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5 |
+| GC07.sighted-v1 | neuroNCAP ncap_score, mean of 3 shapes 3.01 → 4.44 (n=9 runs)<br>scene 0103, 3 runs per shape, relative rule; frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's | released Drive-JEPA, seeing | ●●○○ moderate · smoke, adapted, no-record | paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline experiments/GC08_expert_v6_imitation/README.md §5 |
 
 ## Checks that decided something
 
@@ -43,4 +45,4 @@ On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs
 ## Evidence outside this repo
 
 - neuroNCAP runs on 0103 (3 per shape): paddock run dirs neuroncap/drivejepa_subscore/20261013T202318-c43ac5 (relative rule, the doc's table) and 20261013T205827-fff68a (DRIVEJEPA_SUBSCORE_RULE=absolute, the same nine scores); under the site's paddock runs root, committed to no repository.
-- Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes.
+- Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes and in POINTERS.md.

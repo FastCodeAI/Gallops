@@ -2,8 +2,12 @@
 
 Status at 2026-10-16. This is the first training work on Drive-JEPA **with the
 camera reaching the model** (gallops #8, paddock #62). Everything in
-[swerve-finetune.md](swerve-finetune.md) and [scorer-cache.md](scorer-cache.md)
-was camera-blind.
+[GC03's account](../GC03_swerve_finetune/README.md) and
+[GC06's](../GC06_scorer_cache/README.md) was camera-blind.
+
+This page is the account of two experiments: [GC07](../GC07_subscore_scorer/CARD.md) is
+section 1, and [GC08](CARD.md) the rest. What sits outside the repository is listed in
+[POINTERS.md](POINTERS.md) and [GC07's](../GC07_subscore_scorer/POINTERS.md).
 
 The goal: on neuroNCAP, brake for a parked car and for a crossing car, and for
 an oncoming car brake first, then steer round it.
@@ -155,6 +159,10 @@ lr 1e-4, brake ticks 2×, brake-then-swerve ticks 4×, 3 epochs.
 one frame-cache file from the NAS; the epoch-2 checkpoint (`step_000069186`) is
 the one evaluated.
 
+Tick counts above are labelled ticks, except the expert-driven 9,234, which counts
+usable ones. The trainer read the usable ticks: 7,932 of round 0's 8,402, 9,234 of the
+expert-driven 9,558, and, in section 5, 2,402 of round 2's 2,466.
+
 ### Training curves
 
 From each run's `metrics.jsonl`:
@@ -176,8 +184,8 @@ From each run's `metrics.jsonl`:
 | 0103, round 1A epoch 1, 3 runs | 2.01, 3/3 hit | 5.00 | 0.00, 3/3 hit |
 | 0103, round 1B epoch 2, 3 runs | **4.21, 1/3 hit** | 5.00 | 0.00, 3/3 hit |
 
-On 0103, 1B against the released seeing model is +0.06 with a standard error of
-1.01 over the 9 paired runs: the frontal gain and the side loss cancel. Of 1B's
+On 0103, 1B against the released seeing model is +0.06 with a paired standard error
+of 0.75 over the 9 paired runs: the frontal gain and the side loss cancel. Of 1B's
 frontal runs, one braked to 2.6 m/s and moved 3.3 m left, which is the intended
 manoeuvre; one swerved 3 m right without braking; one was hit. One stationary
 run veered 3.1 m left with no need. Every tick stayed on the drivable area.
@@ -266,3 +274,13 @@ More front-camera data cannot fix that; more cameras can.
 **What would move it:** more reconstructed scenes (NeuRAD measured 7.5 h each on
 this machine), with more than two cities, before more training rounds on these
 five. Results here rest on 3 runs per shape on 0103 and 10 on 0075.
+
+## Decision
+
+- **[D08](../decisions.toml), 13 Oct:** park the sub-score scorer, and teach the manoeuvre
+  through the model's own generator, with expert v6 as the one driver to imitate.
+- **[D10](../decisions.toml), 16 Oct:** concluded negative: the swerve is learned on the five
+  training scenes and lost on unseen streets.
+
+None of these checkpoints went through the regression gate: the scorer was parked and the
+imitation rounds ended negative, so none was a candidate to ship.
