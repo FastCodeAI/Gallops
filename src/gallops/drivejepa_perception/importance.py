@@ -1,6 +1,6 @@
-"""Which agents matter to the ego: the derived labels H15's plan proposes (§3.8 of
-docs/drivejepa-perception-sidecar-A.md), for review before any of them changes a target, a loss weight or
-a metric.
+"""Which agents matter to the ego: the derived labels of H15's plan (§3.8 of
+docs/drivejepa-perception-sidecar-A.md). They grade the side-car (step 5's select records, notebook 06);
+none changes a target, a loss weight or the readout.
 
 Simple on purpose: each is a rule a person can check on a picture, not a learned importance.
 
@@ -9,13 +9,13 @@ Simple on purpose: each is a rule a person can check on a picture, not a learned
   do not): a line-of-sight proxy, not a visibility label. OpenScene's annotations carry no visibility flag.
 - **in_path**: some position of the agent (now, at +0.5 s, at +1.0 s where its track lasted) lies in the
   ego's corridor: the ego's logged next 4 s (the labels' `ego_future`), as wide as both half-widths plus
-  CORRIDOR_MARGIN_M. It reads the human's own future, so it is a label for training and grading, never an
-  input.
+  a margin. It reads the human's own future, so it is a label for training and grading, never an input.
 - **causal** (in the simple sense the plan asks for): visible (at least VISIBLE_MIN) and either in_path or
-  within NEAR_M of the ego. Hidden agents and visible ones far from the ego's path are not causal.
-- **pedestrian groups**: pedestrians chained within GROUP_M of each other (single linkage). One detection
-  anywhere in a group can stand for all of it: to the planner, one pedestrian or three at the same spot are
-  the same obstacle.
+  near the ego. Hidden agents and visible ones far from the ego's path are not causal. CAUSAL_RULES names
+  the two settings the plan reads.
+- **pedestrian groups**: pedestrians chained within GROUP_M of each other (single linkage), no group wider
+  than GROUP_MAX_WIDTH_M. One detection anywhere in a group can stand for all of it: to the planner, one
+  pedestrian or three at the same spot are the same obstacle.
 - **rank**: nearest first, by distance from the ego (targets.build already orders targets this way).
 
 numpy only.
@@ -31,7 +31,18 @@ from gallops.drivejepa_perception import views
 VISIBLE_MIN = 0.5
 NEAR_M = 10.0
 CORRIDOR_MARGIN_M = 0.5
-GROUP_M = 0.5
+#: The owner's choice at the review of steps 1-3 (plan §11.8, 4 Nov). 0.5 m, the first suggestion, groups
+#: almost no one, since a body is about that wide; single linkage at 1.5 m chains whole crowds. The cap
+#: keeps 1.0 m from doing the same in a dense one.
+GROUP_M = 1.0
+GROUP_MAX_WIDTH_M = 3.0
+#: The causal rule's two settings (plan §3.8). "strict" is the defaults above. "chosen" is the owner's
+#: choice at §11.7 (4 Nov): an agent's positions also at constant velocity up to 4 s, and a corridor 2 m
+#: wider, which takes in the adjacent lanes. Causal recall is read under both.
+CAUSAL_RULES = {
+    "strict": {"horizon_s": 0.0, "margin_m": CORRIDOR_MARGIN_M, "near_m": NEAR_M},
+    "chosen": {"horizon_s": 4.0, "margin_m": 2.0, "near_m": NEAR_M},
+}
 PEDESTRIAN = 1
 #: Pixels per cell of the coverage grid on the 512x256 image.
 GRID = 4
@@ -88,18 +99,25 @@ def path_distance(ego_future: np.ndarray, points: np.ndarray) -> np.ndarray:
 
 
 def in_path(
-    agents: dict, ego_future: np.ndarray, ego_half_width: float | None = None, horizon_s: float = 0.0
+    agents: dict,
+    ego_future: np.ndarray,
+    ego_half_width: float | None = None,
+    horizon_s: float = 0.0,
+    margin_m: float | None = None,
 ) -> np.ndarray:
     """(N,) whether any of the agent's labelled positions (now, +0.5 s, +1.0 s where known) is within the
-    corridor: closer to the ego's path than its half-width, the ego's and CORRIDOR_MARGIN_M together.
+    corridor: closer to the ego's path than its half-width, the ego's and `margin_m` together.
 
     With `horizon_s`, also its positions at constant velocity every 0.5 s up to that horizon: a pedestrian
-    walking towards the road is in the path before its labelled second shows it.
+    walking towards the road is in the path before its labelled second shows it. `margin_m` defaults to
+    CORRIDOR_MARGIN_M as it stands when called (notebook 01 §8 turns that knob).
     """
     if ego_half_width is None:
         from gallops.drivejepa_perception.geometry import EGO_WIDTH  # nuPlan's Pacifica
 
         ego_half_width = EGO_WIDTH / 2
+    if margin_m is None:
+        margin_m = CORRIDOR_MARGIN_M
     box = np.asarray(agents["box"], dtype=np.float64).reshape(-1, 7)
     if not len(box):
         return np.zeros(0, bool)
@@ -112,7 +130,7 @@ def in_path(
     for t in np.arange(0.5, horizon_s + 1e-9, 0.5):
         positions.append(box[:, :2] + t * velocity)
         known.append(np.ones(len(box), bool))
-    reach = ego_half_width + box[:, 4] / 2 + CORRIDOR_MARGIN_M
+    reach = ego_half_width + box[:, 4] / 2 + margin_m
     inside = [
         k & (path_distance(ego_future, np.nan_to_num(p)) <= reach)
         for p, k in zip(positions, known)  # noqa: B905
@@ -120,9 +138,16 @@ def in_path(
     return np.any(inside, axis=0)
 
 
-def groups(xy: np.ndarray, cls: np.ndarray, radius: float = GROUP_M) -> np.ndarray:
+def groups(
+    xy: np.ndarray, cls: np.ndarray, radius: float = GROUP_M, max_width: float | None = None
+) -> np.ndarray:
     """(N,) a group id per pedestrian, chaining pedestrians within `radius` of each other (single linkage);
-    -1 for every other class. A group's id is the index of its member nearest the ego."""
+    -1 for every other class. A group's id is the index of its member nearest the ego.
+
+    With `max_width`, a chain wider than that (between its two farthest members) is split, nearest member
+    first: each joins the first part it is within `radius` of and within `max_width` of every member of,
+    or starts a part. A crowd is not one obstacle that a single detection can stand for.
+    """
     xy, cls = np.asarray(xy, dtype=np.float64).reshape(-1, 2), np.asarray(cls)
     out = np.full(len(xy), -1, dtype=np.int64)
     members = np.flatnonzero(cls == PEDESTRIAN)
@@ -143,26 +168,57 @@ def groups(xy: np.ndarray, cls: np.ndarray, radius: float = GROUP_M) -> np.ndarr
     rng = np.hypot(xy[:, 0], xy[:, 1])
     for root in np.unique(roots):
         group = members[roots == root]
-        out[group] = int(group[np.argmin(rng[group])])
+        group = group[np.argsort(rng[group], kind="stable")]  # nearest first; ties by index
+        spread = np.linalg.norm(xy[group, None] - xy[None, group], axis=-1).max()
+        if max_width is None or spread <= max_width:
+            out[group] = int(group[0])
+            continue
+        parts: list = []
+        for m in group:
+            for part in parts:
+                d = np.linalg.norm(xy[part] - xy[m], axis=1)
+                if d.min() <= radius and d.max() <= max_width:
+                    part.append(int(m))
+                    break
+            else:
+                parts.append([int(m)])
+        for part in parts:
+            out[part] = part[0]
     return out
 
 
 def target_importance(agents: dict, projection: np.ndarray, ego_future: np.ndarray, **kwargs) -> dict:
     """The labels above for one sample's targets, in `targets.build`'s order (its first n rows).
 
-    Every labelled agent occludes (static objects included); only targets are labelled.
+    Every labelled agent occludes (static objects included); only targets are labelled. `in_path` and
+    `causal` follow the keyword settings (`horizon_s`, `margin_m`, `near_m`; the strict rule by default),
+    and `causal_<name>` follows each of CAUSAL_RULES, on the same visibility. Groups follow `radius` and
+    `max_width` (GROUP_M and GROUP_MAX_WIDTH_M by default).
     """
     index = tg.target_index(agents, projection)
     seen_share = visibility(projection, agents["box"])[index]
     chosen = {key: np.asarray(agents[key])[index] for key in ("box", "cls", "velocity", "path", "path_ok")}
     xy = chosen["box"][:, :2].astype(np.float64)
-    path = in_path(chosen, ego_future, kwargs.get("ego_half_width"), kwargs.get("horizon_s", 0.0))
-    near = np.hypot(xy[:, 0], xy[:, 1]) <= NEAR_M
+    distance = np.hypot(xy[:, 0], xy[:, 1])
     visible = np.nan_to_num(seen_share, nan=0.0) >= VISIBLE_MIN
-    return {
+    half = kwargs.get("ego_half_width")
+
+    def causal(horizon_s, margin_m, near_m):
+        path = in_path(chosen, ego_future, half, horizon_s, margin_m)
+        return path, visible & (path | (distance <= near_m))
+
+    path, is_causal = causal(
+        kwargs.get("horizon_s", 0.0), kwargs.get("margin_m"), kwargs.get("near_m", NEAR_M)
+    )
+    out = {
         "visible": seen_share,
         "in_path": path,
-        "causal": visible & (path | near),
-        "group": groups(xy, chosen["cls"], kwargs.get("radius", GROUP_M)),
+        "causal": is_causal,
+        "group": groups(
+            xy, chosen["cls"], kwargs.get("radius", GROUP_M), kwargs.get("max_width", GROUP_MAX_WIDTH_M)
+        ),
         "rank": np.arange(len(index)),
     }
+    for name, rule in CAUSAL_RULES.items():
+        out[f"causal_{name}"] = causal(rule["horizon_s"], rule["margin_m"], rule["near_m"])[1]
+    return out

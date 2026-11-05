@@ -98,3 +98,37 @@ def test_a_pedestrian_walking_towards_the_path_is_in_it_within_the_horizon():
     # The labelled second ends 2.5 m from the path, outside 1.15 + 0.3 + 0.5; at 1.5 m/s it is in by 2 s.
     assert im.in_path(agents, future, ego_half_width=1.15).tolist() == [False]
     assert im.in_path(agents, future, ego_half_width=1.15, horizon_s=4.0).tolist() == [True]
+
+
+def test_the_chosen_rule_widens_the_corridor_to_the_adjacent_lane():
+    future = np.array([[5.0 * k, 0.0, 0.0] for k in range(1, 9)])
+    agents = _agents([[15.0, 3.6, 0.9, 4.5, 2.0, 1.8, 0.0]], [0])  # a car in the next lane, 3.6 m left
+    # 1.15 + 1.0 + 0.5 = 2.65 m reach: outside. With the chosen 2 m margin, 4.15 m: inside.
+    assert im.in_path(agents, future, ego_half_width=1.15).tolist() == [False]
+    assert im.in_path(agents, future, ego_half_width=1.15, margin_m=2.0).tolist() == [True]
+
+
+def test_target_importance_gives_causal_under_each_named_rule():
+    future = np.array([[5.0 * k, 0.0, 0.0] for k in range(1, 9)])
+    agents = _agents(
+        [
+            [25.0, 3.6, 0.9, 4.5, 2.0, 1.8, 0.0],  # the next lane, 25 m ahead: causal only when chosen
+            [30.0, 0.0, 0.9, 4.5, 2.0, 1.8, 0.0],  # in the path: causal under both
+        ],
+        [0, 0],
+    )
+    labels = im.target_importance(agents, _projection(), future, ego_half_width=1.15)
+    assert labels["causal"].tolist() == labels["causal_strict"].tolist() == [False, True]
+    assert labels["causal_chosen"].tolist() == [True, True]
+    assert set(im.CAUSAL_RULES) == {"strict", "chosen"}
+
+
+def test_a_chain_wider_than_the_cap_is_split_nearest_first():
+    # Five pedestrians 0.9 m apart in a line: one chain at 1.0 m, 3.6 m wide.
+    xy = np.array([[10.0 + 0.9 * k, 0.0] for k in range(5)])
+    cls = np.ones(5, int)
+    assert im.groups(xy, cls, radius=1.0).tolist() == [0, 0, 0, 0, 0]
+    # Capped at 3 m: the first four (2.7 m) stay together, the fifth starts its own group.
+    assert im.groups(xy, cls, radius=1.0, max_width=3.0).tolist() == [0, 0, 0, 0, 4]
+    # A chain inside the cap is left whole.
+    assert im.groups(xy[:3], cls[:3], radius=1.0, max_width=3.0).tolist() == [0, 0, 0]

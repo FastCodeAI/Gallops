@@ -21,7 +21,9 @@ docs/drivejepa-perception-sidecar-A.md).
 **How the run evolved.** Every LOG_EVERY steps, `steps.jsonl` gets the window's means: each loss
 term of each layer, the learning rate, the gradient norm before clipping, the AMP loss scale, the
 matched slots' centre error and class accuracy, and how long the step waited for data. Each
-epoch's line in `metrics.jsonl` adds the epoch's means and the full select readout.
+epoch's line in `metrics.jsonl` adds the epoch's means and the full select readout, which from the
+rerun's step 5 includes query collapse (duplicates, slot use) and the recall of the targets that
+matter (causal under both rules, visible, hidden, the k nearest).
 
 **The pipeline check** is `--stop-after 1`: epoch 1 of the full schedule (the learning rate follows
 `--epochs`, not the epochs run), so its curves are the first epoch of the run it stands for.
@@ -205,11 +207,47 @@ def predict(model, dataset, device, batch=128, blind=False):
     return preds
 
 
-def read(model, dataset, targets, rows, device, gap, blind=False, detail=False) -> dict:
+def read(model, dataset, targets, rows, device, gap, blind=False, detail=False, subsets=None) -> dict:
+    """The readout on `rows`, with query collapse; with `subsets` (`importance_subsets`), the recall of
+    the targets that matter too."""
     preds = predict(model, dataset, device, blind=blind)
-    result = evaluate.readout(preds, [targets[r] for r in rows], gap, detail=detail)
-    result["detections_per_sample"] = float(np.mean([(p["conf"] >= evaluate.THR).sum() for p in preds]))
+    gts = [targets[r] for r in rows]
+    result = evaluate.readout(preds, gts, gap, detail=detail)
+    result.update(evaluate.slot_numbers(preds))
+    if subsets is not None:
+        result.update(evaluate.recall_of(preds, gts, subsets))
     return result
+
+
+#: Nearest-k recall reads each sample's k nearest targets (plan §3.8).
+NEAREST_K = (1, 3, 5)
+
+
+def importance_subsets(labels_dir, projections, targets, rows) -> dict:
+    """Per row of `rows`, which of its targets matter (plan §3.8, `importance.py`), as
+    `evaluate.recall_of` reads them: causal under each of CAUSAL_RULES, visible and hidden, and the k
+    nearest. Built once, at start-up: the labels never change. Each row's labels must cover exactly
+    its targets, since both come from one `targets.target_index` on the same projection."""
+    from gallops.drivejepa_perception import importance as im
+
+    labels = dict(np.load(Path(labels_dir) / "labels.npz"))
+    subsets: dict = {}
+    for row in rows:
+        lab = im.target_importance(
+            navsim_data.agents_of(labels, row), projections[row], labels["ego_future"][row]
+        )
+        if len(lab["rank"]) != int(targets[row]["mask"].sum()):
+            raise SystemExit(
+                f"row {row}: importance labels for {len(lab['rank'])} targets, the targets have "
+                f"{int(targets[row]['mask'].sum())}"
+            )
+        visible = np.nan_to_num(lab["visible"], nan=0.0) >= im.VISIBLE_MIN
+        named = {f"causal_{name}": lab[f"causal_{name}"] for name in im.CAUSAL_RULES}
+        named.update(visible=visible, hidden=~visible)
+        named.update({f"nearest_{k}": lab["rank"] < k for k in NEAREST_K})
+        for name, mask in named.items():
+            subsets.setdefault(name, []).append(mask)
+    return subsets
 
 
 def f1(m: dict) -> float:
@@ -266,6 +304,7 @@ def train(cfg, args) -> None:
         {"train": train_rows, "select": select_rows, "report": rows["report"]},
         vit_dir=Path(args.vit_tokens) if args.tap == "vit_out" and args.vit_tokens else None,
     )
+    subsets = importance_subsets(args.labels, projections, targets, select_rows)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     device = torch.device("cuda")
@@ -346,7 +385,7 @@ def train(cfg, args) -> None:
                     fh.write(json.dumps(line) + "\n")
             waited = time.time()
         means = epoch_window.means()
-        metrics = read(model, select_set, targets, select_rows, device, gap)
+        metrics = read(model, select_set, targets, select_rows, device, gap, subsets=subsets)
         record = {
             "epoch": epoch,
             "train_loss": means["loss"],
@@ -367,7 +406,9 @@ def train(cfg, args) -> None:
         recall, precision = metrics["recall_2m_within_30m"], metrics["precision_2m_within_30m"]
         print(
             f"epoch {epoch}: loss {record['train_loss']:.3f} select recall {recall:.3f} "
-            f"precision {precision:.3f} f1 {record['f1_30m']:.3f} ({record['seconds']} s)",
+            f"precision {precision:.3f} f1 {record['f1_30m']:.3f} "
+            f"causal {metrics['recall_causal_chosen']:.3f} "
+            f"duplicates {metrics['duplicate_pairs_per_sample']:.2f} ({record['seconds']} s)",
             flush=True,
         )
     finish(model, out, args, tokens, slot, rows, projections, targets, gap, device)

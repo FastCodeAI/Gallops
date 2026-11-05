@@ -275,3 +275,42 @@ def test_match_numbers_measure_the_matched_slots():
     match = (torch.tensor([0, 0]), torch.tensor([2, 0]), torch.tensor([0, 1]))
     numbers = train_sidecar.match_numbers(out, item, match)
     assert numbers == {"targets": 2.0, "match_centre_m": 2.5, "match_class_acc": 1.0}
+
+
+def test_slot_numbers_count_duplicates_and_slot_use():
+    def pred(conf, cls, xy):
+        n = len(conf)
+        return {"conf": np.array(conf), "cls": np.array(cls), "xyz": np.c_[np.array(xy, float), np.zeros(n)]}
+
+    preds = [
+        # two vehicles 1 m apart (a duplicate pair), a pedestrian beside them, one slot below THR
+        pred([0.9, 0.8, 0.7, 0.2], [0, 0, 1, 0], [[10, 0], [11, 0], [10.5, 0], [30, 0]]),
+        # one vehicle, far from anything
+        pred([0.9, 0.1, 0.1, 0.1], [0, 0, 0, 0], [[20, 0], [0, 0], [0, 0], [0, 0]]),
+    ]
+    out = evaluate.slot_numbers(preds)
+    assert out["detections_per_sample"] == 2.0  # 3 and 1
+    assert out["duplicate_pairs_per_sample"] == 0.5  # one pair over two samples; classes must agree
+    assert out["duplicate_share"] == 0.5  # 2 of 4 detections are in a pair
+    assert out["slots"] == 4 and out["slots_firing"] == 3
+    assert out["busiest_eighth_share"] == 0.5  # 4 slots: the busiest one, slot 0, made 2 of 4
+
+
+def test_recall_of_reads_only_the_chosen_targets():
+    gt = {
+        "mask": np.array([True, True, False]),
+        "box": np.array(
+            [[10.0, 0, 0, 4, 2, 1.5, 0], [20.0, 0, 0, 4, 2, 1.5, 0], [0, 0, 0, 0, 0, 0, 0]], np.float32
+        ),
+        "cls": np.array([0, 0, 0]),
+    }
+    pred = {
+        "conf": np.array([0.9, 0.1]),
+        "cls": np.array([0, 0]),
+        "xyz": np.array([[10.2, 0.0, 0.0], [0, 0, 0]]),
+    }
+    out = evaluate.recall_of(
+        [pred], [gt], {"near": [np.array([True, False])], "all": [np.array([True, True])]}
+    )
+    assert out["recall_near"] == 1.0 and out["targets_near"] == 1
+    assert out["recall_all"] == 0.5 and out["targets_all"] == 2

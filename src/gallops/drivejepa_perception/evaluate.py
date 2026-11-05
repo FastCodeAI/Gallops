@@ -11,7 +11,9 @@ Added here:
   centre, constant velocity from the predicted velocity, and constant velocity from the label's
   velocity at the label's centre (a kinematic reference the side-car must approach);
 - the lead vehicle (the nearest vehicle ahead with |y| <= LANE_HALF_M): gap error against a
-  no-camera prior, the train-mean gap.
+  no-camera prior, the train-mean gap;
+- from the rerun's step 5, every epoch: query collapse (`slot_numbers`) and the recall of the
+  targets that matter (`recall_of`, with `importance.py`'s labels).
 """
 
 from __future__ import annotations
@@ -66,6 +68,52 @@ def lead(xy: np.ndarray, cls: np.ndarray):
     """Gap to the nearest vehicle ahead in the ego lane, or None."""
     ahead = (cls == 0) & (xy[:, 0] > 0) & (np.abs(xy[:, 1]) <= LANE_HALF_M)
     return float(xy[ahead, 0].min()) if ahead.any() else None
+
+
+def slot_numbers(preds: list) -> dict:
+    """Query collapse, read on decoded outputs (the rerun's plan §5.2, notebook 02 §8).
+
+    Detections a sample; duplicate pairs a sample (two detections of one class whose centres lie
+    within HIT_M of each other) and the share of detections in such a pair; how many slots ever fire,
+    and the share of all detections the busiest eighth of the slots makes.
+    """
+    fired = np.stack([p["conf"] >= THR for p in preds])  # (samples, slots)
+    pairs = in_pair = 0
+    for pred, shown in zip(preds, fired):  # noqa: B905
+        q = np.flatnonzero(shown)
+        xy, cls = pred["xyz"][q, :2], pred["cls"][q]
+        close = (np.linalg.norm(xy[:, None] - xy[None], axis=-1) <= HIT_M) & (cls[:, None] == cls[None])
+        close = np.triu(close, k=1)
+        pairs += int(close.sum())
+        in_pair += int((close.any(0) | close.any(1)).sum())
+    per_slot = fired.sum(0)
+    detections = int(per_slot.sum())
+    busiest = np.sort(per_slot)[::-1][: max(len(per_slot) // 8, 1)]
+    return {
+        "detections_per_sample": float(fired.sum(1).mean()),
+        "duplicate_pairs_per_sample": pairs / len(preds),
+        "duplicate_share": in_pair / detections if detections else float("nan"),
+        "slots": int(fired.shape[1]),
+        "slots_firing": int((per_slot > 0).sum()),
+        "busiest_eighth_share": float(busiest.sum() / detections) if detections else float("nan"),
+    }
+
+
+def recall_of(preds: list, gts: list, subsets: dict) -> dict:
+    """Recall at HIT_M of chosen targets, all ranges (to 50 m): `subsets` maps a name to one boolean
+    array per sample over that sample's targets, in their order (the causal ones, the nearest; plan
+    §3.8). Gives `recall_<name>` and `targets_<name>`."""
+    found = []
+    for pred, gt in zip(preds, gts):  # noqa: B905
+        m = gt["mask"]
+        gxy = gt["box"][m, :2].astype(np.float64)
+        found.append(match(pred["conf"], pred["cls"], pred["xyz"][:, :2], gxy, gt["cls"][m])[2] >= 0)
+    out = {}
+    for name, masks in subsets.items():
+        hit = np.concatenate([f[np.asarray(s, bool)] for f, s in zip(found, masks)])  # noqa: B905
+        out[f"recall_{name}"] = float(hit.mean()) if len(hit) else float("nan")
+        out[f"targets_{name}"] = int(len(hit))
+    return out
 
 
 def readout(preds: list, gts: list, prior_gap: float, detail: bool = False) -> dict:

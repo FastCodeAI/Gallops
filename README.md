@@ -117,7 +117,8 @@ flowchart TD
   D18{{"<b>D18</b> · 28 Oct<br/>KITScenes exp 3 fails the gate"}}
   D19{{"<b>D19</b> · 4 Nov<br/>H14 cancelled: inconclusive"}}
   D20{{"<b>D20</b> · 4 Nov<br/>H15 redone: Part A first, step by step"}}
-  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19 ==> D20
+  D21{{"<b>D21</b> · 4 Nov<br/>H15 Part A: steps 1-3 reviewed, recommended settings"}}
+  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19 ==> D20 ==> D21
   D01 -.-> GC01
   GC02 --> D02
   D02 -.-> GC03
@@ -163,6 +164,8 @@ flowchart TD
   H14 --> D19
   H15 --> D20
   D20 -.-> H15
+  H15 --> D21
+  D21 -.-> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
   classDef negative stroke:#C0392B,stroke-width:2px
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
@@ -292,6 +295,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | **D18** | 28 Oct 2026 | The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](experiments/H07_encoder_lora/CARD.md) | — |
 | **D19** | 4 Nov 2026 | H14 (auxiliary heads on Drive-JEPA's refiner, fine-tuned on nuScenes) is cancelled: its results and their analysis are inconclusive. Future experiments do not build on it -- not its code (gallops.drivejepa_aux), recipe, held-out scene list, checkpoints, numbers or account; its docs and figures were removed the same day. | Shreedhar | [H14.C](experiments/H14_aux_heads/CARD.md), [H14.T1](experiments/H14_aux_heads/CARD.md), [H14.T2](experiments/H14_aux_heads/CARD.md) | — |
 | **D20** | 4 Nov 2026 | H15's first pass (the side-car and then every phase-B question, run in a day and a half) is judged inconclusive by its owner: more ran than could be reviewed or debugged. H15 is redone from a revised plan, docs/drivejepa-perception-sidecar-A.md: Part A alone, the side-car trained and measured, in eight steps, each reviewed by the owner before the next; phases B and C wait until Part A closes. | Shreedhar | [H15.a1](experiments/H15_perception_sidecar/CARD.md), [H15.b1](experiments/H15_perception_sidecar/CARD.md), [H15.b2](experiments/H15_perception_sidecar/CARD.md), [H15.b3](experiments/H15_perception_sidecar/CARD.md), [H15.ood](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
+| **D21** | 4 Nov 2026 | The owner reviewed H15 Part A's steps 1-3 and chose the plan's recommended settings (section 11 of docs/drivejepa-perception-sidecar-A.md): its success criteria as written, committed as PREDICTIONS.md (step 4); the report logs as the test set; the step-5 runs as listed; the chosen causal rule (a 4 s look-ahead, a 2 m corridor margin); pedestrian groups at 1.0 m, at most 3 m wide; traffic side measured before any input is added; nuScenes read also warped to NAVSIM's camera. Weighting what matters (step 5c) and head changes stay open for the review of step 5. | Shreedhar | [H15.r1](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
 <!-- /experiments:decisions -->
 
 ## How to read these tables

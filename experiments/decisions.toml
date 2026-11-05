@@ -230,3 +230,18 @@ by = ["Shreedhar"]
 evidence = ["H15.a1", "H15.b1", "H15.b2", "H15.b3", "H15.ood"]
 next = ["H15"]
 source = "the owner, 4 Nov 2026"
+
+[[decision]]
+id = "D21"
+date = 2026-11-04
+short = "H15 Part A: steps 1-3 reviewed, recommended settings"
+decision = """The owner reviewed H15 Part A's steps 1-3 and chose the plan's recommended settings (section 11 \
+of docs/drivejepa-perception-sidecar-A.md): its success criteria as written, committed as PREDICTIONS.md \
+(step 4); the report logs as the test set; the step-5 runs as listed; the chosen causal rule (a 4 s \
+look-ahead, a 2 m corridor margin); pedestrian groups at 1.0 m, at most 3 m wide; traffic side measured \
+before any input is added; nuScenes read also warped to NAVSIM's camera. Weighting what matters (step 5c) \
+and head changes stay open for the review of step 5."""
+by = ["Shreedhar"]
+evidence = ["H15.r1"]
+next = ["H15"]
+source = "the owner, 4 Nov 2026"

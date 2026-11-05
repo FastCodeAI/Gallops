@@ -1,8 +1,8 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
-**Status (2026-11-04): steps 1–3 done, and revised after the owner's second review; waiting for the next
-review. Step 3's pipeline check passed (§9). Step 7's nuScenes data is prepared (§8.2); no model has read
-it. Nothing else past step 3 has run, and no report-log number exists.**
+**Status (2026-11-04): steps 1–3 reviewed; the owner chose the recommended settings (§11). Step 4 is
+done: the criteria are in PREDICTIONS.md. Step 5 is running, on the select logs only. Step 7's nuScenes
+data is prepared (§8.2); no model has read it. No report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -971,6 +971,10 @@ interpreters):
 - step 7's side-car-only nuScenes readout.
 
 ## 11. Decisions for the owner at the review of steps 1–3
+
+**Decided on 4 Nov: "use recommended settings".** PREDICTIONS.md records each choice. Where none was marked
+as recommended: 11.4 adopts every proposed metric, since they are readouts; 11.9 (step 5c) and 11.11 (head
+changes) stay open for the review of step 5.
 
 - **11.1 · Success criteria (§7):** approve as written, or edit, before step 4 commits them.
 - **11.2 · Test set:** the report logs only (the default), or navtest as well (§8.3).

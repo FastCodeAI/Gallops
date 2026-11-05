@@ -75,3 +75,81 @@ came first; a prediction written after the result is not one.
 | select: H04's 51 held-out navtrain logs | epochs, modes, thresholds |
 | report: a fresh seeded draw of about 70 navtrain logs | every number above |
 | navtest, nuScenes `val`, KITScenes, neuroNCAP | the gate, later. Nothing here selects on them |
+
+## The rerun, Part A (step 4, written 4 Nov 2026)
+
+**Committed before step 5's first training step.** Copied from section 7 of the rerun's plan
+(`docs/drivejepa-perception-sidecar-A.md`; every § below is the plan's).
+- That section was committed in d1bacdc, before step 3's pipeline check, which read only the train and
+  select logs.
+- Q10 and Q11 were added on 4 Nov after the second review, with step 3's epoch-1 select values known
+  (causal recall 0.70 under the strict rule, nearest-1 recall 0.56), as the plan says.
+
+**The owner's choices** (plan section 11; 4 Nov, "use recommended settings"):
+- 11.1: these criteria, as written. Nothing below was edited after that.
+- 11.2: the report logs are the test set; navtest is not added.
+- 11.3: no ego-motion input until after step 6.
+- 11.4: every proposed metric. None was marked as recommended; all are readouts, not choices.
+- 11.6: the step-5 runs as listed: 5a, then 5b.
+- 11.7: the chosen causal rule adds a 4 s look-ahead at constant velocity and a 2 m corridor margin
+  (`importance.CAUSAL_RULES["chosen"]`). Causal recall is read under it and under the strict rule.
+- 11.8: pedestrian groups chain within 1.0 m, and no group is wider than 3 m.
+- 11.10: traffic side is measured first, at steps 6 and 7.
+- 11.12: step 7 reads nuScenes as it is and warped to NAVSIM's camera.
+- 11.9 (step 5c, weighting what matters) and 11.11 (head changes) had no marked recommendation. They
+  are not run in this round and stay open for the review of step 5.
+
+### Gates: each must hold to go on
+
+| # | Gate |
+|---|---|
+| G1 | every run's preflight passes, and its report is in `run.json` |
+| G2 | each variant passes the overfit check before its first run |
+| G3 | no run has a non-finite loss. Skipped (overflow) steps stay under 1% of steps. Clipped steps are reported |
+| G4 | the owner has seen a run's curves (notebook 03) before its report numbers exist |
+| G5 | v1 seed 0 (12 epochs) reproduces the first pass's A1 seed 0: select F1 at epoch 11 within ±0.01 of the 0.669 that run recorded there (its reread, quoted by B3.1's preflight in the README; its per-epoch files were deleted) |
+
+### Predictions
+
+**Scope.** Report logs, front view, within 30 m, unless stated; the chosen variant, three seeds.
+**First-pass reference values** (A1, v1, report logs): recall 0.630–0.632, precision 0.736–0.742,
+moving vehicles 0.935–0.936, lead-gap error 2.14–2.36 m against the prior's 8.53 m.
+
+| # | Metric | Baseline | Predicted | Support | Refuted |
+|---|---|---|---|---|---|
+| Q1 | recall and precision at 2 m | the blind control | recall 0.60–0.70, precision 0.72–0.85 | recall ≥ 0.55 and precision ≥ 0.65 on every seed | recall < 0.40 on any seed |
+| Q2 | recall of moving vehicles within 20 m | the blind control | ≥ 0.90 | ≥ 0.85 on every seed | < 0.70 on any seed |
+| Q3 | per class: vehicle and pedestrian recall | — | vehicles ≥ 0.70, pedestrians 0.35–0.55 within 30 m | reported, not decided: the class mix differs between splits (§3.4) | — |
+| Q4 | 1 s path FDE of matched moving agents | constant velocity from the side-car's own velocity | lower, by 3–8% | lower beyond 2 SE (clustered by log) on every seed | not lower on any seed |
+| Q5 | lead-vehicle gap error | the train-mean prior | ≤ 2.5 m | ≤ half the prior's error on every seed | ≥ the prior's error |
+| Q6 | sight: recall with another log's tokens | own tokens | ≤ 0.06 | ≤ 0.10 on every seed | > 0.20 on any seed |
+| Q7 | variant (select, seed 0) | v1 | v2 beats v1 by 0.01–0.04 F1. v3 is within 0.01 of v2 | — (a choice by §6.5, recorded) | — |
+| Q8 | schedule (select, v1 seed 0) | 12 epochs | 24 beats 12 by 0.005–0.02 F1 | — (a choice by §6.5, recorded) | — |
+| Q9 | nuScenes, zero-shot: vehicle recall at 2 m within 30 m | — | 0.40–0.55 | ≥ 0.30 | < 0.20 |
+| Q10 | causal recall (§3.8's rule as chosen at §11.7) | the blind control | 0.85–0.95 | ≥ 0.80 on every seed | < 0.70 on any seed |
+| Q11 | recall of each sample's nearest target | — | 0.80–0.90 | reported, not decided | — |
+
+**Q6's companion.** With the tokens zeroed, the first pass found 27 detections a sample on one
+seed. That input never occurs in real data, so it is recorded as a diagnostic, not a gate.
+
+**Q10 and Q11 fall under the scope line: within 30 m.** Step 5's per-epoch select records read causal
+and nearest-k recall over all ranges, to 50 m, as notebook 04 §4e defined them. That is a diagnostic,
+not these rows; step 6 reports both.
+
+### How the choices at step 5 are made (plan §6.5, on select)
+
+| Choice | Rule |
+|---|---|
+| Kept epoch | best F1 at 2 m within 30 m |
+| Variant | the smallest variant within 0.01 F1 of the best, at its kept epoch, seed 0 |
+| Schedule | 24 epochs if v1-24 beats v1-12 by ≥ 0.01 F1, else 12 |
+
+### Decision rules
+
+- **G5 fails:** stop. Find what differs between the passes before any other run.
+- **Q1 refuted:** H-A is refuted for this design. Step 8 records it, and no B question opens.
+- **Q1 to Q6 supported:** H-A holds on NAVSIM. Step 8 decides, with the owner, whether one B question
+  opens, and which one.
+  - Q9 says whether the side-car can be trusted out of domain.
+- **Q9 refuted:** the side-car is NAVSIM-only. That limits any B question to NAVSIM and to the gate's
+  in-domain benchmarks.
