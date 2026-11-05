@@ -1,4 +1,18 @@
-# Drive-JEPA's planner on frozen WA-JEPA tokens
+# H01 — 4-camera base: Drive-JEPA's planner on frozen WA-JEPA tokens
+
+**Owner:** Navvrat · **Priority:** 1 of 11 · **Started:** 16 Oct 2026 · **Status:** running — gated by hand, overall
+HOLD; no paddock ref carries its adapter yet (hypothesis)
+
+The facts are in [experiment.toml](experiment.toml), and what is off the repository is in
+[POINTERS.md](POINTERS.md). This page is the account.
+
+## Why
+
+Released Drive-JEPA reads only its front camera. This puts its planner on WA-JEPA's frozen encoder over four
+cameras, and asks whether that base is at least as good where the gate measures. The team agreed it as the base on
+19 Oct; every later hypothesis needs that baseline.
+
+## What was done
 
 Drive-JEPA's planner (32 proposals × 8 waypoints, four refinement rounds, a
 scorer that picks one) trained on NAVSIM navtrain with its ViT replaced by
@@ -71,6 +85,29 @@ was 0.880 at epoch 19, 0.882 at epoch 17.
 navtest sub-scores, Run 2 / released: NC .980 / .985, DAC .972 / .986, DDC .990 / .991,
 TLC .998 / .998, EP .879 / .891, TTC .973 / .979, LK .967 / .976, HC .977 / .978,
 EC .401 / .478.
+
+## The regression gate
+
+Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Each block is copied from the
+gate's own table into [experiment.toml](experiment.toml). Against released Drive-JEPA:
+
+| Date | Benchmark | Metric | Released | Run 2 | t | Units | Verdict |
+|---|---|---|---:|---:|---:|---:|---|
+| 21 Oct | NAVSIM, 1,000 tokens | EPDMS | 0.875 | 0.863 | −1.29 | 136 | NEUTRAL |
+| 21 Oct | KITScenes | ADE | 3.222 | 1.969 | 6.44 | 140 | GAIN |
+| 21 Oct | nuScenes | L2 | 2.497 | 1.956 | 3.03 | 30 | GAIN |
+| 21 Oct | Bench2Drive, 7 routes, 2 Hz | DS | 58.801 | 62.757 | 0.36 | 7 | NEUTRAL |
+| 27 Oct | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.280 | −0.96 | 15 | NEUTRAL |
+| 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.001 | 3.10 | 117 | GAIN |
+| 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.057 | 3.41 | 143 | GAIN |
+
+AlpaSim, 10 scenes: scene score 0.416 → 0.450, t 0.24; the gate says CONFIG DIFFERS, because our driver profile is not
+the baseline's. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
+
+## Decision
+
+Not decided. The gate says HOLD, and the record stays `running` until the team takes it; no row in the decision log
+closes it yet.
 
 ## The data
 
