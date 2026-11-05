@@ -173,8 +173,8 @@ env -u VIRTUAL_ENV -u CONDA_PREFIX -u GALLOPS_CONFIG make check; echo "exit=$?"
 **Read the exit code directly.** `make check | tail` reports *tail's* status.
 
 **Read CI after you push** (`gh pr checks <N>`). If it shows no checks, the PR
-conflicts with its base and your run is the only one the fix has had, so say so
-in the reply.
+conflicts with its base, or neither side has the workflows yet, and your run is
+the only one the fix has had, so say so in the reply.
 
 ## 5. Report, commit, and push
 

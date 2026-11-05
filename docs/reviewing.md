@@ -41,8 +41,10 @@ env -u VIRTUAL_ENV -u CONDA_PREFIX -u GALLOPS_CONFIG make check; echo "exit=$?"
   of `make check`, and it scans untracked files too.
 - **Read CI as well as running it** (`gh pr checks <N>`). It runs `make check` on
   GitHub's merge of the PR into its base, so it can fail where your run passes.
-  GitHub runs nothing on a PR that conflicts with its base; if no check is there,
-  your run is the only one the PR has had. Say so.
+  GitHub reads the workflows from that merge, so it runs nothing on a PR that
+  conflicts with its base, or on one whose base has no workflows yet, as with a
+  stacked PR until its base takes `main`. If no check is there, your run is the
+  only one the PR has had. Say so.
 - **A red check does not stop a merge.** This GitHub plan has no branch
   protection, so the review is what holds it: a red check is a 🔴.
 

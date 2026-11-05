@@ -190,8 +190,10 @@ description from `gallops experiments pr <ID>`,** never typed; see
 skips `.github/pull_request_template.md`, so this line is what reaches a PR
 opened from the command line.
 
-CI runs `make check` and that title check on every PR. This GitHub plan has no
-branch protection, so a red check does not stop a merge. Do not merge on red.
+CI runs `make check` and that title check on every PR whose merge with its base
+holds the workflows, so a stacked PR gets them once its base has taken `main`.
+This GitHub plan has no branch protection, so a red check does not stop a merge.
+Do not merge on red.
 
 When reporting results, **separate what you verified from what you argued**, and
 state the strength of each claim. That standard is paddock's

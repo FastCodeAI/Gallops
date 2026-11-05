@@ -3,7 +3,8 @@
 name: check
 
 on:
-  # No `branches` filter: gallops PRs stack, so a PR's base is often another PR's branch.
+  # No `branches` filter: gallops PRs stack, so a PR's base is often another PR's branch. GitHub reads
+  # this file from the PR's merge, so a stacked PR gets it once its base has taken main.
   pull_request:
   push:
     branches: [main]
