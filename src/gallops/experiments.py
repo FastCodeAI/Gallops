@@ -94,8 +94,21 @@ GATE_BENCHES = ("navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "
 STEP_UNITS = ("epoch", "pass", "optimizer_step")
 DATA_ROLES = ("train", "selection", "held-out", "eval")
 GATE_TIERS = ("quick", "closed", "all")
-GATE_VERDICTS = ("SHIP", "HOLD", "FAIL", "INCOMPLETE")
-PAIR_VERDICTS = ("GAIN", "NEUTRAL", "REGRESSION", "NO RECORDS", "TOO FEW UNITS", "NOT RUN")
+#: What paddock's `overall()` returns. An unfinished subset is a HOLD that says so, not a verdict of its own.
+GATE_VERDICTS = ("SHIP", "HOLD", "FAIL")
+#: Paddock's nine, then `NOT RUN`, which is ours: a benchmark the job's tier left out.
+PAIR_VERDICTS = (
+    "GAIN",
+    "NEUTRAL",
+    "REGRESSION",
+    "NO RECORDS",
+    "TOO FEW UNITS",
+    "NO UNIT",
+    "CONFIG DIFFERS",
+    "INCOMPLETE",
+    "SUBSET DIFFERS",
+    "NOT RUN",
+)
 
 #: Modules that serve every experiment: the contract, the site config, the CLI. Every other module
 #: under src/gallops must be claimed by an experiment's `[runs.code]`, so no trainer exists in the
@@ -567,10 +580,15 @@ def validate(reg: Registry) -> list[str]:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is not 64 lower-case hex digits")
                     elif wsha == EMPTY_SHA256:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is the SHA-256 of empty input")
-                    elif wsha in seen_sha:
-                        errors.append(f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}")
-                    else:
-                        seen_sha[wsha] = rid
+                    elif run.get("trained") != []:
+                        # `trained = []` pins weights the run did not write: paddock's gate accepts a code
+                        # change on the same weights. Two runs that trained cannot have written one file.
+                        if wsha in seen_sha:
+                            errors.append(
+                                f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}"
+                            )
+                        else:
+                            seen_sha[wsha] = rid
 
             for j, res in enumerate(run.get("results", [])):
                 xwhere = f"{rwhere} results[{j}]"
@@ -626,8 +644,40 @@ def validate(reg: Registry) -> list[str]:
                 errors.append(f"{run.get('id')}: start_from {start} is not a run")
 
     errors.extend(_validate_decisions(reg, ids | seen_runs, owners))
+    errors.extend(_undecided(reg))
     errors.extend(_unclaimed_modules(reg))
     return errors
+
+
+def _undecided(reg: Registry) -> list[str]:
+    """A finished hypothesis was judged by the gate, and the team said what follows from that verdict."""
+    errors = []
+    for e in reg.experiments:
+        if e.data.get("track") != "hypothesis" or e.data.get("status") != "done":
+            continue
+        gates = [gate for run in e.runs for gate in run.get("gate", [])]
+        if not gates:
+            errors.append(f"{e.id}: a done hypothesis has a gate verdict on one of its runs")
+        verdict = e.data.get("verdict")
+        if verdict == "none":
+            errors.append(f"{e.id}: a done hypothesis says how it came out (`verdict` is not none)")
+        if verdict == "positive" and not any(gate.get("verdict") == "SHIP" for gate in gates):
+            errors.append(f"{e.id}: a positive hypothesis has a gate SHIP")
+        # Any older decision will not do: D11 names H01 as the base, and cannot have said what follows
+        # from a gate run after it. The same day counts, since a team decides on the day's verdict.
+        last = max((g["date"] for g in gates if isinstance(g.get("date"), dt.date)), default=dt.date.min)
+        if not any(_cites(d, e.id) and d["date"] >= last for d in reg.decisions):
+            errors.append(
+                f"{e.id}: a done hypothesis is cited as evidence by a decision "
+                "dated on or after its last gate"
+            )
+    return errors
+
+
+def _cites(decision: dict[str, Any], experiment: str) -> bool:
+    # A non-string is `_validate_decisions`' to report, with a message; it must not raise here first.
+    refs = [ref for ref in decision.get("evidence", []) if isinstance(ref, str)]
+    return isinstance(decision.get("date"), dt.date) and experiment in {r.split(".", 1)[0] for r in refs}
 
 
 def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> list[str]:
@@ -737,9 +787,13 @@ PAIR_MARK = {
     "REGRESSION": "🔴",
     "NO RECORDS": "▫️",
     "TOO FEW UNITS": "▫️",
+    "NO UNIT": "▫️",
+    "CONFIG DIFFERS": "▫️",
+    "INCOMPLETE": "▫️",
+    "SUBSET DIFFERS": "▫️",
     "NOT RUN": "—",
 }
-GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**", "INCOMPLETE": "… INCOMPLETE"}
+GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**"}
 
 
 def _cell(text: Any) -> str:
