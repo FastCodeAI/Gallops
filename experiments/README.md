@@ -76,27 +76,27 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
-| `gallops.drivejepa_perception.b_report` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.env` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.evaluate` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.explain` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.geometry` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.importance` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.navsim_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.nuscenes_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.ood` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.pdm_labels` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.preflight` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.scorers` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.targets` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.tokens` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.train_refiner` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.train_scorer` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.train_sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.train_vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.views` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
-| `gallops.drivejepa_perception.vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3 | experiment |
+| `gallops.drivejepa_perception.b_report` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.env` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.evaluate` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.explain` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.geometry` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.importance` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.navsim_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.nuscenes_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.ood` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.pdm_labels` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.preflight` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.scorers` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.targets` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.tokens` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.train_refiner` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.train_scorer` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.train_sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.train_vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.views` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
+| `gallops.drivejepa_perception.vit_lora` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4 | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |

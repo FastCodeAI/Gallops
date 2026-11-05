@@ -1,9 +1,8 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
-**Status (2026-11-04): steps 1–3 reviewed; the owner chose the recommended settings (§11). Step 4 is
-done: the criteria are in PREDICTIONS.md. Step 5a is done (§9.2): by the committed rules, v3 for 24
-epochs; 5b is running, on the select logs only. Step 7's nuScenes data is prepared (§8.2); no model has
-read it. No report-log number exists.**
+**Status (2026-11-05): steps 1–5 done, on the select logs only; waiting for the owner's review of step 5
+(§9.2, notebook 06). By the committed rules the side-car is v3 for 24 epochs: select F1 0.717 over three
+seeds. Step 7's nuScenes data is prepared (§8.2); no model has read it. No report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -21,6 +20,8 @@ steps. The owner reviews each block before the next one starts.
 | 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
 | the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
 | step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
+| 4 · the success criteria, committed | [PREDICTIONS.md](../experiments/H15_perception_sidecar/PREDICTIONS.md), the rerun's section |
+| 5 · three sizes, then the chosen one at three seeds: what it predicts | [notebooks/06_predictions.ipynb](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb), §9.2 |
 
 **The second review's questions, and where each is answered:**
 
@@ -951,8 +952,8 @@ reference).
 
 Runs `H15.r3` (5a, from `9d32b80`) and `H15.r4` (5b, from `97727a8`). They wrote to
 `{runs}/drivejepa_perception/part-a/5a-*` and `5b-*`, all with `--no-report`: no report-log number exists.
-Notebook 06 (`06_predictions.ipynb`, committed with 5b's results) holds every number below, and the
-pictures. All are *measured* on the select logs. Those logs chose the epochs and the
+[Notebook 06](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb) holds every number
+below, and the pictures. All are *measured* on the select logs. Those logs chose the epochs and the
 variant, so each number flatters the chosen run a little.
 
 **The gates:**
@@ -978,7 +979,65 @@ variant, so each number flatters the chosen run a little.
   - Q7 predicted v2 − v1 between +0.01 and +0.04, and v3 within 0.01 of v2: measured +0.008 and +0.020.
   - Q8 predicted 24 epochs beating 12 by 0.005–0.02: measured +0.027.
 
-**5b** (v3 for 24 epochs at seeds 0, 1 and 2, and the no-camera control) is running.
+**5b, the chosen side-car** (v3 for 24 epochs; seed 0 is new, since 5a trained v3 for 12 epochs only):
+
+| Run | Kept epoch | Select F1, kept · last | Recall · precision | Causal recall |
+|---|---|---|---|---|
+| seed 0 | 24 | 0.720 · 0.720 | 0.680 · 0.763 | 0.898 |
+| seed 1 | 21 | 0.718 · 0.718 | 0.673 · 0.770 | 0.903 |
+| seed 2 | 24 | 0.713 · 0.713 | 0.666 · 0.768 | 0.897 |
+| no camera, seed 0 | 23 | 0.041 · 0.024 | 0.057 · 0.032 | 0.108 |
+
+- **The seeds agree to 0.006 F1.** The 0.01 rule sits above that, though by less than §6.5 assumed (it took
+  the first pass's 0.004).
+- **The no-camera control finds almost nothing,** as the first pass's did. It detected nothing until epoch
+  22, then 8 guesses a sample at nearly fixed places.
+- **Its training was unhealthy, for a reason not found.**
+  - 95% of its steps were clipped, its gradient norm reached 3 × 10⁶, and the AMP scale fell to 1.5 × 10⁻⁵.
+  - G3 holds by its letter: 0.12% of steps skipped.
+  - It is not the LayerNorm on a vanishing input: the projection's bias, its only input, keeps the spread
+    it has in the camera runs.
+- **The camera runs were healthy:** skipped steps 0.05%, clipped 0.7–1.7%.
+
+**What notebook 06 finds in the predictions** (v3 on 24 epochs unless stated):
+- **Direction is right, distance is not.**
+  - The median direction error is under 1° at every range.
+  - The median depth error grows from 0.24 m within 10 m to 1.20 m at 30–50 m. Beyond 30 m, 30% of agents
+    are more than 2 m off in depth, and far agents are placed too near.
+  - This is the largest share of the misses (43% have a detection of their class 2–4 m away) and of the
+    false alarms (45% are 2–4 m from a target of their class).
+  - Size and schedule barely change it.
+- **Hidden agents are rarely found:** recall 0.36, against 0.63 for visible ones. Three quarters of the
+  misses are hidden agents.
+- **The agents that matter are found:** causal recall 0.90 (0.11 without the camera), the nearest target
+  0.79, moving vehicles within 20 m 0.96.
+- **Cyclists are almost never found:** 212 on select, found as cyclists 4% of the time and as pedestrians
+  18%.
+- **No query collapse, but under-detection:**
+  - every slot is used;
+  - true duplicates run about 1.2 a sample;
+  - detections run 5.2 a sample against 7.3 targets.
+- **Refinement happens in the first three decoder layers.** v3 on 12 epochs reads the same F1 at layer 3
+  as at layer 6. Its gain over v2 (the same depth) comes from width.
+- **No ego motion leaks into the agents':** parked agents get 0.07–0.10 m/s of velocity error at any ego
+  speed up to 10 m/s.
+- **The 1 s paths beat constant velocity by 4–5% in every run** (Q4 predicts 3–8%).
+- **The rays are a learnt position code, not geometry.**
+  - Turning the camera 2° turns the detections by under 0.1°.
+  - Removing the rays costs 0.07–0.12 recall.
+  - So step 7's image warp (§11.12) is what can correct a different camera.
+- **Each detection's attention lies mostly on its own agent:** 3.0 times its share of the image, at the
+  median.
+- **Confidence is over-confident below 0.7** in every run, and for v3 on 24 epochs above it too.
+- **Left-hand traffic reads lower:** recall 0.40–0.43 against 0.67–0.68, on only two Singapore logs.
+
+**For the owner's review of step 5:**
+- **Step 6:** the report logs, read once, for v3 on 24 epochs at three seeds and the no-camera control.
+- **The no-camera control:** keep it as the baseline, or retrain it in fp32 first.
+- **Still open:** weighting what matters (5c, §11.9) and head changes (§11.11). The measured weak point
+  suggests trying depth along the ray, with an uncertainty, first.
+- **Not a step-5 choice:** v3's layers 4–6 add little, so a three-layer v3 (about 10 M, *estimate*) would
+  likely do as well.
 
 ## 10. Code
 

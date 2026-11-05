@@ -563,3 +563,62 @@ notes = "After the owner's review of steps 1-3 (D21) and PREDICTIONS.md's rerun 
   strength = "moderate"
   flags = ["open-loop", "selected-on-report"]
   note = "kept epoch 23 of 24; recall 0.658, precision 0.742; last epoch 0.697"
+
+[[runs]]
+id = "H15.r4"
+label = "Rerun, Part A, step 5b: the chosen side-car (v3, 18.44 M) for 24 epochs at seeds 0, 1 and 2, and the same side-car trained without the camera, select logs only"
+started = 2026-11-04
+start_from = "released"
+trained = ["side-car"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+params_trained_m = 18.44
+train_git_sha = "97727a8"
+notes = "The variant and schedule 5a chose by plan section 6.5 (H15.r3): v3 for 24 epochs; seed 0 was trained here because 5a had trained v3 for 12 epochs only. --no-report. Every preflight passed (G1); v3 passed the overfit check at step 700 (G2). The seeds: kept epochs 24, 21 and 24; skipped 18-19 of 35,304 steps (0.05%), clipped 0.7-1.7% (G3). The no-camera control (--blind, tokens zeroed in training and reading): skipped 43 steps (0.12%, G3 holds by its letter) but 95% of its steps were clipped, its gradient norm reached 3e6 (50-step means), the AMP scale fell to 1.5e-5 and its epoch-mean loss rose from 33 to as much as 90; it detected nothing until epoch 22, then 8.1 guesses a sample. Cause not found: the projection's bias, the only input left, keeps the spread it has in the camera runs (std 0.018-0.029). The first pass's v1 control also detected nothing. Notebook 06 reads every run's predictions."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-a-5b-v3-e24-s0"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, train logs (1,071)"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, select logs (H04's 51 held-out)"
+  role = "selection"
+  unit = "samples"
+  n = 4457
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, kept epoch: v3 for 24 epochs"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  baseline = "no camera (the same side-car, tokens zeroed), seed 0"
+  baseline_value = "0.041"
+  value = "0.717"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "mean of three seeds: 0.720 (kept epoch 24), 0.718 (21), 0.713 (24), a range of 0.006; recall 0.666-0.680, precision 0.763-0.770. The variant, schedule and epochs were chosen on these logs; step 6 reads the report logs. The control's recall is 0.057 and precision 0.032 at its kept epoch 23 (0.024 F1 at its last)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "recall of causal targets (the chosen rule: 4 s look-ahead, 2 m margin), all ranges, at 2 m: v3 for 24 epochs"
+  subset = "select logs"
+  n = 2117
+  unit = "target"
+  baseline = "no camera, seed 0"
+  baseline_value = "0.108"
+  value = "0.899"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "mean of three seeds (0.897-0.903); a diagnostic over all ranges, recorded every epoch from step 5. Q10 itself is read within 30 m on the report logs at step 6"
