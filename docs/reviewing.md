@@ -124,7 +124,7 @@ This is the lesson that cost the most here, so it gets its own section.
   re-grading reproduced the labeller's labels exactly. Each check tested a part
   that was right. Nothing compared *what the trainer computes* with *what the
   labeller recorded*. A per-episode cache was grading every tick from the
-  wrong pose, wrong on up to 36.6% of verdicts (swerve-finetune.md, defect 6).
+  wrong pose, wrong on up to 36.6% of verdicts (experiments/GC03_swerve_finetune/README.md, defect 6).
 - **The fidelity check passed on a camera-blind model,** because it compared the
   trainer against a recording made by code with the same bug (§2).
 - **The safety check graded against the logged human path while the labels used
@@ -203,6 +203,11 @@ and a physical limit.
 - **Every row of a results table traces to a `run.json` whose checkpoint digest
   matches.** That is how two rows turned out wrong: one run had never been made
   (no override run matched its checkpoint), and one mean was 2.50, not 2.56.
+- **A PR with results updates its `experiment.toml` and the rendered README**
+  (docs/experiments.md): the run's checkpoint pinned by weights sha256, each
+  number with its strength and source, a gate verdict copied verbatim. A number
+  that reaches the README by hand rather than through the registry is a 🟠;
+  `make check` catches the drift, but not a record that was never written.
 - **Know what the benchmark can resolve** before calling a difference a result:
   neuroNCAP's paired standard error is 0.15 (conventions.md). Closed loop is a
   gate on the two or three checkpoints you would ship, not a signal to sweep on.
@@ -299,6 +304,7 @@ The structure:
 - [ ] targets physically possible; baselines measured from the expert's geometry
 - [ ] at least one case looked at, not only the mean
 - [ ] every number traces to a run with a matching checkpoint digest; selection ≠ report split
+- [ ] results recorded in `experiments/<ID>_<slug>/experiment.toml`; predictions committed before the run
 - [ ] docs, STRATEGY.md, data.md and the PR description agree with the diff and with paddock's merged state
 - [ ] stack: reviewed against the base; other PRs' commits named; merge note
 - [ ] no GPU used, `{weights}` untouched, processes cleaned up

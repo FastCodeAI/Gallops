@@ -4,7 +4,8 @@
 #   gallops recipe drivejepa_wajepa                    print every command for this machine
 #   gallops recipe drivejepa_wajepa run2-train --run   run one stage (only the named ones)
 #
-# Lineage, data, and what was verified: docs/drivejepa_wajepa.md. A run trains inside the tree its code stage builds:
+# Lineage, data, and what was verified: experiments/H01_four_camera_base/README.md (Run 2) and
+# experiments/H04_subscore_scorer_navsim/README.md (the agent decoder, Run 3A). A run trains inside the tree its code stage builds:
 # upstream Drive-JEPA at the commit overlay/<name>.json pins, with recipes/drivejepa_wajepa/overlay/<name>/ laid over
 # it. Every stage that writes refuses an output that already exists (the dumps instead skip finished samples).
 #

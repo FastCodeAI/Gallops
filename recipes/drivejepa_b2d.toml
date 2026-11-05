@@ -4,7 +4,7 @@
 #   gallops recipe drivejepa_b2d                       print every command for this machine
 #   gallops recipe drivejepa_b2d split-full --run      run one stage (only the named ones: name check-data too)
 #
-# Lineage, data, and what was verified: docs/drivejepa_b2d.md. Every stage refuses to write into an
+# Lineage, data, and what was verified: experiments/GC04_bench2drive/README.md. Every stage refuses to write into an
 # output directory that already exists, so a rerun goes to a fresh {runs} or a fresh weights root.
 #
 # Site config this needs (gallops.toml):
@@ -137,7 +137,7 @@ args = [
 
 # Between final-generator and the two heads below, the candidates are re-dumped with the new generator
 # ({rerank}/_mtdh/head_<set>_*.npz) and relabelled ({rerank}/_mtdh/labels, labels_m05b). Those data-preparation
-# steps are not in this repo yet; the heads read their recorded output. See docs/drivejepa_b2d.md.
+# steps are not in this repo yet; the heads read their recorded output. See experiments/GC04_bench2drive/README.md.
 
 [[stage]]
 name = "final-split-head"
@@ -180,7 +180,7 @@ python = "train"
 module = "drivejepa_b2d.write_checkpoint"
 after = ["final-generator", "final-split-head", "final-area-head"]
 # The Final was written over Split-v4's checkpoint; its split head replaces the same 10 tensors, so writing over
-# the release gives the same tensors (checked against the deployed file, docs/drivejepa_b2d.md).
+# the release gives the same tensors (checked against the deployed file, experiments/GC04_bench2drive/README.md).
 args = [
   "--src", "{release}",
   "--head", "{out}/final-split-head",

@@ -1,0 +1,168 @@
+# GC02 -- selection changes with no training: momentum-aware selection, the model's own signals as the
+# picker, and injected swerves (Naren, Siddesh). The code for all of it is in paddock, not here.
+# Every number below is copied, never re-derived, from: paddock docs/models/drivejepa.md and docs/ROADMAP.md
+# (origin/main); paddock branch record/drivejepa-camera-blind, docs/models/drivejepa_momentum.md and its
+# run files; paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (commits
+# d737456, 66dddac); and experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json.
+
+schema = 1
+id = "GC02"
+title = "Selection changes with no training: momentum, the model's own signals, injected swerves"
+short = "Selection without training"
+track = "gap-closing"
+owner = "Naren"
+contributors = ["Siddesh"]
+benchmarks = ["alpasim", "neuroncap"]
+started = 2026-09-23
+ended = 2026-10-13
+status = "done"
+verdict = "mixed"
+question = """Drive-JEPA proposes 32 trajectories and a NAVSIM-trained scorer drives one. Before training \
+anything: can a better choice among what it already proposes -- the paper's own momentum-aware selection, \
+the model's other heads and logits, or extra swerves handed to its scorer -- close its gap on AlpaSim and \
+neuroNCAP?"""
+learned = """Momentum-aware selection lifted AlpaSim from 0.4209 to 0.5433 on 30 scenes, one drive each, and \
+became driver 0.1.4b; on the camera-blind neuroNCAP set it changed 2.4% of picks for +0.050 (t 0.99, no \
+measurable effect). No signal the blind model computes picked a clear plan on any of 322 rescue ticks, and \
+its scorer refused injected swerves on all 434 frontal ticks, so the neuroNCAP gap was judged to need training."""
+narrative = "experiments/GC02_selection_without_training/README.md"
+external = [
+  "No gallops code: momentum is upstream's calibrate_score, run by paddock's AlpaSim driver (tools/models/drivejepa/alpasim_driver/ at 0.1.7, now copied in experiments/GC05_physicalai_retrain/paddock/) and by the drivejepa node (paddock #59, on by default since #95).",
+  "neuroNCAP momentum run 20261002T065426-a87115 and its separate adapter (drivejepa_momentum): paddock branch record/drivejepa-camera-blind, kept, not for merging.",
+  "Signal and injection analyses: paddock branch analysis/drivejepa-ncap-candidates (no PR); the dump and injection adapters stay outside paddock; dumps under {runs}.",
+  "AlpaSim 0.1.4b drives: {runs}/alpasim_bulk/baseline_014b/ (experiments/GC05_physicalai_retrain/POINTERS.md).",
+]
+
+[[runs]]
+id = "GC02.momentum-alpasim"
+label = "momentum-aware selection in the native AlpaSim driver: 0.1.4 → 0.1.4b"
+start_from = "released"
+notes = """No training. The driver hands the model its previous plan; upstream's calibrate_score simulates \
+each proposal and the previous plan forward and adds a flat bonus for two-frame comfort, (14·S + 2·S_c)/16. \
+Driver work by Siddesh; the date of the 0.1.4b drives is not recorded in the sources. The AlpaSim driver is \
+not camera-blind (no lidar in its chain; paddock docs/models/drivejepa.md)."""
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "30 scenes: the benchmark's first 10 (public_2601) plus 20 more"
+  role = "eval"
+  n = 30
+  unit = "scenes"
+  note = "one rollout per scene; scene ids in models_compare.json (pilot, ext)"
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "30 scenes, one drive each"
+  n = 30
+  unit = "scene"
+  baseline = "released, driver 0.1.4"
+  baseline_value = "0.4209"
+  value = "0.5433"
+  better = "higher"
+  strength = "moderate"
+  headline = true
+  note = "at-fault collisions 7 → 4, any collision 12 → 10; no paired SE recorded. Constant velocity scores 0.4876 on the same 30 (one simulator setting differs)"
+  source = "experiments/GC05_physicalai_retrain/07_closed_loop_test/runs_017/tables/models_compare.json; paddock docs/models/drivejepa.md"
+
+[[runs]]
+id = "GC02.momentum-ncap"
+label = "momentum-aware selection on the full neuroNCAP set, separate adapter copy drivejepa_momentum"
+start_from = "released"
+notes = """Run 20261002T065426-a87115 at site fastcode-shakaal, paired seed for seed with drivejepa \
+20260905T220225-f11ac0. Verified first: bit-identical scores to the vendor's calibrate_score on 1,242 replayed \
+ticks. Both runs camera-blind (paddock #62). Paddock's own node got the stage in #59 (merged 13 Oct, off by \
+default), which quotes this measurement, and declared it on in #95 (26 Oct)."""
+
+  [[runs.data]]
+  dataset = "neuroncap"
+  split = "full official set: 20 scenario pairs × 10 seeds"
+  role = "eval"
+  n = 200
+  unit = "episodes"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "full set, 20 pairs × 10 seeds, paired seed for seed"
+  n = 20
+  unit = "scenario pair"
+  baseline = "drivejepa, run 20260905T220225-f11ac0"
+  baseline_value = "3.568"
+  value = "3.618"
+  se = "0.050"
+  t = "0.99"
+  better = "higher"
+  strength = "unverified"
+  flags = ["blind"]
+  note = "read by its author as no measurable effect: the whole +0.050 is side-0108 seeds 1 and 8. Pick changed on 324 of 13,977 ticks (2.4%); collision rate 45.5% → 44.5%"
+  source = "paddock branch record/drivejepa-camera-blind: docs/models/drivejepa_momentum.md, results/neuroncap/drivejepa_momentum/20261002T065426-a87115"
+
+[[runs]]
+id = "GC02.signals"
+label = "the model's own signals as the picker: TTC logit, training-only collision head, a linear probe, the KITScenes re-ranker"
+start_from = "released"
+notes = """Offline, over 32-candidate dumps of 7 pairs × 3 seeds from the camera-blind model, each run first \
+reproducing the September sweep's plans and scores exactly. 'Clear' is an open-loop verdict: one candidate \
+followed 4 s with no replanning. The rescue set is the 322 ticks where the driven plan hits although one of \
+the 32 was clear. Every signal is dominated by plan length (the probe's risk correlates 0.97 with it)."""
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "rescue ticks on which the collision head, as the picker, picks a clear candidate"
+  subset = "7 pairs × 3 seeds, offline over candidate dumps"
+  n = 322
+  unit = "tick"
+  value = 0
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop"]
+  note = "also 0 of 322 for the linear probe on proposal_feature and for the KITScenes re-ranker. The head does rank hitting candidates as riskier: 85–94% (stationary), 77–91% (frontal), blind on side. In the source's prose, the head's own safest candidate is clear on 0-4% of the rescue ticks; the 0 of 322 is its table's 'picks a safe one when it matters' column"
+  source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (d737456, 66dddac)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "rescue ticks with the TTC logit as the picker"
+  subset = "7 pairs × 3 seeds, offline over candidate dumps"
+  n = 322
+  unit = "tick"
+  value = 17
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop"]
+  note = "only by braking everywhere: it costs KITScenes ADE 0.97 → 3.96"
+  source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (d737456)"
+
+[[runs]]
+id = "GC02.inject"
+label = "six synthetic swerves injected into the candidate set at the last refinement (±1.5, 2.5, 3.5 m)"
+start_from = "released"
+notes = """Three frontal episodes. The plan comes from a clean first pass, so the episodes reproduce their \
+recorded scores (2.171, 1.865, 1.747) and untouched slots score bit-identically (0.00e+00 drift over 509 \
+ticks). The injected swerves enter before Bev_refiner, so the scorer reads real sampled features for them."""
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "frontal ticks on which an injected swerve is preferred over the driven plan"
+  subset = "3 frontal pairs, one episode each"
+  n = 434
+  unit = "tick"
+  value = 0
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "on the 248 of 314 hitting ticks where a swerve was clear, the best clear swerve scored 0.151 against 0.808 for the plan that hits. The swerves are far outside the scorer's training, so a low score may be unfamiliarity"
+  source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md (66dddac)"
+
+[[checks]]
+name = "Momentum adapter against the vendor's own code"
+result = "1,242 recorded neuroNCAP ticks replayed through the adapter and through calibrate_score: scores bit-identical (max |diff| 0), picks matched; on 20 real nuScenes keyframes only the pick changed (1 tick)"
+decided = "the n=200 run measures the vendor's stage, not a re-implementation"
+source = "paddock branch record/drivejepa-camera-blind, docs/models/drivejepa_momentum.md"
+
+[[checks]]
+name = "What the 32 candidates hold before a crash (camera-blind)"
+date = 2026-09-23
+result = "frontal: no swerve anywhere (widest 0.8–1.2 m sideways); stationary: a safe stop on 97–98% of ticks, ranked about 9th; side: a safe option on 79–98% of ticks, ranked 4th–8th"
+decided = "frontal cannot be fixed by choosing better; stationary and side could in principle"
+source = "paddock branch analysis/drivejepa-ncap-candidates, docs/models/drivejepa-neuroncap.md"
