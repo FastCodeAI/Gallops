@@ -96,3 +96,17 @@ paths, the pick 0.18%; not concentrated in turns. Chain starts are 11.2% of val 
   [runs.code]
   modules = ["gallops.memory.align"]
   as_run = ["experiments/H15_prediction_memory/scripts/"]
+
+[[runs]]
+id = "H15.r3"
+label = "the memory picker: selection of length and epochs, then (a) carried and (b) wiped, 3 seeds, evaluated with (c) released on the val logs"
+started = 2026-11-05
+start_from = "released"
+trained = ["memory picker (new: per-path input MLP, keep gate, nudge MLP with a zero-started last layer)"]
+frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
+notes = """Strict final grade as the BCE target (Sid D22), graded moments of the 878 train logs that are \
+not selection logs; windows along chains, warm-up 1-16; 8 epochs; length and epoch count chosen on the \
+100 selection logs by the rule in PREDICTIONS.md; momentum off for every arm offline (Sid D10)."""
+
+  [runs.code]
+  modules = ["gallops.memory.model", "gallops.memory.train", "gallops.memory.evaluate"]

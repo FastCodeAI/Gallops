@@ -90,11 +90,14 @@ command line serve every experiment and are listed as shared.
 | `gallops.memory.align` | H15.r2 | experiment |
 | `gallops.memory.cache` | H05.r1 | experiment |
 | `gallops.memory.checks` | H05.r1 | experiment |
+| `gallops.memory.evaluate` | H15.r3 | experiment |
 | `gallops.memory.grade` | H15.r1 | experiment |
 | `gallops.memory.inputs` | H05.r1 | experiment |
+| `gallops.memory.model` | H15.r3 | experiment |
 | `gallops.memory.probe` | H05.r2 | experiment |
 | `gallops.memory.probe_control` | H05.r2 | experiment |
 | `gallops.memory.ticks` | H05.r1 | experiment |
+| `gallops.memory.train` | H15.r3 | experiment |
 | `gallops.recipe` | — | shared |
 | `gallops.train.export` | GC03.stageA, GC03.v4, GC03.s1, GC03.s2, GC03.s3 | experiment |
 | `gallops.train.losses` | GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
