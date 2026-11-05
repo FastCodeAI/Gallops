@@ -75,6 +75,13 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
+| `gallops.drivejepa_wajepa.code` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.dump_tokens` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.eval_navtest` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.navtest_score` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.train` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.verify_tokens` | H01.run2 | experiment |
+| `gallops.drivejepa_wajepa.write_checkpoint` | H01.run2 | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |

@@ -59,7 +59,7 @@ runs = "/path/to/gallops-runs"
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
 # maps = "/path/to/nuplan/maps"                   # NUPLAN_MAPS_ROOT, when not under path/maps (recipes/drivejepa_wajepa.toml)
-# current1 = "/path/to/navtrain_current_1"        # its sensor blobs, laid over path's (docs/drivejepa_wajepa.md)
+# current1 = "/path/to/navtrain_current_1"        # its sensor blobs, laid over path's (experiments/H01_four_camera_base/README.md)
 # metric_cache = "/path/to/navtest/metric_cache"  # navsim's navtest metric cache, for run_pdm_score
 
 # [datasets.drivejepa_b2d]

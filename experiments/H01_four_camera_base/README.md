@@ -15,7 +15,7 @@ score a checkpoint this recipe writes until it lands there.
 | Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 (2 Hz) |
 | **Run 2** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs, 23–24 Oct) |
 
-Recipe: [`recipes/drivejepa_wajepa.toml`](../recipes/drivejepa_wajepa.toml).
+Recipe: [`recipes/drivejepa_wajepa.toml`](../../recipes/drivejepa_wajepa.toml).
 `gallops recipe drivejepa_wajepa` prints every command for this machine;
 `gallops recipe drivejepa_wajepa <stage> --run` runs one.
 
@@ -24,7 +24,7 @@ Recipe: [`recipes/drivejepa_wajepa.toml`](../recipes/drivejepa_wajepa.toml).
 Both runs trained inside a Drive-JEPA checkout (linhanwang/Drive-JEPA at
 `548bb82`, upstream `master`) with navsim's own `run_training.py`. What they
 changed is a set of files in navsim's agent packages. Those files are in
-[`recipes/drivejepa_wajepa/overlay/<run>/`](../recipes/drivejepa_wajepa/overlay),
+[`recipes/drivejepa_wajepa/overlay/<run>/`](../../recipes/drivejepa_wajepa/overlay),
 exactly as they ran, and `overlay/<run>.json` lists each file's sha256 as
 tracked and as it ran. The `code-<run>` stage rebuilds the tree: `git archive`
 of the pinned commit from a site's checkout (the checkout is not touched), the

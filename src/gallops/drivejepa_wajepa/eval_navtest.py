@@ -4,7 +4,7 @@ The Hydra overrides come from the recipe, as each evaluation's code/hydra/overri
 agent reads its tokens live (a frozen WA-JEPA encoder per worker), so WAJEPA_CODE and WAJEPA_WEIGHTS must be
 set. No momentum-aware selection. navsim writes a CSV per run under
 {NAVSIM_EXP_ROOT}/<experiment_name>/<timestamp>/; navtest-score turns it into the numbers
-docs/drivejepa_wajepa.md reports.
+experiments/H01_four_camera_base/README.md reports.
 
     python -m gallops.drivejepa_wajepa.eval_navtest --tree <code-run dir> -- train_test_split=navtest
         agent=... ...

@@ -7,5 +7,5 @@ tree a run trained in: upstream Drive-JEPA at a pinned commit with the overlay l
 stage runs inside that tree, in Drive-JEPA's own interpreter (Python 3.9), so nothing here imports navsim at
 module level.
 
-Lineage, data and what was verified: docs/drivejepa_wajepa.md.
+Lineage, data and what was verified: experiments/H01_four_camera_base/README.md.
 """

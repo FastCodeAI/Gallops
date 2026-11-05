@@ -1,4 +1,5 @@
-"""Stage navtest-score: the navtest numbers docs/drivejepa_wajepa.md reports, from run_pdm_score CSVs.
+"""Stage navtest-score: the navtest numbers experiments/H01_four_camera_base/README.md reports,
+from run_pdm_score CSVs.
 
 Two scores per run, over the valid scene rows (the three summary rows dropped):
 
