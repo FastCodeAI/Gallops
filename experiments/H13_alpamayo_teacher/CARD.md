@@ -3,11 +3,13 @@
 
 # H13 · Alpamayo privileged teacher on neuroNCAP, reusing the tested expert solver
 
-**Ruhan** · neuroNCAP · ⏳ running · 14 Oct 2026 · enabler
+**Ruhan** · neuroNCAP · ⏸ parked · 14 Oct – 5 Nov 2026 · enabler
 
-[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/neuroncap-privileged-expert/src/gallops/expert/alpamayo_teacher.py) (on branch ⎇) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/d617893b6fbf64172e22d1edd362548ec3e5305f/src/gallops/expert/alpamayo_teacher.py) (on commit ⎇) · [experiment.toml](experiment.toml)
 
-> The record is on branch `ruhan/neuroncap-privileged-expert`, not merged yet; its links go to that branch.
+> The record is on commit `d617893`, not merged yet; its links go to that commit.
+
+**Evidence for:** D19 ([decision log](../README.md#decision-log))
 
 ## Question
 
@@ -15,7 +17,7 @@ Can Alpamayo get privileged teacher labels on neuroNCAP (stop, swerve, brake, le
 
 ## What we learned
 
-A thin adapter reshapes draw.teach()'s plan to six waypoints at 0.5 s, records labels per tick the way label.py does for Drive-JEPA, and flags a tick-to-tick swerve direction flip rather than forcing commitment. No live neuroNCAP episode has driven it yet: that is paddock's half of the wiring.
+A thin adapter reshapes draw.teach()'s plan to six waypoints at 0.5 s, records labels per tick the way label.py does for Drive-JEPA, and flags a tick-to-tick swerve direction flip rather than forcing commitment. No live neuroNCAP episode drove it. Parked: PR #18 closed unmerged on 5 Nov 2026, as this repo is not training Alpamayo.
 
 ## Runs
 

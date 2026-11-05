@@ -3,11 +3,13 @@
 
 # H12 · nuScenes teacher-scene selection for the privileged teacher's data collection
 
-**Ruhan** · neuroNCAP · ⏳ running · 14 Oct 2026 · enabler
+**Ruhan** · neuroNCAP · ⏸ parked · 14 Oct – 5 Nov 2026 · enabler
 
-[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/nuscenes-teacher-scenes/docs/data.md) (on branch ⎇) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ca5817d2cf6a48bf910b12b0d72a1df487009205/docs/data.md) (on commit ⎇) · [experiment.toml](experiment.toml)
 
-> The record is on branch `ruhan/nuscenes-teacher-scenes`, not merged yet; its links go to that branch.
+> The record is on commit `ca5817d`, not merged yet; its links go to that commit.
+
+**Evidence for:** D19 ([decision log](../README.md#decision-log))
 
 ## Question
 
@@ -15,7 +17,7 @@ Which nuScenes train scenes should be reconstructed with NeuRAD for the privileg
 
 ## What we learned
 
-A selector that scores every eligible nuScenes train scene and picks 12 training scenes by turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; an annotator draws the 'good actor' boxes on each pick's front video for human review. Ported from paddock PR #75 with its horizon-truncation bug fixed; no selection is recorded on the branch yet.
+A selector that scores every eligible nuScenes train scene and picks 12 training scenes by turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; an annotator draws the 'good actor' boxes on each pick's front video for human review. Ported from paddock PR #75 with its horizon-truncation bug fixed; no selection is recorded on the branch. Parked: PR #19 closed unmerged on 5 Nov 2026, as nuScenes curation is not needed for now. Its review lists what to fix before reopening it.
 
 ## Runs
 

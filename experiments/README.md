@@ -44,8 +44,8 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H09](H09_shared_runner/CARD.md) | A shared runner: one queue, one job at a time, with warm neuroNCAP renderers and a persistent CARLA | enabler | Naren | 21 Oct 2026 | ⏳ running | [H09_shared_runner/](H09_shared_runner/) |
 | [H10](H10_pdm_terms/CARD.md) | One set of PDM-style terms on every benchmark, combined by NAVSIM's formula (paddock #102) | enabler | Naren | 21 Oct – 22 Oct 2026 | ☑️ done | [H10_pdm_terms/](H10_pdm_terms/) |
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
-| [H12](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selection for the privileged teacher's data collection | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H12_nuscenes_teacher_scenes/](H12_nuscenes_teacher_scenes/) |
-| [H13](H13_alpamayo_teacher/CARD.md) | Alpamayo privileged teacher on neuroNCAP, reusing the tested expert solver | enabler | Ruhan | 14 Oct 2026 | ⏳ running | [H13_alpamayo_teacher/](H13_alpamayo_teacher/) |
+| [H12](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selection for the privileged teacher's data collection | enabler | Ruhan | 14 Oct – 5 Nov 2026 | ⏸ parked | [H12_nuscenes_teacher_scenes/](H12_nuscenes_teacher_scenes/) |
+| [H13](H13_alpamayo_teacher/CARD.md) | Alpamayo privileged teacher on neuroNCAP, reusing the tested expert solver | enabler | Ruhan | 14 Oct – 5 Nov 2026 | ⏸ parked | [H13_alpamayo_teacher/](H13_alpamayo_teacher/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
 <!-- /experiments:index -->
 
@@ -61,8 +61,8 @@ What the hypotheses need before they can be decided.
 | [**H09**](H09_shared_runner/CARD.md) | Shared gate runner | Naren | 9 | ⏳ running | So far: the queue landed (paddock #109, 26 Oct) and runs as the paddock account, one job at a time, with each submitted checkpoint copied into a shared store by its sha256 and the code pinned to a pushed commit; by 27 Oct it had made Drive-JEPA's quick- and closed-tier baselines and gated a teammate's candidate. |
 | [**H10**](H10_pdm_terms/CARD.md) | PDM-style terms on every benchmark | Naren | 10 | ☑️ done | paddock #102, merged 22 Oct: NAVSIM's five terms print under every gate pair, as far as each benchmark can measure them, and never change a verdict. neuroNCAP has all five by NAVSIM's rules, its collision check agreeing with neuroNCAP's own on 600 of 600 stored runs; NAVSIM has all five; AlpaSim NC, DAC and EP; nuScenes NC, EP and C; Bench2Drive NC and EP; KITScenes and nuPlan EP and C. |
 | [**H11**](H11_hugsim/CARD.md) | HUGSIM trial | Navvrat | 11 | ⏳ running | So far: HUGSIM is a paddock benchmark (#118, merged 27 Oct PDT, 28 Oct IST) on 420 of the release's 436 scenarios (16 fail for every model), with upstream PR #57's controller fix. |
-| [**H12**](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selector | Ruhan | — | ⏳ running | A selector that scores every eligible nuScenes train scene and picks 12 training scenes by turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; an annotator draws the 'good actor' boxes on each pick's front video for human review. |
-| [**H13**](H13_alpamayo_teacher/CARD.md) | Alpamayo teacher (reuses draw.teach) | Ruhan | — | ⏳ running | A thin adapter reshapes draw.teach()'s plan to six waypoints at 0.5 s, records labels per tick the way label.py does for Drive-JEPA, and flags a tick-to-tick swerve direction flip rather than forcing commitment. |
+| [**H12**](H12_nuscenes_teacher_scenes/CARD.md) | nuScenes teacher-scene selector | Ruhan | — | ⏸ parked | A selector that scores every eligible nuScenes train scene and picks 12 training scenes by turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; an annotator draws the 'good actor' boxes on each pick's front video for human review. |
+| [**H13**](H13_alpamayo_teacher/CARD.md) | Alpamayo teacher (reuses draw.teach) | Ruhan | — | ⏸ parked | A thin adapter reshapes draw.teach()'s plan to six waypoints at 0.5 s, records labels per tick the way label.py does for Drive-JEPA, and flags a tick-to-tick swerve direction flip rather than forcing commitment. |
 <!-- /experiments:enablers -->
 
 ## Regression gate log
@@ -107,6 +107,7 @@ What the team decided, in date order, on what evidence. It is kept in
 | **D16** | 23 Oct 2026 | **Drive-JEPA cropped at 2 Hz by default.** Drive-JEPA runs with the OpenScene crop and plans twice a second on every benchmark by default, and the queue's baselines are remade under it. | Naren | [H08.crop](H08_sideways_velocity_fov/CARD.md) | — |
 | **D17** | 26 Oct 2026 | **Momentum-aware selection on by default.** Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA baselines from here on include it. | Siddesh | — | — |
 | **D18** | 28 Oct 2026 | **KITScenes exp 3 fails the gate.** The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](H07_encoder_lora/CARD.md) | — |
+| **D19** | 5 Nov 2026 | **Alpamayo teacher and scene selector parked.** The Alpamayo teacher (H13) and the nuScenes scene selector (H12) are parked and their PRs closed unmerged: this repo is not training Alpamayo, and nuScenes curation is not needed for now. Reopen #19 if it is. | Naren | [H12](H12_nuscenes_teacher_scenes/CARD.md), [H13](H13_alpamayo_teacher/CARD.md) | — |
 <!-- /experiments:decisions -->
 
 ## How to read the results

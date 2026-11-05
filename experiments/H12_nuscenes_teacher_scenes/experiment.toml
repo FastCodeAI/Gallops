@@ -1,5 +1,6 @@
 # H12 -- picking the nuScenes train scenes the privileged teacher collects data from (Ruhan). An enabler,
 # adjacent to the 21 Oct list, so it carries no priority.
+# Parked 5 Nov 2026: PR #19 closed unmerged, so `branch` names its head commit.
 # Sources: branch ruhan/nuscenes-teacher-scenes (docs/data.md's new section, src/gallops/data/teacher_scenes.py,
 # teacher_actor_annotate.py, tests/test_teacher_scenes.py, and its two commit messages); paddock's branch
 # ruhan/alpamayo-teacher-scenes (9a3a2d4), where the selector started.
@@ -12,7 +13,8 @@ track = "enabler"
 owner = "Ruhan"
 benchmarks = ["neuroncap"]
 started = 2026-10-14
-status = "running"
+ended = 2026-11-05
+status = "parked"
 verdict = "none"
 question = """Which nuScenes train scenes should be reconstructed with NeuRAD for the privileged closed-loop \
 teacher's training data, without touching paddock's 14-scene neuroNCAP eval set or the scenes already \
@@ -20,9 +22,11 @@ reconstructed for the swerve finetune?"""
 learned = """A selector that scores every eligible nuScenes train scene and picks 12 training scenes by \
 turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; \
 an annotator draws the 'good actor' boxes on each pick's front video for human review. Ported from paddock \
-PR #75 with its horizon-truncation bug fixed; no selection is recorded on the branch yet."""
+PR #75 with its horizon-truncation bug fixed; no selection is recorded on the branch. Parked: PR #19 closed \
+unmerged on 5 Nov 2026, as nuScenes curation is not needed for now. Its review lists what to fix before \
+reopening it."""
 narrative = "docs/data.md"
-branch = "ruhan/nuscenes-teacher-scenes"
+branch = "ca5817d2cf6a48bf910b12b0d72a1df487009205"
 external = [
   "The original selector and annotator: paddock branch ruhan/alpamayo-teacher-scenes (9a3a2d4, 14 Oct; paddock PR #75), not on paddock main.",
 ]
