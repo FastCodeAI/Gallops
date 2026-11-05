@@ -39,9 +39,12 @@ env -u VIRTUAL_ENV -u CONDA_PREFIX -u GALLOPS_CONFIG make check; echo "exit=$?"
 - **Check `$?` directly.** `make check | tail` reports *tail's* exit code.
 - **A green run is the portability check.** `tests/test_portability.py` is part
   of `make check`, and it scans untracked files too.
-- **There may be no CI.** On 2026-10-13 there was none, although the Makefile
-  says CI runs `make check`. If `.github/workflows/` is still absent, your run is
-  the only one the PR has had. Say so.
+- **Read CI as well as running it** (`gh pr checks <N>`). It runs `make check` on
+  GitHub's merge of the PR into its base, so it can fail where your run passes.
+  GitHub runs nothing on a PR that conflicts with its base; if no check is there,
+  your run is the only one the PR has had. Say so.
+- **A red check does not stop a merge.** This GitHub plan has no branch
+  protection, so the review is what holds it: a red check is a 🔴.
 
 **A green `make check` says nothing about torch code.** Its environment has no
 torch, so nothing constructs a model, a `TickDataset` or a `Referee`. Three times
@@ -224,6 +227,10 @@ and a physical limit.
   PR is false at the other site until that PR merges.
 - **A link to a file that exists only on a PR higher in the stack** breaks on
   `main` until that PR lands.
+- **A results PR's title and description come from `gallops experiments pr`**
+  (docs/experiments.md). The `results-pr` check compares them with the record;
+  it cannot read the hand-written part, so you do. A `Not a results PR:` reason
+  that hides a new result is a 🟠.
 
 ## 10. Stacked PRs
 
@@ -293,7 +300,7 @@ The structure:
 
 ## Reviewer's quick list
 
-- [ ] own worktree and venv; `make check` run, exit code checked; CI presence noted
+- [ ] own worktree and venv; `make check` run, exit code checked; `gh pr checks` read
 - [ ] torch code: structural guard covers it, or a smoke run, stated which
 - [ ] layout, repo root, sidecar and protocol imported; cross-repo copies checked on every load
 - [ ] code copied from paddock or a vendor reviewed as new code

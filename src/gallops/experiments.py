@@ -30,6 +30,7 @@ import hashlib
 import html
 import posixpath
 import re
+import subprocess
 import textwrap
 
 try:
@@ -892,17 +893,19 @@ def strength(res: dict[str, Any]) -> str:
     return text + (f" · {', '.join(flags)}" if flags else "")
 
 
-def result_text(res: dict[str, Any], bold: bool = True) -> str:
+def result_head(res: dict[str, Any], bold: bool = True) -> str:
     value = _num(res["value"])
     value = f"**{value}**" if bold else value
     bench = BENCHMARKS.get(res["bench"], res["bench"])
     head = f"{bench} {res['metric']} "
     if "baseline_value" in res:
-        head += f"{_num(res['baseline_value'])} → {value}"
-    else:
-        head += value
+        return head + f"{_num(res['baseline_value'])} → {value}"
+    return head + value
+
+
+def result_text(res: dict[str, Any], bold: bool = True) -> str:
     n = f"n={_num(res['n'])}" + (f" {res['unit']}s" if res.get("unit") else "") if "n" in res else ""
-    return head + (f" ({n})" if n else "")
+    return result_head(res, bold) + (f" ({n})" if n else "")
 
 
 def tag(run: dict[str, Any] | None) -> str:
@@ -1386,6 +1389,187 @@ def render_card(reg: Registry, e: Experiment) -> str:
     if d.get("external"):
         out += ["## Evidence outside this repo", "", *[f"- {x}" for x in d["external"]], ""]
     return "\n".join(out).rstrip() + "\n"
+
+
+# ---------------------------------------------------------------- results PRs
+
+#: The rendered part of a PR's body. GitHub keeps an HTML comment in the body and hides it on the page,
+#: so the block can name its run for CI without the reader seeing a marker.
+PR_BLOCK_RE = re.compile(r"<!-- gallops:pr (\S+) -->\n(.*?)\n<!-- /gallops:pr -->", re.S)
+_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+#: What the author still has to write. Specific, because a body may mention a plain TODO in the code.
+PR_TODO = "TODO(author):"
+#: The same shape as `predictions = "none: <why>"`: a record can change without a result being reported,
+#: and a reviewer reads the reason.
+_NOT_RESULTS_RE = re.compile(r"^Not a results PR: \S", re.M)
+#: The hand-written part of a results PR, in non-blank lines. The detail belongs in the experiment's
+#: README.md, where it outlives the PR. #17, #22, #23, #24 and #30 ran 42 to 87 when this was set.
+PR_PROSE_LINES = 30
+
+
+def pr_subject(reg: Registry, ref: str) -> tuple[Experiment, dict[str, Any], dict[str, Any] | None]:
+    """What a results PR for `ref` reports: an experiment's headline, or one run's own result.
+
+    A run without the headline reports the first result its record lists. A run can hold a gate verdict
+    and no result (H02.timing), so the result may be None.
+    """
+    experiment = reg.by_id().get(ref)
+    if experiment:
+        head = experiment.headline()
+        if head is None:
+            raise ValueError(f"{ref} has no headline result: name the run this PR reports")
+        return experiment, head[0], head[1]
+    if ref not in reg.run_ids():
+        raise ValueError(f"{ref} is neither an experiment nor a run in the registry")
+    e, run = reg.run_ids()[ref]
+    results = run.get("results", [])
+    res = next((r for r in results if r.get("headline")), results[0] if results else None)
+    if res is None and not run.get("gate"):
+        raise ValueError(f"{ref} has no result and no gate verdict: a PR for it is not a results PR")
+    return e, run, res
+
+
+def _run_gate(run: dict[str, Any]) -> dict[str, Any] | None:
+    gates = run.get("gate", [])
+    return max(gates, key=lambda g: g["date"]) if gates else None
+
+
+def pr_title(run: dict[str, Any], res: dict[str, Any] | None) -> str:
+    gate = _run_gate(run)
+    parts = [result_head(res, bold=False)] if res else []
+    parts.append(f"gate {gate['verdict']}" if gate else "gate not run")
+    return f"{run['id']}: {', '.join(parts)}"
+
+
+def pr_block(reg: Registry, e: Experiment, run: dict[str, Any], res: dict[str, Any] | None) -> str:
+    """The part of a results PR that is copied from the record, and that CI compares with it.
+
+    The card is named as a path, not a link: a link would have to name a branch, and this text is
+    rendered on the PR's branch and checked on GitHub's merge of it.
+    """
+    d = e.data
+    claim = ("Hypothesis", d["hypothesis"]) if d.get("hypothesis") else ("Question", d["question"])
+    result = "none in this run"
+    if res:
+        against = f", against {res['baseline']}" if res.get("baseline") else ""
+        result = f"{result_text(res)}{against} · {strength(res)}"
+    gate = _run_gate(run)
+    verdict = "not run"
+    if gate:
+        against = f", against {gate['baseline']}" if gate.get("baseline") else ""
+        when = f"{_date(gate['date'])} {gate['date'].year}"
+        verdict = f"{GATE_MARK[gate['verdict']]}, {when}, {gate['tier']} tier{against}"
+    cited = [x for x in reg.decisions if {e.id, run["id"]} & set(x.get("evidence", []))]
+    decision = f"{cited[-1]['id']}: {cited[-1]['short']}" if cited else "none yet"
+    return "\n".join(
+        [
+            f"- **{claim[0]}:** {' '.join(claim[1].split())}",
+            f"- **Result:** {result}",
+            f"- **Gate:** {verdict}",
+            f"- **Decision:** {decision}",
+            f"- **Record:** `{card_path(reg, e)}`",
+        ]
+    )
+
+
+def render_pr(reg: Registry, ref: str) -> str:
+    """A results PR, rendered from the record: the title, a blank line, then the body."""
+    e, run, res = pr_subject(reg, ref)
+    out = [
+        pr_title(run, res),
+        "",
+        f"<!-- gallops:pr {run['id']} -->",
+        pr_block(reg, e, run, res),
+        "<!-- /gallops:pr -->",
+        "",
+    ]
+    if not run.get("gate"):
+        out += ["## Why the gate has not run", "", f"{PR_TODO} one line.", ""]
+    out += [
+        "## What changed",
+        "",
+        f"{PR_TODO} the code, in a line or two, or `Records only.`",
+        "",
+        "## Not verified",
+        "",
+        f"{PR_TODO} what this PR argues but did not check, or `Nothing.`",
+        "",
+    ]
+    return "\n".join(out)
+
+
+def _reported(record: dict[str, Any]) -> dict[str, Any]:
+    """What a record reports, by run: its results and gate verdicts. A run with neither reports nothing."""
+    runs = record.get("runs", [])
+    return {
+        r.get("id"): (r.get("results", []), r.get("gate", []))
+        for r in runs
+        if r.get("results") or r.get("gate")
+    }
+
+
+def changed_results(reg: Registry, base: str) -> list[str]:
+    """The experiments whose results or gate verdicts differ from those at commit `base`.
+
+    Records are matched by id, not path, so a folder that moves reports nothing new, and compared as
+    parsed TOML, so a reworded comment is no change.
+    """
+
+    def git(*args: str) -> str:
+        cmd = ["git", "-C", str(reg.root), *args]
+        return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+
+    then: dict[str, dict[str, Any]] = {}
+    for path in git("ls-tree", "-r", "--name-only", base, "--", "experiments").splitlines():
+        # _template's dates are placeholders, so it is not TOML until `experiments new` fills it in.
+        if path.endswith("/experiment.toml") and not path.startswith("experiments/_"):
+            record = tomllib.loads(git("show", f"{base}:{path}"))
+            then[record.get("id", path)] = record
+    return [e.id for e in reg.experiments if _reported(e.data) != _reported(then.get(e.id, {}))]
+
+
+def check_pr(reg: Registry, title: str, body: str, changed: list[str]) -> list[str]:
+    """What is wrong with a PR's title and body, given the experiments whose results it changes.
+
+    A PR with a rendered block is held to the record whether or not it changed a result: it claims to
+    report one. A PR with none is only asked to say why, and only when it changed one.
+    """
+    body = body.replace("\r\n", "\n")  # GitHub's web editor saves CRLF
+    blocks = PR_BLOCK_RE.findall(body)
+    prose = _COMMENT_RE.sub("", PR_BLOCK_RE.sub("", body))
+    if not blocks:
+        if changed and not _NOT_RESULTS_RE.search(prose):
+            return [
+                f"this PR changes results or a gate verdict in {', '.join(changed)}: take the title and "
+                "body from `gallops experiments pr <ID>`, or say why not on a line of its own, "
+                "`Not a results PR: <why>` (docs/experiments.md#results-pr)"
+            ]
+        return []
+    if len(blocks) > 1:
+        return [f"{len(blocks)} rendered blocks: a results PR reports one experiment"]
+    ref, text = blocks[0]
+    try:
+        e, run, res = pr_subject(reg, ref)
+    except ValueError as exc:
+        return [str(exc)]
+    fix = f"re-run `gallops experiments pr {ref}`"
+    problems = []
+    if title.strip() != pr_title(run, res):
+        problems.append(f"the title must be `{pr_title(run, res)}`, not `{title}`")
+    if text != pr_block(reg, e, run, res):
+        problems.append(f"the rendered block differs from the record: {fix}")
+    others = [x for x in changed if x != e.id]
+    if others:
+        problems.append(f"it also changes results in {', '.join(others)}: one PR per experiment")
+    if PR_TODO in prose:
+        problems.append(f"`{PR_TODO}` is still in the body: replace each one")
+    lines = sum(1 for line in prose.splitlines() if line.strip())
+    if lines > PR_PROSE_LINES:
+        problems.append(
+            f"{lines} hand-written lines (limit {PR_PROSE_LINES}): move the detail to the experiment's "
+            "README.md"
+        )
+    return problems
 
 
 def render_index(reg: Registry) -> str:
