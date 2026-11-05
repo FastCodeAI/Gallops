@@ -25,7 +25,8 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
 | Step | Review it in | What it established (*counted* or *measured*) |
 |---|---|---|
 | 1 · the data | [notebooks/01_dataset.ipynb](notebooks/01_dataset.ipynb) | **The labels line up with the images.** Boxes drawn through the side-car's own projection sit on the agents, so z is the box's centre. **The report logs are easier than select:** 5.2 targets a sample against 7.3, and 35% pedestrians against 44%. **Beyond 20 m every agent sits in two token rows.** Velocity labels are ground velocity, which the side-car must infer without the ego's speed |
-| 2 · the model and its loss | [notebooks/02_loss.ipynb](notebooks/02_loss.ipynb) | **The loss rebuilt by hand equals `SideCarLoss`.** Matching trades 8 m of distance against full class certainty. 32 of the 64 reference points start outside the camera's view. Every term falls on a fixed batch |
+| 2 · the model and its loss | [notebooks/02_loss.ipynb](notebooks/02_loss.ipynb) | **The loss rebuilt by hand equals `SideCarLoss`.** Matching trades 8 m of distance against full class certainty. 32 of the 64 reference points start outside the camera's view. A primer on loss options, with references, and the measured gradient balance: the class term pulls the shared layers 14× harder than the box term at step 0, 1.65× after epoch 1. On query collapse, epoch 1 shows under-detection and about one duplicate pair a sample |
+| 2 · the model, part by part | [notebooks/02b_architecture.ipynb](notebooks/02b_architecture.ipynb) | **`lidar2img` never touches the tokens; it gives each one a ray, added to the keys.** NAVSIM's camera varies by 0.5°, and nuScenes' differs by about a token. One epoch in, turning the camera 2° moves detections by 0.01°: the side-car does not use the rays geometrically. Also the decoder's parts and their lineage, the heads, the readout, and Drive-JEPA's two variants |
 | 3 · the pipeline check (`H15.r1`) | [notebooks/03_training.ipynb](notebooks/03_training.ipynb) | **The pipeline runs end to end.** The overfit check passed. The preflight passed, now with the live ViT output held to its cache. One epoch takes 46 s. Select F1 is 0.477 after epoch 1 of 12 (`smoke`). No report number was read |
 | the evaluation plan (steps 6–7) | [notebooks/04_evaluation.ipynb](notebooks/04_evaluation.ipynb) | **The readout reproduces the run's numbers from its checkpoint.** The proposed metrics (AP, box errors, motion apart from position, calibration, by city) are prototyped. nuScenes needs its site root first |
 | step 7, prepared (`H15.r2`) | [notebooks/05_nuscenes.ipynb](notebooks/05_nuscenes.ipynb) | **The nuScenes data is ready, and no model has read it.** The site root was recreated as the view of the shared copy that both configs name. 100 train scenes were drawn and committed, in two interpreters (plan §8.2). All 2,917 kept keyframes are passed, the projection agrees with the calibration to 1.4e-5 px, and the boxes sit on the agents. There are 3.8 targets a keyframe, and night and rain fall in single cities |
@@ -41,6 +42,16 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
 - **The success criteria** (plan §7) were committed before the pipeline check ran. Step 4 moves them
   into PREDICTIONS.md once the owner approves them.
 - **The decisions asked of the owner** are in plan §11.
+- **The second review (4 Nov)** added these, all proposals, none in v1 (plan §3.8, §4.1–4.6, §5.1–5.3, §11.7–11.12):
+  - which agents matter: hidden and causal agents, pedestrian groups, nearest first;
+  - traffic side;
+  - what `lidar2img` does;
+  - the decoder's parts, heads and readout;
+  - Drive-JEPA's variants;
+  - a loss primer, and mode collapse.
+  - **Notebooks:** 01 §8–9, 02 §7–9, 02b, 03 §8 (the epoch-1 model's predictions on images) and 04 §4e–f.
+  - **Measured:** after epoch 1, select recall is 0.70 for causal targets against 0.23 for all targets out to
+    50 m. At step 0, on one batch, hidden targets are 60% of the targets and carry 66% of the box term.
 - **Figures:** [the model](figures/part-a-sidecar.png) and [one training run](figures/part-a-training.png).
 
 ## Why

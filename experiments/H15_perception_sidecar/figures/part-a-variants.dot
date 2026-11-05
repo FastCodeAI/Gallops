@@ -1,0 +1,38 @@
+// H15 Part A: the side-car beside Drive-JEPA's two variants, read in Drive-JEPA's code (notebook 02b §5).
+// Grey: shared with the side-car. Blue: how the side-car differs.
+// Render: dot -Tsvg part-a-variants.dot -o part-a-variants.svg && dot -Tpng:cairo -Gdpi=192 part-a-variants.dot -o part-a-variants.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph part_a_variants {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.35, ranksep=0.3, pad=0.3, bgcolor="white", newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.12,0.05", width=3.3];
+  edge  [color="#6b7280", arrowsize=0.55, penwidth=1.0];
+
+  subgraph cluster_free {
+    label=<<B>Drive-JEPA · perception-free</B>>; fontsize=10.5; style="rounded,filled"; color="#9ca3af"; fillcolor="#f9fafb";
+    F1 [label=<<B>V-JEPA ViT-L</B>&nbsp;· frozen<BR/><FONT POINT-SIZE="8">front camera, two frames</FONT>>];
+    F2 [label=<<B>tokens</B>&nbsp;pooled 2×2 → 8×16, linear to 256<BR/><FONT POINT-SIZE="8">+ a learnt embedding per position · no camera geometry</FONT>>];
+    F3 [label=<<B>nn.Transformer</B><BR/><FONT POINT-SIZE="8">encoder over tokens + an ego-status token<BR/>decoder: 8 queries, one per future pose</FONT>>];
+    F4 [label=<<B>one trajectory</B><BR/><FONT POINT-SIZE="8">L1 loss, normalised by length · no perception</FONT>>];
+    F1 -> F2 -> F3 -> F4;
+  }
+
+  subgraph cluster_based {
+    label=<<B>Drive-JEPA · perception-based (the release)</B>>; fontsize=10.5; style="rounded,filled"; color="#9ca3af"; fillcolor="#f9fafb";
+    B1 [label=<<B>V-JEPA ViT-L</B>&nbsp;+ FPN neck to 256<BR/><FONT POINT-SIZE="8">front camera, two frames</FONT>>];
+    B2 [label=<<B>32 proposals × 8 poses</B>&nbsp;as queries<BR/><FONT POINT-SIZE="8">+ ego status on every query</FONT>>];
+    B3 [label=<<B>refiner</B>&nbsp;× 4<BR/><FONT POINT-SIZE="8">lidar2img projects each proposal's 3D points into the image<BR/>deformable sampling there (BEVFormer)</FONT>>];
+    B4 [label=<<B>32 proposals, 6 scores, a pick</B><BR/><FONT POINT-SIZE="8">perception only as training-time auxiliaries<BR/>(collision agents, drivable area): gone at inference</FONT>>];
+    B1 -> B2 -> B3 -> B4;
+  }
+
+  subgraph cluster_car {
+    label=<<B>H15's side-car</B>>; fontsize=10.5; style="rounded,filled"; color="#2563eb"; fillcolor="#eff6ff";
+    S1 [label=<<B>the release's ViT output</B>&nbsp;· frozen, cached<BR/><FONT POINT-SIZE="8">the same encoder, frames and camera</FONT>>];
+    S2 [label=<<B>64 agent slots</B>&nbsp;+ 3D reference points<BR/><FONT POINT-SIZE="8">no ego status</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+    S3 [label=<<B>decoder</B>&nbsp;× 3<BR/><FONT POINT-SIZE="8">lidar2img gives every token a ray, added to the keys (PETR)<BR/>full attention to all 512 tokens</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+    S4 [label=<<B>a list of agents, at inference</B><BR/><FONT POINT-SIZE="8">class, 3D box, velocity, 1 s path<BR/>Hungarian set loss · separate from the planner</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+    S1 -> S2 -> S3 -> S4;
+  }
+  {rank=same; F1; B1; S1;}
+}

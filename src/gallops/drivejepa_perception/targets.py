@@ -57,13 +57,18 @@ def seen(projection: np.ndarray, xyz: np.ndarray) -> np.ndarray:
     return (h[:, 2] > 0) & (u >= 0) & (u < 512) & (v >= 0) & (v < 256)
 
 
-def build(agents: dict, projection: np.ndarray) -> dict:
-    """One sample's side-car targets, padded to QUERIES, from `navsim_data.agents_of`."""
+def target_index(agents: dict, projection: np.ndarray) -> np.ndarray:
+    """The rows of `agents` that are targets, in the order `build` lays them out (nearest first)."""
     box = agents["box"].astype(np.float64)
     keep = (agents["cls"] < NUM_CLASSES) & (np.hypot(box[:, 0], box[:, 1]) <= RANGE_M)
     keep &= seen(projection, box[:, :3]) if len(box) else keep
     index = np.flatnonzero(keep)
-    index = index[np.argsort(np.hypot(box[index, 0], box[index, 1]), kind="stable")][:QUERIES]
+    return index[np.argsort(np.hypot(box[index, 0], box[index, 1]), kind="stable")][:QUERIES]
+
+
+def build(agents: dict, projection: np.ndarray) -> dict:
+    """One sample's side-car targets, padded to QUERIES, from `navsim_data.agents_of`."""
+    index = target_index(agents, projection)
     n = len(index)
     out = {
         "cls": np.zeros(QUERIES, np.int64),

@@ -1,8 +1,8 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
-**Status (2026-11-04): steps 1–3 done and waiting for the owner's review. Step 3's pipeline check
-passed (§9). Step 7's nuScenes data is prepared (§8.2); no model has read it. Nothing else past step 3
-has run, and no report-log number exists.**
+**Status (2026-11-04): steps 1–3 done, and revised after the owner's second review; waiting for the next
+review. Step 3's pipeline check passed (§9). Step 7's nuScenes data is prepared (§8.2); no model has read
+it. Nothing else past step 3 has run, and no report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -15,10 +15,25 @@ steps. The owner reviews each block before the next one starts.
 | Step | Artifact |
 |---|---|
 | 1 · the data | [notebooks/01_dataset.ipynb](../experiments/H15_perception_sidecar/notebooks/01_dataset.ipynb), §3 |
-| 2 · the model and its loss | [notebooks/02_loss.ipynb](../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §4–5 |
+| 2 · the model, part by part | [notebooks/02b_architecture.ipynb](../experiments/H15_perception_sidecar/notebooks/02b_architecture.ipynb), §4 |
+| 2 · the loss: by hand, a primer, mode collapse, weighting what matters | [notebooks/02_loss.ipynb](../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §5 |
 | 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
 | the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
 | step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
+
+**The second review's questions, and where each is answered:**
+
+| Question | Answered in |
+|---|---|
+| What `lidar2img` is, and what it does to the tokens | §4.1; notebook 02b §1 |
+| The N queries, query position, self- and cross-attention: what each adds, and why this arrangement | §4.2; notebook 02b §2 |
+| One small network per head, or one vector of logits decoded | §4.3; notebook 02b §3 |
+| The readout, and explainability | §4.4; notebook 02b §4 |
+| The side-car against Drive-JEPA's two variants | §4.5; notebook 02b §5 |
+| Left- or right-hand traffic as a controllable input | §4.6; notebook 01 §9 |
+| Hidden agents, causal agents, pedestrian groups, nearest first | §3.8, §5.3, §8.1; notebooks 01 §8, 02 §9, 04 §4e |
+| A primer on loss functions, how they reach the network, and mode collapse | §5.1–5.2; notebook 02 §7–8 |
+| The epoch-1 model's predictions, drawn on images | notebook 03 §8 |
 
 - **Rerunning the notebooks:** use the `drive-jepa-v2` kernel at this site, which starts
   `[python] drivejepa` (Python 3.9, torch 2.1). The kernels to avoid, and a headless runner, are listed
@@ -63,6 +78,8 @@ better than baselines that do not look at the image.
 | Success criteria | written for A and B together | Part A's own, committed at step 4 before any reported run (§7) |
 | nuScenes | part of the B readouts | its own step, with a side-car-only readout (§8.2) |
 | Metrics | recall and precision at one threshold, centre and velocity error, paths | the same, plus proposals for box size and yaw errors, AP, motion apart from position, per city (§8.1) |
+| Which agents matter | every target the same | derived labels proposed (visible, causal, pedestrian groups, nearest first), with metrics and loss options (§3.8, §5.3) |
+| Camera geometry | assumed to be used | tested: one epoch in, the side-car does not use it geometrically (§4.1) |
 
 ## 3. The data (step 1)
 
@@ -89,6 +106,8 @@ Everything here is reviewed in notebook 01, which draws real samples and every d
 - **Why the ViT's own output.** The first pass's A0 probe chose it over the post-projector tokens and
   over block 12: select recall within 30 m 0.343 against 0.249 and 0.269. It is reused, not
   re-tested.
+- **What `lidar2img` does to the tokens: nothing.** The ViT reads pixels only. The projection gives the
+  side-car each token's ray, which is added to the keys (§4.1).
 - **Not an input: the ego's own motion.** The velocity labels are each agent's ground velocity, not
   its velocity relative to the ego.
   - A parked car has velocity zero while the ego drives past it.
@@ -220,6 +239,46 @@ No new data pass is needed for steps 1–6.
   - Yaw means little for pedestrians: even the pipeline check's hits are 72° off for them, against
     7° for vehicles (notebook 04 §4b).
 
+### 3.8 Which agents matter (proposed; notebook 01 §8 and §9)
+
+![Which agents matter: the derived labels, their metrics and the loss options](../experiments/H15_perception_sidecar/figures/part-a-importance.png)
+
+Not every target matters equally to the ego. These labels are derived from the existing ones by
+`importance.py`, for review. **None changes v1's targets, loss or readout.**
+
+| Label | Rule | *Counted*: select, report and 10,000 train samples |
+|---|---|---|
+| **visible** (line of sight) | at least 50% of the target's image box uncovered by nearer agents' boxes | 44% of targets: 74% within 20 m, 46% at 20–30 m, 33% beyond; pedestrians 28% |
+| **in the ego's path** | now, +0.5 s or +1.0 s within the ego's logged 4 s corridor, as wide as both half-widths plus 0.5 m | 2.3% of targets |
+| **causal** | visible, and in the path or within 10 m | 3.4% of targets; 0.23 a sample; one sample in five has one |
+| **pedestrian group** | pedestrians chained within a radius | at 0.5 m, 4% of pedestrians group; at 1.0 m, 52%; at 1.5 m, 71% |
+| **nearest-first rank** | by distance, `targets.build`'s order | the nearest target is visible 95% of the time, the fifth 42%, the tenth 20% |
+
+**What these say:**
+- **The causal rule is a choice, and it moves the answer several-fold** (*counted* on the select and report
+  logs only, so the strict row differs slightly from the table above):
+
+  | Setting | Causal share of targets | Per sample | Samples with one |
+  |---|---|---|---|
+  | strict (the module's defaults) | 3.5% | 0.22 | 20% |
+  | + a 4 s look-ahead at constant velocity | 3.7% | 0.23 | 20% |
+  | + a 2 m margin (adjacent lanes) | 6.9% | 0.43 | 31% |
+  | + near means 15 m | 10.3% | 0.64 | 43% |
+
+  The look-ahead adds little; the margin and the near radius decide it (§11.7).
+- **Pedestrian groups:** 0.5 m groups almost no one, since a body is about that wide; 1.0 m groups half.
+  Single linkage at 1.5 m chains whole crowds into "groups" several metres wide, too lenient for "one
+  detection stands for all". Proposed: 1.0 m, with a cap on a group's width (§11.8).
+- **Nearest first is close to "what can be seen":** the nearest targets are the visible ones, and nearest-k
+  recall is cheap to read (§8.1).
+- **The corridor is the human's own future**, so these are labels for training and grading, never inputs.
+- **The visibility proxy is rough:** rectangles, not silhouettes, and only labelled agents occlude. In crowds
+  it overstates occlusion.
+
+**Traffic side** (notebook 01 §9, *counted*): oncoming vehicles pass on the ego's left 93% of the time in
+Boston and Pittsburgh and 80% in Las Vegas, but only 19% in Singapore. A detector can learn the side as a
+prior; §4.6 says how to handle it.
+
 ## 4. The model (step 2)
 
 ![The side-car: inputs, one decoder layer, heads, loss and readout](../experiments/H15_perception_sidecar/figures/part-a-sidecar.png)
@@ -258,6 +317,128 @@ No new data pass is needed for steps 1–6.
   - class = the most likely of the three;
   - a slot is a detection when its confidence is at least 0.5.
 
+### 4.1 `lidar2img`: what it is, and what it does (notebook 02b §1)
+
+- **What it is:** the vendor's 4 × 4 matrix for CAM_F0, intrinsics times extrinsics at the 0.4 scale of
+  its padded frame. Composed with `TO_512`, it maps an ego point to a pixel of the 512×256 image the ViT read.
+- **What it does to the tokens: nothing.** The ViT computes its tokens from pixels alone. The release's image
+  encoder even has the line that would add a `lidar2img` embedding to its tokens, commented out.
+- **What it does in the side-car:** it gives each token its ray. 16 points along the ray (1–60 m) go through
+  an MLP, and the result is **added to the keys, not the values**. Geometry decides where a slot looks; the
+  token says what is there (PETR, Liu et al., ECCV 2022).
+  - The release uses `lidar2img` the other way round: it projects 3D proposal points into the image and
+    samples there (BEVFormer, Li et al., ECCV 2022).
+- **How much it varies** (*measured*):
+  - across all 103,288 NAVSIM samples, a token's ray direction varies by 0.5° (standard deviation), a quarter
+    of a token, and the camera's position by 1–2 cm: one rig;
+  - nuScenes' rays differ from NAVSIM's by 1.4° in azimuth and 2.1° in elevation on average, about a token.
+- **Whether the side-car uses it** (*measured* on the pipeline check's checkpoint, select logs):
+
+  | Change to the geometry input only | Recall within 30 m | Detections turn by | Their range, × |
+  |---|---|---|---|
+  | as recorded | 0.405 | — | 1 |
+  | camera turned 2° (yaw, either way) | 0.405 | 0.01° | 1.000 |
+  | camera tilted 2° (pitch) | 0.396 | 0.13° | 1.003 |
+  | rays removed from the keys | 0.358 | 0.11° | 1.005 |
+
+  - **One epoch in, it does not place agents by their rays.** It places them by what the tokens say, and the
+    tokens carry their position through the ViT's own positional encoding.
+  - **The rays act as a fixed code:** removing them costs 0.047 recall. A single camera can teach no more.
+- **Why it matters:** beyond 20 m an agent's distance rests on one or two token rows (notebook 01 §4). At
+  20 m, an error of one degree in elevation puts it at 16 or 26 m; two degrees, at 14 or 37 m.
+- **What the plan does about it:**
+  - step 5: run the same test on the trained models;
+  - step 7: read nuScenes as it is, and with its images warped to NAVSIM's camera first. A rotation and a
+    change of intrinsics are undone exactly by a homography, and the cameras' positions differ by
+    centimetres. If the warp helps, the gap is geometry, not appearance (§11.12);
+  - later, only if needed: geometric augmentation in training (crops, scales and small rotations, the
+    projection changed to match). It needs the ViT run again on the augmented images.
+
+### 4.2 The decoder, part by part (notebook 02b §2)
+
+| Part | What it adds | Where it comes from |
+|---|---|---|
+| N queries (slots) | a fixed set of agent slots; the output is a set: no anchors, no non-maximum suppression | DETR (Carion et al., ECCV 2020) |
+| reference points and query position | each slot gets a 3D place to look from | Deformable DETR (Zhu et al., ICLR 2021); DETR3D (Wang et al., CoRL 2021); conditional and anchor queries (Conditional DETR, DAB-DETR) |
+| self-attention among slots | slots see each other, so two do not report one agent | DETR |
+| cross-attention to the tokens | each slot gathers evidence: keys = content + ray, values = content | DETR; PETR's ray keys |
+| FFN | per-slot computation | the Transformer |
+| iterative refinement, detached | each layer moves its slot's point; the next looks again from there | Deformable DETR; DETR3D |
+| heads on every layer | every layer supervised (deep supervision) | DETR's auxiliary losses |
+
+- **The arrangement** is H04's `AgentDecoder`. It follows the camera-only 3D detectors of 2021–2023 (DETR3D,
+  PETR, StreamPETR), reduced to one camera.
+- **What one epoch shows** (pipeline check, select):
+  - the detected slots attend to the same band of tokens along the horizon, not yet each to its own agent;
+  - the first layer moves a slot 19 m on average, the later two by 3 and 7 cm;
+  - most slots attend to the detected ones, which is how duplicates get suppressed.
+  - Step 5's models are read with the same cells.
+
+### 4.3 The heads (notebook 02b §3)
+
+The side-car already has one small network per output, not one vector of logits decoded: a linear layer
+for the class, and MLPs for the centre, the box, the velocity and the path. The options (none in v1):
+
+| Option | What it changes | Why |
+|---|---|---|
+| path as a correction to constant velocity | path = velocity × t + a learnt offset | the paths barely beat constant velocity; the head would learn only the deviation |
+| uncertainty per output | each regression gets a Laplace scale b; loss \|r\| / b + log b | a calibrated "how sure"; hopeless targets stop pulling (Kendall & Gal, NeurIPS 2017) |
+| yaw relative to the ray | predict the allocentric angle, add the ray's azimuth | appearance shows the allocentric angle (Mousavian et al., CVPR 2017) |
+| size from a class prior | predict log(size / class mean) | starts near the right size |
+| depth along the ray | place the centre by depth on its token's ray | depth is the hard part (§4.1) |
+| several paths per agent | K modes, winner-takes-all | junctions; risks mode collapse (§5.2) |
+
+**Proposed first** (§11.11): path as a correction to constant velocity, and uncertainty outputs. Neither
+changes the readout's interface.
+
+### 4.4 The readout and explainability (notebook 02b §4)
+
+- **The readout** turns the last layer's raw outputs into the list a person or a planner reads:
+  confidence = 1 − p(none), the most likely class, the box, velocity and path. A slot is a detection at
+  confidence ≥ 0.5.
+- **It changes nothing in training:** the loss reads every layer's raw outputs.
+- **For explainability it is the interface.** Each detection is a named agent with attributes, and with its
+  cross-attention (where it looked), so it can be checked against the image.
+- **What it cannot show is a missed agent.** That is why recall is measured by range, class and importance.
+
+### 4.5 Beside Drive-JEPA's two variants (notebook 02b §5)
+
+![The side-car beside Drive-JEPA's two variants](../experiments/H15_perception_sidecar/figures/part-a-variants.png)
+
+| | Perception-free | Perception-based (the release) | The side-car |
+|---|---|---|---|
+| Encoder | V-JEPA ViT-L, frozen | V-JEPA ViT-L + an FPN neck | the release's ViT output, frozen |
+| Camera geometry | none: a learnt embedding per token position | 3D proposal points projected into the image (BEVFormer) | rays added to the keys (PETR) |
+| Queries | 8, one per future pose | 32 proposals × 8 poses | 64 agent slots with 3D reference points |
+| Ego status | a token | on every query | not an input |
+| Output at inference | one trajectory | 32 proposals, 6 scores, a pick | a list of agents |
+| Perception | none | training-only auxiliaries (collision agents, drivable area), dropped at inference | its whole output, at inference |
+
+- **The same:** encoder, frames, camera, and building blocks.
+- **Different:** it predicts the agents themselves, at inference, as a readable list, separate from the
+  planner.
+
+### 4.6 Left- or right-hand traffic (notebook 01 §9)
+
+- **Measured:** where oncoming traffic passes flips between the US cities (80–93% on the ego's left) and
+  Singapore (19%). Singapore is 8% of the train logs, and 36 of the 100 nuScenes scenes.
+- **The steering wheel's side** (left- or right-hand drive) does not matter here: the front camera sits on
+  the car's centre line (y = −0.01 m).
+- **The options:**
+
+  | Option | How | Cost | Control |
+  |---|---|---|---|
+  | do nothing | the side-car learns side priors from the image (signs, parked cars) | none | none: the side is confounded with the city |
+  | a traffic-side input | a learnt embedding of the side, added to every query (or one extra memory token) | small | partial: from 8% of the data, the input and the city's appearance are confounded |
+  | **the input, trained with mirrored scenes** | each training scene also seen mirrored (image flipped; y, yaw and vy negated) with the input toggled, so the input is the only cue for the side | a mirrored ViT-out cache: one more pass, about 40 minutes and 108 GB | yes, and testable: flip the input, the priors flip |
+  | mirror at inference | flip left-hand scenes so they look right-hand, then flip the outputs back | a second ViT pass at inference, since the planner reads the unflipped tokens | yes, but costly |
+
+- **Recommended: measure first** (§11.10).
+  - Step 6 reads recall and precision by traffic side; report has 8 Singapore logs.
+  - Step 7 reads them by nuScenes location.
+  - Only if left-hand scenes are clearly worse, add the input with mirrored training scenes.
+  - The side comes from metadata: NAVSIM's map location, nuScenes' location, the region in deployment.
+
 ## 5. The loss (step 2)
 
 Notebook 02 builds each term by hand on a toy example and on a real batch, and checks it against
@@ -291,6 +472,63 @@ first pass):
   The many easy "none" slots are what the focal γ is there to quiet.
 - **Weight decay** (0.01, decoupled) applies to every parameter, LayerNorms, biases, queries and
   reference points included.
+
+### 5.1 The options, and how they shape the gradient (notebook 02 §7)
+
+**Notebook 02 §7 is a primer, with references.** It covers:
+- classification losses (cross-entropy, focal, sigmoid focal, quality focal, label smoothing);
+- regression losses (L2, L1, Huber, Laplace with a learnt scale, the IoU family, disentangled);
+- yaw, size and depth;
+- paths (L1, winner-takes-all, mixtures);
+- matching (one-to-one, one-to-many, denoising);
+- combining terms (fixed weights, normalisation, uncertainty weighting, GradNorm, dynamic averaging,
+  PCGrad, MGDA), and regularisation.
+
+**What its measurements add** (*measured*, a real batch):
+- **The class term drives the shared layers early.** On the projection and the attention layers its
+  gradient is 14 times the box term's at step 0, and 1.65 times after epoch 1, as focal loss quiets
+  confident slots.
+- **The token-ray MLP gets almost no gradient from any term**: two orders of magnitude below attention,
+  consistent with §4.1.
+- **Uncertainty weighting** (Kendall, Gal & Cipolla, CVPR 2018), applied to epoch 1's per-term losses, would
+  halve the class term's weight. It would give velocity and path about 2.6 and 3.4 times theirs, shifting
+  effort towards motion.
+- **No gradient leaves the side-car.** The ViT is frozen and cached, so no loss choice here can change the
+  planner's tokens. A shared LoRA (B3) would.
+
+### 5.2 Does this model have a mode-collapse problem? (notebook 02 §8)
+
+- **Representation collapse** (the failure JEPA encoders guard against) cannot happen: the encoder is frozen,
+  and the side-car learns from labels.
+- **Trajectory mode collapse** cannot either: the path head has one mode. Its failure is averaging between
+  possible futures.
+- **Query collapse**, DETR's version, can. After epoch 1 (select):
+  - **under-detection:** 3.3 detections a sample against 7.3 targets;
+  - **duplicates:** about one duplicate pair a sample; a quarter of detections have a same-class twin
+    within 2 m;
+  - **slot use:** all 64 slots in use, the busiest 8 making half the detections.
+- **What step 5 does about it:**
+  - a converged decoder should lose the first two signs, so step 5 records detections per sample, duplicate
+    pairs and slot use every epoch (a small addition to the readout);
+  - if duplicates persist: one-to-many matching or denoising queries;
+  - if under-detection persists: the class term's weight.
+
+### 5.3 Weighting what matters (proposals; notebook 02 §9)
+
+| Option | The change | Effect on the gradient |
+|---|---|---|
+| importance weights | each matched target's terms weighted 1 (causal), λ (visible), λₕ (hidden) | causal targets pull hardest |
+| ignore regions | slots near hidden, non-causal targets are not pushed to "none", and those targets are not misses | no gradient for agents the camera cannot see |
+| group targets | one target per pedestrian group (1.0 m); the other members ignored | one detection per group suffices |
+| nearest first | weights falling with distance rank | near agents pull hardest |
+
+- **Measured on one batch of 16, at step 0:** hidden targets are 60% of the targets and carry 66% of the box
+  term. Weights of 1 / 0.3 / 0.1 would raise the causal targets' share from 1.3% to 7.4%.
+- **Proposed as step 5c** (§6.6, §11.9): one run of the chosen variant with importance weights, group targets
+  and ignore regions.
+  - It would be read on select by causal recall, with every other number beside it.
+  - The importance labels would then enter training, so the preflight gains a check that the trainer's
+    labels equal `importance.py`'s.
 
 ## 6. The training recipe (step 3)
 
@@ -365,6 +603,7 @@ first pass):
 | 5a | v1, v2, v3 at seed 0, 12 epochs; v1 at seed 0, 24 epochs | choose the variant and the schedule |
 | 5b | the chosen variant and schedule, seeds 1 and 2 (and seed 0 if 5a did not train that pair) | seed spread |
 | 5b | the chosen variant, tokens zeroed throughout (`--blind`), seed 0 | the no-camera control: what can be learnt without the image |
+| 5c (the owner's call, §11.9) | the chosen variant with importance weights, group targets and ignore regions (§5.3) | does weighting what matters raise causal recall without costing the rest? |
 
 - **v1 at seed 0 for 12 epochs repeats the first pass's A1 seed 0:** same code path, start and data
   order. Its select F1 should match that run's to within GPU nondeterminism (G5). If it does not,
@@ -380,6 +619,10 @@ first pass):
 - the number of matched targets;
 - the matched slots' centre error and class accuracy;
 - time waiting for data, and time per step.
+
+**Added at step 5**, every epoch, on select:
+- detections per sample, duplicate pairs and slot use (§5.2);
+- causal and nearest-k recall (§3.8).
 
 **`metrics.jsonl`**, every epoch:
 - the epoch's means of all of the above;
@@ -483,6 +726,15 @@ moving vehicles 0.935–0.936, lead-gap error 2.14–2.36 m against the prior's 
 | Q8 | schedule (select, v1 seed 0) | 12 epochs | 24 beats 12 by 0.005–0.02 F1 | — (a choice by §6.5, recorded) | — |
 | Q9 | nuScenes, zero-shot: vehicle recall at 2 m within 30 m | — | 0.40–0.55 | ≥ 0.30 | < 0.20 |
 
+**Q10 and Q11, added after the second review** (4 Nov). They were drafted with step 3's epoch-1 values
+known (on select, causal recall 0.70 and nearest-1 recall 0.56); like the rest of this section, they are
+drafts until step 4:
+
+| # | Metric | Baseline | Predicted | Support | Refuted |
+|---|---|---|---|---|---|
+| Q10 | causal recall (§3.8's rule as chosen at §11.7) | the blind control | 0.85–0.95 | ≥ 0.80 on every seed | < 0.70 on any seed |
+| Q11 | recall of each sample's nearest target | — | 0.80–0.90 | reported, not decided | — |
+
 **Q6's companion.** With the tokens zeroed, the first pass found 27 detections a sample on one
 seed. That input never occurs in real data, so it is recorded as a diagnostic, not a gate.
 
@@ -523,7 +775,8 @@ seed. That input never occurs in real data, so it is recorded as a diagnostic, n
 | | **displacement error**: (predicted path − predicted centre) against (true path − true centre) | **proposed** | motion apart from position. The first pass's centre error (0.90 m) was most of its path error |
 | Lead vehicle | gap error to the nearest vehicle ahead with \|y\| ≤ 1.75 m, against the train-mean prior | yes | a straight-lane proxy |
 | Sight | recall with zeroed tokens, and with another log's tokens | yes (`sight`) | |
-| Breakdowns | by city; by ego speed (stopped, < 5, ≥ 5 m/s) | **proposed** | report has more Singapore logs than select |
+| Breakdowns | by city; by ego speed (stopped, < 5, ≥ 5 m/s); by traffic side | **proposed** | report has more Singapore logs than select |
+| What matters | causal recall; visible and hidden recall; group-aware recall and precision; nearest-k recall | **proposed** | the proposed headline is causal recall (§3.8). Epoch 1, select: 0.70 against 0.23 for all targets out to 50 m (notebook 04 §4e) |
 
 **Uncertainty.**
 - The spread over three seeds.
@@ -599,7 +852,8 @@ marked):
    - **Notebook 05** draws the keyframes with their targets through the side-car's own projection.
      The boxes sit on the agents.
 5. **A side-car-only readout**, written at step 7. The existing `ood read` also reads every B1 run,
-   which Part A has none of. It reports:
+   which Part A has none of. It reads nuScenes as it is, and again with each image warped to NAVSIM's
+   camera (§4.1), to tell geometry from appearance. It reports:
    - every §8.1 metric;
    - by location (Boston seaport, Singapore one-north, Queenstown, Holland Village);
    - night and rain apart, from the scene descriptions (99 night and 165 rain scenes of the 850,
@@ -706,6 +960,11 @@ interpreters):
 - **Recipe stages** `part-a-overfit` and `part-a-pipeline`, writing under
   `{runs}/drivejepa_perception/part-a/`.
 
+**For the second review** (no training code changed):
+- **`importance.py`** (new, tested): the derived labels of §3.8. Not used in training.
+- **`targets.target_index`**: `targets.build`'s choice of agents, factored out so the labels can follow it.
+- **Notebooks:** `02b_architecture` (new); sections added to 01, 02, 03 and 04.
+
 **Later, each in its own step, after the review that opens it:**
 - step 5's recipe stages;
 - step 6's `reread` of kept and last in one call, and any adopted metric;
@@ -725,6 +984,23 @@ interpreters):
   nuscenes"): the view at the configured path was recreated.
 - **11.6 · Budget:** the step-5 runs as listed (§6.6), or fewer.
 
+**Added by the second review:**
+- **11.7 · The causal rule** (§3.8):
+  - the strict setting;
+  - or with the 4 s look-ahead and a 2 m margin for adjacent lanes: 6.9% of targets, a sample in three
+    (recommended for training weights);
+  - or near = 15 m.
+  - Causal recall would be reported under the strict and the chosen settings.
+- **11.8 · Pedestrian groups:** 1.0 m (recommended), with a cap on a group's width (for example 3 m). 0.5 m
+  groups almost no one.
+- **11.9 · Weighting what matters in training (step 5c):** yes or no; which weights (1 / 0.3 / 0.1 to
+  start); with group targets and ignore regions, or not.
+- **11.10 · Traffic side:** measure first (recommended), or add the input with mirrored training scenes now.
+- **11.11 · Heads:** path as a correction to constant velocity, and uncertainty outputs, as one run after
+  the base is chosen; or no head changes until Part A closes.
+- **11.12 · Geometry:** step 7 also reads nuScenes with its images warped to NAVSIM's camera (recommended).
+  Geometric augmentation only if the warp shows geometry is the gap.
+
 ## 12. Risks
 
 1. **The shared GPUs.** Both run near full load. Runs are slow and their timing is noisy, and the
@@ -735,3 +1011,5 @@ interpreters):
    remedy; otherwise the comparison is flagged.
 4. **Label limits.** Occluded targets and centre-only visibility (§3.7) cap recall in ways no model
    change fixes. Per-range numbers keep that visible.
+5. **The side-car may ignore camera geometry** (one epoch in, §4.1). If the trained models do too, any
+   camera change (nuScenes, another vehicle) moves its depth. §4.1's test and warp cover it.
