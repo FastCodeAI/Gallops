@@ -402,6 +402,13 @@ def test_the_picture_names_the_base_without_repeating_the_word(tmp_path) -> None
     assert ">Base</text>" in svg and ">the released model</text>" in svg and "Base: the" not in svg
 
 
+def test_the_picture_does_not_draw_the_base_as_what_phase_1_produced(tmp_path) -> None:
+    """The base is the released model, which predates gap closing: an arrow into its box says otherwise."""
+    svg = exps.render_picture(exps.Registry.load(_repo(tmp_path)))
+    assert 'x1="226"' not in svg, "no arrow leaves the Phase 1 box"
+    assert 'x1="430"' in svg and 'x1="670"' in svg, "the base still feeds Phase 2, and Phase 2 the gate"
+
+
 def test_a_baseline_the_picture_cannot_hold_is_refused(tmp_path) -> None:
     """The box took two lines and dropped the rest, so it named a different model and nothing failed."""
     long = "Base: the 4-camera stack with state-space memory and the sub-score scorer"

@@ -1052,7 +1052,8 @@ def render_picture(reg: Registry) -> str:
             dashed=not versions,
         ),
     ]
-    for x1, x2 in ((226, 262), (430, 466), (670, 706)):
+    # None out of Phase 1: the base is released Drive-JEPA, which came before gap closing, not from it.
+    for x1, x2 in ((430, 466), (670, 706)):
         parts.append(
             f'  <line x1="{x1}" y1="78" x2="{x2}" y2="78" stroke="{grey}" stroke-width="2" '
             'marker-end="url(#a)"/>'

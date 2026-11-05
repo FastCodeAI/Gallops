@@ -18,7 +18,6 @@
   <rect x="898" y="24" width="102" height="108" rx="10" fill="none" stroke="#768390" stroke-width="2" stroke-dasharray="6 5"/>
   <text x="949" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#768390">gallops-v0</text>
   <text x="949" y="82" text-anchor="middle" font-size="13" fill="#768390">none yet</text>
-  <line x1="226" y1="78" x2="262" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="430" y1="78" x2="466" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="670" y1="78" x2="706" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="846" y1="78" x2="894" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
