@@ -323,7 +323,7 @@ checkpoint to `gallops-v0.N`. `experiments/README.md` lists the log in full.
 8. **When the team decides,** add the decision to `experiments/decisions.toml`, and set `status`,
    `verdict` and `learned`.
 9. `gallops experiments render --write` (the README and the cards; never edit `CARD.md` by hand), then
-   `make check`, then open the PR.
+   `make check`, then open the PR with `gallops experiments pr` ([below](#results-pr)).
 
 <a id="results-pr"></a>
 

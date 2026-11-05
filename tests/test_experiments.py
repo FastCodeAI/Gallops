@@ -716,6 +716,32 @@ def test_a_results_pr_that_differs_from_its_record_is_refused(tmp_path, break_it
     assert any(error in p for p in problems), problems
 
 
+def test_a_run_reports_its_latest_gate_however_the_record_lists_them() -> None:
+    older = {"date": dt.date(2026, 10, 20), "verdict": "FAIL"}
+    newer = {"date": dt.date(2026, 10, 28), "verdict": "HOLD"}
+    for gates in ([older, newer], [newer, older]):
+        assert exps.pr_title({"id": "H01.r1", "gate": gates}, None) == "H01.r1: gate HOLD"
+
+
+def test_a_results_pr_gives_the_latest_decision_that_cites_it(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path, decisions=DECISIONS + _LATER_DECISION))
+    assert "- **Decision:** D03: drop the thing" in exps.render_pr(reg, "H01.r1")
+
+
+def test_a_run_holding_the_headline_reports_it_wherever_it_is_listed(tmp_path) -> None:
+    first = """  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS"
+  value = "0.100"
+  better = "higher"
+  strength = "argued"
+
+"""
+    record = RECORD.replace("  [[runs.results]]\n", first + "  [[runs.results]]\n", 1)
+    reg = exps.Registry.load(_repo(tmp_path, record))
+    assert exps.render_pr(reg, "H01.r1").splitlines()[0] == _TITLE
+
+
 def test_a_block_left_behind_by_the_base_says_to_merge_it(tmp_path) -> None:
     """A decision on main citing the run changes the merge; re-running on the branch prints the old block."""
     reg = exps.Registry.load(_repo(tmp_path))
@@ -753,6 +779,7 @@ def test_a_body_saved_by_the_web_editor_still_matches(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     title, body = _rendered(reg)
     assert exps.check_pr(reg, title, body.replace("\n", "\r\n"), ["H01.r1"]) == []
+    assert exps.check_pr(reg, title + " ", body, ["H01.r1"]) == [], "so may a trailing space in the title"
 
 
 def test_the_pr_template_does_not_pass_for_a_results_pr(tmp_path) -> None:
