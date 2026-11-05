@@ -224,6 +224,7 @@ decision = """The base is released Drive-JEPA, not the 4-camera stack D11 named.
 released Drive-JEPA, so every gate comparison is against the base. Navvrat runs the stack through the gate next. \
 Records from before this decision say `the base` for that stack."""
 by = ["Naren"]
+evidence = ["H02.timing", "H07.exp3"]
 next = ["H01"]
 baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and Navvrat runs it next"
 source = "Naren, 6 Nov 2026"
