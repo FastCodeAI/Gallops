@@ -208,10 +208,10 @@ source = "branch train/drivejepa-kitscenes, docs/drivejepa-kitscenes.md"
 
 [[decision]]
 id = "D19"
-date = 2026-11-05
-short = "Alpamayo teacher and scene selector parked"
-decision = """The Alpamayo teacher (H13) and the nuScenes scene selector (H12) are parked and their PRs closed \
-unmerged: this repo is not training Alpamayo, and nuScenes curation is not needed for now. Reopen #19 if it is."""
+date = 2026-11-06
+short = "H12 and H13 removed"
+decision = """The nuScenes scene selector (H12) and the Alpamayo teacher (H13) are not this repo's work: #19 and #18 \
+closed unmerged, and their records are removed, as they served no experiment here. The two IDs stay retired, never \
+reused; the code is at those PRs' heads."""
 by = ["Naren"]
-evidence = ["H12", "H13"]
 source = "the closing comments on gallops #18 and #19"
