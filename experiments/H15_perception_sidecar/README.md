@@ -1,7 +1,8 @@
 # H15 — A perception side-car on frozen Drive-JEPA: 3D boxes and each agent's 1 s path, tested as an input to the scorer, to the refiner, and against LoRA on the ViT
 
-**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running: the rerun, Part A, steps 1–3 done
-and waiting for the owner's review, step 7's nuScenes data prepared (D20)
+**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running: the rerun, Part A. Steps 1–3
+reviewed (D21), step 4 committed, step 5a done and 5b running, on the select logs only; step 7's nuScenes
+data prepared (D20)
 
 The facts — runs, data, checkpoints, results, gate verdicts — live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. This page is the
@@ -20,7 +21,7 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
 
 ![The rerun's eight steps, with the owner's reviews](figures/part-a-steps.png)
 
-**Steps 1–3 (4 Nov), for the owner's review:**
+**Steps 1–5 (4 Nov):**
 
 | Step | Review it in | What it established (*counted* or *measured*) |
 |---|---|---|
@@ -30,6 +31,8 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
 | 3 · the pipeline check (`H15.r1`) | [notebooks/03_training.ipynb](notebooks/03_training.ipynb) | **The pipeline runs end to end.** The overfit check passed. The preflight passed, now with the live ViT output held to its cache. One epoch takes 46 s. Select F1 is 0.477 after epoch 1 of 12 (`smoke`). No report number was read |
 | the evaluation plan (steps 6–7) | [notebooks/04_evaluation.ipynb](notebooks/04_evaluation.ipynb) | **The readout reproduces the run's numbers from its checkpoint.** The proposed metrics (AP, box errors, motion apart from position, calibration, by city) are prototyped. nuScenes needs its site root first |
 | step 7, prepared (`H15.r2`) | [notebooks/05_nuscenes.ipynb](notebooks/05_nuscenes.ipynb) | **The nuScenes data is ready, and no model has read it.** The site root was recreated as the view of the shared copy that both configs name. 100 train scenes were drawn and committed, in two interpreters (plan §8.2). All 2,917 kept keyframes are passed, the projection agrees with the calibration to 1.4e-5 px, and the boxes sit on the agents. There are 3.8 targets a keyframe, and night and rain fall in single cities |
+| 4 · the success criteria | [PREDICTIONS.md](PREDICTIONS.md), the rerun's section | **Committed before step 5's first training step (`9d32b80`):** plan §7 as written, with the owner's choices of 4 Nov (D21) |
+| 5a · three sizes (`H15.r3`) | plan §9.2 | **By the committed rules: v3 (18.44 M) for 24 epochs.** Select F1 at the kept epoch: v1 0.671, v2 0.679, v3 0.699, and v1 on 24 epochs 0.698. Every gate held; G5: v1 reproduces the first pass, 0.671 against 0.669 |
 
 - **To rerun a notebook,** open it with the **`drive-jepa-v2`** kernel ("Drive-JEPA v2").
   - It starts the interpreter `gallops.toml` names as `[python] drivejepa` (Python 3.9, torch 2.1),
@@ -39,8 +42,8 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
   - Do not use `drive-jepa-py39`: it is another venv, with another navsim tree first on its path.
   - Headless: [scripts/run_notebooks.py](scripts/run_notebooks.py), run with that interpreter.
   - Notebooks 03 and 04 use a GPU if one is visible; `drive-jepa-v2` shows only GPU 1.
-- **The success criteria** (plan §7) were committed before the pipeline check ran. Step 4 moves them
-  into PREDICTIONS.md once the owner approves them.
+- **The success criteria** (plan §7) were committed before the pipeline check ran, and copied into
+  PREDICTIONS.md at step 4, as written, with the owner's choices (D21).
 - **The decisions asked of the owner** are in plan §11.
 - **The second review (4 Nov)** added these, all proposals, none in v1 (plan §3.8, §4.1–4.6, §5.1–5.3, §11.7–11.12):
   - which agents matter: hidden and causal agents, pedestrian groups, nearest first;

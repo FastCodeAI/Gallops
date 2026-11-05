@@ -1,8 +1,9 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
 **Status (2026-11-04): steps 1–3 reviewed; the owner chose the recommended settings (§11). Step 4 is
-done: the criteria are in PREDICTIONS.md. Step 5 is running, on the select logs only. Step 7's nuScenes
-data is prepared (§8.2); no model has read it. No report-log number exists.**
+done: the criteria are in PREDICTIONS.md. Step 5a is done (§9.2): by the committed rules, v3 for 24
+epochs; 5b is running, on the select logs only. Step 7's nuScenes data is prepared (§8.2); no model has
+read it. No report-log number exists.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -945,6 +946,39 @@ reference).
 - Nothing blocks step 5.
 - What one epoch cannot show is the shape of the later epochs' select curves, which is what step 5a
   is for.
+
+### 9.2 Step 5: three sizes, then the chosen one at three seeds (4 Nov), on the select logs
+
+Runs `H15.r3` (5a, from `9d32b80`) and `H15.r4` (5b, from `97727a8`). They wrote to
+`{runs}/drivejepa_perception/part-a/5a-*` and `5b-*`, all with `--no-report`: no report-log number exists.
+Notebook 06 (`06_predictions.ipynb`, committed with 5b's results) holds every number below, and the
+pictures. All are *measured* on the select logs. Those logs chose the epochs and the
+variant, so each number flatters the chosen run a little.
+
+**The gates:**
+- **G1:** every preflight passed.
+- **G2:** the overfit check passed for v2 at step 1,000 and v3 at 700 (v1 at 1,300, at step 3).
+- **G3:** no non-finite loss; skipped steps 0.05–0.07%, clipped 0.06–1.1%.
+- **G5:** v1 at seed 0 reads 0.671 at epoch 11, against the first pass's 0.669.
+
+**5a, the sizes** (seed 0; minutes on one GPU shared by four runs and another job):
+
+| Run | Parameters | Kept epoch | Select F1, kept · last | Recall · precision | Minutes |
+|---|---|---|---|---|---|
+| v1, 12 epochs | 4.39 M | 11 | 0.671 · 0.670 | 0.638 · 0.708 | 24 |
+| v2, 12 epochs | 8.37 M | 12 | 0.679 · 0.679 | 0.620 · 0.749 | 37 |
+| v3, 12 epochs | 18.44 M | 12 | 0.699 · 0.699 | 0.646 · 0.761 | 38 |
+| v1, 24 epochs | 4.39 M | 23 | 0.698 · 0.697 | 0.658 · 0.742 | 39 |
+
+**The choices** (§6.5, as committed):
+- **Variant v3.** v2 and v1 trail it by 0.020 and 0.028. The 95% intervals, resampling the select logs,
+  are +0.009 to +0.029 and +0.016 to +0.037.
+- **Schedule: 24 epochs.** v1 gains 0.027 from it (+0.017 to +0.035).
+- **Q7 and Q8 record the choices; neither gates.**
+  - Q7 predicted v2 − v1 between +0.01 and +0.04, and v3 within 0.01 of v2: measured +0.008 and +0.020.
+  - Q8 predicted 24 epochs beating 12 by 0.005–0.02: measured +0.027.
+
+**5b** (v3 for 24 epochs at seeds 0, 1 and 2, and the no-camera control) is running.
 
 ## 10. Code
 

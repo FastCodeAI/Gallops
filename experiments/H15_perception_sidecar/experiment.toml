@@ -484,3 +484,82 @@ notes = "At the owner's request, while steps 1-3 are reviewed. The site root was
   n = 2917
   scene_list = "recipes/drivejepa_perception/ood_scenes.json"
   built_by = "gallops.drivejepa_perception.ood"
+
+[[runs]]
+id = "H15.r3"
+label = "Rerun, Part A, step 5a: the side-car at three sizes for 12 epochs (v1 4.39 M, v2 8.37 M, v3 18.44 M) and v1 for 24, seed 0, select logs only"
+started = 2026-11-04
+start_from = "released"
+trained = ["side-car"]
+frozen = ["encoder", "projector", "refiner", "scorer"]
+params_trained_m = 18.44
+train_git_sha = "9d32b80"
+notes = "After the owner's review of steps 1-3 (D21) and PREDICTIONS.md's rerun section (9d32b80, before the first step). --no-report: the report logs are read once, at step 6. Overfit check (G2) first: v1 at step 1,300 (step 3), v2 at 1,000, v3 at 700, of 4,000. Every preflight passed (G1); skipped steps 0.05-0.07%, clipped 0.06-1.1% (G3). G5 holds: v1 seed 0 reads select F1 0.671 at epoch 11 against the first pass's 0.669. Choices by plan section 6.5: v3 (v1 0.671, v2 0.679, v3 0.699; v3 - v2 +0.020, 95% interval over resampled select logs +0.009 to +0.029) and 24 epochs (v1-24 0.698 against v1-12 0.671, +0.027, interval +0.017 to +0.035). Q7 predicted v2 - v1 +0.01 to +0.04 and v3 within 0.01 of v2: measured +0.008 and +0.020; Q8 predicted +0.005 to +0.02: measured +0.027. Notebook 06 reads every run's predictions."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-a-5a-v3"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, train logs (1,071)"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain, select logs (H04's 51 held-out)"
+  role = "selection"
+  unit = "samples"
+  n = 4457
+  scene_list = "recipes/drivejepa_perception/splits.json"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, kept epoch: v3 (18.44 M), 12 epochs"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  value = "0.699"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "kept epoch 12 of 12; recall 0.646, precision 0.761. The variant and the epoch were chosen on these logs; step 6 reads the report logs"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, kept epoch: v2 (8.37 M), 12 epochs"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  value = "0.679"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "kept epoch 12 of 12; recall 0.620, precision 0.749"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, kept epoch: v1 (4.39 M), 12 epochs"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  value = "0.671"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "kept epoch 11 of 12 (G5: the first pass's 0.669); recall 0.638, precision 0.708; last epoch 0.670"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "F1 at 2 m within 30 m, front view, all classes, kept epoch: v1 (4.39 M), 24 epochs"
+  subset = "select logs"
+  n = 14601
+  unit = "target"
+  value = "0.698"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "kept epoch 23 of 24; recall 0.658, precision 0.742; last epoch 0.697"
