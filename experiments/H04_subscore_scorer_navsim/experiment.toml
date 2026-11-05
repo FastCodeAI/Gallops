@@ -1,9 +1,9 @@
 # H04 -- training the scorer on the sub-scores closes the base's NAVSIM gap (Navvrat, with Siddesh).
 # Priority 4 on the 21 Oct list. Its two runs (the agent decoder and Run 3A) are mapped here by inference:
 # the branch never names the hypothesis, and Run 3A changes more than the scorer.
-# Sources: this folder's README.md, recipes/drivejepa_wajepa.toml and overlay/{agent_decoder,run3a}.json
-# (numbers copied, never re-derived); the item's wording and motivation
-# from the team's gap-review page (22 Oct).
+# Sources: this folder's README.md, recipes/drivejepa_wajepa.toml and overlay/{agent_decoder,run3a}.json (numbers
+# copied, never re-derived); the gate's printed tables for its verdicts; the item's wording and motivation from the
+# team's gap-review page (22 Oct).
 
 schema = 1
 id = "H04"
@@ -12,7 +12,7 @@ short = "Sub-score scorer, NAVSIM gap"
 track = "hypothesis"
 owner = "Navvrat"
 contributors = ["Siddesh"]
-benchmarks = ["navsim", "bench2drive", "hugsim"]
+benchmarks = ["navsim", "bench2drive", "hugsim", "kitscenes", "nuscenes", "neuroncap", "alpasim"]
 started = 2026-10-22
 status = "running"
 verdict = "none"
@@ -28,12 +28,14 @@ predictions = "none: Run 3A followed a spec (the user's of 23 Oct, revision 2) t
 learned = """So far, Run 3A narrowed the base's navtest gap (EPDMS 85.27 -> 87.30, paired +2.03 [+1.65, \
 +2.44]) but stays behind released Drive-JEPA (87.78; paired -0.49 [-0.84, -0.11]); drivable area rose \
 .972 -> .984 (released .986). It also added an agent decoder and an agent look in place of the global look, \
-so the gain is not the sub-score heads' alone; no scorer-only arm is recorded, and the gate has not run."""
+so the gain is not the sub-score heads' alone; no scorer-only arm is recorded. The regression gate, run by hand \
+from local paddock worktrees, says HOLD: KITScenes and nuScenes GAIN against released Drive-JEPA, NAVSIM, \
+Bench2Drive (7 routes, 2 Hz) and neuroNCAP NEUTRAL, nothing regressed; against Run 2 every pair is NEUTRAL."""
 parents = ["H01"]
 narrative = "experiments/H04_subscore_scorer_navsim/README.md"
 external = [
-  "Paddock's wajepa_dj_run3a adapter: on 27 Oct only uncommitted files in one local paddock worktree (rerank-native), per experiments/H04_subscore_scorer_navsim/README.md; no paddock ref carries it through 3 Nov, so no gate run exists.",
-  "The agent decoder's and Run 3A's epoch checkpoints, the lane centrelines and the rear-safe teacher list are off-repo at the training site ({runs}/drivejepa_wajepa/, beside the metric cache); no sha256 is recorded on the branch.",
+  "Paddock's wajepa_dj_run3a adapter: on 27 Oct only uncommitted files in one local paddock worktree (rerank-native), per experiments/H04_subscore_scorer_navsim/README.md; no paddock ref carries it through 5 Nov, so the gate ran from local worktrees (see [[runs.gate]]).",
+  "The agent decoder's and Run 3A's epoch checkpoints, the lane centrelines and the rear-safe teacher list are off-repo at the training site ({runs}/drivejepa_wajepa/, beside the metric cache); POINTERS.md lists them with bytes and sha256.",
 ]
 
 [[runs]]
@@ -44,8 +46,9 @@ ended = 2026-10-23
 start_from = "scratch, on H01.run2's frozen WA-JEPA token cache"
 trained = ["agent decoder (DETR3D-style slots on the token rays)"]
 frozen = ["WA-JEPA encoder (tokens cached)"]
+train_git_sha = "548bb82"
 params_trained_m = 4.25
-notes = "† Mapped to H04 by inference: it exists to feed Run 3A's agent look. Sweep on the 51 held-out logs (22-23 Oct): 64 x 3, 128 x 3, 64 x 6, 128 x 6, 300 x 3. AdamW 2e-4, weight decay 0.01, batch 64, fp16, cosine over 12 epochs, gradient clip 35. Targets: every vehicle, pedestrian and cyclist within 32 m at time t, nearest 64 kept; navtest never read. D trained 23 Oct 15:56-17:11; its two files are the ones it trained with (verified by timestamps and the code-agent-decoder tree's diff). Checkpoint {runs}/drivejepa_wajepa/agent_decoder/ckpts_D_q300_l3/epoch_11.pt, no sha256 recorded."
+notes = "† Mapped to H04 by inference: it exists to feed Run 3A's agent look. Sweep on the 51 held-out logs (22-23 Oct): 64 x 3, 128 x 3, 64 x 6, 128 x 6, 300 x 3. AdamW 2e-4, weight decay 0.01, batch 64, fp16, cosine over 12 epochs, gradient clip 35. Targets: every vehicle, pedestrian and cyclist within 32 m at time t, nearest 64 kept; navtest never read. D trained 23 Oct 15:56-17:11; its two files are the ones it trained with (verified by timestamps and the code-agent-decoder tree's diff). Checkpoint {runs}/drivejepa_wajepa/agent_decoder/ckpts_D_q300_l3/epoch_11.pt, no sha256 recorded. Trained in a Drive-JEPA checkout at upstream 548bb82 with the overlay, so train_git_sha is that upstream commit. No paddock adapter loads this checkpoint on its own, so `model` names the decoder; it sits at the training site in {data.navsim.exp}/agent_decoder/ckpts_23oct_D_q300_l3/."
 
   [runs.code]
   recipe = "recipes/drivejepa_wajepa.toml#agent-decoder"
@@ -67,6 +70,8 @@ notes = "† Mapped to H04 by inference: it exists to feed Run 3A's agent look. 
   split = "navtrain minus the 51 held-out logs"
   role = "train"
   unit = "samples"
+  built_by = "gallops.drivejepa_wajepa.agent_targets"
+  note = "agent_targets.gz beside each sample's tokens, from navtrain_agents.pkl (POINTERS.md)"
 
   [[runs.data]]
   dataset = "navsim"
@@ -76,6 +81,17 @@ notes = "† Mapped to H04 by inference: it exists to feed Run 3A's agent look. 
   unit = "samples"
   scene_list = "recipes/drivejepa_wajepa/heldout_logs.txt"
   note = "chose the slot count and depth, and reports the metrics below"
+
+  [runs.checkpoint]
+  model = "agent_decoder"
+  train_run = "ckpts_23oct_D_q300_l3"
+  step = 11
+  step_unit = "epoch"
+  file = "epoch_11.pt"
+  weights_sha256 = "e887dcda20a74a043e3a7552fe27d7f34596b7a25e5c97a545b3b2421a9bae2a"
+  location = "{runs}/drivejepa_wajepa/agent_decoder/ckpts_D_q300_l3/"
+  sidecar = false
+  members = ["e887dcda20a74a043e3a7552fe27d7f34596b7a25e5c97a545b3b2421a9bae2a  epoch_11.pt"]
 
   [[runs.results]]
   bench = "offline"
@@ -97,8 +113,9 @@ ended = 2026-10-26
 start_from = "H04.agent-decoder"
 trained = ["planner from scratch (refiner, agent look, 12 scorer heads, map auxiliary targets)", "agent decoder D (detection loss, weight 1)"]
 frozen = ["WA-JEPA encoder (tokens cached)"]
+train_git_sha = "548bb82"
 params_trained_m = 13.22
-notes = "† Mapped to H04 by inference: the branch never names the hypothesis, and Run 3A changes more than the scorer (agent decoder and agent look in place of the global look), so it is not a clean test of the sub-score claim. Spec: the user's of 23 Oct (revision 2), not committed. Trained 24 Oct 17:34 to 25 Oct 10:21; 1,544 steps an epoch at about 2.0 s a step. Epoch 13 chosen by val/score_epoch on the 51 held-out logs (0.9173; epoch 19: 0.9102) under the default pick (gates 1, route 2, no blend); a grid on epoch 13 then locked gates (0.5, 0.5, 1, 0.5, 0.5), route 2, blend 0.5 on 25 Oct (0.9204 against 0.9174; best of 32: 0.9611). drive_jepa_config.py as at launch was not kept (as_run_sha256 null). Closed-loop runs drive with WAJEPA_DJ_FOLLOW=straight. Run 3A's checks 1-3 pass from this repo (27 Oct)."
+notes = "† Mapped to H04 by inference: the branch never names the hypothesis, and Run 3A changes more than the scorer (agent decoder and agent look in place of the global look), so it is not a clean test of the sub-score claim. Spec: the user's of 23 Oct (revision 2), not committed. Trained 24 Oct 17:34 to 25 Oct 10:21; 1,544 steps an epoch at about 2.0 s a step. Epoch 13 chosen by val/score_epoch on the 51 held-out logs (0.9173; epoch 19: 0.9102) under the default pick (gates 1, route 2, no blend); a grid on epoch 13 then locked gates (0.5, 0.5, 1, 0.5, 0.5), route 2, blend 0.5 on 25 Oct (0.9204 against 0.9174; best of 32: 0.9611). drive_jepa_config.py as at launch was not kept (as_run_sha256 null). Closed-loop runs drive with WAJEPA_DJ_FOLLOW=straight. Run 3A's checks 1-3 pass from this repo (27 Oct). Trained in a Drive-JEPA checkout at upstream 548bb82 with the overlay, so train_git_sha is that upstream commit. The checkpoint sits at the training site in {data.navsim.exp}/run3a/epoch_ckpts_20261024_1734/; run3a-checkpoint has not published it, so it has no sidecar yet."
 
   [runs.code]
   recipe = "recipes/drivejepa_wajepa.toml#run3a-train"
@@ -125,6 +142,24 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   role = "train"
   n = 98831
   unit = "samples"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "teacher list: Drive-JEPA's v2 anchors minus those failing rear safety"
+  role = "train"
+  n = 103288
+  unit = "samples"
+  built_by = "gallops.drivejepa_wajepa.teacher_rearok"
+  note = "anchors_scores_index_v2_rearok_lane, beside the metric cache (POINTERS.md)"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "lane centrelines of the four nuPlan maps, for the labels"
+  role = "train"
+  n = 4
+  unit = "maps"
+  built_by = "gallops.drivejepa_wajepa.lane_centrelines"
+  note = "one pickle per map (POINTERS.md)"
 
   [[runs.data]]
   dataset = "navsim"
@@ -161,7 +196,10 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   step = 13
   step_unit = "epoch"
   file = "epoch_13.ckpt"
-  location = "{runs}/drivejepa_wajepa/run3a/epoch_ckpts/"
+  weights_sha256 = "92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24"
+  location = "{weights}/wajepa_dj_run3a/run3a/step_000000013/"
+  sidecar = false
+  members = ["92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24  epoch_13.ckpt"]
 
   [[runs.results]]
   bench = "navsim"
@@ -249,6 +287,100 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   note = "paired +6.6 [+3.6, +9.7]; KITTI-360 and Waymo have no rear camera, so Run 3A drove those with a black rear image"
   source = "experiments/H04_subscore_scorer_navsim/README.md"
 
+  [[runs.gate]]
+  date = 2026-10-25
+  tier = "quick"
+  verdict = "HOLD"
+  baseline = "released Drive-JEPA, the gate runs of 21 Oct, as H01.run2; Bench2Drive: its native-50 2 Hz runs merged to the gate's 7 routes"
+  paddock_commit = "b507811"  # plus the uncommitted adapters and PADDOCK_INFER_HZ patch in local worktree gate-run3a
+  manifest = "{runs}/gate-run3a/gate/smoke/wajepa_dj_run3a-released/manifest.toml"
+  note = "Run by hand, locked pick. Bench2Drive by a hand-written manifest at 2 Hz. Subsets are marked invalid by the gate (a subset of the benchmark). Against H01.run2 (vs_run2 manifest), every pair NEUTRAL: KITScenes 1.969 -> 2.159, t -1.62; nuScenes 1.956 -> 1.914, t 0.28; NAVSIM 0.863 -> 0.879, t 1.89; Bench2Drive 62.757 -> 60.391, t -0.23."
+
+    [[runs.gate.pairs]]
+    bench = "navsim"
+    metric = "epdms"
+    baseline = 0.875
+    candidate = 0.879
+    t = 0.55
+    mde = 0.022
+    units = 136
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "kitscenes"
+    metric = "ade"
+    baseline = 3.222
+    candidate = 2.159
+    t = 5.54
+    units = 140
+    verdict = "GAIN"
+
+    [[runs.gate.pairs]]
+    bench = "nuscenes"
+    metric = "l2_avg"
+    baseline = 2.497
+    candidate = 1.914
+    t = 2.98
+    units = 30
+    verdict = "GAIN"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving_score"
+    baseline = 58.801
+    candidate = 60.391
+    t = 0.13
+    units = 7
+    verdict = "NEUTRAL"
+
+  [[runs.gate]]
+  date = 2026-10-27
+  tier = "closed"
+  verdict = "HOLD"
+  baseline = "released Drive-JEPA, the paddock queue's runs of 26 Oct"
+  paddock_commit = "3daf4b9"  # plus wajepa_dj_run3a copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
+  manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj_run3a-ncap/manifest.toml"
+  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.run2: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): scene_score 0.416 -> 0.439, t 0.11, MDE 0.647, gate verdict CONFIG DIFFERS (our driver profile differs from the baseline's), so it is not a pair here; against H01.run2 0.450 -> 0.439, t -0.08, NEUTRAL."
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "ncap_score"
+    baseline = 3.679
+    candidate = 3.691
+    t = 0.05
+    mde = 0.801
+    units = 15
+    verdict = "NEUTRAL"
+
+  [[runs.gate]]
+  date = 2026-10-28
+  tier = "quick"
+  verdict = "HOLD"
+  baseline = "released Drive-JEPA, the paddock queue's runs of 23 Oct"
+  paddock_commit = "3daf4b9"  # plus wajepa_dj_run3a copied in, worktree gate-oct27
+  manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj_run3a-openloop/manifest.toml"
+  note = "KITScenes and nuScenes rerun for the PDM sub-scores on the queue's newer subsets (nuScenes 1,000 samples). Against H01.run2, NEUTRAL: KITScenes 1.969 -> 2.159, t -1.62; nuScenes 2.057 -> 2.151, t -1.06."
+
+    [[runs.gate.pairs]]
+    bench = "kitscenes"
+    metric = "ade"
+    baseline = 2.537
+    candidate = 2.121
+    t = 2.10
+    mde = 0.559
+    units = 117
+    verdict = "GAIN"
+
+    [[runs.gate.pairs]]
+    bench = "nuscenes"
+    metric = "l2_avg"
+    baseline = 2.431
+    candidate = 2.151
+    t = 2.19
+    mde = 0.361
+    units = 143
+    verdict = "GAIN"
+
 [[checks]]
 name = "Is the Run 3A overlay the code that trained?"
 date = 2026-10-27
@@ -263,5 +395,5 @@ source = "experiments/H04_subscore_scorer_navsim/README.md, 'Verified, and how'"
 
 [[checks]]
 name = "Regression gate on Run 3A"
-result = "not run: paddock has no wajepa_dj_run3a adapter on any ref through 3 Nov"
-source = "experiments/H04_subscore_scorer_navsim/README.md; paddock git log"
+result = "run: see H04.run3a's gate blocks. Overall HOLD on 25, 27 and 28 Oct; no pair regressed. Paddock's git log holds no wajepa_dj_run3a adapter through 5 Nov, because the gate ran from local worktrees with the adapter uncommitted."
+source = "paddock-ops gate outputs at the training site: gate-run3a, gate-oct27; the gate's own printed tables"

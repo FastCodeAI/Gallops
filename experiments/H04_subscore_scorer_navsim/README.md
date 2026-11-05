@@ -1,4 +1,18 @@
-# Run 3A and its agent decoder
+# H04 — Sub-score scorer: Run 3A and its agent decoder
+
+**Owner:** Navvrat, with Siddesh · **Priority:** 4 of 11 · **Started:** 22 Oct 2026 · **Status:** running — gated by hand,
+overall HOLD; no scorer-only arm yet, and no paddock ref carries its adapter (hypothesis)
+
+The facts are in [experiment.toml](experiment.toml), and what is off the repository is in
+[POINTERS.md](POINTERS.md). This page is the account.
+
+## Why
+
+The 4-camera base trails released Drive-JEPA on navtest, and 72 % of its failing scenes are a wrong pick with a good
+plan available. The released recipe trains the scorer on the final score alone; this asks whether training it on the
+sub-scores closes the gap.
+
+## What was done
 
 Run 3A is Run 2's planner with an agent decoder, an agent look in place of the global look, and 12 scorer heads
 trained on the sub-scores. How the code is kept, the stages of Run 2 and the data are in the
@@ -87,6 +101,30 @@ Bench2Drive (26 Oct, 50 routes, 2 Hz, the command fix, one run per route): DS
 runs). HUGSIM (419 scenarios, command only): HD-Score 40.4 against 33.8 for the
 release, paired +6.6 [+3.6, +9.7]; KITTI-360 and Waymo have no rear camera, so
 Run 3A drove those with a black rear image.
+
+## The regression gate
+
+Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Each block is copied from the
+gate's own table into [experiment.toml](experiment.toml). Run 3A with the locked pick:
+
+| Date | Benchmark | Metric | Released | Run 3A | t | Units | Verdict | Against Run 2 |
+|---|---|---|---:|---:|---:|---:|---|---|
+| 25 Oct | NAVSIM, 1,000 tokens | EPDMS | 0.875 | 0.879 | 0.55 | 136 | NEUTRAL | 0.863 → 0.879, t 1.89, NEUTRAL |
+| 25 Oct | KITScenes | ADE | 3.222 | 2.159 | 5.54 | 140 | GAIN | 1.969 → 2.159, t −1.62, NEUTRAL |
+| 25 Oct | nuScenes | L2 | 2.497 | 1.914 | 2.98 | 30 | GAIN | 1.956 → 1.914, t 0.28, NEUTRAL |
+| 25 Oct | Bench2Drive, 7 routes, 2 Hz | DS | 58.801 | 60.391 | 0.13 | 7 | NEUTRAL | 62.757 → 60.391, t −0.23, NEUTRAL |
+| 27 Oct | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.691 | 0.05 | 15 | NEUTRAL | 3.280 → 3.691, t 0.99, NEUTRAL |
+| 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.121 | 2.10 | 117 | GAIN | 1.969 → 2.159, t −1.62, NEUTRAL |
+| 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.151 | 2.19 | 143 | GAIN | 2.057 → 2.151, t −1.06, NEUTRAL |
+
+AlpaSim, 10 scenes: scene score 0.416 → 0.439, t 0.11; the gate says CONFIG DIFFERS, because our driver profile is not
+the baseline's. Against Run 2: 0.450 → 0.439, t −0.08, NEUTRAL. Overall **HOLD** each time: nothing regressed, and no
+closed-loop benchmark gained.
+
+## Decision
+
+Not decided. The gate says HOLD, and no scorer-only arm is recorded, so the record stays `running` until the team
+takes it.
 
 ## Verified, and how
 
