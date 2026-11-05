@@ -7,164 +7,97 @@
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.11%2B-3776AB.svg?logo=python&logoColor=white" alt="Python 3.11+"></a>
-  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
   <a href="#quickstart"><img src="https://img.shields.io/badge/gate-make_check_(no_CI_yet)-555555.svg" alt="Gate: make check, no CI yet"></a>
-  <a href="#training-so-far"><img src="https://img.shields.io/badge/training_so_far-6_efforts-2E8B4E.svg" alt="Training so far: 6 efforts"></a>
-  <a href="docs/reviewing.md"><img src="https://img.shields.io/badge/reviews-severity_scale-B4560A.svg" alt="Review standard"></a>
+<!-- experiments:badges -->
+  <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-7_open_or_tested-1F6FEB.svg" alt="hypotheses: 7 open or tested"></a>
+  <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-2-B4560A.svg" alt="gated checkpoints: 2"></a>
+  <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
+<!-- /experiments:badges -->
 </p>
 
-Gallops takes a driving model, trains it, and writes a checkpoint that paddock
-scores on the same benchmarks, with the same machinery, that scored four vendor
-models first. So far every run has started from the released Drive-JEPA and
-retrained part of it. Our own model, gallops-v0, is designed
-([docs/architecture.md](docs/architecture.md)) but not built yet.
+We are building a JEPA-based driving model, and this repo is its evidence: every
+experiment, who ran it, and what it showed. Click an ID for that experiment's card,
+with its data, code, checkpoint sha256, results and gate verdicts.
 
-Every checkpoint written here says what it is: which model, at what step, from
-which commit, trained on which scenes. That record is how a number on paddock's
-leaderboard traces back to the training that produced it, and most of the rules
-in this repo exist to keep it true.
+![Gap closing leads to an agreed base. Hypotheses of one change each are then judged by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
 
-The two repos meet at a directory on disk:
+## Where we are
 
-```
-{weights}/<model>/<train_run>/step_<n>/
-    checkpoint.json      <- the entire contract
-    model.safetensors
-```
+<!-- experiments:status -->
+- **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA.
+- **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
+- **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
+- **In progress:** 6 hypotheses, 5 enablers. Next by priority: [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
+<!-- /experiments:status -->
 
-Gallops writes it. Paddock reads it, scores the model, and puts the result in
-the same table as every other model. That separation is the point; see
-[why](#why-two-repos).
+<a id="training-so-far"></a>
 
-| Where | What |
-|---|---|
-| [src/gallops/train/](src/gallops/train/) | the trainers: the KITScenes re-ranker, the swerve finetune, the scorer on cached features, and the preflight and safety checks they must pass |
-| [src/gallops/expert/](src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by |
-| [src/gallops/data/](src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
-| [src/gallops/drivejepa_b2d/](src/gallops/drivejepa_b2d/), [recipes/](recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
-| [experiments/drivejepa_retrain/](experiments/drivejepa_retrain/) | the Physical AI AV retrain, as the scripts that ran |
-| [checkpoint.py](src/gallops/checkpoint.py), [config.py](src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
+## Gap-closing experiments
 
-The names: a paddock is the enclosure where a horse is paraded and judged
-before a race. The gallops is the training ground where it is made fast.
+Each of us took some benchmarks and tried to close released Drive-JEPA's gap on them.
 
----
-
-## Status
-
-**gallops-v0, our own model, is not built yet.** Every training run so far has
-started from the released Drive-JEPA checkpoint and retrained part of it, or
-trained something small on top of it. [Training so far](#training-so-far) lists
-all eight efforts. The loop is proven end to end: `gallops train-rerank` writes a
-checkpoint with its sidecar, and paddock's `drivejepa_rerank` adapter loads it
-and scores it like any other model.
-
-Read [docs/STRATEGY.md](docs/STRATEGY.md) first. It carries what paddock's
-results already established about what to build, and what this machine can and
-cannot actually do today.
-
-## Training so far
-
-Status at 2026-10-15. Everything below starts from the released Drive-JEPA
-checkpoint, with its image encoder frozen. Each row's doc has the full account;
-the numbers here are copied from it, never re-derived.
-
-| What was trained | Retrained on top of the release | Trained on | Headline | How far it holds | Doc |
+<!-- experiments:gap-closing -->
+| ID | Experiment | Owner | Headline result | Strength | Outcome |
 |---|---|---|---|---|---|
-| **Re-ranker** (`drivejepa_rerank`) | nothing: a new small MLP chooses among the frozen model's 32 candidates | KITScenes `train`: 318 scenes, plus 55 to choose the epoch | KITScenes ADE@3s **0.973 m**, against **2.521** for the model's own pick (223 samples) | **Strong, open loop:** paired t −8.0. **Worse in closed loop:** 1.85 against 3.01 on 9 neuroNCAP episodes | [STRATEGY.md](docs/STRATEGY.md#first-target--taken-drive-jepas-selection-not-its-head), paddock's `docs/models/drivejepa_rerank.md` |
-| **Bench2Drive Split-v4** | the scorer head (1.32 M parameters) | Bench2Drive base set, 150 clips held out | **DS 68.1** on 50 routes | **Selection on the test routes**, one run per route; paddock cannot score it yet | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
-| **Bench2Drive Final** | the proposal generator, the split head, the area head | as Split-v4, plus MTD-H teacher paths | **DS 73.6** on 50 routes | as Split-v4. Its three training stages have not been rerun from this repo | [drivejepa_b2d.md](docs/drivejepa_b2d.md) |
-| **Physical AI AV retrain** | run 1: generator and scorer; run 2, shipped: generator only | NVIDIA Physical AI AV `train`: 126,981 samples from 4,015 clips | AlpaSim mean `scene_score` **0.5433 → 0.7697** on 30 scenes | **One drive per scene.** 3 at-fault collisions, 2 of them new | [drivejepa-retrain.md](docs/drivejepa-retrain.md) |
-| **Swerve finetune**, 11 runs | the refiner, the scorer, or both | 5 reconstructed nuScenes train scenes with inserted hazards: 9,495 + 5,426 + 9,263 labelled ticks | 0103: v4 **4.53** against **4.05** released. Full neuroNCAP set, s1: **3.671** against **3.568** | **Camera-blind.** 0103 is what chose v4, and its gain is one episode; s1's is +0.10 with SE 0.08. No evasion learned | [swerve-finetune.md](docs/swerve-finetune.md) |
-| **Scorer on cached features** | the scorer, with sub-score heads | the same rendered episodes, from a feature cache (21,934 ticks × 64 plans) | Held-out collision ranking AUC **0.66–0.83**, against 0.50–0.59 released | **Camera-blind, open loop only.** Breaks on real nuScenes logs. Its one closed-loop gain was a drift, not an avoidance | [scorer-cache.md](docs/scorer-cache.md) |
-| **Sub-score scorer, seeing** | as above, on features that include the camera, over 32 inserted swerve paths | the 5 scenes re-collected with the seeing model, plus cache v4: 23,777 ticks | 0103 frontal **5.00** (0/3 hit) against **2.36** released | **Parked.** It swerves in every scenario from 0.5 s and flips side up to 16 times an episode | [brake-swerve-expert.md](docs/brake-swerve-expert.md#1-sub-score-scorer-with-inserted-swerves-parked) |
-| **Expert v6 imitation**, rounds 1A, 1B and 2 | the refiner and the scorer | 5 scenes relabelled by expert v6 (8,402 ticks), 150 episodes the expert drove (9,234), real nuScenes | 0103 frontal **4.21** (1/3 hit) against **2.36**; side **0.00** against 1.67. nuScenes L2 **1.186** against 2.380 | **Learned on the training scenes, not transferred.** On new seeds of those scenes 10/20 frontal runs clear, against 4/50 released; on 0103 (3 runs a shape) the gain is gone after one short DAgger round. The scorer does not carry over to a held-out scene | [brake-swerve-expert.md](docs/brake-swerve-expert.md) |
+| [**GC01**](experiments/GC01_rerank_kitscenes/CARD.md) | KITScenes re-ranker | Naren | KITScenes ADE@3s (m) 2.521 → **0.973** (n=223 samples) | ●●●○ strong · adapted, open-loop | ◐ mixed |
+| [**GC02**](experiments/GC02_selection_without_training/CARD.md) | Selection without training | Naren, Siddesh | AlpaSim scene_score 0.4209 → **0.5433** (n=30 scenes) | ●●○○ moderate | ◐ mixed |
+| [**GC03**](experiments/GC03_swerve_finetune/CARD.md) | Swerve finetune, 11 runs | Naren | neuroNCAP ncap_score 3.568 → **3.671** (n=20 scenario pairs) | ○○○○ unverified · blind | ⏸ parked (inconclusive) |
+| [**GC04**](experiments/GC04_bench2drive/CARD.md) | Bench2Drive retrain (Split-v4, Final) | Navvrat | Bench2Drive mean driving score 57.60 → **73.6** (n=50 routes) | ●●○○ moderate · adapted, selected-on-report, no-record | ✅ positive |
+| [**GC05**](experiments/GC05_physicalai_retrain/CARD.md) | Physical AI AV retrain | Siddesh | AlpaSim scene_score 0.5433 → **0.7697** (n=30 scenes) | ●●○○ moderate · adapted | ✅ positive |
+| [**GC06**](experiments/GC06_scorer_cache/CARD.md) | Scorer on cached features | Naren | offline held-out collision ranking AUC, worst of 5 folds 0.59 → **0.660** (n=5 scenes) | ●●○○ moderate · blind, open-loop | ⏸ parked (inconclusive) |
+| [**GC07**](experiments/GC07_subscore_scorer/CARD.md) | Sub-score scorer, seeing | Naren | neuroNCAP ncap_score, frontal 2.36 → **5.00** (n=3 runs) | ●●○○ moderate · smoke, adapted, no-record | ⏸ parked (mixed) |
+| [**GC08**](experiments/GC08_expert_v6_imitation/CARD.md) | Expert v6 imitation | Naren | neuroNCAP ncap_score, mean of 3 shapes 3.01 → **2.31** (n=9 runs) | ●●○○ moderate · smoke, adapted, no-record | ❌ negative |
+<!-- /experiments:gap-closing -->
 
-How to read it:
+## Hypothesis experiments
 
-- **Nothing here is yet a closed-loop safety gain** shown on a split nothing was
-  chosen on. The strongest result is the re-ranker's open-loop gain on KITScenes,
-  and the same weights do worse on neuroNCAP.
-- **Every swerve and scorer-cache run was camera-blind.** Paddock and the
-  trainer both placed the cameras relative to nuScenes' LIDAR_TOP, so no image
-  reached the model; a black frame gave the same plan. Those numbers are what
-  the runs measured, but they say nothing about learning to *see* a hazard. The
-  trainer is fixed and its preflight now refuses a model that a blanked camera
-  does not move. Paddock's half is #62, merged.
-- **The swerve runs also trained at batch 8, and scorer cache v1 was built at
-  batch 4.** The vendor model mixes ticks within a batch, which did not matter
-  while it was blind but would from the first run that sees. Every forward pass
-  is now one tick, so any rerun trains differently (see swerve-finetune.md).
-- **Several shipped sidecars are known to be wrong about their own run,** and
-  were left as written rather than hand-edited. Each doc lists them.
-- **Bench2Drive and AlpaSim runs are one run per route or scene,** so a
-  difference of a few points is not a result on its own.
+One structural change each, on the agreed base, decided by paddock's regression gate.
+
+<!-- experiments:hypotheses -->
+| ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |
+|---|---|---|---|---|---|---|
+| [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera base (WA-JEPA + DJ planner) | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | ⏳ running | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren | 📝 planned | — | — | — |
+| [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | ⏳ running | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |
+| [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | ⏳ running | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
+| [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
+| [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
+<!-- /experiments:hypotheses -->
+
+**Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.
+**Nothing here is yet a closed-loop safety gain on a split nothing was chosen on,**
+and `blind` results predate the 12 Oct camera fix.
+[How to read these results](experiments/README.md#how-to-read-the-results).
+
+Enablers, the gate log and the decision log are in
+[experiments/README.md](experiments/README.md). These tables are generated from each
+experiment's `experiment.toml`, and `make check` fails if they drift.
 
 ## Quickstart
 
 ```bash
-make setup                                  # .venv + install (no torch)
-source .venv/bin/activate
-
-cp gallops.toml.example gallops.toml
-$EDITOR gallops.toml                        # point at YOUR weights, runs and data
-
+make setup && source .venv/bin/activate     # .venv + install (no torch)
+cp gallops.toml.example gallops.toml        # then point it at YOUR weights, runs and data
 gallops config                              # what this machine resolved
 gallops show <checkpoint dir>               # what a checkpoint claims about itself
-gallops train-rerank <dataset.npz> --train-run <name>   # see gallops/train/rerank.py
-python -m gallops.data.rerank keyframes|dataset ...     # its training data; see gallops/data/rerank.py
 ```
 
-Point `[roots.weights]` at **the same directory as paddock's
-`[roots.weights]`**. That is the whole mechanism by which paddock finds a model
-this repo trained.
+Point `[roots.weights]` at the same directory as paddock's. Add the training stack with
+`uv pip install --python .venv/bin/python -e ".[train]"`.
 
-The training stack is a separate extra, so a machine with no GPU can still run
-the gate:
+## Find your way
 
-```bash
-uv pip install --python .venv/bin/python -e ".[train]"
-```
-
-## Why two repos
-
-Four reasons, in increasing order of importance:
-
-1. **Engineering.** Paddock's dependency list is six packages and its `make
-   check` runs in a clean environment with no GPU. Putting torch in there makes
-   its gate heavy and breaks the invariant that paddock never imports a model.
-2. **Data isolation.** The strategy is to attract OEMs who bring their own data.
-   That data arrives under terms that do not permit it to sit beside a repo we
-   publish results from. The separation has to exist before the first
-   conversation, not after.
-3. **Our own numbers stay trustworthy to us.** Paddock's claim is that an ADE
-   and an NCAP score are "statements about the same model, run the same way".
-   The moment our model gets a privilege the vendors' do not have — in-process
-   access, a special data path, a shortcut past the HTTP node — we lose the
-   ability to tell whether we are actually gaining on them.
-4. **Paddock's credibility is the commercial asset.** A leaderboard maintained
-   by the party that also trains the winning entry is marketing. A leaderboard
-   where our model is one adapter among six, scored by machinery that predates
-   it and scored four competitors first, is evidence. **Keeping the scorer
-   separate from the trainee is what makes the numbers persuasive to somebody
-   who does not work here.**
-
-## Documentation
-
-| Doc | Read it when |
+| Looking for | Go to |
 |---|---|
-| [docs/STRATEGY.md](docs/STRATEGY.md) | **start here** — why this exists, what the evidence says, what to build |
-| [docs/architecture.md](docs/architecture.md) | designing or changing the model — what gallops-v0 is, and which choices are measured |
-| [docs/checkpoints.md](docs/checkpoints.md) | writing or reading a checkpoint; the paddock contract |
-| [docs/conventions.md](docs/conventions.md) | before training anything — frames, splits, what counts as a result |
-| [docs/data.md](docs/data.md) | what data exists, what does not, and what must be fetched |
-| [docs/reviewing.md](docs/reviewing.md) | reviewing a PR — what gets checked, and the 🔴 / 🟠 / 🟡 scale |
-| [docs/swerve-finetune.md](docs/swerve-finetune.md) | the first training experiment end to end — results, and the defects the measurements exposed |
-| [docs/scorer-cache.md](docs/scorer-cache.md) | training Drive-JEPA's scorer on cached features — what it measured, and why it is camera-blind |
-| [docs/brake-swerve-expert.md](docs/brake-swerve-expert.md) | the first training with the camera working — the parked sub-score scorer, expert v6 and its gates, rounds 1A, 1B and 2, and why 5 scenes are not enough |
-| [docs/drivejepa-retrain.md](docs/drivejepa-retrain.md) | the Drive-JEPA retrain on Physical AI AV — what was trained, on what, and what it measured |
-| [docs/drivejepa_b2d.md](docs/drivejepa_b2d.md) | the Drive-JEPA Bench2Drive recipe — lineage, what it reads, what was verified |
-
-## Licence
+| Every experiment, gate verdict and decision | [experiments/README.md](experiments/README.md) |
+| How to run and record an experiment | [docs/experiments.md](docs/experiments.md) |
+| Why this exists, what to build, how the repo is laid out | [docs/STRATEGY.md](docs/STRATEGY.md) |
+| What gallops-v0 is | [docs/architecture.md](docs/architecture.md) |
+| Writing or reading a checkpoint | [docs/checkpoints.md](docs/checkpoints.md) |
+| Frames, splits, what counts as a result | [docs/conventions.md](docs/conventions.md) |
+| What data exists | [docs/data.md](docs/data.md) |
+| Reviewing a PR | [docs/reviewing.md](docs/reviewing.md) |
 
 Apache-2.0, matching paddock.

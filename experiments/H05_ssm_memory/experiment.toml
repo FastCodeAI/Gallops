@@ -1,0 +1,29 @@
+# H05 -- a state-space memory layer makes plans steadier and reactions earlier. Owner Naren.
+# Source: "Renesas Progress and Plan", 22 Oct 2026 (Next steps item 5, and "Naren · hypothesis to test"
+# with steps 0-4). No run has started: nothing in gallops or paddock touches it as of 3 Nov 2026.
+
+schema = 1
+id = "H05"
+title = "A state-space memory layer makes plans steadier and reactions earlier"
+short = "State-space memory"
+track = "hypothesis"
+owner = "Naren"
+benchmarks = ["navsim", "neuroncap", "bench2drive", "alpasim"]
+started = 2026-10-21
+status = "planned"
+verdict = "none"
+priority = 5
+question = """Does a planner that carries a running state across ticks drive better than one that sees \
+only the last 0.5 s? Extended comfort is the base's biggest NAVSIM gap (−0.077); neuroNCAP's side \
+crashes are runs that never brake although the car was in view for 2 s or more; Bench2Drive stalls \
+after a first stop."""
+hypothesis = """Drive-JEPA sees two frames 0.5 s apart and the current ego status; nothing survives \
+from one tick to the next. A state-space layer (Mamba-style: a learned recurrence with a fixed-size \
+state, linear in sequence length) between the frozen encoder and the planner can carry the scene \
+forward: how the crossing car has been moving, a brake already begun, an actor that has left the view. \
+Expected: earlier, steadier reactions in closed loop and better NAVSIM extended comfort, with no \
+open-loop loss (no size is given). Refuted at step 0 if a probe on the last k ticks stops improving at \
+k = 2 (little for memory to add: the layer is not built); at step 2 unless the arm with state carried \
+across ticks beats the same layer reset every tick (else the gain is capacity, not memory); at step 3 \
+unless it beats that control in closed loop, nothing regresses, and reactions come no later."""
+narrative = "experiments/H05_ssm_memory/README.md"

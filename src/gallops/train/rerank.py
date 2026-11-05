@@ -49,7 +49,8 @@ import numpy as np
 from gallops.checkpoint import Checkpoint, TrainedOn, staged, write
 from gallops.config import SiteConfig
 
-#: Must equal paddock's `adapters/models/drivejepa_rerank/ranker.py::FORMAT`.
+#: Must equal `FORMAT` in the adapter's `ranker.py`, copied in
+#: experiments/GC01_rerank_kitscenes/paddock/ (paddock's until paddock #121).
 #: A contract string, not an import: neither repo imports the other.
 FORMAT = "paddock-listwise-mlp/1"
 

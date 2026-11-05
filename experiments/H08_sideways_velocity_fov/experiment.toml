@@ -1,0 +1,54 @@
+# H08 -- real sideways velocity and a matched camera field of view are free gains. Owner Naren.
+# Sources: "Renesas Progress and Plan", 22 Oct 2026 (Next steps item 8; the Gate row of the 19 Oct
+# status), paddock PR #106 and Drive-JEPA's model.yaml on main, paddock docs/models/drivejepa.md and
+# docs/benchmarks/navsim.md.
+
+schema = 1
+id = "H08"
+title = "Real sideways velocity and a matched camera field of view are free gains"
+short = "Sideways velocity and camera FOV"
+track = "hypothesis"
+owner = "Naren"
+benchmarks = ["kitscenes", "navsim", "nuscenes", "neuroncap", "bench2drive", "alpasim"]
+started = 2026-10-21
+status = "running"
+verdict = "none"
+priority = 8
+question = """Drive-JEPA trained with inputs paddock does not give it: the car's sideways velocity, and \
+the camera field of view it was trained on. The switches are already built. Is each a free gain, about \
+1 h per arm through the gate? It decides whether to keep the inputs."""
+hypothesis = """Claim: giving Drive-JEPA the real sideways velocity, and cameras matched to the field of \
+view it trained on, improves it at no cost. Expected: each arm, through the regression gate, gains or \
+holds on every benchmark (the page gives no size). Refuted for an input whose arm regresses on any \
+benchmark: it is not free, and it is not kept."""
+predictions = "none: the camera arm was adopted in paddock PR #106 on a KITScenes comparison, and no prediction was written before it"
+learned = """So far, the camera half only: cropping every camera onto the OpenScene camera the checkpoint \
+was trained on took KITScenes ADE from 3.222 m to 2.521 m (t −4.0, 223 keyframes), and paddock made the \
+crop Drive-JEPA's default on every benchmark (#106, 23 Oct). No gate verdict for it is recorded. The \
+sideways-velocity arm has not run: paddock still sends Drive-JEPA a sideways speed of 0."""
+narrative = "experiments/H08_sideways_velocity_fov/README.md"
+external = [
+  "Camera arm: paddock PR #106 (f737ae5) and the DRIVEJEPA_IMAGE_GEOMETRY comment in src/paddock/adapters/models/drivejepa/model.yaml on main.",
+  "A gate smoke of #106's branch (crop and 2 Hz replanning together) left a state dir {runs}/gate/smoke/drivejepa-pr106-crop-rate-20261022/ under paddock's runs root with no verdict written down; its Bench2Drive lane exited 1.",
+]
+
+[[runs]]
+id = "H08.crop"
+label = "matched field of view: every camera cropped onto the OpenScene camera (64 degrees) Drive-JEPA trained on; paddock #106, merged 23 Oct"
+notes = "Paddock-side input change on the released weights; no training. Now the model's own setting, so every benchmark and every gate run gets it; a site that sets 'native' is the override and its runs are not valid."
+
+  [[runs.results]]
+  bench = "kitscenes"
+  metric = "ADE (m), cropped"
+  baseline = "released, uncropped (native geometry)"
+  baseline_value = "3.222"
+  value = "2.521"
+  t = "-4.0"
+  n = 223
+  unit = "keyframe"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  headline = true
+  note = "uncropped, KITScenes' 87-degree camera reached the model squeezed: objects 0.65x as wide and 0.55x as tall as in training"
+  source = "paddock PR #106 (f737ae5); src/paddock/adapters/models/drivejepa/model.yaml (DRIVEJEPA_IMAGE_GEOMETRY)"

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import pickle
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -35,10 +37,11 @@ def golden_input():
     return proposals, logits, 4.2
 
 
-#: travel_1s .. total_turning for `golden_input()`, as paddock's own
-#: `ranker.candidate_features` computes them. Paddock's
-#: `test_features_match_gallops` holds the same numbers: if either side's
-#: definition moves, that side's test fails.
+#: travel_1s .. total_turning for `golden_input()`, as the adapter's
+#: `ranker.candidate_features` computes them. Paddock removed the adapter in
+#: #121, so its own `test_features_match_gallops` runs nowhere now;
+#: `test_features_match_the_recorded_adapter` below holds the two definitions
+#: equal from this side.
 GOLDEN = np.array(
     [
         [4.0, 8.0, 12.0, 0.0, 0.0, 0.0, 2.0, 2.0, 2.0, 0.0, 0.0],
@@ -79,6 +82,35 @@ def test_features_match_paddock():
     np.testing.assert_array_equal(features[:, :6], logits)
     np.testing.assert_allclose(features[:, 6:17], GOLDEN, rtol=0, atol=1e-9)
     np.testing.assert_array_equal(features[:, 17], speed)
+
+
+#: The adapter that ran these weights in paddock, kept as a record since paddock
+#: #121. It imports only numpy, so it loads here without paddock.
+RECORDED_RANKER = (
+    Path(__file__).resolve().parents[1]
+    / "experiments/GC01_rerank_kitscenes/paddock/src/paddock/adapters/models/drivejepa_rerank/ranker.py"
+)
+
+
+def test_features_match_the_recorded_adapter():
+    """The transcription and the adapter it copies agree: format, names and values.
+
+    Weights trained on a different feature definition would pass the adapter's
+    name check and its probe, and then rank candidates on the wrong inputs.
+    """
+    spec = importlib.util.spec_from_file_location("recorded_ranker", RECORDED_RANKER)
+    assert spec is not None and spec.loader is not None
+    ranker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ranker)
+    assert ranker.FORMAT == rerank.FORMAT
+    assert tuple(ranker.FEATURE_NAMES) == data.FEATURE_NAMES
+    proposals, logits, speed = golden_input()
+    np.testing.assert_allclose(
+        data.candidate_features(proposals, logits, speed),
+        ranker.candidate_features(proposals, logits, speed),
+        rtol=0,
+        atol=1e-12,
+    )
 
 
 def test_keyframes_follow_the_devkit_rule():

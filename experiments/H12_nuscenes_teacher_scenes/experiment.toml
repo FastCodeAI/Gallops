@@ -1,0 +1,51 @@
+# H12 -- picking the nuScenes train scenes the privileged teacher collects data from (Ruhan). An enabler,
+# adjacent to the 21 Oct list, so it carries no priority.
+# Sources: branch ruhan/nuscenes-teacher-scenes (docs/data.md's new section, src/gallops/data/teacher_scenes.py,
+# teacher_actor_annotate.py, tests/test_teacher_scenes.py, and its two commit messages); paddock's branch
+# ruhan/alpamayo-teacher-scenes (9a3a2d4), where the selector started.
+
+schema = 1
+id = "H12"
+title = "nuScenes teacher-scene selection for the privileged teacher's data collection"
+short = "nuScenes teacher-scene selector"
+track = "enabler"
+owner = "Ruhan"
+benchmarks = ["neuroncap"]
+started = 2026-10-14
+status = "running"
+verdict = "none"
+question = """Which nuScenes train scenes should be reconstructed with NeuRAD for the privileged closed-loop \
+teacher's training data, without touching paddock's 14-scene neuroNCAP eval set or the scenes already \
+reconstructed for the swerve finetune?"""
+learned = """A selector that scores every eligible nuScenes train scene and picks 12 training scenes by \
+turn / curve / straight quota plus 3 disjoint validation scenes, with paddock's own 3 s, 2.0 m command rule; \
+an annotator draws the 'good actor' boxes on each pick's front video for human review. Ported from paddock \
+PR #75 with its horizon-truncation bug fixed; no selection is recorded on the branch yet."""
+narrative = "docs/data.md"
+branch = "ruhan/nuscenes-teacher-scenes"
+external = [
+  "The original selector and annotator: paddock branch ruhan/alpamayo-teacher-scenes (9a3a2d4, 14 Oct; paddock PR #75), not on paddock main.",
+]
+
+[[runs]]
+id = "H12.r1"
+label = "the selector and annotator as ported into gallops (19 Oct); tests only, no selection recorded"
+started = 2026-10-19
+ended = 2026-10-19
+start_from = "paddock ruhan/alpamayo-teacher-scenes 9a3a2d4 (select_scenes.py, annotate_actors.py)"
+notes = "Not a training run: it records the code the branch adds. Exclusions come from gallops.data.nuscenes_real (neuroncap_scenes(), which imports paddock's OFFICIAL_SET, and RECONSTRUCTED), not a restated list. Quotas: train turn_left 2, turn_right 2, curved_road 4, straight 4; val turn_left 1, curved_road 1, straight 1. Runs in an env with nuscenes-devkit, outside make setup."
+
+  [runs.code]
+  modules = ["gallops.data.teacher_scenes", "gallops.data.teacher_actor_annotate"]
+
+  [[runs.data]]
+  dataset = "nuscenes"
+  split = "v1.0-trainval, train scenes not in neuroNCAP's set or already reconstructed"
+  role = "train"
+  note = "the pool the selector scores; what it picked is not recorded on the branch"
+
+[[checks]]
+name = "Horizon-truncation fix and its regression test"
+date = 2026-10-19
+result = "the original shrank the 3 s lookahead for every scene's last ~6 samples, biasing them toward 'straight'; tail samples are now excluded from every category, as paddock's nuScenes harness drops them. tests/test_teacher_scenes.py guards it; make check passed (232 passed, 4 skipped), per the commit message"
+source = "commit 1d9f43d on ruhan/nuscenes-teacher-scenes; docs/data.md"

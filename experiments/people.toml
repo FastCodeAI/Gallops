@@ -1,0 +1,27 @@
+# Who can own an experiment. The key is the name the README shows; `git` lists the author names their
+# commits carry (in gallops and paddock), so a record can be matched to its commits.
+
+[people.Naren]
+name = "Narendiran"
+git = ["Narendiran", "Narendiran CG", "Narendiran Chembu"]
+focus = "crash avoidance on KITScenes, nuScenes and neuroNCAP; the regression gate"
+
+[people.Navvrat]
+name = "Navvrat Rao"
+git = ["Navvrat Rao"]
+focus = "Bench2Drive and NAVSIM; the 4-camera base"
+
+[people.Siddesh]
+name = "Siddesh Choudhary"
+git = ["Siddesh Choudhary", "siddesh-fastcode"]
+focus = "AlpaSim and KITScenes; the domain gap"
+
+[people.Shreedhar]
+name = "Shreedhar Kodate"
+git = ["Shreedhar Kodate", "ssk-rea"]
+focus = "auxiliary training heads"
+
+[people.Ruhan]
+name = "Ruhan Gianchandani"
+git = ["rgianchandani-renesas"]
+focus = "teacher data for neuroNCAP and nuScenes"
