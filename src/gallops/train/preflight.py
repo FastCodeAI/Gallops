@@ -304,12 +304,21 @@ def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
     4,347 of round 0's 9,495 targets were not, by `undrivable` (the 934 stops that
     slid 2 m sideways among them), and nothing noticed. Checking all of them costs a
     fraction of a second; a 48-tick sample misses a 1% regression 62% of the time.
+
+    A logged human path is not a drawn target: a car did drive it, and relabelling cannot
+    change it, so it is counted apart. 542 of labelled_nusc's 18,015 fail `undrivable` (a
+    3.8 m radius at real-0020/run_0), which is the limit's reach, not the driver's error.
+    `human_checks` is what stops a drawn target claiming this.
     """
     from gallops.expert.draw import undrivable
 
     usable = [t for t in ticks if t.get("usable_for_imitation", True)]
+    logged = [t for t in usable if t.get("expert_kind") == HUMAN]
+    usable = [t for t in usable if t.get("expert_kind") != HUMAN]
     bad = [t for t in usable if undrivable(np.asarray(t["expert"]))]
     report = {"undrivable": f"{len(bad)}/{len(usable)}"}
+    if logged:
+        report["logged"] = len(logged)
     if not bad:
         return report, []
     first = bad[0]
@@ -318,6 +327,31 @@ def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
         f"({undrivable(np.asarray(first['expert']))}, {first['episode']} @ {first['timestamp']}): "
         "relabel with the current expert"
     ]
+
+
+def human_checks(ticks: list[dict], sources) -> list[str]:
+    """A `human` source holds logged driving and nothing else, and no other source holds any.
+
+    Saying `human` skips grading and fidelity, and `drivable_checks` exempts the tick, so the
+    claim has to be checked: a rendered round passed as `human` was otherwise never graded,
+    never fidelity-checked, and raised nothing.
+    """
+    problems = []
+    for i, source in enumerate(sources):
+        kinds = Counter(t.get("expert_kind", "?") for t in ticks if t.get("source", 0) == i)
+        if source.drove == HUMAN:
+            drawn = {k: n for k, n in sorted(kinds.items()) if k != HUMAN}
+            if drawn:
+                problems.append(
+                    f"sources: {source.labelled} says a human drove it, but it holds drawn targets "
+                    f"{drawn}; only logged driving skips the grading and fidelity checks"
+                )
+        elif kinds.get(HUMAN):
+            problems.append(
+                f"sources: {source.labelled} holds {kinds[HUMAN]} ticks marked {HUMAN!r} but says "
+                f"{source.drove!r} drove it; name it `{HUMAN}`, or relabel it"
+            )
+    return problems
 
 
 def fidelity_check(
@@ -536,6 +570,7 @@ def run(
     problems = []
     report["code"], found = code_checks(repo)
     problems += found
+    problems += human_checks(train, sources)
     groups = [
         [t for t in train if t.get("source", 0) == i]
         for i in range(len(sources))

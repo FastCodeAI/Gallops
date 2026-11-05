@@ -141,6 +141,11 @@ candidate dumps the labels were made from), or one `--source LABELLED DUMPS DROV
 per data set when training on several (DAgger rounds, GT-shadow); the report lands
 in the checkpoint sidecar beside `sources`. Fidelity runs only on sources the
 starting weights drove (`DROVE` = `start`), and a run with none is refused.
+`DROVE` = `init` is a round the `--init` weights drove: the same check runs once
+they have loaded. `DROVE` = `human` is logged driving, with no dumps and no
+candidates, so grading, fidelity and the drawn-target limits do not apply; the
+claim is checked, and a source says `human` only if every tick is `expert_kind =
+human`, while no other source may hold such a tick.
 
 **Any new code that grades, labels or builds inputs gets a check here**, in the
 form "what the trainer computes equals what was recorded". Testing the parts
