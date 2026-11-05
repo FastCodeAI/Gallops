@@ -38,6 +38,36 @@ def test_the_readme_is_what_the_registry_renders(registry) -> None:
     assert stale == [], f"{stale} out of date: run `gallops experiments render --write`"
 
 
+def _front_page_problems(text: str) -> list[str]:
+    """What keeps a README from being a front page, read from the prose around its rendered blocks.
+
+    The tables grow a row per experiment and IDs are never retired, so a cap on the whole page would
+    one day fail a PR that only registers a hypothesis. The prose is what can bloat, and can move.
+    """
+    for name in exps.README_BLOCKS:
+        start, end = exps.markers(name)
+        text = text[: text.index(start)] + text[text.index(end) + len(end) :]
+    lines, size = len(text.splitlines()), len(text.encode())
+    if lines <= PROSE_LINES and size <= PROSE_BYTES:
+        return []
+    return [
+        f"README prose is {lines} lines and {size} bytes (limit {PROSE_LINES} and {PROSE_BYTES}): "
+        "move the detail to a card, experiments/README.md or docs/"
+    ]
+
+
+def test_the_readme_stays_a_front_page() -> None:
+    """One row per experiment and links out. Detail goes on cards and in experiments/README.md."""
+    assert _front_page_problems((REPO_ROOT / "README.md").read_text()) == []
+
+
+def test_the_front_page_cap_counts_prose_and_not_experiments() -> None:
+    readme = (REPO_ROOT / "README.md").read_text()
+    _, end = exps.markers("hypotheses")
+    assert _front_page_problems(readme.replace(end, "| a row |\n" * 200 + end)) == []
+    assert "move the detail" in _front_page_problems(readme + "prose\n" * 200)[0]
+
+
 def test_paddocks_link_into_this_readme_still_lands() -> None:
     """Paddock's README links Gallops#training-so-far for its trained Drive-JEPA rows (paddock 9a51c15)."""
     assert '<a id="training-so-far"></a>' in (REPO_ROOT / "README.md").read_text()
@@ -88,6 +118,8 @@ def test_the_template_fills_into_a_valid_record(tmp_path) -> None:
 
 # ---------------------------------------------------------------- a small repository to break
 
+#: The prose around the README's rendered blocks, which stood at 72 lines and 3.1 KB when this cap was set.
+PROSE_LINES, PROSE_BYTES = 90, 6 * 1024
 SHA = "a" * 64
 
 RECORD = f"""\
@@ -184,7 +216,12 @@ def _repo(tmp_path: Path, record: str | None = RECORD, decisions: str = DECISION
 def test_the_small_repository_is_valid_and_renders(tmp_path) -> None:
     reg = exps.Registry.load(_repo(tmp_path))
     assert reg.errors == []
-    assert exps.write(reg) == ["README.md", "experiments/README.md", "experiments/H01_thing/CARD.md"]
+    assert exps.write(reg) == [
+        "README.md",
+        "experiments/README.md",
+        "docs/assets/experiments.svg",
+        "experiments/H01_thing/CARD.md",
+    ]
     assert exps.stale(exps.Registry.load(reg.root)) == []
     readme = (reg.root / "README.md").read_text()
     # the README links each ID to its card, and keeps one row per experiment
@@ -273,6 +310,37 @@ def test_a_hand_edited_readme_is_caught(tmp_path) -> None:
     readme = reg.root / "README.md"
     readme.write_text(readme.read_text().replace("**0.885**", "**0.950**"))
     assert exps.stale(exps.Registry.load(reg.root)) == ["README.md"]
+
+
+def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    exps.write(reg)
+    picture = reg.root / "docs" / "assets" / "experiments.svg"
+    svg = picture.read_text()
+    assert "1 hypothesis, one change each" in svg and "1 gated so far" in svg and "none yet" in svg
+    picture.write_text(svg.replace("1 gated so far", "9 gated so far"))
+    assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
+
+
+def test_a_baseline_the_picture_cannot_hold_is_refused(tmp_path) -> None:
+    """The box took two lines and dropped the rest, so it named a different model and nothing failed."""
+    long = "Base: the 4-camera stack with state-space memory and the sub-score scorer"
+    decisions = DECISIONS.replace(
+        'short = "try the thing"\n', f'short = "{long}"\nbaseline = "the 4-camera stack"\n'
+    )
+    errors = exps.Registry.load(_repo(tmp_path, decisions=decisions)).errors
+    assert any("baseline's `short`" in e for e in errors)
+
+
+def test_a_count_of_one_is_singular(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    reg.experiments[0].data["status"] = "running"
+    assert "**In progress:** 1 hypothesis, 0 enablers." in exps.render_status(reg)
+
+
+def test_each_decision_leads_with_its_short_name(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    assert "| **try the thing.** Try the thing. |" in exps.render_decisions(reg)
 
 
 def test_a_hand_edited_or_missing_card_is_caught(tmp_path) -> None:

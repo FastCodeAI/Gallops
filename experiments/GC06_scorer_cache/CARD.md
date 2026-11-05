@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#gap-closing-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [GC03](../GC03_swerve_finetune/CARD.md) · **Evidence for:** D06, D07, D09 ([decision log](../../README.md#decision-log))
+**Builds on:** [GC03](../GC03_swerve_finetune/CARD.md) · **Evidence for:** D06, D07, D09 ([decision log](../README.md#decision-log))
 
 ## Question
 

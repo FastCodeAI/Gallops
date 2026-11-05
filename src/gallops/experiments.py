@@ -4,8 +4,8 @@ Gallops exists to produce evidence that a model is better, and evidence that liv
 hand-written table drifts: a number is copied, the run behind it is retrained, and nobody can say
 which checkpoint the row was about. So each experiment carries its facts in one machine-readable
 file -- who ran it, what it started from, what it trained on, which checkpoint it wrote (by weights
-sha256), what it measured and how strongly -- and the README's tables, decision path and gate log
-are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
+sha256), what it measured and how strongly -- and the README's tables, the experiments index and
+each card are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
 what this module renders, so the README cannot say something the registry does not.
 
 Layout (docs/experiments.md has the rules and the reasons):
@@ -27,8 +27,10 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import html
 import posixpath
 import re
+import textwrap
 
 try:
     import tomllib
@@ -47,6 +49,12 @@ SCHEMA = 1
 #: Each experiment's one-page card, rendered whole into its folder; the README's IDs link to it.
 CARD = "CARD.md"
 
+#: The README's one picture, rendered whole from the registry.
+PICTURE = "docs/assets/experiments.svg"
+
+#: The index page: the tables too long for the README's front page.
+INDEX = "experiments/README.md"
+
 #: Where a record on an unmerged branch is linked. A URL, not a machine path.
 GITHUB = "https://github.com/FastCodeAI/Gallops"
 
@@ -60,6 +68,8 @@ EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
+#: The picture's base box: how wide a line of a baseline's `short` can run, and how many fit.
+BASE_WIDTH, BASE_LINES = 22, 2
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -641,6 +651,12 @@ def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> lis
         for ref in [*d.get("evidence", []), *d.get("next", [])]:
             if ref not in known:
                 errors.append(f"{where}: {ref} is not an experiment or run")
+        if d.get("baseline") and len(_base_lines(str(d.get("short", "")))) > BASE_LINES:
+            # Refused, not cut: a box that drops words names a different model and nothing fails.
+            errors.append(
+                f"{where}: a baseline's `short` names it in the picture, which has room for "
+                f"{BASE_LINES} lines of {BASE_WIDTH} characters"
+            )
     return errors
 
 
@@ -853,7 +869,7 @@ def render_badges(reg: Registry) -> str:
     badges = [
         ("gap_closing", f"{counts['gap-closing']}_experiments", "2E8B4E", "#gap-closing-experiments"),
         ("hypotheses", f"{counts['hypothesis']}_open_or_tested", "1F6FEB", "#hypothesis-experiments"),
-        ("gated_checkpoints", str(gated), "B4560A", "#regression-gate-log"),
+        ("gated_checkpoints", str(gated), "B4560A", f"{INDEX}#regression-gate-log"),
         ("gallops_version", version.replace("-", "--"), "555555", "#where-we-are"),
     ]
     return "\n".join(
@@ -863,22 +879,22 @@ def render_badges(reg: Registry) -> str:
     )
 
 
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
 def render_status(reg: Registry) -> str:
     lines = []
     baselines = [d for d in reg.decisions if d.get("baseline")]
     if baselines:
-        d = baselines[-1]
-        lines.append(
-            f"- **Base model:** {d['baseline']} — since {d['id']}, {_date(d['date'])} {d['date'].year}."
-        )
+        lines.append(f"- **Base model:** {baselines[-1]['baseline']}.")
     versions = [d for d in reg.decisions if d.get("version")]
     if versions:
-        d = versions[-1]
-        lines.append(f"- **Latest shipped version:** `{d['version']}` ({d['id']}).")
+        lines.append(f"- **Shipped version:** `{versions[-1]['version']}` ({versions[-1]['id']}).")
     else:
         lines.append(
-            "- **Shipped version:** none yet. `gallops-v0.1` is the first checkpoint the gate says SHIP to "
-            "against the base ([how versions are earned](docs/experiments.md#versions))."
+            "- **Shipped version:** none yet. A version is earned by a gate SHIP "
+            "([how](docs/experiments.md#versions))."
         )
     gates = [(e, run, g) for e in reg.experiments for run in e.runs for g in run.get("gate", [])]
     if gates:
@@ -889,90 +905,118 @@ def render_status(reg: Registry) -> str:
             f"- **Last gate run:** {_date(g['date'])} · [{run['id']}]({card(reg, e.id)}) · "
             f"{GATE_MARK[g['verdict']]}{why}."
         )
-    for track, label in (("hypothesis", "Hypotheses in progress"), ("enabler", "Enablers in progress")):
-        running = [
-            e for e in reg.experiments if e.data.get("status") == "running" and e.data.get("track") == track
-        ]
-        if running:
-            items = ", ".join(
-                f"[{e.id}]({card(reg, e.id)}) {e.data['short']} ({owners(reg, e.data)})" for e in running
-            )
-            lines.append(f"- **{label}:** {items}.")
+    counts = {
+        t: sum(e.data.get("status") == "running" and e.data.get("track") == t for e in reg.experiments)
+        for t in ("hypothesis", "enabler")
+    }
+    now = (
+        f"- **In progress:** {_count(counts['hypothesis'], 'hypothesis', 'hypotheses')}, "
+        f"{_count(counts['enabler'], 'enabler', 'enablers')}."
+    )
     planned = sorted(
         (e for e in reg.experiments if e.data.get("status") == "planned"),
         key=lambda e: e.data.get("priority", 99),
     )
     if planned:
-        items = ", ".join(f"[{e.id}]({card(reg, e.id)}) {e.data['short']}" for e in planned[:4])
-        lines.append(f"- **Next, by priority:** {items}.")
+        items = ", ".join(f"[{e.id}]({card(reg, e.id)}) {e.data['short']}" for e in planned[:3])
+        now += f" Next by priority: {items}."
+    lines.append(now)
     return "\n".join(lines)
 
 
-def _node(e: Experiment) -> str:
-    title = e.data["short"].replace('"', "'")
-    who = e.data.get("owner", "")
-    return f'{e.id}["<b>{e.id}</b> · {title}<br/>{mark(e.data)} · {who}"]'
+def _base_lines(short: str) -> list[str]:
+    return textwrap.wrap(short, BASE_WIDTH)
 
 
-def render_flow(reg: Registry) -> str:
-    """The decision path: decisions chained in date order, each fed by its evidence and leading on."""
-    by_id = reg.by_id()
-    runs = reg.run_ids()
+def _box(x: int, w: int, fill: str, title: str, lines: list[str], dashed: bool = False) -> str:
+    """One stage of the picture. White text on a solid fill reads on GitHub's light and dark pages alike."""
+    ink = "#768390" if dashed else "#FFFFFF"
+    stroke = ' stroke="#768390" stroke-width="2" stroke-dasharray="6 5"' if dashed else ""
+    out = [f'  <rect x="{x}" y="24" width="{w}" height="108" rx="10" fill="{fill}"{stroke}/>']
+    cx = x + w // 2
+    out.append(
+        f'  <text x="{cx}" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="{ink}">'
+        f"{html.escape(title)}</text>"
+    )
+    for k, line in enumerate(lines):
+        out.append(
+            f'  <text x="{cx}" y="{82 + 20 * k}" text-anchor="middle" font-size="13" fill="{ink}">'
+            f"{html.escape(line)}</text>"
+        )
+    return "\n".join(out)
 
-    def exp_of(ref: str) -> str:
-        return runs[ref][0].id if ref in runs else ref
 
-    lines = ["```mermaid", "flowchart TD"]
-    gc = [e for e in reg.experiments if e.data.get("track") == "gap-closing"]
-    hx = [e for e in reg.experiments if e.data.get("track") != "gap-closing"]
-    lines.append('  subgraph P1["Phase 1 · gap closing, one benchmark each"]')
-    for who in dict.fromkeys(e.data.get("owner", "") for e in gc):
-        lines.append(f'    subgraph gc_{who}["{who}"]')
-        lines.extend(f"      {_node(e)}" for e in gc if e.data.get("owner") == who)
-        lines.append("    end")
-    lines.append("  end")
-    lines.append('  subgraph P2["Phase 2 · hypotheses, each decided by the regression gate"]')
-    lines.extend(f"    {_node(e)}" for e in hx)
-    lines.append("  end")
-    for d in reg.decisions:
-        text = d["short"].replace('"', "'")
-        lines.append(f'  {d["id"]}{{{{"<b>{d["id"]}</b> · {_date(d["date"])}<br/>{text}"}}}}')
-    chain = [d["id"] for d in reg.decisions]
-    if len(chain) > 1:
-        lines.append("  " + " ==> ".join(chain))
-    edges: list[str] = []
-    for d in reg.decisions:
-        for ref in dict.fromkeys(exp_of(r) for r in d.get("evidence", [])):
-            edges.append(f"  {ref} --> {d['id']}")
-        for ref in dict.fromkeys(exp_of(r) for r in d.get("next", [])):
-            edges.append(f"  {d['id']} -.-> {ref}")
-    linked = {x for edge in edges for x in edge.replace("-.->", " ").replace("-->", " ").split()}
-    for e in reg.experiments:
-        for parent in e.data.get("parents", []):
-            if parent in by_id and not (e.id in linked and parent in linked):
-                edges.append(f"  {parent} --> {e.id}")
-    lines.extend(dict.fromkeys(edges))
-    lines.append("  classDef positive stroke:#2E8B4E,stroke-width:2px")
-    lines.append("  classDef negative stroke:#C0392B,stroke-width:2px")
-    lines.append("  classDef open stroke:#1F6FEB,stroke-dasharray:4 3")
-    for cls, pick in (
-        ("positive", lambda e: e.data.get("verdict") == "positive"),
-        ("negative", lambda e: e.data.get("verdict") == "negative"),
-        ("open", lambda e: e.data.get("status") in ("planned", "running")),
-    ):
-        ids = [e.id for e in reg.experiments if pick(e)]
-        if ids:
-            lines.append(f"  class {','.join(ids)} {cls}")
-    lines.append("```")
-    return "\n".join(lines)
+def render_picture(reg: Registry) -> str:
+    """The README's picture: how the work flows, with the counts as they stand.
+
+    Five stages and one loop. It stays this small on purpose: one node per experiment drew 40 boxes
+    nobody could read, and the decision log already says what fed what.
+    """
+    tracks = {t: [e for e in reg.experiments if e.data.get("track") == t] for t in TRACKS}
+    gc = tracks["gap-closing"]
+    first = min((e.data["started"] for e in gc), default=None)
+    last = max((e.data.get("ended") or e.data["started"] for e in gc), default=None)
+    span = f"{_date(first)} – {_date(last)}" if first and last else ""
+    gated = sum(1 for e in reg.experiments for run in e.runs if run.get("gate"))
+    bases = [d for d in reg.decisions if d.get("baseline")]
+    base = bases[-1] if bases else None
+    versions = [d["version"] for d in reg.decisions if d.get("version")]
+    hypotheses = _count(len(tracks["hypothesis"]), "hypothesis", "hypotheses")
+    enablers = _count(len(tracks["enabler"]), "enabler", "enablers")
+    grey = "#768390"
+    parts = [
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
+        'aria-label="Gap closing leads to an agreed base, then hypotheses of one change each, judged by the '
+        'regression gate, until the gate ships a version" '
+        "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\">",
+        "  <title>How the work flows</title>",
+        f'  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+        f'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="{grey}"/></marker></defs>',
+        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [_count(len(gc), "experiment", "experiments"), span]),
+        _box(
+            266,
+            164,
+            "#B4560A",
+            _date(base["date"]) if base else "Base",
+            _base_lines(base["short"]) if base else [],
+        ),
+        _box(
+            470,
+            200,
+            "#1F5FBF",
+            "Phase 2: hypotheses",
+            [f"{hypotheses}, one change each", enablers],
+        ),
+        _box(710, 136, "#57606A", "Regression gate", [f"{gated} gated so far"]),
+        _box(
+            898,
+            102,
+            "#1E6B3A" if versions else "none",
+            versions[-1] if versions else "gallops-v0",
+            ["shipped"] if versions else ["none yet"],
+            dashed=not versions,
+        ),
+    ]
+    for x1, x2 in ((226, 262), (430, 466), (670, 706)):
+        parts.append(
+            f'  <line x1="{x1}" y1="78" x2="{x2}" y2="78" stroke="{grey}" stroke-width="2" '
+            'marker-end="url(#a)"/>'
+        )
+    parts += [
+        f'  <line x1="846" y1="78" x2="894" y2="78" stroke="{grey}" stroke-width="2" marker-end="url(#a)"/>',
+        f'  <text x="870" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="{grey}">'
+        "SHIP</text>",
+        f'  <path d="M778 132 V176 H570 V136" fill="none" stroke="{grey}" stroke-width="2" '
+        'marker-end="url(#a)"/>',
+        f'  <text x="674" y="196" text-anchor="middle" font-size="13" fill="{grey}">'
+        "FAIL or HOLD: recorded, back to the hypotheses</text>",
+        "</svg>",
+    ]
+    return "\n".join(parts) + "\n"
 
 
 def render_gap_closing(reg: Registry) -> str:
-    rows = [
-        "| ID | Experiment | Owner | Benchmark | Headline result | Strength | Outcome | Checkpoint "
-        "| Record |",
-        "|---|---|---|---|---|---|---|---|---|",
-    ]
+    rows = ["| ID | Experiment | Owner | Headline result | Strength | Outcome |", "|---|---|---|---|---|---|"]
     for e in reg.experiments:
         d = e.data
         if d.get("track") != "gap-closing":
@@ -981,27 +1025,22 @@ def render_gap_closing(reg: Registry) -> str:
         res = result_text(head[1]) if head else "—"
         strg = strength(head[1]) if head else "—"
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {benches(d)} | "
-            f"{_cell(res)} | {strg} | {mark(d)} | {tag(head[0] if head else None)} | {record(d)} |"
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {_cell(res)} | "
+            f"{strg} | {mark(d)} |"
         )
     return "\n".join(rows)
 
 
 def first_sentence(text: str) -> str:
-    """A table cell's worth: up to the first full stop that ends a sentence; the details keep the rest."""
+    """A table cell's worth: up to the first full stop that ends a sentence; the card keeps the rest."""
     m = re.search(r"[.!?](?=\s+[A-Z(])", text)
     return text[: m.end()] if m else text
 
 
-def _runs_cell(e: Experiment) -> str:
-    labels = [run["id"].split(".", 1)[1] for run in e.runs]
-    return ", ".join(f"`{x}`" for x in labels) if labels else "—"
-
-
 def render_hypotheses(reg: Registry) -> str:
     rows = [
-        "| ID | Hypothesis | Owner | Priority | Status | Runs | Headline result | Strength | Gate |",
-        "|---|---|---|:-:|---|---|---|---|---|",
+        "| ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |",
+        "|---|---|---|---|---|---|---|",
     ]
     for e in reg.experiments:
         d = e.data
@@ -1011,8 +1050,7 @@ def render_hypotheses(reg: Registry) -> str:
         gate = latest_gate(e)
         gate_text = f"{GATE_MARK[gate[1]['verdict']]} {_date(gate[1]['date'])}" if gate else "—"
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
-            f"{d.get('priority', '—')} | {mark(d)} | {_runs_cell(e)} | "
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {mark(d)} | "
             f"{_cell(result_text(head[1])) if head else '—'} | {strength(head[1]) if head else '—'} | "
             f"{gate_text} |"
         )
@@ -1030,7 +1068,7 @@ def render_enablers(reg: Registry) -> str:
             continue
         gives = first_sentence(d.get("learned") or d["question"])
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
+            f"| [**{e.id}**]({card(reg, e.id, 'experiments')}) | {_cell(d['short'])} | {owners(reg, d)} | "
             f"{d.get('priority', '—')} | {mark(d)} | {_cell(gives)} |"
         )
     return "\n".join(rows)
@@ -1060,7 +1098,8 @@ def render_gate(reg: Registry) -> str:
         pairs = {p["bench"]: p for p in g.get("pairs", [])}
         cells = " | ".join(_pair_cell(pairs.get(b)) for b in GATE_BENCHES)
         rows.append(
-            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}]({card(reg, e.id)}) | {tag(run)} | "
+            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}]({card(reg, e.id, 'experiments')}) | "
+            f"{tag(run)} | "
             f"{g['tier']} | "
             f"{cells} | {GATE_MARK[g['verdict']]} |"
         )
@@ -1083,9 +1122,11 @@ def render_decisions(reg: Registry) -> str:
     rows = ["| # | Date | Decision | By | Evidence | Led to |", "|---|---|---|---|---|---|"]
     for d in reg.decisions:
         by = ", ".join(d.get("by", []))
+        evidence = _refs(reg, d.get("evidence", []), "experiments")
         rows.append(
-            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | {_cell(d['decision'])} | {by} | "
-            f"{_refs(reg, d.get('evidence', []))} | {_refs(reg, d.get('next', []))} |"
+            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | **{_cell(d['short'])}.** "
+            f"{_cell(d['decision'])} | {by} | "
+            f"{evidence} | {_refs(reg, d.get('next', []), 'experiments')} |"
         )
     return "\n".join(rows)
 
@@ -1160,11 +1201,11 @@ def _code_text(d: dict[str, Any], run: dict[str, Any], base: str = "") -> str:
     return "<br>".join(bits) or "—"
 
 
-#: Where a card's "back" link lands in the README, by track.
+#: Where a card's "back" link lands, by track: the README's tables, or the index for enablers.
 _BACK = {
-    "gap-closing": "gap-closing-experiments",
-    "hypothesis": "hypothesis-experiments",
-    "enabler": "enablers",
+    "gap-closing": "README.md#gap-closing-experiments",
+    "hypothesis": "README.md#hypothesis-experiments",
+    "enabler": f"{INDEX}#enablers",
 }
 
 
@@ -1185,7 +1226,7 @@ def render_card(reg: Registry, e: Experiment) -> str:
         f"**{owners(reg, d)}** · {benches(d)} · {mark(d)} · {_span(d)} · {d['track']}",
         "",
     ]
-    nav = [f"[← all experiments]({rel('README.md', base)}#{_BACK[d['track']]})"]
+    nav = [f"[← all experiments]({rel(_BACK[d['track']], base)})"]
     if d.get("narrative"):
         where = f" (on {_ref_kind(d)} ⎇)" if d.get("branch") else ""
         nav.append(f"[the account]({link(d, base=base)})" + where)
@@ -1207,9 +1248,7 @@ def render_card(reg: Registry, e: Experiment) -> str:
     ]
     if led:
         meta.append(
-            "**Evidence for:** "
-            + ", ".join(led)
-            + f" ([decision log]({rel('README.md', base)}#decision-log))"
+            f"**Evidence for:** {', '.join(led)} ([decision log]({rel(INDEX + '#decision-log', base)}))"
         )
     if meta:
         out += [" · ".join(meta), ""]
@@ -1319,17 +1358,19 @@ def render_code_map(reg: Registry) -> str:
 README_BLOCKS = {
     "badges": render_badges,
     "status": render_status,
-    "flow": render_flow,
     "gap-closing": render_gap_closing,
     "hypotheses": render_hypotheses,
+}
+INDEX_BLOCKS = {
+    "index": render_index,
     "enablers": render_enablers,
     "gate": render_gate,
     "decisions": render_decisions,
+    "code-map": render_code_map,
 }
-INDEX_BLOCKS = {"index": render_index, "code-map": render_code_map}
 
 #: Which file each set of blocks is rendered into, relative to the repo root.
-TARGETS = {"README.md": README_BLOCKS, "experiments/README.md": INDEX_BLOCKS}
+TARGETS = {"README.md": README_BLOCKS, INDEX: INDEX_BLOCKS}
 
 
 def render(reg: Registry, blocks: dict[str, Any]) -> dict[str, str]:
@@ -1354,11 +1395,13 @@ def apply(text: str, rendered: dict[str, str]) -> str:
 def rendered(reg: Registry) -> dict[str, str]:
     """Every file the registry renders, repo-root path -> the text it should hold.
 
-    The README and the index have marked blocks inside hand-written prose; each card is rendered whole.
+    The README and the index have marked blocks inside hand-written prose; the picture and each card
+    are rendered whole.
     """
     out = {}
     for target, blocks in TARGETS.items():
         out[target] = apply((reg.root / target).read_text(), render(reg, blocks))
+    out[PICTURE] = render_picture(reg)
     for e in reg.experiments:
         out[card_path(reg, e)] = render_card(reg, e)
     return out
@@ -1377,5 +1420,6 @@ def write(reg: Registry) -> list[str]:
     changed = stale(reg)
     for target, text in rendered(reg).items():
         if target in changed:
+            (reg.root / target).parent.mkdir(parents=True, exist_ok=True)
             (reg.root / target).write_text(text)
     return changed

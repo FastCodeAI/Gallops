@@ -5,7 +5,7 @@
 
 **Ruhan** · neuroNCAP · ⏳ running · 14 Oct 2026 · enabler
 
-[← all experiments](../../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/neuroncap-privileged-expert/src/gallops/expert/alpamayo_teacher.py) (on branch ⎇) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](https://github.com/FastCodeAI/Gallops/blob/ruhan/neuroncap-privileged-expert/src/gallops/expert/alpamayo_teacher.py) (on branch ⎇) · [experiment.toml](experiment.toml)
 
 > The record is on branch `ruhan/neuroncap-privileged-expert`, not merged yet; its links go to that branch.
 
