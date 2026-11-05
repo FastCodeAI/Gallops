@@ -174,3 +174,49 @@ def test_the_route_reads_distance_along_and_to_the_left():
     s, left = route.project(np.array([12.3, 1.5]))
     assert abs(s - 32.3) < 1e-9 and abs(left - 1.5) < 1e-9
     assert route.project(np.array([5.0, -2.0]))[1] == -2.0
+
+
+def _hard_stop(speed: float, decel: float) -> np.ndarray:
+    """A plan braking at `decel` from `speed` to rest, straight ahead."""
+    times = np.arange(1, 9) * 0.5
+    braking = np.minimum(times, speed / decel)
+    return np.column_stack([speed * braking - 0.5 * decel * braking**2, np.zeros(8), np.zeros(8)])
+
+
+def test_a_plan_is_undrivable_if_no_car_could_brake_that_hard():
+    """#17 review, 🟠 2: `undrivable` tested only lateral limits, so a stop dead at 11 m/s passed."""
+    from gallops.expert.draw import HARDEST_BRAKE, undrivable
+
+    dead_stop = np.zeros((8, 3))
+    assert undrivable(dead_stop) is None  # waypoints alone cannot say how fast the car is going
+    assert "brakes at" in undrivable(dead_stop, speed=11.24)
+    assert undrivable(dead_stop, speed=0.3) is None  # a car this slow can do that
+
+    assert undrivable(_hard_stop(11.24, HARDEST_BRAKE), speed=11.24) is None
+    assert undrivable(_hard_stop(2.0, HARDEST_BRAKE), speed=2.0) is None
+    assert undrivable(_hard_stop(11.24, 12.0), speed=11.24) is not None
+
+    # full speed for a second, then a wall: fine from the start, impossible in the middle
+    held = np.array([[min(10.0 * 0.5 * k, 10.0), 0.0, 0.0] for k in range(1, 9)])
+    assert "waypoint 3" in undrivable(held, speed=10.0)
+
+
+def test_past_its_stop_point_it_draws_the_hardest_stop_and_not_a_standstill():
+    """#17 review, 🟠 2: side-0070/run_8 was labelled `brake` at 11.24 m/s, 0.0 m at every waypoint.
+
+    Once the car is past `stop_s` the room goes negative and capped every distance at zero: a plan
+    that grades clear because it never moves, and that no car could follow.
+    """
+    from gallops.expert.draw import undrivable
+    from gallops.expert.teacher import BRAKE_MAX, Manoeuvre
+
+    teacher = Teacher(ROUTE, [], None, cruise=(np.array([0.0, 400.0]), np.array([12.0, 12.0])))
+    # 60 m along the route, which starts at x = -20: the stop point is x = 40
+    man = Manoeuvre("parked", "parked", 0, BRAKE_MAX, 0.0, 60.0)
+    for x in (45.0, 39.0):  # past the point, and short of it with no room left
+        plan = teacher._plan(_pose(x, 0.0, 0.0), 11.24, man)
+        assert undrivable(plan, speed=11.24) is None, x
+        assert abs(plan[-1, 0] - 11.24**2 / (2 * BRAKE_MAX)) < 0.3, x
+
+    # with room to stop, the stop point still sets the rate: 0.8 m/s^2 over 40 m, 25.6 m in 4 s
+    assert abs(teacher._plan(_pose(0.0, 0.0, 0.0), 8.0, man)[-1, 0] - 25.6) < 0.3

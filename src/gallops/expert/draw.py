@@ -41,6 +41,9 @@ POSES = 8
 LATERAL_ACCEL_MAX = 4.0
 #: Emergency braking. nuScenes' own driving almost never goes below -4 m/s^2.
 BRAKE_MAX = 5.0
+#: The hardest any car here can brake: neuro-ncap's vehicle-model clamp. A plan needing more is
+#: one the benchmark's car cannot follow, however it is drawn.
+HARDEST_BRAKE = 6.0
 #: Clearance added to the two half-widths before a pass counts as a pass.
 MARGIN_M = 0.5
 #: Tightest path a passenger car can actually follow. The lateral-acceleration
@@ -175,14 +178,22 @@ def undrivable(
     min_radius: float = MIN_TURN_RADIUS_M,
     tolerance: float = 1.3,
     accel_max: float = LATERAL_ACCEL_MAX,
+    speed: float | None = None,
 ) -> str | None:
-    """Why no car could follow this plan, or None if one could: too tight a turn, or
-    too much lateral acceleration (v^2 kappa) at the speed it turns at.
+    """Why no car could follow this plan, or None if one could: too tight a turn,
+    too much lateral acceleration (v^2 kappa) at the speed it turns at, or, given the
+    car's `speed`, harder braking than it has.
 
     Between two chords of an arc of radius R the heading turns by (ds_prev + ds) / 2R;
     the first chord leaves the car's own heading. `tolerance` covers the chord
     approximation on a correctly drawn S-curve, which peaks at exactly 1 / R. The
     acceleration test is the same turn over the same span, at the chord's speed.
+
+    Braking needs `speed`, because waypoints alone do not say how fast the car is going
+    now: an all-zero plan is a standstill at 0 m/s and impossible at 11. A chord's length
+    over its time is the mean speed across it, so that mean sits half a chord after the
+    start and a whole chord after the mean before it. A constant-rate stop never exceeds
+    its rate on either measure, however the stop falls inside a chord.
     """
     points = np.vstack([[0.0, 0.0], np.asarray(waypoints, dtype=float)[:, :2]])
     previous_heading, previous_step = 0.0, 0.0
@@ -202,6 +213,15 @@ def undrivable(
         if lateral > tolerance * accel_max:
             return f"turns at {lateral:.1f} m/s^2 into waypoint {i} (limit {accel_max:.0f} m/s^2)"
         previous_heading, previous_step = heading, length
+    if speed is None:
+        return None
+    means = np.hypot(*np.diff(points, axis=0).T) / WAYPOINT_DT
+    drops = np.r_[(speed - means[0]) / (WAYPOINT_DT / 2), -np.diff(means) / WAYPOINT_DT]
+    worst = int(np.argmax(drops))
+    if drops[worst] > tolerance * HARDEST_BRAKE:
+        return (
+            f"brakes at {drops[worst]:.1f} m/s^2 into waypoint {worst + 1} (limit {HARDEST_BRAKE:.0f} m/s^2)"
+        )
     return None
 
 

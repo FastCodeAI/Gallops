@@ -557,3 +557,12 @@ def test_a_rendered_round_passed_as_human_stops_the_run(tmp_path, monkeypatch):
     ]
     with pytest.raises(preflight.PreflightFailed, match="r2"):
         preflight.run(tmp_path, ticks + rendered, None, sources, object(), None, None, "cpu")
+
+
+def test_a_stop_no_car_could_make_is_refused():
+    """#17 review, 🟠 2: 207 usable ticks above 1 m/s were all-zero, and the check could not see them."""
+    dead_stop = [[0.0, 0.0, 0.0]] * 8
+    tick = {"episode": "side-0070/run_8", "timestamp": 1, "expert": dead_stop, "speed": 11.24}
+    report, problems = preflight.drivable_checks([tick])
+    assert report["undrivable"] == "1/1" and "brakes at" in problems[0]
+    assert preflight.drivable_checks([{**tick, "speed": 0.0}])[1] == []

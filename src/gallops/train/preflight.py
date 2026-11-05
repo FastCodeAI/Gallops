@@ -315,7 +315,11 @@ def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
     usable = [t for t in ticks if t.get("usable_for_imitation", True)]
     logged = [t for t in usable if t.get("expert_kind") == HUMAN]
     usable = [t for t in usable if t.get("expert_kind") != HUMAN]
-    bad = [t for t in usable if undrivable(np.asarray(t["expert"]))]
+
+    def why(tick: dict) -> str | None:
+        return undrivable(np.asarray(tick["expert"]), speed=tick.get("speed"))
+
+    bad = [t for t in usable if why(t)]
     report = {"undrivable": f"{len(bad)}/{len(usable)}"}
     if logged:
         report["logged"] = len(logged)
@@ -324,7 +328,7 @@ def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
     first = bad[0]
     return report, [
         f"{len(bad)} of {len(usable)} targets are undrivable "
-        f"({undrivable(np.asarray(first['expert']))}, {first['episode']} @ {first['timestamp']}): "
+        f"({why(first)}, {first['episode']} @ {first['timestamp']}): "
         "relabel with the current expert"
     ]
 

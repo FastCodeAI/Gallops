@@ -35,7 +35,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .draw import teach
+from .draw import teach, undrivable
 from .drivable import DrivableArea
 from .grader import first_hit, grade
 from .lanes import load_references, reference_at
@@ -238,7 +238,7 @@ def label_episode_v6(directory: Path, rows: list[dict], pack: dict, area=None) -
                 "expert_kind": taught.kind,
                 "expert_version": "v6",
                 "expert_clear": verdict.clear,
-                "expert_drivable": True,
+                "expert_drivable": undrivable(waypoints, speed=float(row["speed"])) is None,
                 "expert_side": 0 if man is None else man.side,
                 "reference": reference_kind,
                 "expert_offset_m": 0.0 if man is None else round(man.offset_m, 3),

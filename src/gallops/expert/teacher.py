@@ -40,6 +40,7 @@ from dataclasses import dataclass, replace
 import numpy as np
 
 from .draw import (
+    HARDEST_BRAKE,
     LATERAL_ACCEL_MAX,
     MIN_TURN_RADIUS_M,
     POSES,
@@ -97,7 +98,7 @@ ONCOMING_FLOOR_MPS = 3.0
 #: every tick from the fixed stop point, so it is the one a fresh look at the same state gives; a
 #: rate fixed at the first tick and clipped up to a minimum stopped the car 8 m short instead.
 BRAKE_MIN = 0.5
-BRAKE_MAX = 6.0
+BRAKE_MAX = HARDEST_BRAKE
 STOP_GAP_M = 2.0
 #: Driving on once the way is clear: back to the place's speed, gently.
 RESUME_ACCEL = 1.0
@@ -418,6 +419,11 @@ class Teacher:
         if man is None or man.released:
             return self._draw(ego2world, resume(speed, times, self.cruise_at(s_ego, speed)), speed, None)
         stop_after = None if man.stop_s is None else man.stop_s - s_ego
+        if stop_after is not None:
+            # Too late for the stop point, or already past it: the hardest stop there is. Capped at
+            # the room left, this was an all-zero plan at full speed, which grades clear because it
+            # never moves and which no car can follow (side-0070/run_8: 11.24 m/s, 0.0 m throughout).
+            stop_after = max(stop_after, speed**2 / (2 * BRAKE_MAX))
         decel = man.decel if stop_after is None else stopping_decel(speed, stop_after)
         distances = travel(speed, times, decel, man.floor_mps, stop_after)
         return self._draw(ego2world, distances, speed, man)
