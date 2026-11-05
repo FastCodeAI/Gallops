@@ -393,6 +393,15 @@ def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
     assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
 
+def test_the_picture_names_the_base_without_repeating_the_word(tmp_path) -> None:
+    """The base box stands between the phases, so a date there would put 6 Nov before a phase of 16 Oct."""
+    decisions = DECISIONS.replace(
+        'short = "try the thing"\n', 'short = "Base: the released model"\nbaseline = "the released model"\n'
+    )
+    svg = exps.render_picture(exps.Registry.load(_repo(tmp_path, decisions=decisions)))
+    assert ">Base</text>" in svg and ">the released model</text>" in svg and "Base: the" not in svg
+
+
 def test_a_baseline_the_picture_cannot_hold_is_refused(tmp_path) -> None:
     """The box took two lines and dropped the rest, so it named a different model and nothing failed."""
     long = "Base: the 4-camera stack with state-space memory and the sub-score scorer"
