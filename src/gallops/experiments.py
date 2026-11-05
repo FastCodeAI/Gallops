@@ -568,10 +568,15 @@ def validate(reg: Registry) -> list[str]:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is not 64 lower-case hex digits")
                     elif wsha == EMPTY_SHA256:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is the SHA-256 of empty input")
-                    elif wsha in seen_sha:
-                        errors.append(f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}")
-                    else:
-                        seen_sha[wsha] = rid
+                    elif run.get("trained") != []:
+                        # `trained = []` pins weights the run did not write: paddock's gate accepts a code
+                        # change on the same weights. Two runs that trained cannot have written one file.
+                        if wsha in seen_sha:
+                            errors.append(
+                                f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}"
+                            )
+                        else:
+                            seen_sha[wsha] = rid
 
             for j, res in enumerate(run.get("results", [])):
                 xwhere = f"{rwhere} results[{j}]"

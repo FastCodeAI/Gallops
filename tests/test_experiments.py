@@ -330,6 +330,27 @@ def test_a_bad_evidence_entry_is_an_error_and_not_a_traceback(tmp_path) -> None:
     assert any("1 is not an experiment or run" in e for e in reg.errors), reg.errors
 
 
+@pytest.mark.parametrize(
+    ("trained", "shared"),
+    [("trained = []", True), ('trained = ["scorer"]', False), ("", False)],
+)
+def test_only_a_run_that_trained_nothing_may_share_a_digest(tmp_path, trained, shared) -> None:
+    """Paddock's gate accepts a code change on the same weights (H08); two trainings cannot write one file."""
+    second = f"""
+[[runs]]
+id = "H01.r2"
+label = "a code change on the same weights"
+{trained}
+
+  [runs.checkpoint]
+  model = "drivejepa"
+  train_run = "r2"
+  weights_sha256 = "{SHA}"
+"""
+    errors = exps.Registry.load(_repo(tmp_path, RECORD + second)).errors
+    assert (errors == []) if shared else any("is also claimed by H01.r1" in e for e in errors), errors
+
+
 def test_an_unfinished_hypothesis_needs_neither(tmp_path) -> None:
     running = RECORD[: RECORD.index("  [[runs.gate]]")].replace('status = "done"', 'status = "running"')
     assert exps.Registry.load(_repo(tmp_path, running, decisions="")).errors == []

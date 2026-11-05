@@ -279,7 +279,11 @@ HOLD has four causes, and the job's output says which.
 
 `make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
 it dated on or after its last gate. It also refuses `verdict = "none"`, and `positive` without a SHIP.
-Work that never reached a checkpoint ends as `parked` or `dropped`, with what it `learned`.
+Work that never reached the gate ends as `parked` or `dropped`, with what it `learned`.
+
+**A change that trains nothing still goes through the gate.** A paddock-side input change on the
+same weights is gated like any other, and paddock accepts identical weights for a code change. Set
+`trained = []` on the run and pin the weights it ran on; only such a run may share a digest.
 
 <a id="decisions"></a>
 
