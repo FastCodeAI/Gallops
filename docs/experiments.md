@@ -323,7 +323,7 @@ checkpoint to `gallops-v0.N`. `experiments/README.md` lists the log in full.
 8. **When the team decides,** add the decision to `experiments/decisions.toml`, and set `status`,
    `verdict` and `learned`.
 9. `gallops experiments render --write` (the README and the cards; never edit `CARD.md` by hand), then
-   `make check`, then open the PR.
+   `make check`, then open the PR with `gallops experiments pr` ([below](#results-pr)).
 
 <a id="results-pr"></a>
 
@@ -339,6 +339,35 @@ One PR per experiment, or one per run if it is large. Reviewers check each of th
 - [ ] `README.md` says why, what was done, what it showed and what was decided.
 - [ ] A decision row is in `experiments/decisions.toml` if this result changes what the team does next.
 - [ ] `gallops experiments render --write` was run, and `make check` passes.
+- [ ] The title and description come from `gallops experiments pr`, with every `TODO(author):` replaced.
+
+A results PR is any PR that adds, changes or removes a result or a gate verdict. Its title and the top of its
+description are rendered from the record, like the README, so the ID and the numbers are copied, never
+typed:
+
+```bash
+gallops experiments pr H04.run3a > /tmp/pr.md   # H04 alone takes the run that holds the headline
+$EDITOR /tmp/pr.md                              # replace each TODO(author):
+gh pr create --title "$(head -1 /tmp/pr.md)" --body-file <(tail -n +3 /tmp/pr.md)
+```
+
+The title is `<run>: <benchmark> <metric> <baseline> → <value>, gate <verdict>`. The description gives
+the hypothesis, the result with its strength and flags, the gate, the decision and the card. Anything
+longer belongs in the experiment's `README.md`.
+
+The `results-pr` check in CI re-renders both, from the PR merged into its base. It fails a PR when:
+
+- it changes a result or a gate verdict and has no rendered block;
+- its title or block differs from the record, which is fixed by merging the base and re-running the
+  command, because the record it is compared with is the merged one;
+- a `TODO(author):` is left in it;
+- it also changes the results of a second experiment;
+- the run it reports is not one it changed;
+- it has more than 30 lines written by hand.
+
+A PR that changes a result without reporting one, such as a correction across several records, says so
+on a line of its own: `Not a results PR: <why>`. The reviewer judges that reason, as they judge
+`predictions = "none: <why>"`.
 
 Merge with a merge commit, never a squash, when another PR is stacked on this one. A squash lands
 the PR as one new commit, so whatever it gained after the upper PR was cut conflicts there, even in

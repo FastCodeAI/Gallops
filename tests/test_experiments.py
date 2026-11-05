@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import importlib.util
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -480,12 +481,10 @@ def _step(tmp_path: Path, files: dict[str, bytes], digest: str | None = None) ->
     return d
 
 
-def _pin(d: Path, *args: object):
-    """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
+def _cli_module():
+    """gallops.cli, or skip where it cannot load."""
     try:
-        from typer.testing import CliRunner
-
-        from gallops.cli import app
+        from gallops import cli
     except (ImportError, TypeError) as exc:
         # The preflight runs this file under Drive-JEPA's Python 3.9, where the CLI cannot load (recipe.py's
         # tomllib, then typer on `X | None`) and is never run. Anywhere with tomllib, the interpreter
@@ -493,13 +492,23 @@ def _pin(d: Path, *args: object):
         if importlib.util.find_spec("tomllib") is not None:
             raise
         pytest.skip(f"gallops.cli does not load on this interpreter: {exc}")
+    return cli
 
+
+def _cli(args: list[str], env: dict[str, str] | None = None):
+    """Invoke the CLI, or skip where it cannot load."""
+    app = _cli_module().app
+    from typer.testing import CliRunner
+
+    return CliRunner().invoke(app, args, env=env)
+
+
+def _pin(d: Path, *args: object):
+    """`gallops experiments checkpoint d ...`, with a site whose weights root is beside the step dir's."""
     site = d.parents[3]
     config = site / "gallops.toml"
     config.write_text(f'[roots]\nweights = "{site / "weights"}"\nruns = "{site / "runs"}"\n')
-    return CliRunner().invoke(
-        app, ["experiments", "checkpoint", str(d), *map(str, args)], env={"GALLOPS_CONFIG": str(config)}
-    )
+    return _cli(["experiments", "checkpoint", str(d), *map(str, args)], {"GALLOPS_CONFIG": str(config)})
 
 
 def _sha(data: bytes) -> str:
@@ -591,3 +600,304 @@ def test_members_agree_with_the_pinned_digest(tmp_path, members, file, error) ->
         assert reg.errors == []
     else:
         assert any(error in e for e in reg.errors), reg.errors
+
+
+# ---------------------------------------------------------------- results PRs
+
+_TITLE = "H01.r1: NAVSIM EPDMS 0.875 → 0.885, gate HOLD"
+_NO_GATE = RECORD.split("  [[runs.gate]]")[0]
+_LATER_DECISION = """
+[[decision]]
+id = "D03"
+date = 2026-10-30
+short = "drop the thing"
+decision = "Drop the thing."
+by = ["Naren"]
+evidence = ["H01"]
+"""
+_SECOND_RUN = """
+[[runs]]
+id = "H01.r2"
+label = "second run"
+start_from = "released"
+
+  [runs.code]
+  modules = ["gallops.train.thing"]
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS"
+  value = "0.890"
+  better = "higher"
+  strength = "argued"
+"""
+
+
+def _rendered(reg: exps.Registry, ref: str = "H01.r1") -> tuple[str, str]:
+    """A results PR as an author leaves it: the record's title and body, with the TODOs written."""
+    title, _, body = exps.render_pr(reg, ref).partition("\n\n")
+    return title, "\n".join(
+        "Written." if line.startswith(exps.PR_TODO) else line for line in body.splitlines()
+    )
+
+
+def test_a_results_pr_is_rendered_from_its_record(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    title, body = _rendered(reg)
+    assert title == _TITLE
+    assert "<!-- gallops:pr H01.r1 -->" in body
+    assert "- **Hypothesis:** It raises EPDMS by 0.01; a NEUTRAL with MDE under 0.01 refutes it." in body
+    assert "- **Result:** NAVSIM EPDMS 0.875 → **0.885** · ●●○○ moderate" in body
+    assert "- **Gate:** ⏸ **HOLD**, 28 Oct 2026, quick tier" in body
+    assert "- **Decision:** D02: keep the thing" in body
+    assert "- **Record:** `experiments/H01_thing/CARD.md`" in body
+    assert "Why the gate has not run" not in body
+    assert exps.render_pr(reg, "H01") == exps.render_pr(reg, "H01.r1"), "an experiment means its headline"
+    assert exps.check_pr(reg, title, body, ["H01.r1"]) == []
+
+
+def test_a_run_with_no_gate_says_so_and_asks_why(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path, _NO_GATE))
+    text = exps.render_pr(reg, "H01.r1")
+    assert text.splitlines()[0] == "H01.r1: NAVSIM EPDMS 0.875 → 0.885, gate not run"
+    assert "- **Gate:** not run" in text
+    assert f"## Why the gate has not run\n\n{exps.PR_TODO}" in text
+
+
+def test_a_run_with_a_gate_and_no_result_can_be_reported(tmp_path) -> None:
+    """H02.timing holds a gate verdict and no result."""
+    results = RECORD[RECORD.index("  [[runs.results]]") : RECORD.index("  [[runs.gate]]")]
+    reg = exps.Registry.load(_repo(tmp_path, RECORD.replace(results, "")))
+    text = exps.render_pr(reg, "H01.r1")
+    assert text.splitlines()[0] == "H01.r1: gate HOLD"
+    assert "- **Result:** none in this run" in text
+
+
+def test_a_run_reports_its_own_result_when_the_headline_is_elsewhere(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path, RECORD + _SECOND_RUN))
+    assert exps.render_pr(reg, "H01.r2").splitlines()[0] == "H01.r2: NAVSIM EPDMS 0.890, gate not run"
+    assert exps.render_pr(reg, "H01").splitlines()[0] == _TITLE
+
+
+@pytest.mark.parametrize(
+    ("ref", "error"),
+    [("H99", "neither an experiment nor a run"), ("H01.r9", "neither an experiment nor a run")],
+)
+def test_a_pr_names_something_the_registry_holds(tmp_path, ref, error) -> None:
+    with pytest.raises(ValueError, match=error):
+        exps.render_pr(exps.Registry.load(_repo(tmp_path)), ref)
+
+
+def test_a_record_with_nothing_to_report_has_no_results_pr(tmp_path) -> None:
+    start = RECORD.index("  [[runs.results]]")
+    reg = exps.Registry.load(_repo(tmp_path, RECORD[:start]))
+    with pytest.raises(ValueError, match="no headline result"):
+        exps.render_pr(reg, "H01")
+    with pytest.raises(ValueError, match="not a results PR"):
+        exps.render_pr(reg, "H01.r1")
+
+
+@pytest.mark.parametrize(
+    ("break_it", "error"),
+    [
+        (lambda t, b: ("H01.r1: EPDMS is up", b), "the title must be"),
+        (lambda t, b: (t, b.replace("**0.885**", "**0.895**")), "differs from the record"),
+        (lambda t, b: (t, b.replace("HOLD", "SHIP")), "differs from the record"),
+        (lambda t, b: (t, b + f"\n{exps.PR_TODO} later\n"), "is still in the body"),
+        (lambda t, b: (t, b + "\nline" * (exps.PR_PROSE_LINES + 1)), "hand-written lines"),
+        (lambda t, b: (t, b + b), "2 rendered blocks"),
+        (lambda t, b: (t, b.replace("gallops:pr H01.r1", "gallops:pr H77.r1")), "neither an experiment"),
+    ],
+)
+def test_a_results_pr_that_differs_from_its_record_is_refused(tmp_path, break_it, error) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    title, body = break_it(*_rendered(reg))
+    problems = exps.check_pr(reg, title, body, ["H01.r1"])
+    assert any(error in p for p in problems), problems
+
+
+def test_a_run_reports_its_latest_gate_however_the_record_lists_them() -> None:
+    older = {"date": dt.date(2026, 10, 20), "verdict": "FAIL"}
+    newer = {"date": dt.date(2026, 10, 28), "verdict": "HOLD"}
+    for gates in ([older, newer], [newer, older]):
+        assert exps.pr_title({"id": "H01.r1", "gate": gates}, None) == "H01.r1: gate HOLD"
+
+
+def test_a_results_pr_gives_the_latest_decision_that_cites_it(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path, decisions=DECISIONS + _LATER_DECISION))
+    assert "- **Decision:** D03: drop the thing" in exps.render_pr(reg, "H01.r1")
+
+
+def test_a_run_holding_the_headline_reports_it_wherever_it_is_listed(tmp_path) -> None:
+    first = """  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS"
+  value = "0.100"
+  better = "higher"
+  strength = "argued"
+
+"""
+    record = RECORD.replace("  [[runs.results]]\n", first + "  [[runs.results]]\n", 1)
+    reg = exps.Registry.load(_repo(tmp_path, record))
+    assert exps.render_pr(reg, "H01.r1").splitlines()[0] == _TITLE
+
+
+def test_a_block_left_behind_by_the_base_says_to_merge_it(tmp_path) -> None:
+    """A decision on main citing the run changes the merge; re-running on the branch prints the old block."""
+    reg = exps.Registry.load(_repo(tmp_path))
+    title, body = _rendered(reg)
+    (reg.root / "experiments" / "decisions.toml").write_text(DECISIONS + _LATER_DECISION)
+    assert exps.check_pr(exps.Registry.load(reg.root), title, body, ["H01.r1"]) == [
+        "the rendered block differs from the record: merge the base, then re-run "
+        "`gallops experiments pr H01.r1`"
+    ]
+
+
+def test_one_results_pr_reports_one_experiment(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    problems = exps.check_pr(reg, *_rendered(reg), ["H01.r1", "H02.r1"])
+    assert problems == ["it also changes results in H02: one PR per experiment"]
+
+
+def test_a_result_with_no_rendered_block_is_refused_until_it_says_why(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    assert "gallops experiments pr <ID>" in exps.check_pr(reg, "any title", "any body", ["H01.r1"])[0]
+    assert (
+        exps.check_pr(reg, "any title", "Fixes a flag.\nNot a results PR: a flag was wrong.", ["H01.r1"])
+        == []
+    )
+    assert exps.check_pr(reg, "any title", "Not a results PR: ", ["H01.r1"]) != [], "a reason is required"
+
+
+def test_a_pr_that_changes_no_result_is_left_alone(tmp_path) -> None:
+    reg = exps.Registry.load(_repo(tmp_path))
+    assert exps.check_pr(reg, "docs: a typo", "", []) == []
+
+
+def test_a_body_saved_by_the_web_editor_still_matches(tmp_path) -> None:
+    """GitHub's editor saves CRLF, which would otherwise fail every PR someone touched up in the browser."""
+    reg = exps.Registry.load(_repo(tmp_path))
+    title, body = _rendered(reg)
+    assert exps.check_pr(reg, title, body.replace("\n", "\r\n"), ["H01.r1"]) == []
+    assert exps.check_pr(reg, title + " ", body, ["H01.r1"]) == [], "so may a trailing space in the title"
+
+
+def test_the_pr_template_does_not_pass_for_a_results_pr(tmp_path) -> None:
+    """Leaving the template in place says nothing, and neither does a reason hidden in a comment."""
+    reg = exps.Registry.load(_repo(tmp_path))
+    template = (REPO_ROOT / ".github" / "pull_request_template.md").read_text()
+    assert exps.check_pr(reg, "any title", template, ["H01.r1"]) != []
+    hidden = "<!--\nNot a results PR: hidden from the reviewer\n-->"
+    assert exps.check_pr(reg, "any title", hidden, ["H01.r1"]) != [], "the reason has to be visible"
+
+
+def _commit(root: Path, message: str) -> None:
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t", "-C", str(root)]
+    if not (root / ".git").exists():
+        subprocess.run([*git, "init", "-q"], check=True)
+    subprocess.run([*git, "add", "-A"], check=True)
+    subprocess.run([*git, "commit", "-qm", message, "--allow-empty"], check=True)
+
+
+def _with_base(tmp_path: Path, record: str | None = RECORD) -> Path:
+    root = _repo(tmp_path, record)
+    template = root / "experiments" / "_template"
+    template.mkdir()
+    (template / "experiment.toml").write_text("started = {{DATE}}\n")  # not TOML, like the real one
+    _commit(root, "base")
+    return root
+
+
+def test_changing_a_result_or_a_gate_is_what_makes_a_results_pr(tmp_path) -> None:
+    root = _with_base(tmp_path)
+    record = root / "experiments" / "H01_thing" / "experiment.toml"
+    for old, new in [('value = "0.885"', 'value = "0.886"'), ('verdict = "HOLD"', 'verdict = "FAIL"')]:
+        record.write_text(RECORD.replace(old, new))
+        assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"], new
+
+
+def test_registering_an_experiment_is_not_a_results_pr_until_it_reports_something(tmp_path) -> None:
+    """H15 was registered, with a run and its predictions, before anything was graded."""
+    root = _with_base(tmp_path, None)
+    folder = root / "experiments" / "H01_thing"
+    folder.mkdir()
+    (folder / "experiment.toml").write_text(RECORD[: RECORD.index("  [[runs.results]]")])
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == []
+    (folder / "experiment.toml").write_text(RECORD)
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"]
+
+
+def test_a_result_that_is_removed_is_a_change_too(tmp_path) -> None:
+    """IDs are marked `dropped`, not freed, so a record that vanishes needs a reason someone can read."""
+    root = _with_base(tmp_path)
+    shutil.rmtree(root / "experiments" / "H01_thing")
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == ["H01.r1"]
+
+
+def test_a_results_pr_reports_a_run_it_changed(tmp_path) -> None:
+    """A title that names H01.r1 must not stand for a PR that only moved H01.r2's number."""
+    root = _with_base(tmp_path, RECORD + _SECOND_RUN)
+    record = root / "experiments" / "H01_thing" / "experiment.toml"
+    record.write_text((RECORD + _SECOND_RUN).replace('value = "0.890"', 'value = "0.891"'))
+    reg = exps.Registry.load(root)
+    changed = exps.changed_results(reg, "HEAD")
+    assert changed == ["H01.r2"]
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r2"), changed) == []
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r1"), changed) == [
+        "it reports H01.r1 but changes H01.r2: report a run it changed"
+    ]
+    assert exps.check_pr(reg, *_rendered(reg, "H01.r1"), ["H01.r1", "H01.r2"]) == [], "one of several is fine"
+
+
+def test_what_a_record_says_around_its_results_is_no_change(tmp_path) -> None:
+    root = _with_base(tmp_path)
+    folder = root / "experiments" / "H01_thing"
+    (folder / "experiment.toml").write_text(
+        "# a new comment\n" + RECORD.replace('learned = "It did."', 'learned = "It did, a little."')
+    )
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == []
+
+
+def test_a_folder_that_moves_reports_nothing_new(tmp_path) -> None:
+    root = _with_base(tmp_path)
+    (root / "experiments" / "H01_thing").rename(root / "experiments" / "H01_renamed")
+    assert exps.changed_results(exps.Registry.load(root), "HEAD") == []
+
+
+def test_pr_prints_the_title_then_the_body_and_pr_check_reads_the_environment(tmp_path, monkeypatch) -> None:
+    """On a repository of its own: the real one holds uncommitted results while someone records them."""
+    root = _with_base(tmp_path)
+    monkeypatch.setattr(_cli_module(), "_registry", lambda: exps.Registry.load(root))
+    printed = _cli(["experiments", "pr", "H01.r1"])
+    assert printed.exit_code == 0
+    assert printed.output.splitlines()[:3] == [_TITLE, "", "<!-- gallops:pr H01.r1 -->"]
+    assert _cli(["experiments", "pr", "H99"]).exit_code == 2
+
+    def check(title: str, body: str):
+        return _cli(["experiments", "pr-check", "--base", "HEAD"], {"PR_TITLE": title, "PR_BODY": body})
+
+    written = printed.output.partition("\n\n")[2].replace(exps.PR_TODO, "Written:")
+    assert check(_TITLE, written).exit_code == 0
+    assert check("H01.r1: better", written).exit_code == 1
+    assert _cli(["experiments", "pr-check", "--base", "no-such-commit"]).exit_code == 2
+
+
+# ---------------------------------------------------------------- CI
+
+
+def _workflow(name: str) -> dict:
+    yaml = pytest.importorskip("yaml")
+    return yaml.safe_load((REPO_ROOT / ".github" / "workflows" / name).read_text())
+
+
+def test_ci_runs_make_check_and_holds_no_gate_of_its_own() -> None:
+    """Anything that can reject work belongs in the Makefile, so a green run here is a green run there."""
+    steps = _workflow("check.yml")["jobs"]["check"]["steps"]
+    assert [s["run"] for s in steps if "run" in s] == ["make setup", "make check"]
+
+
+def test_a_prs_text_never_reaches_a_shell() -> None:
+    """`${{ }}` inside `run` is pasted into the script before it runs, so a PR title could run commands."""
+    for name in ("check.yml", "results-pr.yml"):
+        for job in _workflow(name)["jobs"].values():
+            assert not [s["run"] for s in job["steps"] if "${{" in s.get("run", "")], name
