@@ -15,7 +15,7 @@
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
   <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-8_open_or_tested-1F6FEB.svg" alt="hypotheses: 8 open or tested"></a>
-  <a href="#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-2-B4560A.svg" alt="gated checkpoints: 2"></a>
+  <a href="#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-4-B4560A.svg" alt="gated checkpoints: 4"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
 </p>
@@ -49,7 +49,7 @@ The work has had two phases:
 <!-- experiments:status -->
 - **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA — since D11, 19 Oct 2026.
 - **Shipped version:** none yet. `gallops-v0.1` is the first checkpoint the gate says SHIP to against the base ([how versions are earned](docs/experiments.md#versions)).
-- **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
+- **Last gate run:** 6 Nov · [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) · ⏸ **HOLD**.
 - **Hypotheses in progress:** [H01](experiments/H01_four_camera_base/CARD.md) 4-camera base (WA-JEPA + DJ planner) (Navvrat), [H04](experiments/H04_subscore_scorer_navsim/CARD.md) Sub-score scorer, NAVSIM gap (Navvrat, Siddesh), [H06](experiments/H06_global_read/CARD.md) Global read and side braking (Navvrat), [H07](experiments/H07_encoder_lora/CARD.md) Encoder LoRA, domain gap (Siddesh), [H08](experiments/H08_sideways_velocity_fov/CARD.md) Sideways velocity and camera FOV (Naren), [H14](experiments/H14_aux_heads/CARD.md) Aux heads on the refiner (Shreedhar), [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory (Naren, Siddesh).
 - **Enablers in progress:** [H03](experiments/H03_shared_store_and_tags/CARD.md) Shared store and checkpoint tags (Naren), [H09](experiments/H09_shared_runner/CARD.md) Shared gate runner (Naren), [H11](experiments/H11_hugsim/CARD.md) HUGSIM trial (Navvrat), [H12](experiments/H12_nuscenes_teacher_scenes/CARD.md) nuScenes teacher-scene selector (Ruhan), [H13](experiments/H13_alpamayo_teacher/CARD.md) Alpamayo teacher (reuses draw.teach) (Ruhan).
 <!-- /experiments:status -->
@@ -227,7 +227,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | ⏳ running | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | — | ⏳ running | `r1`, `r2`, `r3`, `r3-a-s0`, `r3-a-s1`, `r3-a-s2`, `r3-b-s0`, `r3-b-s1`, `r3-b-s2` | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●●○ strong · open-loop | — |
+| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | — | ⏳ running | `r1`, `r2`, `r3`, `r3-a-s0`, `r3-a-s1`, `r3-a-s2`, `r3-b-s0`, `r3-b-s1`, `r3-b-s2` | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●●○ strong · open-loop | ⏸ **HOLD** 6 Nov |
 <!-- /experiments:hypotheses -->
 
 ### Enablers
@@ -260,6 +260,10 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](experiments/H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](experiments/H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
+| 6 Nov 2026 | [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) | `0679ea453b97` | quick | ⚪ 0.857 → 0.858 | 🟢 2.537 → 2.292 | ⚪ 2.431 → 2.336 | ⚪ 3.179 → 2.533 | ▫️ 37.670 → 28.141 | ▫️ 0.929 → 0.967 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) | `0679ea453b97` | closed | — | — | — | ⚪ 3.679 → 3.404 | ⚪ 59.036 → 68.512 | ⚪ 0.434 → 0.394 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H15.r3-b-s0](experiments/H15_prediction_memory/CARD.md) | `dfd944c1c3f1` | quick | ⚪ 0.857 → 0.856 | 🟢 2.537 → 2.261 | 🟢 2.431 → 2.288 | ⚪ 3.179 → 4.213 | ▫️ 37.670 → 16.400 | ▫️ 0.929 → 1.000 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H15.r3-b-s0](experiments/H15_prediction_memory/CARD.md) | `dfd944c1c3f1` | closed | — | — | — | ⚪ 3.679 → 3.531 | ⚪ 59.036 → 45.964 | — | … INCOMPLETE |
 <!-- /experiments:gate -->
 
 ## Decision log

@@ -1,0 +1,349 @@
+{
+  "overall": "HOLD",
+  "unfinished": [],
+  "steps": [
+    {
+      "name": "neuroncap",
+      "bench": "neuroncap",
+      "status": "finished",
+      "run_id": "20261106T024315-611199"
+    },
+    {
+      "name": "bench2drive",
+      "bench": "bench2drive",
+      "status": "finished",
+      "run_id": "20261106T024207-5a2632"
+    },
+    {
+      "name": "alpasim",
+      "bench": "alpasim",
+      "status": "finished",
+      "run_id": "20261106T040355-9f4cd1"
+    }
+  ],
+  "pairs": [
+    {
+      "bench": "neuroncap",
+      "metric": "ncap_score",
+      "baseline": "drivejepa:20261026T232704-7bcf0e",
+      "candidate": "drivejepa:20261106T024315-611199",
+      "verdict": "NEUTRAL",
+      "higher_is_better": true,
+      "baseline_mean": 3.679186044188835,
+      "candidate_mean": 3.53098150034282,
+      "diff": -0.14820454384601486,
+      "se": 0.38839761427317593,
+      "t": -0.3815794392129725,
+      "df": 14,
+      "t_crit": 2.145,
+      "units": 15,
+      "unit_name": "scenario pairs",
+      "matched": 15,
+      "only_baseline": 0,
+      "only_candidate": 0,
+      "threshold": null,
+      "beyond_threshold": null,
+      "mde": 1.1702420118050791,
+      "can_ship": true,
+      "crash_check": false,
+      "baseline_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+      },
+      "candidate_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+        "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+      },
+      "notes": [
+        "baseline run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)",
+        "candidate run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)",
+        "model.yaml env differs: DRIVEJEPA_MEMORY None -> ''",
+        "candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it",
+        "the runs used different paddock code (06870801c vs 0fae53422): an adapter change between them is part of the difference",
+        "the candidate ran from a paddock checkout with uncommitted edits",
+        "PDM terms not recorded by one of the runs, so not compared: pdm_nc, pdm_dac, pdm_ttc, pdm_ep, pdm_comfort, pdm_style_score"
+      ],
+      "slot": "",
+      "pdm": [],
+      "pdm_missing": []
+    },
+    {
+      "bench": "bench2drive",
+      "metric": "driving_score",
+      "baseline": "drivejepa:20261026T233957-56d38c",
+      "candidate": "drivejepa:20261106T024207-5a2632",
+      "verdict": "NEUTRAL",
+      "higher_is_better": true,
+      "baseline_mean": 59.036,
+      "candidate_mean": 45.96382857142857,
+      "diff": -13.072171428571428,
+      "se": 10.65141408813904,
+      "t": -1.2272709820875372,
+      "df": 6,
+      "t_crit": 2.447,
+      "units": 7,
+      "unit_name": "routes",
+      "matched": 7,
+      "only_baseline": 0,
+      "only_candidate": 0,
+      "threshold": null,
+      "beyond_threshold": null,
+      "mde": 35.714191437530204,
+      "can_ship": false,
+      "crash_check": false,
+      "baseline_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+      },
+      "candidate_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+        "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+      },
+      "notes": [
+        "baseline run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)",
+        "candidate run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)",
+        "model.yaml env differs: DRIVEJEPA_MEMORY None -> ''",
+        "candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it",
+        "the runs used different paddock code (06870801c vs 0fae53422): an adapter change between them is part of the difference",
+        "the candidate ran from a paddock checkout with uncommitted edits"
+      ],
+      "slot": "",
+      "pdm": [
+        {
+          "bench": "bench2drive",
+          "metric": "collision_rate",
+          "baseline": "drivejepa:20261026T233957-56d38c",
+          "candidate": "drivejepa:20261106T024207-5a2632",
+          "verdict": "NEUTRAL",
+          "higher_is_better": false,
+          "baseline_mean": 0.2857142857142857,
+          "candidate_mean": 0.42857142857142855,
+          "diff": -0.14285714285714285,
+          "se": 0.14285714285714288,
+          "t": -0.9999999999999998,
+          "df": 6,
+          "t_crit": 2.447,
+          "units": 7,
+          "unit_name": "routes",
+          "matched": 7,
+          "only_baseline": 0,
+          "only_candidate": 0,
+          "threshold": null,
+          "beyond_threshold": null,
+          "mde": 0.4790000000000001,
+          "can_ship": true,
+          "crash_check": false,
+          "baseline_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+          },
+          "candidate_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+            "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+          },
+          "notes": [],
+          "slot": "nc",
+          "pdm": [],
+          "pdm_missing": []
+        },
+        {
+          "bench": "bench2drive",
+          "metric": "route_completion",
+          "baseline": "drivejepa:20261026T233957-56d38c",
+          "candidate": "drivejepa:20261106T024207-5a2632",
+          "verdict": "NEUTRAL",
+          "higher_is_better": true,
+          "baseline_mean": 72.23428571428572,
+          "candidate_mean": 66.26285714285714,
+          "diff": -5.971428571428572,
+          "se": 10.516747964798911,
+          "t": -0.567801813965288,
+          "df": 6,
+          "t_crit": 2.447,
+          "units": 7,
+          "unit_name": "routes",
+          "matched": 7,
+          "only_baseline": 0,
+          "only_candidate": 0,
+          "threshold": null,
+          "beyond_threshold": null,
+          "mde": 35.262655925970755,
+          "can_ship": true,
+          "crash_check": false,
+          "baseline_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+          },
+          "candidate_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+            "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+          },
+          "notes": [],
+          "slot": "ep",
+          "pdm": [],
+          "pdm_missing": []
+        }
+      ],
+      "pdm_missing": [
+        "DAC",
+        "TTC",
+        "C"
+      ]
+    },
+    {
+      "bench": "alpasim",
+      "metric": "scene_score",
+      "baseline": "drivejepa:20261027T005941-d3f828",
+      "candidate": "drivejepa:20261106T040355-9f4cd1",
+      "verdict": "INCOMPLETE",
+      "higher_is_better": true,
+      "baseline_mean": 0.422340520626746,
+      "candidate_mean": 0.5182727700753396,
+      "diff": 0.09593224944859358,
+      "se": 0.13644578960430903,
+      "t": 0.7030795873349835,
+      "df": 7,
+      "t_crit": 2.365,
+      "units": 8,
+      "unit_name": "units",
+      "matched": 8,
+      "only_baseline": 2,
+      "only_candidate": 0,
+      "threshold": null,
+      "beyond_threshold": null,
+      "mde": 0.44494971989965176,
+      "can_ship": true,
+      "crash_check": false,
+      "baseline_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+      },
+      "candidate_env": {
+        "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+        "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+      },
+      "notes": [
+        "baseline run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env); resumed: 9 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only",
+        "candidate run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env); 2 episode(s) failed",
+        "model.yaml env differs: DRIVEJEPA_MEMORY None -> ''",
+        "candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it",
+        "the runs used different paddock code (1561b66ac vs 0fae53422): an adapter change between them is part of the difference",
+        "the candidate ran from a paddock checkout with uncommitted edits",
+        "the runs cover different sample sets; only the shared samples are paired",
+        "candidate lost 2 sample(s) to a failure (partial, n_expected 10); the statistics cover only what it kept",
+        "unpaired samples left out: 2 baseline-only, 0 candidate-only",
+        "the candidate holds 8 of subset alpasim's 10; run it again on this subset"
+      ],
+      "slot": "",
+      "pdm": [
+        {
+          "bench": "alpasim",
+          "metric": "collision_at_fault",
+          "baseline": "drivejepa:20261027T005941-d3f828",
+          "candidate": "drivejepa:20261106T040355-9f4cd1",
+          "verdict": "INCOMPLETE",
+          "higher_is_better": false,
+          "baseline_mean": 0.25,
+          "candidate_mean": 0.25,
+          "diff": 0.0,
+          "se": 0.1889822365046136,
+          "t": 0.0,
+          "df": 7,
+          "t_crit": 2.365,
+          "units": 8,
+          "unit_name": "units",
+          "matched": 8,
+          "only_baseline": 2,
+          "only_candidate": 0,
+          "threshold": null,
+          "beyond_threshold": null,
+          "mde": 0.616271073241545,
+          "can_ship": true,
+          "crash_check": false,
+          "baseline_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+          },
+          "candidate_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+            "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+          },
+          "notes": [],
+          "slot": "nc",
+          "pdm": [],
+          "pdm_missing": []
+        },
+        {
+          "bench": "alpasim",
+          "metric": "offroad",
+          "baseline": "drivejepa:20261027T005941-d3f828",
+          "candidate": "drivejepa:20261106T040355-9f4cd1",
+          "verdict": "INCOMPLETE",
+          "higher_is_better": false,
+          "baseline_mean": 0.125,
+          "candidate_mean": 0.125,
+          "diff": 0.0,
+          "se": 0.0,
+          "t": null,
+          "df": 7,
+          "t_crit": 2.365,
+          "units": 8,
+          "unit_name": "units",
+          "matched": 8,
+          "only_baseline": 2,
+          "only_candidate": 0,
+          "threshold": null,
+          "beyond_threshold": null,
+          "mde": 0.0,
+          "can_ship": true,
+          "crash_check": false,
+          "baseline_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+          },
+          "candidate_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+            "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+          },
+          "notes": [],
+          "slot": "dac",
+          "pdm": [],
+          "pdm_missing": []
+        },
+        {
+          "bench": "alpasim",
+          "metric": "progress",
+          "baseline": "drivejepa:20261027T005941-d3f828",
+          "candidate": "drivejepa:20261106T040355-9f4cd1",
+          "verdict": "INCOMPLETE",
+          "higher_is_better": true,
+          "baseline_mean": 0.4705053887329035,
+          "candidate_mean": 0.5333006106641274,
+          "diff": 0.06279522193122392,
+          "se": 0.05093378024636117,
+          "t": 1.2328796650766984,
+          "df": 7,
+          "t_crit": 2.365,
+          "units": 8,
+          "unit_name": "units",
+          "matched": 8,
+          "only_baseline": 2,
+          "only_candidate": 0,
+          "threshold": null,
+          "beyond_threshold": null,
+          "mde": 0.1660950573833838,
+          "can_ship": true,
+          "crash_check": false,
+          "baseline_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"
+          },
+          "candidate_env": {
+            "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+            "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"
+          },
+          "notes": [],
+          "slot": "ep",
+          "pdm": [],
+          "pdm_missing": []
+        }
+      ],
+      "pdm_missing": [
+        "TTC",
+        "C"
+      ]
+    }
+  ]
+}

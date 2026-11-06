@@ -1,0 +1,120 @@
+{
+  "run_id": "20261105T221005-55cefc",
+  "site": "fastcode-shakaal",
+  "benchmark": "alpasim",
+  "model": "drivejepa",
+  "mode": "closed_loop",
+  "started_utc": "2026-11-05T22:10:05+00:00",
+  "duration_s": 587.3,
+  "repo_sha": null,
+  "dataset": {
+    "name": "",
+    "n_samples": 1,
+    "sequences_sha256": "aebd039bac1214b4",
+    "n_expected": 1,
+    "n_failed": 0,
+    "n_reused": 0
+  },
+  "config": {
+    "scene": "clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739",
+    "runs": 1,
+    "cameras": [
+      "CAM_FRONT",
+      "CAM_FRONT_LEFT",
+      "CAM_FRONT_RIGHT",
+      "CAM_BACK"
+    ],
+    "scene_set": "public_2601_gate10",
+    "startup_timeout_s": 900,
+    "scorer_repo_sha": "affc2ea",
+    "renderer": "nurec",
+    "topology": "1gpu",
+    "driver_profile": "drivejepa",
+    "driver_config": "paddock_bridge_drivejepa",
+    "bridge_args": [
+      "--camera-name",
+      "camera_front_wide_120fov=CAM_FRONT",
+      "--placeholder",
+      "CAM_FRONT_LEFT",
+      "--placeholder",
+      "CAM_FRONT_RIGHT",
+      "--placeholder",
+      "CAM_BACK",
+      "--placeholder-source",
+      "CAM_FRONT",
+      "--pinhole-intrinsics",
+      "--planner",
+      "drivejepa-0.1.4b",
+      "--front-camera",
+      "camera_front_wide_120fov",
+      "--frame-interval-us",
+      "50000",
+      "--force-gt-us",
+      "3000000"
+    ],
+    "scenes_csv": "public_2601_30scenes_26p01.csv",
+    "replan_log": true,
+    "declared_env": {
+      "DRIVEJEPA_CHECKPOINT": "{data.navsim.exp}drive_jepa_perception_based_agent_vitl_v2.ckpt",
+      "DRIVEJEPA_IMAGE_GEOMETRY": "openscene",
+      "DRIVEJEPA_MEMORY": "",
+      "DRIVEJEPA_MOMENTUM": "on",
+      "DRIVE_JEPA_MSDA": "auto",
+      "NAVSIM_DEVKIT_ROOT": "{repo}/navsim_v2",
+      "NAVSIM_EXP_ROOT": "{data.navsim.exp}",
+      "NUPLAN_MAPS_ROOT": "{data.navsim}/maps",
+      "NUPLAN_MAP_VERSION": "nuplan-maps-v1.0",
+      "OPENSCENE_DATA_ROOT": "{data.navsim}"
+    },
+    "model_env": {
+      "DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>",
+      "DRIVEJEPA_MEMORY": "<site path:517b7624>"
+    }
+  },
+  "hardware": {
+    "gpu_free_gb_at_start": null
+  },
+  "provenance": {
+    "repo": {
+      "repo": "Drive-JEPA",
+      "sha": null,
+      "pinned_sha": "e21f474"
+    },
+    "paddock": {
+      "sha": "0fae53422eaedef0d31b3c398ed74584517dfced",
+      "dirty": true
+    },
+    "policy": {
+      "image_geometry": "openscene",
+      "camera_frame": "ego",
+      "momentum": "on",
+      "momentum_counts": {
+        "replans": 39,
+        "fed": 38,
+        "no_previous": 1,
+        "out_of_window": 0,
+        "picks_changed": 16
+      },
+      "memory": {
+        "mode": "carry",
+        "length": 4,
+        "weights_sha256": "0679ea453b9714dbc524d4d8435619572fac784ca006b9935adffbec6a5456b4",
+        "resets": 2,
+        "steps": 39,
+        "chains": 1,
+        "clock_jumps": 0,
+        "paths": 1216,
+        "unmatched_paths": 7,
+        "unmatched_fraction": 0.0058
+      },
+      "frames_recorded": 40,
+      "history_span_s": 1.5,
+      "history_target_s": 1.5
+    }
+  },
+  "status": "complete",
+  "valid": false,
+  "superseded_by": "",
+  "notes": "1 of the 10 clips of public_2601_gate10 (--scene); a subset, not an AlpaSim score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)",
+  "ingested_from": ""
+}

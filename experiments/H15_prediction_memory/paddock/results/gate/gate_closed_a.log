@@ -1,0 +1,76 @@
+smoke for drivejepa-6474e173, tier closed (executing)
+  state directory: {runs}/gate/smoke/drivejepa-6474e173
+  lanes: cores 0-3 / port 10400, cores 4-7 / port 10500, cores 8-11 / port 10600
+  PADDOCK_CONFIG: {paddock}/paddock.toml with neuroNCAP renderer_url port 8950 and [models.drivejepa.env] DRIVEJEPA_MEMORY
+
+[launch] neuroncap (closed)
+  baseline: drivejepa:20261026T232704-7bcf0e
+
+[launch] bench2drive (closed)
+  baseline: drivejepa:20261026T233957-56d38c
+
+[launch] alpasim (closed)
+  baseline: drivejepa:20261027T005941-d3f828
+
+=== bench2drive on cores 0-3, port 10400; log {runs}/gate/smoke/drivejepa-6474e173/bench2drive.log
+
+=== neuroncap on cores 4-7, port 10500; log {runs}/gate/smoke/drivejepa-6474e173/neuroncap.log
+  alpasim: waiting for 47 GB of free GPU memory, 16 GB of it held for running simulators (34.3 GB free now)
+
+  neuroncap: exit 0, run 20261105T235036-428c51
+  neuroncap: NEUTRAL (ncap_score better by -0.2753834778935006, t -1.34, 15 units)
+
+=== alpasim on cores 4-7, port 10500; log {runs}/gate/smoke/drivejepa-6474e173/alpasim.log
+
+  bench2drive: exit 0, run 20261105T234927-199c58
+  bench2drive: NEUTRAL (driving_score better by 9.476357142857141, t 0.89, 7 units)
+
+  alpasim: exit 0, run 20261106T013721-fda566
+  alpasim: NEUTRAL (scene_score better by -0.040399488118486385, t -1.19, 10 units)
+
+wrote {runs}/gate/smoke/drivejepa-6474e173/manifest.toml
+bench        metric                    baseline candidate better by      SE      t t crit     MDE   units  verdict
+------------------------------------------------------------------------------------------------------------------
+neuroncap    ncap_score                   3.679     3.404    -0.275   0.206  -1.34   2.15   0.621      15  NEUTRAL
+             model_env: baseline {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"}, candidate {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>", "DRIVEJEPA_MEMORY": "<site path:517b7624>"}
+             note: baseline run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)
+             note: candidate run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)
+             note: model.yaml env differs: DRIVEJEPA_MEMORY None -> ''
+             note: candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it
+             note: the runs used different paddock code (06870801c vs 0fae53422): an adapter change between them is part of the difference
+             note: the candidate ran from a paddock checkout with uncommitted edits
+             note: PDM terms not recorded by one of the runs, so not compared: pdm_nc, pdm_dac, pdm_ttc, pdm_ep, pdm_comfort, pdm_style_score
+bench2drive  driving_score               59.036    68.512     9.476  10.636   0.89   2.45  35.664       7  NEUTRAL (cannot ship)
+               NC  collision_rate         0.286     0.143     0.143   0.261   0.55   2.45   0.875       7  NEUTRAL
+               EP  route_completion      72.234    70.879    -1.356   2.765  -0.49   2.45   9.273       7  NEUTRAL
+               not measured on bench2drive: DAC, TTC, C
+             model_env: baseline {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"}, candidate {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>", "DRIVEJEPA_MEMORY": "<site path:517b7624>"}
+             note: baseline run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)
+             note: candidate run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)
+             note: model.yaml env differs: DRIVEJEPA_MEMORY None -> ''
+             note: candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it
+             note: the runs used different paddock code (06870801c vs 0fae53422): an adapter change between them is part of the difference
+             note: the candidate ran from a paddock checkout with uncommitted edits
+alpasim      scene_score                  0.434     0.394    -0.040   0.034  -1.19   2.26   0.107      10  NEUTRAL
+               NC  collision_at_fault     0.200     0.300    -0.100   0.100  -1.00   2.26   0.315      10  NEUTRAL
+               DAC offroad                0.100     0.100     0.000   0.000      -   2.26   0.000      10  NEUTRAL
+               EP  progress               0.454     0.487     0.033   0.029   1.16   2.26   0.090      10  NEUTRAL
+               not measured on alpasim: TTC, C
+             model_env: baseline {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"}, candidate {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>", "DRIVEJEPA_MEMORY": "<site path:517b7624>"}
+             note: baseline run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env); resumed: 9 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only
+             note: candidate run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)
+             note: model.yaml env differs: DRIVEJEPA_MEMORY None -> ''
+             note: candidate sets DRIVEJEPA_MEMORY and the baseline does not: the baseline ran model.yaml's default for it
+             note: the runs used different paddock code (1561b66ac vs 0fae53422): an adapter change between them is part of the difference
+             note: the candidate ran from a paddock checkout with uncommitted edits
+
+'better by' is candidate minus baseline over the shared samples, signed so that positive
+is better. SE and t are clustered on the independent unit (scene, scenario pair, route, log).
+A pair is a GAIN or a REGRESSION when |t| reaches 't crit', the two-sided 5% Student-t value
+on (units - 1) degrees of freedom; with fewer than 2 units there is no verdict.
+MDE is the smallest true difference the pair detects 80% of the time: a NEUTRAL well below it says little.
+'cannot ship': too few units for a GAIN to be trusted; its REGRESSION still fails the gate.
+Indented rows are NAVSIM's PDM terms as each benchmark fills them (benchmark.yaml `pdm:`), paired the
+same way. They never decide the gate: each is tested at 5%, so across many, some cross by chance.
+
+overall: HOLD

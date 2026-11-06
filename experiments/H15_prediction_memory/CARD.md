@@ -56,3 +56,50 @@ A selective state-space memory per path, fed that path's planner output embeddin
 | H15.r3 | offline P2b: two-frame extended comfort pass rate, (a) carried 0.3759 → 0.3962 (n=12,768 pairs)<br>(a) - (b) +0.0204 [+0.0162, +0.0250]; released (c) 0.4261: (a) - (c) -0.0299 [-0.0415, -0.0196] and (b) - (c) -0.0503 [-0.0635, -0.0391], both trained arms less comfortable than released | (b) wiped, same layer | ●●●○ strong · open-loop | {data}/memory_cache/h15/evaluate.json (navtrain cache); write-up MEMORY_H15_STEP3.md (Siddesh, 5 Nov) |
 | H15.r3 | offline R1: picks a braking path where a best path brakes and released does not, (a) carried 0.1465 → 0.1264 (n=546 samples)<br>read-out, no prediction; (a) - (b) -0.0202 [-0.0355, -0.0047]; released 0 by the subset's definition. 'better' is not pinned: braking here is only good where the braking path is the best one, which these moments are | (b) wiped, same layer | ●●○○ moderate · open-loop | {data}/memory_cache/h15/evaluate.json (navtrain cache); write-up MEMORY_H15_STEP3.md (Siddesh, 5 Nov) |
 | H15.r3 | offline pick is a best path, (a) carried 0.3947 → 0.3905 (n=15,320 samples)<br>(a) - (b) -0.0042 [-0.0061, -0.0024]; released 0.3582, (a) - (c) +0.0323 [+0.0275, +0.0373]; mean grade does not rise with it | (b) wiped, same layer | ●●●○ strong · open-loop | {data}/memory_cache/h15/evaluate.json (navtrain cache); write-up MEMORY_H15_STEP3.md (Siddesh, 5 Nov) |
+
+## Regression gate
+
+**H15.r3-a-s0** — 6 Nov 2026, quick tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): ⏸ **HOLD**
+
+| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
+|---|---|---|---|---|---|---|---|
+| KITScenes | ADE (m) | 2.537 | 2.292 | 2.78 | 0.25 | 117 | 🟢 GAIN |
+| nuScenes | L2 avg (m) | 2.431 | 2.336 | 1.59 | 0.169 | 143 | ⚪ NEUTRAL |
+| NAVSIM | EPDMS | 0.857 | 0.858 | 0.13 | 0.011 | 126 | ⚪ NEUTRAL |
+| neuroNCAP | NCAP score (quick: 3 pairs, cannot ship) | 3.179 | 2.533 | -0.71 | 4.866 | 3 | ⚪ NEUTRAL |
+| Bench2Drive | driving score (route 3717, crash check) | 37.670 | 28.141 |  |  | 1 | ▫️ TOO FEW UNITS |
+| AlpaSim | scene score (1acf2f5d, crash check) | 0.929 | 0.967 |  |  | 1 | ▫️ TOO FEW UNITS |
+
+By hand from a throwaway paddock worktree (Sid D28-D30), momentum on, one lane. neuroNCAP quick first failed to start its renderer (port 8900 held by another user's process) and was re-run on port 8950 (Sid). The Bench2Drive and AlpaSim crash checks ran cleanly (one unit: no verdict). Beside the scores, NAVSIM's no-at-fault-collisions term is a REGRESSION, 0.993 to 0.988 (t -2.19); per-term pairs never decide the gate.
+
+**H15.r3-a-s0** — 6 Nov 2026, closed tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): ⏸ **HOLD**
+
+| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
+|---|---|---|---|---|---|---|---|
+| neuroNCAP | NCAP score (15 pairs) | 3.679 | 3.404 | -1.34 | 0.621 | 15 | ⚪ NEUTRAL |
+| Bench2Drive | driving score (7 routes, cannot ship) | 59.036 | 68.512 | 0.89 | 35.664 | 7 | ⚪ NEUTRAL |
+| AlpaSim | scene score (10 gate scenes) | 0.434 | 0.394 | -1.19 | 0.107 | 10 | ⚪ NEUTRAL |
+
+Three lanes. AlpaSim on alpasim-base 9ee8dfb8 (rebuilt 3 Nov), checked first: released on 1acf2f5d gave 0.9294890766651916, the baseline's exact value (Naren's rule). P4 side pairs (braking start from ego poses): side-0103 score 0.00, did not brake, impact 8.71 m/s (released 2.44, 1.5 s, 3.17 m/s); side-0110 3.04, 0.6 s, 2.28 m/s (released 5.0, 0.2 s, none). AlpaSim at-fault collisions 3 against released 2 (new: d1a25a99).
+
+**H15.r3-b-s0** — 6 Nov 2026, quick tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): ⏸ **HOLD**
+
+| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
+|---|---|---|---|---|---|---|---|
+| KITScenes | ADE (m) | 2.537 | 2.261 | 3.17 | 0.246 | 117 | 🟢 GAIN |
+| nuScenes | L2 avg (m) | 2.431 | 2.288 | 2.53 | 0.16 | 143 | 🟢 GAIN |
+| NAVSIM | EPDMS | 0.857 | 0.856 | -0.32 | 0.01 | 126 | ⚪ NEUTRAL |
+| neuroNCAP | NCAP score (quick: 3 pairs, cannot ship) | 3.179 | 4.213 | 1.32 | 4.186 | 3 | ⚪ NEUTRAL |
+| Bench2Drive | driving score (route 3717, crash check) | 37.670 | 16.400 |  |  | 1 | ▫️ TOO FEW UNITS |
+| AlpaSim | scene score (1acf2f5d, crash check) | 0.929 | 1.000 |  |  | 1 | ▫️ TOO FEW UNITS |
+
+As (a), same commands and site. No REGRESSION, terms included.
+
+**H15.r3-b-s0** — 6 Nov 2026, closed tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): … INCOMPLETE
+
+| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
+|---|---|---|---|---|---|---|---|
+| neuroNCAP | NCAP score (15 pairs) | 3.679 | 3.531 | -0.38 | 1.17 | 15 | ⚪ NEUTRAL |
+| Bench2Drive | driving score (7 routes, cannot ship) | 59.036 | 45.964 | -1.23 | 35.714 | 7 | ⚪ NEUTRAL |
+
+AlpaSim INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving, the bridge not accepting connections within 60 s; on the 8 that ran, released 0.422 and (b) 0.518 (t 0.70), not a verdict, so the AlpaSim pair is left out here. P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions on the 8: d1a25a99, b44a4a44.

@@ -1,0 +1,259 @@
+{
+  "run_id": "20261106T013721-fda566",
+  "primary_metric": "scene_score",
+  "n": 10,
+  "metrics": {
+    "scene_score": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.393966,
+      "median": 0.100884,
+      "p90": 0.970095,
+      "max": 1.0,
+      "std": 0.444582
+    },
+    "progress": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.486733,
+      "median": 0.528254,
+      "p90": 0.950807,
+      "max": 1.0,
+      "std": 0.362721
+    },
+    "collision_rate": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.4,
+      "median": 0.0,
+      "p90": 1.0,
+      "max": 1.0,
+      "std": 0.489898
+    },
+    "collision_at_fault": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.3,
+      "median": 0.0,
+      "p90": 1.0,
+      "max": 1.0,
+      "std": 0.458258
+    },
+    "offroad": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.1,
+      "median": 0.0,
+      "p90": 0.1,
+      "max": 1.0,
+      "std": 0.3
+    },
+    "duration_frac_20s": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.5685,
+      "median": 0.58625,
+      "p90": 0.84,
+      "max": 0.84,
+      "std": 0.244395
+    },
+    "dist_to_gt_trajectory": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 1.938782,
+      "median": 1.300795,
+      "p90": 4.045142,
+      "max": 4.400152,
+      "std": 1.49035
+    },
+    "open_loop_collision": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 0.175363,
+      "median": 0.011905,
+      "p90": 0.468338,
+      "max": 0.555556,
+      "std": 0.218745
+    },
+    "duration_s": {
+      "n": 10,
+      "n_missing": 0,
+      "mean": 366.44,
+      "median": 371.1,
+      "p90": 408.61,
+      "max": 423.1,
+      "std": 43.200306
+    }
+  },
+  "by_split": {
+    "ext20": {
+      "n": 9,
+      "scene_score": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.326629,
+        "median": 0.051968,
+        "p90": 0.913175,
+        "max": 0.966772,
+        "std": 0.417459
+      },
+      "progress": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.429703,
+        "median": 0.359434,
+        "p90": 0.807802,
+        "max": 0.945341,
+        "std": 0.337137
+      },
+      "collision_rate": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.444444,
+        "median": 0.0,
+        "p90": 1.0,
+        "max": 1.0,
+        "std": 0.496904
+      },
+      "collision_at_fault": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.333333,
+        "median": 0.0,
+        "p90": 1.0,
+        "max": 1.0,
+        "std": 0.471405
+      },
+      "offroad": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.111111,
+        "median": 0.0,
+        "p90": 0.2,
+        "max": 1.0,
+        "std": 0.31427
+      },
+      "duration_frac_20s": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.545556,
+        "median": 0.4525,
+        "p90": 0.84,
+        "max": 0.84,
+        "std": 0.247186
+      },
+      "dist_to_gt_trajectory": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 1.665297,
+        "median": 1.291017,
+        "p90": 3.561091,
+        "max": 4.005696,
+        "std": 1.311485
+      },
+      "open_loop_collision": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 0.194848,
+        "median": 0.02381,
+        "p90": 0.478028,
+        "max": 0.555556,
+        "std": 0.222193
+      },
+      "duration_s": {
+        "n": 9,
+        "n_missing": 0,
+        "mean": 369.311111,
+        "median": 395.2,
+        "p90": 410.22,
+        "max": 423.1,
+        "std": 44.622825
+      }
+    },
+    "pilot10": {
+      "n": 1,
+      "scene_score": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "max": 1.0,
+        "std": 0.0
+      },
+      "progress": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 1.0,
+        "median": 1.0,
+        "p90": 1.0,
+        "max": 1.0,
+        "std": 0.0
+      },
+      "collision_rate": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 0.0,
+        "median": 0.0,
+        "p90": 0.0,
+        "max": 0.0,
+        "std": 0.0
+      },
+      "collision_at_fault": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 0.0,
+        "median": 0.0,
+        "p90": 0.0,
+        "max": 0.0,
+        "std": 0.0
+      },
+      "offroad": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 0.0,
+        "median": 0.0,
+        "p90": 0.0,
+        "max": 0.0,
+        "std": 0.0
+      },
+      "duration_frac_20s": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 0.775,
+        "median": 0.775,
+        "p90": 0.775,
+        "max": 0.775,
+        "std": 0.0
+      },
+      "dist_to_gt_trajectory": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 4.400152,
+        "median": 4.400152,
+        "p90": 4.400152,
+        "max": 4.400152,
+        "std": 0.0
+      },
+      "open_loop_collision": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 0.0,
+        "median": 0.0,
+        "p90": 0.0,
+        "max": 0.0,
+        "std": 0.0
+      },
+      "duration_s": {
+        "n": 1,
+        "n_missing": 0,
+        "mean": 340.6,
+        "median": 340.6,
+        "p90": 340.6,
+        "max": 340.6,
+        "std": 0.0
+      }
+    }
+  },
+  "by_group": {}
+}
