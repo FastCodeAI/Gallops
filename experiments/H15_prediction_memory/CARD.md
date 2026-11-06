@@ -95,11 +95,12 @@ Three lanes. AlpaSim on alpasim-base 9ee8dfb8 (rebuilt 3 Nov), checked first: re
 
 As (a), same commands and site. No REGRESSION, terms included.
 
-**H15.r3-b-s0** — 6 Nov 2026, closed tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): … INCOMPLETE
+**H15.r3-b-s0** — 6 Nov 2026, closed tier, against released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run): ⏸ **HOLD**
 
 | Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
 |---|---|---|---|---|---|---|---|
 | neuroNCAP | NCAP score (15 pairs) | 3.679 | 3.531 | -0.38 | 1.17 | 15 | ⚪ NEUTRAL |
 | Bench2Drive | driving score (7 routes, cannot ship) | 59.036 | 45.964 | -1.23 | 35.714 | 7 | ⚪ NEUTRAL |
+| AlpaSim | scene score (10 gate scenes) | 0.434 | 0.508 | 0.68 | 0.342 | 10 | ⚪ NEUTRAL |
 
-AlpaSim INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving, the bridge not accepting connections within 60 s; on the 8 that ran, released 0.422 and (b) 0.518 (t 0.70), not a verdict, so the AlpaSim pair is left out here. P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions on the 8: d1a25a99, b44a4a44.
+AlpaSim first INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving (bridge not accepting connections within 60 s); completed on 6 Nov 23:15-23:30 IST by resuming the same run in place (paddock run --resume, the 8 finished scenes reused, Sid), then the gate re-checked the tier (gate_closed_b_recheck). P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions: d1a25a99, b44a4a44 (released: b44a4a44, 8023dce5).

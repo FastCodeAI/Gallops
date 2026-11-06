@@ -474,11 +474,11 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   [[runs.gate]]
   date = 2026-11-06
   tier = "closed"
-  verdict = "INCOMPLETE"
+  verdict = "HOLD"
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
   manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
-  note = "AlpaSim INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving, the bridge not accepting connections within 60 s; on the 8 that ran, released 0.422 and (b) 0.518 (t 0.70), not a verdict, so the AlpaSim pair is left out here. P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions on the 8: d1a25a99, b44a4a44."
+  note = "AlpaSim first INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving (bridge not accepting connections within 60 s); completed on 6 Nov 23:15-23:30 IST by resuming the same run in place (paddock run --resume, the 8 finished scenes reused, Sid), then the gate re-checked the tier (gate_closed_b_recheck). P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions: d1a25a99, b44a4a44 (released: b44a4a44, 8023dce5)."
 
     [[runs.gate.pairs]]
     bench = "neuroncap"
@@ -498,6 +498,16 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
     t = -1.23
     mde = 35.714
     units = 7
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene score (10 gate scenes)"
+    baseline = "0.434"
+    candidate = "0.508"
+    t = 0.68
+    mde = 0.342
+    units = 10
     verdict = "NEUTRAL"
 
 [[runs]]

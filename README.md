@@ -263,7 +263,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | 6 Nov 2026 | [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) | `0679ea453b97` | quick | ⚪ 0.857 → 0.858 | 🟢 2.537 → 2.292 | ⚪ 2.431 → 2.336 | ⚪ 3.179 → 2.533 | ▫️ 37.670 → 28.141 | ▫️ 0.929 → 0.967 | ⏸ **HOLD** |
 | 6 Nov 2026 | [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) | `0679ea453b97` | closed | — | — | — | ⚪ 3.679 → 3.404 | ⚪ 59.036 → 68.512 | ⚪ 0.434 → 0.394 | ⏸ **HOLD** |
 | 6 Nov 2026 | [H15.r3-b-s0](experiments/H15_prediction_memory/CARD.md) | `dfd944c1c3f1` | quick | ⚪ 0.857 → 0.856 | 🟢 2.537 → 2.261 | 🟢 2.431 → 2.288 | ⚪ 3.179 → 4.213 | ▫️ 37.670 → 16.400 | ▫️ 0.929 → 1.000 | ⏸ **HOLD** |
-| 6 Nov 2026 | [H15.r3-b-s0](experiments/H15_prediction_memory/CARD.md) | `dfd944c1c3f1` | closed | — | — | — | ⚪ 3.679 → 3.531 | ⚪ 59.036 → 45.964 | — | … INCOMPLETE |
+| 6 Nov 2026 | [H15.r3-b-s0](experiments/H15_prediction_memory/CARD.md) | `dfd944c1c3f1` | closed | — | — | — | ⚪ 3.679 → 3.531 | ⚪ 59.036 → 45.964 | ⚪ 0.434 → 0.508 | ⏸ **HOLD** |
 <!-- /experiments:gate -->
 
 ## Decision log

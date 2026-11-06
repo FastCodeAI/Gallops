@@ -4,16 +4,16 @@
   "benchmark": "alpasim",
   "model": "drivejepa",
   "mode": "closed_loop",
-  "started_utc": "2026-11-06T04:03:55+00:00",
-  "duration_s": 5767.8,
+  "started_utc": "2026-11-06T17:45:31+00:00",
+  "duration_s": 915.1,
   "repo_sha": null,
   "dataset": {
     "name": "",
-    "n_samples": 8,
-    "sequences_sha256": "3268f498a5ee16c6",
+    "n_samples": 10,
+    "sequences_sha256": "e12ceecc19eeb65e",
     "n_expected": 10,
-    "n_failed": 2,
-    "n_reused": 0
+    "n_failed": 0,
+    "n_reused": 8
   },
   "config": {
     "scene": null,
@@ -89,32 +89,32 @@
       "camera_frame": "ego",
       "momentum": "on",
       "momentum_counts": {
-        "replans": 312,
-        "fed": 304,
-        "no_previous": 8,
+        "replans": 78,
+        "fed": 76,
+        "no_previous": 2,
         "out_of_window": 0,
-        "picks_changed": 83
+        "picks_changed": 18
       },
       "memory": {
         "mode": "reset",
         "length": 0,
         "weights_sha256": "dfd944c1c3f1ceabae1cfdfc2bf63c55c19872b887ad2ffd3909da2c29ed8bca",
-        "resets": 9,
-        "steps": 312,
-        "chains": 8,
+        "resets": 3,
+        "steps": 78,
+        "chains": 2,
         "clock_jumps": 0,
-        "paths": 9728,
-        "unmatched_paths": 137,
-        "unmatched_fraction": 0.0141
+        "paths": 2432,
+        "unmatched_paths": 14,
+        "unmatched_fraction": 0.0058
       },
       "frames_recorded": 40,
       "history_span_s": 1.5,
       "history_target_s": 1.5
     }
   },
-  "status": "partial",
+  "status": "complete",
   "valid": false,
   "superseded_by": "",
-  "notes": "site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env); 2 episode(s) failed",
+  "notes": "site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env); resumed: 8 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only",
   "ingested_from": ""
 }

@@ -1,0 +1,22 @@
+bench        metric                    baseline candidate better by      SE      t t crit     MDE   units  verdict
+------------------------------------------------------------------------------------------------------------------
+alpasim      scene_score                  0.508     0.394    -0.114   0.099  -1.16   2.26   0.311      10  NEUTRAL
+               NC  collision_at_fault     0.200     0.300    -0.100   0.100  -1.00   2.26   0.315      10  NEUTRAL
+               DAC offroad                0.100     0.100     0.000   0.000      -   2.26   0.000      10  NEUTRAL
+               EP  progress               0.502     0.487    -0.015   0.036  -0.41   2.26   0.115      10  NEUTRAL
+               not measured on alpasim: TTC, C
+             model_env: baseline {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>", "DRIVEJEPA_MEMORY": "<site path:ceb630d8>"}, candidate {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>", "DRIVEJEPA_MEMORY": "<site path:517b7624>"}
+             note: baseline run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env); resumed: 8 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only
+             note: candidate run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_MEMORY (values in config.model_env)
+             note: the baseline ran from a paddock checkout with uncommitted edits
+             note: the candidate ran from a paddock checkout with uncommitted edits
+
+'better by' is candidate minus baseline over the shared samples, signed so that positive
+is better. SE and t are clustered on the independent unit (scene, scenario pair, route, log).
+A pair is a GAIN or a REGRESSION when |t| reaches 't crit', the two-sided 5% Student-t value
+on (units - 1) degrees of freedom; with fewer than 2 units there is no verdict.
+MDE is the smallest true difference the pair detects 80% of the time: a NEUTRAL well below it says little.
+Indented rows are NAVSIM's PDM terms as each benchmark fills them (benchmark.yaml `pdm:`), paired the
+same way. They never decide the gate: each is tested at 5%, so across many, some cross by chance.
+
+overall: HOLD
