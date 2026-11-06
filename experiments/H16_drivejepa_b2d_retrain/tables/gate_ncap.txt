@@ -1,0 +1,74 @@
+smoke for drivejepa_p2-ncap, tier all (executing)
+  state directory: {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap
+  lanes: cores 28-31 / port 10900
+  PADDOCK_CONFIG: {ops}/b2d_drivejepa/phase2/gate/paddock.toml with neuroNCAP renderer_url port 8960
+
+[launch] neuroncap_quick (quick)
+  cd {ops}/worktrees/gate-oct27 && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27/src PADDOCK_BASE_PORT=10900 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/paddock.toml PADDOCK_NCAP_MANAGE_RENDERER=true PADDOCK_NCAP_PAIRS=frontal-0103,side-0103,stationary-0783 taskset -c 28-31 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench neuroncap --model drivejepa_p2 --scene 0103,0783 --runs 1
+  baseline: drivejepa:20261026T195633-2a9a76
+
+[launch] neuroncap (closed)
+  cd {ops}/worktrees/gate-oct27 && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27/src PADDOCK_BASE_PORT=10900 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/paddock.toml PADDOCK_NCAP_MANAGE_RENDERER=true PADDOCK_NCAP_PAIRS=frontal-0103,frontal-0106,frontal-0110,frontal-0346,frontal-0923,side-0103,side-0108,side-0110,side-0278,side-0921,stationary-0099,stationary-0101,stationary-0331,stationary-0796,stationary-0966 taskset -c 28-31 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench neuroncap --model drivejepa_p2 --scene 0099,0101,0103,0106,0108,0110,0278,0331,0346,0796,0921,0923,0966 --runs 1
+  baseline: drivejepa:20261026T232704-7bcf0e
+
+=== neuroncap_quick on cores 28-31, port 10900; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/neuroncap_quick.log
+
+  neuroncap_quick: exit 0, run 20261106T060736-4ffabb
+  neuroncap_quick: NEUTRAL (ncap_score better by -3.0812731429275946, t -3.21, 3 units)
+
+=== neuroncap on cores 28-31, port 10900; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/neuroncap.log
+
+  neuroncap: exit 0, run 20261106T062033-0ef480
+  neuroncap: REGRESSION (ncap_score better by -1.8591874013423597, t -3.24, 15 units)
+  neuroncap: PDM terms worse beyond t crit, not part of the verdict: neuroncap NC pdm_nc (t -2.26), neuroncap DAC pdm_dac (t -2.41), neuroncap TTC pdm_ttc (t -2.17), neuroncap PDM pdm_style_score (t -2.68)
+
+wrote {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/manifest.toml
+bench        metric                 baseline candidate better by      SE      t t crit     MDE   units  verdict
+---------------------------------------------------------------------------------------------------------------
+neuroncap    ncap_score                3.179     0.098    -3.081   0.959  -3.21   4.30   5.146       3  NEUTRAL (cannot ship)
+             model_env: baseline {}, candidate {}
+             note: baseline run is marked invalid: 3 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes)
+             note: candidate run is marked invalid: 3 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes)
+             note: model.yaml env differs: CUDA_HOME None -> '<site path:2aaa35c4>'
+             note: model.yaml env differs: DRIVEJEPA_CHECKPOINT '{data.navsim.exp}drive_jepa_perception_based_agent_vitl_v2.ckpt' -> '<site path:dbd42f42>'
+             note: model.yaml env differs: DRIVEJEPA_IMAGE_GEOMETRY 'openscene' -> 'native'
+             note: model.yaml env differs: DRIVEJEPA_MOMENTUM 'on' -> None
+             note: model.yaml env differs: DRIVE_JEPA_MSDA 'auto' -> 'pytorch'
+             note: model.yaml env differs: NAVSIM_DEVKIT_ROOT '{repo}/navsim_v2' -> '<site path:334481e4>'
+             note: model.yaml env differs: NAVSIM_EXP_ROOT '{data.navsim.exp}' -> '<site path:0db8f1f7>'
+             note: model.yaml env differs: NUPLAN_MAPS_ROOT '{data.navsim}/maps' -> None
+             note: model.yaml env differs: OPENSCENE_DATA_ROOT '{data.navsim}' -> None
+             note: the runs used different paddock code (54306afa9 vs 3daf4b9cb): an adapter change between them is part of the difference
+             note: PDM terms not recorded by one of the runs, so not compared: pdm_nc, pdm_dac, pdm_ttc, pdm_ep, pdm_comfort, pdm_style_score
+neuroncap    ncap_score                3.679     1.820    -1.859   0.574  -3.24   2.15   1.731      15  REGRESSION
+               NC  pdm_nc              0.637     0.380    -0.257   0.114  -2.26   2.15   0.343      15  REGRESSION
+               DAC pdm_dac             0.998     0.831    -0.168   0.069  -2.41   2.15   0.209      15  REGRESSION
+               TTC pdm_ttc             0.582     0.304    -0.278   0.128  -2.17   2.15   0.385      15  REGRESSION
+               EP  pdm_ep              0.448     0.249    -0.199   0.096  -2.06   2.15   0.291      15  NEUTRAL
+               C   pdm_comfort         0.918     0.798    -0.121   0.063  -1.91   2.15   0.190      15  NEUTRAL
+               PDM pdm_style_score     0.525     0.231    -0.294   0.110  -2.68   2.15   0.331      15  REGRESSION
+             model_env: baseline {"DRIVEJEPA_CHECKPOINT": "<site path:a90f1310>"}, candidate {}
+             note: baseline run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)
+             note: candidate run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes)
+             note: model.yaml env differs: CUDA_HOME None -> '<site path:2aaa35c4>'
+             note: model.yaml env differs: DRIVEJEPA_CHECKPOINT '{data.navsim.exp}drive_jepa_perception_based_agent_vitl_v2.ckpt' -> '<site path:dbd42f42>'
+             note: model.yaml env differs: DRIVEJEPA_IMAGE_GEOMETRY 'openscene' -> 'native'
+             note: model.yaml env differs: DRIVEJEPA_MOMENTUM 'on' -> None
+             note: model.yaml env differs: DRIVE_JEPA_MSDA 'auto' -> 'pytorch'
+             note: model.yaml env differs: NAVSIM_DEVKIT_ROOT '{repo}/navsim_v2' -> '<site path:334481e4>'
+             note: model.yaml env differs: NAVSIM_EXP_ROOT '{data.navsim.exp}' -> '<site path:0db8f1f7>'
+             note: model.yaml env differs: NUPLAN_MAPS_ROOT '{data.navsim}/maps' -> None
+             note: model.yaml env differs: OPENSCENE_DATA_ROOT '{data.navsim}' -> None
+             note: the runs used different paddock code (06870801c vs 3daf4b9cb): an adapter change between them is part of the difference
+
+'better by' is candidate minus baseline over the shared samples, signed so that positive
+is better. SE and t are clustered on the independent unit (scene, scenario pair, route, log).
+A pair is a GAIN or a REGRESSION when |t| reaches 't crit', the two-sided 5% Student-t value
+on (units - 1) degrees of freedom; with fewer than 2 units there is no verdict.
+MDE is the smallest true difference the pair detects 80% of the time: a NEUTRAL well below it says little.
+'cannot ship': too few units for a GAIN to be trusted; its REGRESSION still fails the gate.
+Indented rows are NAVSIM's PDM terms as each benchmark fills them (benchmark.yaml `pdm:`), paired the
+same way. They never decide the gate: each is tested at 5%, so across many, some cross by chance.
+
+overall: FAIL
+PDM terms worse beyond t crit, not part of the verdict: neuroncap NC pdm_nc (t -2.26), neuroncap DAC pdm_dac (t -2.41), neuroncap TTC pdm_ttc (t -2.17), neuroncap PDM pdm_style_score (t -2.68)

@@ -1,0 +1,80 @@
+smoke for drivejepa_p2-openloop, tier quick (executing)
+  state directory: {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop
+  lanes: cores 24-27 / port 10700
+  PADDOCK_CONFIG: {ops}/b2d_drivejepa/phase2/gate/paddock.toml with neuroNCAP renderer_url port 8700
+
+[launch] kitscenes (quick)
+  cd {ops}/worktrees/gate-oct27 && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27/src PADDOCK_BASE_PORT=10700 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/paddock.toml taskset -c 24-27 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench kitscenes --model drivejepa_p2
+  baseline: drivejepa:20261023T195836-e90d98
+
+[launch] nuscenes (quick)
+  cd {ops}/worktrees/gate-oct27 && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27/src PADDOCK_BASE_PORT=10700 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/paddock.toml PADDOCK_NUSCENES_SAMPLES="$({workspace}/Paddock/.venv/bin/python -m tools.gate subset nuscenes --env PADDOCK_NUSCENES_SAMPLES)" taskset -c 24-27 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench nuscenes --model drivejepa_p2 --limit 1000
+  baseline: drivejepa:20261023T200508-261359
+
+[launch] navsim (quick)
+  cd {ops}/worktrees/gate-oct27 && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27/src PADDOCK_BASE_PORT=10700 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/paddock.toml PADDOCK_NAVSIM_OVERRIDES="$({workspace}/Paddock/.venv/bin/python -m tools.gate subset navsim --env PADDOCK_NAVSIM_OVERRIDES)" taskset -c 24-27 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench navsim --model drivejepa_p2 --limit 1018
+  baseline: drivejepa:20261023T202240-de2f00
+
+=== kitscenes on cores 24-27, port 10700; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/kitscenes.log
+
+  kitscenes: exit 0, run 20261106T050616-13e261
+  kitscenes: REGRESSION (ade better by -0.6214712539224313, t -2.91, 117 units)
+  kitscenes: PDM terms worse beyond t crit, not part of the verdict: kitscenes C pdm_comfort (t -10.63)
+
+=== nuscenes on cores 24-27, port 10700; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/nuscenes.log
+
+  nuscenes: exit 0, run 20261106T064433-b94735
+  nuscenes: REGRESSION (l2_avg better by -1.364848810387867, t -8.13, 143 units)
+  nuscenes: PDM terms worse beyond t crit, not part of the verdict: nuscenes C pdm_comfort (t -13.48)
+
+=== navsim on cores 24-27, port 10700; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/navsim.log
+
+  navsim: exit 1, run 20261106T072511-6d0a1c
+
+wrote {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-openloop/manifest.toml
+not finished: navsim; the same command resumes them
+bench        metric             baseline candidate better by      SE      t t crit     MDE   units  verdict
+-----------------------------------------------------------------------------------------------------------
+kitscenes    ade                   2.537     3.159    -0.621   0.214  -2.91   1.98   0.604     117  REGRESSION
+               EP  pdm_ep          0.820     0.905     0.085   0.024   3.56   1.98   0.067     117  GAIN
+               C   pdm_comfort     0.435     0.027    -0.409   0.038 -10.63   1.98   0.109     117  REGRESSION
+               not measured on kitscenes: NC, DAC, TTC
+             model_env: baseline {}, candidate {}
+             note: model.yaml env differs: CUDA_HOME None -> '<site path:2aaa35c4>'
+             note: model.yaml env differs: DRIVEJEPA_CHECKPOINT '{data.navsim.exp}drive_jepa_perception_based_agent_vitl_v2.ckpt' -> '<site path:dbd42f42>'
+             note: model.yaml env differs: DRIVEJEPA_IMAGE_GEOMETRY 'openscene' -> 'native'
+             note: model.yaml env differs: DRIVE_JEPA_MSDA 'auto' -> 'pytorch'
+             note: model.yaml env differs: NAVSIM_DEVKIT_ROOT '{repo}/navsim_v2' -> '<site path:334481e4>'
+             note: model.yaml env differs: NAVSIM_EXP_ROOT '{data.navsim.exp}' -> '<site path:0db8f1f7>'
+             note: model.yaml env differs: NUPLAN_MAPS_ROOT '{data.navsim}/maps' -> None
+             note: model.yaml env differs: OPENSCENE_DATA_ROOT '{data.navsim}' -> None
+             note: the runs used different paddock code (d889539c9 vs 3daf4b9cb): an adapter change between them is part of the difference
+             note: 37 sample(s) of overlap_train_val left out of this verdict (overlap_train_val: places in the training data); on them alone, better by -0.590, t -1.24
+nuscenes     l2_avg                2.431     3.796    -1.365   0.168  -8.13   1.98   0.474     143  REGRESSION
+               NC  col_avg         0.021     0.024    -0.003   0.006  -0.46   1.98   0.018     143  NEUTRAL
+               EP  pdm_ep          0.864     0.966     0.102   0.015   6.80   1.98   0.042     143  GAIN
+               C   pdm_comfort     0.412     0.063    -0.349   0.026 -13.48   1.98   0.073     143  REGRESSION
+               not measured on nuscenes: DAC, TTC
+             model_env: baseline {}, candidate {}
+             note: baseline run is marked invalid: 1000 samples named by PADDOCK_NUSCENES_SAMPLES; a subset, not a nuScenes score; --limit 1000: a subset of the benchmark, run to test the pipeline
+             note: candidate run is marked invalid: 1000 samples named by PADDOCK_NUSCENES_SAMPLES; a subset, not a nuScenes score; --limit 1000: a subset of the benchmark, run to test the pipeline
+             note: model.yaml env differs: CUDA_HOME None -> '<site path:2aaa35c4>'
+             note: model.yaml env differs: DRIVEJEPA_CHECKPOINT '{data.navsim.exp}drive_jepa_perception_based_agent_vitl_v2.ckpt' -> '<site path:dbd42f42>'
+             note: model.yaml env differs: DRIVEJEPA_IMAGE_GEOMETRY 'openscene' -> 'native'
+             note: model.yaml env differs: DRIVE_JEPA_MSDA 'auto' -> 'pytorch'
+             note: model.yaml env differs: NAVSIM_DEVKIT_ROOT '{repo}/navsim_v2' -> '<site path:334481e4>'
+             note: model.yaml env differs: NAVSIM_EXP_ROOT '{data.navsim.exp}' -> '<site path:0db8f1f7>'
+             note: model.yaml env differs: NUPLAN_MAPS_ROOT '{data.navsim}/maps' -> None
+             note: model.yaml env differs: OPENSCENE_DATA_ROOT '{data.navsim}' -> None
+             note: the runs used different paddock code (d889539c9 vs 3daf4b9cb): an adapter change between them is part of the difference
+
+'better by' is candidate minus baseline over the shared samples, signed so that positive
+is better. SE and t are clustered on the independent unit (scene, scenario pair, route, log).
+A pair is a GAIN or a REGRESSION when |t| reaches 't crit', the two-sided 5% Student-t value
+on (units - 1) degrees of freedom; with fewer than 2 units there is no verdict.
+MDE is the smallest true difference the pair detects 80% of the time: a NEUTRAL well below it says little.
+Indented rows are NAVSIM's PDM terms as each benchmark fills them (benchmark.yaml `pdm:`), paired the
+same way. They never decide the gate: each is tested at 5%, so across many, some cross by chance.
+
+overall: FAIL (not finished: navsim)
+PDM terms worse beyond t crit, not part of the verdict: kitscenes C pdm_comfort (t -10.63), nuscenes C pdm_comfort (t -13.48)

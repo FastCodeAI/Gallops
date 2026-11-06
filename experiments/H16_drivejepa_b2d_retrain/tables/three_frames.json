@@ -1,0 +1,107 @@
+[
+ {
+  "scenario": "HazardAtSideLaneTwoWays",
+  "clip": "HazardAtSideLaneTwoWays_Town12_Route1147_Weather3",
+  "frame": "18000",
+  "v1": {
+   "v0": 3.1,
+   "feasible": 513,
+   "expert_S": 0.054,
+   "expert_terms": {},
+   "expert_outside": 0.946,
+   "expert_P": 1.0,
+   "best_stop_S": 0.537,
+   "stop_paths": 60,
+   "best_path_S": 1.0,
+   "teachers": 1,
+   "teachers_that_stop": 0,
+   "teachers_go": 1,
+   "teachers_mean_end_y": 7.6
+  },
+  "v2": {
+   "v0": 3.1,
+   "feasible": 513,
+   "expert_S": 0.781,
+   "expert_terms": {},
+   "expert_outside": 0.219,
+   "expert_P": 1.0,
+   "best_stop_S": 0.588,
+   "stop_paths": 60,
+   "best_path_S": 0.966,
+   "teachers": 1,
+   "teachers_that_stop": 0,
+   "teachers_go": 1,
+   "teachers_mean_end_y": 11.6
+  }
+ },
+ {
+  "scenario": "AccidentTwoWays",
+  "clip": "AccidentTwoWays_Town12_Route1103_Weather11",
+  "frame": "30500",
+  "v1": {
+   "v0": 3.5,
+   "feasible": 549,
+   "expert_S": 0.226,
+   "expert_terms": {},
+   "expert_outside": 0.774,
+   "expert_P": 1.0,
+   "best_stop_S": 0.623,
+   "stop_paths": 69,
+   "best_path_S": 0.82,
+   "teachers": 0,
+   "teachers_that_stop": 0,
+   "teachers_go": 0,
+   "teachers_mean_end_y": null
+  },
+  "v2": {
+   "v0": 3.5,
+   "feasible": 549,
+   "expert_S": 0.822,
+   "expert_terms": {},
+   "expert_outside": 0.178,
+   "expert_P": 1.0,
+   "best_stop_S": 0.568,
+   "stop_paths": 69,
+   "best_path_S": 0.938,
+   "teachers": 0,
+   "teachers_that_stop": 0,
+   "teachers_go": 0,
+   "teachers_mean_end_y": null
+  }
+ },
+ {
+  "scenario": "VehicleOpensDoorTwoWays",
+  "clip": "VehicleOpensDoorTwoWays_Town12_Route1203_Weather7",
+  "frame": "21500",
+  "v1": {
+   "v0": 3.3,
+   "feasible": 522,
+   "expert_S": 0.248,
+   "expert_terms": {},
+   "expert_outside": 0.752,
+   "expert_P": 1.0,
+   "best_stop_S": 1.0,
+   "stop_paths": 63,
+   "best_path_S": 1.0,
+   "teachers": 13,
+   "teachers_that_stop": 1,
+   "teachers_go": 12,
+   "teachers_mean_end_y": 7.7
+  },
+  "v2": {
+   "v0": 3.3,
+   "feasible": 522,
+   "expert_S": 0.93,
+   "expert_terms": {},
+   "expert_outside": 0.07,
+   "expert_P": 1.0,
+   "best_stop_S": 1.0,
+   "stop_paths": 63,
+   "best_path_S": 1.0,
+   "teachers": 22,
+   "teachers_that_stop": 3,
+   "teachers_go": 19,
+   "teachers_mean_end_y": 7.9
+  }
+ }
+]

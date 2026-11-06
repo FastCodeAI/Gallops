@@ -1,0 +1,155 @@
+### frames.py <- data.py: 81 lines, 2 changed
+   -import wiring as W
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+### ade.py <- ade.py: 27 lines, 3 changed
+   -import wiring as W
+   -from data import FrameCache, _to_tensor
+   +from gallops.drivejepa_b2d_retrain.frames import FrameCache, _to_tensor
+### build_cache.py <- build_cache.py: 73 lines, 7 changed
+   -from pathlib import Path
+   -import numpy as np
+   -sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+   -import wiring as W
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   -    clips = json.load(open(W.ROOT / 'splits/clips.json'))['clips']
+   +    clips = json.load(open(W.SPLITS))['clips']
+### train_lora.py <- train_b2d.py: 274 lines, 9 changed
+   -sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+   -import wiring as W
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   -import ade as A
+   -import data as D
+   +from gallops.drivejepa_b2d_retrain import ade as A
+   +from gallops.drivejepa_b2d_retrain import frames as D
+   -        self.splits = json.load(open(W.ROOT / 'splits/clips.json'))
+   +        self.splits = json.load(open(W.SPLITS))
+### merge_lora.py <- merge_pass.py: 68 lines, 16 changed
+   -import ast, copy, hashlib, json, sys, time, types
+   -import wiring as W
+   +import ast
+   +import copy
+   +import hashlib
+   +import json
+   +import sys
+   +import time
+   +import types
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   -import data as D
+   +from gallops.drivejepa_b2d_retrain import frames as D
+   -src = open(W.ROOT / 'sid_e75aaac/f_final.py').read()
+   +src = open(W.SID_TRAIN / 'f_final.py').read()
+   -splits = json.load(open(W.ROOT / 'splits/clips.json'))
+   +splits = json.load(open(W.SPLITS))
+### build_vocab.py <- build_vocab.py: 64 lines, 5 changed
+   -HERE = os.path.dirname(os.path.abspath(__file__))
+   -    ap.add_argument('--cache', default=f'{HERE}/paths_cache.npz')
+   -    ap.add_argument('--out', default=HERE)
+   +    ap.add_argument('--cache', required=True)
+   +    ap.add_argument('--out', required=True)
+### scorer.py <- scorer.py: 371 lines, 0 changed
+### grade.py <- grade2.py: 283 lines, 6 changed
+   -import math, os, sys
+   -sys.path.insert(0, '{ops}/mtd')
+   -import scorer as SC
+   +from gallops.drivejepa_b2d_retrain import scorer as SC
+   -    py = torch.zeros_like(pp[..., 0])
+   -    Q = c.shape[2]
+### grade_all.py <- grade_all.py: 90 lines, 17 changed
+   -import argparse, csv, json, os, sys, time
+   -import numpy as np, torch
+   -import grade2 as G2
+   -D = '{data.b2d_retrain}'
+   +import argparse
+   +import json
+   +import os
+   +import time
+   +import numpy as np
+   +import torch
+   +from gallops.drivejepa_b2d_retrain import grade as G2
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   +D = str(W.DATA)
+   -V = '{ops}/b2d_drivejepa/vocab/b2d_2048.npy'
+   +V = str(W.VOCAB / 'b2d_2048.npy')
+   -    sp = json.load(open('{ops}/b2d_drivejepa/phase1/splits/clips.json'))
+   +    sp = json.load(open(W.SPLITS))
+### teachers.py <- teachers.py: 77 lines, 16 changed
+   -import json, os, re, numpy as np
+   -D = '{data.b2d_retrain}'
+   +import json
+   +import os
+   +import re
+   +import numpy as np
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   +D = str(W.DATA)
+   -RES = '{ops}/b2d_drivejepa/phase2/step_a_v2_numbers.json'
+   +RES = f'{D}/step_a_v2_numbers.json'
+   -sp = json.load(open('{ops}/b2d_drivejepa/phase1/splits/clips.json'))
+   +sp = json.load(open(W.SPLITS))
+   -    p = f'{ops}/b2d_drivejepa/phase2/logs/{f}'
+   -    m = re.findall('GRADE_DONE (\\d+) (\\d+) (\\d+)', open(p).read())
+   +    p = f'{D}/logs/{f}'
+   +    m = re.findall('GRADE_DONE (\\d+) (\\d+) (\\d+)', open(p).read()) if os.path.exists(p) else []
+### samples.py <- data2.py: 65 lines, 19 changed
+   -import json, os, sys
+   -import numpy as np, torch
+   -import grade2 as G2
+   -sys.path.insert(0, '{ops}/b2d_drivejepa/phase1/src')
+   -import wiring as W
+   -D = '{data.b2d_retrain}'
+   +import json
+   +import os
+   +import numpy as np
+   +import torch
+   +from gallops.drivejepa_b2d_retrain import grade as G2
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   +D = str(W.DATA)
+   -        sp = json.load(open(W.ROOT / 'splits/clips.json'))
+   +        sp = json.load(open(W.SPLITS))
+   -        z = np.load('{ops}/b2d_drivejepa/vocab/paths_cache.npz', allow_pickle=True)
+   +        z = np.load(W.VOCAB / 'paths_cache.npz', allow_pickle=True)
+   -        from data import FrameCache, _to_tensor
+   +        from gallops.drivejepa_b2d_retrain.frames import FrameCache, _to_tensor
+### train_stage2.py <- train_b2d.py: 226 lines, 32 changed
+   -import argparse, hashlib, json, math, os, random, sys, time
+   +import argparse
+   +import hashlib
+   +import json
+   +import math
+   +import os
+   +import random
+   +import time
+   -import numpy as np, torch, torch.nn as nn
+   -sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+   -sys.path.insert(0, '{ops}/b2d_drivejepa/phase1/src')
+   -import wiring as W
+   +import numpy as np
+   +import torch
+   +import torch.nn as nn
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   -import grade2 as G2
+   -import data2 as D2
+   -sys.path.insert(0, '{ops}/mtd/stage4')
+   -import sca_fix
+   -sca_fix.apply_all()
+   +from gallops.drivejepa_b2d import batch_fix
+   +from gallops.drivejepa_b2d_retrain import grade as G2
+   +from gallops.drivejepa_b2d_retrain import samples as D2
+   +batch_fix.apply_all()
+   -VOCAB = '{ops}/b2d_drivejepa/vocab/b2d_2048.npy'
+   +VOCAB = W.VOCAB / 'b2d_2048.npy'
+   -        r = ag._pad_model.load_state_dict({k.replace('agent._pad_model.', ''): v for k, v in sd.items()}, strict=True)
+   +        ag._pad_model.load_state_dict({k.replace('agent._pad_model.', ''): v for k, v in sd.items()}, strict=True)
+   -        t_prev = time.time()
+   -            tg_t = 0.0
+   -                tg0 = time.time()
+### export_agent.py <- export_ckpt.py: 15 lines, 9 changed
+   -import hashlib, json, sys, torch
+   +import hashlib
+   +import os
+   +import sys
+   +import torch
+   +from gallops.drivejepa_b2d_retrain import wiring as W
+   -d = f'{runs}/b2d_drivejepa/phase2/runs/p2_05nov/ckpt_epoch{e:02d}'
+   +d = str(W.RUNS.parent / f'phase2/runs/p2_05nov/ckpt_epoch{e:02d}')
+   -import os
+TOTAL 141

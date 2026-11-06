@@ -1,0 +1,24 @@
+smoke for drivejepa_p2-alpasim, tier all (executing)
+  state directory: {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim
+  lanes: cores 28-31 / port 11000
+  PADDOCK_CONFIG: {ops}/b2d_drivejepa/phase2/gate/paddock.toml with neuroNCAP renderer_url port 8970
+
+[launch] alpasim_quick (quick)
+  cd {ops}/worktrees/gate-oct27-alp && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27-alp/src PADDOCK_BASE_PORT=11000 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim/paddock.toml taskset -c 28-31 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench alpasim --model drivejepa_p2 --scene clipgt-04749bb9-9b37-495b-bed0-77f0e33ac7da
+  baseline: drivejepa:20261027T005941-d3f828
+
+[launch] alpasim (closed)
+  cd {ops}/worktrees/gate-oct27-alp && PYTHONUNBUFFERED=1 PYTHONPATH={ops}/worktrees/gate-oct27-alp/src PADDOCK_BASE_PORT=11000 PADDOCK_CONFIG={runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim/paddock.toml taskset -c 28-31 nice {workspace}/Paddock/.venv/bin/python -m paddock.cli run --bench alpasim --model drivejepa_p2
+  baseline: drivejepa:20261027T005941-d3f828
+
+=== alpasim_quick on cores 28-31, port 11000; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim/alpasim_quick.log
+
+  alpasim_quick: exit 1, run 20261106T071055-226479
+
+=== alpasim on cores 28-31, port 11000; log {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim/alpasim.log
+
+  alpasim: exit 1, run 20261106T082131-87b21e
+
+wrote {runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-alpasim/manifest.toml
+not finished: alpasim_quick, alpasim; the same command resumes them
+no benchmark has both a baseline and a finished candidate; nothing to check

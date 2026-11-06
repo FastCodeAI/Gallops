@@ -11,11 +11,11 @@
   <text x="348" y="102" text-anchor="middle" font-size="13" fill="#FFFFFF">4-camera stack</text>
   <rect x="470" y="24" width="200" height="108" rx="10" fill="#1F5FBF"/>
   <text x="570" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">Phase 2: hypotheses</text>
-  <text x="570" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">7 hypotheses, one change each</text>
+  <text x="570" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">8 hypotheses, one change each</text>
   <text x="570" y="102" text-anchor="middle" font-size="13" fill="#FFFFFF">5 enablers</text>
   <rect x="710" y="24" width="136" height="108" rx="10" fill="#57606A"/>
   <text x="778" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">Regression gate</text>
-  <text x="778" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">2 gated so far</text>
+  <text x="778" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">3 gated so far</text>
   <rect x="898" y="24" width="102" height="108" rx="10" fill="none" stroke="#768390" stroke-width="2" stroke-dasharray="6 5"/>
   <text x="949" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#768390">gallops-v0</text>
   <text x="949" y="82" text-anchor="middle" font-size="13" fill="#768390">none yet</text>

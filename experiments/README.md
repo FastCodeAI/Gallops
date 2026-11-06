@@ -45,6 +45,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H10](H10_pdm_terms/CARD.md) | One set of PDM-style terms on every benchmark, combined by NAVSIM's formula (paddock #102) | enabler | Naren | 21 Oct – 22 Oct 2026 | ☑️ done | [H10_pdm_terms/](H10_pdm_terms/) |
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
+| [H16](H16_drivejepa_b2d_retrain/CARD.md) | Drive-JEPA's training rebuilt on Bench2Drive: encoder LoRA, own vocabulary, own grade, Stage 2 | hypothesis | Navvrat | 5 Nov 2026 | ⏳ running | [H16_drivejepa_b2d_retrain/](H16_drivejepa_b2d_retrain/) |
 <!-- /experiments:index -->
 
 ## Enablers
@@ -75,6 +76,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
+| 6 Nov 2026 | [H16.r2](H16_drivejepa_b2d_retrain/CARD.md) | `ed07e8a10f69` | all | — | 🔴 2.537 → 3.159 | 🔴 2.431 → 3.796 | 🔴 3.679 → 1.82 | — | — | ⛔ **FAIL** |
 <!-- /experiments:gate -->
 
 ## Decision log
@@ -159,7 +161,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.config` | — | shared |
 | `gallops.data.nuscenes_real` | GC06.v3_nusc | experiment |
 | `gallops.data.rerank` | GC01.kitscenes-train-h128-t1 | experiment |
-| `gallops.drivejepa_b2d.batch_fix` | GC04.final | experiment |
+| `gallops.drivejepa_b2d.batch_fix` | GC04.final, H16.r2 | experiment |
 | `gallops.drivejepa_b2d.check_data` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.host` | GC04.final | experiment |
@@ -170,6 +172,20 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
+| `gallops.drivejepa_b2d_retrain.ade` | H16.r1 | experiment |
+| `gallops.drivejepa_b2d_retrain.build_cache` | H16.r1 | experiment |
+| `gallops.drivejepa_b2d_retrain.build_vocab` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.export_agent` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.frames` | H16.r1 | experiment |
+| `gallops.drivejepa_b2d_retrain.grade` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.grade_all` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.merge_lora` | H16.r1 | experiment |
+| `gallops.drivejepa_b2d_retrain.samples` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.scorer` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.teachers` | H16.r2 | experiment |
+| `gallops.drivejepa_b2d_retrain.train_lora` | H16.r1 | experiment |
+| `gallops.drivejepa_b2d_retrain.train_stage2` | H16.r2, H16.r3 | experiment |
+| `gallops.drivejepa_b2d_retrain.wiring` | H16.r1 | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |

@@ -1,0 +1,23 @@
+{
+ "K": 2048,
+ "seed": 20261105,
+ "settings": {
+  "init": "k-means++",
+  "n_init": 1,
+  "algorithm": "lloyd",
+  "max_iter": 10000,
+  "tol": 0.0,
+  "random_state": 20261105
+ },
+ "sklearn": "1.2.2",
+ "n_paths": 36897,
+ "n_iter": 37,
+ "converged": true,
+ "inertia": 53608.99254124908,
+ "fit_seconds": 1.8,
+ "labels_unchanged_on_final_centres": 1.0,
+ "max_gap_member_mean_vs_kmeans_centre_m": 1.522237197404408e-13,
+ "max_gap_saved_float32_vs_kmeans_centre_m": 1.9069817653871723e-06,
+ "min_heading_resultant_length": 0.81349807490844,
+ "peak_rss_gb": 0.18
+}

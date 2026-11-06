@@ -1,0 +1,44 @@
+0 57
+200 10566
+400 16852
+600 24442
+800 32715
+{
+ "frames": 39148,
+ "frames_with_hit": {
+  "path": {
+   "pedestrian": 49,
+   "vehicle": 1131,
+   "static": 461
+  },
+  "log": {
+   "pedestrian": 17,
+   "vehicle": 1121,
+   "static": 406
+  },
+  "true": {
+   "pedestrian": 17,
+   "vehicle": 763,
+   "static": 44
+  },
+  "path_and_log": {
+   "pedestrian": 17,
+   "vehicle": 981,
+   "static": 402
+  },
+  "path_and_true": {
+   "pedestrian": 17,
+   "vehicle": 657,
+   "static": 44
+  },
+  "path_not_true": {
+   "pedestrian": 32,
+   "vehicle": 474,
+   "static": 417
+  }
+ },
+ "expert_vehicle_infraction_with_no_path_contact": 42
+}
+ego_center used by the scorer vs the anno box centre, along / across (m): mean -0.0077 -0.0004, largest 0.0447 0.0375
+anno actor location relative to the box centre, along / across: mean 0.0000 0.0000
+anno half extent x, y: 2.4462 0.9184; scorer half box 2.446 0.918; rear-axle offset 1.3886
