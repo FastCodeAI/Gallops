@@ -42,10 +42,10 @@ Committed to no repository, which is what the results' `no-record` flag says.
 
 ## Paddock code
 
-Neither repository imports the other, so what ran on paddock's side has to be named here. Without
-these branches another site can train this scorer but cannot load it.
+Copied in [`paddock/`](paddock/README.md), so another site can load this scorer without paddock's
+branches. Where it came from:
 
-| Code | Where it is | Pin |
+| Code | Where it was | Pin |
 |---|---|---|
-| the `drivejepa_subscore` adapter | branch `model/drivejepa-subscore`, not on `main` or any PR | `027bc9f82996d0ee4f824eee76425d6ef973e09c` |
-| the adapter and its result records | branch `record/drivejepa-camera-blind`, not on `main` or any PR | `779214431d452510743647d0d60d0647dbf79e91` |
+| the `drivejepa_subscore` adapter that ran | branch `model/drivejepa-subscore`, not on `main` or any PR | `027bc9f82996d0ee4f824eee76425d6ef973e09c` |
+| an earlier version, with its result records | branch `record/drivejepa-camera-blind`, not on `main` or any PR | `779214431d452510743647d0d60d0647dbf79e91` |

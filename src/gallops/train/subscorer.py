@@ -2,9 +2,10 @@
 
 One definition, used by the leave-one-scene-out folds (`scorer_folds --variant probe-geo`) and by
 `scorer_train`, which writes weights paddock's `drivejepa_subscore` adapter loads. That adapter is
-not on paddock's `main`: it is on paddock's branch `model/drivejepa-subscore` (027bc9f). The repos do
-not import each other, so `layout()` is the contract: the adapter's `build_scorer` must produce
-exactly these state_dict keys and shapes, and `tests/test_subscorer.py` pins them.
+not on paddock's `main`: it is copied in `experiments/GC07_subscore_scorer/paddock/`, from paddock's
+branch `model/drivejepa-subscore` (027bc9f). The repos do not import each other, so `layout()` is
+the contract: the adapter's `build_scorer` must produce exactly these state_dict keys and shapes,
+and `tests/test_subscorer.py` pins them.
 
 Per tick the scorer sees 64 candidate plans -- Drive-JEPA's 32 and the 32 swerves `scorer_cache`
 injects through a second pass of the refiner's last stage -- and 32 straight probe paths reaching

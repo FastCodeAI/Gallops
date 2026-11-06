@@ -46,4 +46,4 @@ On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs
 
 - neuroNCAP runs on 0103 (3 per shape): paddock run dirs neuroncap/drivejepa_subscore/20261013T202318-c43ac5 (relative rule, the doc's table) and 20261013T205827-fff68a (DRIVEJEPA_SUBSCORE_RULE=absolute, the same nine scores); under the site's paddock runs root, committed to no repository.
 - Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes and in POINTERS.md.
-- Paddock's drivejepa_subscore adapter, which loads these weights: on branches model/drivejepa-subscore (027bc9f) and record/drivejepa-camera-blind (7792144), not on main or any PR.
+- experiments/GC07_subscore_scorer/paddock/: paddock's drivejepa_subscore adapter, which loads these weights, copied from model/drivejepa-subscore (027bc9f); it is not on paddock's main.

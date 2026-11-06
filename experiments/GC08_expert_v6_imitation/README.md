@@ -42,7 +42,7 @@ What was tried:
 - **Code:** `train/subscorer.py` (the module, inputs, targets, rules and the
   `layout()` contract with paddock's `drivejepa_subscore`), `train/scorer_train.py`
   (trainer and its preflight), `train/scorer_folds.py --variant probe-geo`. That
-  adapter is not on paddock's `main`; see [POINTERS.md](../GC07_subscore_scorer/POINTERS.md#paddock-code).
+  adapter is copied in [GC07's `paddock/`](../GC07_subscore_scorer/paddock/README.md).
 - **Run:** `{weights}/drivejepa_subscore/sighted-v1`, 5 seeds × 20 epochs, on the
   seeing round-0 collection plus cache v4, 23,777 usable ticks over the 5 scenes.
   Preflight passed (fidelity 99.3% after the switch to lossless frames).
@@ -117,14 +117,15 @@ evaluator and collision checker without the renderer.
 - **The real engine agrees.** Expert-driven collection (paddock's analysis
   adapter, `DRIVEJEPA_DRIVE=expert`) replays v6 through neuroNCAP with the
   renderer and asserts the pose stays within 2 cm of the offline rollout; the
-  first smoke differed by 0.000 mm over 70 ticks and scored the same. **That mode
-  is in no commit,** so the collection cannot be remade from any repository yet;
-  see [POINTERS.md](POINTERS.md#paddock-code).
+  first smoke differed by 0.000 mm over 70 ticks and scored the same, and the full
+  collection finished 150 of 150 without that assertion firing. The adapter is in
+  [`paddock/`](paddock/README.md) and the chain around it in [`scripts/`](scripts/README.md).
 - **Probe:** a linear probe on the frozen encoder's pooled tokens, predicting
   v6's decision on a held-out scene, balanced accuracy with the image against
   ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070
   0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075,
-  and trails ego state on 0070. No script or report for this was kept.
+  and trails ego state on 0070. The script and its output are
+  [`probe_v6.py`](scripts/probe_v6.py) and [`probe_v6.json`](scripts/probe_v6.json).
 
 `expert/label.py --expert v6 --packs <dir>` labels a collection with v6 and
 refuses an episode with no `lane_reference.json`.

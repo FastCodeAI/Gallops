@@ -33,7 +33,8 @@ external = [
   "nuScenes open loop of 1B epoch 2: paddock run dir nuscenes/drivejepa/20261015T074632-198187, committed to no repository.",
   "Round 1A on 0075 (10 runs per shape): the gallops collection collect_r1a_eval under {runs}; which 1A epoch drove it is not recorded.",
   "Labelled data (labelled_r0cam_v6, labelled_expert_v6, labelled_r2_v6, labelled_nusc) and candidate dumps: under {runs}, listed per run in each sidecar's notes.sources, and with bytes and sha256 in POINTERS.md.",
-  "Paddock's dump adapter drivejepa_ncapdump: on branch analysis/drivejepa-ncap-candidates (b1c5779), not on main. Its DRIVEJEPA_DRIVE=expert mode, which made the expert-driven collection, is in no commit; POINTERS.md pins the file.",
+  "experiments/GC08_expert_v6_imitation/paddock/: paddock's dump adapter drivejepa_ncapdump, its DRIVEJEPA_DRIVE=expert mode included, which was never committed in paddock.",
+  "experiments/GC08_expert_v6_imitation/scripts/: the chain behind Gate B, the probe and the expert-driven collection, as it ran. The Gate A and Gate B reports stay on the site's store, pinned in POINTERS.md.",
 ]
 
 [[runs]]
@@ -49,6 +50,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -170,6 +172,7 @@ notes = "Recipe as 1A. Stopped about 78% of the way through epoch 3 (last logged
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -301,6 +304,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -375,13 +379,13 @@ source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Expert v6 in the real engine"
-result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert, a mode in no commit: see POINTERS.md) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
+result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert, copied in paddock/ here) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
 source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Probe: does the frozen encoder see what v6 decides?"
-result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075, and trails ego state on 0070. No script or report was kept"
-source = "experiments/GC08_expert_v6_imitation/README.md §2"
+result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075, and trails ego state on 0070"
+source = "experiments/GC08_expert_v6_imitation/README.md §2; scripts/probe_v6.py, output scripts/probe_v6.json"
 
 [[checks]]
 name = "Round 2's init preflight"

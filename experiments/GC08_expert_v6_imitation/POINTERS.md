@@ -45,13 +45,14 @@ the trainer read.
 
 ## Inputs every v6 label read
 
-The routes come from the scene packs and the road from the rasters. `drivable_all/` holds symbolic
-links, so its digest takes `find -L` in the command above.
+The routes come from the scene packs and the road from the rasters. The labels and Gate B read
+`drivable/`; `drivable_all/` links the same 5 files beside the real scenes' rasters.
 
 | Location | What it is | Files | Bytes | Folder digest |
 |---|---|---:|---:|---|
 | `{runs}/scene_packs/` | the 5 scenes' logged data and routes, from `rollout pack` and `routes` | 5 | 988,922 | `2ad03270617702b5a73ff4116466734ea5abbebdbfdf114711f05c1d9ef8f4df` |
-| `{runs}/drivable_all/` | a road raster per scene, as links into `drivable/` and `drivable_nusc/` | 684 | 6,115,314 | `73ed14df14ad8c6736ffd63e3e41da70ad34fbe4b35634a097d2bd2e6ec20bf6` |
+| `{runs}/drivable/` | a road raster per scene | 5 | 56,690 | `5647dd4682737e106ff8ccb9adfaa0989b10e4b8ca2bfd8c439afb5bc5af7775` |
+| `{runs}/expert_plans_v3/` | v6's plans and poses per episode, which the expert-driven collection drove | 150 | 7,109,787 | `b023380a8cd95f5a77e050b0db10c3c2e6ffaf02e5192c65b2454d9c75d851df` |
 
 ## Collections
 
@@ -81,29 +82,26 @@ the results' `no-record` flag says.
 
 ## Paddock code
 
-Neither repository imports the other, so what ran on paddock's side has to be named here.
+Copied in [`paddock/`](paddock/README.md), so nothing depends on one working tree. Where each piece
+came from:
 
-| Code | Where it is | Pin |
+| Code | Where it was | Pin |
 |---|---|---|
 | `drivejepa_ncapdump` with `DRIVEJEPA_DRIVE` = `model` or `gt` | branch `analysis/drivejepa-ncap-candidates`, not on `main` or any PR | `b1c57796b80c568167e1859134d4eeb7e024879d` |
-| the same, with the camera-frame fix | branch `drivejepa-ncapdump-camfix`, never pushed | `f4f5efc0acd7fee592aab0198407dc09a6c2aba1` |
-| the same, with `DRIVEJEPA_DRIVE=expert` | **uncommitted**, on that branch, in the worktree `paddock-dj-ncapdump-camfix` at the training site | `policy.py`, 18,573 bytes, sha256 `ecd6641be8256a2ed78dbfdb39534ab3700c289275667763e466467866249375` |
+| the parent adapter, with the camera-frame fix | branch `drivejepa-ncapdump-camfix`, never pushed | `f4f5efc0acd7fee592aab0198407dc09a6c2aba1` |
+| `policy.py` with `DRIVEJEPA_DRIVE=expert` | uncommitted, in the worktree `paddock-dj-ncapdump-camfix` | 18,573 bytes, sha256 `ecd6641be8256a2ed78dbfdb39534ab3700c289275667763e466467866249375` |
 
-The last row made the expert-driven collection that 1B and round 2 trained on. It exists in one
-working tree, and until it is committed and pushed on paddock's side the collection cannot be remade.
+## Evidence
 
-## Evidence with no file
+Reports and logs under paddock's runs root, where the gates and the collection wrote them. The
+scripts that made them are in [`scripts/`](scripts/README.md), and the probe's output is
+[`scripts/probe_v6.json`](scripts/probe_v6.json).
 
-Searched for and not found: the top of `{runs}`, the top two levels of the weights store and of the
-training site's workspace, and `/tmp`, by name, and the sibling checkouts for a probe script. A
-deeper copy may exist.
-
-| Claim in the account | What exists |
-|---|---|
-| Gate A, 150/150 episodes | no report. `rollout replay --out` writes one; it was not kept |
-| Gate B, the table and the agreement figures | no report. The figures are in the commit messages of `ed2e7ab`, `4d606bd` and `22b5083` |
-| the engine's 2 cm agreement | no log. The adapter asserts it at run time, so a finished collection passed it |
-| the probe table | no script, no report, and no way to rerun it from here |
+| Location | What it holds | Bytes | sha256 |
+|---|---|---:|---|
+| `ops/dj_expert/gateA_r0cam.json` | Gate A: 150 of 150 episodes, worst 0.069 mm | 56,697 | `17bbb86afd8626e68e20b260e71c176dba55443d09bb79dcef6ef4d9d2fa6746` |
+| `ops/dj_expert/gateB_v3_T3.5.json` | Gate B: the account's table and agreement figures, and every tick's plan | 9,114,255 | `bea45e729e19ab754195291af315adc6437803543bedfe579a81619e568c3379` |
+| `ops/dj_collect/collect_expert.log` | the expert-driven collection: 150 of 150, the 2 cm assertion never firing | 482,940 | `25c711333a2d70c5d8b1bc5d871a92793422c8a6a465bfa096408a79cf137ed2` |
 
 The review of #17 reran samples at `67ad95f`: Gate A on 6 episodes, worst 0.049 mm, and Gate B on 48
 of the 50 frontal episodes, 8 hits, all 0058 at 1.56.
