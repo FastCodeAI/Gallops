@@ -12,6 +12,27 @@
   - [B-4, both with LoRA](drivejepa-perception-sidecar-B-4-joint-lora.md).
 - Until 11 Nov this page was the whole Part B plan. Its B-LoRA sections moved to B-4's document.
 
+## The four experiments, in one picture
+
+![Part B's four experiments, and where each fits inside Drive-JEPA](../experiments/H15_perception_sidecar/figures/b0-four-experiments.png)
+
+**How to read it.**
+- **Down the left is Drive-JEPA as it runs today:** the ViT, the projector, the refiner's four passes, the scorer
+  and the pick. In every experiment all of it stays frozen, except what LoRA adapts.
+- **On the right is the side-car.** It reads the same frozen ViT tokens and lists the agents ahead, with each one's
+  clearance to every proposal.
+- **Between them, each experiment sits beside the part of the planner it changes:**
+  - B-1 acts before the pick;
+  - B-2 acts in the scorer;
+  - B-3 acts in the refiner;
+  - B-4 changes both, through B-3's refiner and B-2's scorer, retrained on the new proposals.
+- **Each card says** what changes, what trains, the one question it tests, and what is read. They run in their
+  numbers' order, B-1 first, each closed by the owner's review.
+- **This page, B-0, makes their answers comparable:**
+  - the same data;
+  - the same official scorer, after it reproduces the release's 87.78;
+  - every trained arm starting as the release, exactly.
+
 ## The crux
 
 **Before any experiment can claim it plans better than the release, three things must be true here.**

@@ -144,6 +144,12 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - **Not implemented.** The owner reviews the plans, and execution starts in another session.
   - **Counted for the primer:** the refiner's 13 linear layers and the scorer's 3. Rank-16 LoRA on them adds
     177,200 and 69,728 parameters.
+- **11 Nov · one picture of the four experiments.**
+  - At the owner's request, [B-0](drivejepa-perception-sidecar-B.md) opens with a single diagram of B-1 to B-4
+    inside Drive-JEPA.
+  - It shows each experiment beside the part of the planner it changes, with what it trains, the one question it
+    tests, and what is read.
+  - The figure is `b0-four-experiments`.
 
 <a id="open"></a>
 
