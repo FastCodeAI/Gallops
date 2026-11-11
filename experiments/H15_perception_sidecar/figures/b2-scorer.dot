@@ -1,0 +1,27 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar-B-2-scorer.md): the side-car's agents into the release's scorer.
+// The release's 32 proposals are kept; only the pick among them can change. Grey: the release, frozen. Blue: the
+// agents. Green: what trains (every green output layer starts at zero, so step 0 is the release's pick).
+// Render: dot -Tsvg b2-scorer.dot -o b2-scorer.svg && dot -Tpng:cairo -Gdpi=192 b2-scorer.dot -o b2-scorer.png
+digraph b2_scorer {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.3, ranksep=0.42, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  props [label=<<B>the release's 32 proposals</B><BR/><FONT POINT-SIZE="9">and their pass-4 queries, cached</FONT>>];
+  pool [label=<<B>max over the 8 poses</B><BR/><FONT POINT-SIZE="9">f: one 256-d feature a proposal</FONT>>];
+  agents [label=<<B>agents</B><BR/><FONT POINT-SIZE="9">F: the side-car's · O: the labels'<BR/>C: none</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  own [label=<<B>own half</B><BR/><FONT POINT-SIZE="9">f + the proposal's shape,<BR/>the ego status, the logits<BR/>(every arm)</FONT>>, color="#059669", fillcolor="#d1fae5"];
+  read [label=<<B>agent half</B><BR/><FONT POINT-SIZE="9">attention to the agents, biased by clearance<BR/>+ 13 clearance features (F, O)</FONT>>, color="#059669", fillcolor="#d1fae5"];
+  delta [label=<<B>δ</B><BR/><FONT POINT-SIZE="9">added to f</FONT>>, color="#059669", fillcolor="#d1fae5"];
+  head [label=<<B>scorer MLP</B><BR/><FONT POINT-SIZE="9">256 → 1024 → 1024 → 6<BR/>frozen + LoRA (B-2-1)<BR/>or replaced (B-2-2)</FONT>>, color="#059669", fillcolor="#ecfdf5"];
+  logits [label=<<B>logits</B><BR/><FONT POINT-SIZE="9">release's + (new head(f + δ) − release head(f))<BR/>= the release's, exactly, at step 0</FONT>>];
+  pick [label=<<B>the pick</B><BR/><FONT POINT-SIZE="9">argmax σ(final)</FONT>>];
+
+  props -> pool -> own;
+  props -> read [label="poses"];
+  agents -> read [color="#2563eb"];
+  own -> delta; read -> delta;
+  pool -> head;
+  delta -> head -> logits -> pick;
+}

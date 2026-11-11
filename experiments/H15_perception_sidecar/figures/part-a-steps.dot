@@ -32,7 +32,7 @@ digraph part_a_steps {
   S1 -> S2 -> S3 -> R1 -> S4 -> S5 -> R2 -> S6 -> S7 -> R3 -> S8;
 
   NOTE [shape=note, style="filled", fillcolor="white", color="#9ca3af", fontsize=9, width=2.4,
-        label=<<B>Phase B: planned in documents (D22)</B><BR ALIGN="LEFT"/>the ideas, for a shortlist · B-LoRA in full<BR ALIGN="LEFT"/>nothing trains before the go-ahead<BR ALIGN="LEFT"/>>];
+        label=<<B>Part B: four experiments planned (D22, D23)</B><BR ALIGN="LEFT"/>B-1 veto · B-2 scorer · B-3 refiner · B-4 both<BR ALIGN="LEFT"/>nothing trains before the go-ahead<BR ALIGN="LEFT"/>>];
   edge [style=invis]; S1 -> NOTE;
   {rank=same; S1; NOTE;}
 }

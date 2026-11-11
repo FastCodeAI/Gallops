@@ -262,3 +262,20 @@ by = ["Shreedhar"]
 evidence = ["H15.r4", "H15.b1", "H15.b2"]
 next = ["H15"]
 source = "the owner, 10 Nov 2026"
+
+[[decision]]
+id = "D23"
+date = 2026-11-11
+short = "H15 phase B: four experiments chosen, each with its own plan; one naming, B-<n>-<v>"
+decision = """The owner chose four of phase B's ideas to plan first, in this order: the analytic veto, the side-car's agents \
+into the scorer, into the refiner, and into both with LoRA, renamed B-1 to B-4 (they were C4, C2, C1 and C3). Every \
+phase-B experiment is now named B-<n>-<v>: n = 0 for the foundations every experiment shares, 1-4 for these, 5-16 \
+for the other ideas; v a sub-version. Each of B-1 to B-4 has its own plan, opening with its crux and what to expect, \
+then its concepts as questions and answers; docs/drivejepa-perception-sidecar-B.md becomes B-0, the foundations. A \
+LoRA primer serves B-2 to B-4, and docs/drivejepa-perception-sidecar-overview.md is the common record of this work: \
+the tracker, the naming, every discussion and decision. Nothing is implemented and nothing trains: the owner reviews \
+the plans, and execution starts in another session. The work's branch is drivejepa/auxilliary-head-part-b."""
+by = ["Shreedhar"]
+evidence = ["H15.r5", "H15.b1", "H15.b2"]
+next = ["H15"]
+source = "the owner, 11 Nov 2026"

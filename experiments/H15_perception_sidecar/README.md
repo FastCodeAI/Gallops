@@ -2,7 +2,7 @@
 
 **Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running. Part A: steps 1–5 done on the select
 logs (D21) and step 7, nuScenes, done (`H15.r5`); step 6, the report logs, waits. Phase B is planned in documents,
-and nothing in it trains until the owner shortlists (D22)
+and nothing in it trains before the owner's go-ahead (D22, D23)
 
 The facts — runs, data, checkpoints, results, gate verdicts — live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. This page is the
@@ -11,11 +11,17 @@ account: why, what was done, what it showed, and what was decided.
 - **The rerun's plan**, Part A alone, in reviewed steps: [docs/drivejepa-perception-sidecar-A.md](../../docs/drivejepa-perception-sidecar-A.md).
 - **The first pass's plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar.md](../../docs/drivejepa-perception-sidecar.md).
 - **The predictions**, committed before anything trained: [PREDICTIONS.md](PREDICTIONS.md).
-- **Phase B, planned (10 Nov, D22):**
-  - where the side-car could connect to Drive-JEPA, for the owner's shortlist:
-    [docs/drivejepa-perception-sidecar-B-ideas.md](../../docs/drivejepa-perception-sidecar-B-ideas.md);
-  - the plan, in reviewed steps, with the owner's first idea (B-LoRA) in full:
-    [docs/drivejepa-perception-sidecar-B.md](../../docs/drivejepa-perception-sidecar-B.md).
+- **Start here: [the overview](../../docs/drivejepa-perception-sidecar-overview.md)**, the common record of this
+  work: the tracker, the naming (`B-<n>-<v>`), every discussion and decision, and the open questions.
+- **Phase B, planned (10–11 Nov, D22, D23):** four experiments, in the owner's order, each with its own plan:
+  - [B-1, the veto](../../docs/drivejepa-perception-sidecar-B-1-veto.md);
+  - [B-2, the scorer](../../docs/drivejepa-perception-sidecar-B-2-scorer.md);
+  - [B-3, the refiner](../../docs/drivejepa-perception-sidecar-B-3-refiner.md);
+  - [B-4, both with LoRA](../../docs/drivejepa-perception-sidecar-B-4-joint-lora.md).
+- **What they share:**
+  - [B-0, the foundations](../../docs/drivejepa-perception-sidecar-B.md);
+  - [a LoRA primer](../../docs/drivejepa-perception-sidecar-B-lora-primer.md);
+  - [the ideas, B-1 to B-16](../../docs/drivejepa-perception-sidecar-B-ideas.md).
 
 ## The rerun: Part A, one reviewed step at a time (from 4 Nov)
 

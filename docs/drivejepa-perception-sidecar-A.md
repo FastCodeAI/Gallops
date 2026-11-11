@@ -2,8 +2,8 @@
 
 **Status (2026-11-10): steps 1–5 done on the select logs (§9.2, notebook 06), and step 7 done (§9.3,
 notebook 07): on nuScenes the side-car finds 0.53 of the vehicles within 30 m, so Q9 holds. Step 6, the report
-logs, waits: no report-log number exists. The owner has opened phase B's planning alongside (D22,
-[the ideas](drivejepa-perception-sidecar-B-ideas.md), [the plan](drivejepa-perception-sidecar-B.md)).**
+logs, waits: no report-log number exists. The owner has opened phase B's planning alongside (D22, D23):
+[the overview](drivejepa-perception-sidecar-overview.md) tracks it, and every document of this work.**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question

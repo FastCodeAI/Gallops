@@ -1,0 +1,24 @@
+// H15 Part B, B-1 (docs/drivejepa-perception-sidecar-B-1-veto.md): the analytic veto. Nothing is trained: the
+// release proposes and scores as it always does; a rule on the agents' clearances removes proposals before the pick.
+// Grey: the release, untouched. Blue: the agents (three sources, one per sub-version). Amber: the rule.
+// Render: dot -Tsvg b1-veto-flow.dot -o b1-veto-flow.svg && dot -Tpng:cairo -Gdpi=192 b1-veto-flow.dot -o b1-veto-flow.png
+digraph b1_veto_flow {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.3, ranksep=0.45, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  release [label=<<B>the release, untouched</B><BR/><FONT POINT-SIZE="9">32 proposals × 8 poses (4 s)<BR/>a final score for each</FONT>>];
+  src1 [label=<<B>B-1-1 · the ceiling</B><BR/><FONT POINT-SIZE="9">the agents' logged futures<BR/>(the grader's own; not deployable)</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  src2 [label=<<B>B-1-2 · perfect perception</B><BR/><FONT POINT-SIZE="9">labelled agents now<BR/>1 s path, then constant velocity</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  src3 [label=<<B>B-1-3 · the side-car</B><BR/><FONT POINT-SIZE="9">its agents, seeds 0–2<BR/>the same forecast</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  clear [label=<<B>clearances</B><BR/><FONT POINT-SIZE="9">each proposal against each agent<BR/>at 0.5, 1.0, … s (geometry.terms)</FONT>>, color="#d97706", fillcolor="#fef3c7"];
+  rule [label=<<B>the rule</B><BR/><FONT POINT-SIZE="9">veto: clearance &lt; margin within the horizon<BR/>B-1-4: a penalty instead, margins by range</FONT>>, color="#d97706", fillcolor="#fef3c7"];
+  pick [label=<<B>the pick</B><BR/><FONT POINT-SIZE="9">the release's best score among the kept<BR/>all vetoed: the release's own pick</FONT>>];
+  score [label=<<B>scored</B><BR/><FONT POINT-SIZE="9">R-clean: by lookup in the 32's PDM labels<BR/>navtest: once, by the official scorer</FONT>>];
+
+  release -> clear;
+  src1 -> clear; src2 -> clear; src3 -> clear;
+  clear -> rule -> pick -> score;
+  release -> pick [label="scores", style=dashed];
+}

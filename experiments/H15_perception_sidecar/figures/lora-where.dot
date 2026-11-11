@@ -1,0 +1,34 @@
+// The LoRA primer (docs/drivejepa-perception-sidecar-B-lora-primer.md): where rank-16 LoRA can attach in the
+// release's planner, every linear layer counted on 11 Nov (refiner 13 layers, scorer MLP 3). Grey: frozen and never
+// adapted here. Green: linear layers LoRA can adapt, with LoRA's parameter count. Amber: the choice that moves where
+// the refiner looks in the image.
+// Render: dot -Tsvg lora-where.dot -o lora-where.svg && dot -Tpng:cairo -Gdpi=192 lora-where.dot -o lora-where.png
+digraph lora_where {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.25, ranksep=0.3, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.12,0.05"];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0];
+
+  vit [label=<<B>ViT-L and projector</B><BR/><FONT POINT-SIZE="9">frozen, read from caches · never adapted in Part B</FONT>>, width=6.5];
+
+  subgraph cluster_ref {
+    label=<<B>refiner · one module, run 4 times · 2,321,219 parameters · LoRA on all 13 layers: 177,200</B>>;
+    fontname="Helvetica"; fontsize=10; style="rounded,dashed"; color="#9ca3af";
+    tsa [label=<<B>self-attention among the 256 queries</B><BR/><FONT POINT-SIZE="9">value_proj 256→256 · 8,192 · output_proj 256→256 · 8,192</FONT>>, color="#059669", fillcolor="#d1fae5", width=6.5];
+    tsa_w [label=<<B>where the self-attention samples</B><BR/><FONT POINT-SIZE="9">sampling_offsets 512→128 · 10,240 · attention_weights 512→64 · 9,216</FONT>>, color="#d97706", fillcolor="#fef3c7", width=6.5];
+    sca [label=<<B>deformable attention to the image</B><BR/><FONT POINT-SIZE="9">value_proj 256→256 · 8,192 · output_proj 256→256 · 8,192</FONT>>, color="#059669", fillcolor="#d1fae5", width=6.5];
+    sca_w [label=<<B>where it samples the image around each pose</B><BR/><FONT POINT-SIZE="9">sampling_offsets 256→256 · 8,192 · attention_weights 256→128 · 6,144</FONT>>, color="#d97706", fillcolor="#fef3c7", width=6.5];
+    ffn [label=<<B>feed-forward</B><BR/><FONT POINT-SIZE="9">256→1024 · 20,480 · 1024→256 · 20,480</FONT>>, color="#059669", fillcolor="#d1fae5", width=6.5];
+    dec [label=<<B>decoder to proposals</B><BR/><FONT POINT-SIZE="9">256→1024 · 20,480 · 1024→1024 · 32,768 · 1024→3 · 16,432 (more than its 3,072 weights)</FONT>>, color="#059669", fillcolor="#d1fae5", width=6.5];
+  }
+
+  subgraph cluster_sc {
+    label=<<B>scorer MLP · 1.32 M · LoRA on its 3 layers: 69,728</B>>;
+    fontname="Helvetica"; fontsize=10; style="rounded,dashed"; color="#9ca3af";
+    head [label=<<B>pred_score</B><BR/><FONT POINT-SIZE="9">256→1024 · 20,480 · 1024→1024 · 32,768 · 1024→6 · 16,480</FONT>>, color="#059669", fillcolor="#d1fae5", width=6.5];
+    aux [label=<<B>training-only heads</B><BR/><FONT POINT-SIZE="9">collision agents, drivable area · dropped at inference · not adapted</FONT>>, width=6.5];
+  }
+
+  vit -> tsa -> tsa_w -> sca -> sca_w -> ffn -> dec -> head;
+  head -> aux [style=invis];
+}

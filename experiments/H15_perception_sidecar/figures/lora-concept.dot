@@ -1,0 +1,23 @@
+// The LoRA primer (docs/drivejepa-perception-sidecar-B-lora-primer.md): one linear layer with LoRA. The frozen
+// weight W keeps its path; a low-rank path A then B adds (alpha / r) B A x. B starts at zero, so the layer starts as W.
+// Grey: frozen. Green: what trains.
+// Render: dot -Tsvg lora-concept.dot -o lora-concept.svg && dot -Tpng:cairo -Gdpi=192 lora-concept.dot -o lora-concept.png
+digraph lora_concept {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.35, ranksep=0.5, pad=0.3, bgcolor="white"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  x [label=<<B>x</B><BR/><FONT POINT-SIZE="9">d_in numbers<BR/>(a query: 256)</FONT>>, shape=ellipse];
+  W [label=<<B>W, frozen</B><BR/><FONT POINT-SIZE="9">d_out × d_in<BR/>e.g. 1024 × 256 = 262,144</FONT>>];
+  A [label=<<B>A</B><BR/><FONT POINT-SIZE="9">r × d_in<BR/>16 × 256 = 4,096<BR/>random at start</FONT>>, color="#059669", fillcolor="#d1fae5"];
+  B [label=<<B>B</B><BR/><FONT POINT-SIZE="9">d_out × r<BR/>1024 × 16 = 16,384<BR/><B>zero at start</B></FONT>>, color="#059669", fillcolor="#d1fae5"];
+  s [label=<<B>× α / r</B><BR/><FONT POINT-SIZE="9">16 / 16 = 1</FONT>>, color="#059669", fillcolor="#ecfdf5"];
+  plus [label="+", shape=circle, width=0.4, fixedsize=true, fontsize=14];
+  y [label=<<B>y = W x + (α / r) B A x</B><BR/><FONT POINT-SIZE="9">d_out numbers<BR/>at step 0: exactly W x</FONT>>, shape=ellipse];
+
+  x -> W -> plus;
+  x -> A [label="r = 16 directions"];
+  A -> B -> s -> plus;
+  plus -> y;
+}

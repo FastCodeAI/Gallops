@@ -1,6 +1,6 @@
-// H15 Phase B ideas: Drive-JEPA's planner as it runs at inference, and where the side-car's agents could
+// H15 Part B ideas: Drive-JEPA's planner as it runs at inference, and where the side-car's agents could
 // connect to it (docs/drivejepa-perception-sidecar-B-ideas.md). Grey: the release, frozen. Blue: the
-// side-car (Part A). Amber, dashed: a connection point, labelled with its idea's number.
+// side-car (Part A). Amber, dashed: a connection point, labelled B-<n> (the four chosen first: B-1 to B-4).
 // Render: dot -Tsvg b-connections.dot -o b-connections.svg && dot -Tpng:cairo -Gdpi=192 b-connections.dot -o b-connections.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)
 digraph b_connections {
@@ -40,13 +40,13 @@ digraph b_connections {
   node [shape=box, style="rounded,filled", color="#d97706", fillcolor="#fef3c7", fontsize=9.5, margin="0.08,0.04"];
   edge [color="#d97706", style=dashed, penwidth=1.2];
 
-  c56  [label=<<B>C5 · C6</B> initial queries · token map>];
-  c1   [label=<<B>C1</B> refiner input>];
-  c2   [label=<<B>C2</B> scorer input>];
-  c3   [label=<<B>C3 · B-LoRA</B><BR/>C1 + C2 together, LoRA>];
-  c4   [label=<<B>C4</B> analytic veto of a proposal>];
-  c7   [label=<<B>C7</B> a teacher, training only>];
-  c13  [label=<<B>C13</B> the named agent: an explanation>];
+  c56  [label=<<B>B-5 · B-6</B> initial queries · token map>];
+  c1   [label=<<B>B-3</B> refiner input>];
+  c2   [label=<<B>B-2</B> scorer input>];
+  c3   [label=<<B>B-4</B><BR/>B-2 + B-3 together, LoRA>];
+  c4   [label=<<B>B-1</B> analytic veto of a proposal>];
+  c7   [label=<<B>B-7</B> a teacher, training only>];
+  c13  [label=<<B>B-13</B> the named agent: an explanation>];
 
   agents -> c56 -> init;
   c56 -> proj;

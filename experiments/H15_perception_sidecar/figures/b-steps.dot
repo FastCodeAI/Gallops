@@ -1,29 +1,29 @@
-// H15 Phase B (docs/drivejepa-perception-sidecar-B.md): the steps, each closed by a review before the next opens.
-// Grey: not yet run. Amber diamonds: the owner's reviews. Nothing trains before B5, and B5 waits for the go-ahead.
+// H15 Part B (docs/drivejepa-perception-sidecar-B.md and one document per experiment): the order of work, each block
+// closed by the owner's review before the next opens. Grey: not yet run. Amber diamonds: the owner's reviews.
+// Nothing trains before B-2, and B-2 waits for the go-ahead. Experiments are named B-<n>-<v> (overview, "Naming").
 // Render: dot -Tsvg b-steps.dot -o b-steps.svg && dot -Tpng:cairo -Gdpi=192 b-steps.dot -o b-steps.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)
 digraph b_steps {
   graph [rankdir=TB, fontname="Helvetica", nodesep=0.35, ranksep=0.30, pad=0.3, bgcolor="white"];
   node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
-         color="#6b7280", fillcolor="#f3f4f6", margin="0.16,0.07", width=5.6];
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.16,0.07", width=5.8];
   edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
 
-  R0 [shape=diamond, style="filled", width=2.9, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
-      label=<<FONT POINT-SIZE="9.5"><B>owner shortlists the ideas</B></FONT>>];
-  B1 [label=<<B>B1 · the data step (no training)</B><BR/><FONT POINT-SIZE="9">v3 agents on train and select · the side-car's train-row optimism, measured<BR/>navtest: labels, tokens, agents, metric cache · the R-clean split from the unused logs<BR/>official scoring of stored picks · the release re-measured: 87.78 or stop</FONT>>];
-  B2 [label=<<B>B2 · B0, the headroom check (no training)</B><BR/><FONT POINT-SIZE="9">the release's navtest failures by term · the at-fault agent in view, within 50 m?<BR/>found by the side-car?</FONT>>];
-  B3 [label=<<B>B3 · C4, the analytic veto (no training)</B><BR/><FONT POINT-SIZE="9">its settings chosen on the R-clean split · labelled agents (O) and the side-car's (F)</FONT>>];
-  RA [shape=diamond, style="filled", width=2.9, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
-      label=<<FONT POINT-SIZE="9.5"><B>owner reviews B1–B3</B></FONT>>];
-  B4 [label=<<B>B4 · pre-register</B><BR/><FONT POINT-SIZE="9">§7's criteria, as approved, into PREDICTIONS.md before B5's first step</FONT>>];
-  B5 [label=<<B>B5 · B-LoRA: the pipeline check, then the runs</B><BR/><FONT POINT-SIZE="9">preflight · one epoch of the refiner stage on select, read for health only<BR/>then C, F and O at seeds 0–2, the fixed recipe, the last epoch kept</FONT>>];
-  RB [shape=diamond, style="filled", width=2.9, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
-      label=<<FONT POINT-SIZE="9.5"><B>owner sees the curves</B></FONT>>];
-  B6 [label=<<B>B6 · navtest, read once</B><BR/><FONT POINT-SIZE="9">R̃, C, F and O by the official scorer · F − C, F against R<BR/>how the proposals change · counterfactuals on F · the named agent</FONT>>];
-  B7 [label=<<B>B7 · nuScenes</B><BR/><FONT POINT-SIZE="9">every arm: L2 at 1, 2 and 3 s, collisions within 3 s, best of 32</FONT>>];
-  RC [shape=diamond, style="filled", width=2.9, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
-      label=<<FONT POINT-SIZE="9.5"><B>owner reviews B6–B7</B></FONT>>];
-  B8 [label=<<B>B8 · close</B><BR/><FONT POINT-SIZE="9">record · decision · whether the gate (C14) opens, and for which model</FONT>>];
+  R0 [shape=diamond, style="filled", width=3.1, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>owner reviews the four plans</B></FONT>>];
+  B0 [label=<<B>B-0 · foundations (no training)</B><BR/><FONT POINT-SIZE="9">B-0-1 the data: navtest, the R-clean split, the side-car's agents<BR/>B-0-2 the official scorer on stored picks · the release's 87.78 reproduced, or stop<BR/>B-0-3 the headroom check · B-0-4 the proposal analysis</FONT>>];
+  B1 [label=<<B>B-1 · the analytic veto (no training)</B><BR/><FONT POINT-SIZE="9">B-1-1 the ceiling · B-1-2 labelled agents · B-1-3 the side-car's agents<BR/>settings chosen on the R-clean split · navtest once</FONT>>];
+  RA [shape=diamond, style="filled", width=3.1, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>review · go-ahead to train?</B></FONT>>];
+  B2 [label=<<B>B-2 · agents into the scorer</B><BR/><FONT POINT-SIZE="9">pre-register · B-2-1 adapter + LoRA · B-2-2 a new scorer · B-2-3 adapter only<BR/>arms C, F, O · three seeds · navtest once</FONT>>];
+  RB [shape=diamond, style="filled", width=3.1, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>review</B></FONT>>];
+  B3 [label=<<B>B-3 · agents into the refiner</B><BR/><FONT POINT-SIZE="9">pre-register · B-3-1 adapter + LoRA · B-3-2 H04's agent look · B-3-3 agent-aware start<BR/>best of 32, the proposals' own quality · navtest once</FONT>>];
+  RC [shape=diamond, style="filled", width=3.1, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>review</B></FONT>>];
+  B4 [label=<<B>B-4 · both, with LoRA</B><BR/><FONT POINT-SIZE="9">pre-register · B-4-1 two stages · B-4-2 joint training, if the scorer limits<BR/>meet or beat the release on navtest · how the proposals change</FONT>>];
+  RD [shape=diamond, style="filled", width=3.1, height=0.62, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>review · close Part B's first round</B></FONT>>];
 
-  R0 -> B1 -> B2 -> B3 -> RA -> B4 -> B5 -> RB -> B6 -> B7 -> RC -> B8;
+  R0 -> B0 -> B1 -> RA -> B2 -> RB -> B3 -> RC -> B4 -> RD;
 }
