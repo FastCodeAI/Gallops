@@ -118,7 +118,8 @@ flowchart TD
   D19{{"<b>D19</b> · 4 Nov<br/>H14 cancelled: inconclusive"}}
   D20{{"<b>D20</b> · 4 Nov<br/>H15 redone: Part A first, step by step"}}
   D21{{"<b>D21</b> · 4 Nov<br/>H15 Part A: steps 1-3 reviewed, recommended settings"}}
-  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19 ==> D20 ==> D21
+  D22{{"<b>D22</b> · 10 Nov<br/>H15: phase B planned before Part A closes; step 7 runs, step 6 waits"}}
+  D01 ==> D02 ==> D03 ==> D04 ==> D05 ==> D06 ==> D07 ==> D08 ==> D09 ==> D10 ==> D11 ==> D12 ==> D13 ==> D14 ==> D15 ==> D16 ==> D17 ==> D18 ==> D19 ==> D20 ==> D21 ==> D22
   D01 -.-> GC01
   GC02 --> D02
   D02 -.-> GC03
@@ -166,6 +167,8 @@ flowchart TD
   D20 -.-> H15
   H15 --> D21
   D21 -.-> H15
+  H15 --> D22
+  D22 -.-> H15
   classDef positive stroke:#2E8B4E,stroke-width:2px
   classDef negative stroke:#C0392B,stroke-width:2px
   classDef open stroke:#1F6FEB,stroke-dasharray:4 3
@@ -235,7 +238,7 @@ written down before it runs and its checkpoint put through the
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | 7 | ⏳ running | `exp1`, `exp2a`, `exp2b`, `exp3` | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | 8 | ⏳ running | `crop` | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | — | 🗑 dropped | `C`, `T1`, `T2` | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood`, `r1`, `r2`, `r3`, `r4` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
+| [**H15**](experiments/H15_perception_sidecar/CARD.md) | Side-car: scorer, refiner, ViT LoRA | Shreedhar | — | ⏳ running | `s0`, `a0`, `a1`, `a2`, `b1`, `b2`, `b3`, `b32`, `ood`, `r1`, `r2`, `r3`, `r4`, `r5` | NAVSIM pick EPDMS, scorer with the side-car's agents (F) against the same scorer without (C), best mode on select (full) 0.9150 → **0.9142** (n=4,636 samples) | ●●○○ moderate · open-loop | — |
 <!-- /experiments:hypotheses -->
 
 ### Enablers
@@ -296,6 +299,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | **D19** | 4 Nov 2026 | H14 (auxiliary heads on Drive-JEPA's refiner, fine-tuned on nuScenes) is cancelled: its results and their analysis are inconclusive. Future experiments do not build on it -- not its code (gallops.drivejepa_aux), recipe, held-out scene list, checkpoints, numbers or account; its docs and figures were removed the same day. | Shreedhar | [H14.C](experiments/H14_aux_heads/CARD.md), [H14.T1](experiments/H14_aux_heads/CARD.md), [H14.T2](experiments/H14_aux_heads/CARD.md) | — |
 | **D20** | 4 Nov 2026 | H15's first pass (the side-car and then every phase-B question, run in a day and a half) is judged inconclusive by its owner: more ran than could be reviewed or debugged. H15 is redone from a revised plan, docs/drivejepa-perception-sidecar-A.md: Part A alone, the side-car trained and measured, in eight steps, each reviewed by the owner before the next; phases B and C wait until Part A closes. | Shreedhar | [H15.a1](experiments/H15_perception_sidecar/CARD.md), [H15.b1](experiments/H15_perception_sidecar/CARD.md), [H15.b2](experiments/H15_perception_sidecar/CARD.md), [H15.b3](experiments/H15_perception_sidecar/CARD.md), [H15.ood](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
 | **D21** | 4 Nov 2026 | The owner reviewed H15 Part A's steps 1-3 and chose the plan's recommended settings (section 11 of docs/drivejepa-perception-sidecar-A.md): its success criteria as written, committed as PREDICTIONS.md (step 4); the report logs as the test set; the step-5 runs as listed; the chosen causal rule (a 4 s look-ahead, a 2 m corridor margin); pedestrian groups at 1.0 m, at most 3 m wide; traffic side measured before any input is added; nuScenes read also warped to NAVSIM's camera. Weighting what matters (step 5c) and head changes stay open for the review of step 5. | Shreedhar | [H15.r1](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
+| **D22** | 10 Nov 2026 | The owner opens H15's phase B before Part A's steps 6 and 8, documents first. docs/drivejepa-perception-sidecar-B-ideas.md lists where the side-car could connect to Drive-JEPA, for a shortlist; docs/drivejepa-perception-sidecar-B.md plans the shortlisted ideas in reviewed steps, and the owner's first idea in full: the side-car's agents as an input to the refiner and the scorer, adapted with LoRA, read on navtest against the release. Phase B is recorded in H15, as runs H15.r6 onward. Nothing trains, and no phase-B data pass runs, until the owner approves a shortlist; the first B-LoRA run uses a fixed recipe and reads navtest once, and choices are made on an R-clean split built from the trainval logs no NAVSIM split uses. Part A's step 7 (nuScenes) runs now (H15.r5); step 6 waits, and no phase-B step reads the report logs. | Shreedhar | [H15.r4](experiments/H15_perception_sidecar/CARD.md), [H15.b1](experiments/H15_perception_sidecar/CARD.md), [H15.b2](experiments/H15_perception_sidecar/CARD.md) | [H15](experiments/H15_perception_sidecar/CARD.md) |
 <!-- /experiments:decisions -->
 
 ## How to read these tables

@@ -1,5 +1,5 @@
 // H15 rerun, Part A: the side-car alone, in eight steps, each closed by a review before the next opens.
-// Blue: done (steps 1-5, 4 Nov). Grey: not yet run. Amber diamonds: reviews.
+// Blue: done (steps 1-5, 4 Nov; step 7, 10 Nov). Grey: not yet run. Amber diamonds: reviews.
 // Render: dot -Tsvg part-a-steps.dot -o part-a-steps.svg && dot -Tpng:cairo -Gdpi=192 part-a-steps.dot -o part-a-steps.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)
 digraph part_a_steps {
@@ -22,16 +22,17 @@ digraph part_a_steps {
       color="#2563eb", fillcolor="#dbeafe"];
   R2 [shape=diamond, style="filled", width=2.6, height=0.6, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
       label=<<FONT POINT-SIZE="9.5"><B>owner reviews 5</B></FONT>>];
-  S6 [label=<<B>Step 6 · NAVSIM, report logs, read once</B><BR/><FONT POINT-SIZE="9">detection · boxes · velocity · 1 s paths · lead vehicle · sight checks<BR/>notebook 04_evaluation, filled in</FONT>>];
-  S7 [label=<<B>Step 7 · nuScenes, out of the box</B><BR/><FONT POINT-SIZE="9">data prepared (H15.r2): site root · the draw · extract · pass<BR/>left: the readout, zero-shot · and with images warped to NAVSIM's camera</FONT>>];
+  S6 [label=<<B>Step 6 · NAVSIM, report logs, read once</B><BR/><FONT POINT-SIZE="9">detection · boxes · velocity · 1 s paths · lead vehicle · sight checks<BR/>notebook 04_evaluation, filled in · waits (D22)</FONT>>];
+  S7 [label=<<B>Step 7 · nuScenes, out of the box (10 Nov, H15.r5)</B><BR/><FONT POINT-SIZE="9">data prepared (H15.r2) · read as recorded: vehicles within 30 m 0.53, Q9 holds<BR/>warped to NAVSIM's camera: direction better, distance worse · notebook 07</FONT>>,
+      color="#2563eb", fillcolor="#dbeafe"];
   R3 [shape=diamond, style="filled", width=2.6, height=0.6, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
-      label=<<FONT POINT-SIZE="9.5"><B>owner reviews 6–7</B></FONT>>];
+      label=<<FONT POINT-SIZE="9.5"><B>owner reviews 7 (6 waits)</B></FONT>>];
   S8 [label=<<B>Step 8 · close Part A</B><BR/><FONT POINT-SIZE="9">record · decision · whether, and how narrowly, any B question opens</FONT>>];
 
   S1 -> S2 -> S3 -> R1 -> S4 -> S5 -> R2 -> S6 -> S7 -> R3 -> S8;
 
   NOTE [shape=note, style="filled", fillcolor="white", color="#9ca3af", fontsize=9, width=2.4,
-        label=<<B>Out of scope until Part A closes</B><BR ALIGN="LEFT"/>B1 scorer · B2 refiner · B3 ViT LoRA<BR ALIGN="LEFT"/>C adapter and gate<BR ALIGN="LEFT"/>>];
+        label=<<B>Phase B: planned in documents (D22)</B><BR ALIGN="LEFT"/>the ideas, for a shortlist · B-LoRA in full<BR ALIGN="LEFT"/>nothing trains before the go-ahead<BR ALIGN="LEFT"/>>];
   edge [style=invis]; S1 -> NOTE;
   {rank=same; S1; NOTE;}
 }

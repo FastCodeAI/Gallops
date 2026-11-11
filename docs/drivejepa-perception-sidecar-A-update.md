@@ -141,7 +141,9 @@ camera's ray, or more cyclist data, not more training.
 **What's next:**
 - **Step 6, when the owner agrees:** read the 70 test logs once, for the three seeds and the no-camera run.
   This decides the criteria in section 2.
-- **Step 7:** nuScenes without retraining, both as recorded and with its images warped to NAVSIM's camera.
+- **Step 7, done on 10 Nov** ([the plan](drivejepa-perception-sidecar-A.md), §9.3): on nuScenes, a city and car
+  it never saw, the side-car finds 53% of the vehicles within 30 m, so the committed criterion holds (F1 0.50,
+  against 0.72 on NAVSIM). Warping the images to NAVSIM's camera does not help.
 - **Step 8:** close Part A, and decide whether any question about feeding the side-car to the planner opens.
 - **Open decisions:**
   - retrain the no-camera run so it is stable;

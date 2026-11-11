@@ -1,0 +1,63 @@
+// H15 Phase B ideas: Drive-JEPA's planner as it runs at inference, and where the side-car's agents could
+// connect to it (docs/drivejepa-perception-sidecar-B-ideas.md). Grey: the release, frozen. Blue: the
+// side-car (Part A). Amber, dashed: a connection point, labelled with its idea's number.
+// Render: dot -Tsvg b-connections.dot -o b-connections.svg && dot -Tpng:cairo -Gdpi=192 b-connections.dot -o b-connections.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b_connections {
+  graph [rankdir=LR, fontname="Helvetica", nodesep=0.32, ranksep=0.42, pad=0.3, bgcolor="white", newrank=true];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  cam   [label=<<B>CAM_F0</B><BR/><FONT POINT-SIZE="9">now and 0.5 s earlier<BR/>cropped, 512×256</FONT>>];
+  vit   [label=<<B>ViT-L (V-JEPA)</B><BR/><FONT POINT-SIZE="9">frozen · 304 M<BR/>512 tokens × 1024</FONT>>];
+  proj  [label=<<B>projector</B><BR/><FONT POINT-SIZE="9">1024 → 256<BR/>a 16 × 32 map</FONT>>];
+  init  [label=<<B>initial queries</B><BR/><FONT POINT-SIZE="9">32 proposals × 8 poses<BR/>+ ego status</FONT>>];
+
+  subgraph cluster_refiner {
+    label=<<B>refiner: one shared module, run 4 times</B>>; fontname="Helvetica"; fontsize=10;
+    style="rounded,dashed"; color="#9ca3af";
+    dec [label=<<B>decoder</B><BR/><FONT POINT-SIZE="9">MLP → 32 proposals<BR/>× 8 poses (x, y, yaw)</FONT>>];
+    bev [label=<<B>BEVFormer layer</B><BR/><FONT POINT-SIZE="9">self-attention among the 256 queries<BR/>deformable attention to the map,<BR/>at each proposal's own points</FONT>>];
+  }
+
+  scorer [label=<<B>scorer</B><BR/><FONT POINT-SIZE="9">max over the 8 poses<BR/>MLP → 6 logits a proposal</FONT>>];
+  pick   [label=<<B>pick</B><BR/><FONT POINT-SIZE="9">argmax of the final score<BR/>one 4 s plan</FONT>>];
+  aux    [label=<<B>training-only heads</B><BR/><FONT POINT-SIZE="9">collision agents · drivable area<BR/>dropped at inference</FONT>>, style="rounded,dashed", fillcolor="white"];
+
+  sidecar [label=<<B>side-car (Part A, v3)</B><BR/><FONT POINT-SIZE="9">18.4 M · 128 slots<BR/>the same frozen tokens</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  agents  [label=<<B>agents</B><BR/><FONT POINT-SIZE="9">class · box · velocity<BR/>1 s path · confidence</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+
+  cam -> vit -> proj -> bev;
+  init -> dec;
+  dec -> bev [label="proposals"];
+  bev -> dec [label="queries, passes 2-4", style=dashed];
+  bev -> scorer [label="pass 4"];
+  scorer -> pick;
+  scorer -> aux [style=dashed, arrowhead=none];
+  vit -> sidecar -> agents;
+
+  node [shape=box, style="rounded,filled", color="#d97706", fillcolor="#fef3c7", fontsize=9.5, margin="0.08,0.04"];
+  edge [color="#d97706", style=dashed, penwidth=1.2];
+
+  c56  [label=<<B>C5 · C6</B> initial queries · token map>];
+  c1   [label=<<B>C1</B> refiner input>];
+  c2   [label=<<B>C2</B> scorer input>];
+  c3   [label=<<B>C3 · B-LoRA</B><BR/>C1 + C2 together, LoRA>];
+  c4   [label=<<B>C4</B> analytic veto of a proposal>];
+  c7   [label=<<B>C7</B> a teacher, training only>];
+  c13  [label=<<B>C13</B> the named agent: an explanation>];
+
+  agents -> c56 -> init;
+  c56 -> proj;
+  agents -> c1 -> bev;
+  agents -> c2 -> scorer;
+  agents -> c3;
+  c3 -> bev;
+  c3 -> scorer;
+  agents -> c4 -> pick;
+  agents -> c7 -> aux;
+  scorer -> c13;
+
+  { rank=same; vit; sidecar; }
+}

@@ -1,8 +1,8 @@
 # H15 — A perception side-car on frozen Drive-JEPA: 3D boxes and each agent's 1 s path, tested as an input to the scorer, to the refiner, and against LoRA on the ViT
 
-**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running: the rerun, Part A. Steps 1–5 done
-on the select logs only (D21), waiting for the owner's review of step 5 before step 6 reads the report
-logs; step 7's nuScenes data prepared (D20)
+**Owner:** Shreedhar · **Started:** 2026-11-03 · **Status:** running. Part A: steps 1–5 done on the select
+logs (D21) and step 7, nuScenes, done (`H15.r5`); step 6, the report logs, waits. Phase B is planned in documents,
+and nothing in it trains until the owner shortlists (D22)
 
 The facts — runs, data, checkpoints, results, gate verdicts — live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. This page is the
@@ -11,17 +11,23 @@ account: why, what was done, what it showed, and what was decided.
 - **The rerun's plan**, Part A alone, in reviewed steps: [docs/drivejepa-perception-sidecar-A.md](../../docs/drivejepa-perception-sidecar-A.md).
 - **The first pass's plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar.md](../../docs/drivejepa-perception-sidecar.md).
 - **The predictions**, committed before anything trained: [PREDICTIONS.md](PREDICTIONS.md).
+- **Phase B, planned (10 Nov, D22):**
+  - where the side-car could connect to Drive-JEPA, for the owner's shortlist:
+    [docs/drivejepa-perception-sidecar-B-ideas.md](../../docs/drivejepa-perception-sidecar-B-ideas.md);
+  - the plan, in reviewed steps, with the owner's first idea (B-LoRA) in full:
+    [docs/drivejepa-perception-sidecar-B.md](../../docs/drivejepa-perception-sidecar-B.md).
 
 ## The rerun: Part A, one reviewed step at a time (from 4 Nov)
 
 **Why.** The owner judged the first pass inconclusive (D20). It ran the side-car and every phase-B
 question in a day and a half, more than could be reviewed or debugged. H15 is redone from a revised
 plan: Part A alone (train the side-car, measure it), in eight steps, each reviewed before the next.
-Phases B and C wait. Everything from "Why" down is the first pass's account, kept as it was.
+Phases B and C waited; on 10 Nov the owner opened phase B's planning, with step 7 run alongside and step 6
+deferred (D22). Everything from "Why" down is the first pass's account, kept as it was.
 
 ![The rerun's eight steps, with the owner's reviews](figures/part-a-steps.png)
 
-**Steps 1–5 (4 Nov):**
+**Steps 1–5 (4 Nov) and step 7 (10 Nov):**
 
 | Step | Review it in | What it established (*counted* or *measured*) |
 |---|---|---|
@@ -33,6 +39,7 @@ Phases B and C wait. Everything from "Why" down is the first pass's account, kep
 | step 7, prepared (`H15.r2`) | [notebooks/05_nuscenes.ipynb](notebooks/05_nuscenes.ipynb) | **The nuScenes data is ready, and no model has read it.** The site root was recreated as the view of the shared copy that both configs name. 100 train scenes were drawn and committed, in two interpreters (plan §8.2). All 2,917 kept keyframes are passed, the projection agrees with the calibration to 1.4e-5 px, and the boxes sit on the agents. There are 3.8 targets a keyframe, and night and rain fall in single cities |
 | 4 · the success criteria | [PREDICTIONS.md](PREDICTIONS.md), the rerun's section | **Committed before step 5's first training step (`9d32b80`):** plan §7 as written, with the owner's choices of 4 Nov (D21) |
 | 5 · three sizes, then the chosen one at three seeds (`H15.r3`, `H15.r4`) | [notebooks/06_predictions.ipynb](notebooks/06_predictions.ipynb), plan §9.2 | **By the committed rules: v3 (18.44 M) for 24 epochs, select F1 0.717 over three seeds (0.713–0.719).** 5a read v1 0.671, v2 0.679, v3 0.699 and v1 on 24 epochs 0.698; every gate held. **It places agents in the right direction (under 1°) but not at the right distance:** the depth error passes 1 m beyond about 25 m, the largest share of its misses and false alarms. Causal recall 0.90; hidden agents 0.36; cyclists almost never. The no-camera control finds almost nothing, but trained unhealthily |
+| 7 · nuScenes, zero-shot, as recorded and warped (`H15.r5`, 10 Nov) | [notebooks/07_nuscenes_readout.ipynb](notebooks/07_nuscenes_readout.ipynb), plan §9.3 | **Q9 is supported on every seed: vehicle recall within 30 m 0.526, 0.532, 0.537** (predicted 0.40–0.55; the first pass's v1 read 0.480). Out of domain it is a weaker detector in the same ways: F1 within 30 m 0.49–0.50 (NAVSIM select 0.713–0.719), pedestrians 0.15–0.16, causal recall 0.62–0.67, depth error near the car two to three times NAVSIM's. Left-hand traffic costs vehicles nothing. **Warping the frames to NAVSIM's camera does not help:** direction improves, distance gets worse, and recall falls 8–11 points, so the gap is not shown to be the camera's geometry. Checks first: each run's select F1 reproduced exactly; the identity warp exact |
 
 - **To rerun a notebook,** open it with the **`drive-jepa-v2`** kernel ("Drive-JEPA v2").
   - It starts the interpreter `gallops.toml` names as `[python] drivejepa` (Python 3.9, torch 2.1),

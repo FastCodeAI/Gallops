@@ -622,3 +622,68 @@ notes = "The variant and schedule 5a chose by plan section 6.5 (H15.r3): v3 for 
   strength = "moderate"
   flags = ["open-loop", "selected-on-report"]
   note = "mean of three seeds (0.897-0.903); a diagnostic over all ranges, recorded every epoch from step 5. Q10 itself is read within 30 m on the report logs at step 6"
+
+[[runs]]
+id = "H15.r5"
+label = "Rerun, Part A, step 7: the chosen side-car (v3, 24 epochs, seeds 0-2) and the no-camera control on H15's 100 nuScenes train scenes, as recorded and warped to NAVSIM's camera; nothing trains"
+started = 2026-11-10
+start_from = "H15.r4"
+trained = []
+frozen = ["everything"]
+train_git_sha = "19456b5"
+notes = "Run alongside Phase B's planning, before step 6, at the owner's request (D22); no report-log row is read. Every run at its kept epoch (24, 21, 24; the control 23) and its last, on the same 2,917 keyframes in both reads. Checks passed first: each run, read by this code on NAVSIM's select logs, gives its recorded select F1 exactly (gap 0.0); the identity warp reproduces nusc-v1's ViT output exactly on 32 rows; each scene's homography and the warped camera agree to 3e-12 px. The warp (stage part-a-7-warp-pass) turns each scene's camera 2.41 degrees (Boston) or 1.31 (Singapore) onto a navtrain train row's CAM_F0 chosen by a fixed rule (focal 1545 px, principal point 960, 560), keeping nuScenes' camera centre; 3.5-3.6% of the rows the ViT reads are black. Notebook 07 reviews it."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-a-7-read"
+
+  [[runs.data]]
+  dataset = "nuscenes"
+  split = "train, 100 scenes (H15's own draw)"
+  role = "held-out"
+  unit = "keyframes"
+  n = 2917
+  scene_list = "recipes/drivejepa_perception/ood_scenes.json"
+  built_by = "gallops.drivejepa_perception.ood"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "side-car zero-shot vehicle recall at 2 m within 30 m, as recorded (Q9): v3 for 24 epochs"
+  subset = "H15's 100 nuScenes train scenes"
+  n = 3575
+  unit = "target"
+  baseline = "no camera (the same side-car, tokens zeroed), seed 0"
+  baseline_value = "0.120"
+  value = "0.532"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "mean of three seeds at their kept epochs: 0.526 (95% over scenes 0.481-0.570), 0.532 (0.485-0.578), 0.537 (0.495-0.583); vehicle precision 0.62-0.65. Q9 (predicted 0.40-0.55; supports if >= 0.30) supported on every seed. The first pass's v1 read 0.480 on its own draw"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "F1 at 2 m within 30 m, all classes, as recorded: v3 for 24 epochs"
+  subset = "H15's 100 nuScenes train scenes"
+  n = 5280
+  unit = "target"
+  baseline = "no camera, seed 0"
+  baseline_value = "0.037"
+  value = "0.495"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds 0.491, 0.491, 0.504; recall 0.407-0.415, precision 0.616-0.642 (in domain, NAVSIM select: 0.713-0.719). Pedestrians within 30 m 0.154-0.159; causal recall (the chosen rule, all ranges) 0.62-0.67; moving vehicles within 20 m 0.74-0.76; median depth error within 10 m 0.62-0.95 m and direction 2.2-2.3 degrees. Left-hand traffic costs vehicles nothing (0.54 against 0.52)"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "side-car vehicle recall at 2 m within 30 m, frames warped to NAVSIM's CAM_F0 (a diagnostic; no prediction)"
+  subset = "H15's 100 nuScenes train scenes"
+  n = 3521
+  unit = "target"
+  baseline = "the same runs, as recorded"
+  baseline_value = "0.532"
+  value = "0.438"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds 0.446, 0.424, 0.444; all-class F1 0.424. The warp straightens direction (median 1.2 degrees beyond 20 m, against 1.6-1.8 as recorded) but places agents within 20 m a median 1.0-1.4 m too far (as recorded 0.5-0.7 m). So the gap is not shown to be the camera's geometry: the warp aligns each camera's rotation on its ego frame, which can tilt the view against the road, and it adds a black band and a second resampling; this read cannot separate them"

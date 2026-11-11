@@ -1,8 +1,9 @@
 # H15, Part A, revised: the perception side-car alone, one reviewed step at a time
 
-**Status (2026-11-05): steps 1–5 done, on the select logs only; waiting for the owner's review of step 5
-(§9.2, notebook 06). By the committed rules the side-car is v3 for 24 epochs: select F1 0.717 over three
-seeds. Step 7's nuScenes data is prepared (§8.2); no model has read it. No report-log number exists.**
+**Status (2026-11-10): steps 1–5 done on the select logs (§9.2, notebook 06), and step 7 done (§9.3,
+notebook 07): on nuScenes the side-car finds 0.53 of the vehicles within 30 m, so Q9 holds. Step 6, the report
+logs, waits: no report-log number exists. The owner has opened phase B's planning alongside (D22,
+[the ideas](drivejepa-perception-sidecar-B-ideas.md), [the plan](drivejepa-perception-sidecar-B.md)).**
 
 **Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
 record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
@@ -22,6 +23,7 @@ steps. The owner reviews each block before the next one starts.
 | step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
 | 4 · the success criteria, committed | [PREDICTIONS.md](../experiments/H15_perception_sidecar/PREDICTIONS.md), the rerun's section |
 | 5 · three sizes, then the chosen one at three seeds: what it predicts | [notebooks/06_predictions.ipynb](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb), §9.2 |
+| 7 · nuScenes, as recorded and warped to NAVSIM's camera | [notebooks/07_nuscenes_readout.ipynb](../experiments/H15_perception_sidecar/notebooks/07_nuscenes_readout.ipynb), §9.3 |
 
 **The second review's questions, and where each is answered:**
 
@@ -853,7 +855,7 @@ marked):
      - 47% within 30 m.
    - **Notebook 05** draws the keyframes with their targets through the side-car's own projection.
      The boxes sit on the agents.
-5. **A side-car-only readout**, written at step 7. The existing `ood read` also reads every B1 run,
+5. **A side-car-only readout: done on 10 Nov (§9.3, `H15.r5`).** The existing `ood read` also reads every B1 run,
    which Part A has none of. It reads nuScenes as it is, and again with each image warped to NAVSIM's
    camera (§4.1), to tell geometry from appearance. It reports:
    - every §8.1 metric;
@@ -1039,6 +1041,74 @@ variant, so each number flatters the chosen run a little.
 - **Not a step-5 choice:** v3's layers 4–6 add little, so a three-layer v3 (about 10 M, *estimate*) would
   likely do as well.
 
+### 9.3 Step 7: nuScenes, as recorded and warped (10 Nov, `H15.r5`)
+
+**What ran** (recipe stages `part-a-7-warp-pass` and `part-a-7-read`, code at `19456b5`; nothing trains).
+- **Runs read:** v3 for 24 epochs at seeds 0–2 and the no-camera control, at kept epochs (24, 21, 24; 23) and
+  last.
+- **Rows:** all 2,917 keyframes of H15's 100 scenes, the same rows in both reads.
+- **The warp.**
+  - Each scene's frames are turned onto a NAVSIM camera chosen by a fixed rule: the navtrain train row whose
+    CAM_F0 lands a grid ahead closest to the per-point median. It has focal 1545 px and principal point (960, 560).
+  - The warp keeps nuScenes' camera centre. It turns Boston's camera 2.41° and Singapore's 1.31°.
+  - 3.5% of the rows the ViT reads come out black, at the bottom.
+- **Checks, before anything was read** (*measured*):
+  - (a) each run, read by the new code on NAVSIM's select logs, gives its recorded select F1 exactly;
+  - (b) the identity warp reproduces `nusc-v1`'s ViT output exactly on 32 rows;
+  - (c) each homography and its warped camera agree to 3e-12 px.
+
+**Q9 is supported on every seed** (*measured*; 95% intervals over 1,000 draws of whole scenes):
+
+| Run | Vehicle recall within 30 m, as recorded | Its interval | Warped |
+|---|---|---|---|
+| seed 0 (kept 24) | 0.526 | 0.481–0.570 | 0.446 |
+| seed 1 (kept 21) | 0.532 | 0.485–0.578 | 0.424 |
+| seed 2 (kept 24) | 0.537 | 0.495–0.583 | 0.444 |
+| no camera (kept 23) | 0.120 | 0.097–0.145 | 0.131 |
+
+- **Against the committed rule:**
+  - predicted 0.40–0.55; supports at ≥ 0.30 on every seed;
+  - the first pass's v1 read 0.480, on its own draw.
+- **How it fails out of domain** (as recorded, three seeds):
+
+  | Measure | nuScenes | NAVSIM select |
+  |---|---|---|
+  | F1 within 30 m | 0.49–0.50 | 0.713–0.719 |
+  | recall · precision within 30 m | 0.41 · 0.62–0.64 | |
+  | pedestrians found within 30 m | 0.15–0.16 | 0.46–0.49 |
+  | AP: vehicles · pedestrians | 0.53–0.56 · 0.24 | |
+  | causal recall, the chosen rule | 0.62–0.67 | 0.90 |
+  | moving vehicles within 20 m | 0.74–0.76 | 0.95–0.96 |
+  | median depth error within 10 m | 0.62–0.95 m | 0.24 m |
+  | direction error | 1.6–2.3° | under 1° |
+
+  - nuScenes keeps only boxes with a lidar point, so its targets are more visible than NAVSIM's (§8.2).
+- **By place:**
+  - Left-hand traffic costs vehicles nothing: 0.54 in Singapore against 0.52 in Boston. Choice 11.10's measurement
+    finds no case for a traffic-side input. Singapore's all-class F1 is lower (0.45 against 0.51), mostly
+    pedestrians.
+  - Queenstown is the weakest and least certain place: 9 scenes, 0.36.
+  - Night and rain coincide with city in this draw, so they cannot be told apart from it.
+- **The warp does not help** (choice 11.12, *measured*):
+  - Direction improves at every range: the median beyond 20 m falls from 1.6–1.8° to 1.2°.
+  - Distance gets worse. Within 20 m, agents are placed a median 1.0–1.4 m too far, against 0.5–0.7 m as
+    recorded.
+  - Recall falls 8–11 points within 30 m.
+- **So the gap is not shown to be the camera's geometry** (*argued*).
+  - The warp aligns each camera's rotation on its own ego frame. The side-car judges distance from where an agent
+    meets the road, which depends on the camera's pitch against the road.
+  - If the datasets' ego frames sit differently on it, an exact ego-frame warp tilts the view. About a degree
+    moves a placement at 10 m by about half a metre, the size of the change.
+  - The warp also adds the black band and a second resampling.
+  - This read cannot separate the three. A warp of the yaw alone, or one fitted to the ground, would.
+
+**For the owner's review of step 7:**
+- Q9's verdict, and whether the out-of-domain weaknesses (pedestrians, depth near the car) bear on which phase-B
+  ideas to shortlist.
+- Whether to test the warp's three changes apart: yaw only; pitch fitted to the ground; the black band cropped.
+  Each needs a warp pass and a readout, minutes of GPU, and no training.
+- Step 6, the report logs, still waits for the review of step 5.
+
 ## 10. Code
 
 **For steps 1–3** (`8da23d6`, plus `views`' palette in the notebooks' commit; tests in both
@@ -1060,10 +1130,13 @@ interpreters):
 - **`targets.target_index`**: `targets.build`'s choice of agents, factored out so the labels can follow it.
 - **Notebooks:** `02b_architecture` (new); sections added to 01, 02, 03 and 04.
 
+**For step 7** (`19456b5`, tests in both interpreters):
+- **`ood warp-pass` and `ood read-sidecar`:** the warp and its checks, and the side-car-only readout (§9.3).
+- **`evaluate`:** AP, calibration, the ray split of the position error and per-sample counts, moved out of
+  notebooks 04 and 06 so step 6 reads them the same way.
+
 **Later, each in its own step, after the review that opens it:**
-- step 5's recipe stages;
-- step 6's `reread` of kept and last in one call, and any adopted metric;
-- step 7's side-car-only nuScenes readout.
+- step 6's `reread` of kept and last in one call, reading the measures `evaluate` now has.
 
 ## 11. Decisions for the owner at the review of steps 1–3
 

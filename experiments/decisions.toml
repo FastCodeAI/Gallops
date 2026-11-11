@@ -245,3 +245,20 @@ by = ["Shreedhar"]
 evidence = ["H15.r1"]
 next = ["H15"]
 source = "the owner, 4 Nov 2026"
+
+[[decision]]
+id = "D22"
+date = 2026-11-10
+short = "H15: phase B planned before Part A closes; step 7 runs, step 6 waits"
+decision = """The owner opens H15's phase B before Part A's steps 6 and 8, documents first. \
+docs/drivejepa-perception-sidecar-B-ideas.md lists where the side-car could connect to Drive-JEPA, for a shortlist; \
+docs/drivejepa-perception-sidecar-B.md plans the shortlisted ideas in reviewed steps, and the owner's first idea in \
+full: the side-car's agents as an input to the refiner and the scorer, adapted with LoRA, read on navtest against \
+the release. Phase B is recorded in H15, as runs H15.r6 onward. Nothing trains, and no phase-B data pass runs, until \
+the owner approves a shortlist; the first B-LoRA run uses a fixed recipe and reads navtest once, and choices are \
+made on an R-clean split built from the trainval logs no NAVSIM split uses. Part A's step 7 (nuScenes) runs now \
+(H15.r5); step 6 waits, and no phase-B step reads the report logs."""
+by = ["Shreedhar"]
+evidence = ["H15.r4", "H15.b1", "H15.b2"]
+next = ["H15"]
+source = "the owner, 10 Nov 2026"
