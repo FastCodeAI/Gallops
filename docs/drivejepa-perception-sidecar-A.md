@@ -983,7 +983,7 @@ variant, so each number flatters the chosen run a little.
 
 | Run | Kept epoch | Select F1, kept · last | Recall · precision | Causal recall |
 |---|---|---|---|---|
-| seed 0 | 24 | 0.720 · 0.720 | 0.680 · 0.763 | 0.898 |
+| seed 0 | 24 | 0.719 · 0.719 | 0.680 · 0.763 | 0.898 |
 | seed 1 | 21 | 0.718 · 0.718 | 0.673 · 0.770 | 0.903 |
 | seed 2 | 24 | 0.713 · 0.713 | 0.666 · 0.768 | 0.897 |
 | no camera, seed 0 | 23 | 0.041 · 0.024 | 0.057 · 0.032 | 0.108 |

@@ -607,7 +607,7 @@ notes = "The variant and schedule 5a chose by plan section 6.5 (H15.r3): v3 for 
   better = "higher"
   strength = "moderate"
   flags = ["open-loop", "selected-on-report"]
-  note = "mean of three seeds: 0.720 (kept epoch 24), 0.718 (21), 0.713 (24), a range of 0.006; recall 0.666-0.680, precision 0.763-0.770. The variant, schedule and epochs were chosen on these logs; step 6 reads the report logs. The control's recall is 0.057 and precision 0.032 at its kept epoch 23 (0.024 F1 at its last)"
+  note = "mean of three seeds: 0.719 (kept epoch 24), 0.718 (21), 0.713 (24), a range of 0.006; recall 0.666-0.680, precision 0.763-0.770. The variant, schedule and epochs were chosen on these logs; step 6 reads the report logs. The control's recall is 0.057 and precision 0.032 at its kept epoch 23 (0.024 F1 at its last)"
 
   [[runs.results]]
   bench = "navsim"
