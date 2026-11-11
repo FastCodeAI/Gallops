@@ -13,7 +13,11 @@ Added here:
 - the lead vehicle (the nearest vehicle ahead with |y| <= LANE_HALF_M): gap error against a
   no-camera prior, the train-mean gap;
 - from the rerun's step 5, every epoch: query collapse (`slot_numbers`) and the recall of the
-  targets that matter (`recall_of`, with `importance.py`'s labels).
+  targets that matter (`recall_of`, with `importance.py`'s labels);
+- from step 7, the plan's adopted metrics (§8.1, choice 11.4), until then computed in notebooks 04
+  and 06: AP per class (`average_precision`), calibration of the confidence (`calibration`), the
+  position error along the camera's ray and across it (`ray_errors`), and per-sample counts for
+  intervals over resampled scenes or logs (`per_sample_counts`).
 """
 
 from __future__ import annotations
@@ -98,6 +102,123 @@ def slot_numbers(preds: list) -> dict:
         "slots_firing": int((per_slot > 0).sum()),
         "busiest_eighth_share": float(busiest.sum() / detections) if detections else float("nan"),
     }
+
+
+#: Confidence floor for AP: every slot at or over it is ranked, not only those at THR (notebook 04 §5).
+AP_FLOOR = 0.01
+#: Recall points AP averages precision over (101, as COCO's interpolated AP).
+AP_POINTS = np.linspace(0.0, 1.0, 101)
+#: Confidence bins for calibration (notebook 06 §9): THR's bin is [0.5, 0.6).
+CALIBRATION_BINS = np.linspace(0.1, 1.0, 10)
+
+
+def average_precision(
+    preds: list, gts: list, cls: int, radius: float = HIT_M, max_range: float = 30.0
+) -> dict:
+    """AP of one class within `max_range`: every slot of that class at AP_FLOOR or more, ranked by
+    confidence over all samples, each a hit when the nearest free target of its class lies within
+    `radius` (centre, x-y). Moved from notebooks 04 and 06 so steps 6 and 7 read it alike.
+    Gives `ap`, the curve (`recall`, `precision`) and `targets`."""
+    dets, gt_xy = [], []
+    for i, (pred, gt) in enumerate(zip(preds, gts)):  # noqa: B905 -- Python 3.9
+        m = gt["mask"] & (gt["cls"] == cls)
+        g = gt["box"][m, :2].astype(np.float64)
+        gt_xy.append(g[np.hypot(g[:, 0], g[:, 1]) < max_range])
+        sel = (pred["cls"] == cls) & (pred["conf"] >= AP_FLOOR)
+        xy = pred["xyz"][sel, :2].astype(np.float64)
+        near = np.hypot(xy[:, 0], xy[:, 1]) < max_range
+        dets += [(float(c), i, p) for c, p in zip(pred["conf"][sel][near], xy[near])]  # noqa: B905
+    n_gt = sum(len(g) for g in gt_xy)
+    dets.sort(key=lambda d: -d[0])
+    used = [np.zeros(len(g), bool) for g in gt_xy]
+    tp = np.zeros(len(dets))
+    for k, (_, i, xy) in enumerate(dets):
+        if not len(gt_xy[i]):
+            continue
+        d = np.hypot(*(gt_xy[i] - xy).T)
+        d[used[i]] = np.inf
+        g = int(np.argmin(d))
+        if d[g] <= radius:
+            used[i][g], tp[k] = True, 1.0
+    hits = np.cumsum(tp)
+    precision = hits / np.arange(1, len(tp) + 1) if len(tp) else np.zeros(0)
+    recall = hits / max(n_gt, 1)
+    ap = float(np.mean([precision[recall >= r].max() if (recall >= r).any() else 0.0 for r in AP_POINTS]))
+    return {"ap": ap, "recall": recall, "precision": precision, "targets": int(n_gt)}
+
+
+def calibration(preds: list, gts: list, bins: np.ndarray = CALIBRATION_BINS) -> dict:
+    """How often a slot of a given confidence is right: every slot at bins[0] or more, matched to the
+    nearest free target of its class within HIT_M in order of confidence (the readout's rule, applied
+    below THR too). Gives each bin's centre, share right and count."""
+    hit_by, n_by = np.zeros(len(bins) - 1), np.zeros(len(bins) - 1)
+    for pred, gt in zip(preds, gts):  # noqa: B905
+        m = gt["mask"]
+        keep = np.flatnonzero(pred["conf"] >= bins[0])
+        order = keep[np.argsort(-pred["conf"][keep], kind="stable")]
+        free = np.ones(int(m.sum()), bool)
+        gxy, gcls = gt["box"][m, :2].astype(np.float64), gt["cls"][m]
+        for q in order:
+            d = np.hypot(*(gxy - pred["xyz"][q, :2]).T) if len(gxy) else np.zeros(0)
+            d[~free | (gcls != pred["cls"][q])] = np.inf
+            ok = bool(len(d)) and float(d.min()) <= HIT_M
+            if ok:
+                free[int(np.argmin(d))] = False
+            b = min(int(np.searchsorted(bins, pred["conf"][q], side="right")) - 1, len(bins) - 2)
+            n_by[b] += 1
+            hit_by[b] += ok
+    return {"centre": (bins[:-1] + bins[1:]) / 2, "right": hit_by / np.maximum(n_by, 1), "count": n_by}
+
+
+def camera_centre(projection: np.ndarray) -> np.ndarray:
+    """The ego-frame point an ego -> image projection maps to the camera's own centre."""
+    p = np.asarray(projection, dtype=np.float64)
+    return -np.linalg.solve(p[:3, :3], p[:3, 3])
+
+
+def ray_errors(preds: list, gts: list, projections: list, radius: float = 5.0) -> dict:
+    """Each target's position error split along the camera's ray and across it (notebook 06 §7).
+
+    Targets are paired with a detection of their class within `radius` by `match` (looser than the
+    readout's 2 m, so a misplaced agent still pairs). Per pair: the target's range from the camera,
+    its class, the error along the ray (depth: positive means placed too far), across it (lateral,
+    positive to the left) and that lateral error as an angle seen from the camera."""
+    out = {k: [] for k in ("range", "cls", "depth", "lateral", "direction_deg")}
+    for pred, gt, projection in zip(preds, gts, projections):  # noqa: B905
+        m = gt["mask"]
+        gxy, gcls = gt["box"][m, :2].astype(np.float64), gt["cls"][m]
+        _, _, pair = match(pred["conf"], pred["cls"], pred["xyz"][:, :2], gxy, gcls, radius=radius)
+        centre = camera_centre(projection)[:2]
+        for j in np.flatnonzero(pair >= 0):
+            g, d = gxy[j], pred["xyz"][pair[j], :2].astype(np.float64)
+            reach = float(np.linalg.norm(g - centre))
+            ray = (g - centre) / reach
+            err = d - g
+            across = float(ray[0] * err[1] - ray[1] * err[0])
+            out["range"].append(reach)
+            out["cls"].append(int(gcls[j]))
+            out["depth"].append(float(err @ ray))
+            out["lateral"].append(across)
+            out["direction_deg"].append(float(np.degrees(np.arctan2(across, reach))))
+    return {k: np.asarray(v) for k, v in out.items()}
+
+
+def per_sample_counts(preds: list, gts: list, cls: int = -1, max_range: float = 30.0) -> dict:
+    """Per sample, the targets within `max_range` and how many were hit, and the detections there
+    and how many were right (one class, or all with -1): what interval draws over scenes resample."""
+    out = {k: np.zeros(len(preds), np.int64) for k in ("targets", "hits", "detections", "right")}
+    for i, (pred, gt) in enumerate(zip(preds, gts)):  # noqa: B905
+        m = gt["mask"]
+        gxy, gcls = gt["box"][m, :2].astype(np.float64), gt["cls"][m]
+        det, tp, hit = match(pred["conf"], pred["cls"], pred["xyz"][:, :2], gxy, gcls)
+        g_in = np.hypot(gxy[:, 0], gxy[:, 1]) < max_range
+        d_in = np.hypot(pred["xyz"][det, 0], pred["xyz"][det, 1]) < max_range
+        if cls >= 0:
+            g_in &= gcls == cls
+            d_in &= pred["cls"][det] == cls
+        out["targets"][i], out["hits"][i] = int(g_in.sum()), int((g_in & (hit >= 0)).sum())
+        out["detections"][i], out["right"][i] = int(d_in.sum()), int((d_in & tp).sum())
+    return out
 
 
 def recall_of(preds: list, gts: list, subsets: dict) -> dict:

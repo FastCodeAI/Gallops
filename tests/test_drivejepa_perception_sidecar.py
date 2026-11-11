@@ -321,3 +321,81 @@ def test_match_takes_a_looser_radius_when_asked():
     xy, gxy, gcls = np.array([[10.0, 0.0]]), np.array([[13.0, 0.0]]), np.array([0])
     assert evaluate.match(conf, cls, xy, gxy, gcls)[2].tolist() == [-1]  # 3 m: beyond the readout's 2 m
     assert evaluate.match(conf, cls, xy, gxy, gcls, radius=5.0)[2].tolist() == [0]
+
+
+def _toy(pred_xy, pred_conf, pred_cls, gt_xy, gt_cls):
+    """One sample: decoded predictions and targets in the readout's layout."""
+    n = len(gt_xy)
+    box = np.zeros((tg.QUERIES, 7), np.float32)
+    box[:n, :2] = gt_xy
+    cls = np.zeros(tg.QUERIES, np.int64)
+    cls[:n] = gt_cls
+    mask = np.zeros(tg.QUERIES, bool)
+    mask[:n] = True
+    gt = {"box": box, "cls": cls, "mask": mask}
+    xyz = np.c_[np.asarray(pred_xy, dtype=np.float64), np.zeros(len(pred_xy))]
+    pred = {"conf": np.asarray(pred_conf, dtype=np.float64), "cls": np.asarray(pred_cls), "xyz": xyz}
+    return pred, gt
+
+
+def test_average_precision_is_one_for_perfect_ranking_and_drops_when_a_false_alarm_ranks_first():
+    pred, gt = _toy([[10.0, 0.0], [20.0, 1.0]], [0.9, 0.8], [0, 0], [[10.0, 0.0], [20.0, 1.0]], [0, 0])
+    assert evaluate.average_precision([pred], [gt], 0)["ap"] == 1.0
+    worse, _ = _toy(
+        [[15.0, 5.0], [10.0, 0.0], [20.0, 1.0]],
+        [0.95, 0.9, 0.8],
+        [0, 0, 0],
+        [[10.0, 0.0], [20.0, 1.0]],
+        [0, 0],
+    )
+    ap = evaluate.average_precision([worse], [gt], 0)
+    assert 0.5 < ap["ap"] < 1.0 and ap["targets"] == 2
+    # A pedestrian detection is ranked for pedestrians only, and targets beyond 30 m are not counted.
+    far, gt_far = _toy([[10.0, 0.0]], [0.9], [1], [[10.0, 0.0], [40.0, 0.0]], [0, 0])
+    out = evaluate.average_precision([far], [gt_far], 0)
+    assert out["ap"] == 0.0 and out["targets"] == 1
+
+
+def test_calibration_counts_each_slot_once_in_its_confidence_bin():
+    pred, gt = _toy(
+        [[10.0, 0.0], [30.0, 8.0], [12.0, 0.0]], [0.95, 0.55, 0.15], [0, 0, 0], [[10.0, 0.0]], [0]
+    )
+    cal = evaluate.calibration([pred], [gt])
+    assert cal["count"].sum() == 3
+    top = int(np.searchsorted(evaluate.CALIBRATION_BINS, 0.95, side="right")) - 1
+    assert cal["right"][top] == 1.0 and cal["count"][top] == 1
+    mid = int(np.searchsorted(evaluate.CALIBRATION_BINS, 0.55, side="right")) - 1
+    assert cal["right"][mid] == 0.0  # 22 m from the only target
+    # The 0.15 slot sits 2 m from a target the 0.95 slot already took: one target, one hit.
+    assert cal["right"][0] == 0.0
+
+
+def test_ray_errors_split_a_misplacement_into_depth_and_direction():
+    projection = tg.front_projection(_pinhole_lidar2img())
+    centre = evaluate.camera_centre(projection)
+    assert np.allclose(centre, [0.0, 0.0, 1.5], atol=1e-9)
+    # A target 20 m straight ahead, detected 2 m too far: all depth, no direction.
+    pred, gt = _toy([[22.0, 0.0]], [0.9], [0], [[20.0, 0.0]], [0])
+    err = evaluate.ray_errors([pred], [gt], [projection])
+    assert np.isclose(err["depth"][0], 2.0) and np.isclose(err["lateral"][0], 0.0)
+    assert np.isclose(err["range"][0], 20.0)
+    # The same target detected 1 m to the left: direction, no depth.
+    pred, gt = _toy([[20.0, 1.0]], [0.9], [0], [[20.0, 0.0]], [0])
+    err = evaluate.ray_errors([pred], [gt], [projection])
+    assert np.isclose(err["depth"][0], 0.0) and np.isclose(err["lateral"][0], 1.0)
+    assert np.isclose(err["direction_deg"][0], np.degrees(np.arctan2(1.0, 20.0)))
+
+
+def test_per_sample_counts_read_one_class_within_thirty_metres():
+    pred, gt = _toy(
+        [[10.0, 0.0], [25.0, 0.0], [12.0, 3.0]],
+        [0.9, 0.8, 0.7],
+        [0, 0, 1],
+        [[10.0, 0.0], [25.5, 0.0], [40.0, 0.0], [12.0, 3.0]],
+        [0, 0, 0, 1],
+    )
+    vehicles = evaluate.per_sample_counts([pred], [gt], cls=0)
+    assert vehicles["targets"][0] == 2 and vehicles["hits"][0] == 2  # the 40 m vehicle is out of range
+    assert vehicles["detections"][0] == 2 and vehicles["right"][0] == 2
+    every = evaluate.per_sample_counts([pred], [gt])
+    assert every["targets"][0] == 3 and every["hits"][0] == 3
