@@ -92,6 +92,32 @@ the headline result was measured on.
 | `ckpt/step0930.pt` | 36748734 | `84359783ef502e1ccc3a2dcff013bf45d215f9fb11e046cc8110c64581434e21` |
 | `resume.pt` | 110139953 | `b688396305885b14fad21b9cea99fe67620cb9a52129dbe82816566d7d3ff5e9` |
 
+## Per-moment picks, grades and run records
+
+What every pick grade in the record is computed from: for each scored checkpoint, the path the scorer chose
+at each picking-set moment (`<name>.npz`) and the grades of all 32 paths (`<name>_grades.npy`), and each run's
+`run.json`. `06_recall_lesson/interval_after_review.py` reads the six dump pairs below. Where they sit:
+`{experiment_store}/`, then the path given.
+
+| File | Bytes | sha256 |
+|---|---:|---|
+| `runs/pilot_seed0/carry/dumps/p01.2.npz` | 9329536 | `e5972d11bc0ec558288cc6b76a7e8e044a2a7638d31aa3c9ed6bd402413ef146` |
+| `runs/pilot_seed0/carry/dumps/p01.2_grades.npy` | 1303040 | `7cc23d762208b1a715520eb37cf9c35e72aedd81620410e515ba53cb1c03a227` |
+| `runs/pilot_seed0/wiped/dumps/p01.2.npz` | 9332753 | `c049917f176d9a37e84c30422d9df440ddc50c22f52396149e66bb80288d3e4a` |
+| `runs/pilot_seed0/wiped/dumps/p01.2_grades.npy` | 1303040 | `5e01b53b65aaadd2ef0152cee1c93daf29f129194b3ecba79ef43106a1bbaed1` |
+| `runs/build4_short/dumps/step0930.npz` | 9323163 | `fc9ca410d7eec0e9d8852cd6cbd6a4ace547520705807e547f7b70e658a8abd9` |
+| `runs/build4_short/dumps/step0930_grades.npy` | 1303040 | `a6467f4910f0252a5fbea50bac72044b175077873d9f0454c1f2eebe266f14d1` |
+| `runs/build4_short/dumps/step0930_wiped.npz` | 9322759 | `f8d69dfe9489ce5493c017b7fe5a3442bdc432d5356ac38aad4aadf9049d47d9` |
+| `runs/build4_short/dumps/step0930_wiped_grades.npy` | 1303040 | `0eb601a310dd184538bbb84e3756913b4af102e4a91c7e1e22b824be9ea87029` |
+| `runs/build5_short/dumps/step0930_carried.npz` | 9328637 | `36acaf4b02cc3cab6d4f622238f7c1e5f15cfff578ed873e271cecee4b024d20` |
+| `runs/build5_short/dumps/step0930_carried_grades.npy` | 1303040 | `51c6b5c4636189e8652c4fb8ef167fd7619121356cb0cc042827a2d6bed4c8e9` |
+| `runs/build5_short/dumps/step0930_reset.npz` | 9328284 | `3415bcaa4730e9654b4269d01461e9dd89741b4d20fe7c59a8e0a7927fbd0284` |
+| `runs/build5_short/dumps/step0930_reset_grades.npy` | 1303040 | `88a70a5eb439363bcbca1bceb42ab2ca3a11abd379b1c6142903af049aa99cae` |
+| `runs/pilot_seed0/carry/run.json` | 3198457 | `f7611c7947a4b52e9ecac231f75d2673da586f47c6cc53e2c0cc069b9afffe4f` |
+| `runs/pilot_seed0/wiped/run.json` | 2936808 | `5d734580b17bc8d103b62e487edd0abe30d0d35f3bb55b58b8c9fd739f3b8491` |
+| `runs/build4_short/run.json` | 322527 | `e72546db4d709af078b37fa440bc39e575655eca08a0dab0a26764c8b12f55cf` |
+| `runs/build5_short/run.json` | 490038 | `01287c17733a3b86d5444f7f267b9cf5c4c059cc15fcada498b59035d454d061` |
+
 ## The token cache and the slices
 
 The frozen encoder's output at every moment of four slices, 88.6 GB in all, one file per clip. The per-clip

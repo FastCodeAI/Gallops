@@ -1,0 +1,45 @@
+{
+ "note": "Clip-clustered intervals for the two 930-step runs' carried-against-reset pick grade, written after review.",
+ "pairs": [
+  {
+   "moments": 1131,
+   "clips": 46,
+   "point": 0.011306057479084329,
+   "ci95": [
+    -0.007629073085026701,
+    0.03150194492695941
+   ],
+   "draws": 2000,
+   "name": "first training run: carried against wiped (check)",
+   "carried_mean": 0.7752012736653987,
+   "other_mean": 0.7638952161863143
+  },
+  {
+   "moments": 1131,
+   "clips": 46,
+   "point": -0.0024629159114932086,
+   "ci95": [
+    -0.00895969267328118,
+    0.0038897549875745395
+   ],
+   "draws": 2000,
+   "name": "collapse fix, step 930: carried against reset",
+   "carried_mean": 0.7495679898034356,
+   "other_mean": 0.7520309057149288
+  },
+  {
+   "moments": 1131,
+   "clips": 46,
+   "point": -0.004188541497518065,
+   "ci95": [
+    -0.010282675468381417,
+    0.0012415904502666754
+   ],
+   "draws": 2000,
+   "name": "recall lesson, step 930: carried against reset",
+   "carried_mean": 0.7313216669068306,
+   "other_mean": 0.7355102084043488
+  }
+ ],
+ "check": "the first training run's recorded interval reproduced exactly"
+}
