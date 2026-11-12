@@ -274,3 +274,29 @@ they almost all drive straight (133 left, 3 right). Nothing else below changed.
 - **V2 supported and V3 not:** perception is the limit; B-8 or B-9 before B-4.
 - **V3 supported:** a learned use of the agents (B-2 to B-4) has B-1-3's navtest EPDMS as its bar.
 - B-1-1 is never reported as a result: it reads the grader's labels.
+
+## Part B · B-1-4, the soft veto (written 12 Nov 2026)
+
+**Committed before B-1-4's first read of R-clean.** B-1-3 lost progress beyond 2 SE on navtest (`H15.r9`), which fires
+B-1-4's trigger (Part B · B-1, decision rules); the owner chose to run it as B-1's plan sketched it (D27), knowing B-1's
+analysis: false alarms cause few of B-1-3's switches, and half its loss is EC. B-1's navtest results were known when
+this was written; nothing of B-1-4 was.
+
+**The rule.** The side-car's agents at the detection threshold (confidence 0.5), seed k on the planner's seed k. Each
+proposal's score is lowered by λ times its worst confidence-weighted shortfall under a margin that widens with the
+agent's range: λ · max over kept agents a and plan times within H of conf_a · max(0, m + β · range_a − clearance).
+Nothing is removed; the pick is the highest adjusted score, first index on ties (`veto.pick_with_penalty`).
+
+**The grid (16 settings):** λ 0.1 and 0.3; m 0.5 and 1 m; β 0 and 0.05 per metre of range; H 1 and 2 s.
+
+**The choice:** on R-clean's 2,624 known-command windows (D25), by B-1's value (the vendored final under the human
+filter, reweighted to navtest's cities), the mean over seeds 0–2; a tie goes to the fewer switches, then to the grid's
+order. Written once to `recipes/drivejepa_perception/part_b14_frozen.json` and committed before navtest is read.
+
+| # | What (navtest, official, paired per scene with R, SE clustered by log) | Predicted | Supports if | Refutes if |
+|---|---|---|---|---|
+| V6 | B-1-4 − R in EPDMS (human filter), each seed | −0.25 to +0.05 | above 0 beyond 2 SE, on every seed | under 0 beyond 2 SE, on any seed |
+| V7 | B-1-4's EC change against B-1-3's, and its switch rate (reported) | a smaller EC loss than B-1-3's | — | — |
+
+Navtest is read once, for B-1-4 alone, with the gates of B-1 (the anchor, the empty-change check, every plan store
+covering navtest and replayed exactly).

@@ -73,7 +73,7 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **read on navtest** (`H15.r9`): no. B-1-4 waits for the owner | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **read on navtest** (`H15.r9`): no. B-1-4 running (D27) | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
 | B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
 | B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
@@ -227,6 +227,10 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     loss is EC, from picks that switch on one frame and not the next. False alarms explain almost none of it.
   - B-1-4's pre-registered trigger fired (B-1-3 loses progress beyond 2 SE). Its design is not pre-registered in
     detail, and the analysis rules out the causes it targets, so it waits for the owner.
+- **12 Nov · B-1-4 runs (D27).**
+  - **Asked and answered:** whether B-1-4 runs, given that the analysis rules out what it targets. The owner: run it
+    as sketched. Its 16-setting grid and its criterion (V6, predicted −0.25 to +0.05) are pre-registered in
+    PREDICTIONS.md before any read.
 
 <a id="open"></a>
 
@@ -258,7 +262,7 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D26 for this work |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D27 for this work |
 
 ## How this set is kept
 

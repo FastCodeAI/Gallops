@@ -1358,3 +1358,28 @@ module = "drivejepa_perception.b_analysis"
 args = ["compare", "--root", "{out}", "--split", "navtest", "--a", "R=tokens-navtest-v1", "--b", "R-tilde=rtilde-navtest-v1",
         "--pdm-a", "pdm-navtest-v1", "--out", "{out}/part-b/b0/analysis-R-Rtilde.json"]
 after = ["part-b-0-rtilde-navtest", "part-b-0-pdm-navtest"]
+
+# B-1-4, the soft veto (D27; PREDICTIONS.md, Part B · B-1-4): its grid on R-clean's known-command windows,
+# frozen once, then navtest read once for it alone. The grid refuses until its PREDICTIONS.md section is committed.
+
+[[stage]]
+name = "part-b-1-4-grid"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["soft-grid", "--root", "{out}", "--out", "{out}/part-b/b1/grid-b14-fresh"]
+after = ["part-b-1-navtest"]
+
+[[stage]]
+name = "part-b-1-4-freeze"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["soft-freeze", "--grid", "{out}/part-b/b1/grid-b14-fresh", "--write", "{repo}/recipes/drivejepa_perception/part_b14_frozen.json"]
+after = ["part-b-1-4-grid"]
+
+[[stage]]
+name = "part-b-1-4-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["soft-navtest", "--root", "{out}", "--grid", "{out}/part-b/b1/grid-b14-fresh", "--verified", "{out}/part-b/b0/navtest-cache-verify",
+        "--anchor", "{out}/part-b/b0/anchor-d26", "--r", "{out}/part-b/b0/navtest-R", "--out", "{out}/part-b/b1/navtest-b14"]
+after = ["part-b-1-4-freeze"]

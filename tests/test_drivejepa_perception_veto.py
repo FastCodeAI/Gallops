@@ -200,3 +200,37 @@ def test_b1_chooses_only_where_the_command_is_one_navtest_uses(tmp_path):
     np.save(tmp_path / "ego_status.npy", ego)
     with pytest.raises(SystemExit, match="not one-hot"):
         veto.known_command(tmp_path)
+
+
+def test_the_soft_veto_reorders_by_penalty_and_removes_nothing():
+    scores = np.array([[0.9, 0.8]])
+    penalty = np.array([[0.64, 0.0]])  # proposal 0 passes 0.8 m inside a widened margin, at confidence 0.8
+    assert veto.pick_with_penalty(scores, penalty, 0.1).tolist() == [0]  # 0.836 against 0.8
+    assert veto.pick_with_penalty(scores, penalty, 0.3).tolist() == [1]  # 0.708 against 0.8
+    assert len(veto.soft_settings()) == 16
+    assert veto.soft_name((0.1, 0.5, 0.05, 2.0)) == "l0.1-m0.5-b0.05-h2"
+
+
+def test_the_soft_freeze_takes_the_best_value_then_the_fewer_switches(tmp_path):
+    results = {
+        "l0.1-m0.5-b0-h1": {"mean_over_seeds": {"value": 0.80, "switch_rate": 0.010}},
+        "l0.3-m0.5-b0-h1": {"mean_over_seeds": {"value": 0.80, "switch_rate": 0.004}},
+        "l0.3-m1-b0-h2": {"mean_over_seeds": {"value": 0.79, "switch_rate": 0.001}},
+    }
+    record = veto.soft_frozen_record(
+        {"split": "fresh", "rows": 2624, "weights": {}, "results": results}, "abc"
+    )
+    assert record["chosen"] == {"B-1-4": "l0.3-m0.5-b0-h1"}
+    path = tmp_path / "frozen.json"
+    path.write_text(json.dumps(record))
+    assert veto.load_frozen(path)["chosen"] == record["chosen"]  # re-derived by the same rule
+
+
+def test_the_soft_penalty_by_hand():
+    torch = pytest.importorskip("torch")
+    clearance = torch.full((1, 2, 1, 8), 5.0)
+    clearance[0, 0, 0, 0] = 0.2  # proposal 0 comes within 0.2 m at 0.5 s
+    conf, reach, keep = torch.tensor([[0.8]]), torch.tensor([[10.0]]), torch.tensor([[True]])
+    got = veto.penalty_of(clearance, conf, reach, keep, margin=0.5, widening=0.05, horizon=1.0)
+    assert torch.allclose(got, torch.tensor([[0.64, 0.0]]))  # (0.5 + 0.05 * 10 - 0.2) * 0.8
+    assert torch.equal(veto.penalty_of(clearance, conf, reach, ~keep, 0.5, 0.05, 1.0), torch.zeros(1, 2))

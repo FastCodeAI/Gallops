@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#hypothesis-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [H04](../H04_subscore_scorer_navsim/CARD.md) · **Evidence for:** D20, D21, D22, D23, D24, D25, D26 ([decision log](../../README.md#decision-log))
+**Builds on:** [H04](../H04_subscore_scorer_navsim/CARD.md) · **Evidence for:** D20, D21, D22, D23, D24, D25, D26, D27 ([decision log](../../README.md#decision-log))
 
 ## Question
 

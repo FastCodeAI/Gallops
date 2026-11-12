@@ -788,6 +788,227 @@ def analyse(out_root: Path, split: str, grid_dir: Path, out: Path, official_dir=
     return record
 
 
+# ------------------------------------------------------------------------- B-1-4, the soft variant
+
+#: B-1-4 (D27; PREDICTIONS.md, Part B · B-1-4): the side-car's agents at the detection threshold, each
+#: proposal's score lowered by LAMBDA times its worst confidence-weighted shortfall under a margin that widens
+#: with the agent's range; nothing is removed.
+SOFT_LAMBDAS = (0.1, 0.3)
+SOFT_MARGINS = (0.5, 1.0)
+SOFT_WIDENING = (0.0, 0.05)
+SOFT_KEEP = 0.5
+
+
+def soft_settings() -> list:
+    """(lambda, margin, widening per metre, horizon): 16 settings."""
+    return [
+        (lam, m, b, h) for lam in SOFT_LAMBDAS for m in SOFT_MARGINS for b in SOFT_WIDENING for h in HORIZONS
+    ]
+
+
+def soft_name(setting) -> str:
+    lam, m, b, h = setting
+    return f"l{lam:g}-m{m:g}-b{b:g}-h{h:g}"
+
+
+def penalty_of(clearance, conf, reach, keep, margin: float, widening: float, horizon: float):
+    """(B, K) the worst conf_a * max(0, m_a - clearance) over kept agents and plan times within `horizon`,
+    m_a = margin + widening * the agent's range. clearance (B, K, A, T); conf, reach, keep (B, A)."""
+    import torch
+
+    m = margin + widening * reach  # B, A
+    short = (m[:, None, :, None] - clearance).clamp(min=0) * (conf * keep)[:, None, :, None]
+    return (
+        short[..., : horizon_steps(horizon)].amax(dim=(2, 3))
+        if short.shape[2]
+        else torch.zeros(short.shape[:2])
+    )
+
+
+def pick_with_penalty(scores: np.ndarray, penalty: np.ndarray, lam: float) -> np.ndarray:
+    """The release's highest score after the penalty, first index on ties."""
+    return (np.asarray(scores, np.float64) - lam * np.asarray(penalty, np.float64)).argmax(1).astype(np.int64)
+
+
+def penalty_arrays(proposals, agents: dict, rows: np.ndarray, chunk: int = 128) -> dict:
+    """Per (margin, widening, horizon), (N, K) penalties for `rows`, computed once from the clearances."""
+    import torch
+
+    from gallops.drivejepa_perception import geometry
+
+    shapes = [(m, b, h) for m in SOFT_MARGINS for b in SOFT_WIDENING for h in HORIZONS]
+    out = {shape: np.zeros((len(rows), 32), np.float32) for shape in shapes}
+    with torch.no_grad():
+        for i in range(0, len(rows), chunk):
+            r = rows[i : i + chunk]
+            conf = torch.from_numpy(np.asarray(agents["conf"][r], dtype=np.float32))
+            keep = conf >= SOFT_KEEP
+            xy = torch.from_numpy(np.asarray(agents["xyz"][r][..., :2], dtype=np.float32))
+            clearance = geometry.clearances(
+                torch.from_numpy(np.asarray(proposals[r], dtype=np.float32)),
+                xy,
+                torch.from_numpy(np.asarray(agents["lwh"][r][..., :2], dtype=np.float32)),
+                torch.from_numpy(np.asarray(agents["vel"][r], dtype=np.float32)),
+                torch.from_numpy(np.asarray(agents["path"][r], dtype=np.float32)),
+                keep,
+            )
+            reach = xy.norm(dim=-1)
+            for m, b, h in shapes:
+                out[(m, b, h)][i : i + len(r)] = penalty_of(clearance, conf, reach, keep, m, b, h).numpy()
+    return out
+
+
+def soft_picks(out_root: Path, split: str) -> tuple:
+    """(data, seed -> setting name -> pick) for every B-1-4 setting on a split."""
+    data = load_split(out_root, split)
+    sources = agent_sources(out_root, split)
+    picks = {}
+    for k in SEEDS:
+        penalties = penalty_arrays(data["proposals"], sources[f"s{k}"][0], data["rows"])
+        picks[f"s{k}"] = {
+            soft_name(st): pick_with_penalty(data["scores"], penalties[st[1:]], st[0])
+            for st in soft_settings()
+        }
+    return data, picks
+
+
+def run_soft_grid(out_root: Path, out: Path) -> dict:
+    """B-1-4's grid on R-clean's known-command windows, by B-1's value and rule (mean over seeds)."""
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    problems = predictions_committed() + (
+        [] if SOFT_SECTION in _committed_predictions() else [f"no '{SOFT_SECTION}'"]
+    )
+    if problems:
+        raise SystemExit("B-1-4 may not read R-clean yet:\n- " + "\n- ".join(problems))
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    data, picks = soft_picks(out_root, "fresh")
+    navtest = np.load(Path(out_root) / O_DIRS["navtest"][1] / "labels.npz")
+    nmanifest = json.loads((Path(out_root) / O_DIRS["navtest"][1] / "manifest.json").read_text())
+    weights, city_record = city_weights(data["city"], np.array(nmanifest["cities"])[navtest["log_id"]])
+    failing = ceiling_vetoed(data["pdm"])
+    results = {}
+    for st in soft_settings():
+        name = soft_name(st)
+        entry = {f"s{k}": evaluate_pick(data, picks[f"s{k}"][name], None, failing, weights) for k in SEEDS}
+        entry["mean_over_seeds"] = {
+            key: float(np.mean([entry[f"s{k}"][key] for k in SEEDS]))
+            for key in ("value", "minus_release", "switch_rate", "pick_ep")
+        }
+        results[name] = entry
+    record = {
+        "pass": "veto-soft-grid",
+        "split": "fresh",
+        "smoke": False,
+        "when": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "gallops_sha": git_sha(),
+        "rows": int(len(data["rows"])),
+        "inputs": data["inputs"],
+        "value": "vendored final, human-filtered, no EC (filtered_final)",
+        "weights": city_record,
+        "results": results,
+    }
+    out.mkdir(parents=True)
+    (out / "grid.json").write_text(json.dumps(record, indent=1))
+    return record
+
+
+SOFT_FROZEN = "recipes/drivejepa_perception/part_b14_frozen.json"
+SOFT_SECTION = "## Part B · B-1-4, the soft veto"
+
+
+def _committed_predictions() -> str:
+    return subprocess.run(
+        ["git", "-C", str(REPO), "show", f"HEAD:{PREDICTIONS}"], capture_output=True, text=True
+    ).stdout
+
+
+def soft_frozen_record(grid: dict, grid_sha256: str) -> dict:
+    v = {name: e["mean_over_seeds"]["value"] for name, e in grid["results"].items()}
+    rates = {name: e["mean_over_seeds"]["switch_rate"] for name, e in grid["results"].items()}
+    return {
+        "rule": "the setting with the highest R-clean selection value, mean over seeds 0-2 (as B-1); a "
+        "tie goes to the fewer switches, then to the grid's order (D27; PREDICTIONS.md, Part B · B-1-4)",
+        "source": {"grid_sha256": grid_sha256, "split": grid["split"], "rows": grid["rows"]},
+        "weights": grid["weights"],
+        "values": {"B-1-4": {name: {"value": v[name], "veto_rate": rates[name]} for name in v}},
+        "chosen": {"B-1-4": choose(v, rates)},
+    }
+
+
+def soft_freeze(grid_dir: Path, write: Path) -> dict:
+    grid = json.loads((Path(grid_dir) / "grid.json").read_text())
+    write = Path(write)
+    if write.exists():
+        raise SystemExit(f"{write} exists: B-1-4's setting is frozen once")
+    record = soft_frozen_record(grid, _sha256(Path(grid_dir) / "grid.json"))
+    write.write_text(json.dumps(record, indent=1) + "\n")
+    print(json.dumps(record["chosen"], indent=1))
+    return record
+
+
+def read_navtest_soft(cfg, out_root, grid_dir, verified, anchor_dir, r_dir, out, workers) -> dict:
+    """B-1-4 on navtest, once, at its frozen setting: the three seeds scored officially, paired with R."""
+    from gallops.drivejepa_perception import navtest
+
+    problems = predictions_committed() + committed_clean(SOFT_FROZEN)
+    frozen = load_frozen(REPO / SOFT_FROZEN, grid_dir)
+    anchor = json.loads((Path(anchor_dir) / "anchor.json").read_text())
+    if not all(anchor["gates"].values()):
+        problems.append(f"B-0's anchor does not hold: {anchor['gates']}")
+    out = Path(out)
+    if (out / "navtest.json").exists():
+        problems.append(f"{out} holds a finished read: navtest is read once")
+    if problems:
+        raise SystemExit("B-1-4 may not read navtest:\n- " + "\n- ".join(problems))
+    out.mkdir(parents=True, exist_ok=True)
+    name = frozen["chosen"]["B-1-4"]
+    setting = {soft_name(st): st for st in soft_settings()}[name]
+    data = load_split(out_root, "navtest")
+    sources = agent_sources(out_root, "navtest")
+    labels_dir = Path(out_root) / O_DIRS["navtest"][1]
+    tokens = [str(t) for t in data["token"]]
+    pairs, rates = {}, {}
+    for k in SEEDS:
+        arm = f"B-1-4-s{k}"
+        penalties = penalty_arrays(data["proposals"], sources[f"s{k}"][0], data["rows"])
+        pick = pick_with_penalty(data["scores"], penalties[setting[1:]], setting[0])
+        plans = out / f"plans-{arm}"
+        if not plans.exists():
+            meta = {"arm": arm, "setting": name, "frozen_sha256": _sha256(REPO / SOFT_FROZEN)}
+            navtest.write_plans(
+                plans,
+                tokens,
+                np.asarray(data["proposals"][data["rows"], pick]),
+                meta,
+                pick=pick,
+                row=data["rows"],
+            )
+        scored = out / f"score-{arm}"
+        if not scored.exists():
+            navtest.score_plans(cfg, plans, verified, scored, workers, arm)
+        pairs[arm] = navtest.paired(scored, r_dir, labels_dir)
+        rates[arm] = {"switch_rate": float((pick != data["pick"]).mean())}
+    per_seed = {arm: (p["epdms_hf"]["a_minus_b"], p["epdms_hf"]["se"]) for arm, p in pairs.items()}
+    record = {
+        "pass": "veto-soft-navtest",
+        "when": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "frozen": frozen["chosen"],
+        "pairs": pairs,
+        "rates": rates,
+        "V6": {
+            "per_seed": {arm: {"b14_minus_r": d, "se": se} for arm, (d, se) in per_seed.items()},
+            "supports": all(d > 2 * se for d, se in per_seed.values()),
+            "refutes": any(d < -2 * se for d, se in per_seed.values()),
+        },
+    }
+    (out / "navtest.json").write_text(json.dumps(record, indent=1))
+    print(json.dumps(record["V6"], indent=1))
+    return record
+
+
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.veto")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -812,6 +1033,20 @@ def main(argv=None) -> None:
     p.add_argument("--r", required=True, help="R's official run (navtest score)")
     p.add_argument("--out", required=True)
     p.add_argument("--workers", type=int, default=32)
+    p = sub.add_parser("soft-grid", help="B-1-4's grid on R-clean")
+    p.add_argument("--root", required=True)
+    p.add_argument("--out", required=True)
+    p = sub.add_parser("soft-freeze")
+    p.add_argument("--grid", required=True)
+    p.add_argument("--write", required=True)
+    p = sub.add_parser("soft-navtest", help="B-1-4 on navtest, once")
+    p.add_argument("--root", required=True)
+    p.add_argument("--grid", required=True)
+    p.add_argument("--verified", required=True)
+    p.add_argument("--anchor", required=True)
+    p.add_argument("--r", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--workers", type=int, default=32)
     p = sub.add_parser("analyse", help="the frozen settings taken apart on a split")
     p.add_argument("--root", required=True)
     p.add_argument("--split", choices=("fresh", "navtest"), required=True)
@@ -827,6 +1062,24 @@ def main(argv=None) -> None:
         print(json.dumps({k: record[k] for k in ("split", "smoke", "rows", "logs", "weights")}, indent=1))
     elif args.cmd == "freeze":
         freeze(Path(args.grid), Path(args.write))
+    elif args.cmd == "soft-grid":
+        record = run_soft_grid(Path(args.root), Path(args.out))
+        print(json.dumps({k: record[k] for k in ("split", "rows", "weights")}, indent=1))
+    elif args.cmd == "soft-freeze":
+        soft_freeze(Path(args.grid), Path(args.write))
+    elif args.cmd == "soft-navtest":
+        from gallops.config import SiteConfig
+
+        read_navtest_soft(
+            SiteConfig.load(),
+            Path(args.root),
+            Path(args.grid),
+            Path(args.verified),
+            Path(args.anchor),
+            Path(args.r),
+            Path(args.out),
+            args.workers,
+        )
     elif args.cmd == "navtest":
         from gallops.config import SiteConfig
 
