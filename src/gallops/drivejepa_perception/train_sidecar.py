@@ -301,6 +301,33 @@ def fraction_of_logs(labels_dir, train_rows: np.ndarray, fraction: float) -> np.
     return train_rows[np.isin(logs[train_rows], picked)]
 
 
+#: B-0's cross-fitting (PREDICTIONS.md, Part B · B-0): the train logs in five seeded folds.
+CROSSFIT_FOLDS, CROSSFIT_SEED = 5, 0
+
+
+def crossfit_folds(train_logs: list, k: int = CROSSFIT_FOLDS, seed: int = CROSSFIT_SEED) -> list:
+    """The train logs in `k` folds: a seeded permutation of the sorted logs, dealt round robin, so every
+    log is in exactly one fold and the folds' sizes differ by at most one."""
+    logs = sorted(train_logs)
+    order = np.random.default_rng(seed).permutation(len(logs))
+    return [sorted(logs[i] for i in order[f::k]) for f in range(k)]
+
+
+def crossfit_train_rows(args, train_rows: np.ndarray) -> np.ndarray:
+    """A cross-fit run's train rows: every train row but its fold's. Refused unless the pre-registered
+    optimism rule called for cross-fitting and the run reads no report row."""
+    verdict = json.loads(Path(args.optimism).read_text()) if args.optimism else {}
+    if not verdict.get("crossfit_needed"):
+        raise SystemExit("cross-fitting runs only when the optimism rule calls for it (--optimism)")
+    if not args.no_report:
+        raise SystemExit("a cross-fit run reads no report row: --no-report")
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+    held = crossfit_folds(splits["train"], args.crossfit_folds)[args.crossfit_fold]
+    return train_rows[~np.isin(logs[train_rows], held)]
+
+
 def train(cfg, args) -> None:
     from gallops.drivejepa_perception import preflight
 
@@ -311,15 +338,21 @@ def train(cfg, args) -> None:
     train_rows = rows["tap"] if args.rows == "tap" else rows["train"]
     if args.train_fraction < 1.0:
         train_rows = fraction_of_logs(args.labels, train_rows, args.train_fraction)
+    crossfit = args.crossfit_fold >= 0
+    if crossfit:
+        train_rows = crossfit_train_rows(args, train_rows)
     select_rows = rows["select"]
     stop = args.stop_after or args.epochs
     if not 1 <= stop <= args.epochs:
         raise SystemExit(f"--stop-after {args.stop_after} is outside 1..{args.epochs}")
+    checked = {"train": train_rows, "select": select_rows}
+    if not crossfit:
+        checked["report"] = rows["report"]
     report = preflight.run(
         cfg,
         Path(args.tokens),
         Path(args.labels),
-        {"train": train_rows, "select": select_rows, "report": rows["report"]},
+        checked,
         vit_dir=Path(args.vit_tokens) if args.tap == "vit_out" and args.vit_tokens else None,
     )
     subsets = importance_subsets(args.labels, projections, targets, select_rows)
@@ -914,6 +947,13 @@ def main(argv=None) -> None:
     )
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
     parser.add_argument("--runs", default="", help="optimism: the runs, comma-separated")
+    parser.add_argument(
+        "--crossfit-fold", type=int, default=-1, help="train without this fold of the train logs (B-0)"
+    )
+    parser.add_argument("--crossfit-folds", type=int, default=CROSSFIT_FOLDS)
+    parser.add_argument(
+        "--optimism", default="", help="the optimism record whose rule calls for cross-fitting"
+    )
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
     parser.add_argument("--out", default="")

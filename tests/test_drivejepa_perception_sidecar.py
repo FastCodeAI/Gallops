@@ -451,3 +451,14 @@ def test_the_optimism_draw_and_rule_are_the_pre_registered_ones():
     assert verdict["mean_gap"]["f1"] == pytest.approx(0.035) and verdict["crossfit_needed"]
     seeds["s1"]["train"]["f1"] = 0.74  # mean gap 0.025: under the limit in both
     assert not ts.optimism_verdict(seeds)["crossfit_needed"]
+
+
+def test_the_crossfit_folds_partition_the_train_logs():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar as ts
+
+    logs = [f"log{i:04d}" for i in range(1071)]
+    folds = ts.crossfit_folds(logs)
+    assert len(folds) == 5 and sorted(sum(folds, [])) == logs  # every log once
+    assert max(map(len, folds)) - min(map(len, folds)) <= 1
+    assert folds == ts.crossfit_folds(list(reversed(logs)))  # seeded over the sorted logs

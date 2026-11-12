@@ -1245,3 +1245,53 @@ python = "drivejepa"
 module = "drivejepa_perception.headroom"
 args = ["profile", "--root", "{out}", "--out", "{out}/part-b/b0/profile.json"]
 after = ["part-b-0-pdm-navtest", "part-b-0-pdm-fresh"]
+
+# Cross-fitting (D24; PREDICTIONS.md, Part B · B-0): the optimism rule fired on 11 Nov (mean train - select
+# 0.085 in F1, 0.046 in causal recall; limit 0.03), so five v3 side-cars train by the kept recipe (24
+# epochs, seed 0, kept epoch chosen on select), each without one fold of the train logs, inside B-0 and
+# before B-1. Each refuses to train unless the optimism record calls for it, and reads no report row.
+
+[[stage]]
+name = "part-b-0-crossfit-f0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--crossfit-fold", "0", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f0"]
+after = ["part-b-0-optimism"]
+
+[[stage]]
+name = "part-b-0-crossfit-f1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--crossfit-fold", "1", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f1"]
+after = ["part-b-0-optimism"]
+
+[[stage]]
+name = "part-b-0-crossfit-f2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--crossfit-fold", "2", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f2"]
+after = ["part-b-0-optimism"]
+
+[[stage]]
+name = "part-b-0-crossfit-f3"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--crossfit-fold", "3", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f3"]
+after = ["part-b-0-optimism"]
+
+[[stage]]
+name = "part-b-0-crossfit-f4"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
+        "--crossfit-fold", "4", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f4"]
+after = ["part-b-0-optimism"]
