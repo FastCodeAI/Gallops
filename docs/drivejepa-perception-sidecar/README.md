@@ -21,8 +21,11 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 - **Part B, the side-car in the planner.**
   - Four experiments are chosen and planned, one document each, in this order: B-1, B-2, B-3, B-4.
   - They share one plan of foundations, B-0, and a LoRA primer.
-  - **Execution opened on 11 Nov (D24): B-0 in full, then B-1.** B-2 to B-4 wait for the review after B-1.
-    What has run is in the [log](#log).
+  - **B-0 is done (12 Nov):** the anchor reproduces here (87.783 against 87.78), R̃ equals R, and the headroom is
+    counted (`H15.r6`–`r8`).
+  - **B-1 is read (`H15.r9`):** a clearance veto loses 0.19 to 0.25 points on navtest, with labelled agents or the
+    side-car's; the ceiling gains 1.58. B-2 to B-4 wait for the review after B-1. What has run is in the
+    [log](#log).
 
 ![H15: Part A, and Part B's four experiments in order](../../experiments/H15_perception_sidecar/figures/b-overview.png)
 
@@ -69,8 +72,8 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
-| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing, unless cross-fitting is needed | **running** (D24) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | built and pre-registered; waits for B-0 | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **read on navtest** (`H15.r9`): no. B-1-4 waits for the owner | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
 | B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
 | B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
@@ -215,6 +218,15 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     EP within 1.5e-6, EPDMS within 6e-8). The owner amended it, knowing the result: discrete columns equal on
     99.9%, EP within 1e-5. The as-written record stays beside the amended one; PREDICTIONS.md carries the
     amendment, dated. B-1 then reads navtest once.
+- **12 Nov · B-1 read on navtest, once: the veto does not pick better than the release.** Details in
+  [B-1's "What has run"](part-b/B-1-veto.md#what-has-run-1112-nov).
+  - The ceiling, which reads the grader's labels, gains +1.58 ± 0.19 points: the room is real.
+  - With labelled agents the veto loses 0.21 ± 0.05; with the side-car's, 0.19 to 0.25 on each seed. V2 and V3 are
+    refuted.
+  - Why: the 1 s clearance catches 5% of the failing proposals and switches safe picks near vehicles. Half the
+    loss is EC, from picks that switch on one frame and not the next. False alarms explain almost none of it.
+  - B-1-4's pre-registered trigger fired (B-1-3 loses progress beyond 2 SE). Its design is not pre-registered in
+    detail, and the analysis rules out the causes it targets, so it waits for the owner.
 
 <a id="open"></a>
 

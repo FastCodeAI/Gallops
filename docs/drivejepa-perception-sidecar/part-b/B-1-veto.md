@@ -1,6 +1,8 @@
 # H15 Part B · B-1: the analytic veto. Can a rule on the agents pick better than the release?
 
-**Status (11 Nov 2026): approved (D24), waits for B-0. Nothing here trains.**
+**Status (12 Nov 2026): read on navtest, once (`H15.r9`). Nothing here trains.** A near-ego clearance veto does not
+pick better than the release: with labelled agents it loses 0.21 points, with the side-car's 0.19 to 0.25. The
+ceiling, which reads the grader's labels, gains 1.58. B-1-4's pre-registered trigger fired; it waits for the owner.
 - [The overview](../README.md) holds the tracker, the naming and the log.
 - This plan stands on [B-0, the foundations](B-0-foundations.md).
 - It was C4 in [the ideas](ideas.md). The owner chose it first on 11 Nov.
@@ -189,6 +191,49 @@ the release's proposals that come too close to them, and leave a better pick?
 
 After B-0: minutes of CPU for the grid, and one official scoring run per sub-version and seed (10–30 min of CPU
 each).
+
+## What has run (11–12 Nov)
+
+All of it is `H15.r9`; the gates are PREDICTIONS.md's (Part B · B-1, amended by D25), committed before any read.
+
+**R-clean, the choice (D25: its 2,624 known-command windows, reweighted to navtest's cities; *measured*,
+selected-on-report).** The ceiling gains +0.24 ± 0.20 points there. Every setting of B-1-2 (6) and of B-1-3 (12)
+loses, by 0.05 to 0.20 points, so the rule froze the least intrusive: 0.5 m within 1 s (confidence 0.7 for the
+side-car). On R-clean every switch the frozen settings make is away from a pick the grader passes, and none comes
+from a false alarm.
+
+**Navtest, read once (the official scorer, paired with R's 87.783, SE clustered over 136 logs; *measured*).**
+
+| | EPDMS − R | NC | TTC | EP | EC | picks switched |
+|---|---|---|---|---|---|---|
+| B-1-1, the ceiling (reads the answer) | **+1.58 ± 0.19** | +0.0150 | +0.0207 | +0.0129 | −0.0001 | 2.25% |
+| B-1-2, labelled agents | **−0.21 ± 0.05** | −0.0001 | +0.0002 | −0.0018 | −0.0144 | 2.51% |
+| B-1-3, the side-car, seed 0 | **−0.25 ± 0.05** | −0.0004 | −0.0004 | −0.0025 | −0.0120 | 2.33% |
+| B-1-3, seed 1 | **−0.19 ± 0.04** | −0.0002 | +0.0001 | −0.0020 | −0.0111 | 2.06% |
+| B-1-3, seed 2 | **−0.25 ± 0.05** | −0.0004 | −0.0002 | −0.0023 | −0.0135 | 2.40% |
+
+| # | Predicted | Measured | Verdict |
+|---|---|---|---|
+| V1 | +0.5 to +1.5 | +1.58 ± 0.19 | supported (the ceiling) |
+| V2 | +0.2 to +0.8 | −0.21 ± 0.05 | **refuted** |
+| V3 | −0.3 to +0.4 | −0.25, −0.19, −0.25 (each beyond 2 SE) | **refuted**, every seed |
+| V4 | 0.2 to 0.6 | 1.10, a ratio of two losses | — |
+| V5 | under 0.3 | 0.22 | not refuted; but EP is below R's beyond 2 SE, so B-1-4's trigger fires |
+
+**Why it loses** (`veto analyse`, *measured*):
+- **It looks in the wrong place.** B-1-2's veto catches 1,949 of 40,595 failing proposals and removes 9,164 passing
+  ones; of its 305 pick switches, 10 removed a failing pick. Failures come later than 1 s, or from agents out of
+  view (35% of them, B-0-3).
+- **It is not perception.** B-1-3's switches come from real agents (244–286 per seed) far more than from false alarms
+  (6–11), and it loses about as much as B-1-2.
+- **It is not collisions.** NC and TTC barely move. Half the loss is EC: a veto that switches the pick on one frame
+  and not the next breaks the plans' consistency; a third is EP, lost near vehicles within 20 m.
+
+**What it says** (PREDICTIONS.md's decision rules; *argued*):
+- V2 not supported: a rule on explicit agents near the ego adds nothing the release's scorer has not used, on NAVSIM.
+  By the rule, B-2 to B-4 are unlikely to show a NAVSIM gain, and the closed-loop gate (B-14) becomes the place.
+- The room is real (B-1-1, +1.58), but a clearance rule at 1 s does not find it. A rule that reads failures later
+  in the plan, or a learned one, is a different question.
 
 ## Questions B-1 can answer
 
