@@ -7,8 +7,9 @@ paddock's `adding-a-model` guide prescribes for adapters: get the boring path
 green first, so that when something moves you know it was the model.
 """
 
-from __future__ import annotations
-
+# No `from __future__ import annotations` here: it turns every hint into a string, and under Drive-JEPA's
+# Python 3.9 typer then resolves them without their `Annotated` metadata. An option with no default
+# becomes an argument and an `envvar` is dropped, which is how `experiments pr-check` broke there.
 import json
 from typing import Annotated, Optional
 
