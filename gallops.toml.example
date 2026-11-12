@@ -60,7 +60,7 @@ runs = "/path/to/gallops-runs"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
 
 # [datasets.drivejepa_b2d]
-# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (docs/drivejepa_b2d.md)
+# path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (experiments/GC04_bench2drive/README.md)
 
 # ---------------------------------------------------------------------------
 # Interpreters and upstream code, for stages that must run inside a model's own

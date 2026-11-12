@@ -106,6 +106,11 @@ so a family also gets distinct colours in every comparison figure for free.
 each claim.** Paddock's roadmap and review docs use an explicit ladder — proof /
 strong / moderate / argued / unverified — and it is the reason its numbers are
 worth anything. Use it.
+Every result in the experiment registry carries one of these five words, plus
+flags for what kind of number it is (`adapted`, `blind`, `smoke`, …); see
+[experiments.md](experiments.md#strength). Older documents here use other words
+(*reproduced*, *verified by reading*, *not supported*); the registry translates
+them into this ladder.
 
 Sample size is the recurring lesson: paddock has had conclusions overturned in
 *both directions* by running more scenarios. Before claiming an improvement, ask

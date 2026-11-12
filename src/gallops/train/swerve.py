@@ -119,6 +119,28 @@ def parse_oversample(specs: list[str], ticks: list[dict]) -> dict[str, int]:
     return factors
 
 
+def parse_subsample(specs: list[str], ticks: list[dict]) -> dict[int, float]:
+    """`--subsample-source I=FRACTION` specs, refused unless source I has ticks and F keeps some.
+
+    Parsed inside the epoch loop, a typo surfaced after the model had loaded, and `9=0.1`
+    silently did nothing, as `swerv=4` once did for `parse_oversample`.
+    """
+    present = {t.get("source", 0) for t in ticks}
+    shares = {}
+    for spec in specs:
+        index, _, value = spec.partition("=")
+        try:
+            source, share = int(index), float(value)
+        except ValueError:
+            raise SystemExit(f"--subsample-source {spec}: expected I=FRACTION, e.g. 2=0.33") from None
+        if source not in present:
+            raise SystemExit(f"--subsample-source {spec}: no training tick is from source {source}")
+        if not 0 < share <= 1:
+            raise SystemExit(f"--subsample-source {spec}: FRACTION must be above 0 and at most 1")
+        shares[source] = share
+    return shares
+
+
 def epoch_means(losses: list[tuple]) -> tuple:
     """Mean of each loss over an epoch, None for one the stage skips (never 0.0, a perfect fit)."""
     # by index, not zip: this runs in the 3.9 training interpreter, and ruff wants strict=
@@ -203,20 +225,26 @@ def labelled_digest(directory: Path) -> str:
 
 
 def declared_training(
-    train: list[dict], labelled: list[str], read_share: float, inherited=()
+    train: list[dict], labelled: list[str], read_share: float, inherited=(), read: list[dict] | None = None
 ) -> tuple[sidecar.TrainedOn, ...]:
     """`trained_on`: the nuScenes scenes read, each labelled set, and what `--init` saw.
 
     `read_share` is the share of the loaded ticks kept (below 1 for a `--limit`
-    smoke), so a smoke checkpoint does not claim the whole round.
+    smoke), so a smoke checkpoint does not claim the whole round. `read` is the ticks
+    the model has been through so far, when that is not all of `train`:
+    `--subsample-source` draws afresh each epoch, so a source kept at 33% an epoch has
+    been read at about 70% after three, and a sidecar saying all of it claims more
+    than the model saw. Counted, not worked out from the flags, so it is what happened.
     """
-    scenes = {scene_of(t["episode"]) for t in train}
+    read = train if read is None else read
+    scenes = {scene_of(t["episode"]) for t in read}
     fraction = round(len(scenes) / NUSCENES_TRAIN_SCENES * read_share, 6)
     own = [sidecar.TrainedOn("nuscenes", "train", fraction)]
-    own += [
-        sidecar.TrainedOn(RENDERED, Path(path).name, None if read_share >= 1 else read_share)
-        for path in dict.fromkeys(labelled)
-    ]
+    for i, path in enumerate(labelled):
+        whole = sum(1 for t in train if t.get("source", 0) == i)
+        seen = sum(1 for t in read if t.get("source", 0) == i)
+        share = read_share * (seen / whole if whole else 1.0)
+        own.append(sidecar.TrainedOn(RENDERED, Path(path).name, None if share >= 1 else round(share, 6)))
     out = list(dict.fromkeys(own))
     out += [t for t in inherited if t not in out]
     return tuple(out)
@@ -232,14 +260,14 @@ def inherited_training(init: Path | None) -> tuple:
         raise SystemExit(f"--init {init}: {error}; its training cannot be carried forward") from error
 
 
-def fresh_run(cfg: SiteConfig, train_run: str) -> Path:
+def fresh_run(cfg: SiteConfig, train_run: str, model: str = MODEL) -> Path:
     """The run directory for `train_run`, refused if a fit is already in it.
 
     One fit is one run. Rerun into an existing one and the new fit starts again from
     the released weights, overwrites step directories it reaches and lands new ones
     beside the old fit's -- which paddock then groups as one sweep.
     """
-    run = cfg.checkpoint_dir(MODEL, train_run, 0).parent
+    run = cfg.checkpoint_dir(model, train_run, 0).parent
     if run.exists() and any(run.iterdir()):
         raise SystemExit(f"{run} already holds a fit; one fit is one run -- choose a new --train-run")
     return run
@@ -279,8 +307,13 @@ def split_by_scene(ticks: list[dict], held_out: str) -> tuple[list[dict], list[d
     split would put near-duplicates on both sides and report a validation loss
     that means nothing.
     """
-    train = [t for t in ticks if held_out not in t["episode"]]
-    val = [t for t in ticks if held_out in t["episode"]]
+
+    def scene(tick: dict) -> str:
+        # "frontal-0075/run_3" -> "0075"; exact, so 613 real scenes cannot match a substring
+        return tick["episode"].split("/")[0].rsplit("-", 1)[-1]
+
+    train = [t for t in ticks if scene(t) != held_out]
+    val = [t for t in ticks if scene(t) == held_out]
     return train, val
 
 
@@ -579,6 +612,20 @@ def main() -> None:
         default=0.0,
         help="weight of the ranking loss over the 32 plans, added to the scorer's BCE (0 = BCE only)",
     )
+    parser.add_argument(
+        "--accumulate",
+        type=int,
+        default=1,
+        help="ticks per optimiser step: every forward pass is one tick (TICKS_PER_PASS in swerve_data), "
+        "so this is the batch size, with gradients summed over N single-tick passes",
+    )
+    parser.add_argument(
+        "--subsample-source",
+        action="append",
+        default=[],
+        metavar="I=FRACTION",
+        help="each epoch keep this random fraction of source I's ticks, e.g. 2=0.33 for real driving",
+    )
     parser.add_argument("--seed", type=int, default=0, help="seeds python, numpy and torch; recorded")
     parser.add_argument("--trajectory-weight", type=float, default=1.0)
     parser.add_argument("--score-weight", type=float, default=1.0)
@@ -604,7 +651,7 @@ def main() -> None:
         for labelled, dumps, drove in args.source
     ]
     out_root = fresh_run(cfg, args.train_run)  # before any of the minutes below
-    loaded = git_sha(REPO_ROOT)  # the commit whose modules this process imported
+    imported = git_sha(REPO_ROOT)  # the commit whose modules this process imported
     # The agent reads these at construction, exactly as paddock's model.yaml
     # supplies them to its node. NAVSIM_EXP_ROOT in particular is where it looks
     # for the V-JEPA weights the encoder is built on.
@@ -675,14 +722,15 @@ def main() -> None:
     scorer_only = args.train_only == "scorer"
     refiner_only = args.train_only == "refiner"
     factors = parse_oversample(args.oversample, train)
+    shares = parse_subsample(args.subsample_source, train)
     agent, model, torch = build_model(
         checkpoint_path,
         args.device,
         cfg.resolve("{data.drivejepa_repo}"),
         train_parts=TRAINABLE_SCORER if scorer_only else TRAINABLE_REFINER if refiner_only else TRAINABLE,
     )
-    # The anchor term draws from numpy's global RNG and the vendor's GridMask from it
-    # too; unseeded, no run could be rebuilt from its sidecar.
+    # The anchor term draws from numpy's global RNG; unseeded, no run could be rebuilt
+    # from its sidecar.
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -694,15 +742,12 @@ def main() -> None:
     # Held-out checks still grade the candidates when training skips it: how the frozen
     # scorer picks among the refiner's new plans is the thing to watch.
     eval_options = {**loss_options, "with_score": True}
-    # In train mode the frozen encoder still applies the vendor's GridMask(prob 0.7):
-    # its weights do not move, but the frames the trained parts learn from are masked.
-    gridmask = "; the frozen encoder runs in train mode, so the vendor's GridMask augmentation is on"
     if scorer_only:
         stage_note = "scorer only -- refiner, queries, ego encoder and encoder frozen and in eval mode"
     elif refiner_only:
-        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped" + gridmask
+        stage_note = "refiner only -- scorer and encoder frozen, scorer loss skipped"
     else:
-        stage_note = "joint -- refiner and scorer train, encoder frozen" + gridmask
+        stage_note = "joint -- refiner and scorer train, encoder frozen"
     loss_note = "vendor trajectory_loss_anchors (winner + good anchors)" if not scorer_only else ""
     if not refiner_only:
         loss_note += (" + " if loss_note else "") + "scorer BCE against score_target"
@@ -720,6 +765,13 @@ def main() -> None:
             model.scorer.eval()
         else:
             model.train()
+        # A module with nothing to train runs as at inference. Left in train mode the frozen
+        # image encoder applied the vendor's GridMask augmentation (p 0.7) to every frame, so
+        # the refiner trained on masked images it never sees when driving.
+        for module in model.modules():
+            params = list(module.parameters())
+            if params and not any(p.requires_grad for p in params):
+                module.eval()
 
     dataset = TickDataset(train, args.device)
     validation = TickDataset(val, args.device) if val else None
@@ -749,9 +801,9 @@ def main() -> None:
         args.device,
     )
 
-    if checked["code"]["sha"] != loaded:
+    if checked["code"]["sha"] != imported:
         raise SystemExit(
-            f"HEAD moved from {loaded} to {checked['code']['sha']} while the model loaded; the "
+            f"HEAD moved from {imported} to {checked['code']['sha']} while the model loaded; the "
             "preflight checked a tree this process did not import -- start again"
         )
 
@@ -760,9 +812,21 @@ def main() -> None:
         # which a later checkpoint never drove. Which parameters train is unchanged.
         model.load_state_dict(torch.load(args.init, map_location=args.device, weights_only=True))
         print(f"  started from {args.init}", flush=True)
+    if any(s.drove == preflight.INIT for s in sources):
+        if not args.init:
+            raise SystemExit(
+                f"a source says the --init weights drove it ({preflight.INIT!r}), but there is no --init"
+            )
+        checked["fidelity_init"] = preflight.init_fidelity(
+            train, referee, sources, model, TickDataset, torch, args.device
+        )
 
     parameters = [p for p in model.parameters() if p.requires_grad]
     optimiser = torch.optim.Adam(parameters, lr=args.lr)
+
+    def apply_gradients() -> None:
+        torch.nn.utils.clip_grad_norm_(parameters, 1.0)
+        optimiser.step()
 
     out_root.mkdir(parents=True, exist_ok=True)
     # One JSON line per 25 training steps and per held-out check, beside the
@@ -794,27 +858,39 @@ def main() -> None:
         interim = sorted({int(i) for i in np.linspace(0, len(validation) - 1, n).round()})
     history = []
     step = 0
+    seen: set[int] = set()  # indices of `dataset.ticks` the model has been through
     for epoch in range(args.epochs):
         training_mode()
         order = oversampled(dataset.ticks, factors) if factors else list(range(len(dataset)))
+        if shares:
+            keep = random.Random(1000 + epoch)
+            order = [i for i in order if keep.random() < shares.get(dataset.ticks[i].get("source", 0), 1.0)]
         random.Random(epoch).shuffle(order)
         losses = []
         recent_parts: list[dict] = []
         started = time.time()
+        # Counted in ticks built, not positions in `order`: a skipped tick then shifts nothing. By
+        # position, one skipped last in a group wiped it unstepped, and one skipped first stepped
+        # the group before it twice. Replayed, 1B's first epoch dropped 276 of 4,592 groups that way
+        # and doubled 267, before `keep_rebuildable` removed nearly all such ticks.
+        built = 0
         for start in range(0, len(order), args.batch):
             chunk = order[start : start + args.batch]
             features, target, ticks_used = timed("data", lambda c=chunk: dataset.batch(c))
             if features is None:
                 continue
+            seen.update(chunk)
             output = timed("forward", lambda f=features: model(f))
             trajectory, scored, parts = combined_loss(
                 output, target, ticks_used, referee, torch, **loss_options
             )
             loss = args.trajectory_weight * trajectory + args.score_weight * scored
-            optimiser.zero_grad(set_to_none=True)
-            timed("backward", loss.backward)
-            torch.nn.utils.clip_grad_norm_(parameters, 1.0)
-            optimiser.step()
+            if built % args.accumulate == 0:
+                optimiser.zero_grad(set_to_none=True)
+            timed("backward", lambda lo=loss: (lo / args.accumulate).backward())
+            built += 1
+            if built % args.accumulate == 0:
+                apply_gradients()
             losses.append(
                 (
                     None if scorer_only else float(trajectory.detach()),
@@ -853,6 +929,9 @@ def main() -> None:
                     flush=True,
                 )
 
+        if built % args.accumulate:
+            apply_gradients()  # the epoch's short last group
+
         mean_trajectory, mean_score = epoch_means(losses)
         entry = {
             "epoch": epoch,
@@ -886,60 +965,69 @@ def main() -> None:
             flush=True,
         )
 
-        directory = cfg.checkpoint_dir(MODEL, args.train_run, step)
-        directory.mkdir(parents=True, exist_ok=True)
-        torch.save({k: v for k, v in model.state_dict().items()}, directory / "model.pt")
         moved = head_moved(checked["code"]["sha"], REPO_ROOT)
         if moved:
             print(f"  HEAD moved during the run to {moved['git_head_at_save']}; recorded beside", flush=True)
-        sidecar.write(
-            directory,
-            sidecar.Checkpoint(
-                model=MODEL,
-                step=step,
-                train_git_sha=checked["code"]["sha"],
-                train_run=args.train_run,
-                # Built from what this run read, not a literal: the literal said
-                # "round0, 5 scenes" for runs on three data sets and three scenes.
-                trained_on=declared_training(train, [s.labelled for s in sources], read_share, inherited),
-                selection_split=f"held-out scene {args.held_out}",
-                params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
-                precision="fp32",
-                notes={
-                    # These two read "stage A -- refiner only" and "L1 to the expert"
-                    # long after the trainer became joint; they now say what runs.
-                    "stage": stage_note,
-                    "loss": loss_note,
-                    "init": str(args.init) if args.init else "released checkpoint",
-                    "oversample": factors,
-                    "excluded_episodes": args.exclude_episodes,
-                    # Which label set and which dumps: v4 could only be traced to
-                    # its labels by file timestamps.
-                    "sources": [
-                        {**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)
-                    ],
-                    # the scenes actually read, which `trained_on` counts but cannot name
-                    "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
-                    "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
-                    "limit": args.limit or None,
-                    "preflight": checked,
-                    "history": history,
-                    # every 25-step mean and held-out check of this run, beside the checkpoints
-                    "metrics_file": "../metrics.jsonl",
-                    "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
-                    "off_camera_targets": "kept" if args.keep_blind else "dropped",
-                    "excluded_scenes": args.exclude_scene,
-                    # dropped before training because their input cannot be rebuilt
-                    "unrebuildable": unrebuildable,
-                    "seed": args.seed,
-                    "val_every": args.val_every,
-                    "val_sample": args.val_sample,
-                    # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
-                    "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
-                    **moved,
-                },
+        checkpoint = sidecar.Checkpoint(
+            model=MODEL,
+            step=step,
+            train_git_sha=checked["code"]["sha"],
+            train_run=args.train_run,
+            # Built from what this run read, not a literal: the literal said
+            # "round0, 5 scenes" for runs on three data sets and three scenes.
+            trained_on=declared_training(
+                train,
+                [s.labelled for s in sources],
+                read_share,
+                inherited,
+                [dataset.ticks[i] for i in sorted(seen)],
             ),
+            selection_split=f"held-out scene {args.held_out}",
+            params_m=round(sum(p.numel() for p in model.parameters()) / 1e6, 2),
+            precision="fp32",
+            notes={
+                # These two read "stage A -- refiner only" and "L1 to the expert"
+                # long after the trainer became joint; they now say what runs.
+                "stage": stage_note,
+                "loss": loss_note,
+                "init": str(args.init) if args.init else "released checkpoint",
+                "oversample": factors,
+                # Where the pixels came from: a cache is a recording, and it can be stale.
+                "frame_cache": os.environ.get("GALLOPS_FRAME_CACHE") or None,
+                # Ticks per optimiser step, and each source's share per epoch: two runs differing
+                # only in these read as the same recipe when neither was recorded.
+                "accumulate": args.accumulate,
+                "subsample_source": shares,
+                "excluded_episodes": args.exclude_episodes,
+                # Which label set and which dumps: v4 could only be traced to
+                # its labels by file timestamps.
+                "sources": [{**s._asdict(), "labelled_sha256": digests[i]} for i, s in enumerate(sources)],
+                # the scenes actually read, which `trained_on` counts but cannot name
+                "train_scenes": sorted({scene_of(t["episode"]) for t in train}),
+                "holdout_scenes": sorted({scene_of(t["episode"]) for t in val}),
+                "limit": args.limit or None,
+                "preflight": checked,
+                "history": history,
+                # every 25-step mean and held-out check of this run, beside the checkpoints
+                "metrics_file": "../metrics.jsonl",
+                "caveat": "no navtrain replay: drift on ordinary driving is expected and unmeasured here",
+                "off_camera_targets": "kept" if args.keep_blind else "dropped",
+                "excluded_scenes": args.exclude_scene,
+                # dropped before training because their input cannot be rebuilt
+                "unrebuildable": unrebuildable,
+                "seed": args.seed,
+                "val_every": args.val_every,
+                "val_sample": args.val_sample,
+                # GALLOPS_SCENE_CALIB, when set, replaces nuScenes' calibration tables
+                "calibration": os.environ.get("GALLOPS_SCENE_CALIB") or "nuscenes v1.0-trainval tables",
+                **moved,
+            },
         )
+        # Staged: a job stopped between these two writes left weights with no sidecar, which is
+        # worse than no checkpoint, because it looks usable.
+        with sidecar.staged(cfg.checkpoint_dir(MODEL, args.train_run, step)) as staging:
+            torch.save({k: v for k, v in model.state_dict().items()}, staging / "model.pt")
+            sidecar.write(staging, checkpoint)
     metrics.close()
     print(f"  wrote checkpoints and {metrics_path.name} under {out_root}")
 

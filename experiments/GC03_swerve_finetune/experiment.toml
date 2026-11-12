@@ -1,0 +1,966 @@
+# GC03 -- the swerve finetune: eleven runs teaching released Drive-JEPA to evade on reconstructed scenes
+# with inserted hazards (Naren). Every number is copied, never re-derived, from experiments/GC03_swerve_finetune/README.md,
+# except: weights hashes, steps, commits, label sets and tick counts, read from each checkpoint's sidecar
+# (`gallops experiments checkpoint`); and the pairing of each 0103 smoke with the step it drove, read from the
+# path digest in the paddock run.json (paddock branch record/drivejepa-camera-blind) and matched here to the
+# step's exported agent.ckpt. Run dates are the day each checkpoint was written, IST, as the doc dates v4.
+# Every result is camera-blind (`blind`): no image reached the model (the doc's 2026-10-12 correction).
+
+schema = 1
+id = "GC03"
+title = "The swerve finetune: teaching Drive-JEPA to evade on reconstructed scenes with inserted hazards"
+short = "Swerve finetune, 11 runs"
+track = "gap-closing"
+owner = "Naren"
+benchmarks = ["neuroncap", "offline"]
+started = 2026-09-26
+ended = 2026-10-12
+status = "parked"
+verdict = "inconclusive"
+question = """Paddock's neuroNCAP sweep put Drive-JEPA's frontal split at 2.42 against 4.23 on stationary: it \
+drives into oncoming traffic. Across all 32 proposals the widest reaches 0.70 m sideways on a frontal tick, and \
+navtrain's 20 hours hold 1.5 s of emergency braking and no evasions. Can expert-labelled episodes on \
+reconstructed nuScenes train scenes, with hazards inserted on collision courses, teach it to evade?"""
+learned = """Eleven camera-blind finetunes taught no evasion. The one run taken to the full neuroNCAP set, s1 \
+(scorer only), scored 3.671 against 3.568 (+0.103, pair SE 0.079: not resolved), and v4's 4.53 against 4.05 on \
+0103 was chosen on those six episodes and is one episode. Retraining the refiner made the car faster and lost \
+its braking; with no image reaching the model, the runs say nothing about learning to see a hazard."""
+parents = ["GC02"]
+narrative = "experiments/GC03_swerve_finetune/README.md"
+external = [
+  "neuroNCAP 0103 smokes and the s1 full sweep (20261008T021909-55974f), and three re-scores of that sweep with PDM terms added: run records in experiments/GC03_swerve_finetune/paddock/results/, since paddock holds only the released models' results. The first eleven are also on paddock branch record/drivejepa-camera-blind, kept, not for merging. The s1 sweep is recorded valid: true only through a runner gap that branch describes.",
+  "Collections, candidate dumps and label sets (collect_dumps*, labelled_round0*, labelled_gt, labelled_round1_s2, rounds.json): under {runs} at the training site, not in git.",
+  "The grader's reference, paddock's check.json, comes from candidate_check.py on paddock branch analysis/drivejepa-ncap-candidates (no PR).",
+  "The runs were launched by site-local wrappers, as were the side-by-side videos and camera plots that found three of the six defects; the reproducible commands are in experiments/GC03_swerve_finetune/README.md 'Reproducing'.",
+]
+
+[[runs]]
+id = "GC03.stageA"
+label = "Stage A: the refiner alone on round 0"
+ended = 2026-09-30
+start_from = "released"
+trained = ["refiner"]
+frozen = ["encoder", "scorer"]
+train_git_sha = "6ef2660"
+notes = """Loss: min over the 32 proposals of L1 to the expert trajectory; off-camera targets dropped. Six \
+epochs written (steps 928 to 5568); the 0103 smoke (paddock run 20260930T081242-bb52e8) drove step 928. Held \
+out scene 0058, replaced by 0053 from v1 on: 0058 has 54 swerve ticks of 1,673, one of them frontal."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.export",
+    "gallops.train.reach",
+    "gallops.expert.draw",
+    "gallops.expert.grader",
+    "gallops.expert.scenarios",
+    "gallops.expert.check_scenarios",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "150 episodes, 9,495 ticks: 5 reconstructed nuScenes train scenes × 3 hazard types × 10 seeds; the label set it read is not recorded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0058"
+  role = "selection"
+  note = "the sidecar's selection_split"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-stageA-round0-seen"
+  step = 928
+  step_unit = "optimizer_step"
+  weights_sha256 = "46d27e70cf47d65f1bf1c8e14a76acfaef2c5ca36136dfdaad8c9e9fbf56f23c"
+  file = "agent.ckpt"
+  members = [
+    "46d27e70cf47d65f1bf1c8e14a76acfaef2c5ca36136dfdaad8c9e9fbf56f23c  agent.ckpt",
+    "1ab1c66126ab4cfb7bee344129ed9384fe4b2ae9730f59e081d381a52788196f  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-stageA-round0-seen/step_000000928/"
+  sidecar = true
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "1.22"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 1.90 / 1.90, stationary 1.30 / 0.89, side 0.81 / 0.56; recorded valid: false"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T081242-bb52e8"
+
+[[runs]]
+id = "GC03.v1"
+label = "joint v1: refiner and scorer"
+ended = 2026-10-01
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+notes = """Three epochs written (steps 917, 1834, 2751); the 0103 smoke (20260930T212532-af6551) drove step 917. \
+Its step sidecars name two commits, 2957918 at step 917 and fa47c4b at steps 1834 and 2751, because \
+train_git_sha was read at each save; so no training commit is recorded here. Its scorer targets carry defect 6. \
+The doc's table once gave its 0103 mean as 2.56; corrected to 2.50."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = ["gallops.train.swerve_data", "gallops.train.losses", "gallops.expert.grader", "gallops.expert.draw"]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "the label set it read is not recorded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0"
+  step = 917
+  step_unit = "optimizer_step"
+  weights_sha256 = "965222b8e50cd93c0379b04ac7622a200cbf9d51933745314245acd7efa2031f"
+  file = "agent.ckpt"
+  members = [
+    "965222b8e50cd93c0379b04ac7622a200cbf9d51933745314245acd7efa2031f  agent.ckpt",
+    "b1c4bf00256fb59be5d73ab97a53674ea831b37e53ad2bd1720696f790371b27  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0/step_000000917/"
+  sidecar = true
+  known_wrong = "notes.stage says 'A -- refiner only, scorer and encoder frozen', a stale note: v1 trained its scorer (its scorer weights differ from Stage A's frozen ones by up to 0.032)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "2.50"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 5.00 / 5.00, stationary 0.00 / 0.00, side 0.00 / 5.00"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20260930T212532-af6551"
+
+[[runs]]
+id = "GC03.v2"
+label = "joint v2: brake-first expert"
+ended = 2026-10-02
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "ae32ff4"
+notes = """The expert brakes for what is not closing on the ego and swerves for what is (defect 4). It moved \
+1,200 targets and, through the scorer's progress term, changed behaviour not at all (defect 5). Scorer targets \
+carry defect 6. 0103 smoke: 20261002T010108-5f6f80."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = ["gallops.train.swerve_data", "gallops.train.losses", "gallops.expert.grader", "gallops.expert.draw"]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "the label set it read is not recorded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-v2"
+  step = 922
+  step_unit = "optimizer_step"
+  weights_sha256 = "2ba030cd8c5af7513b66d70d8b76bcd70fbc2f32db553a340951f2d731f464f5"
+  file = "agent.ckpt"
+  members = [
+    "2ba030cd8c5af7513b66d70d8b76bcd70fbc2f32db553a340951f2d731f464f5  agent.ckpt",
+    "593279d1467c9faffeb8d3675669dbe24c03ed5cd2fcbcbf1b1a9c403dae23d6  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-v2/step_000000922/"
+  sidecar = true
+  known_wrong = "notes.stage says 'A -- refiner only, scorer and encoder frozen', but v2 trained its scorer (the doc: all four scorers, v1 to v4, carry defect 6)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "3.05"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 1.60 / 1.60, stationary 5.00 / 5.00, side 5.00 / 0.07"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T010108-5f6f80"
+
+[[runs]]
+id = "GC03.v3"
+label = "joint v3: the scorer's progress term capped at the expert's distance"
+ended = 2026-10-02
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "35037f2"
+notes = """Never run on 0103: no override run's digest matches it, and no export of it exists. Measured offline, \
+its capped target tied braking with full speed, and the model sped up 26% where the expert braked 38%; v4 \
+replaced it the same day. Scorer targets carry defect 6."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = ["gallops.train.swerve_data", "gallops.train.losses", "gallops.expert.grader", "gallops.expert.draw"]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "the label set it read is not recorded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-v3"
+  step = 922
+  step_unit = "optimizer_step"
+  weights_sha256 = "b9279f00c588c13911b30881852ba3ea878cd439581d4bb3356dbd9687c82b38"
+  file = "model.pt"
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-v3/step_000000922/"
+  sidecar = true
+  known_wrong = "notes.stage says 'A -- refiner only, scorer and encoder frozen', but v3 trained its scorer (the doc: all four scorers, v1 to v4, carry defect 6)"
+
+[[runs]]
+id = "GC03.v4"
+label = "joint v4: the progress term peaks at the expert's distance"
+ended = 2026-10-02
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "a0c20bf"
+notes = """Trained on labelled_round0_v2, not on the label set later named v4: training ended 2026-10-02 13:35 \
+IST, and the v3 and v4 labels were written at 23:04 that day and on 2026-10-06. Slowing on brake ticks rose to \
++47% (the expert asks 38%, the released model does 50%). It drives like the released model with harder braking: \
+0.11–0.21 m of lateral motion; on held-out swerve ticks it moves 0.07 m where the expert asks 4.59. On 46 \
+held-out stationary creep ticks it picks a crashing plan on all 46. Scorer targets carry defect 6. 18 round-1 \
+episodes were collected under v4 and stopped, because v4 does not swerve. 0103 smoke: 20261002T080920-070cd5."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.export",
+    "gallops.train.reach",
+    "gallops.expert.grader",
+    "gallops.expert.draw",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v2)"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+  note = "the sidecar's selection_split; 0103 is what chose among v1 to v4"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-v4"
+  step = 922
+  step_unit = "optimizer_step"
+  weights_sha256 = "24a47a94da6d299dc565ed53aeebebe607453a036af0e6e13d4cba8943d3cd04"
+  file = "agent.ckpt"
+  members = [
+    "24a47a94da6d299dc565ed53aeebebe607453a036af0e6e13d4cba8943d3cd04  agent.ckpt",
+    "a1a835259988f268a915228803536ec01f7f1c2dcb60eb912aa71cdcc8eabfbc  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-v4/step_000000922/"
+  sidecar = true
+  known_wrong = "notes.stage says 'A -- refiner only' for a joint run; it records no label set (labelled_round0_v2); selection_split says scene 0053, but 0103 is what chose among v1 to v4"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "4.53"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke", "selected-on-report"]
+  note = "frontal 2.15 / 5.00, stationary and side 5.00 ×4. Best of four checkpoints chosen on these six episodes; its whole +0.47 is frontal run_1 (5.0 where the released model averages 2.16). Lower impact speed, not an evasion"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261002T080920-070cd5"
+
+[[runs]]
+id = "GC03.v4fix"
+label = "v4fix: v4's recipe on correctly graded targets (defect 6 fixed)"
+ended = 2026-10-06
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "c18f488"
+notes = """Ran without the preflight and without the history skip (it trained at c18f488, before both). On 0103 \
+it behaves like v4: slows to about 2 m/s, no swerve. 0103 smoke: 20261005T225911-49344e."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.safety_check",
+    "gallops.expert.grader",
+    "gallops.expert.draw",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove"
+  role = "train"
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "the label set it read is not recorded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-v4fix"
+  step = 922
+  step_unit = "optimizer_step"
+  weights_sha256 = "410200004a7930e3545c1642be08b61a72061048af5cdbbbb61aa2960024801c"
+  file = "agent.ckpt"
+  members = [
+    "410200004a7930e3545c1642be08b61a72061048af5cdbbbb61aa2960024801c  agent.ckpt",
+    "370f97e0a34e34e747fb27ffc2b00778cab077b218d272381b13c51dc2c49920  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-v4fix/step_000000922/"
+  sidecar = true
+  known_wrong = "train_git_sha says 85e1f9c, but c18f488 trained it (its chain log; 85e1f9c was committed mid-run); notes.stage says 'A -- refiner only' for a joint run"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "4.51"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 2.07 / 5.00, stationary and side 5.00 ×4"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T225911-49344e"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "88%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[runs]]
+id = "GC03.l4fix"
+label = "l4fix: + an expert that holds speed, then brakes firmly to a stop; ticks with no recorded past skipped"
+ended = 2026-10-06
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "38690b9"
+notes = """The first run through the preflight: grading reproduced 48 of 48 sampled ticks, fidelity agreed on 47 \
+of 47. Loss: the vendor's trajectory_loss_anchors plus scorer BCE against score_target. On 0103 like v4, ending \
+at 2–3.4 m/s. 0103 smoke: 20261005T231510-5dcf05."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.train.safety_check",
+    "gallops.expert.grader",
+    "gallops.expert.draw",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v4)"
+  role = "train"
+  n = 7376
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "120 episodes; continue 4,119, brake 1,423 as claimed (about 1,154 trained), swerve 932, least-impact 902"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-l4fix"
+  step = 922
+  step_unit = "optimizer_step"
+  weights_sha256 = "1ddcdc2f0224d26e6530da07cfa5f90492a56340780ec5dde69850c0a06973da"
+  file = "agent.ckpt"
+  members = [
+    "1ddcdc2f0224d26e6530da07cfa5f90492a56340780ec5dde69850c0a06973da  agent.ckpt",
+    "361a600431a78aa072e0cdddcbeee43bdb4091ab03dee7d1150aa4f65b0b68cb  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-l4fix/step_000000922/"
+  sidecar = true
+  known_wrong = "claims 1,423 brake ticks where about 1,154 trained: ticks with no recorded past were then skipped silently, after counting; validation losses before and after 38690b9 are over different held-out sets"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "4.40"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 1.41 / 5.00, stationary and side 5.00 ×4"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261005T231510-5dcf05"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "55%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[runs]]
+id = "GC03.l5"
+label = "l5: + an expert that follows the lane centre, and every plan drivable"
+ended = 2026-10-08
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "cdfdb64"
+notes = """The expert had copied the human's path; it now follows the centre of the lane the car is in. On 0103 \
+it never drops below about 3 m/s and hits all 6. 0103 smoke: 20261007T202011-99499f."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.train.safety_check",
+    "gallops.expert.grader",
+    "gallops.expert.draw",
+    "gallops.expert.lanes",
+    "gallops.expert.drivable",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v5)"
+  role = "train"
+  n = 5583
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "90 episodes; scene 0064 excluded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0, scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-joint-round0-l5"
+  step = 698
+  step_unit = "optimizer_step"
+  weights_sha256 = "8ab47505de46d483f870df8990a8d396b970c893c744c7a88b07e4f32e9dbcf3"
+  file = "agent.ckpt"
+  members = [
+    "8ab47505de46d483f870df8990a8d396b970c893c744c7a88b07e4f32e9dbcf3  agent.ckpt",
+    "7473767c3a655a70102cc362398cf34f4f21955fada93d4a485647061e1fb992  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-joint-round0-l5/step_000000698/"
+  sidecar = true
+  known_wrong = "train_git_sha says a9ef8ba, but cdfdb64 trained it: a9ef8ba was committed 80 minutes into the epoch, and the sidecar lacks the fields a9ef8ba writes"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "2.65"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 3.05 / 3.05, stationary 2.51 / 2.44, side 2.40 / 2.45"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261007T202011-99499f"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "32%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[runs]]
+id = "GC03.s1"
+label = "s1: the scorer alone, + a ranking loss, + 150 GT drives"
+ended = 2026-10-08
+start_from = "released"
+trained = ["scorer"]
+frozen = ["encoder", "ego encoder", "queries", "refiner"]
+train_git_sha = "fbc0ce7"
+notes = """Why: l5 had safe candidates and picked wrong, and joint training damaged the candidates. Loss: scorer \
+BCE against score_target + 1.0 × a ranking loss over the 32. Kept frontal-0064 (it predates --exclude-episodes): \
+882 of its 10,499 ticks (8.4%) were graded against a car that never renders; its sidecar records no exclusion, \
+which is true. Two epochs written; step 2626 drove both the 0103 smoke (20261008T020429-00e049) and the full \
+sweep (20261008T021909-55974f). On 0103 it drives like the released model, slowing to about 1.7 m/s."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.train.safety_check",
+    "gallops.train.export",
+    "gallops.expert.grader",
+    "gallops.expert.lanes",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v5)"
+  role = "train"
+  n = 7352
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "of the round's 9,495"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "GT: the human's logged path driven, the released model's plans saved (labelled_gt)"
+  role = "train"
+  n = 3147
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "of the set's 5,426; 230 episodes in all across both sources"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "scene 0053"
+  role = "selection"
+
+  [[runs.data]]
+  dataset = "neuroncap"
+  split = "full official set: 20 scenario pairs × 10 seeds"
+  role = "eval"
+  n = 200
+  unit = "episodes"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-scorer-r0gt-s1"
+  step = 2626
+  step_unit = "optimizer_step"
+  weights_sha256 = "78071f68af07804468be5bc095d55cfd933d0686fbcce312ab122507e92815b5"
+  file = "agent.ckpt"
+  members = [
+    "78071f68af07804468be5bc095d55cfd933d0686fbcce312ab122507e92815b5  agent.ckpt",
+    "e7cda16810230d2cddd339c9b2b2de72a0bcdc36a8eeb503800c21e61314f7fd  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-scorer-r0gt-s1/step_000002626/"
+  sidecar = true
+  known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt as well (read from the sidecar; the doc does not list this)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "full set, 20 pairs × 10 seeds, paired seed for seed"
+  n = 20
+  unit = "scenario pair"
+  baseline = "released, sweep of 5 Sep (20260905T220225-f11ac0)"
+  baseline_value = "3.568"
+  value = "3.671"
+  se = "0.079"
+  better = "higher"
+  strength = "unverified"
+  flags = ["blind"]
+  headline = true
+  note = "+0.103 with a pair-level SE of 0.079: not a proven win. 83 collisions against 91 (10 avoided, 2 new); per pair stationary +0.16, side +0.17, frontal −0.08. Most of the side gain is side-0108 seeds 1 and 8. The released sweep ran on older harness code and was not re-run"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T021909-55974f"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "4.04"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 2.02 / 2.23, stationary and side 5.00 ×4"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T020429-00e049"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "8%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "disagrees with closed loop (5.0 on both stationary 0103 runs, +0.16 per pair on stationary over the full set), unexplained; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "held-out top-choice accuracy"
+  subset = "scene 0053, on the released candidates"
+  value = "23%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[runs]]
+id = "GC03.s2"
+label = "s2: the refiner alone (swerve ticks ×4), then the scorer on its candidates"
+ended = 2026-10-08
+start_from = "released"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "735f478"
+notes = """Two stages, each a run of its own. s2a, refiner only, scorer frozen, swerve and swerve+brake ticks \
+oversampled ×4, from the released weights: {weights}/drivejepa_swerve/swerve-refiner-r0gt-s2a/step_000003280/, \
+model.pt sha256 7bb0a3f694c1cdb343015e5329c770c6f11e76a77e5907e55fc2ee386dd437a2. s2b, scorer only, from s2a: \
+the checkpoint below. Why: frontal needs swerves the released candidates never contain. On 0103 it holds about \
+5.8 m/s and swerves 2–3 m; passes the parked car once, otherwise hits. 0103 smoke: 20261008T103801-ec9faa."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.train.safety_check",
+    "gallops.train.export",
+    "gallops.expert.grader",
+    "gallops.expert.lanes",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v5)"
+  role = "train"
+  n = 6850
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "frontal-0064 excluded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "GT: the human's logged path driven, the released model's plans saved (labelled_gt)"
+  role = "train"
+  n = 2767
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "frontal-0064 excluded; 210 episodes in all across both sources"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-scorer-r0gt-s2b"
+  step = 2406
+  step_unit = "optimizer_step"
+  weights_sha256 = "28a1f89eed3a05395534c2577d4d77fe12fcc524c5d76e7798c6c1efc7501687"
+  file = "agent.ckpt"
+  members = [
+    "28a1f89eed3a05395534c2577d4d77fe12fcc524c5d76e7798c6c1efc7501687  agent.ckpt",
+    "1897b595c6eeaf688bb7104711f6565d461c8d0d34897af2b1bd9183a38875a9  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-scorer-r0gt-s2b/step_000002406/"
+  sidecar = true
+  known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt as well (read from the sidecar; the doc does not list this)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "2.11"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 2.19 / 2.19, stationary 5.00 / 1.15, side 1.07 / 1.04"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T103801-ec9faa"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "40%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "held-out top-choice accuracy"
+  subset = "scene 0053, s2b on its own refiner's candidates"
+  value = "7%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[runs]]
+id = "GC03.s3"
+label = "s3: DAgger round 1 -- s2 drove 150 episodes, the expert labelled them, both stages retrained from s2 on all three data sets"
+ended = 2026-10-09
+start_from = "GC03.s2"
+trained = ["refiner", "scorer"]
+frozen = ["encoder"]
+train_git_sha = "735f478"
+notes = """Why: s2 never came back after a swerve. Two stages: s3a, refiner only, from s2b, swerve ticks ×4: \
+{weights}/drivejepa_swerve/swerve-refiner-r0gtr1-s3a/step_000002343/, model.pt sha256 \
+c137805196ab7bb8a83b5d1889914cd9e0724584c5e2b0ba97f93871f04d7cbc; s3b, scorer only, from s3a: the checkpoint \
+below. After s3a a safe candidate exists on 87% of frontal 0075 approach ticks, 68% before. On 0103 it stays on \
+its route at about 6.4 m/s, neither swerves nor brakes, and hits all 6. 0103 smoke: 20261008T205424-aee62f."""
+
+  [runs.code]
+  entry = "gallops.train.swerve"
+  modules = [
+    "gallops.train.swerve_data",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.train.safety_check",
+    "gallops.train.export",
+    "gallops.expert.grader",
+    "gallops.expert.lanes",
+    "gallops.expert.rounds",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "round 0: the released model drove (labelled_round0_v5)"
+  role = "train"
+  n = 6850
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "frontal-0064 excluded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "GT: the human's logged path driven, the released model's plans saved (labelled_gt)"
+  role = "train"
+  n = 2767
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "frontal-0064 excluded"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "DAgger round 1: s2 drove (labelled_round1_s2)"
+  role = "train"
+  n = 3617
+  unit = "ticks"
+  built_by = "gallops.expert.label"
+  note = "of the round's 9,263; 313 episodes in all across the three sources"
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "scene 0053"
+  role = "selection"
+
+  [runs.checkpoint]
+  model = "drivejepa_swerve"
+  train_run = "swerve-scorer-r0gtr1-s3b"
+  step = 1655
+  step_unit = "optimizer_step"
+  weights_sha256 = "0678b10898ef3074e6017b7d31f2f801e63ad1e1d3a2755699471853e8d73f79"
+  file = "agent.ckpt"
+  members = [
+    "0678b10898ef3074e6017b7d31f2f801e63ad1e1d3a2755699471853e8d73f79  agent.ckpt",
+    "4420e7384b3f64405b0029d489da8833f8510b9ab895d3e2445678aa28e5571c  model.pt",
+  ]
+  location = "{weights}/drivejepa_swerve/swerve-scorer-r0gtr1-s3b/step_000001655/"
+  sidecar = true
+  known_wrong = "trained_on names only 'round0, 5 non-benchmark nuScenes train scenes', though notes.sources lists labelled_gt and labelled_round1_s2 as well (read from the sidecar; the doc does not list this)"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "scene 0103, seeds 0 / 1, two runs per scenario"
+  n = 6
+  unit = "episode"
+  baseline = "released (n=10)"
+  baseline_value = "4.05"
+  value = "0.80"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "smoke"]
+  note = "frontal 0.56 / 0.80, stationary 1.04 / 0.83, side 0.73 / 0.86"
+  source = "experiments/GC03_swerve_finetune/README.md; paddock run 20261008T205424-aee62f"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "safe picks on held-out 0053 approach ticks (stationary, expert brakes)"
+  baseline = "released"
+  baseline_value = "89%"
+  value = "29%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  note = "from the ops copy of what is now gallops.train.safety_check; read as a diagnostic, not a ranking"
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "held-out top-choice accuracy"
+  subset = "scene 0053, s3b on its own refiner's candidates"
+  baseline = "keeping s2's scorer"
+  baseline_value = "5.8%"
+  value = "4%"
+  better = "higher"
+  strength = "moderate"
+  flags = ["blind", "open-loop", "smoke"]
+  source = "experiments/GC03_swerve_finetune/README.md ('After the fix')"
+
+[[checks]]
+name = "The grader against paddock's verdicts"
+result = "reproduces paddock's check.json exactly: 38,080 of 38,080 candidate verdicts"
+decided = "every drawn target and every proposal goes through the same grader"
+source = "experiments/GC03_swerve_finetune/README.md ('What was built')"
+
+[[checks]]
+name = "Defect 1: reactions taught to an off-camera hazard (found by plotting the training set)"
+result = "the crossing actor sits a median 43.5° off axis against a 32.6° half-FOV; 400 of 9,495 ticks taught an evasion of something outside the frame"
+decided = "every tick records the hazard's bearing; reactive targets that cannot see their hazard are dropped"
+source = "experiments/GC03_swerve_finetune/README.md (defect 1)"
+
+[[checks]]
+name = "Defect 2: a swerve from t = 0 held to the horizon (found by watching the closed-loop video)"
+result = "at 10 Hz the target re-commanded full displacement at once on every tick; the model threw the wheel over at first sight"
+decided = "the drawn plan holds its lane, then moves, then recovers"
+source = "experiments/GC03_swerve_finetune/README.md (defect 2)"
+
+[[checks]]
+name = "Defect 3: an undrivable recovery (found by probing a state round 0 never visits)"
+result = "a plan for a car 3 m off the logged path began with a 3 m jump: 24.5 m/s², six times the module's own comfort limit, taught after every evasion"
+decided = "rejoin() eases the correction: 1.7 m/s², back in lane by 4 s"
+source = "experiments/GC03_swerve_finetune/README.md (defect 3)"
+
+[[checks]]
+name = "Defect 4: swerving where braking was available (found by measurement)"
+result = "braking alone was clear on 197 of 197 sampled stationary swerve ticks and 10 of 10 side ones, every one taught as a swerve"
+decided = "brake for what is not closing on the ego, swerve for what is (closing-speed split near −3.0 m/s): the v2 expert"
+source = "experiments/GC03_swerve_finetune/README.md (defect 4)"
+
+[[checks]]
+name = "Defect 5: the scorer taught to want the opposite of the expert"
+result = "score_target scored a clear swerve 1.00 and a clear brake 0.75 on every tick; swerve-first to brake-first moved 1,200 targets and changed behaviour not at all; a cap at the expert's distance tied brake with full speed (v3)"
+decided = "the progress term peaks at the expert's distance and falls on both sides (v4): slowing on brake ticks −26% → +47%"
+source = "experiments/GC03_swerve_finetune/README.md (defect 5)"
+
+[[checks]]
+name = "Defect 6: every scorer target graded from the wrong pose (found by a creep check that could not be true)"
+date = 2026-10-06
+result = "Referee cached the ego pose once per episode, 14–16 m off; re-grading round 0 that way flipped 19.5% of 3,776 stationary, 36.6% of 3,008 frontal and 1.6% of 3,808 side hit/clear verdicts. In every run that trained the scorer: v1 to v4"
+decided = "episode_context returns the tick's own pose; no run trains until the preflight shows the trainer's grading reproduces the labels exactly; v4's recipe retrained under the fix (v4fix)"
+source = "experiments/GC03_swerve_finetune/README.md (defect 6); CLAUDE.md ('Before any training run')"
+
+[[checks]]
+name = "Preflight fidelity: the rebuilt past (506 round-0 ticks)"
+result = "the first real run was refused by an absolute 5 cm limit; measuring why found that an episode's first half second needs a priming frame the logger never saved: rebuilt pick a median 0.4–0.5 m (p90 2.4 m) from the driven one, against 0.10 m once the real frame exists; about 7% of every round's ticks"
+decided = "unrebuildable ticks are dropped before counting and recorded by kind (notes.unrebuildable); a set with more than 10% is refused; fidelity gates the median at 1% of travel (measured 0.29%) and the p90 at 10%"
+source = "experiments/GC03_swerve_finetune/README.md; CLAUDE.md ('Before any training run')"
+
+[[checks]]
+name = "Camera-blind: did any image reach the model?"
+date = 2026-10-12
+result = "no: the trainer's inputs (swerve_data.py) and paddock's adapter placed the cameras relative to nuScenes' LIDAR_TOP, yawed −90°; a black frame gave the identical plan, in every run and every collection here"
+decided = "fixed in camera_extrinsics (paddock half: #62); the preflight refuses a model a blanked camera does not move; these runs say nothing about learning to see a hazard"
+source = "experiments/GC03_swerve_finetune/README.md (correction)"
+
+[[checks]]
+name = "Ticks mixed within a batch"
+date = 2026-10-14
+result = "every run here trained at --batch 8; the vendor's spatial cross-attention picks each camera's queries from batch element 0's mask for the whole batch"
+decided = "every forward pass is one tick (TICKS_PER_PASS in swerve_data.py); --batch refuses anything else"
+source = "experiments/GC03_swerve_finetune/README.md (correction)"

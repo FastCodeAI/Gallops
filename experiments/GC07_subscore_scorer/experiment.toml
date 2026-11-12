@@ -1,0 +1,128 @@
+# GC07 -- the sub-score scorer over inserted swerve paths, on the seeing (camera-fixed) model (Naren). Parked.
+# Every number is copied from section 1 of the account in GC08's folder, which tells both stories,
+# except the 9-run mean (4.44), which is the team's status page's and matches the nine ncap_scores in paddock run
+# neuroncap/drivejepa_subscore/20261013T202318-c43ac5/samples.jsonl. Checkpoint block from
+# `gallops experiments checkpoint` on {weights}/drivejepa_subscore/sighted-v1/step_000000020/.
+
+schema = 1
+id = "GC07"
+title = "Sub-score scorer over inserted swerve paths, on the seeing model"
+short = "Sub-score scorer, seeing"
+track = "gap-closing"
+owner = "Naren"
+benchmarks = ["neuroncap"]
+started = 2026-10-13
+ended = 2026-10-13
+status = "parked"
+verdict = "mixed"
+parents = ["GC06"]
+question = """After the camera fix, none of the seeing model's 32 candidates swerves round the oncoming car on \
+neuroNCAP 0103 frontal; the only clear plans are hard braking, and braking alone still gets hit. Can a scorer \
+with six sub-score heads, choosing among 32 inserted swerve paths passed through the model's own refiner, \
+avoid the car?"""
+predictions = "none: run before the registry asked for predictions, and none were written down first"
+learned = """On 0103 it cleared frontal (5.00, 0/3 hit, against 2.36 released), but on 3 runs a shape and by \
+overriding the model from 0.5 s in every scenario, stationary and side included, flipping side 0–16 times an \
+episode. Parked: labels graded each plan as if followed for 4 s, progress is 5/12 of the formula and the \
+choice has no memory, so fast early swerves win; what carried forward is that the manoeuvre must come from \
+the model's own generator, taught by one consistent driver (GC08)."""
+narrative = "experiments/GC08_expert_v6_imitation/README.md#1-sub-score-scorer-with-inserted-swerves-parked"
+external = [
+  "neuroNCAP runs on 0103 (3 per shape): paddock run dirs neuroncap/drivejepa_subscore/20261013T202318-c43ac5 (relative rule, the doc's table) and 20261013T205827-fff68a (DRIVEJEPA_SUBSCORE_RULE=absolute, the same nine scores); under the site's paddock runs root, committed to no repository.",
+  "Training inputs: the seeing round-0 collection and scorer cache v4, under the site's runs and cache roots; listed in the sidecar's notes and in POINTERS.md.",
+  "experiments/GC07_subscore_scorer/paddock/: paddock's drivejepa_subscore adapter, which loads these weights, copied from model/drivejepa-subscore (027bc9f); it is not on paddock's main.",
+]
+
+[[runs]]
+id = "GC07.sighted-v1"
+label = "sub-score scorer, 5 seeds × 20 epochs, on features that include the camera"
+started = 2026-10-13
+ended = 2026-10-13
+start_from = "released Drive-JEPA scorer MLP for the own-token columns; probe and geometry columns at zero"
+trained = ["sub-score scorer (no collision, on road, TTC, lane keeping, progress, final)"]
+frozen = ["encoder", "generator", "refiner"]
+params_trained_m = 2.012
+train_git_sha = "dbcc105"
+notes = "Each tick, 32 hand-built paths (the pick or straight ahead shifted 1–4 m either side, plus 4 braking nudges) and 32 straight probe paths go through the refiner's last stage: 64 plans with the model's own features. A fixed formula combines the heads and an override rule (relative or absolute) decides when to leave the model's pick. Preflight passed (fidelity 99.3% after the switch to lossless frames). The checkpoint is a 5-seed ensemble (seed_0.pt … seed_4.pt, averaged); weights_sha256 is the digest over all five, listed in members (it pinned seed_4.pt alone until the #25 review). params_trained_m is the sidecar's params_m (per seed)."
+
+  [runs.code]
+  entry = "gallops.train.scorer_train"
+  as_run = ["experiments/GC07_subscore_scorer/paddock/"]
+  modules = [
+    "gallops.train.subscorer",
+    "gallops.train.scorer_folds",
+    "gallops.train.scorer_labels",
+    "gallops.train.scorer_cache",
+    "gallops.train.losses",
+    "gallops.train.preflight",
+    "gallops.data.nuscenes_real",
+  ]
+
+  [[runs.data]]
+  dataset = "neuroncap-actor-insertion"
+  split = "5 non-benchmark nuScenes train scenes (0053 0058 0064 0070 0075), rendered with an inserted car"
+  role = "train"
+  n = 23777
+  unit = "ticks"
+  note = "usable ticks: the seeing round-0 collection plus cache v4"
+
+  [[runs.data]]
+  dataset = "neuroncap"
+  split = "scene 0103, frontal / stationary / side"
+  role = "eval"
+  n = 9
+  unit = "runs"
+  note = "3 runs per shape"
+
+  [runs.checkpoint]
+  model = "drivejepa_subscore"
+  train_run = "sighted-v1"
+  step = 20
+  step_unit = "epoch"
+  weights_sha256 = "b6e0c778e9f0f5f38e0b0388eb77b335cab286ff7b919a5226b5079b0d7224c7"
+  members = [
+    "690ae3d6709da2dc7ce528d1cbeb44e8db0d57eaeb38d6cc0716e18246c8cf35  seed_0.pt",
+    "47a72b5d2c4314bd7387df5e849519248723b3c2712e3f9748ea892ecc2eccbe  seed_1.pt",
+    "5dfaff3e3023eb9e9d6761098ebd0116c515a30d9091789e3cf3ec6bf7f9c7e0  seed_2.pt",
+    "27125b1e205abd8be14e9a03f25e95028be8b62fd8839cd387f863fd6f3687f5  seed_3.pt",
+    "1f11144e697efed38dfe50390141ee94b8f3f8dfe056d7008921daf1cbe9429c  seed_4.pt",
+  ]
+  location = "{weights}/drivejepa_subscore/sighted-v1/step_000000020/"
+  sidecar = true
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score, frontal"
+  subset = "scene 0103, 3 runs, relative rule"
+  n = 3
+  unit = "run"
+  baseline = "released Drive-JEPA, seeing"
+  baseline_value = "2.36"
+  value = "5.00"
+  better = "higher"
+  strength = "moderate"
+  flags = ["smoke", "adapted", "no-record"]
+  headline = true
+  note = "0/3 hit against 3/3; it moved early in every scenario, so the clear frontal runs are not shown to be a reaction to the car"
+  source = "experiments/GC08_expert_v6_imitation/README.md §1; paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5"
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score, mean of 3 shapes"
+  subset = "scene 0103, 3 runs per shape, relative rule"
+  n = 9
+  unit = "run"
+  baseline = "released Drive-JEPA, seeing"
+  baseline_value = "3.01"
+  value = "4.44"
+  better = "higher"
+  strength = "moderate"
+  flags = ["smoke", "adapted", "no-record"]
+  note = "frontal 5.00 vs 2.36, stationary 5.00 vs 5.00, side 3.33 (1/3 hit) vs 1.67 (2/3 hit). The doc gives the shapes, not the mean; 4.44 is the team page's"
+  source = "paddock run neuroncap/drivejepa_subscore/20261013T202318-c43ac5; baseline experiments/GC08_expert_v6_imitation/README.md §5"
+
+[[checks]]
+name = "Why the sub-score scorer was parked"
+result = "it overrode the model from 0.5 s in every scenario and flipped side 0–16 times an episode: plans were labelled as if followed for the full 4 s (so the released braking plan graded as a crash), progress is 5/12 of the formula, each tick chose with no memory, and after the first swerve the car was in states no training data covered"
+decided = "parked; code and caches kept as diagnostics; the manoeuvre must come from the model's own plan generator, taught by one consistent driver (expert v6, GC08)"
+source = "experiments/GC08_expert_v6_imitation/README.md §1"

@@ -35,7 +35,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .draw import teach
+from .draw import teach, undrivable
 from .drivable import DrivableArea
 from .grader import first_hit, grade
 from .lanes import load_references, reference_at
@@ -50,7 +50,7 @@ CAMERA_HALF_FOV_DEG = 32.6
 CAMERA_AHEAD_M = 1.72
 #: Half a car's diagonal, so a hazard counts as visible if any corner is in frame.
 HAZARD_HALF_EXTENT_M = 2.4
-REACTIVE = ("swerve", "brake", "swerve+brake", "least-impact")
+REACTIVE = ("swerve", "brake", "swerve+brake", "least-impact", "stop", "brake+swerve")
 
 
 def episode_dirs(collect: Path):
@@ -175,6 +175,90 @@ def label_episode(directory: Path, rows: list[dict], area=None) -> list[dict]:
     return out
 
 
+def v6_teacher(directory: Path, pack: dict, area):
+    """Expert v6 for one recorded episode: the route from the pose the closed loop started at.
+
+    The first logged pose is 0.1 s after the last priming keyframe, which is where `rollout`
+    takes the route from too, so a label here and a rollout of the same episode agree.
+    """
+    from .teacher import Route, Teacher, human_cruise
+
+    poses = json.loads((directory / "ego_poses.json").read_text())
+    first = min(int(t) for t in poses)
+    frame = int(np.argmin([abs(t - (first - 100_000)) for t in pack["timestamps"]]))
+    route = np.asarray(pack["routes"][str(frame)], dtype=float)
+    actors = json.loads((directory / "actors.json").read_text())
+    for actor in actors:
+        actor["cls_name"] = pack["uuid_cls"].get(actor["uuid"], "unknown")
+    cruise = human_cruise(Route(route), pack["ego_poses"], pack["timestamps"])
+    return Teacher(route, actors, area, cruise)
+
+
+def label_episode_v6(directory: Path, rows: list[dict], pack: dict, area=None) -> list[dict]:
+    """`label_episode` with expert v6 as the target, taught tick by tick in time order.
+
+    The candidates are graded exactly as for v5, and the expert's own plan by the same
+    referee (the target actor, the lane reference, the raster), so the trainer's preflight
+    can re-check both.
+    """
+    actors = json.loads((directory / "actors.json").read_text())
+    targets = [a for a in actors if a["is_target_actor"]]
+    poses = json.loads((directory / "ego_poses.json").read_text())
+    logged, lanes = load_references(directory)
+    frames = {int(p.stem): p for p in (directory / "CAM_FRONT").glob("*.jpg")}
+    teacher = v6_teacher(directory, pack, area)
+    out = []
+    for row in sorted(rows, key=lambda r: r["timestamp"]):
+        stamp = row["timestamp"]
+        if str(stamp) not in poses:
+            continue
+        ego2world = np.asarray(poses[str(stamp)])
+        before = poses.get(str(stamp - 500_000))
+        taught = teacher.teach(
+            ego2world, stamp, float(row["speed"]), None if before is None else np.asarray(before)
+        )
+        waypoints = np.asarray(taught.waypoints)
+        reference, reference_kind = reference_at(stamp, logged, lanes)
+        verdict = grade(waypoints, ego2world, stamp, targets, reference, area)
+        proposals = np.asarray(row["proposals"])
+        graded = [grade(p, ego2world, stamp, targets, reference, area) for p in proposals]
+        driven = first_hit(np.asarray(row["trajectory"]), ego2world, stamp, targets)
+        seen = hazard_bearing(ego2world, stamp, targets)
+        bearing, in_frame = seen if seen else (None, False)
+        man = taught.manoeuvre
+        out.append(
+            {
+                "episode": f"{directory.parent.name}/{directory.name}",
+                "timestamp": stamp,
+                "frame": str(frames[stamp]) if stamp in frames else None,
+                "speed": row["speed"],
+                "accel": row["accel"],
+                "command": row["command"],
+                "expert": waypoints.round(4).tolist(),
+                "expert_kind": taught.kind,
+                "expert_version": "v6",
+                "expert_clear": verdict.clear,
+                "expert_drivable": undrivable(waypoints, speed=float(row["speed"])) is None,
+                "expert_side": 0 if man is None else man.side,
+                "reference": reference_kind,
+                "expert_offset_m": 0.0 if man is None else round(man.offset_m, 3),
+                "hazard_bearing_deg": None if bearing is None else round(bearing, 1),
+                "hazard_in_frame": in_frame,
+                "usable_for_imitation": taught.kind not in REACTIVE or in_frame,
+                "candidate_hits": [v.hit_at for v in graded],
+                "candidate_off_road": [v.off_road_at for v in graded],
+                "candidate_clear": [v.clear for v in graded],
+                "driven_hits": driven,
+                "driver": row.get("drive", "model"),
+                "model_hits": first_hit(np.asarray(pick), ego2world, stamp, targets)
+                if (pick := model_pick(row)) is not None
+                else driven,
+                "pdm_score": row.get("pdm_score"),
+            }
+        )
+    return out
+
+
 def fresh_out(out: Path) -> None:
     """Refuse an `--out` that already holds labels.
 
@@ -219,7 +303,11 @@ def main() -> None:
     parser.add_argument("--dumps", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--drivable", type=Path, help="directory of scene-*.npz rasters")
+    parser.add_argument("--expert", choices=("v5", "v6"), default="v5")
+    parser.add_argument("--packs", type=Path, help="scene packs with routes (rollout pack/routes); v6 only")
     args = parser.parse_args()
+    if args.expert == "v6" and (args.packs is None or args.drivable is None):
+        parser.error("--expert v6 needs --packs and --drivable")
     fresh_out(args.out)
     from gallops.config import REPO_ROOT
     from gallops.train.swerve import git_sha
@@ -244,7 +332,14 @@ def main() -> None:
             continue
         # "frontal-0075/run_3" -> the raster built for scene-0075
         scene = directory.parent.name.rsplit("-", 1)[-1]
-        labelled = label_episode(directory, rows, areas.get(scene))
+        if args.expert == "v6":
+            if not (directory / "lane_reference.json").exists():
+                # without it the candidates are graded against the human's path, silently
+                raise SystemExit(f"{directory}: no lane_reference.json; run gallops.expert.lanes first")
+            pack = json.loads((args.packs / f"scene-{scene}.json").read_text())
+            labelled = label_episode_v6(directory, rows, pack, areas.get(scene))
+        else:
+            labelled = label_episode(directory, rows, areas.get(scene))
         if not labelled:
             continue
         name = f"{directory.parent.name}__{directory.name}.jsonl"
