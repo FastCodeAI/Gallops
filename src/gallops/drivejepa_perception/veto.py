@@ -725,8 +725,11 @@ def analyse(out_root: Path, split: str, grid_dir: Path, out: Path, official_dir=
     labels = dict(np.load(Path(out_root) / lab / "labels.npz"))
     projections = tg.front_projection(np.load(Path(out_root) / tok / "lidar2img.npy"))
     sources = agent_sources(out_root, split)
-    proposals = np.asarray(data["proposals"][data["rows"]])
-    subsets = navsim_data.subsets(labels, proposals)
+    # The subsets are read over every row of the labels (navsim_data.subsets walks them all), then kept for
+    # the rows B-1 reads: R-clean's are its known-command windows (D25).
+    subsets = {
+        k: v[data["rows"]] for k, v in navsim_data.subsets(labels, np.asarray(data["proposals"])).items()
+    }
     failing = ceiling_vetoed(data["pdm"])
     n = np.arange(len(data["pick"]))
     record = {"split": split, "rows": int(len(n)), "frozen": frozen["chosen"], "arms": {}}
