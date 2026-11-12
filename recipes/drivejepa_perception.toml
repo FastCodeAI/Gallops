@@ -1323,3 +1323,17 @@ module = "drivejepa_perception.veto"
 args = ["analyse", "--root", "{out}", "--split", "navtest", "--grid", "{out}/part-b/b1/grid-fresh",
         "--out", "{out}/part-b/b1/analysis-navtest.json"]
 after = ["part-b-1-navtest"]
+
+# The train rows' agents from the cross-fit side-cars (one GPU, minutes): each train row decoded by the
+# side-car that did not see its log. Each fold must pass B0-G11 (select F1 within 0.02 of seed 0's) and
+# reproduce its recorded select F1 when decoded here. For B-2 onward; B-1 reads no train row.
+
+[[stage]]
+name = "part-b-0-crossfit-agents"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["crossfit-agents",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--reference", "{out}/part-a/5b-v3-e24-s0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--vit-tokens", "{out}/tokens-vit-v1", "--out", "{out}/agents-train-crossfit-v3"]
+after = ["part-b-0-crossfit-f0", "part-b-0-crossfit-f1", "part-b-0-crossfit-f2", "part-b-0-crossfit-f3", "part-b-0-crossfit-f4"]

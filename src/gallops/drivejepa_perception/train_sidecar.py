@@ -911,6 +911,80 @@ def optimism(cfg, args) -> None:
     print(json.dumps({k: record[k] for k in ("mean_gap", "limit", "crossfit_needed")}, indent=1))
 
 
+#: B0-G11: a fold's side-car reads a select F1 within this of seed 0's recorded value.
+CROSSFIT_F1_TOLERANCE = 0.02
+
+
+def crossfit_agents(cfg, args) -> None:
+    """The train rows' agents, each row decoded by the cross-fit side-car that did not see its log.
+
+    Every fold's run must have trained without its own fold, pass B0-G11 (its kept-epoch select F1 within
+    CROSSFIT_F1_TOLERANCE of `--reference`'s), and give exactly that F1 when decoded here
+    (`select_f1_check`). The folds' train rows must cover the train rows exactly once.
+    """
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a pass never overwrites one")
+    runs = [Path(r) for r in args.runs.split(",")]
+    reference_run = Path(args.reference)
+    ref_epoch = json.loads((reference_run / "summary.json").read_text())["kept_epoch"]
+    ref_f1 = [
+        json.loads(line)["f1_30m"]
+        for line in (reference_run / "metrics.jsonl").read_text().splitlines()
+        if json.loads(line)["epoch"] == ref_epoch
+    ][0]
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+    folds = crossfit_folds(splits["train"], len(runs))
+    device = torch.device("cuda")
+    run_args = json.loads((runs[0] / "run.json").read_text())["args"]
+    tokens, slot, rows, projections, _ = load(args.tokens, args.labels, run_args["tap"], args.vit_tokens)
+    merged, checks, covered = None, [], np.zeros(len(projections), np.int64)
+    for k, run in enumerate(runs):
+        meta = json.loads((run / "run.json").read_text())["args"]
+        if meta.get("crossfit_fold") != k:
+            raise SystemExit(f"{run} is not fold {k}'s run")
+        model, epoch = load_run(run)
+        check = select_f1_check(model, run, epoch, device)
+        check["fold"], check["reference"] = k, ref_f1
+        check["within_tolerance"] = abs(check["recorded"] - ref_f1) <= CROSSFIT_F1_TOLERANCE
+        checks.append(check)
+        if check["gap"] > 1e-6 or not check["within_tolerance"]:
+            raise SystemExit(f"fold {k} fails B0-G11 or its decode check: {check}")
+        picked = rows["train"][np.isin(logs[rows["train"]], folds[k])]
+        arrays = agent_arrays(model, tokens, slot, picked, projections, device)
+        if merged is None:
+            merged = {key: np.zeros_like(value) for key, value in arrays.items()}
+        for key, value in arrays.items():
+            merged[key][picked] = value[picked]
+        covered[picked] += 1
+    if not (covered[rows["train"]] == 1).all() or covered.sum() != len(rows["train"]):
+        raise SystemExit("the folds do not cover the train rows exactly once")
+    staging = out.with_name(out.name + ".staging")
+    staging.mkdir(parents=True)
+    np.savez(staging / "agents.npz", **merged)
+    manifest = {
+        "pass": "crossfit-agents",
+        "runs": [str(r) for r in runs],
+        "reference": str(reference_run),
+        "gallops_sha": git_sha(),
+        "source": "navtrain",
+        "row_set": "train",
+        "rows": len(projections),
+        "rows_decoded": int(len(rows["train"])),
+        "folds": [len(f) for f in folds],
+        "checks": checks,
+        "threshold": evaluate.THR,
+        "agents_per_row": float(merged["mask"][rows["train"]].sum(1).mean()),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(json.dumps({k: v for k, v in manifest.items() if k != "checks"}, indent=1))
+
+
 def refinish(cfg, args) -> None:
     """Write a trained run's summary from its saved epochs, without retraining (its own args)."""
     out = Path(args.out)
@@ -943,10 +1017,14 @@ def main(argv=None) -> None:
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
     parser.add_argument(
-        "cmd", choices=("train", "overfit", "agents", "finish", "reread", "sight", "optimism")
+        "cmd",
+        choices=("train", "overfit", "agents", "finish", "reread", "sight", "optimism", "crossfit-agents"),
     )
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
-    parser.add_argument("--runs", default="", help="optimism: the runs, comma-separated")
+    parser.add_argument("--runs", default="", help="optimism, crossfit-agents: the runs, comma-separated")
+    parser.add_argument(
+        "--reference", default="", help="crossfit-agents: the run B0-G11 compares each fold with"
+    )
     parser.add_argument(
         "--crossfit-fold", type=int, default=-1, help="train without this fold of the train logs (B-0)"
     )
@@ -1000,6 +1078,7 @@ def main(argv=None) -> None:
         "reread": reread,
         "sight": sight,
         "optimism": optimism,
+        "crossfit-agents": crossfit_agents,
     }[args.cmd](cfg, args)
 
 
