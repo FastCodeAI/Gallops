@@ -42,6 +42,8 @@ gallops experiments check   # every experiment record valid, README rendered fro
 gallops experiments render --write   # re-render the README's tables and every CARD.md from experiment.toml
 gallops experiments new <ID> <slug> --owner <name>   # register an experiment before it runs
 gallops experiments checkpoint <ckpt-dir>   # the [runs.checkpoint] block, pinned by weights sha256
+gallops experiments pr <ID>[.run]    # a results PR's title and description, rendered from the record
+gallops experiments pr-check --base <commit>   # what CI holds a PR's title and description to
 ```
 
 Set `GALLOPS_CONFIG` to use a config file other than `./gallops.toml`.
@@ -169,7 +171,11 @@ what the registry renders.
   claimed by some run. Maintained code stays in `src/`, named by function; one-off
   scripts go in the experiment's `scripts/`.
 - **Record decisions** in `experiments/decisions.toml`, in date order, with
-  their evidence; a `gallops-v0.N` version is earned only by a gate SHIP.
+  their evidence; a `gallops-v0.N` version is earned only by a gate SHIP. A
+  `done` hypothesis needs a gate verdict, and a decision citing it dated on or after
+  that gate.
+- **A secondary run** that tests the same claim is the next `[[runs]]` under its
+  hypothesis; a different claim gets its own `Hnn`.
 
 ## Before opening a PR
 
@@ -177,6 +183,17 @@ what the registry renders.
 than piping to `tail`. `make typecheck` is the deliberate exception — advisory,
 absent from `make check`, blocking nowhere — for the same reason paddock keeps
 it advisory: a check that reddens unrelated work is one people learn to ignore.
+
+**A PR that adds, changes or removes a result or a gate verdict takes its title and
+description from `gallops experiments pr <ID>`,** never typed; see
+[docs/experiments.md](docs/experiments.md#results-pr). `gh pr create --body`
+skips `.github/pull_request_template.md`, so this line is what reaches a PR
+opened from the command line.
+
+CI runs `make check` and that title check on every PR whose merge with its base
+holds the workflows, so a stacked PR gets them once its base has taken `main`.
+This GitHub plan has no branch protection, so a red check does not stop a merge.
+Do not merge on red.
 
 When reporting results, **separate what you verified from what you argued**, and
 state the strength of each claim. That standard is paddock's

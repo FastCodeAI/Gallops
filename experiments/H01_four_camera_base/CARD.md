@@ -9,7 +9,7 @@
 
 > The record is on branch `drivejepa-wajepa/run3a`, not merged yet; its links go to that branch.
 
-**Priority:** 1 · **Evidence for:** D11 ([decision log](../../README.md#decision-log))
+**Priority:** 1 · **Evidence for:** D11 ([decision log](../README.md#decision-log))
 
 ## Question
 

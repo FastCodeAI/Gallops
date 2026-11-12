@@ -9,7 +9,7 @@
 
 > The record is on branch `expert/v6-imitation`, not merged yet; its links go to that branch.
 
-**Builds on:** [GC06](../GC06_scorer_cache/CARD.md) · **Evidence for:** D08 ([decision log](../../README.md#decision-log))
+**Builds on:** [GC06](../GC06_scorer_cache/CARD.md) · **Evidence for:** D08 ([decision log](../README.md#decision-log))
 
 ## Question
 
