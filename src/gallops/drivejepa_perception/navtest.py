@@ -555,6 +555,319 @@ def build_cache(cfg, labels_dir: Path, out: Path, workers: int) -> dict:
     return manifest
 
 
+# ------------------------------------------------------------------------------- scoring runs
+
+#: H04's account of the release on navtest (docs/drivejepa_wajepa.md on run3a): B0-G8 holds the
+#: release's replayed picks to it.
+ANCHOR = {"epdms_human_filter": 87.78, "csv_score": 84.49}
+ANCHOR_TOLERANCE = 0.02
+#: B0-G9: the live release against its replayed picks.
+LIVE_PICKS_EQUAL, LIVE_COLUMNS_EQUAL, LIVE_EPDMS = 0.999, 0.999, 0.02
+#: A token's EC is scored against its successor: the next frame of its log, under 0.55 s later.
+SUCCESSOR_US = 550_000
+
+
+def release_plans(tokens_dir: Path, labels_dir: Path, out: Path) -> Path:
+    """R's plan store: the release's own pick of its 32 proposals for every navtest row."""
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    proposals = np.load(Path(tokens_dir) / "proposals.npy", mmap_mode="r")
+    pick = np.load(Path(tokens_dir) / "pick.npy").astype(np.int64)
+    rows = np.arange(len(pick))
+    meta = {
+        "arm": "R",
+        "what": "the release's pick of its 32 proposals, from the token pass",
+        "proposals": str(tokens_dir),
+        "proposals_sha256": _sha256(Path(tokens_dir) / "proposals.npy"),
+        "pick_sha256": _sha256(Path(tokens_dir) / "pick.npy"),
+    }
+    return write_plans(
+        out, [str(t) for t in labels["token"]], np.asarray(proposals[rows, pick]), meta, pick=pick, row=rows
+    )
+
+
+def verified_cache(verified_dir: Path) -> Path:
+    """The navtest metric cache `verify-cache` passed, refused if its CSV changed since (Paddock owns it)."""
+    m = json.loads((Path(verified_dir) / "manifest.json").read_text())
+    if not m.get("verified"):
+        raise SystemExit(f"{verified_dir}: the navtest cache is not verified")
+    root = Path(m["cache"]["root"])
+    now = cache_identity(root)
+    if (now["csv_sha256"], now["tokens"]) != (m["cache"]["csv_sha256"], m["cache"]["tokens"]):
+        raise SystemExit(f"{root} changed since it was verified: verify it again before scoring on it")
+    return root
+
+
+def run_official(
+    entered: dict, overrides: list, cache: Path, staging: Path, workers: int, gpu: bool, name: str
+):
+    """navsim's run_pdm_score.py on all of navtest, writing its CSV into `staging`; returns (argv, CSV)."""
+    code = Path(entered["code"])
+    argv = [
+        sys.executable,
+        str(code / SCRIPTS / "run_pdm_score.py"),
+        f"hydra.searchpath=[pkg://navsim.planning.script.config.common,file://{NAVSIM_CONFIG}]",
+        "train_test_split=navtest",
+        *overrides,
+        "worker=single_machine_thread_pool",
+        f"worker.max_workers={workers}",
+        "worker.use_process_pool=true",
+        f"metric_cache_path={cache}",
+        f"experiment_name=h15_{name}",
+        f"output_dir={staging}",
+    ]
+    environ = {**os.environ, "PYTHONPATH": os.pathsep.join([str(code / "navsim_v2"), str(REPO / "src")])}
+    if not gpu:
+        environ["CUDA_VISIBLE_DEVICES"] = ""
+    done = subprocess.run(argv, cwd=code / "navsim_v2", env=environ)
+    if done.returncode:
+        raise SystemExit(f"run_pdm_score.py exited {done.returncode}; {staging} is left to look at")
+    return argv[1:], resolve(str(Path(staging) / "*.csv"))
+
+
+def read_dumps(dump_dir: Path) -> tuple:
+    """token -> its dumped record, and the tokens dumped more than once."""
+    out, repeated = {}, []
+    for path in sorted(Path(dump_dir).glob("*.jsonl")):
+        for line in path.read_text().splitlines():
+            record = json.loads(line)
+            if record["token"] in out:
+                repeated.append(record["token"])
+            out[record["token"]] = record
+    return out, repeated
+
+
+def _navtest_tokens(entered: dict) -> set:
+    from gallops.drivejepa_perception import navsim_data
+
+    filt = navsim_data.scene_filter(Path(entered["code"]), "navtest")
+    navsim_data.load_navtest(REPO / navsim_data.LISTS["navtest"], filt)
+    return set(filt["tokens"])
+
+
+def score_plans(cfg, plans_dir: Path, verified_dir: Path, out: Path, workers: int, name: str) -> dict:
+    """A plan store, scored on all of navtest by the official scorer through the replay agent.
+
+    Refused unless the cache is the verified one and the store covers navtest exactly; after the run,
+    every navtest token must be valid in the CSV and every plan the agent handed over must equal the store's.
+    """
+    from gallops.drivejepa_b2d.provenance import git_sha
+    from gallops.drivejepa_perception import env
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; navtest is scored once per plan store")
+    started, sha = time.strftime("%Y-%m-%dT%H:%M:%S"), git_sha()
+    entered = env.enter(cfg)
+    navtest = _navtest_tokens(entered)
+    cache = verified_cache(verified_dir)
+    z = np.load(Path(plans_dir) / "plans.npz")
+    problems = coverage_problems(z, navtest)
+    if problems:
+        raise SystemExit(f"{plans_dir} cannot be replayed on navtest: " + "; ".join(problems))
+    staging = out.with_name(out.name + ".staging")
+    if staging.exists():
+        raise SystemExit(f"{staging} exists: a failed run; look at it, then remove it")
+    dumps = staging / "dumps"
+    dumps.mkdir(parents=True)
+    t0 = time.time()
+    overrides = [
+        "agent=gallops_replay",
+        f"agent.plans={Path(plans_dir).resolve()}",
+        f"agent.dump_dir={dumps}",
+    ]
+    argv, csv_path = run_official(entered, overrides, cache, staging, workers, gpu=False, name=name)
+    valid = {r["token"] for r in rows_of(csv_path)}
+    if valid != navtest:
+        problems.append(f"{len(navtest - valid)} navtest tokens are not valid in the CSV")
+    handed, repeated = read_dumps(dumps)
+    stored = load_plans(plans_dir)
+    differ = [
+        t
+        for t, r in handed.items()
+        if not np.array_equal(np.asarray(r["poses"], np.float32), stored[t].astype(np.float32))
+    ]
+    if set(handed) != navtest or repeated or differ:
+        unlike = f"{len(differ)} unlike the store's"
+        problems.append(f"{len(handed)} plans handed over, {len(repeated)} twice, {unlike}")
+    if problems:
+        raise SystemExit("the replay is not the store's:\n- " + "\n- ".join(problems))
+    manifest = {
+        "pass": "navtest-score",
+        "name": name,
+        "started": started,
+        "ended": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "gallops_sha": sha,
+        "entered": entered,
+        "plans": str(Path(plans_dir).resolve()),
+        "plans_manifest": json.loads((Path(plans_dir) / "manifest.json").read_text()),
+        "cache": cache_identity(cache),
+        "verified": str(verified_dir),
+        "command": argv,
+        "csv": Path(csv_path).name,
+        "replayed_equal_to_store": len(handed),
+        "score": score(csv_path),
+        "seconds": round(time.time() - t0),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(
+        json.dumps(
+            {k: manifest[k] for k in ("name", "score", "replayed_equal_to_store", "seconds")}, indent=1
+        )
+    )
+    return manifest
+
+
+def live_release(
+    cfg, verified_dir: Path, tokens_dir: Path, labels_dir: Path, out: Path, workers: int
+) -> dict:
+    """The release itself through the official scorer, its plans, scores and picks dumped (B0-G9)."""
+    from gallops.drivejepa_b2d.provenance import git_sha
+    from gallops.drivejepa_perception import env
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; the live release is run once")
+    started, sha = time.strftime("%Y-%m-%dT%H:%M:%S"), git_sha()
+    entered = env.enter(cfg)
+    navtest = _navtest_tokens(entered)
+    cache = verified_cache(verified_dir)
+    release = Path(entered["release"])
+    recorded = json.loads((Path(tokens_dir) / "manifest.json").read_text())["release_sha256"]
+    if _sha256(release) != recorded:
+        raise SystemExit(f"{release} is not the release the token pass ran (sha256 {recorded[:12]})")
+    staging = out.with_name(out.name + ".staging")
+    if staging.exists():
+        raise SystemExit(f"{staging} exists: a failed run; look at it, then remove it")
+    dumps = staging / "dumps"
+    dumps.mkdir(parents=True)
+    t0 = time.time()
+    overrides = ["agent=gallops_live_release", f"agent.checkpoint_path={release}", f"agent.dump_dir={dumps}"]
+    argv, csv_path = run_official(entered, overrides, cache, staging, workers, gpu=True, name="live_release")
+    valid = {r["token"] for r in rows_of(csv_path)}
+    handed, repeated = read_dumps(dumps)
+    problems = []
+    if valid != navtest:
+        problems.append(f"{len(navtest - valid)} navtest tokens are not valid in the CSV")
+    if set(handed) != navtest or repeated:
+        problems.append(f"{len(navtest - set(handed))} tokens were not dumped, {len(repeated)} twice")
+    if problems:
+        raise SystemExit("the live run is not complete:\n- " + "\n- ".join(problems))
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    order = [str(t) for t in labels["token"]]
+    write_plans(
+        staging / "plans",
+        order,
+        np.array([handed[t]["poses"] for t in order], np.float32),
+        {"arm": "R-live", "what": "the release's own plans, as navsim ran it, dumped by LiveReleaseAgent"},
+        pick=np.array([handed[t]["pick"] for t in order], np.int64),
+        scores=np.array([handed[t]["scores"] for t in order], np.float32),
+    )
+    manifest = {
+        "pass": "navtest-live",
+        "started": started,
+        "ended": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "gallops_sha": sha,
+        "entered": entered,
+        "release_sha256": recorded,
+        "cache": cache_identity(cache),
+        "command": argv,
+        "csv": Path(csv_path).name,
+        "score": score(csv_path),
+        "seconds": round(time.time() - t0),
+    }
+    (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
+    staging.rename(out)
+    print(json.dumps({k: manifest[k] for k in ("score", "seconds")}, indent=1))
+    return manifest
+
+
+def successors(labels_dir: Path) -> dict:
+    """token -> the next navtest token of its log under SUCCESSOR_US later, whose plan its EC reads."""
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    tokens, logs, stamps = [str(t) for t in labels["token"]], labels["log_id"], labels["timestamp"]
+    out = {}
+    for log in np.unique(logs):
+        index = np.flatnonzero(logs == log)
+        index = index[np.argsort(stamps[index], kind="stable")]
+        for a, b in zip(index[:-1], index[1:]):  # noqa: B905 -- Python 3.9
+            if stamps[b] - stamps[a] < SUCCESSOR_US:
+                out[tokens[a]] = tokens[b]
+    return out
+
+
+def compare_live(
+    replay: dict, live: dict, replay_plans: dict, live_plans: dict, release_pick: dict, after: dict
+) -> dict:
+    """B0-G9's numbers: pick agreement, per-token equality where the plans (and their successors') agree,
+    and the two EPDMS. `replay`, `live`: per_token(csv); plans: token -> (8, 3); `after`: successors."""
+    tokens = sorted(replay)
+    live_pick = {t: int(np.asarray(live_plans["pick"][i])) for i, t in enumerate(live_plans["token"])}
+    picks_equal = float(np.mean([live_pick[t] == release_pick[t] for t in tokens]))
+
+    def same_plan(t):
+        return np.abs(replay_plans[t] - live_plans["poses_of"][t]).max() <= 1e-3
+
+    comparable = [t for t in tokens if same_plan(t) and (t not in after or same_plan(after[t]))]
+    columns = [k for k in replay[tokens[0]] if k != "epdms_hf"]
+    equal = [t for t in comparable if all(_same(replay[t][k], live[t][k]) for k in columns)]
+    mean_r = 100 * mean([replay[t]["epdms_hf"] for t in tokens])
+    mean_l = 100 * mean([live[t]["epdms_hf"] for t in tokens])
+    return {
+        "tokens": len(tokens),
+        "picks_equal": picks_equal,
+        "comparable": len(comparable),
+        "columns_equal": len(equal) / max(1, len(comparable)),
+        "unequal_sample": [t for t in comparable if t not in set(equal)][:20],
+        "epdms_replay": mean_r,
+        "epdms_live": mean_l,
+        "epdms_gap": abs(mean_r - mean_l),
+    }
+
+
+def _same(a: float, b: float) -> bool:
+    return (math.isnan(a) and math.isnan(b)) or a == b
+
+
+def anchor(replay_dir: Path, live_dir: Path, tokens_dir: Path, labels_dir: Path, out: Path) -> dict:
+    """B0-G8 and B0-G9: the replayed release against H04's account, and against the live release."""
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists")
+    replay_m = json.loads((Path(replay_dir) / "manifest.json").read_text())
+    live_m = json.loads((Path(live_dir) / "manifest.json").read_text())
+    got = replay_m["score"]
+    a1 = {
+        k: {"measured": got[k], "account": v, "within": abs(got[k] - v) <= ANCHOR_TOLERANCE}
+        for k, v in ANCHOR.items()
+    }
+    replay = per_token(str(Path(replay_dir) / replay_m["csv"]))
+    live = per_token(str(Path(live_dir) / live_m["csv"]))
+    z = np.load(Path(live_dir) / "plans/plans.npz")
+    live_plans = {"token": [str(t) for t in z["token"]], "pick": z["pick"]}
+    live_plans["poses_of"] = {t: np.asarray(p, np.float64) for t, p in zip(live_plans["token"], z["poses"])}  # noqa: B905
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    pick = np.load(Path(tokens_dir) / "pick.npy")
+    release_pick = {str(t): int(p) for t, p in zip(labels["token"], pick)}  # noqa: B905 -- Python 3.9
+    g9 = compare_live(
+        replay, live, load_plans(replay_m["plans"]), live_plans, release_pick, successors(labels_dir)
+    )
+    gates = {
+        "B0-G8": all(v["within"] for v in a1.values()),
+        "B0-G9": g9["tokens"] == len(live)
+        and g9["picks_equal"] >= LIVE_PICKS_EQUAL
+        and g9["columns_equal"] >= LIVE_COLUMNS_EQUAL
+        and g9["epdms_gap"] <= LIVE_EPDMS,
+    }
+    record = {"anchor": a1, "live": g9, "gates": gates, "tolerance": ANCHOR_TOLERANCE}
+    out.mkdir(parents=True)
+    (out / "anchor.json").write_text(json.dumps(record, indent=1))
+    print(json.dumps(record, indent=1))
+    if not all(gates.values()):
+        raise SystemExit(f"the anchor does not hold: {gates}; nothing on navtest is compared until it does")
+    return record
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
@@ -569,6 +882,28 @@ def main(argv=None) -> None:
     p.add_argument("--labels", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--workers", type=int, default=32)
+    p = sub.add_parser("plans", help="R's plan store: the release's pick of its own 32, every navtest row")
+    p.add_argument("--tokens", required=True)
+    p.add_argument("--labels", required=True)
+    p.add_argument("--out", required=True)
+    p = sub.add_parser("score", help="a plan store through the official scorer, via the replay agent")
+    p.add_argument("--plans", required=True)
+    p.add_argument("--verified", required=True, help="verify-cache's output for the navtest cache")
+    p.add_argument("--out", required=True)
+    p.add_argument("--name", required=True)
+    p.add_argument("--workers", type=int, default=32)
+    p = sub.add_parser("live", help="the release itself through the official scorer (B0-G9; one GPU)")
+    p.add_argument("--verified", required=True)
+    p.add_argument("--tokens", required=True)
+    p.add_argument("--labels", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--workers", type=int, default=8)
+    p = sub.add_parser("anchor", help="B0-G8 and B0-G9")
+    p.add_argument("--replay", required=True)
+    p.add_argument("--live", required=True)
+    p.add_argument("--tokens", required=True)
+    p.add_argument("--labels", required=True)
+    p.add_argument("--out", required=True)
     p = sub.add_parser("score-csv", help="H04's two numbers from run_pdm_score CSVs")
     p.add_argument("runs", nargs="+", help="NAME=CSV (a glob: the last match)")
     p.add_argument("--json", default="")
@@ -583,11 +918,23 @@ def main(argv=None) -> None:
         if args.json:
             Path(args.json).write_text(json.dumps(out, indent=2))
         return
+    if args.cmd == "plans":
+        release_plans(Path(args.tokens), Path(args.labels), Path(args.out))
+        return
+    if args.cmd == "anchor":
+        anchor(Path(args.replay), Path(args.live), Path(args.tokens), Path(args.labels), Path(args.out))
+        return
     cfg = SiteConfig.load()
     if args.cmd == "verify-cache":
         verify_cache(cfg, Path(args.cache), Path(args.labels), Path(args.out), args.rebuild)
-    else:
+    elif args.cmd == "build-cache":
         build_cache(cfg, Path(args.labels), Path(args.out), args.workers)
+    elif args.cmd == "score":
+        score_plans(cfg, Path(args.plans), Path(args.verified), Path(args.out), args.workers, args.name)
+    else:
+        live_release(
+            cfg, Path(args.verified), Path(args.tokens), Path(args.labels), Path(args.out), args.workers
+        )
 
 
 if __name__ == "__main__":

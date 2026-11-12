@@ -138,3 +138,44 @@ def test_the_fresh_scene_filter_is_the_list_and_navtrains_window():
     filt = navtest.fresh_scene_filter(record)
     assert filt["log_names"] == ["b", "a"] and filt["tokens"] is None and filt["has_route"] is True
     assert (filt["num_history_frames"], filt["num_future_frames"], filt["frame_interval"]) == (4, 10, 1)
+
+
+def test_a_tokens_successor_is_the_next_frame_of_its_log(tmp_path):
+    np.savez(
+        tmp_path / "labels.npz",
+        token=np.array(["a", "b", "c", "d"]),
+        log_id=np.array([0, 0, 0, 1]),
+        timestamp=np.array([1_500_000, 1_000_000, 2_500_000, 1_000_000]),
+    )
+    # b (1.0 s) -> a (1.5 s): 0.5 s, its successor; a -> c is 1.0 s, too far; d is alone in its log.
+    assert navtest.successors(tmp_path) == {"b": "a"}
+
+
+def test_dumps_are_read_with_their_repeats(tmp_path):
+    (tmp_path / "agent-1.jsonl").write_text(json.dumps({"token": "a", "poses": [[0, 0, 0]]}) + "\n")
+    (tmp_path / "agent-2.jsonl").write_text(
+        json.dumps({"token": "b", "poses": [[1, 0, 0]]})
+        + "\n"
+        + json.dumps({"token": "a", "poses": [[0, 0, 0]]})
+        + "\n"
+    )
+    handed, repeated = navtest.read_dumps(tmp_path)
+    assert set(handed) == {"a", "b"} and repeated == ["a"]
+
+
+def test_the_live_comparison_reads_only_tokens_whose_plans_agree():
+    plan = np.zeros((8, 3))
+    moved = plan + np.array([0.0, 0.01, 0.0])  # 1 cm: not the same plan
+    replay = {t: {"epdms_hf": 1.0, "csv": 1.0, "NC": 1.0, "EC": float("nan")} for t in "abc"}
+    live = {t: dict(v) for t, v in replay.items()}
+    live["c"]["epdms_hf"], live["c"]["NC"] = 0.0, 0.0  # c differs, but its plan differs too
+    replay_plans = {"a": plan, "b": plan, "c": plan}
+    live_plans = {
+        "token": ["a", "b", "c"],
+        "pick": np.array([3, 3, 4]),
+        "poses_of": {"a": plan, "b": plan, "c": moved},
+    }
+    got = navtest.compare_live(replay, live, replay_plans, live_plans, {"a": 3, "b": 3, "c": 3}, {"a": "b"})
+    assert got["picks_equal"] == pytest.approx(2 / 3)
+    assert got["comparable"] == 2 and got["columns_equal"] == 1.0  # a (and its successor b) and b
+    assert got["epdms_gap"] == pytest.approx(100 / 3)

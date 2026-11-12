@@ -1112,3 +1112,43 @@ python = "drivejepa"
 module = "drivejepa_perception.veto"
 args = ["freeze", "--grid", "{out}/part-b/b1/grid-fresh", "--write", "{repo}/recipes/drivejepa_perception/part_b1_frozen.json"]
 after = ["part-b-1-grid"]
+
+# ---------------------------------------------------------------------------------------------
+# Part B · B-0-2, the official scorer and the anchor (D24). R's plan store is the release's pick of its
+# own 32 proposals from the token pass; `score` replays a store through navsim's run_pdm_score.py on all
+# 12,146 navtest tokens (CPU, no momentum) and refuses unless the cache is still the verified one, the
+# store covers navtest, and every plan the agent handed over equals the store's. `live` runs the release
+# itself through the same scorer (one GPU). `anchor` holds the replay to H04's 87.78 / 84.49 (B0-G8) and to
+# the live release (B0-G9): if it fails, nothing on navtest is compared.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "part-b-0-plans-R"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["plans", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/plans-R"]
+after = ["part-b-0-tokens-navtest"]
+
+[[stage]]
+name = "part-b-0-score-R"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["score", "--plans", "{out}/part-b/b0/plans-R", "--verified", "{out}/part-b/b0/navtest-cache-verify",
+        "--name", "R", "--out", "{out}/part-b/b0/navtest-R", "--workers", "32"]
+after = ["part-b-0-plans-R", "part-b-0-verify-navtest-cache"]
+
+[[stage]]
+name = "part-b-0-live-R"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["live", "--verified", "{out}/part-b/b0/navtest-cache-verify", "--tokens", "{out}/tokens-navtest-v1",
+        "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/navtest-R-live", "--workers", "8"]
+after = ["part-b-0-verify-navtest-cache"]
+
+[[stage]]
+name = "part-b-0-anchor"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["anchor", "--replay", "{out}/part-b/b0/navtest-R", "--live", "{out}/part-b/b0/navtest-R-live",
+        "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/anchor"]
+after = ["part-b-0-score-R", "part-b-0-live-R"]

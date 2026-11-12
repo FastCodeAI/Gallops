@@ -1,0 +1,13 @@
+# H15 Part B's replay agent (src/gallops/drivejepa_perception/replay_agent.py): the stored plan for each
+# navtest token, scored by navsim's own run_pdm_score.py. `navtest score` sets plans and dump_dir.
+_target_: gallops.drivejepa_perception.replay_agent.ReplayAgent
+_convert_: 'all'
+
+plans: ???
+dump_dir: null
+
+trajectory_sampling:
+  _target_: nuplan.planning.simulation.trajectory.trajectory_sampling.TrajectorySampling
+  _convert_: 'all'
+  time_horizon: 4
+  interval_length: 0.5

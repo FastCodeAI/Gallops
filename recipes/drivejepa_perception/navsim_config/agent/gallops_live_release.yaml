@@ -1,0 +1,21 @@
+# H15 Part B's live release (src/gallops/drivejepa_perception/replay_agent.py): the vendor's own agent
+# config (common/agent/drive_jepa_perception_based_agent.yaml), with each token's plan, scores and pick
+# dumped. `navtest live` sets checkpoint_path, the release whose sha256 the token pass recorded, and dump_dir.
+_target_: gallops.drivejepa_perception.replay_agent.LiveReleaseAgent
+_convert_: 'all'
+
+config:
+  _target_: navsim.agents.drive_jepa_perception_based.drive_jepa_config.DriveJEPAConfig
+  _convert_: 'all'
+
+  trajectory_sampling:
+    _target_: nuplan.planning.simulation.trajectory.trajectory_sampling.TrajectorySampling
+    _convert_: 'all'
+    time_horizon: 4
+    interval_length: 0.5
+
+  latent: False
+
+checkpoint_path: ???
+lr: 1e-4
+dump_dir: ???
