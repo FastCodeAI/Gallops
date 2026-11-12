@@ -23,9 +23,9 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
   - They share one plan of foundations, B-0, and a LoRA primer.
   - **B-0 is done (12 Nov):** the anchor reproduces here (87.783 against 87.78), R̃ equals R, and the headroom is
     counted (`H15.r6`–`r8`).
-  - **B-1 is read (`H15.r9`):** a clearance veto loses 0.19 to 0.25 points on navtest, with labelled agents or the
-    side-car's; the ceiling gains 1.58. B-2 to B-4 wait for the review after B-1. What has run is in the
-    [log](#log).
+  - **B-1 is done (`H15.r9`, `H15.r10`):** a clearance veto loses 0.15 to 0.25 points on navtest, with labelled
+    agents or the side-car's, removed or penalised; the ceiling gains 1.58. B-2 to B-4 wait for the owner's review of
+    B-1. What has run is in the [log](#log).
 
 ![H15: Part A, and Part B's four experiments in order](../../experiments/H15_perception_sidecar/figures/b-overview.png)
 
@@ -73,7 +73,7 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **read on navtest** (`H15.r9`): no. B-1-4 running (D27) | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **done: no** (`H15.r9`, `r10`); for the owner's review | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
 | B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
 | B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
@@ -231,6 +231,13 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - **Asked and answered:** whether B-1-4 runs, given that the analysis rules out what it targets. The owner: run it
     as sketched. Its 16-setting grid and its criterion (V6, predicted −0.25 to +0.05) are pre-registered in
     PREDICTIONS.md before any read.
+- **12 Nov · B-1-4 read on navtest, once; B-1 closes.**
+  - Frozen on R-clean (every setting at or below R there): λ 0.1, 0.5 m, no widening, 1 s.
+  - On navtest it loses 0.15 to 0.16 points on each seed (V6 refuted): less than B-1-3's removal, with less EC and
+    progress lost, but as many switched picks and no fewer collisions.
+  - **B-1's answer:** with perfect front-camera agents or the side-car's, removed or penalised, a clearance rule at
+    the pick does not beat the release on navtest. The room is real (the ceiling: +1.58), but the rule does not find
+    it. Next is the owner's review of B-1, before B-2 to B-4.
 
 <a id="open"></a>
 

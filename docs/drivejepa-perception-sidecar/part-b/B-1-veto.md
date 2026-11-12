@@ -1,8 +1,9 @@
 # H15 Part B · B-1: the analytic veto. Can a rule on the agents pick better than the release?
 
-**Status (12 Nov 2026): read on navtest, once (`H15.r9`). Nothing here trains.** A near-ego clearance veto does not
-pick better than the release: with labelled agents it loses 0.21 points, with the side-car's 0.19 to 0.25. The
-ceiling, which reads the grader's labels, gains 1.58. B-1-4's pre-registered trigger fired; it waits for the owner.
+**Status (12 Nov 2026): closed; for the owner's review (`H15.r9`, `H15.r10`). Nothing here trains.** A near-ego
+clearance veto does not pick better than the release: with labelled agents it loses 0.21 points, with the side-car's
+0.19 to 0.25, and softened into a penalty (B-1-4) 0.15 to 0.16. The ceiling, which reads the grader's labels, gains
+1.58.
 - [The overview](../README.md) holds the tracker, the naming and the log.
 - This plan stands on [B-0, the foundations](B-0-foundations.md).
 - It was C4 in [the ideas](ideas.md). The owner chose it first on 11 Nov.
@@ -228,6 +229,20 @@ from a false alarm.
   (6–11), and it loses about as much as B-1-2.
 - **It is not collisions.** NC and TTC barely move. Half the loss is EC: a veto that switches the pick on one frame
   and not the next breaks the plans' consistency; a third is EP, lost near vehicles within 20 m.
+
+**B-1-4, the soft veto (D27; `H15.r10`; *measured*).** B-1-3's lost progress fired B-1-4's trigger, and the owner
+ran it as sketched, pre-registered first (PREDICTIONS.md, Part B · B-1-4). On R-clean every one of its 16 settings
+was at or below R; the least intrusive was frozen: λ 0.1, 0.5 m, no widening, 1 s.
+
+| | EPDMS − R | EP | EC | picks switched |
+|---|---|---|---|---|
+| B-1-4, seed 0 | **−0.16 ± 0.03** | −0.0011 | −0.0105 | 2.34% |
+| B-1-4, seed 1 | **−0.15 ± 0.03** | −0.0010 | −0.0092 | 2.11% |
+| B-1-4, seed 2 | **−0.16 ± 0.04** | −0.0011 | −0.0106 | 2.39% |
+
+- V6 (predicted −0.25 to +0.05) is **refuted** on every seed: under 0 beyond 2 SE.
+- V7: the penalty loses less EC and half the progress of B-1-3's removal, but switches as many picks, and NC and TTC do
+  not move. A gentler rule only loses less.
 
 **What it says** (PREDICTIONS.md's decision rules; *argued*):
 - V2 not supported: a rule on explicit agents near the ego adds nothing the release's scorer has not used, on NAVSIM.

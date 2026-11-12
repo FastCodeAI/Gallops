@@ -924,3 +924,41 @@ notes = "D24, D25, D26; PREDICTIONS.md, Part B · B-1 (committed b89c67b, amende
   strength = "strong"
   flags = ["open-loop"]
   note = "V5 predicted under 0.3; not refuted (limit 0.6). But B-1-3's EP is below R's beyond 2 SE on every seed, which fires B-1-4's pre-registered trigger"
+
+[[runs]]
+id = "H15.r10"
+label = "Part B, B-1-4: the soft veto (a confidence-weighted penalty under a range-widened margin, nothing removed) on navtest, read once, its setting frozen on R-clean; nothing trains"
+started = 2026-11-12
+ended = 2026-11-12
+start_from = "released"
+trained = []
+frozen = ["everything"]
+train_git_sha = "65127a8"
+notes = "D27; PREDICTIONS.md, Part B · B-1-4 (committed 65127a8 before any read). Grid on R-clean's 2,624 known-command windows (16 settings, mean over seeds 0-2, city-reweighted; selected-on-report): every setting at or below R, from -0.006 to -0.211 points; frozen (0e5efdf): lambda 0.1, margin 0.5 m, no widening, 1 s. Navtest, read once (official scorer, every plan replayed equal to its store, paired with R, SE clustered over 136 logs). V7: EC falls 0.009-0.011 against B-1-3's 0.011-0.014 and EP half as much, but the pick still switches on 2.1-2.4% of scenes (0.8% on R-clean), and NC and TTC do not move."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-b-1-4-navtest"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), B-1-4 minus R: the soft veto on the side-car's agents, lambda 0.1, 0.5 m, 1 s (V6; mean of seeds 0-2)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "R, the release's replayed picks"
+  baseline_value = "87.783"
+  value = "-0.159"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "seeds -0.164 +- 0.033, -0.150 +- 0.032, -0.162 +- 0.035. V6 predicted -0.25 to +0.05; refuted on every seed (under 0 beyond 2 SE). Less of a loss than B-1-3's -0.232"
