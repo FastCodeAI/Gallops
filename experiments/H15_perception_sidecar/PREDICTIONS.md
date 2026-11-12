@@ -153,3 +153,53 @@ not these rows; step 6 reports both.
   - Q9 says whether the side-car can be trusted out of domain.
 - **Q9 refuted:** the side-car is NAVSIM-only. That limits any B question to NAVSIM and to the gate's
   in-domain benchmarks.
+
+## Part B · B-0, the foundations (written 11 Nov 2026)
+
+**Committed before B-0's first data pass.** Copied from B-0's plan
+(`docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md`) and D24. B-0 trains nothing unless the
+optimism rule below calls for cross-fitting. These are its gates, and the rule that decides that.
+
+**The owner's choices** (B-0's decisions; 11 Nov, D24):
+- (a) every routed R-clean window; the two routed test logs outside navtest are left out.
+- (b) the fidelity gate reads the replayed release and the live release.
+- (c) Paddock's navtest metric cache, once verified here, instead of building one.
+- (d) no momentum for the anchor; momentum as a second read.
+- (e) a cross-fit threshold of 0.03 in F1 or causal recall.
+- (f) the side-car read on navtest, for the analysis' strata, flagged.
+- (g) H04's EPDMS arithmetic, ported with its test.
+
+### Gates: each must hold to go on
+
+| # | Gate | If it fails |
+|---|---|---|
+| B0-G1 | `navtest.json` re-derives 136 logs and 12,146 tokens from `navtest.yaml`. `fresh.json` re-derives B-0's counts: 118 candidate logs, 58 routed, 11,340 windows (Las Vegas 9,895, Pittsburgh 975, Boston 470, Singapore 0) | stop: those counts were never scripted. Find which side is wrong |
+| B0-G2 | each labels pass checks clean, and its tokens equal its list | stop |
+| B0-G3 | Paddock's navtest cache: one entry per navtest token; its builder's scene filter equals `navtest.yaml`; 32 seeded tokens cached again here score bit-equal against both caches, by the vendored scorer and by the official one | build H15's own cache, as B-0 first planned |
+| B0-G4 | the R-clean cache holds exactly `fresh.json`'s 11,340 tokens, with no failure | stop |
+| B0-G5 | each token pass: batched equals batch 1 (the existing limits); the pick equals the argmax of the saved scores on every row; a live forward equals the cache on 6 rows; the ViT output equals its taps | stop |
+| B0-G6 | PDM labels: no row without a metric cache; 50 rows per split re-score exactly | stop |
+| B0-G7 | the side-car's agents: each run, decoded by the pass's code, gives the select F1 its training recorded (within 1e-6); no report-log row is decoded | stop |
+| B0-G8 | **the anchor:** the release's picks, replayed through the official scorer, give EPDMS with the human filter 87.78 ± 0.02 and navsim's CSV score 84.49 ± 0.02 | stop. Nothing on navtest is compared; navsim at `548bb82` is compared with this site's `e21f474` |
+| B0-G9 | the live release through the same scorer: complete; its pick equals the token pass's on ≥ 99.9% of tokens; where its plan and its successor's plan equal the replay's within 1 mm, every score column is equal on ≥ 99.9% of tokens; its EPDMS is within 0.02 of the replay's | stop, as for B0-G8 |
+| B0-G10 | R̃ − R: ≥ 99% of picks equal, and \|ΔEPDMS\| ≤ 0.05 points | B-2 and later wait. B-1 does not read R̃ |
+| B0-G11 | if cross-fitting runs: each fold's side-car reads a select F1, at its kept epoch, within 0.02 of seed 0's recorded value | stop before any fold's agents are used |
+
+### The train-row optimism rule (decision (e))
+
+- Each side-car seed (v3, at its kept epoch) is read on a seeded draw of 51 train logs (`default_rng(0)` over
+  the sorted train logs) and on the select logs: F1 at 2 m within 30 m, causal recall under the chosen rule, and
+  the median depth error by range.
+- **Cross-fit if the mean over the three seeds of train − select exceeds 0.03 in F1 or in causal recall.** The
+  per-seed values are reported beside it.
+  - B-0 says "if train − select exceeds 0.03". Reading it as the mean over seeds is this section's choice, made
+    before any value is known.
+- **Cross-fitting:** the train logs split into five seeded folds. Five v3 side-cars train by the kept recipe (24
+  epochs, seed 0, kept epoch chosen on select), each without one fold. Each train row then gets the agents of
+  the side-car that did not see its log.
+
+### What B-0 measures and does not decide
+
+- B-0-3's headroom counts and B-0-4's analysis of R against R̃.
+- The vendored scorer's agreement with the official one on navtest, and the momentum read.
+- None of them chooses a setting: no experiment's settings are chosen on navtest.

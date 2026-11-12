@@ -1,6 +1,7 @@
 # H15 Part B · B-0: the foundations every experiment shares
 
-**Status (11 Nov 2026): planned, not run.** Nothing here trains, and nothing runs before the owner's go-ahead.
+**Status (11 Nov 2026): running.** The owner approved execution on 11 Nov (D24): all of B-0, then B-1, with the
+recommended choices below, except (c). What has run is logged in [the overview](../README.md#log).
 - **Where it sits:**
   - The common record is [the overview](../README.md): the tracker, the naming and the
     discussion log.
@@ -89,10 +90,13 @@ never trained on them.
 **Q4. What does "scored the way 87.78 was" mean?**
 - NAVSIM's official v2 `run_pdm_score.py`, on all 12,146 navtest scenes, with no momentum-aware selection.
 - It reports EPDMS with the human filter (87.78) and navsim's CSV score (84.49).
-- The vendored scorer that labelled H15's proposals is close, but not the same:
-  - progress is normalised against PDM-Closed only;
-  - TTC is checked every 0.5 s;
+- The vendored scorer that labelled H15's proposals is close, but not the same (*read*):
+  - progress is normalised against PDM-Closed only. The official per-token run also scores each plan beside
+    PDM-Closed alone, so this matters only where both make under 5 m of progress;
+  - lane keeping is checked every 0.5 s, and drivable area by a faster point test;
   - EC and the human filter are absent.
+  - Until 11 Nov this page said TTC was checked every 0.5 s. It is not: the vendored TTC loop is the official one,
+    line for line (0.1 s steps, projections at 0, 0.3, 0.6 and 0.9 s).
 - So the vendored scorer labels every proposal cheaply, for choices and analysis. The official one gives each
   headline.
 
@@ -140,7 +144,7 @@ report logs are never read; the preflight refuses them.
 | labels: agents, the ego's future | `labels-v1`, exists | new | new | under a minute each |
 | projected tokens, ViT output, the release's 32 proposals and pooled scorer input | `tokens-v1`, `tokens-vit-v1`, exist | new | new | about 8 GPU-min for navtest (`tokens-v1` took 3,786 s for 103,288 rows, *measured*); 3.2 + 12.7 GB |
 | the side-car's agents, seeds 0–2 | new (`agents-a1-s0` is the first pass's v1) | new | new | minutes of GPU |
-| metric cache | Drive-JEPA's pruned v2 train cache, exists | new | **new: none at this site** | about 1 h of CPU each, 48 workers |
+| metric cache | Drive-JEPA's pruned v2 train cache, exists | new | Paddock's v2 cache, reused once verified (D24) | R-clean about 1 h of CPU; navtest minutes, to verify |
 | PDM labels of the release's 32 proposals | `pdm-v1`, exists | new | new | `pdm-v1` took 596 s for 103,288 rows (*measured*) |
 
 - **The lists.** `navtest.json` and `fresh.json` sit beside `splits.json` in `recipes/drivejepa_perception/`. Each
@@ -158,10 +162,18 @@ report logs are never read; the preflight refuses them.
 
 ### B-0-2 · The official scorer, and the anchor
 
-1. **The navtest metric cache.**
-   - navsim v2's `run_metric_caching.py`, `train_test_split=navtest`, 48 workers.
-   - Written under `{runs}/drivejepa_perception/metric-cache-navtest-v2`.
-   - Its manifest counts the tokens (12,146 expected) and records the filter's sha256.
+1. **The navtest metric cache: Paddock's, verified (D24).**
+   - Paddock built a complete v2 cache on 10 Nov: 12,146 tokens over 136 logs (*counted*), read here as
+     `{data.navsim_navtest_metric_cache}`.
+   - It came from another Drive-JEPA tree (`e21f474` with edits equal to patches 0001–0003, none of which touch
+     caching) and another interpreter. So counting it is not enough:
+     - every navtest token must have exactly one entry, and the builder's scene filter must equal this site's
+       `navtest.yaml`;
+     - 32 seeded tokens are cached again here, with this site's tree and interpreter, and fixed plans must score
+       bit-equal against both, by the vendored scorer and by the official one.
+   - A manifest under `{runs}/drivejepa_perception/` records its identity: its metadata CSV's sha256, re-checked
+     before every scoring run, since Paddock owns the directory.
+   - If it fails, H15 builds its own, as first planned (`run_metric_caching.py`, about 1 h of CPU).
    - `pdm_labels.check` re-scores navtest rows exactly before any proposal is labelled there.
 2. **The replay agent.**
    - `replay_agent.py`, with its Hydra config under `recipes/drivejepa_perception/navsim_config/agent/`.
@@ -189,6 +201,7 @@ For the release's pick on navtest (official CSV per token) and its 32 proposals 
 | scenes failing NC, TTC, DAC, EP… by term | where the points go |
 | of the NC or TTC failures, how many have a proposal among the 32 that passes both | the room for a better pick (B-1, B-2) |
 | of those, how many have the at-fault agent in CAM_F0's view within 50 m (`targets.seen`) | the room for an agent input |
+| of those, how many failed on a static object | room for a pick (B-1-1) but not for an agent input: the side-car names only vehicles, pedestrians and cyclists |
 | of those, how many the side-car found, per seed | the room for this side-car |
 | best of 32 against the pick, overall | the room for selection of any kind |
 | the same for the R-clean split | whether it resembles navtest |
@@ -240,11 +253,14 @@ and on the R-clean split.
 
 ## Decisions for the owner
 
+**Decided on 11 Nov (D24):** the recommendations, except (c). Paddock's navtest cache, which did not exist when this was
+written, is reused once verified (B-0-2).
+
 | | Decision | Recommended |
 |---|---|---|
 | (a) | the R-clean window rule: all routed windows, or a navtrain-like "non-trivial" filter (validated by how well it reproduces `navtest.yaml` on 10 navtest logs); the 2 routed test logs outside navtest (306 Boston windows) | all routed windows; leave the test logs out |
 | (b) | the fidelity gate: the replay alone, or the live release too | both |
-| (c) | where the navtest metric cache lives | under `{runs}`, H15's; Paddock can point at it later |
+| (c) | where the navtest metric cache lives | under `{runs}`, H15's; Paddock can point at it later. **Decided: Paddock's, verified** |
 | (d) | momentum | none, as the anchor; with it as a second read |
 | (e) | the cross-fit threshold | 0.03 in F1 or causal recall |
 | (f) | the side-car read on navtest, for the analysis' strata. Choice 11.2 kept navtest out of Part A's test; here nothing about the side-car is chosen | yes, flagged |
@@ -276,8 +292,8 @@ and on the R-clean split.
 | | Modules |
 |---|---|
 | **Reused** | `pdm_labels.score`, `geometry.terms`, `train_sidecar.agent_arrays`, `b_report.clustered_se`, `importance.py`, `drivejepa_b2d.train_generator.evaluate`, the preflight's existing checks |
-| **Extended** | `navsim_data`, `tokens`, `preflight` (a split source); `pdm_labels` (`--root`, `--rows`); `train_sidecar agents` (`--rows`, `--vit-tokens`, report rows masked) |
-| **New** | `navtest.py` (metric-cache, score, compare), `replay_agent.py`, `b_analysis.py`, `headroom.py` |
+| **Extended** | `navsim_data`, `tokens`, `preflight` (a split source); `pdm_labels` (`--root`, a row set, the TTC agent); `train_sidecar agents` (`--rows`, `--vit-tokens`, report rows refused); `geometry` (per-agent clearances); `targets` (`truth_agents`) |
+| **New** | `navtest.py` (metric-cache, score, compare), `replay_agent.py` and its configs in `recipes/drivejepa_perception/navsim_config/`, `cached_release.py` (R̃), `b_analysis.py`, `headroom.py` |
 
 The new modules sit inside `gallops.drivejepa_perception`, so the package's claim covers them. The recipe stages
-`b0-*` are written after the go-ahead.
+are `part-b-0-*`: the first pass already owns `b1-*` to `b3-*`.

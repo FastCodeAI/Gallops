@@ -21,8 +21,8 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 - **Part B, the side-car in the planner.**
   - Four experiments are chosen and planned, one document each, in this order: B-1, B-2, B-3, B-4.
   - They share one plan of foundations, B-0, and a LoRA primer.
-  - **Nothing in Part B has run.** The owner reviews the plans; execution starts in another session, with the
-    owner's go-ahead.
+  - **Execution opened on 11 Nov (D24): B-0 in full, then B-1.** B-2 to B-4 wait for the review after B-1.
+    What has run is in the [log](#log).
 
 ![H15: Part A, and Part B's four experiments in order](../../experiments/H15_perception_sidecar/figures/b-overview.png)
 
@@ -69,8 +69,8 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
-| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing | planned | [B-0, the foundations](part-b/B-0-foundations.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | planned | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing, unless cross-fitting is needed | **running** (D24) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | approved (D24); waits for B-0 | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
 | B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
 | B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
@@ -157,6 +157,25 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - `part-a/` holds Part A's plan and its executive update;
   - `part-b/` holds B-0 to B-4, the ideas and the LoRA primer.
   - Every link and path that named the old files was rewritten, including the paths quoted in D20–D23.
+- **11 Nov · execution opens: B-0 in full, then B-1 (D24).**
+  - **Asked and answered** (the owner):
+    - Scope: all of B-0, cross-fitting included, then B-1. B-2 to B-4 wait for the review after B-1.
+    - B-1's four decisions and B-0's (a), (b) and (d)–(g): the recommendations.
+    - B-0 (c): reuse the navtest metric cache Paddock built on 10 Nov, once verified here, rather than build one.
+    - Cross-fitting, if the train rows read more than 0.03 better than select, trains inside B-0, before B-1.
+    - A smoke run of B-1 on the select logs: allowed, flagged, choosing nothing.
+    - "Keep documenting all the progress with good commit history": one commit per step, each with a line here.
+  - **Found while planning, and corrected in [B-0](part-b/B-0-foundations.md):**
+    - The vendored scorer's TTC loop is the official one, line for line (*read*). It is lane keeping that it checks
+      every 0.5 s. B-0, `pdm_labels` and [the metric-cache page](../navsim-metric-cache.md) said TTC.
+    - A navtest metric cache exists at this site after all: Paddock's, 12,146 tokens over 136 logs (*counted*).
+      Paddock built it from another tree and interpreter, so H15 re-caches 32 tokens here before trusting it.
+    - The release's navtest score per token is not on this site, so the 87.78 anchor is measured here for the
+      first time.
+    - The side-car names only vehicles, pedestrians and cyclists. A collision with a static object is room for
+      B-1-1 but not for B-1-2 or B-1-3, and B-0-3 counts it apart.
+  - **Pre-registered:** B-0's gates and its cross-fit rule, in PREDICTIONS.md, before any B-0 pass. B-1's section
+    is written after B-0's review, before B-1 reads R-clean.
 
 <a id="open"></a>
 
@@ -165,8 +184,8 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
 | From | Decision |
 |---|---|
 | Part A | step 6, the report logs, read once; retrain the no-camera control in fp32; weighting what matters (11.9); head changes (11.11); test the warp's three changes apart (plan A §9.3) |
-| B-0 | the R-clean split's window rule; where the navtest metric cache lives; the live release run for the fidelity gate; momentum; the cross-fit threshold |
-| B-1 | the settings grid; the fallback when every proposal is vetoed; whether B-1-1, the ceiling read from the grader's own labels, is read on navtest |
+| B-0 | decided on 11 Nov (D24) |
+| B-1 | decided on 11 Nov (D24) |
 | B-2 | which sub-versions run (B-2-1 always; B-2-2 and B-2-3 or not); whether the scorer's sub-score heads train |
 | B-3 | which sub-versions run; LoRA on the sampling offsets, or not |
 | B-4 | two stages or joint; whether B-4-3 waits for B-2 and B-3 to differ |
@@ -188,7 +207,7 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D23 for this work |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D24 for this work |
 
 ## How this set is kept
 

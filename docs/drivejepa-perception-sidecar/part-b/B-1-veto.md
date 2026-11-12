@@ -1,6 +1,6 @@
 # H15 Part B · B-1: the analytic veto. Can a rule on the agents pick better than the release?
 
-**Status (11 Nov 2026): planned, not run. Nothing here trains.**
+**Status (11 Nov 2026): approved (D24), waits for B-0. Nothing here trains.**
 - [The overview](../README.md) holds the tracker, the naming and the log.
 - This plan stands on [B-0, the foundations](B-0-foundations.md).
 - It was C4 in [the ideas](ideas.md). The owner chose it first on 11 Nov.
@@ -85,6 +85,8 @@ the release's proposals that come too close to them, and leave a better pick?
     No deployable rule can know more about safety. It is not deployable: it reads the answer.
   - **B-1-2, perfect perception.** The labelled agents in CAM_F0's view, within 50 m, with the side-car's
     forecast model: their 1 s path, then constant velocity.
+    - Where a label's track ends before 1 s, the missing step is filled at constant velocity. The side-car always
+      predicts both steps, so B-1-2 differs from B-1-3 only in perception.
 - B-1-1 − B-1-2 is what the camera's view, the forecast and the round footprints cost.
 - B-1-2 − B-1-3 is what the side-car's errors cost.
 
@@ -97,6 +99,9 @@ the release's proposals that come too close to them, and leave a better pick?
 - **Dense scenes.** Every proposal may be vetoed, and the fallback decides.
 - **Agents outside the front camera.** A car behind or beside the ego is invisible to the side-car and to the
   release alike.
+- **Static objects.** The side-car names only vehicles, pedestrians and cyclists, and so do B-1-2's labels.
+  - A collision with a static object (NC 0.5) is in B-1-1's room, but outside B-1-2's and B-1-3's.
+  - B-0-3 counts these failures apart.
 - **The human filter.** EPDMS forgives a failure the human driver also has, so some vetoes change nothing.
 
 **Q8. How are the settings chosen without fooling ourselves?**
@@ -162,6 +167,8 @@ the release's proposals that come too close to them, and leave a better pick?
 | V5 | EP lost to vetoes, B-1-3 | under 0.3 points | — | over 0.6 |
 
 ### Decisions for the owner
+
+**Decided on 11 Nov (D24): all four as recommended.**
 
 | | Decision | Recommended |
 |---|---|---|

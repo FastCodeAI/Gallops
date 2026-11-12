@@ -19,10 +19,11 @@ Per sample:
 
 The columns are `after_score_proposals`'s: NC, DAC, TLC, DDC, EP, TTC, LK, HC, final.
 
-**This scorer is not NAVSIM's official one.** Progress is normalised against PDM-Closed only, TTC is
-checked every 0.5 s, and drivable area uses a fast variant. Labels must equal what the trainer's
-scorer computes, so `check` re-scores rows and requires exact equality. Agreement with the official
-scorer is a separate measurement.
+**This scorer is not NAVSIM's official one.** Progress is normalised against PDM-Closed only, lane
+keeping is checked every 0.5 s, drivable area uses a fast point test, and EC and the human filter are
+absent. Its TTC loop is the official one, line for line (until 11 Nov this said TTC was checked every
+0.5 s; it is not). Labels must equal what the trainer's scorer computes, so `check` re-scores rows and
+requires exact equality. Agreement with the official scorer is a separate measurement.
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 # NAVSIM's metric cache, as H15 uses it
 
-**Status (2026-11-03): downloaded, verified, counted and exercised.** H15 phase B reads it for its
+**Status (2026-11-03; corrected 2026-11-11): downloaded, verified, counted and exercised.** H15 phase B reads it for its
 labels: every release candidate's NAVSIM v2 sub-scores (`gallops.drivejepa_perception.pdm_labels`).
 The plan is [the side-car's first-pass plan](drivejepa-perception-sidecar/first-pass-plan.md), S0.5–S0.6.
 
@@ -86,8 +86,15 @@ stored final score.
 
 **It is not NAVSIM's official scorer.**
 - Progress is normalised per plan against PDM-Closed only (*read*: `_aggregate_pdm_scores`), not
-  against the best of all the plans scored together.
-- TTC is evaluated every 0.5 s, and drivable area uses a faster check (*reported*).
+  against the best of all the plans scored together. The official per-token run also scores each plan
+  beside PDM-Closed alone (`navsim/evaluate/pdm_score.py`), so the two differ only where both make
+  under 5 m of progress (*read*).
+- Lane keeping is checked every 0.5 s (`interval_length = 0.5`, every fifth 0.1 s step), and drivable
+  area uses a faster point test, `points_in_polygons_fast` (*read*).
+- TTC is the official loop, line for line: 0.1 s steps, the ego projected 0, 0.3, 0.6 and 0.9 s ahead
+  (*read*, 11 Nov). Until then this page said, as *reported*, that TTC was evaluated every 0.5 s. It is
+  not.
+- EC and the human filter are absent.
 - H15's labels must equal what this scorer computes, and `pdm_labels check` requires exact
   equality on re-scoring. Agreement with the official scorer is a separate measurement.
 

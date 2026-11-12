@@ -279,3 +279,27 @@ by = ["Shreedhar"]
 evidence = ["H15.r5", "H15.b1", "H15.b2"]
 next = ["H15"]
 source = "the owner, 11 Nov 2026"
+
+[[decision]]
+id = "D24"
+date = 2026-11-11
+short = "H15 phase B: execution opens, B-0 in full and then B-1, with the owner's choices"
+decision = """The owner approved execution: all of B-0 (the navtest and R-clean data passes with their ViT tokens, the \
+official scorer through a replay agent, the 87.78 anchor with the live release, R-tilde, train-row optimism and, if \
+it is needed, cross-fitting), then B-1, the analytic veto. B-2 to B-4 still wait for the review after B-1. B-1's \
+choices are its plan's recommendations: margins 0.5, 1 and 2 m, horizons 1 and 2 s, confidence 0.5 and 0.7 for the \
+side-car; when every proposal is vetoed the release's pick stands; B-1-1, the ceiling read from the grader's labels, \
+is read on navtest and flagged; B-1-4 runs only if B-1-3 loses progress. B-0's choices are its recommendations too: \
+every routed R-clean window, the two routed test logs outside navtest left out; the fidelity gate on the replayed \
+release and on the live release; no momentum, with it as a second read; a cross-fit threshold of 0.03 in F1 or \
+causal recall; the side-car read on navtest for the analysis, flagged; H04's EPDMS arithmetic ported with its test. \
+One choice changed with what exploration found: Paddock already built a complete navtest v2 metric cache (10 Nov, \
+12,146 tokens), and H15 reuses it once it is verified here, instead of building its own. If the train rows read more \
+than 0.03 better than select, the five cross-fit side-cars train inside B-0, before B-1. A smoke run of B-1 on the \
+navtrain select logs is allowed, flagged, and chooses nothing. The plan of record is the B-0 and B-1 documents in \
+docs/drivejepa-perception-sidecar/part-b/, corrected the same day, and their gates are pre-registered in the \
+experiment's PREDICTIONS.md."""
+by = ["Shreedhar"]
+evidence = ["H15.r4", "H15.r5"]
+next = ["H15"]
+source = "the owner, 11 Nov 2026"
