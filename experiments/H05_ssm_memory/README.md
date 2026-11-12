@@ -2,8 +2,9 @@
 
 **Owner:** Naren · **Priority:** 5 of 11 · **Started:** 21 Oct 2026 (planned) · **Status:** parked, inconclusive (hypothesis) · step 0 run by Siddesh, 3–5 Nov 2026
 
-The facts are in [experiment.toml](experiment.toml). Everything below is transcribed from Renesas
-Progress and Plan, 22 Oct 2026 ("Next steps", item 5, and "Naren · hypothesis to test"); nothing has run.
+The facts are in [experiment.toml](experiment.toml). The why, the hypothesis and the plan below are
+transcribed from Renesas Progress and Plan, 22 Oct 2026 ("Next steps", item 5, and "Naren · hypothesis to
+test"). Only the plan's step 0 has run; "What step 0 did" says what it found.
 
 ## Why
 
