@@ -9,7 +9,7 @@ Nothing below may be changed after the first run; anything added later goes unde
 | | |
 |---|---|
 | Arms | **(a)** memory carried, length 4, seed 0: `h15-r3-a-L4-s0`, weights sha256 `0679ea453b97…`. **(b)** the same layer wiped every moment, seed 0: `h15-r3-b-L0-s0`, `dfd944c1c3f1…`. One seed per arm (Sid D28: seed 0 is the median seed of offline P1 (a) − (b), +0.00078 against +0.00020 / +0.00237, chosen before any gate run). |
-| Released | not re-run. The baselines are `/srv/paddock/queue/baselines/drivejepa.toml` (all 7 subsets; closed tier from job 4b7a, 26–27 Oct). |
+| Released | not re-run. The baselines are `{paddock_site}/queue/baselines/drivejepa.toml` (all 7 subsets; closed tier from job 4b7a, 26–27 Oct). |
 | Momentum | ON for both arms, as released ships (Sid D29); it acts on the nudged score. |
 | How | a throwaway paddock worktree off origin/main with the adapter added to `drivejepa/` behind `DRIVEJEPA_MEMORY` (empty = released, bit for bit). `python -m tools.gate smoke --model drivejepa --env DRIVEJEPA_MEMORY=<checkpoint dir>`, quick tier for (a) then (b), then closed tier for (a) then (b) (Sid D30). `--keep-going` so every subset of a tier runs and is reported even after a REGRESSION. Then `tools.gate compare` (a) against (b) per benchmark. |
 | Quick tier | KITScenes (223 keyframes, decides on 186), nuScenes (1,000 keyframes), NAVSIM (1,018 navtest tokens), neuroNCAP quick (frontal-0103, side-0103, stationary-0783), and the two crash checks: Bench2Drive route 3717 and AlpaSim scene 1acf2f5d (one sample each: no verdict). |
@@ -87,3 +87,10 @@ Nothing below may be changed after the first run; anything added later goes unde
   arms apart, which is the expected result at this effect size (offline +0.0011 in grade).
 - Several pairs at once: an unchanged model is called a REGRESSION somewhere on the 7 pairs about 16% of the
   time. A single REGRESSION is read with that in mind, but it still fails P3 as written.
+
+## Changed after the first run (12 Nov 2026)
+
+- The Released row named the queue's baseline file by its real location on the training machine. It is
+  now written `{paddock_site}/queue/baselines/drivejepa.toml`, the form docs/experiments.md uses, because
+  a tracked file may not hold a machine path. Nothing else in this file changed; the line as it was is in
+  the commit before (`d978349`).

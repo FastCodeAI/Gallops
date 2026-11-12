@@ -5,8 +5,14 @@ rest because it is derived from NAVSIM navtrain. Each row gives a size in bytes 
 be recognised wherever it ends up. Hashes were computed on 12 Nov 2026 from the files on the training
 site's store.
 
-**Locations are templates, not paths.** `{data}/memory_cache` is the `cache` entry of the `navtrain`
-dataset in `gallops.toml`, the folder the record's `source` fields name.
+**Locations are templates, not paths.** `{data.navtrain.cache}` is the `cache` key of
+`[datasets.navtrain]` in `gallops.toml`, which `gallops.config` resolves. The record's `source` fields
+write the same folder as `{data}/memory_cache`.
+
+**These are the files the weights were trained on.** The hashes were taken on 12 Nov, a week after
+training, and the trainer of 5 Nov wrote no digest into its sidecars (it does now). What ties them: every
+input file here was last written before the first of the six checkpoints (the latest, `scores.npy`, at
+06:44 on 5 Nov; the first checkpoint at 06:49), by the store's modification times.
 
 ## Checkpoints (H15.r3-a-s0 to H15.r3-b-s2)
 
@@ -30,7 +36,7 @@ dataset in `gallops.toml`, the folder the record's `source` fields name.
 
 ## True grades of the 32 paths (H15.r1)
 
-`{data}/memory_cache/grades/`: one row per graded moment, 91,977 moments.
+`{data.navtrain.cache}/grades/`: one row per graded moment, 91,977 moments.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
@@ -46,7 +52,7 @@ dataset in `gallops.toml`, the folder the record's `source` fields name.
 
 ## Matching each path to the previous moment's closest path (H15.r2)
 
-`{data}/memory_cache/align/`.
+`{data.navtrain.cache}/align/`.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
@@ -58,7 +64,7 @@ dataset in `gallops.toml`, the folder the record's `source` fields name.
 
 ## Selection, preflight and evaluation outputs (H15.r3)
 
-`{data}/memory_cache/h15/`. `evaluate.json` is the file the record's offline results cite.
+`{data.navtrain.cache}/h15/`. `evaluate.json` is the file the record's offline results cite.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
@@ -83,7 +89,8 @@ throwaway paddock checkout the gate ran from, and in this branch's history at `1
 
 The gate's printed output for each tier and arm. The verdict files (`paddock/results/gate/*.json`) and the
 two comparison tables are committed; the logs are not. Two copies exist: the logs as they were written,
-under `{runs}/paddock_h15_runs/` on the training site's store, and the copies with machine paths replaced
+in a folder named `paddock-h15-runs` beside `{runs}` on the training site's network store (written
+`{nas_store}/paddock-h15-runs/`: a label, not a variable `gallops.config` resolves), and the copies with machine paths replaced
 by placeholders that this branch held until `1825bce` (`git show 1825bce:experiments/H15_prediction_memory/paddock/results/gate/<name>`).
 
 | File | Bytes, as committed at `1825bce` | sha256, as committed | Bytes, on the store | sha256, on the store |

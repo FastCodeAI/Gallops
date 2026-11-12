@@ -23,6 +23,14 @@ scorer input changes that path's x_i and no other; carry equals reset on chain-s
     python -m gallops.memory.train preflight
     python -m gallops.memory.train select  [--epochs 8]          # (a) at L = 1, 2, 4 and (b), seed 0
     python -m gallops.memory.train final   --length L --epochs E  # (a) and (b), seeds 0, 1, 2; checkpoints
+
+**The sidecar** (`sidecar_notes`) records what the weights are: (b) is written as length 0, since its
+memory is wiped every moment whatever `--length` says; the train logs that gave a graded moment, by
+count and by the sha256 of their sorted names; and the sha256 of every input file the run read
+(`input_digests`), so the weights stay tied to their labels if the grades are ever rebuilt.
+
+**One fit is one run.** `final` refuses, before anything trains, a run name whose directory already
+holds a checkpoint (`refuse_existing_runs`): two fits under one name would read as one sweep.
 """
 
 from __future__ import annotations
@@ -37,6 +45,7 @@ from pathlib import Path
 
 import numpy as np
 
+from gallops.config import REPO_ROOT
 from gallops.memory.model import batch_windows
 
 MODEL_NAME = "drivejepa_memory"
@@ -47,7 +56,21 @@ BATCH = 256
 LR = 3e-4
 WEIGHT_DECAY = 1e-4
 EPOCHS = 8
-REPO = Path(__file__).resolve().parents[3]
+REPO = REPO_ROOT
+#: The selection logs, relative to the repository.
+SELECTION_LOGS = "experiments/H15_prediction_memory/selection_logs.txt"
+#: Every file `Data` reads, relative to {data.navtrain.cache}: what the weights were trained on.
+INPUTS = (
+    "ticks/moments.npz",
+    "align/prev.npy",
+    "align/match.npy",
+    "grades/row.npy",
+    "grades/done.npy",
+    "grades/scores.npy",
+    "release/scorer_in.npy",
+    "release/logits.npy",
+    "release/ego.npy",
+)
 
 
 # --- data ------------------------------------------------------------------------------------------
@@ -84,7 +107,7 @@ class Data:
         self.ego = torch.from_numpy(np.asarray(np.load(release / "ego.npy"), np.float32)).to(device)
         self.target_t = torch.from_numpy(np.nan_to_num(self.target)).to(device)
         self.load_s = round(time.time() - t0, 1)
-        selection = set((REPO / "experiments/H15_prediction_memory/selection_logs.txt").read_text().split())
+        selection = set((REPO / SELECTION_LOGS).read_text().split())
         split, logs = self.table["split"], self.table["log"]
         in_selection = np.isin(logs, list(selection))
         self.rows = {
@@ -93,6 +116,8 @@ class Data:
             "val": np.flatnonzero(self.graded & (split == "val")),
         }
         self.train_logs = int(len(set(logs[(split == "train") & ~in_selection].tolist())))
+        #: the train logs that gave at least one graded moment: the ones the weights actually saw
+        self.train_logs_used = sorted(set(logs[self.rows["train"]].tolist()))
 
     def batch(self, targets, earlier):
         import torch
@@ -340,7 +365,80 @@ def preflight(data: Data, out: Path) -> dict:
 # --- commands --------------------------------------------------------------------------------------
 
 
-def save_checkpoint(cfg, run: str, result: dict, mode: str, length: int, seed: int, epochs: int, pre: dict):
+def input_digests(cache: Path) -> dict:
+    """sha256 of every file the trainer reads, and of the selection list, read in 16 MB blocks."""
+    import hashlib
+
+    def sha(path: Path) -> str:
+        digest = hashlib.sha256()
+        with open(path, "rb") as f:
+            for block in iter(lambda: f.read(1 << 24), b""):
+                digest.update(block)
+        return digest.hexdigest()
+
+    out = {name: sha(Path(cache) / name) for name in INPUTS}
+    out["selection_logs.txt"] = sha(REPO / SELECTION_LOGS)
+    return out
+
+
+def sidecar_notes(
+    mode: str,
+    length: int,
+    seed: int,
+    epochs: int,
+    history: list,
+    preflight_passed: bool,
+    train_logs_used: list,
+    train_logs: int,
+    inputs: dict,
+) -> dict:
+    """The `notes` of a memory checkpoint's sidecar. Pure, so `make check` tests it without torch."""
+    import hashlib
+
+    return {
+        "experiment": "H15",
+        "mode": mode,
+        # (b) wipes its memory at every moment: whatever --length was, its weights carry none.
+        "length": length if mode == "carry" else 0,
+        "seed": seed,
+        "epochs": epochs,
+        "history": history,
+        "preflight_passed": preflight_passed,
+        "train_logs_used": len(train_logs_used),
+        "train_logs_in_split": train_logs,
+        "train_logs_used_sha256": hashlib.sha256("\n".join(sorted(train_logs_used)).encode()).hexdigest(),
+        "inputs_sha256": inputs,
+        "frozen": "released Drive-JEPA; this file holds the memory picker only",
+    }
+
+
+def refuse_existing_runs(cfg, runs: list[str]) -> None:
+    """Stop before training if any run's directory already holds a checkpoint: one fit is one run."""
+    taken = [run for run in runs if any(cfg.run_dir(MODEL_NAME, run).glob("step_*"))]
+    if taken:
+        raise SystemExit(
+            f"these runs hold a checkpoint already: {', '.join(taken)}; one fit is one run, "
+            "so a new fit needs new run names"
+        )
+
+
+def run_name(mode: str, length: int, seed: int) -> str:
+    return f"h15-r3-{'a' if mode == 'carry' else 'b'}-L{length if mode == 'carry' else 0}-s{seed}"
+
+
+def save_checkpoint(
+    cfg,
+    run: str,
+    result: dict,
+    mode: str,
+    length: int,
+    seed: int,
+    epochs: int,
+    pre: dict,
+    train_logs_used: list,
+    train_logs: int,
+    inputs: dict,
+):
     import torch
 
     from gallops import checkpoint as ck
@@ -360,22 +458,28 @@ def save_checkpoint(cfg, run: str, result: dict, mode: str, length: int, seed: i
                 train_git_sha=git_sha(),
                 train_run=run,
                 trained_on=(
-                    ck.TrainedOn("navsim", "navtrain: vendor train logs minus the 100 H15 selection logs"),
+                    ck.TrainedOn(
+                        "navsim",
+                        "navtrain: vendor train logs minus the 100 H15 selection logs, "
+                        f"the {len(train_logs_used)} of {train_logs} with a graded moment",
+                        fraction=round(len(train_logs_used) / train_logs, 4),
+                    ),
                 ),
                 selection_split="navtrain: the 100 H15 selection logs",
                 params_m=round(params, 4),
                 precision="fp32",
                 weights_sha256=ck.sha256_file(weights),
-                notes={
-                    "experiment": "H15",
-                    "mode": mode,
-                    "length": length,
-                    "seed": seed,
-                    "epochs": epochs,
-                    "history": result["history"],
-                    "preflight_passed": pre["passed"],
-                    "frozen": "released Drive-JEPA; this file holds the memory picker only",
-                },
+                notes=sidecar_notes(
+                    mode,
+                    length,
+                    seed,
+                    epochs,
+                    result["history"],
+                    pre["passed"],
+                    train_logs_used,
+                    train_logs,
+                    inputs,
+                ),
             ),
         )
     return directory
@@ -397,6 +501,9 @@ def main() -> None:
     cfg = SiteConfig.load()
     out = (args.out or Path(cfg.resolve("{data.navtrain.cache}")) / "h15").resolve()
     out.mkdir(parents=True, exist_ok=True)
+    if args.part == "final" and args.length is not None:
+        # before the inputs load: a refused run should cost seconds, not the load
+        refuse_existing_runs(cfg, [run_name(m, args.length, s) for s in SEEDS for m in ("carry", "reset")])
     device = pick_device()
     print(f"device {device}", flush=True)
     data = Data(cfg, device)
@@ -422,12 +529,25 @@ def main() -> None:
         return
     if args.length is None:
         raise SystemExit("final needs --length (chosen on the selection logs)")
+    inputs = input_digests(Path(cfg.resolve("{data.navtrain.cache}")))
     results = {"device": device, "length": args.length, "epochs": args.epochs, "runs": []}
     for seed in SEEDS:
         for mode in ("carry", "reset"):
-            run = f"h15-r3-{'a' if mode == 'carry' else 'b'}-L{args.length if mode == 'carry' else 0}-s{seed}"
+            run = run_name(mode, args.length, seed)
             r = train_one(data, mode, args.length, seed, args.epochs, log=lambda s: print(s, flush=True))
-            directory = save_checkpoint(cfg, run, r, mode, args.length, seed, args.epochs, pre)
+            directory = save_checkpoint(
+                cfg,
+                run,
+                r,
+                mode,
+                args.length,
+                seed,
+                args.epochs,
+                pre,
+                data.train_logs_used,
+                data.train_logs,
+                inputs,
+            )
             results["runs"].append(
                 {
                     "run": run,

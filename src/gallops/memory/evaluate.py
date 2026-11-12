@@ -74,6 +74,7 @@ def summarise(point: float, draws: np.ndarray) -> dict:
 def run(cfg, h15: Path) -> dict:
     import torch
 
+    from gallops import checkpoint as ck
     from gallops.memory import grade, train
     from gallops.memory.model import MemoryPicker
 
@@ -120,7 +121,9 @@ def run(cfg, h15: Path) -> dict:
         s = train.scores_of(model, data, val_rows, mode, length)
         arm = "a" if mode == "carry" else "b"
         picks.setdefault(arm, []).append(s.argmax(1))
-        per_run.append({"run": r["run"], "arm": arm, "seed": r["seed"]})
+        # the weights scored, by digest: a run name alone does not say which file it was
+        weights_sha256 = ck.sha256_file(Path(r["checkpoint"]) / "memory.pt")
+        per_run.append({"run": r["run"], "arm": arm, "seed": r["seed"], "weights_sha256": weights_sha256})
     where = {int(v): k for k, v in enumerate(val_rows)}
     at_graded = np.array([where[int(v)] for v in graded_val])
 
