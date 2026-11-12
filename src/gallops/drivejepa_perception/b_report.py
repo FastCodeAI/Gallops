@@ -45,6 +45,19 @@ def clustered_se(diff: np.ndarray, clusters: np.ndarray) -> float:
     return float(np.sqrt(len(groups) / (len(groups) - 1) * (sums**2).sum()) / n)
 
 
+def clustered_se_weighted(diff: np.ndarray, clusters: np.ndarray, weights: np.ndarray) -> float:
+    """SE of the weighted mean of `diff`, clustered: sqrt(G / (G - 1) * sum_g (sum_i in g w_i (d_i - mu))^2)
+    / sum w, with mu the weighted mean. Equal weights give `clustered_se` exactly (B-1's city weights)."""
+    diff, weights = np.asarray(diff, dtype=np.float64), np.asarray(weights, dtype=np.float64)
+    groups = np.unique(clusters)
+    if len(groups) < 2:
+        return float("nan")
+    mu = (weights * diff).sum() / weights.sum()
+    centred = weights * (diff - mu)
+    sums = np.array([centred[clusters == g].sum() for g in groups])
+    return float(np.sqrt(len(groups) / (len(groups) - 1) * (sums**2).sum()) / weights.sum())
+
+
 def pick_scores(picks: dict, key: str, pdm: np.ndarray, rows: np.ndarray) -> np.ndarray:
     return pdm[rows, picks[key], -1]
 

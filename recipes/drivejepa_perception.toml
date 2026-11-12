@@ -1067,3 +1067,48 @@ module = "drivejepa_perception.train_sidecar"
 args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s2", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
         "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--row-set", "all", "--out", "{out}/agents-fresh-v3-s2"]
 after = ["part-b-0-vit-fresh"]
+
+# ---------------------------------------------------------------------------------------------
+# Part B · B-1, the analytic veto (docs/drivejepa-perception-sidecar/part-b/B-1-veto.md; D24). Nothing
+# trains. Clearances are computed once per split and source (torch on the CPU); the grid is then a
+# lookup in the vendored labels. The smoke run reads navtrain's select rows, where the release trained,
+# and chooses nothing; the grid on R-clean refuses to run until B-1's PREDICTIONS.md section is
+# committed; the freeze writes the committed choice once; navtest is read once, later, by its own stage.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "part-b-1-smoke-clearances"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["clearances", "--root", "{out}", "--split", "select", "--smoke", "--out", "{out}/part-b/b1/smoke/clearance-select"]
+after = ["part-b-0-agents-select-s0", "part-b-0-agents-select-s1", "part-b-0-agents-select-s2"]
+
+[[stage]]
+name = "part-b-1-smoke-grid"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["grid", "--root", "{out}", "--split", "select", "--smoke", "--clearances", "{out}/part-b/b1/smoke/clearance-select",
+        "--out", "{out}/part-b/b1/smoke/grid-select"]
+after = ["part-b-1-smoke-clearances"]
+
+[[stage]]
+name = "part-b-1-clearances-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["clearances", "--root", "{out}", "--split", "fresh", "--out", "{out}/part-b/b1/clearance-fresh"]
+after = ["part-b-0-agents-fresh-s0", "part-b-0-agents-fresh-s1", "part-b-0-agents-fresh-s2", "part-b-0-pdm-fresh"]
+
+[[stage]]
+name = "part-b-1-grid"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["grid", "--root", "{out}", "--split", "fresh", "--clearances", "{out}/part-b/b1/clearance-fresh",
+        "--out", "{out}/part-b/b1/grid-fresh"]
+after = ["part-b-1-clearances-fresh"]
+
+[[stage]]
+name = "part-b-1-freeze"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["freeze", "--grid", "{out}/part-b/b1/grid-fresh", "--write", "{repo}/recipes/drivejepa_perception/part_b1_frozen.json"]
+after = ["part-b-1-grid"]
