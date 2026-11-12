@@ -203,3 +203,60 @@ optimism rule below calls for cross-fitting. These are its gates, and the rule t
 - B-0-3's headroom counts and B-0-4's analysis of R against R̃.
 - The vendored scorer's agreement with the official one on navtest, and the momentum read.
 - None of them chooses a setting: no experiment's settings are chosen on navtest.
+
+## Part B · B-1, the analytic veto (written 11 Nov 2026)
+
+**Committed before B-1's first read of R-clean** (the grid). Copied from B-1's plan
+(`docs/drivejepa-perception-sidecar/part-b/B-1-veto.md`, success criteria V1–V5 and decisions (a)–(d)) and D24.
+Nothing trains. B-1 reads navtest once, after its settings are frozen on R-clean.
+- **What had been read when this was written:**
+  - the smoke run on navtrain's select logs (`{out}/part-b/b1/smoke`), which chose nothing;
+  - B-0-3's headroom counts on navtest (the release's own labels only): of 275 scenes whose pick fails NC or TTC,
+    271 have a proposal among the 32 that passes both, and 156 of those name an agent in CAM_F0's view within
+    50 m.
+  - No R-clean or navtest number of any B-1 rule existed.
+
+**The owner's choices** (B-1's decisions; 11 Nov, D24):
+- (a) the grid: margins 0.5, 1 and 2 m; horizons 1 and 2 s; confidence 0.5 and 0.7 for the side-car (12 settings
+  for B-1-3, 6 for B-1-2; none for B-1-1).
+- (b) when every proposal is vetoed, the release's pick stands.
+- (c) B-1-1, the ceiling read from the grader's own labels, is read on navtest, and flagged in every table.
+- (d) B-1-4 runs only if B-1-3 loses progress (below).
+
+### How the settings are chosen (on R-clean only)
+
+- **The value of a pick** is its vendored PDM final score under the human filter: each of the eight terms the
+  human's own plan fails is forgiven, then NC·DAC·TLC·DDC·(5 EP + 5 TTC + 2 LK + 2 HC)/14 (`veto.filtered_final`;
+  the vendored scorer has no EC).
+- **Its mean is reweighted to navtest's city mix**, by token. Singapore, which R-clean lacks, is left out and the
+  other three cities renormalised (`veto.city_weights`).
+- **The rule:** per sub-version, the setting with the highest reweighted mean; B-1-3 by its mean over seeds 0–2;
+  a tie goes to the fewer vetoes, then to the grid's order. The choice is written once to
+  `recipes/drivejepa_perception/part_b1_frozen.json` and committed before navtest is read.
+
+### Predictions (navtest, the official scorer, paired per scene against R, SE clustered by log)
+
+| # | What | Predicted | Supports if | Refutes if |
+|---|---|---|---|---|
+| V1 | B-1-1 − R in EPDMS (human filter): the ceiling, which reads the answer | +0.5 to +1.5 points | beyond 2 SE | — (the ceiling) |
+| V2 | B-1-2 − R: room for perfect front-camera agents | +0.2 to +0.8 | beyond 2 SE | under 0, beyond 2 SE |
+| V3 | B-1-3 − R, each seed | −0.3 to +0.4 | above 0 beyond 2 SE, on every seed | under 0 beyond 2 SE, on any seed |
+| V4 | the share of B-1-2's gain B-1-3 keeps: the mean over seeds of (B-1-3 − R) / (B-1-2 − R) | 0.2 to 0.6 | — (reported) | — |
+| V5 | EP lost to vetoes by B-1-3: R's mean official EP minus B-1-3's, ×100, mean over seeds | under 0.3 | — | over 0.6 |
+
+**Gates before navtest is read** (each must hold, or B-1 stops):
+- B-0's anchor (B0-G8, B0-G9) holds;
+- with an empty veto, the rule's pick equals the release's recorded pick on every row of both splits;
+- every clearance file's inputs are the ones on disk (sha256); the release's scores reproduce its pick on every row;
+- every plan store covers navtest exactly, and every replayed plan equals the store's.
+
+### Decision rules
+
+- **B-1-4 runs** if B-1-3 loses progress: V5 is refuted (over 0.6), or B-1-3's official EP is below R's beyond
+  2 SE on any seed. Its settings are then chosen on R-clean the same way, and navtest is read once more, for it
+  alone.
+- **V2 not supported:** agents carry little the release's scorer has not already used; B-2 to B-4 are unlikely to
+  show a NAVSIM gain, and the closed-loop gate (B-14) becomes the place.
+- **V2 supported and V3 not:** perception is the limit; B-8 or B-9 before B-4.
+- **V3 supported:** a learned use of the agents (B-2 to B-4) has B-1-3's navtest EPDMS as its bar.
+- B-1-1 is never reported as a result: it reads the grader's labels.
