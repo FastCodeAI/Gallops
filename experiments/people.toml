@@ -9,7 +9,7 @@ focus = "crash avoidance on KITScenes, nuScenes and neuroNCAP; the regression ga
 [people.Navvrat]
 name = "Navvrat Rao"
 git = ["Navvrat Rao"]
-focus = "Bench2Drive and NAVSIM; the 4-camera base"
+focus = "Bench2Drive and NAVSIM; the 4-camera stack"
 
 [people.Siddesh]
 name = "Siddesh Choudhary"

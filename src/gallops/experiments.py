@@ -982,7 +982,8 @@ def render_status(reg: Registry) -> str:
 
 
 def _base_lines(short: str) -> list[str]:
-    return textwrap.wrap(short, BASE_WIDTH)
+    # The box is titled "Base", so a decision's own "Base: " would only repeat it.
+    return textwrap.wrap(short.removeprefix("Base: "), BASE_WIDTH)
 
 
 def _box(x: int, w: int, fill: str, title: str, lines: list[str], dashed: bool = False) -> str:
@@ -1023,7 +1024,7 @@ def render_picture(reg: Registry) -> str:
     grey = "#768390"
     parts = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
-        'aria-label="Gap closing leads to an agreed base, then hypotheses of one change each, judged by the '
+        'aria-label="Gap closing, then hypotheses of one change each, judged against the base by the '
         'regression gate, until the gate ships a version" '
         "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\">",
         "  <title>How the work flows</title>",
@@ -1034,7 +1035,7 @@ def render_picture(reg: Registry) -> str:
             266,
             164,
             "#B4560A",
-            _date(base["date"]) if base else "Base",
+            "Base",
             _base_lines(base["short"]) if base else [],
         ),
         _box(
@@ -1054,7 +1055,8 @@ def render_picture(reg: Registry) -> str:
             dashed=not versions,
         ),
     ]
-    for x1, x2 in ((226, 262), (430, 466), (670, 706)):
+    # None out of Phase 1: the base is released Drive-JEPA, which came before gap closing, not from it.
+    for x1, x2 in ((430, 466), (670, 706)):
         parts.append(
             f'  <line x1="{x1}" y1="78" x2="{x2}" y2="78" stroke="{grey}" stroke-width="2" '
             'marker-end="url(#a)"/>'

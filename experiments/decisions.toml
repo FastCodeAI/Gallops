@@ -215,3 +215,16 @@ closed unmerged, and their records are removed, as they served no experiment her
 reused; the code is at those PRs' heads."""
 by = ["Naren"]
 source = "the closing comments on gallops #18 and #19"
+
+[[decision]]
+id = "D20"
+date = 2026-11-06
+short = "Base: released Drive-JEPA"
+decision = """The base is released Drive-JEPA, not the 4-camera stack D11 named. The queue's baselines are already \
+released Drive-JEPA, so every gate comparison is against the base. Navvrat runs the stack through the gate next. \
+Records from before this decision say `the base` for that stack."""
+by = ["Naren"]
+evidence = ["H02.timing", "H07.exp3"]
+next = ["H01"]
+baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first"
+source = "Naren, 6 Nov 2026"

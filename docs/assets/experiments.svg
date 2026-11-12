@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" aria-label="Gap closing leads to an agreed base, then hypotheses of one change each, judged by the regression gate, until the gate ships a version" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" aria-label="Gap closing, then hypotheses of one change each, judged against the base by the regression gate, until the gate ships a version" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>How the work flows</title>
   <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#768390"/></marker></defs>
   <rect x="0" y="24" width="226" height="108" rx="10" fill="#1E6B3A"/>
@@ -6,9 +6,8 @@
   <text x="113" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">8 experiments</text>
   <text x="113" y="102" text-anchor="middle" font-size="13" fill="#FFFFFF">16 Sep – 16 Oct</text>
   <rect x="266" y="24" width="164" height="108" rx="10" fill="#B4560A"/>
-  <text x="348" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">19 Oct</text>
-  <text x="348" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">Base: Navvrat&#x27;s</text>
-  <text x="348" y="102" text-anchor="middle" font-size="13" fill="#FFFFFF">4-camera stack</text>
+  <text x="348" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">Base</text>
+  <text x="348" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">released Drive-JEPA</text>
   <rect x="470" y="24" width="200" height="108" rx="10" fill="#1F5FBF"/>
   <text x="570" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#FFFFFF">Phase 2: hypotheses</text>
   <text x="570" y="82" text-anchor="middle" font-size="13" fill="#FFFFFF">7 hypotheses, one change each</text>
@@ -19,7 +18,6 @@
   <rect x="898" y="24" width="102" height="108" rx="10" fill="none" stroke="#768390" stroke-width="2" stroke-dasharray="6 5"/>
   <text x="949" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#768390">gallops-v0</text>
   <text x="949" y="82" text-anchor="middle" font-size="13" fill="#768390">none yet</text>
-  <line x1="226" y1="78" x2="262" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="430" y1="78" x2="466" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="670" y1="78" x2="706" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>
   <line x1="846" y1="78" x2="894" y2="78" stroke="#768390" stroke-width="2" marker-end="url(#a)"/>

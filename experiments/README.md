@@ -104,6 +104,7 @@ What the team decided, in date order, on what evidence. It is kept in
 | **D17** | 26 Oct 2026 | **Momentum-aware selection on by default.** Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA baselines from here on include it. | Siddesh | — | — |
 | **D18** | 28 Oct 2026 | **KITScenes exp 3 fails the gate.** The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](H07_encoder_lora/CARD.md) | — |
 | **D19** | 6 Nov 2026 | **H12 and H13 removed.** The nuScenes scene selector (H12) and the Alpamayo teacher (H13) are not this repo's work: #19 and #18 closed unmerged, and their records are removed, as they served no experiment here. The two IDs stay retired, never reused; the code is at those PRs' heads. | Naren | — | — |
+| **D20** | 6 Nov 2026 | **Base: released Drive-JEPA.** The base is released Drive-JEPA, not the 4-camera stack D11 named. The queue's baselines are already released Drive-JEPA, so every gate comparison is against the base. Navvrat runs the stack through the gate next. Records from before this decision say `the base` for that stack. | Naren | [H02.timing](H02_smallest_valid_gate/CARD.md), [H07.exp3](H07_encoder_lora/CARD.md) | [H01](H01_four_camera_base/CARD.md) |
 <!-- /experiments:decisions -->
 
 ## How to read the results
