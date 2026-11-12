@@ -44,6 +44,22 @@ def ego_centres(candidates):
     return candidates[..., :2] + EGO_CENTRE_AHEAD * torch.stack([torch.cos(yaw), torch.sin(yaw)], dim=-1)
 
 
+def clearances(candidates, xy, size, vel, path, mask):
+    """(B, K, A, T): the clearance of each candidate to each agent at each plan time, in metres.
+
+    Masked agents sit at +CLIP, and every value is clamped to CLEARANCE_CLIP. B-1's veto reads this
+    per agent and per time (a margin within a horizon, and which agent was behind it); `terms` reduces
+    it to the scorer's features.
+    """
+    ego = ego_centres(candidates)  # B, K, T, 2
+    agents = agent_centres(xy, vel, path)  # B, A, T, 2
+    distance = torch.linalg.norm(ego[:, :, None] - agents[:, None], dim=-1)  # B, K, A, T
+    radius_ego = math.sqrt(EGO_LENGTH * EGO_WIDTH / math.pi)
+    radius = torch.sqrt((size[..., 0] * size[..., 1]).clamp(min=0.01) / math.pi)  # B, A
+    clearance = distance - radius_ego - radius[:, None, :, None]
+    return clearance.masked_fill(~mask[:, None, :, None], CLEARANCE_CLIP[1]).clamp(*CLEARANCE_CLIP)
+
+
 def terms(candidates, xy, size, vel, path, mask):
     """The analytic terms of K candidates against A agents.
 
@@ -52,13 +68,7 @@ def terms(candidates, xy, size, vel, path, mask):
     Returns features (B, K, N_FEATURES), pairwise (B, K, A) smallest clearance per agent (masked
     agents at +CLIP), nearest (B, K) index of the agent with the smallest clearance (-1 if none).
     """
-    ego = ego_centres(candidates)  # B, K, T, 2
-    agents = agent_centres(xy, vel, path)  # B, A, T, 2
-    distance = torch.linalg.norm(ego[:, :, None] - agents[:, None], dim=-1)  # B, K, A, T
-    radius_ego = math.sqrt(EGO_LENGTH * EGO_WIDTH / math.pi)
-    radius = torch.sqrt((size[..., 0] * size[..., 1]).clamp(min=0.01) / math.pi)  # B, A
-    clearance = distance - radius_ego - radius[:, None, :, None]
-    clearance = clearance.masked_fill(~mask[:, None, :, None], CLEARANCE_CLIP[1]).clamp(*CLEARANCE_CLIP)
+    clearance = clearances(candidates, xy, size, vel, path, mask)  # B, K, A, T
     per_time = clearance.min(dim=2).values  # B, K, T
     overall, when = per_time.min(dim=-1)
     pairwise = clearance.min(dim=-1).values  # B, K, A

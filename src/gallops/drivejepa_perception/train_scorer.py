@@ -98,29 +98,10 @@ def truth_agents(labels: dict, lidar2img: np.ndarray) -> dict:
 
 
 def truth_agents_projected(labels: dict, projections: np.ndarray) -> dict:
-    """`truth_agents` through given token-image projections (nuScenes' differ from NAVSIM's)."""
-    n = len(labels["count"])
-    out = {
-        "cls": np.zeros((n, tg.QUERIES), np.int64),
-        "conf": np.zeros((n, tg.QUERIES), np.float32),
-        "xyz": np.zeros((n, tg.QUERIES, 3), np.float32),
-        "lwh": np.ones((n, tg.QUERIES, 3), np.float32),
-        "yaw": np.zeros((n, tg.QUERIES), np.float32),
-        "vel": np.zeros((n, tg.QUERIES, 2), np.float32),
-        "path": np.zeros((n, tg.QUERIES, 2, 2), np.float32),
-        "mask": np.zeros((n, tg.QUERIES), bool),
-    }
-    for row in range(n):
-        t = tg.build(navsim_data.agents_of(labels, row), projections[row])
-        m = t["mask"]
-        out["cls"][row], out["conf"][row] = t["cls"], m.astype(np.float32)
-        out["xyz"][row], out["lwh"][row] = t["box"][:, :3], np.where(m[:, None], t["box"][:, 3:6], 1.0)
-        out["yaw"][row], out["vel"][row], out["path"][row], out["mask"][row] = (
-            t["box"][:, 6],
-            t["vel"],
-            t["path"],
-            m,
-        )
+    """`truth_agents` through given token-image projections (nuScenes' differ from NAVSIM's). The rule
+    lives in `targets.truth_agents` (numpy); arm O keeps the first pass's zero fill and its eight keys."""
+    out = tg.truth_agents(labels, projections, fill="zero")
+    out.pop("path_ok")
     return out
 
 

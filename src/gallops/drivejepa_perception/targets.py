@@ -87,3 +87,52 @@ def build(agents: dict, projection: np.ndarray) -> dict:
     out["path_ok"][:n] = ok
     out["mask"][:n] = True
     return out
+
+
+#: The two path steps' times, seconds after t.
+PATH_DT = (0.5, 1.0)
+
+
+def truth_agents(labels: dict, projections: np.ndarray, fill: str = "zero") -> dict:
+    """Arm O's agents: the labels' targets the camera sees (`build`), in the side-car's decoded format,
+    confidence 1, with `path_ok` beside them.
+
+    `fill` says what a path step the label's track lacks becomes:
+    - "zero", the first pass's arm O (`train_scorer.truth_agents`): offset 0, so the agent stands at
+      its centre for that step;
+    - "constant_velocity", B-1-2's: the step continues at the label's velocity from the step before
+      (0.5 s from the centre, then 0.5 s more). A track that ends means the agent left the annotated
+      range or was hidden, not that it stopped; and the side-car always predicts both steps, so B-1-2
+      differs from B-1-3 only in perception (docs/drivejepa-perception-sidecar/part-b/B-1-veto.md).
+    """
+    from gallops.drivejepa_perception import navsim_data
+
+    if fill not in ("zero", "constant_velocity"):
+        raise ValueError(f"fill is zero or constant_velocity, not {fill!r}")
+    n = len(labels["count"])
+    out = {
+        "cls": np.zeros((n, QUERIES), np.int64),
+        "conf": np.zeros((n, QUERIES), np.float32),
+        "xyz": np.zeros((n, QUERIES, 3), np.float32),
+        "lwh": np.ones((n, QUERIES, 3), np.float32),
+        "yaw": np.zeros((n, QUERIES), np.float32),
+        "vel": np.zeros((n, QUERIES, 2), np.float32),
+        "path": np.zeros((n, QUERIES, PATH_STEPS, 2), np.float32),
+        "mask": np.zeros((n, QUERIES), bool),
+        "path_ok": np.zeros((n, QUERIES, PATH_STEPS), bool),
+    }
+    for row in range(n):
+        t = build(navsim_data.agents_of(labels, row), projections[row])
+        m = t["mask"]
+        out["cls"][row], out["conf"][row] = t["cls"], m.astype(np.float32)
+        out["xyz"][row], out["lwh"][row] = t["box"][:, :3], np.where(m[:, None], t["box"][:, 3:6], 1.0)
+        out["yaw"][row], out["vel"][row], out["mask"][row] = t["box"][:, 6], t["vel"], m
+        out["path_ok"][row] = t["path_ok"]
+        path = t["path"].copy()
+        if fill == "constant_velocity":
+            ok, vel = t["path_ok"], t["vel"]
+            step0 = np.where(ok[:, 0, None], path[:, 0], vel * PATH_DT[0])
+            step1 = np.where(ok[:, 1, None], path[:, 1], step0 + vel * (PATH_DT[1] - PATH_DT[0]))
+            path = np.stack([step0, step1], axis=1) * m[:, None, None]
+        out["path"][row] = path
+    return out

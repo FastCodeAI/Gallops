@@ -7,6 +7,8 @@ final score is NAVSIM's formula, and the clearances put an agent where the ego w
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -115,3 +117,27 @@ def test_the_best_loss_targets_the_pdm_best_candidates_and_shares_ties():
     assert imitation["listwise"] > best["listwise"]
     _, bce = scorers.loss(out, batch, "bce")
     assert "listwise" not in bce
+
+
+def test_clearances_are_what_terms_reduce():
+    batch = _batch()
+    a = batch["agents"]
+    args = (batch["candidates"], a["xyz"][..., :2], a["lwh"][..., :2], a["vel"], a["path"], a["mask"])
+    clearance = geometry.clearances(*args)
+    features, pairwise, _ = geometry.terms(*args)
+    assert clearance.shape == (B, K, a["mask"].shape[1], 8)
+    assert torch.equal(features[..., :8], clearance.min(dim=2).values / 10.0)
+    assert torch.equal(pairwise, clearance.min(dim=-1).values)
+
+
+def test_a_clearance_by_hand():
+    # The ego parked at the origin, facing x; a 4 x 2 m car whose centre stays 20 m ahead.
+    candidates = torch.zeros(1, 1, 8, 3)
+    xy = torch.tensor([[[20.0, 0.0]]])
+    size, vel, path = torch.tensor([[[4.0, 2.0]]]), torch.zeros(1, 1, 2), torch.zeros(1, 1, 2, 2)
+    clearance = geometry.clearances(candidates, xy, size, vel, path, torch.tensor([[True]]))
+    ego_radius = math.sqrt(geometry.EGO_LENGTH * geometry.EGO_WIDTH / math.pi)
+    expected = 20.0 - geometry.EGO_CENTRE_AHEAD - ego_radius - math.sqrt(8.0 / math.pi)
+    assert torch.allclose(clearance, torch.full((1, 1, 1, 8), expected))
+    masked = geometry.clearances(candidates, xy, size, vel, path, torch.tensor([[False]]))
+    assert torch.equal(masked, torch.full((1, 1, 1, 8), geometry.CLEARANCE_CLIP[1]))

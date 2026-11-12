@@ -148,3 +148,48 @@ def test_the_committed_lists_add_up(which):
         for log, city in record["cities"].items():
             per_city[city] = per_city.get(city, 0) + record["windows"][log]
         assert per_city == record["windows_per_city"]
+
+
+def _one_agent_labels(path_ok):
+    """One row, one vehicle 10 m ahead moving 4 m/s forward, whose track lasts per `path_ok`."""
+    box = np.zeros((1, 7), np.float32)
+    box[0, :6] = [10.0, 0.0, 0.5, 4.0, 2.0, 1.5]
+    sample = {
+        "cls": np.array([0], np.int8),
+        "name": np.zeros(1, np.int8),
+        "box": box,
+        "velocity": np.array([[4.0, 0.0]], np.float32),
+        "path": np.array([[[12.1, 0.0], [14.3, 0.0]]], np.float32),
+        "path_ok": np.array([path_ok]),
+        "size_change": np.zeros((1, 2), np.float32),
+        "track": np.zeros(1, np.int64),
+        "ego_future": np.zeros((8, 3), np.float32),
+        "ego_speed": np.zeros(5, np.float32),
+    }
+    return nd.pack([sample])
+
+
+def _front_projection():
+    """A camera at the ego origin looking along x: everything ahead is in view."""
+    proj = np.zeros((1, 4, 4))
+    proj[0, 0] = [256.0, -256.0, 0, 0]  # u = 256 (1 - y / x)
+    proj[0, 1] = [128.0, 0, -128.0, 0]  # v = 128 (1 - z / x)
+    proj[0, 2] = [1.0, 0, 0, 0]
+    proj[0, 3] = [0, 0, 0, 1.0]
+    return proj
+
+
+def test_truth_agents_fill_a_lost_track_at_constant_velocity():
+    from gallops.drivejepa_perception import targets as tg
+
+    labels = _one_agent_labels([True, False])
+    zero = tg.truth_agents(labels, _front_projection(), fill="zero")
+    cv = tg.truth_agents(labels, _front_projection(), fill="constant_velocity")
+    assert zero["mask"][0, 0] and zero["path_ok"][0, 0].tolist() == [True, False]
+    assert np.allclose(zero["path"][0, 0], [[2.1, 0.0], [0.0, 0.0]])  # the first pass: stands still
+    assert np.allclose(cv["path"][0, 0], [[2.1, 0.0], [4.1, 0.0]])  # 2.1 m, then 0.5 s at 4 m/s
+    lost = tg.truth_agents(_one_agent_labels([False, False]), _front_projection(), fill="constant_velocity")
+    assert np.allclose(lost["path"][0, 0], [[2.0, 0.0], [4.0, 0.0]])
+    assert not cv["path"][0, 1:].any()  # padded slots stay zero
+    with pytest.raises(ValueError):
+        tg.truth_agents(labels, _front_projection(), fill="other")
