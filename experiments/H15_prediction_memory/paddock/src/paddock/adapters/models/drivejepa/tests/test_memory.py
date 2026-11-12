@@ -50,6 +50,9 @@ def test_a_sidecar_that_disagrees_with_the_weights_is_refused(tmp_path) -> None:
 
 def _fixture_model():
     torch = pytest.importorskip("torch")
+    if not FIXTURE.is_file():
+        # The array is not committed in gallops (experiments/H15_prediction_memory/POINTERS.md).
+        pytest.skip(f"{FIXTURE.name} is absent: build it with gallops' scripts/make_memory_fixture.py")
     data = np.load(FIXTURE)
     state = {k[2:]: torch.as_tensor(data[k]) for k in data.files if k.startswith("w:")}
     model = memory.build_model(int(state["keep.weight"].shape[0]))

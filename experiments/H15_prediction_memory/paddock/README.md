@@ -10,10 +10,13 @@ had there.
 | `src/paddock/adapters/models/drivejepa/memory.py` | new: the memory layer transcribed from `gallops.memory.model` and `.align`, the checkpoint loader (refuses a directory without `checkpoint.json`, or whose weights' sha256 disagrees with it) and the per-path state kept by timestamp |
 | `src/paddock/adapters/models/drivejepa/policy.py` | released `policy.py` plus the memory: hooks on the scorer add the nudge to the final logit inside the model's own forward, so momentum acts on the nudged score; `_catch_up` runs the scored frame's own chain at plan time; `/diagnostics` reports the memory |
 | `src/paddock/adapters/models/drivejepa/model.yaml` | released `model.yaml` plus `DRIVEJEPA_MEMORY: ""` (empty: the released node, bit for bit) |
-| `src/paddock/adapters/models/drivejepa/tests/test_memory.py` | the adapter's memory tests (14), and `fixtures/memory_fixture.npz`, which pins this copy to gallops' (same inputs, same scores to 1e-6); written by `../scripts/make_memory_fixture.py` |
+| `src/paddock/adapters/models/drivejepa/tests/test_memory.py` | the adapter's memory tests (14). Those that pin this copy to gallops' (same inputs, same scores to 1e-6) read `fixtures/memory_fixture.npz`. That array is not committed: `../scripts/make_memory_fixture.py` writes it, [POINTERS.md](../POINTERS.md) gives its sha256, and the tests skip when it is absent. That is the one change to this file since it ran |
 | `drivejepa_memory.diff` | the change to paddock's tracked files against `0fae534` |
 
 They are a record. Gallops' `make check` neither lints nor runs them.
+
+`results/` holds the paddock run records and the gate's verdict files and comparison tables. The gate's
+printed logs are not committed; [POINTERS.md](../POINTERS.md) lists them.
 
 ## Running them again
 
