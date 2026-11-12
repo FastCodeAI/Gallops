@@ -687,3 +687,151 @@ notes = "Run alongside Phase B's planning, before step 6, at the owner's request
   strength = "moderate"
   flags = ["open-loop"]
   note = "seeds 0.446, 0.424, 0.444; all-class F1 0.424. The warp straightens direction (median 1.2 degrees beyond 20 m, against 1.6-1.8 as recorded) but places agents within 20 m a median 1.0-1.4 m too far (as recorded 0.5-0.7 m). So the gap is not shown to be the camera's geometry: the warp aligns each camera's rotation on its ego frame, which can tilt the view against the road, and it adds a black band and a second resampling; this read cannot separate them"
+
+[[runs]]
+id = "H15.r6"
+label = "Part B, B-0-1: the navtest and R-clean data passes -- lists, labels, token and ViT passes, the release's PDM labels, R-clean's metric cache, the side-car's agents (v3, seeds 0-2); nothing trains"
+started = 2026-11-11
+start_from = "released"
+trained = []
+frozen = ["everything"]
+train_git_sha = "cf30b4c"
+notes = "D24. The passes ran from da93e80 to cf30b4c, each manifest naming its own sha. Every pass is a part-b-0-* stage under {runs}/drivejepa_perception and passed its PREDICTIONS.md gate (Part B · B-0). B0-G1: navtest.json pins the vendor's navtest filter (sha256 61284edf...: 136 logs, 12,146 tokens); fresh.json is the rule 'trainval logs no NAVSIM scene filter names, every routed window': 118 candidates, 58 routed logs, 11,340 windows (Las Vegas 9,895, Pittsburgh 975, Boston 470), B-0's counts scripted for the first time. B0-G2: labels check clean on 60 windows each. B0-G3: Paddock's navtest metric cache (10 Nov) verified here: its builder's filter equals navtest.yaml, and 32 seeded tokens cached again with this site's tree score bit-equal against it (vendored, eight plans each; official, the human's). B0-G4: R-clean's cache, built by navsim's run_metric_caching.py, holds exactly the list's 11,340 windows. B0-G5: token passes batched equal batch 1 (32 rows), the pick is the argmax of the saved scores on every row, ViT-out equals its taps exactly, a live forward of 6 rows per split equals the cache. B0-G6: PDM labels for every row of both splits, 50 re-scored exactly per split, with the TTC agent named. B0-G7: each v3 seed, decoded by the pass's own code, gives exactly the select F1 it recorded (0.7195, 0.7182, 0.7132); select, navtest and R-clean decoded, no report row."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-b-0-labels-navtest"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest (the vendor's filter, read from the test data split)"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "R-clean (fresh): trainval logs no NAVSIM filter names, every routed window"
+  role = "selection"
+  unit = "windows"
+  n = 11340
+  scene_list = "recipes/drivejepa_perception/fresh.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+[[runs]]
+id = "H15.r7"
+label = "Part B, B-0-2: the official scorer on stored plans, the 87.78 anchor, the live release and R-tilde on navtest; nothing trains"
+started = 2026-11-11
+start_from = "released"
+trained = []
+frozen = ["everything"]
+train_git_sha = "f6e7224"
+notes = "D24. NAVSIM's own v2 run_pdm_score.py on all 12,146 navtest tokens, no momentum, through Part B's replay agent (replay_agent.py), on Paddock's navtest metric cache verified here (B0-G3); H04's EPDMS arithmetic ported with its tests (D24, B-0 (g)). Every replay refused unless the store covered navtest exactly, and every plan the agent handed the scorer equalled the store's (12,146 of 12,146 per run). B0-G8 holds: the release's own picks replayed give EPDMS (human filter) 87.783 and CSV 84.495 against H04's 87.78 and 84.49, with NC 0.985, TTC 0.979, DAC 0.986 and EC 0.479 as H04 recorded. The live release, run by navsim itself through LiveReleaseAgent (27 min on one GPU), picks as the token pass on every token, its plans within 5e-5 m, and scores EPDMS 87.783 (6e-8 points from the replay); every discrete column is equal on every token, but EP differs by up to 1.5e-6 on 5,754 tokens, so B0-G9's pre-registered 'every column equal on 99.9%' does not hold as written (52.2%): the gate is brought to the owner before B-1 reads navtest. R-tilde, the cached path every trained arm starts from (cached_release.py: fp16 tokens, batch_fix, adapter output exactly 0), picks as R on 99.975% of scenes and differs by +0.0014 +- 0.0011 points (B0-G10). B-0-4 (b_analysis.py): R-tilde's proposals are within 2e-5 m of R's (Hungarian-matched ADE)."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-b-0-score-R"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), the release's own picks replayed through the official v2 scorer here (B0-G8)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "H04's account of the release, measured off this site"
+  baseline_value = "87.78"
+  value = "87.783"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "CSV score 84.495 against H04's 84.49; both within the pre-registered 0.02. The live release scores 87.783 too (6e-8 points from the replay)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), R-tilde minus R: the cached path every trained arm starts from (B0-G10)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "R, the release's replayed picks"
+  baseline_value = "87.783"
+  value = "+0.0014"
+  se = 0.0011
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "picks equal on 99.975% of scenes (3 differ); SE clustered by log over 136 logs"
+
+[[runs]]
+id = "H15.r8"
+label = "Part B, B-0-1 and B-0-3: train-row optimism, five cross-fit side-cars (v3, each without a fifth of the train logs), and the headroom check"
+started = 2026-11-11
+ended = 2026-11-12
+start_from = "H15.r4"
+trained = ["side-car"]
+frozen = ["everything else"]
+params_trained_m = 18.44
+gpu_hours = 8.5
+train_git_sha = "73f744f"
+notes = "D24. Optimism (PREDICTIONS.md, Part B · B-0): on a seeded draw of 51 train logs (6,615 rows) each v3 seed reads F1 0.800-0.805 and causal recall 0.945-0.946 against select's 0.713-0.720 and 0.897-0.903; the mean gaps 0.085 and 0.046 exceed 0.03, so five cross-fit side-cars trained, by the kept recipe (24 epochs, seed 0, kept epoch on select), each without one fold of the 1,071 train logs (folds of 214-215 logs), together on one GPU in 1.6-1.7 h of wall time each (about 8.5 GPU-hours of work). Folds 0-2 recorded 73f744f; folds 3-4 b89c67b, whose only change is PREDICTIONS.md. B0-G11 holds: their kept-epoch select F1 is 0.7005-0.7077, within 0.012-0.019 of seed 0's 0.7195, and each reproduces it exactly when decoded by crossfit-agents, which gives each of the 94,195 train rows the side-car that did not see its log. Headroom (B-0-3, the release's labels only): of 275 navtest scenes whose pick fails NC or TTC (official), 271 have a proposal among the 32 that passes both; behind 156 of those is a labelled agent in CAM_F0's view within 50 m (94 out of view or range, 14 not in the labels, 7 static); the seeds found 127, 133 and 135 of the 156. On R-clean (vendored): 577 failures, 488 with a safe proposal, 317 in view."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-b-0-crossfit-f0"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain train logs (splits.json), in five folds; select for each fold's kept epoch"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "side-car F1 at 2 m within 30 m, train rows minus select (optimism; the mean over seeds 0-2)"
+  subset = "51 seeded train logs against the 51 select logs"
+  n = 6615
+  unit = "sample"
+  value = "0.085"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "causal recall 0.046; the pre-registered limit was 0.03 in either, so cross-fitting ran"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "cross-fit side-cars' select F1 at 2 m within 30 m, each fold at its kept epoch (B0-G11)"
+  subset = "select logs"
+  n = 4457
+  unit = "sample"
+  baseline = "the v3 side-car, seed 0, trained on every train log"
+  baseline_value = "0.7195"
+  value = "0.7047"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  note = "folds 0.7043, 0.7005, 0.7038, 0.7077, 0.7067 (mean shown); each within the pre-registered 0.02 of seed 0's"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "headroom: navtest scenes whose pick fails NC or TTC with a passing proposal among the 32, and the agent behind the failure in CAM_F0's view within 50 m (B-0-3)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  value = "156"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "of 275 failing scenes (2.3%), 271 have a safe proposal, 156 of those name an in-view agent (58%), and the side-car's seeds found 127, 133 and 135 of the 156. Counts read from the release's labels only; nothing was chosen on them"
