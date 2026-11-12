@@ -152,10 +152,17 @@ def fidelity(args) -> int:
     gaps = np.asarray([r["max_abs_m"] for r in rows])
     same = [r["max_abs_m"] <= WAYPOINT_TOL_M for r in rows]
     consistent = [r["pick_is_top"] and r["pick_proposal_exact"] for r in rows]
+    from gallops.drivejepa_b2d.provenance import git_sha
+    from gallops.drivejepa_b2d.sidecar import sha256
+
     verdict = {
         "check": "fidelity + self-consistency",
         "run": str(args.run),
         "checkpoint": checkpoint,
+        # what `cache.build` requires of a verdict before it builds (`cache.start_problems`)
+        "checkpoint_sha256": sha256(Path(checkpoint)),
+        "code_tree": cache.code_tree(),
+        "git_sha": git_sha(),
         "gpu_free_mib_at_start": free,
         "tokens": len(rows),
         "same_pick_within_1e-3_m": int(sum(same)),
@@ -271,10 +278,10 @@ def _run_rows(agent, builder, cfg, table, rows, workers: int, device: str):
     """
     import torch
 
-    from gallops.memory import cache
+    from gallops.memory import cache, ticks
 
     data = cfg.datasets["navtrain"]
-    roots = [data.extra["blobs"], data.extra["extra_blobs"]]
+    roots = ticks.image_roots(data)
     by_log: dict = {}
     for i in rows:
         by_log.setdefault(str(table["log"][i]), []).append(int(i))
@@ -389,11 +396,11 @@ def contact(args) -> int:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    from gallops.memory import cache, inputs
+    from gallops.memory import cache, inputs, ticks
 
     cfg = _cfg()
     data = cfg.datasets["navtrain"]
-    roots = [data.extra["blobs"], data.extra["extra_blobs"]]
+    roots = ticks.image_roots(data)
     table, rows = _training_sample(cfg, args.n, seed=3)
     cache.enter(cfg)  # navsim on the path; no model
     fig, axes = plt.subplots(args.n, 2, figsize=(9, 2.6 * args.n))
@@ -443,11 +450,11 @@ def contact(args) -> int:
 def timing(args) -> int:
     import torch
 
-    from gallops.memory import cache, inputs
+    from gallops.memory import cache, inputs, ticks
 
     cfg = _cfg()
     data = cfg.datasets["navtrain"]
-    roots = [data.extra["blobs"], data.extra["extra_blobs"]]
+    roots = ticks.image_roots(data)
     table, rows = _training_sample(cfg, args.n, seed=4)
     agent, builder, _, free = _load(cfg, args.device)
     torch.cuda.reset_peak_memory_stats()
