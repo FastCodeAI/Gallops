@@ -15,6 +15,14 @@ building its data and before its first optimizer step; a failure lists every pro
   tokens.VIT_LIMITS: it is the tap the side-car reads, so it is the one held to the live model.
 - **projection:** a point 20 m straight ahead lands near the token image's centre column through
   the cached CAM_F0 projection; a wrong camera slot or a wrong TO_512 puts it elsewhere.
+
+**Part B's data preflight** (`run_data`, `python -m gallops.drivejepa_perception.preflight data`) holds
+each of navtest's and R-clean's passes to the code and the data before anything reads them: the code
+committed and the suite green; the list re-derived; the labels against NAVSIM's code on 8 windows;
+a live batch-1 forward of 6 rows, inputs built by the vendor's code from that split's own data split,
+equal to the cache (tokens, pick, the release's scores, the ViT output); the projection check; and the
+PDM labels re-scored on 5 rows. `report_guard` refuses any row set that touches a report log: Part B
+never reads them (B-0's protocol).
 """
 
 from __future__ import annotations
@@ -102,8 +110,81 @@ def run(cfg, tokens_dir: Path, labels_dir: Path, rows: dict, live_rows: int = 6,
     return report
 
 
-def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, sample, vit_dir=None) -> tuple:
-    """Rebuild `sample` rows live (vendor inputs, batch 1) and compare them with the cache."""
+def report_guard(token_logs: np.ndarray, rows: dict, report_logs) -> list:
+    """Every row set that touches a report log, named: Part B reads none of them."""
+    report = set(report_logs)
+    return [
+        f"{name}: {int(np.isin(token_logs[np.asarray(picked)], list(report)).sum())} rows from report logs"
+        for name, picked in rows.items()
+        if len(picked) and np.isin(token_logs[np.asarray(picked)], list(report)).any()
+    ]
+
+
+def run_data(
+    cfg, labels_dir: Path, tokens_dir: Path, vit_dir: Path, pdm_dir=None, live_rows: int = 6
+) -> dict:
+    """Part B's data preflight for a navtest or R-clean pass set (module docstring); writes nothing.
+
+    Raises SystemExit listing every problem; returns the report otherwise.
+    """
+    from gallops.drivejepa_perception import env, navsim_data, pdm_labels, targets
+    from gallops.train.preflight import code_checks
+
+    report, problems = {}, []
+    report["code"], found = code_checks(REPO)
+    problems += found
+    entered = env.enter(cfg)
+    report["entered"] = entered
+    lmanifest = json.loads((Path(labels_dir) / "manifest.json").read_text())
+    source = navsim_data.source_of(lmanifest)
+    if source == "navtrain":
+        problems.append("run_data reads Part B's own sources; navtrain passes are held by `run`")
+    spec = navsim_data.source_spec(Path(entered["code"]), Path(entered["navsim_root"]), source)
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    token_logs = np.array(lmanifest["logs"])[labels["log_id"]]
+    if sorted(set(token_logs.tolist())) != sorted(spec["logs"]):
+        problems.append(f"the labels' logs are not the {source} list's")
+    for name, directory in (("tokens", tokens_dir), ("vit", vit_dir)):
+        m = json.loads((Path(directory) / "manifest.json").read_text())
+        if m["rows"] != len(labels["token"]) or Path(m["labels"]).resolve() != Path(labels_dir).resolve():
+            problems.append(f"the {name} pass was not built from these labels, row for row")
+    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+    problems += report_guard(token_logs, {"all": np.arange(len(token_logs))}, splits["report"])
+    report["data"] = {
+        "source": source,
+        "rows": int(len(labels["token"])),
+        "logs": len(set(token_logs.tolist())),
+    }
+
+    report["labels"] = {"problems": navsim_data.check_labels(cfg, Path(labels_dir), n_windows=8)}
+    problems += report["labels"]["problems"]
+    sample = np.linspace(0, len(labels["token"]) - 1, live_rows).astype(int)
+    report["inputs"], found = _live_equals_cache(
+        entered, tokens_dir, labels, token_logs, sample, vit_dir, navsim_data.DATA_SPLIT[source]
+    )
+    problems += found
+    l2i = np.load(Path(tokens_dir) / "lidar2img.npy", mmap_mode="r")
+    centre_u = []
+    for r in sample:
+        h = targets.front_projection(np.asarray(l2i[r])) @ np.array([20.0, 0.0, 1.0, 1.0])
+        centre_u.append(float(h[0] / h[2]))
+    report["projection"] = {"u_of_20m_ahead": centre_u}
+    if max(abs(u - 256.0) for u in centre_u) > 64:
+        problems.append(f"20 m straight ahead projects to u = {centre_u}, not near 256: wrong slot or TO_512")
+    if pdm_dir is not None:
+        report["pdm_recheck"] = pdm_labels.check(cfg, Path(pdm_dir), Path(tokens_dir), Path(labels_dir), 5)
+        problems += report["pdm_recheck"]
+    report["problems"] = problems
+    if problems:
+        raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
+    return report
+
+
+def _live_equals_cache(
+    entered: dict, tokens_dir: Path, labels, token_logs, sample, vit_dir=None, data_split: str = "trainval"
+) -> tuple:
+    """Rebuild `sample` rows live (vendor inputs, batch 1) and compare them with the cache: tokens to fp16
+    rounding, the pick exactly, the release's scores (where cached) within 1e-3, the ViT output."""
     import torch
     from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
     from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
@@ -113,6 +194,8 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
     from gallops.drivejepa_perception import navsim_data, tokens
 
     cache = {k: np.load(Path(tokens_dir) / f"{k}.npy", mmap_mode="r") for k in ("tokens", "pick")}
+    if (Path(tokens_dir) / "scores.npy").exists():
+        cache["scores"] = np.load(Path(tokens_dir) / "scores.npy", mmap_mode="r")
     if vit_dir is not None:
         cache["vit_out"] = np.load(Path(vit_dir) / "vit_out.npy", mmap_mode="r")
     agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
@@ -129,9 +212,9 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
     vit_diff = []
     builder = DriveJEPAFeatureBuilder(config=DriveJEPAConfig())
     sensors = DriveJEPAAgent.get_sensor_config(None)
-    logs_dir = Path(entered["navsim_root"]) / "navsim_logs/trainval"
-    blobs = Path(entered["navsim_root"]) / "sensor_blobs/trainval"
-    worst, picks, problems = 0.0, 0, []
+    logs_dir = Path(entered["navsim_root"]) / "navsim_logs" / data_split
+    blobs = Path(entered["navsim_root"]) / "sensor_blobs" / data_split
+    worst, picks, problems, score_gap = 0.0, 0, [], 0.0
     with torch.no_grad():
         for r in sample:
             token = str(labels["token"][r])
@@ -142,6 +225,9 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
             live = captured["tokens"][0, :, 0].float().cpu().numpy()
             worst = max(worst, float(np.abs(live - np.asarray(cache["tokens"][r], dtype=np.float32)).max()))
             picks += int(int(out["pdm_score"][0].argmax()) == int(cache["pick"][r]))
+            if "scores" in cache:
+                live_scores = out["pdm_score"][0].float().cpu().numpy()
+                score_gap = max(score_gap, float(np.abs(live_scores - cache["scores"][r]).max()))
             if vit_dir is not None:
                 live_vit = captured["vit_out"].reshape(512, 1024).float().cpu().numpy()
                 vit_diff.append(np.abs(live_vit - np.asarray(cache["vit_out"][r], dtype=np.float32)))
@@ -150,6 +236,12 @@ def _live_equals_cache(entered: dict, tokens_dir: Path, labels, token_logs, samp
     del model, agent
     torch.cuda.empty_cache()
     found = {"rows": [int(r) for r in sample], "token_max_diff": worst, "picks_equal": picks}
+    if "scores" in cache:
+        found["scores_max_diff"] = score_gap
+        if score_gap > 1e-3:
+            problems.append(
+                f"the live release's scores differ from the cache by {score_gap:.3g} (limit 1e-3)"
+            )
     if worst > TOKEN_ATOL:
         problems.append(f"live tokens differ from the cache by {worst:.3g} (limit {TOKEN_ATOL})")
     if picks != len(sample):
@@ -342,3 +434,36 @@ def run_vit_lora(cfg, args, d: dict, vit, car, f1_recorded: float) -> dict:
     if problems:
         raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
     return report
+
+
+def main(argv=None) -> None:
+    import argparse
+
+    from gallops.config import SiteConfig
+
+    parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.preflight")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("data", help="Part B's data preflight for a navtest or R-clean pass set")
+    p.add_argument("--labels", required=True)
+    p.add_argument("--tokens", required=True)
+    p.add_argument("--vit-tokens", required=True)
+    p.add_argument("--pdm", default="")
+    p.add_argument("--out", required=True, help="the report, JSON")
+    args = parser.parse_args(argv)
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists")
+    report = run_data(
+        SiteConfig.load(),
+        Path(args.labels),
+        Path(args.tokens),
+        Path(args.vit_tokens),
+        Path(args.pdm) if args.pdm else None,
+    )
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=1, default=str))
+    print(json.dumps({k: report[k] for k in ("data", "inputs", "projection")}, indent=1, default=str))
+
+
+if __name__ == "__main__":
+    main()

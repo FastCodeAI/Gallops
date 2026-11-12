@@ -193,3 +193,12 @@ def test_truth_agents_fill_a_lost_track_at_constant_velocity():
     assert not cv["path"][0, 1:].any()  # padded slots stay zero
     with pytest.raises(ValueError):
         tg.truth_agents(labels, _front_projection(), fill="other")
+
+
+def test_the_report_guard_names_every_row_set_that_touches_a_report_log():
+    from gallops.drivejepa_perception import preflight
+
+    token_logs = np.array(["l1", "l2", "rep", "l1"])
+    assert preflight.report_guard(token_logs, {"all": np.arange(2)}, ["rep"]) == []
+    found = preflight.report_guard(token_logs, {"train": np.array([0, 2]), "select": np.array([1])}, ["rep"])
+    assert found == ["train: 1 rows from report logs"]

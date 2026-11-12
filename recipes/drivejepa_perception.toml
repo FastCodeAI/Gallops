@@ -1152,3 +1152,22 @@ module = "drivejepa_perception.navtest"
 args = ["anchor", "--replay", "{out}/part-b/b0/navtest-R", "--live", "{out}/part-b/b0/navtest-R-live",
         "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/anchor"]
 after = ["part-b-0-score-R", "part-b-0-live-R"]
+
+# Part B's data preflight (one GPU, minutes): each split's passes held to the code and the live model before
+# anything reads them (B0-G5's live check; the labels, the lists, the PDM labels re-scored on 5 rows).
+
+[[stage]]
+name = "part-b-0-preflight-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.preflight"
+args = ["data", "--labels", "{out}/labels-navtest-v1", "--tokens", "{out}/tokens-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1", "--pdm", "{out}/pdm-navtest-v1", "--out", "{out}/part-b/b0/preflight-navtest.json"]
+after = ["part-b-0-vit-navtest", "part-b-0-pdm-navtest"]
+
+[[stage]]
+name = "part-b-0-preflight-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.preflight"
+args = ["data", "--labels", "{out}/labels-fresh-v1", "--tokens", "{out}/tokens-fresh-v1",
+        "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--pdm", "{out}/pdm-fresh-v1", "--out", "{out}/part-b/b0/preflight-fresh.json"]
+after = ["part-b-0-vit-fresh", "part-b-0-pdm-fresh"]
