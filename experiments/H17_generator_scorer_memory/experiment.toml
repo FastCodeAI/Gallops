@@ -1,0 +1,37 @@
+# H17 -- a memory that the generator and the scorer both read, trained with them on Physical AI AV. Owner Siddesh.
+# Sources: every number is copied from a json file in this folder's step folders (named in each `source`), or
+# from a run file listed in POINTERS.md. The step reports quote the same files.
+# The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
+
+schema = 1
+id = "H17"
+title = "A memory read by both the generator and the scorer, trained with them, picks better paths"
+short = "Generator and scorer memory"
+track = "hypothesis"
+owner = "Siddesh"
+benchmarks = ["offline"]
+started = 2026-11-07
+ended = 2026-11-12
+status = "parked"
+verdict = "negative"
+question = """H05 found that the camera's past, read through a small probe, adds little; H15 carried only the \
+planner's own outputs and could not be told from the same layer wiped. Both left the released model frozen. \
+Does a memory help when the two parts that decide the drive, the generator that proposes 32 paths and the \
+scorer that picks one, are trained to use it?"""
+hypothesis = """A memory of 16 slots, written at every moment from the frozen encoder's output and read by \
+both the generator and the scorer, trained together with them from Drive-JEPA 0.1.8b on Physical AI AV, makes \
+the scorer pick better paths than the same model with the memory wiped at every moment. Expected: a higher \
+mean grade of the picked path on the picking set, and at least +0.01 on moments within 5 s after a cut-in, a \
+crossing or a hard brake. Refuted if the carried memory does not beat the wiped one."""
+predictions = "none: the rule for each run was written before it started (file times and run logs agree) but in a folder outside git, so no commit date shows it"
+learned = """Camera memory has a low ceiling on this data. With a healthy memory (slots distinct, gates open, \
+earlier views recalled), carrying it gave a pick grade of 0.7313 against 0.7355 with the same weights and the \
+memory reset every moment, on 1,131 graded moments: no gain. The first training run's gap in favour of the \
+carried memory (0.7752 against 0.7639, 95 % interval -0.008 to +0.032) came from a collapsed memory whose 16 \
+slots were 99.96 % alike, so it is not the memory working. A direct test found the trained memory adds nothing \
+for predicting the driver beyond the current view and the car's own motion history. Given the true past camera \
+view directly, a linear reader gains 1 to 2 % on speed and nothing on braking or steering. The car's own \
+motion history is the stronger signal, and is a separate, later experiment. Limits: one seed, one data set, \
+open loop only; the 12-scene closed-loop check of carried against reset had not finished when this was recorded."""
+parents = ["H05", "H15"]
+narrative = "experiments/H17_generator_scorer_memory/README.md"
