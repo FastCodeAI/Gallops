@@ -1,14 +1,14 @@
 # H15 · A perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), then tested as an input to the scorer, as an input to the refiner, and against LoRA on the ViT
 
 **The rerun (from 4 Nov) follows a new plan:** Part A alone, in eight steps, each reviewed by the
-owner before the next starts: [drivejepa-perception-sidecar-A.md](drivejepa-perception-sidecar-A.md).
+owner before the next starts: [part-a/plan.md](part-a/plan.md).
 Phases B and C wait until Part A closes. This document stays the first pass's plan, which that pass's
 record and its departures refer to.
 
 **Status (2026-11-04): every planned run done except the gate (C), which the owner deferred.**
 H15 is registered, and its predictions were committed before the first training step. The account
 of what ran, what it showed, the decision and every departure from this plan is
-[experiments/H15_perception_sidecar/README.md](../experiments/H15_perception_sidecar/README.md);
+[experiments/H15_perception_sidecar/README.md](../../experiments/H15_perception_sidecar/README.md);
 this document stays the plan.
 
 **Where it came out (4 Nov, open loop):**

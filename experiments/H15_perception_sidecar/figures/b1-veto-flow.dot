@@ -1,4 +1,4 @@
-// H15 Part B, B-1 (docs/drivejepa-perception-sidecar-B-1-veto.md): the analytic veto. Nothing is trained: the
+// H15 Part B, B-1 (docs/drivejepa-perception-sidecar/part-b/B-1-veto.md): the analytic veto. Nothing is trained: the
 // release proposes and scores as it always does; a rule on the agents' clearances removes proposals before the pick.
 // Grey: the release, untouched. Blue: the agents (three sources, one per sub-version). Amber: the rule.
 // Render: dot -Tsvg b1-veto-flow.dot -o b1-veto-flow.svg && dot -Tpng:cairo -Gdpi=192 b1-veto-flow.dot -o b1-veto-flow.png

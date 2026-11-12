@@ -16,7 +16,7 @@ epoch is the one with the best F1 at 2 m within 30 m on select. The report logs 
 after training, at the kept epoch and at the fixed last epoch: the kept epoch is the best of
 several on select, so the last, which nothing chose, is quoted beside it. `--no-report` skips
 them, so a run can be reviewed on select before any report number exists (the rerun's plan,
-docs/drivejepa-perception-sidecar-A.md).
+docs/drivejepa-perception-sidecar/part-a/plan.md).
 
 **How the run evolved.** Every LOG_EVERY steps, `steps.jsonl` gets the window's means: each loss
 term of each layer, the learning rate, the gradient norm before clipping, the AMP loss scale, the
@@ -53,7 +53,7 @@ from gallops.drivejepa_perception import targets as tg
 REPO = Path(__file__).resolve().parents[3]
 LR, WEIGHT_DECAY, BATCH, CLIP = 2e-4, 0.01, 64, 35.0
 TAP_DIMS = {"post": 256, "vit_out": 1024, "block12": 1024}
-#: The rerun's three architectures (docs/drivejepa-perception-sidecar-A.md, section 6). v1 is A1's
+#: The rerun's three architectures (docs/drivejepa-perception-sidecar/part-a/plan.md, section 6). v1 is A1's
 #: side-car, 4.39 M on the ViT-out tap; v2 doubles its depth and its queries, 8.37 M; v3 also widens
 #: it to 384, 18.44 M, inside the plan's 30.8 M budget.
 VARIANTS = {

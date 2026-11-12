@@ -1,9 +1,9 @@
 # H15 Part B · B-1: the analytic veto. Can a rule on the agents pick better than the release?
 
 **Status (11 Nov 2026): planned, not run. Nothing here trains.**
-- [The overview](drivejepa-perception-sidecar-overview.md) holds the tracker, the naming and the log.
-- This plan stands on [B-0, the foundations](drivejepa-perception-sidecar-B.md).
-- It was C4 in [the ideas](drivejepa-perception-sidecar-B-ideas.md). The owner chose it first on 11 Nov.
+- [The overview](../README.md) holds the tracker, the naming and the log.
+- This plan stands on [B-0, the foundations](B-0-foundations.md).
+- It was C4 in [the ideas](ideas.md). The owner chose it first on 11 Nov.
 
 ## The crux
 
@@ -33,7 +33,7 @@ the release's proposals that come too close to them, and leave a better pick?
   - If B-1-3 beats it, B-2 to B-4 have a bar to clear: a learned use of the agents must do better than a
     rule.
 
-![B-1, the analytic veto: three sources of agents, one rule](../experiments/H15_perception_sidecar/figures/b1-veto-flow.png)
+![B-1, the analytic veto: three sources of agents, one rule](../../../experiments/H15_perception_sidecar/figures/b1-veto-flow.png)
 
 ## The concepts, question by question
 
@@ -61,7 +61,7 @@ the release's proposals that come too close to them, and leave a better pick?
   velocity, as PDM simulates other agents.
 - The figure below shows it on a made-up scene.
 
-![The veto on a made-up scene: the release's pick overlaps the car at 2.0 s; the rule leaves "slow down"](../experiments/H15_perception_sidecar/figures/b1-clearance.png)
+![The veto on a made-up scene: the release's pick overlaps the car at 2.0 s; the rule leaves "slow down"](../../../experiments/H15_perception_sidecar/figures/b1-clearance.png)
 
 **Q4. What is the rule?**
 - **Veto.** A proposal is removed if any clearance within the horizon H is under the margin m, against any agent

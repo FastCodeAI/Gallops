@@ -1,11 +1,11 @@
 # H15 Part B · B-2: the agents into the scorer. Can a scorer that reads them pick better?
 
 **Status (11 Nov 2026): planned, not run. Nothing trains before the owner's go-ahead.**
-- [The overview](drivejepa-perception-sidecar-overview.md) holds the tracker, the naming and the log.
-- This plan stands on [B-0, the foundations](drivejepa-perception-sidecar-B.md).
-- B-1's result is its bar: [B-1, the veto](drivejepa-perception-sidecar-B-1-veto.md).
-- How LoRA adapts the scorer: [the LoRA primer](drivejepa-perception-sidecar-B-lora-primer.md).
-- It was C2 in [the ideas](drivejepa-perception-sidecar-B-ideas.md). It continues the first pass's B1 (`H15.b1`).
+- [The overview](../README.md) holds the tracker, the naming and the log.
+- This plan stands on [B-0, the foundations](B-0-foundations.md).
+- B-1's result is its bar: [B-1, the veto](B-1-veto.md).
+- How LoRA adapts the scorer: [the LoRA primer](lora-primer.md).
+- It was C2 in [the ideas](ideas.md). It continues the first pass's B1 (`H15.b1`).
 
 ## The crux
 
@@ -36,7 +36,7 @@
   - One that does not, says the rule is enough.
   - Either way, it says whether the scorer's named agent (B-13) is faithful out of sample.
 
-![B-2: the agents into the release's scorer](../experiments/H15_perception_sidecar/figures/b2-scorer.png)
+![B-2: the agents into the release's scorer](../../../experiments/H15_perception_sidecar/figures/b2-scorer.png)
 
 ## The concepts, question by question
 

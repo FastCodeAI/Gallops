@@ -1,16 +1,16 @@
 # H15 Part B: where the side-car could connect to Drive-JEPA (the ideas, B-1 to B-16)
 
 **Status (11 Nov 2026): the catalogue of ideas.** On 11 Nov the owner chose four to plan first, in this order:
-- **B-1, the analytic veto** (was B-1): [its plan](drivejepa-perception-sidecar-B-1-veto.md);
-- **B-2, the agents into the scorer** (was B-2): [its plan](drivejepa-perception-sidecar-B-2-scorer.md);
-- **B-3, the agents into the refiner** (was B-3): [its plan](drivejepa-perception-sidecar-B-3-refiner.md);
-- **B-4, both with LoRA** (was B-4, "B-LoRA"): [its plan](drivejepa-perception-sidecar-B-4-joint-lora.md).
+- **B-1, the analytic veto** (was B-1): [its plan](B-1-veto.md);
+- **B-2, the agents into the scorer** (was B-2): [its plan](B-2-scorer.md);
+- **B-3, the agents into the refiner** (was B-3): [its plan](B-3-refiner.md);
+- **B-4, both with LoRA** (was B-4, "B-LoRA"): [its plan](B-4-joint-lora.md).
 
 The rest keep their numbers, B-5 to B-16 (were B-5 to B-16), until chosen.
-- **What they share:** [B-0, the foundations](drivejepa-perception-sidecar-B.md).
-- **The tracker, the naming and the discussion log:** [the overview](drivejepa-perception-sidecar-overview.md).
-- Part A, the side-car itself: [the plan](drivejepa-perception-sidecar-A.md) and
-  [the executive update](drivejepa-perception-sidecar-A-update.md).
+- **What they share:** [B-0, the foundations](B-0-foundations.md).
+- **The tracker, the naming and the discussion log:** [the overview](../README.md).
+- Part A, the side-car itself: [the plan](../part-a/plan.md) and
+  [the executive update](../part-a/executive-update.md).
 - "First-pass first-pass B1, first-pass B2, first-pass B3" below are the first pass's recorded runs of 3–4 Nov (`H15.b1`, `H15.b2`, `H15.b3`). They
   are not the new B-1, B-2, B-3.
 
@@ -62,7 +62,7 @@ with it on scenes it never trained on.
 - B-14, until there is a model worth gating.
 - B-15 is not recommended.
 
-![Where the side-car's agents could connect to Drive-JEPA's planner](../experiments/H15_perception_sidecar/figures/b-connections.png)
+![Where the side-car's agents could connect to Drive-JEPA's planner](../../../experiments/H15_perception_sidecar/figures/b-connections.png)
 
 ## 1. How Drive-JEPA plans, and where information flows
 
@@ -173,7 +173,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 
 ### B-1 · An analytic veto (no training)
 
-**Chosen first (11 Nov); planned in full in [its own document](drivejepa-perception-sidecar-B-1-veto.md).** The notes below are the catalogue's.
+**Chosen first (11 Nov); planned in full in [its own document](B-1-veto.md).** The notes below are the catalogue's.
 
 - **What.** No learning.
   - For each proposal, the clearance to each forecast agent over its first 2 s (`geometry.terms`).
@@ -204,7 +204,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 
 ### B-2 · Agents shape the pick (scorer input)
 
-**Chosen second (11 Nov); planned in full in [its own document](drivejepa-perception-sidecar-B-2-scorer.md).** The notes below are the catalogue's.
+**Chosen second (11 Nov); planned in full in [its own document](B-2-scorer.md).** The notes below are the catalogue's.
 
 - **What.** The scorer reads the agents to score each of the 32 proposals.
   - Attention over agents is biased by clearance.
@@ -228,7 +228,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 
 ### B-3 · Agents shape the proposals (refiner input)
 
-**Chosen third (11 Nov); planned in full in [its own document](drivejepa-perception-sidecar-B-3-refiner.md).** The notes below are the catalogue's.
+**Chosen third (11 Nov); planned in full in [its own document](B-3-refiner.md).** The notes below are the catalogue's.
 
 - **What.** The side-car's agents enter each of the refiner's 4 passes, so the 32 proposals are formed knowing
   where every agent is and will be.
@@ -264,7 +264,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 
 ### B-4 · B-LoRA: both together, with LoRA
 
-**Chosen fourth (11 Nov); planned in full in [its own document](drivejepa-perception-sidecar-B-4-joint-lora.md).** The notes below are the catalogue's.
+**Chosen fourth (11 Nov); planned in full in [its own document](B-4-joint-lora.md).** The notes below are the catalogue's.
 
 - **What.** The agents go into the refiner (B-3) and the scorer (B-2). LoRA adapts both; the rest is frozen.
 - **Why it might help.**

@@ -1,6 +1,6 @@
 """Which agents matter to the ego: the derived labels of H15's plan (§3.8 of
-docs/drivejepa-perception-sidecar-A.md). They grade the side-car (step 5's select records, notebook 06);
-none changes a target, a loss weight or the readout.
+docs/drivejepa-perception-sidecar/part-a/plan.md). They grade the side-car (step 5's select records,
+notebook 06); none changes a target, a loss weight or the readout.
 
 Simple on purpose: each is a rule a person can check on a picture, not a learned importance.
 

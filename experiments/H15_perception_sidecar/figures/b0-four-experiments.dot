@@ -1,4 +1,4 @@
-// H15 Part B (docs/drivejepa-perception-sidecar-B.md, top): the four experiments in one picture. Left, Drive-JEPA as it
+// H15 Part B (docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md, top): the four experiments in one picture. Left, Drive-JEPA as it
 // runs at inference, frozen; right, the side-car and its agents; between them, each experiment beside the part of the
 // planner it changes, with what it tests. Grey: the release, frozen. Blue: the side-car and its agents. Green: an
 // experiment that trains (an adapter + LoRA). Amber: a rule that trains nothing.

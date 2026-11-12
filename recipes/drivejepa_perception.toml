@@ -4,7 +4,7 @@
 #   gallops recipe drivejepa_perception                    print every command for this machine
 #   gallops recipe drivejepa_perception labels --run       run one stage
 #
-# The plan, its rules and the reasons for them: docs/drivejepa-perception-sidecar.md. The record:
+# The plan, its rules and the reasons for them: docs/drivejepa-perception-sidecar/first-pass-plan.md. The record:
 # experiments/H15_perception_sidecar/. Every pass refuses to write into an output that already exists.
 #
 # Site config this needs (gallops.toml):
@@ -715,7 +715,7 @@ args = ["read-b2", "--nusc", "{out}/nusc-v1", "--sidecar", "{out}/runs/a1-s0", "
         "--out", "{out}/ood/ood-b2.json"]
 
 # ---------------------------------------------------------------------------------------------
-# The rerun, Part A: the side-car alone, one reviewed step at a time (docs/drivejepa-perception-sidecar-A.md).
+# The rerun, Part A: the side-car alone, one reviewed step at a time (docs/drivejepa-perception-sidecar/part-a/plan.md).
 # It reads the first pass's caches unchanged (labels-v1, tokens-v1 for geometry, tokens-vit-v1 for the
 # ViT's output) and writes under {out}/part-a/, apart from the first pass's runs. Every stage runs the
 # preflight first, which now also holds the live ViT output to tokens-vit-v1.

@@ -2,10 +2,10 @@
 
 **Status (11 Nov 2026): a primer, written for these experiments.** Every count below is *counted* on 11 Nov from the
 release's own modules, unless labelled otherwise.
-- [The overview](drivejepa-perception-sidecar-overview.md) holds the tracker, the naming and the log.
-- It serves [B-2, the scorer](drivejepa-perception-sidecar-B-2-scorer.md),
-  [B-3, the refiner](drivejepa-perception-sidecar-B-3-refiner.md) and
-  [B-4, both](drivejepa-perception-sidecar-B-4-joint-lora.md).
+- [The overview](../README.md) holds the tracker, the naming and the log.
+- It serves [B-2, the scorer](B-2-scorer.md),
+  [B-3, the refiner](B-3-refiner.md) and
+  [B-4, both](B-4-joint-lora.md).
 
 ## The crux
 
@@ -59,7 +59,7 @@ LoRA keeps the release's weights, and learns a bounded change.
   output in at most r independent directions.
 - Hu et al. (ICLR 2022) found that adaptations of large networks often fit in such a small space.
 
-![One linear layer with LoRA](../experiments/H15_perception_sidecar/figures/lora-concept.png)
+![One linear layer with LoRA](../../../experiments/H15_perception_sidecar/figures/lora-concept.png)
 
 **Q4. Why does B start at zero, and A at random?**
 - **B = 0 makes the change zero,** so before the first step the model is exactly the release. The preflight checks
@@ -95,7 +95,7 @@ LoRA keeps the release's weights, and learns a bounded change.
 - A rank larger than the layer's output adds nothing but parameters. Training that small layer outright, or
   leaving it frozen, is cheaper (a variant, not the plan).
 
-![Where LoRA can attach in the release's refiner and scorer](../experiments/H15_perception_sidecar/figures/lora-where.png)
+![Where LoRA can attach in the release's refiner and scorer](../../../experiments/H15_perception_sidecar/figures/lora-where.png)
 
 **Q7. Why there, and not elsewhere?**
 - **The refiner and the scorer** are what must learn to use a new input: B-3 and B-2.

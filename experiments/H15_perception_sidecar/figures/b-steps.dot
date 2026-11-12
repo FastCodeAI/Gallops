@@ -1,4 +1,4 @@
-// H15 Part B (docs/drivejepa-perception-sidecar-B.md and one document per experiment): the order of work, each block
+// H15 Part B (docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md and one document per experiment): the order of work, each block
 // closed by the owner's review before the next opens. Grey: not yet run. Amber diamonds: the owner's reviews.
 // Nothing trains before B-2, and B-2 waits for the go-ahead. Experiments are named B-<n>-<v> (overview, "Naming").
 // Render: dot -Tsvg b-steps.dot -o b-steps.svg && dot -Tpng:cairo -Gdpi=192 b-steps.dot -o b-steps.png

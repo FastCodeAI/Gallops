@@ -1,10 +1,10 @@
 # H15 Part B · B-3: the agents into the refiner. Do the proposals themselves get better?
 
 **Status (11 Nov 2026): planned, not run. Nothing trains before the owner's go-ahead.**
-- [The overview](drivejepa-perception-sidecar-overview.md) holds the tracker, the naming and the log.
-- This plan stands on [B-0, the foundations](drivejepa-perception-sidecar-B.md).
-- How LoRA adapts the refiner: [the LoRA primer](drivejepa-perception-sidecar-B-lora-primer.md).
-- It was C1 in [the ideas](drivejepa-perception-sidecar-B-ideas.md). It continues the first pass's B2 (`H15.b2`).
+- [The overview](../README.md) holds the tracker, the naming and the log.
+- This plan stands on [B-0, the foundations](B-0-foundations.md).
+- How LoRA adapts the refiner: [the LoRA primer](lora-primer.md).
+- It was C1 in [the ideas](ideas.md). It continues the first pass's B2 (`H15.b2`).
 
 ## The crux
 
@@ -32,7 +32,7 @@
   release's good anchors. The agents can only help the refiner match those better where agents are near.
   - So the change should concentrate in scenes with an agent near the plan, and be absent elsewhere.
 
-![B-3: the agents into the refiner, before every BEVFormer layer](../experiments/H15_perception_sidecar/figures/b3-refiner.png)
+![B-3: the agents into the refiner, before every BEVFormer layer](../../../experiments/H15_perception_sidecar/figures/b3-refiner.png)
 
 ## The concepts, question by question
 

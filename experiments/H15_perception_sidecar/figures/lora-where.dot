@@ -1,4 +1,4 @@
-// The LoRA primer (docs/drivejepa-perception-sidecar-B-lora-primer.md): where rank-16 LoRA can attach in the
+// The LoRA primer (docs/drivejepa-perception-sidecar/part-b/lora-primer.md): where rank-16 LoRA can attach in the
 // release's planner, every linear layer counted on 11 Nov (refiner 13 layers, scorer MLP 3). Grey: frozen and never
 // adapted here. Green: linear layers LoRA can adapt, with LoRA's parameter count. Amber: the choice that moves where
 // the refiner looks in the image.

@@ -1,5 +1,5 @@
 // H15 Part B ideas: Drive-JEPA's planner as it runs at inference, and where the side-car's agents could
-// connect to it (docs/drivejepa-perception-sidecar-B-ideas.md). Grey: the release, frozen. Blue: the
+// connect to it (docs/drivejepa-perception-sidecar/part-b/ideas.md). Grey: the release, frozen. Blue: the
 // side-car (Part A). Amber, dashed: a connection point, labelled B-<n> (the four chosen first: B-1 to B-4).
 // Render: dot -Tsvg b-connections.dot -o b-connections.svg && dot -Tpng:cairo -Gdpi=192 b-connections.dot -o b-connections.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)

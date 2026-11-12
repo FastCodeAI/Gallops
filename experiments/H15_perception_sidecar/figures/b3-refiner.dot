@@ -1,4 +1,4 @@
-// H15 Part B, B-3 (docs/drivejepa-perception-sidecar-B-3-refiner.md): the side-car's agents into the refiner, so the
+// H15 Part B, B-3 (docs/drivejepa-perception-sidecar/part-b/B-3-refiner.md): the side-car's agents into the refiner, so the
 // 32 proposals themselves can change. The refiner is one module run four times; a pre-hook adds the adapter's output
 // to its queries before every BEVFormer layer. Pass 1's proposals are decoded before any hook acts.
 // Grey: frozen. Blue: the agents. Green: what trains.

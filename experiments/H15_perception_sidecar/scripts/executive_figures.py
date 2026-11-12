@@ -1,4 +1,4 @@
-"""The executive update's figures (docs/drivejepa-perception-sidecar-A-update.md), from step 5's runs.
+"""The executive update's figures (docs/drivejepa-perception-sidecar/part-a/executive-update.md), from step 5's runs.
 
     <[python] drivejepa> experiments/H15_perception_sidecar/scripts/executive_figures.py
 

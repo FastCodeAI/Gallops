@@ -2,19 +2,19 @@
 
 **Status (11 Nov 2026): planned, not run.** Nothing here trains, and nothing runs before the owner's go-ahead.
 - **Where it sits:**
-  - The common record is [the overview](drivejepa-perception-sidecar-overview.md): the tracker, the naming and the
+  - The common record is [the overview](../README.md): the tracker, the naming and the
     discussion log.
-  - The ideas are in [the ideas](drivejepa-perception-sidecar-B-ideas.md).
+  - The ideas are in [the ideas](ideas.md).
 - **The experiments that stand on it:**
-  - [B-1, the veto](drivejepa-perception-sidecar-B-1-veto.md);
-  - [B-2, the scorer](drivejepa-perception-sidecar-B-2-scorer.md);
-  - [B-3, the refiner](drivejepa-perception-sidecar-B-3-refiner.md);
-  - [B-4, both with LoRA](drivejepa-perception-sidecar-B-4-joint-lora.md).
+  - [B-1, the veto](B-1-veto.md);
+  - [B-2, the scorer](B-2-scorer.md);
+  - [B-3, the refiner](B-3-refiner.md);
+  - [B-4, both with LoRA](B-4-joint-lora.md).
 - Until 11 Nov this page was the whole Part B plan. Its B-LoRA sections moved to B-4's document.
 
 ## The four experiments, in one picture
 
-![Part B's four experiments, and where each fits inside Drive-JEPA](../experiments/H15_perception_sidecar/figures/b0-four-experiments.png)
+![Part B's four experiments, and where each fits inside Drive-JEPA](../../../experiments/H15_perception_sidecar/figures/b0-four-experiments.png)
 
 **How to read it.**
 - **Down the left is Drive-JEPA as it runs today:** the ViT, the projector, the refiner's four passes, the scorer

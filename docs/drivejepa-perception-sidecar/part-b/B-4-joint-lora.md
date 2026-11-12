@@ -1,11 +1,11 @@
 # H15 Part B · B-4: the agents into the refiner and the scorer, with LoRA. Does it meet or beat the release?
 
 **Status (11 Nov 2026): planned, not run. Nothing trains before the owner's go-ahead.**
-- [The overview](drivejepa-perception-sidecar-overview.md) holds the tracker, the naming and the log.
-- This plan stands on [B-0](drivejepa-perception-sidecar-B.md), [B-2](drivejepa-perception-sidecar-B-2-scorer.md)
-  and [B-3](drivejepa-perception-sidecar-B-3-refiner.md).
-- How LoRA adapts both: [the LoRA primer](drivejepa-perception-sidecar-B-lora-primer.md).
-- It was C3, "B-LoRA", in [the ideas](drivejepa-perception-sidecar-B-ideas.md): the owner's first idea of 10 Nov,
+- [The overview](../README.md) holds the tracker, the naming and the log.
+- This plan stands on [B-0](B-0-foundations.md), [B-2](B-2-scorer.md)
+  and [B-3](B-3-refiner.md).
+- How LoRA adapts both: [the LoRA primer](lora-primer.md).
+- It was C3, "B-LoRA", in [the ideas](ideas.md): the owner's first idea of 10 Nov,
   placed fourth on 11 Nov so that it builds on B-1 to B-3.
 
 ## The crux
@@ -37,7 +37,7 @@
 - **EC may drop silently:** picks that switch between neighbouring frames lose two-frame comfort, which no training
   label carries. It is measured.
 
-![B-4-1: two stages, B-3-1's refiner then B-2-1's scorer on its proposals](../experiments/H15_perception_sidecar/figures/b4-two-stage.png)
+![B-4-1: two stages, B-3-1's refiner then B-2-1's scorer on its proposals](../../../experiments/H15_perception_sidecar/figures/b4-two-stage.png)
 
 ## The concepts, question by question
 

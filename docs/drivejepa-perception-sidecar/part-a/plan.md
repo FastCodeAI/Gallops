@@ -3,10 +3,10 @@
 **Status (2026-11-10): steps 1–5 done on the select logs (§9.2, notebook 06), and step 7 done (§9.3,
 notebook 07): on nuScenes the side-car finds 0.53 of the vehicles within 30 m, so Q9 holds. Step 6, the report
 logs, waits: no report-log number exists. The owner has opened phase B's planning alongside (D22, D23):
-[the overview](drivejepa-perception-sidecar-overview.md) tracks it, and every document of this work.**
+[the overview](../README.md) tracks it, and every document of this work.**
 
-**Why a revision.** The first pass ([its plan](drivejepa-perception-sidecar.md), [its
-record](../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
+**Why a revision.** The first pass ([its plan](../first-pass-plan.md), [its
+record](../../../experiments/H15_perception_sidecar/README.md)) ran the side-car and every phase-B question
 in a day and a half. It produced too much to review, so the owner judged its results inconclusive.
 This plan covers **Part A only**, training the side-car and measuring it. It breaks Part A into eight
 steps. The owner reviews each block before the next one starts.
@@ -15,15 +15,15 @@ steps. The owner reviews each block before the next one starts.
 
 | Step | Artifact |
 |---|---|
-| 1 · the data | [notebooks/01_dataset.ipynb](../experiments/H15_perception_sidecar/notebooks/01_dataset.ipynb), §3 |
-| 2 · the model, part by part | [notebooks/02b_architecture.ipynb](../experiments/H15_perception_sidecar/notebooks/02b_architecture.ipynb), §4 |
-| 2 · the loss: by hand, a primer, mode collapse, weighting what matters | [notebooks/02_loss.ipynb](../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §5 |
-| 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
-| the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
-| step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
-| 4 · the success criteria, committed | [PREDICTIONS.md](../experiments/H15_perception_sidecar/PREDICTIONS.md), the rerun's section |
-| 5 · three sizes, then the chosen one at three seeds: what it predicts | [notebooks/06_predictions.ipynb](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb), §9.2 |
-| 7 · nuScenes, as recorded and warped to NAVSIM's camera | [notebooks/07_nuscenes_readout.ipynb](../experiments/H15_perception_sidecar/notebooks/07_nuscenes_readout.ipynb), §9.3 |
+| 1 · the data | [notebooks/01_dataset.ipynb](../../../experiments/H15_perception_sidecar/notebooks/01_dataset.ipynb), §3 |
+| 2 · the model, part by part | [notebooks/02b_architecture.ipynb](../../../experiments/H15_perception_sidecar/notebooks/02b_architecture.ipynb), §4 |
+| 2 · the loss: by hand, a primer, mode collapse, weighting what matters | [notebooks/02_loss.ipynb](../../../experiments/H15_perception_sidecar/notebooks/02_loss.ipynb), §5 |
+| 3 · the training recipe and the pipeline check | [notebooks/03_training.ipynb](../../../experiments/H15_perception_sidecar/notebooks/03_training.ipynb), §6 and §9 |
+| the plan for steps 4–8 | [notebooks/04_evaluation.ipynb](../../../experiments/H15_perception_sidecar/notebooks/04_evaluation.ipynb), §7–8 and §11 |
+| step 7's nuScenes data, prepared | [notebooks/05_nuscenes.ipynb](../../../experiments/H15_perception_sidecar/notebooks/05_nuscenes.ipynb), §8.2 |
+| 4 · the success criteria, committed | [PREDICTIONS.md](../../../experiments/H15_perception_sidecar/PREDICTIONS.md), the rerun's section |
+| 5 · three sizes, then the chosen one at three seeds: what it predicts | [notebooks/06_predictions.ipynb](../../../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb), §9.2 |
+| 7 · nuScenes, as recorded and warped to NAVSIM's camera | [notebooks/07_nuscenes_readout.ipynb](../../../experiments/H15_perception_sidecar/notebooks/07_nuscenes_readout.ipynb), §9.3 |
 
 **The second review's questions, and where each is answered:**
 
@@ -49,7 +49,7 @@ steps. The owner reviews each block before the next one starts.
   - *estimate* and *argued*: as named.
 - **First-pass numbers** are quoted as reference only. Part A re-measures what it claims.
 
-![The eight steps of Part A, with the owner's reviews](../experiments/H15_perception_sidecar/figures/part-a-steps.png)
+![The eight steps of Part A, with the owner's reviews](../../../experiments/H15_perception_sidecar/figures/part-a-steps.png)
 
 ## 1. The question
 
@@ -245,7 +245,7 @@ No new data pass is needed for steps 1–6.
 
 ### 3.8 Which agents matter (proposed; notebook 01 §8 and §9)
 
-![Which agents matter: the derived labels, their metrics and the loss options](../experiments/H15_perception_sidecar/figures/part-a-importance.png)
+![Which agents matter: the derived labels, their metrics and the loss options](../../../experiments/H15_perception_sidecar/figures/part-a-importance.png)
 
 Not every target matters equally to the ego. These labels are derived from the existing ones by
 `importance.py`, for review. **None changes v1's targets, loss or readout.**
@@ -285,7 +285,7 @@ prior; §4.6 says how to handle it.
 
 ## 4. The model (step 2)
 
-![The side-car: inputs, one decoder layer, heads, loss and readout](../experiments/H15_perception_sidecar/figures/part-a-sidecar.png)
+![The side-car: inputs, one decoder layer, heads, loss and readout](../../../experiments/H15_perception_sidecar/figures/part-a-sidecar.png)
 
 | Part | What it does | Parameters (v1) |
 |---|---|---|
@@ -407,7 +407,7 @@ changes the readout's interface.
 
 ### 4.5 Beside Drive-JEPA's two variants (notebook 02b §5)
 
-![The side-car beside Drive-JEPA's two variants](../experiments/H15_perception_sidecar/figures/part-a-variants.png)
+![The side-car beside Drive-JEPA's two variants](../../../experiments/H15_perception_sidecar/figures/part-a-variants.png)
 
 | | Perception-free | Perception-based (the release) | The side-car |
 |---|---|---|---|
@@ -536,7 +536,7 @@ first pass):
 
 ## 6. The training recipe (step 3)
 
-![How one run moves data and what it writes](../experiments/H15_perception_sidecar/figures/part-a-training.png)
+![How one run moves data and what it writes](../../../experiments/H15_perception_sidecar/figures/part-a-training.png)
 
 ### 6.1 Optimisation
 
@@ -954,7 +954,7 @@ reference).
 
 Runs `H15.r3` (5a, from `9d32b80`) and `H15.r4` (5b, from `97727a8`). They wrote to
 `{runs}/drivejepa_perception/part-a/5a-*` and `5b-*`, all with `--no-report`: no report-log number exists.
-[Notebook 06](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb) holds every number
+[Notebook 06](../../../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb) holds every number
 below, and the pictures. All are *measured* on the select logs. Those logs chose the epochs and the
 variant, so each number flatters the chosen run a little.
 

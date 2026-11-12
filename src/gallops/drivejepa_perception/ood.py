@@ -535,12 +535,13 @@ def read_b2(cfg, args) -> None:
 
 # ------------------------------------------------------------- step 7: the side-car alone, warped or not
 #
-# The rerun's step 7 (docs/drivejepa-perception-sidecar-A.md §8.2, choice 11.12) reads the side-car alone
-# on these keyframes twice: as recorded, and with every frame warped to NAVSIM's CAM_F0. The two cameras
-# differ by about a degree in where their rays point and by a few per cent in focal length (§4.1, §8.2);
-# a rotation and a change of intrinsics about one centre are undone exactly by a homography, so the warped
-# read keeps nuScenes' images and asks only whether the side-car's distance error is the camera's geometry.
-# The cameras' centres differ by centimetres; the warp keeps nuScenes' own, and its projection says so.
+# The rerun's step 7 (docs/drivejepa-perception-sidecar/part-a/plan.md §8.2, choice 11.12) reads the
+# side-car alone on these keyframes twice: as recorded, and with every frame warped to NAVSIM's CAM_F0. The
+# two cameras differ by about a degree in where their rays point and by a few per cent in focal length
+# (§4.1, §8.2); a rotation and a change of intrinsics about one centre are undone exactly by a homography,
+# so the warped read keeps nuScenes' images and asks only whether the side-car's distance error is the
+# camera's geometry. The cameras' centres differ by centimetres; the warp keeps nuScenes' own, and its
+# projection says so.
 
 #: NAVSIM's CAM_F0 frame, which the warp renders into before the vendor's crop and resize.
 NAVSIM_SIZE = (1920, 1080)

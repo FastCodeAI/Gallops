@@ -1,8 +1,8 @@
 # H15 Part A, the perception side-car: executive update
 
 **9 Nov 2026 · owner: Shreedhar · status: steps 1–5 of 8 done; the one-time test (step 6) waits for the
-owner's review.** Details: [the plan](drivejepa-perception-sidecar-A.md) (§9.2 for step 5) and
-[notebook 06](../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb).
+owner's review.** Details: [the plan](plan.md) (§9.2 for step 5) and
+[notebook 06](../../../experiments/H15_perception_sidecar/notebooks/06_predictions.ipynb).
 
 ## Summary
 
@@ -62,7 +62,7 @@ output (Figure 2).
 **Fit for purpose comes first:** for a planner, finding the agents that affect the car, and placing the
 near ones accurately, matters more than distant agents.
 
-**Our thresholds** were committed in [PREDICTIONS.md](../experiments/H15_perception_sidecar/PREDICTIONS.md)
+**Our thresholds** were committed in [PREDICTIONS.md](../../../experiments/H15_perception_sidecar/PREDICTIONS.md)
 before training. They are decided at step 6, on the test logs; here is the preview on the selection logs:
 
 | Criterion | Passes if, on every seed | Preview (chosen model, three seeds) |
@@ -141,7 +141,7 @@ camera's ray, or more cyclist data, not more training.
 **What's next:**
 - **Step 6, when the owner agrees:** read the 70 test logs once, for the three seeds and the no-camera run.
   This decides the criteria in section 2.
-- **Step 7, done on 10 Nov** ([the plan](drivejepa-perception-sidecar-A.md), §9.3): on nuScenes, a city and car
+- **Step 7, done on 10 Nov** ([the plan](plan.md), §9.3): on nuScenes, a city and car
   it never saw, the side-car finds 53% of the vehicles within 30 m, so the committed criterion holds (F1 0.50,
   against 0.72 on NAVSIM). Warping the images to NAVSIM's camera does not help.
 - **Step 8:** close Part A, and decide whether any question about feeding the side-car to the planner opens.
@@ -154,35 +154,35 @@ camera's ray, or more cyclist data, not more training.
 
 **Figure 1: the eight steps, each closed by a review.** Steps 1–5 are done (blue).
 
-![The rerun's eight steps](../experiments/H15_perception_sidecar/figures/part-a-steps.png)
+![The rerun's eight steps](../../../experiments/H15_perception_sidecar/figures/part-a-steps.png)
 
 **Figure 2: the side-car.** These are its inputs (frozen camera features and the camera's geometry), its
 decoder, its five heads, the loss it is trained with, and what is read out.
 
-![The side-car's architecture](../experiments/H15_perception_sidecar/figures/part-a-sidecar.png)
+![The side-car's architecture](../../../experiments/H15_perception_sidecar/figures/part-a-sidecar.png)
 
 **Figure 3: the side-car beside Drive-JEPA's two variants.** It reads the same frozen encoder, but its
 output is a list of agents, kept separate from the planner.
 
-![The side-car beside Drive-JEPA's two variants](../experiments/H15_perception_sidecar/figures/part-a-variants.png)
+![The side-car beside Drive-JEPA's two variants](../../../experiments/H15_perception_sidecar/figures/part-a-variants.png)
 
 **Figure 4: detection quality by configuration.** The black tick on the chosen model spans its three seeds.
 
-![F1 by configuration](../experiments/H15_perception_sidecar/figures/part-a-exec-f1.png)
+![F1 by configuration](../../../experiments/H15_perception_sidecar/figures/part-a-exec-f1.png)
 
 **Figure 5: which agents it finds.** These are the chosen model's numbers; the agents that matter most are
 found most often.
 
-![Recall by kind of agent](../experiments/H15_perception_sidecar/figures/part-a-exec-recall.png)
+![Recall by kind of agent](../../../experiments/H15_perception_sidecar/figures/part-a-exec-recall.png)
 
 **Figure 6: position error, distance against direction.** Error along the camera's line of sight grows
 with range; error across it stays small.
 
-![Depth against direction error](../experiments/H15_perception_sidecar/figures/part-a-exec-depth.png)
+![Depth against direction error](../../../experiments/H15_perception_sidecar/figures/part-a-exec-depth.png)
 
 **Figure 7: two scenes drawn at random from the selection logs.** Each shows the camera image and a
 bird's-eye view. Coloured boxes are the labelled agents and white boxes the side-car's detections. In the
 bird's-eye view, green dots are detections that hit an agent and red ones are false alarms, mostly a few
 metres from a real car.
 
-![Example predictions](../experiments/H15_perception_sidecar/figures/part-a-exec-example.jpg)
+![Example predictions](../../../experiments/H15_perception_sidecar/figures/part-a-exec-example.jpg)

@@ -1,4 +1,4 @@
-// H15 overview (docs/drivejepa-perception-sidecar-overview.md): Part A, the side-car, and Part B, its uses in the
+// H15 overview (docs/drivejepa-perception-sidecar/README.md): Part A, the side-car, and Part B, its uses in the
 // planner, as experiments B-<n>-<v>. Blue: done. Grey: planned, not run. Amber diamonds: the owner's reviews.
 // Nothing in Part B trains before the owner's go-ahead.
 // Render: dot -Tsvg b-overview.dot -o b-overview.svg && dot -Tpng:cairo -Gdpi=192 b-overview.dot -o b-overview.png
@@ -10,7 +10,7 @@ digraph b_overview {
   edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
 
   subgraph cluster_a {
-    label=<<B>Part A · the side-car</B><BR/><FONT POINT-SIZE="9">docs/drivejepa-perception-sidecar-A.md</FONT>>;
+    label=<<B>Part A · the side-car</B><BR/><FONT POINT-SIZE="9">docs/drivejepa-perception-sidecar/part-a/plan.md</FONT>>;
     fontname="Helvetica"; fontsize=10; style="rounded,dashed"; color="#9ca3af";
     a15 [label=<<B>steps 1–5</B><BR/><FONT POINT-SIZE="9">v3, 24 epochs · select F1 0.717</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
     a7  [label=<<B>step 7 · nuScenes</B><BR/><FONT POINT-SIZE="9">vehicles 0.53 · Q9 holds</FONT>>, color="#2563eb", fillcolor="#dbeafe"];

@@ -3,7 +3,7 @@
 **The geometry.** The vendor's `lidar2img` maps ego points onto a 768x448 padded frame (scale 0.4 of
 1920x1080). The tokens come from rows 28 to 1052 of the 1080, resized to 512x256. `TO_512` maps one
 onto the other exactly: x_512 = (0.2667 / 0.4) x_pad = 2/3 x_pad, and y_512 = 0.25 (y - 28) =
-0.625 y_pad - 7 (H04's matrix; docs/drivejepa-perception-sidecar.md, S0.4).
+0.625 y_pad - 7 (H04's matrix; docs/drivejepa-perception-sidecar/first-pass-plan.md, S0.4).
 
 **Targets** (`build`): agents of the three classes the side-car names, within RANGE_M, whose centre
 projects inside the 512x256 image in front of the camera (H04's "seen" rule), nearest first, at most

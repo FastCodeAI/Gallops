@@ -13,7 +13,7 @@
 <title>cluster_a</title>
 <path fill="white" stroke="#9ca3af" stroke-dasharray="5,2" d="M20,-156C20,-156 739,-156 739,-156 745,-156 751,-162 751,-168 751,-168 751,-223 751,-223 751,-229 745,-235 739,-235 739,-235 20,-235 20,-235 14,-235 8,-229 8,-223 8,-223 8,-168 8,-168 8,-162 14,-156 20,-156"/>
 <text text-anchor="start" x="332.5" y="-224" font-family="Helvetica" font-weight="bold" font-size="10.00">Part A · the side&#45;car</text>
-<text text-anchor="start" x="298" y="-214.8" font-family="Helvetica" font-size="9.00">docs/drivejepa&#45;perception&#45;sidecar&#45;A.md</text>
+<text text-anchor="start" x="278.5" y="-214.8" font-family="Helvetica" font-size="9.00">docs/drivejepa&#45;perception&#45;sidecar/part&#45;a/plan.md</text>
 </g>
 <g id="clust2" class="cluster">
 <title>cluster_b</title>

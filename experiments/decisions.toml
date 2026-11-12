@@ -224,7 +224,7 @@ date = 2026-11-04
 short = "H15 redone: Part A first, step by step"
 decision = """H15's first pass (the side-car and then every phase-B question, run in a day and a half) is judged \
 inconclusive by its owner: more ran than could be reviewed or debugged. H15 is redone from a revised plan, \
-docs/drivejepa-perception-sidecar-A.md: Part A alone, the side-car trained and measured, in eight steps, each \
+docs/drivejepa-perception-sidecar/part-a/plan.md: Part A alone, the side-car trained and measured, in eight steps, each \
 reviewed by the owner before the next; phases B and C wait until Part A closes."""
 by = ["Shreedhar"]
 evidence = ["H15.a1", "H15.b1", "H15.b2", "H15.b3", "H15.ood"]
@@ -236,7 +236,7 @@ id = "D21"
 date = 2026-11-04
 short = "H15 Part A: steps 1-3 reviewed, recommended settings"
 decision = """The owner reviewed H15 Part A's steps 1-3 and chose the plan's recommended settings (section 11 \
-of docs/drivejepa-perception-sidecar-A.md): its success criteria as written, committed as PREDICTIONS.md \
+of docs/drivejepa-perception-sidecar/part-a/plan.md): its success criteria as written, committed as PREDICTIONS.md \
 (step 4); the report logs as the test set; the step-5 runs as listed; the chosen causal rule (a 4 s \
 look-ahead, a 2 m corridor margin); pedestrian groups at 1.0 m, at most 3 m wide; traffic side measured \
 before any input is added; nuScenes read also warped to NAVSIM's camera. Weighting what matters (step 5c) \
@@ -251,8 +251,8 @@ id = "D22"
 date = 2026-11-10
 short = "H15: phase B planned before Part A closes; step 7 runs, step 6 waits"
 decision = """The owner opens H15's phase B before Part A's steps 6 and 8, documents first. \
-docs/drivejepa-perception-sidecar-B-ideas.md lists where the side-car could connect to Drive-JEPA, for a shortlist; \
-docs/drivejepa-perception-sidecar-B.md plans the shortlisted ideas in reviewed steps, and the owner's first idea in \
+docs/drivejepa-perception-sidecar/part-b/ideas.md lists where the side-car could connect to Drive-JEPA, for a shortlist; \
+docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md plans the shortlisted ideas in reviewed steps, and the owner's first idea in \
 full: the side-car's agents as an input to the refiner and the scorer, adapted with LoRA, read on navtest against \
 the release. Phase B is recorded in H15, as runs H15.r6 onward. Nothing trains, and no phase-B data pass runs, until \
 the owner approves a shortlist; the first B-LoRA run uses a fixed recipe and reads navtest once, and choices are \
@@ -271,8 +271,8 @@ decision = """The owner chose four of phase B's ideas to plan first, in this ord
 into the scorer, into the refiner, and into both with LoRA, renamed B-1 to B-4 (they were C4, C2, C1 and C3). Every \
 phase-B experiment is now named B-<n>-<v>: n = 0 for the foundations every experiment shares, 1-4 for these, 5-16 \
 for the other ideas; v a sub-version. Each of B-1 to B-4 has its own plan, opening with its crux and what to expect, \
-then its concepts as questions and answers; docs/drivejepa-perception-sidecar-B.md becomes B-0, the foundations. A \
-LoRA primer serves B-2 to B-4, and docs/drivejepa-perception-sidecar-overview.md is the common record of this work: \
+then its concepts as questions and answers; docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md becomes B-0, the foundations. A \
+LoRA primer serves B-2 to B-4, and docs/drivejepa-perception-sidecar/README.md is the common record of this work: \
 the tracker, the naming, every discussion and decision. Nothing is implemented and nothing trains: the owner reviews \
 the plans, and execution starts in another session. The work's branch is drivejepa/auxilliary-head-part-b."""
 by = ["Shreedhar"]

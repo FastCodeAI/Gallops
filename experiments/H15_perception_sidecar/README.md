@@ -8,20 +8,20 @@ The facts — runs, data, checkpoints, results, gate verdicts — live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. This page is the
 account: why, what was done, what it showed, and what was decided.
 
-- **The rerun's plan**, Part A alone, in reviewed steps: [docs/drivejepa-perception-sidecar-A.md](../../docs/drivejepa-perception-sidecar-A.md).
-- **The first pass's plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar.md](../../docs/drivejepa-perception-sidecar.md).
+- **The rerun's plan**, Part A alone, in reviewed steps: [docs/drivejepa-perception-sidecar/part-a/plan.md](../../docs/drivejepa-perception-sidecar/part-a/plan.md).
+- **The first pass's plan**, with every step, rule and cost estimate: [docs/drivejepa-perception-sidecar/first-pass-plan.md](../../docs/drivejepa-perception-sidecar/first-pass-plan.md).
 - **The predictions**, committed before anything trained: [PREDICTIONS.md](PREDICTIONS.md).
-- **Start here: [the overview](../../docs/drivejepa-perception-sidecar-overview.md)**, the common record of this
+- **Start here: [the overview](../../docs/drivejepa-perception-sidecar/README.md)**, the common record of this
   work: the tracker, the naming (`B-<n>-<v>`), every discussion and decision, and the open questions.
 - **Phase B, planned (10–11 Nov, D22, D23):** four experiments, in the owner's order, each with its own plan:
-  - [B-1, the veto](../../docs/drivejepa-perception-sidecar-B-1-veto.md);
-  - [B-2, the scorer](../../docs/drivejepa-perception-sidecar-B-2-scorer.md);
-  - [B-3, the refiner](../../docs/drivejepa-perception-sidecar-B-3-refiner.md);
-  - [B-4, both with LoRA](../../docs/drivejepa-perception-sidecar-B-4-joint-lora.md).
+  - [B-1, the veto](../../docs/drivejepa-perception-sidecar/part-b/B-1-veto.md);
+  - [B-2, the scorer](../../docs/drivejepa-perception-sidecar/part-b/B-2-scorer.md);
+  - [B-3, the refiner](../../docs/drivejepa-perception-sidecar/part-b/B-3-refiner.md);
+  - [B-4, both with LoRA](../../docs/drivejepa-perception-sidecar/part-b/B-4-joint-lora.md).
 - **What they share:**
-  - [B-0, the foundations](../../docs/drivejepa-perception-sidecar-B.md);
-  - [a LoRA primer](../../docs/drivejepa-perception-sidecar-B-lora-primer.md);
-  - [the ideas, B-1 to B-16](../../docs/drivejepa-perception-sidecar-B-ideas.md).
+  - [B-0, the foundations](../../docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md);
+  - [a LoRA primer](../../docs/drivejepa-perception-sidecar/part-b/lora-primer.md);
+  - [the ideas, B-1 to B-16](../../docs/drivejepa-perception-sidecar/part-b/ideas.md).
 
 ## The rerun: Part A, one reviewed step at a time (from 4 Nov)
 
@@ -88,7 +88,7 @@ also asks whether LoRA on the ViT does better than the frozen tap.
 
 | Date | Step | What happened |
 |---|---|---|
-| 3 Nov | plan | Approved and committed: `docs/drivejepa-perception-sidecar.md` |
+| 3 Nov | plan | Approved and committed: `docs/drivejepa-perception-sidecar/first-pass-plan.md` |
 | 3 Nov | S0.1 | The site's `gallops.toml` points `navsim` at the real NAVSIM root (trainval: 1,310 logs, all 8 cameras, *counted*) and names the metric cache |
 | 3 Nov | S0.2 | `Drive-JEPA-ext` recreated (details below) |
 | 3 Nov | S0.5 | Download started: Drive-JEPA's `train_metric_cache_v2_pruned.tar` (33.5 GB) and `anchors_scores_index_v2.tar` (0.4 GB). Source: the Hugging Face dataset repo `LinhanWang/Drive-JEPA` at `9d435e12`, checked against its LFS sha256s |

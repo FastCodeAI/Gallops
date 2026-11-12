@@ -11,7 +11,7 @@ tests/ runs them in gallops' interpreter too.
 current frame t (index 3) and 10 of future. Windows come from the vendor's own `filter_scenes`,
 imported, so the index is exactly the one NAVSIM's `SceneLoader` builds.
 
-**A label** (docs/drivejepa-perception-sidecar.md, S0.4) is every annotated agent at t within
+**A label** (docs/drivejepa-perception-sidecar/first-pass-plan.md, S0.4) is every annotated agent at t within
 RANGE_M of the ego, in frame t's ego coordinates (x forward, y left, metres):
 - class, box (x, y, z, length, width, height, yaw) and velocity (vx, vy);
 - its position at t + 0.5 s and t + 1.0 s: frames t+1 and t+2, joined on `track_token`, moved from
@@ -68,7 +68,7 @@ EGO_FUTURE = 8
 EGO_SPEED_STEPS = 5
 
 #: The select logs are H04's 51 held-out navtrain logs, copied with their source; the report logs are
-#: drawn from the rest by this rule. docs/drivejepa-perception-sidecar.md, S0.3.
+#: drawn from the rest by this rule. docs/drivejepa-perception-sidecar/first-pass-plan.md, S0.3.
 SELECT_SOURCE = {
     "branch": "drivejepa-wajepa/run3a",
     "commit": "e5ca907",

@@ -1,4 +1,4 @@
-// H15 Part B, B-4-1 (docs/drivejepa-perception-sidecar-B-4-joint-lora.md): the release with the side-car's agents in
+// H15 Part B, B-4-1 (docs/drivejepa-perception-sidecar/part-b/B-4-joint-lora.md): the release with the side-car's agents in
 // its refiner and its scorer, adapted by LoRA, trained in two stages: B-3-1's refiner, then B-2-1's scorer. Grey: the release, frozen. Blue: the
 // side-car, frozen (Part A, v3). Green: what trains. Every green part's last layer starts at zero, or its LoRA B
 // does, so before the first step the model is the release run through the same cached path (R̃).

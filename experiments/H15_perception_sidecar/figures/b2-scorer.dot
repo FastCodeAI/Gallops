@@ -1,4 +1,4 @@
-// H15 Part B, B-2 (docs/drivejepa-perception-sidecar-B-2-scorer.md): the side-car's agents into the release's scorer.
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-scorer.md): the side-car's agents into the release's scorer.
 // The release's 32 proposals are kept; only the pick among them can change. Grey: the release, frozen. Blue: the
 // agents. Green: what trains (every green output layer starts at zero, so step 0 is the release's pick).
 // Render: dot -Tsvg b2-scorer.dot -o b2-scorer.svg && dot -Tpng:cairo -Gdpi=192 b2-scorer.dot -o b2-scorer.png

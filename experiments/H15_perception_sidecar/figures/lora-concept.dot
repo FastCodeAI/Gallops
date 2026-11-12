@@ -1,4 +1,4 @@
-// The LoRA primer (docs/drivejepa-perception-sidecar-B-lora-primer.md): one linear layer with LoRA. The frozen
+// The LoRA primer (docs/drivejepa-perception-sidecar/part-b/lora-primer.md): one linear layer with LoRA. The frozen
 // weight W keeps its path; a low-rank path A then B adds (alpha / r) B A x. B starts at zero, so the layer starts as W.
 // Grey: frozen. Green: what trains.
 // Render: dot -Tsvg lora-concept.dot -o lora-concept.svg && dot -Tpng:cairo -Gdpi=192 lora-concept.dot -o lora-concept.png

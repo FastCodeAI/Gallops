@@ -1,6 +1,6 @@
 """B1: four ways to give the scorer the side-car's agents, and the control that withholds them.
 
-Modes (docs/drivejepa-perception-sidecar.md, section 5.1):
+Modes (docs/drivejepa-perception-sidecar/first-pass-plan.md, section 5.1):
 - `frozen` (B1.1): the release's scorer MLP unchanged; an input adapter adds to its input feature.
 - `lora` (B1.2): as frozen, plus rank-r LoRA on the scorer MLP's three linear layers.
 - `full` (B1.3): as frozen, with the scorer MLP itself trained.

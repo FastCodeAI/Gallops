@@ -2,7 +2,7 @@
 
 **Status (2026-11-03): downloaded, verified, counted and exercised.** H15 phase B reads it for its
 labels: every release candidate's NAVSIM v2 sub-scores (`gallops.drivejepa_perception.pdm_labels`).
-The plan is [drivejepa-perception-sidecar.md](drivejepa-perception-sidecar.md), S0.5–S0.6.
+The plan is [the side-car's first-pass plan](drivejepa-perception-sidecar/first-pass-plan.md), S0.5–S0.6.
 
 How to read the marks:
 - *counted* and *measured*: done on this site, by

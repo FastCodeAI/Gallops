@@ -1,6 +1,6 @@
 # H15 -- a perception side-car on frozen Drive-JEPA (3D boxes + each agent's 1 s path), tested as an
 # input to the scorer, as an input to the refiner, and against LoRA on the ViT. Owner Shreedhar.
-# Sources: the plan, docs/drivejepa-perception-sidecar.md; every number below will be copied from the
+# Sources: the plan, docs/drivejepa-perception-sidecar/first-pass-plan.md; every number below will be copied from the
 # run files this folder names, never re-derived.
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
@@ -52,7 +52,7 @@ started = 2026-11-03
 start_from = "released"
 trained = []
 frozen = ["encoder", "projector", "refiner", "scorer"]
-notes = "Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`."
+notes = "Nothing trains here. Labels: every annotated agent within 60 m at the current frame, in its ego frame, with its positions at t + 0.5 s and t + 1.0 s joined on track_token and moved through global (docs/drivejepa-perception-sidecar/first-pass-plan.md, S0.4). Held to NAVSIM's and nuPlan's own code by `navsim_data check`."
 
   [runs.code]
   modules = ["gallops.drivejepa_perception"]
@@ -428,7 +428,7 @@ trained = ["side-car"]
 frozen = ["encoder", "projector", "refiner", "scorer"]
 params_trained_m = 4.39
 train_git_sha = "d1bacdc"
-notes = "The rerun's plan is docs/drivejepa-perception-sidecar-A.md; its success criteria (section 7) were committed in d1bacdc, before this run. --epochs 12 --stop-after 1 --no-report: the first epoch of the schedule a real run uses, no report row read. Overfit check passed first (step 1,300 of 4,000; centre 0.49 m). Preflight: the live ViT output equals the ViT-out cache (largest 0.0156, mean 3.6e-4; new in the rerun). 46 s for the epoch with the readout; 3 steps skipped by the loss scaler, 16 clipped. Curves and checks: notebooks 03 and 04 under experiments/H15_perception_sidecar/notebooks/."
+notes = "The rerun's plan is docs/drivejepa-perception-sidecar/part-a/plan.md; its success criteria (section 7) were committed in d1bacdc, before this run. --epochs 12 --stop-after 1 --no-report: the first epoch of the schedule a real run uses, no report row read. Overfit check passed first (step 1,300 of 4,000; centre 0.49 m). Preflight: the live ViT output equals the ViT-out cache (largest 0.0156, mean 3.6e-4; new in the rerun). 46 s for the epoch with the readout; 3 steps skipped by the loss scaler, 16 clipped. Curves and checks: notebooks 03 and 04 under experiments/H15_perception_sidecar/notebooks/."
 
   [runs.code]
   modules = ["gallops.drivejepa_perception"]

@@ -2,7 +2,7 @@
 
 **Updated 11 Nov 2026.** This is the common record of H15. Every document of this work links here.
 - Every change to one of them adds a dated line to the [log](#log) and updates the [tracker](#tracker).
-- A decision also gets its D-number in [experiments/decisions.toml](../experiments/decisions.toml).
+- A decision also gets its D-number in [experiments/decisions.toml](../../experiments/decisions.toml).
 
 ## The crux
 
@@ -24,7 +24,7 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
   - **Nothing in Part B has run.** The owner reviews the plans; execution starts in another session, with the
     owner's go-ahead.
 
-![H15: Part A, and Part B's four experiments in order](../experiments/H15_perception_sidecar/figures/b-overview.png)
+![H15: Part A, and Part B's four experiments in order](../../experiments/H15_perception_sidecar/figures/b-overview.png)
 
 <a id="naming"></a>
 
@@ -69,18 +69,18 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
-| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing | planned | [B-0, the foundations](drivejepa-perception-sidecar-B.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | planned | [B-1, the veto](drivejepa-perception-sidecar-B-1-veto.md) | B-0 |
-| B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](drivejepa-perception-sidecar-B-2-scorer.md) | B-0; B-1 is its bar |
-| B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](drivejepa-perception-sidecar-B-3-refiner.md) | B-0 |
-| B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](drivejepa-perception-sidecar-B-4-joint-lora.md) | B-2, B-3 |
-| B-5 to B-16 | the other ideas | — | — | not chosen | [the ideas](drivejepa-perception-sidecar-B-ideas.md) | by what B-1 to B-4 show |
+| B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing | planned | [B-0, the foundations](part-b/B-0-foundations.md) | — |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | planned | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
+| B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
+| B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
+| B-5 to B-16 | the other ideas | — | — | not chosen | [the ideas](part-b/ideas.md) | by what B-1 to B-4 show |
 
-- **What B-2, B-3 and B-4 adapt, and how:** [the LoRA primer](drivejepa-perception-sidecar-B-lora-primer.md).
+- **What B-2, B-3 and B-4 adapt, and how:** [the LoRA primer](part-b/lora-primer.md).
 - **Order of work:** B-0, then B-1, a review and the go-ahead to train, then B-2, B-3 and B-4, each closed by a
   review.
 
-![Part B's order of work, with the owner's reviews](../experiments/H15_perception_sidecar/figures/b-steps.png)
+![Part B's order of work, with the owner's reviews](../../experiments/H15_perception_sidecar/figures/b-steps.png)
 
 **Part A:**
 
@@ -111,7 +111,7 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - Steps 1–3 reviewed: "use recommended settings" (D21).
 - **4–5 Nov · step 5.** v3 for 24 epochs, chosen by the committed rules: select F1 0.717.
 - **9 Nov · the executive update** of Part A
-  ([drivejepa-perception-sidecar-A-update.md](drivejepa-perception-sidecar-A-update.md)).
+  ([part-a/executive-update.md](part-a/executive-update.md)).
 - **10 Nov · the next steps (D22).**
   - **The owner asked for:**
     - nuScenes validation in parallel;
@@ -129,7 +129,7 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - **Done:**
     - the branch;
     - step 7 (`H15.r5`): Q9 holds; the warp does not help;
-    - [the ideas](drivejepa-perception-sidecar-B-ideas.md) (then C1–C16) and the first B plan.
+    - [the ideas](part-b/ideas.md) (then C1–C16) and the first B plan.
 - **11 Nov · reprioritised and restructured (D23).**
   - **The owner chose four ideas, in order:** the veto, the scorer, the refiner, both with LoRA. They are now
     B-1 to B-4.
@@ -145,11 +145,18 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - **Counted for the primer:** the refiner's 13 linear layers and the scorer's 3. Rank-16 LoRA on them adds
     177,200 and 69,728 parameters.
 - **11 Nov · one picture of the four experiments.**
-  - At the owner's request, [B-0](drivejepa-perception-sidecar-B.md) opens with a single diagram of B-1 to B-4
+  - At the owner's request, [B-0](part-b/B-0-foundations.md) opens with a single diagram of B-1 to B-4
     inside Drive-JEPA.
   - It shows each experiment beside the part of the planner it changes, with what it trains, the one question it
     tests, and what is read.
   - The figure is `b0-four-experiments`.
+
+- **11 Nov · every side-car document in one folder.** At the owner's request, H15's documents move under
+  `docs/drivejepa-perception-sidecar/`:
+  - this overview is the folder's `README.md`, beside `first-pass-plan.md`, which spans both parts;
+  - `part-a/` holds Part A's plan and its executive update;
+  - `part-b/` holds B-0 to B-4, the ideas and the LoRA primer.
+  - Every link and path that named the old files was rewritten, including the paths quoted in D20–D23.
 
 <a id="open"></a>
 
@@ -170,21 +177,23 @@ Each experiment's own document gives these decisions in full, with a recommendat
 
 | Document | What it is |
 |---|---|
-| [docs/drivejepa-perception-sidecar.md](drivejepa-perception-sidecar.md) | the first pass's plan (3 Nov), kept as it was |
-| [docs/drivejepa-perception-sidecar-A.md](drivejepa-perception-sidecar-A.md) | Part A's plan, in reviewed steps, with what has run (§9) |
-| [docs/drivejepa-perception-sidecar-A-update.md](drivejepa-perception-sidecar-A-update.md) | Part A's executive update (9 Nov) |
-| [docs/drivejepa-perception-sidecar-B-ideas.md](drivejepa-perception-sidecar-B-ideas.md) | every idea for Part B, B-1 to B-16 |
-| [docs/drivejepa-perception-sidecar-B.md](drivejepa-perception-sidecar-B.md) | **B-0**: the foundations and the protocol every experiment shares |
-| [docs/drivejepa-perception-sidecar-B-1-veto.md](drivejepa-perception-sidecar-B-1-veto.md) | **B-1**, the analytic veto |
-| [docs/drivejepa-perception-sidecar-B-2-scorer.md](drivejepa-perception-sidecar-B-2-scorer.md) | **B-2**, the agents into the scorer |
-| [docs/drivejepa-perception-sidecar-B-3-refiner.md](drivejepa-perception-sidecar-B-3-refiner.md) | **B-3**, the agents into the refiner |
-| [docs/drivejepa-perception-sidecar-B-4-joint-lora.md](drivejepa-perception-sidecar-B-4-joint-lora.md) | **B-4**, both with LoRA |
-| [docs/drivejepa-perception-sidecar-B-lora-primer.md](drivejepa-perception-sidecar-B-lora-primer.md) | LoRA, for these experiments |
-| [experiments/H15_perception_sidecar/](../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../experiments/decisions.toml) | the decisions, D19–D23 for this work |
+| [first-pass-plan.md](first-pass-plan.md) | the first pass's plan (3 Nov), kept as it was |
+| [part-a/plan.md](part-a/plan.md) | Part A's plan, in reviewed steps, with what has run (§9) |
+| [part-a/executive-update.md](part-a/executive-update.md) | Part A's executive update (9 Nov) |
+| [part-b/ideas.md](part-b/ideas.md) | every idea for Part B, B-1 to B-16 |
+| [part-b/B-0-foundations.md](part-b/B-0-foundations.md) | **B-0**: the foundations and the protocol every experiment shares |
+| [part-b/B-1-veto.md](part-b/B-1-veto.md) | **B-1**, the analytic veto |
+| [part-b/B-2-scorer.md](part-b/B-2-scorer.md) | **B-2**, the agents into the scorer |
+| [part-b/B-3-refiner.md](part-b/B-3-refiner.md) | **B-3**, the agents into the refiner |
+| [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
+| [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
+| [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D23 for this work |
 
 ## How this set is kept
 
+- **Every side-car document lives in this folder:** cross-part ones at its top, the rest in `part-a/` or `part-b/`.
+  Figures stay with the experiment's record, in `experiments/H15_perception_sidecar/figures/`.
 - **Each document opens with its status and date.** Experiment plans open with the crux and what to expect.
 - **Any change to a document adds a dated line to the log here,** and updates the tracker.
 - **A decision gets a D-number** in `experiments/decisions.toml`, and is mirrored in the log.

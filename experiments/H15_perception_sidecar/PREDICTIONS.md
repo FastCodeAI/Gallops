@@ -4,7 +4,7 @@
 came first; a prediction written after the result is not one.
 
 - **Written:** 2026-11-03.
-  - Drafted by Claude from the estimates in the plan (`docs/drivejepa-perception-sidecar.md`), at
+  - Drafted by Claude from the estimates in the plan (`docs/drivejepa-perception-sidecar/first-pass-plan.md`), at
     the request of the owner, Shreedhar, who approved committing them as H15's pre-registration.
   - A row changed after the run it decides is a new prediction, recorded as one.
 - **Hypothesis:**
@@ -79,7 +79,7 @@ came first; a prediction written after the result is not one.
 ## The rerun, Part A (step 4, written 4 Nov 2026)
 
 **Committed before step 5's first training step.** Copied from section 7 of the rerun's plan
-(`docs/drivejepa-perception-sidecar-A.md`; every § below is the plan's).
+(`docs/drivejepa-perception-sidecar/part-a/plan.md`; every § below is the plan's).
 - That section was committed in d1bacdc, before step 3's pipeline check, which read only the train and
   select logs.
 - Q10 and Q11 were added on 4 Nov after the second review, with step 3's epoch-1 select values known
