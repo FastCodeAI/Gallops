@@ -1,0 +1,433 @@
+# H16 -- Drive-JEPA's training rebuilt on Bench2Drive (Navvrat).
+# Registered after the runs, from the specs and reports of 5-6 Nov: nothing here was registered first, and the
+# hypothesis' wording is the recorder's, read from the specs, for Navvrat to confirm.
+# Its own ID by the rule in docs/experiments.md#runs: H07's verdict turns on AlpaSim and on WA-JEPA's encoder, which
+# nothing here touches, and GC04 is phase 1, closed. H12 and H13 are retired and H15 is taken on open branches.
+# Sources: this folder's specs/, reports/ and tables/ (copied, machine roots replaced by placeholders); the gate's own
+# verdict files for [[runs.gate]]. Numbers are copied, never re-derived. POINTERS.md holds what is off the repository.
+
+schema = 1
+id = "H16"
+title = "Drive-JEPA's training rebuilt on Bench2Drive: encoder LoRA, own vocabulary, own grade, Stage 2"
+short = "Drive-JEPA rebuilt on Bench2Drive"
+track = "hypothesis"
+owner = "Navvrat"
+benchmarks = ["bench2drive", "kitscenes", "nuscenes", "neuroncap", "navsim", "alpasim", "offline"]
+started = 2026-11-05
+status = "running"
+verdict = "none"
+question = """Released Drive-JEPA was trained on NAVSIM and drives paddock's 50 Bench2Drive routes to a mean DS of \
+57.60 at 2 Hz; GC04's Final reached 73.6 by retraining parts of it, with the encoder frozen and same-spot twins of \
+eval routes in its training set. If everything Drive-JEPA's training rests on is rebuilt from Bench2Drive instead \
+(the encoder adapted by hide-and-guess, a vocabulary from the expert's paths, a grade from Bench2Drive's own penalties, \
+Stage 2 on those), with the eval routes and their trigger twins kept out, what does the model do, on the routes and on \
+the regression gate?"""
+hypothesis = """Rebuilding Drive-JEPA's training on Bench2Drive's own data and scoring terms gives a model that drives \
+the 50 routes better than the released model, whose DS there is 57.60 at 2 Hz. No effect size or refutation rule was \
+written before the runs: this wording is read from the specs, not taken from them."""
+predictions = "none: the specs of 5 Nov fix the recipe and what to report, not an expected effect, and nothing was registered here before the runs, though the rule already stood"
+learned = """So far, and none of it a Bench2Drive driving score. Offline on the 47 held-out clips, epoch 18's pick grades \
+.894 on the 4 s grade, against .983 for the expert and .981 for the best of its 32 (closest ADE .240 m, pick ADE \
+2.23 m). On the 13 of 50 routes that finished before the run was stopped, its mean DS is 31.73, against 42.16 for the \
+released model and 45.36 for Run 3A on the same routes; those 13 are the front of the queue, not a sample of the 50. \
+The regression gate, run by hand, says FAIL: KITScenes 2.537 -> 3.159, nuScenes 2.431 -> 3.796 and neuroNCAP \
+3.679 -> 1.820 regress, with the candidate on crop native and FOLLOW sent as straight; NAVSIM, AlpaSim and the gate's \
+Bench2Drive subset have no result yet."""
+parents = ["H07", "GC04"]
+narrative = "experiments/H16_drivejepa_b2d_retrain/README.md"
+external = [
+  "Paddock's drivejepa_p2 adapter: uncommitted, in local paddock worktrees rerank-native (the 50 routes) and gate-oct27 (the gate), so the gate ran from those worktrees and not from the queue. Its two files are in this folder's paddock/, machine roots replaced by placeholders.",
+  "Merged encoder, epoch checkpoints, the frame cache, grade files and teacher index: off-repo at the training site; POINTERS.md lists each with bytes and sha256 where it is small enough to hash.",
+  "Site tooling the as-run scripts import, which is in no repository of ours: paddock-ops mtd/, b2d-labels/ and phase0a-labels/; run3a-adapted is a local git repository. POINTERS.md pins each file by sha256. mtd/scorer.py is in src/ as scorer.py, unchanged.",
+  "Closed-loop run records and the gate's manifests and per-subset logs: {runs}/b2d_drivejepa/phase2/. The small tables this record's numbers come from are in tables/.",
+]
+
+[[runs]]
+id = "H16.r1"
+label = "p1_05nov: rank-16 encoder LoRA by hide-and-guess on Bench2Drive front-camera pairs; pass 3 of 3 merged"
+started = 2026-11-05
+ended = 2026-11-05
+start_from = "released (740335c800e2)"
+trained = ["encoder LoRA (rank 16, alpha 16, qkv / proj / fc1 / fc2 of all 24 blocks)", "guesser (training only)"]
+frozen = ["encoder base weights", "projector", "generator", "scorer"]
+train_git_sha = "e21f474"
+params_trained_m = 6.29
+notes = "Sid's KIT Experiment 1 recipe (H07.exp1): masks 8 x 0.15 and 2 x 0.70, the same patches in both frames; guesser = the predictor from vitl_merge_3dataset_e50.pt with his grid fix; slow copy EMA 0.99925 of the LoRA, main phase only; L1 to the layer-normed target at hidden tokens. AdamW, LoRA lr 2e-4 wd 0, guesser lr 1e-4 wd 0.04, a 200-step ramp in each phase, batch 32, bf16, seed 20261016. 1,000 guesser-only steps, then 3 passes of 1,350 steps (5,050 in all), 05 Nov 16:05-17:25, beside run 3A-M on the same GPU. No stop rule: all 3 passes run. Pass 3 taken for its lowest held-out loss, from Navvrat's 'looks good can we start it' after the vocabulary report; neither pass nor size was named outright, so it is to confirm. Merged with Sid's merge(), unchanged, lifted from f_final.py with ast. The code was not committed when it trained, so train_git_sha is the Drive-JEPA tree's upstream commit; that tree has local changes (POINTERS.md). The trainer that ran is scripts/phase1/train_b2d_with_ade_as_run.py: it also computed the released planner's ADE each pass (tables/p1_05nov_reports.csv), which spec v3 dropped while the run was on pass 3. The merged encoder sits at the training site in {runs}/b2d_drivejepa/phase1/merged/p1_05nov_pass_03/."
+
+  [runs.code]
+  recipe = "recipes/drivejepa_b2d_retrain.toml#lora-train"
+  modules = [
+    "gallops.drivejepa_b2d_retrain.wiring",
+    "gallops.drivejepa_b2d_retrain.frames",
+    "gallops.drivejepa_b2d_retrain.ade",
+    "gallops.drivejepa_b2d_retrain.build_cache",
+    "gallops.drivejepa_b2d_retrain.train_lora",
+    "gallops.drivejepa_b2d_retrain.merge_lora",
+  ]
+  as_run = ["experiments/H16_drivejepa_b2d_retrain/scripts/phase1/"]
+
+  [runs.code.upstream]
+  repo = "Drive-JEPA (vendored tree with local changes, see POINTERS.md)"
+  commit = "e21f474"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, 897 clips: the 968 kept by Phase 0a less the 24 trigger twins, less the 47 held out"
+  role = "train"
+  n = 43176
+  unit = "frame pairs"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+  note = "front camera, 2 frames 0.5 s apart, crop native (1600 x 900 -> 800 x 450 -> rows [28:-28], 512 x 256); no labels"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, 47 held-out clips (5.0%, by route)"
+  role = "selection"
+  n = 2000
+  unit = "frame pairs"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+  note = "the fixed set behind the held-out loss, which chose the pass"
+
+  [runs.checkpoint]
+  model = "drivejepa_b2d_encoder"
+  train_run = "h16-r1-lora"
+  step = 3
+  step_unit = "pass"
+  weights_sha256 = "339d74428a15de9d20976568cae9decbe71f3ac81286b7085a68bd6fe53d5e94"
+  file = "merged_encoder_pass_03.pt"
+  location = "{weights}/drivejepa_b2d_encoder/h16-r1-lora/step_000000003/"
+  sidecar = false
+  members = ["339d74428a15de9d20976568cae9decbe71f3ac81286b7085a68bd6fe53d5e94  merged_encoder_pass_03.pt"]
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "hide-and-guess loss, 47 held-out clips, pass 3"
+  n = 2000
+  unit = "frame pair"
+  baseline = "the end of the warm-up: guesser trained, LoRA still zero"
+  baseline_value = "0.49556"
+  value = "0.47869"
+  better = "lower"
+  strength = "moderate"
+  flags = ["adapted", "selected-on-report"]
+  note = "passes 1, 2, 3: held-out .47969, .47918, .47869; training .47575, .47005, .46683"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/p1_05nov_reports.csv"
+
+[[runs]]
+id = "H16.r2"
+label = "p2_05nov: Drive-JEPA's Stage 2 from scratch on Bench2Drive, on H16.r1's encoder, vocabulary 2,048, Step A v2 grade; epoch 18 of 20 exported"
+started = 2026-11-05
+ended = 2026-11-06
+start_from = "H16.r1"
+trained = ["encoder (the merged ViT, at the backbone rate x 0.1)", "generator and refiner, from scratch", "scorer, from scratch", "projector, from scratch"]
+train_git_sha = "e21f474"
+notes = "Drive-JEPA's settings: Adam 1e-4 (backbone 1e-5), no scheduler, 20 epochs, batch 64 (micro 64, no accumulation), 16-mixed, 576 steps an epoch, seed 20261105; its losses and weights; K = 4 teachers drawn per round; the scorer's labels from its 32 live proposals, graded every step by the Step A grade. Scorer columns, NAVSIM order: NC = collision factors, DAC = 1 - off-lane share, TL = 0.7^n_red, DDC = 1 - oncoming share, EP = P, LK = 1 - outside, final = S; TTC and EC have no term and stay 1. 05 Nov 22:39 to 06 Nov 03:40, exit 0, beside run 3A-M. mtd/stage4/sca_fix.apply_all() patched the batch mixing at runtime (gallops.drivejepa_b2d.batch_fix is its port, the same three patches). The launch line was not kept; ckpt_epoch18/state.json records name, micro 64, batch 64, step 10,368. The trainer that ran is scripts/phase2/train_b2d_p2_05nov_copy.py. No epoch was named for the evaluations, so epoch 18 went forward: highest pick grade and best of 32, lowest closest ADE on the held-out clips. Epochs 19 and 20 hold the lowest pick ADE (2.05 m) and the lowest loss (1.915). The code was not committed when it trained, so train_git_sha is the Drive-JEPA tree's upstream commit. gallops.train.preflight did not run; the spec's own checks did ([[checks]]). The checkpoint sits at the training site in {runs}/b2d_drivejepa/phase2/runs/p2_05nov/ckpt_epoch18/, beside state.pt (3,735,293,277 bytes, not hashed), with no sidecar."
+
+  [runs.code]
+  recipe = "recipes/drivejepa_b2d_retrain.toml#stage2-train"
+  modules = [
+    "gallops.drivejepa_b2d_retrain.build_vocab",
+    "gallops.drivejepa_b2d_retrain.scorer",
+    "gallops.drivejepa_b2d_retrain.grade",
+    "gallops.drivejepa_b2d_retrain.grade_all",
+    "gallops.drivejepa_b2d_retrain.teachers",
+    "gallops.drivejepa_b2d_retrain.samples",
+    "gallops.drivejepa_b2d_retrain.train_stage2",
+    "gallops.drivejepa_b2d_retrain.export_agent",
+    "gallops.drivejepa_b2d.batch_fix",
+  ]
+  as_run = [
+    "experiments/H16_drivejepa_b2d_retrain/scripts/vocab/",
+    "experiments/H16_drivejepa_b2d_retrain/scripts/phase2/",
+    "experiments/H16_drivejepa_b2d_retrain/scripts/closed_loop/",
+    "experiments/H16_drivejepa_b2d_retrain/scripts/gate/",
+    "experiments/H16_drivejepa_b2d_retrain/paddock/",
+  ]
+
+  [runs.code.upstream]
+  repo = "Drive-JEPA (vendored tree with local changes, see POINTERS.md)"
+  commit = "e21f474"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, the LoRA run's 897 training clips, graded frames"
+  role = "train"
+  n = 36897
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+  note = "a frame needs 4 s of future, so the last 8 samples of each clip are out; ego status as the runner sends it, command with FOLLOW as straight: straight .945, left .037, right .018, unknown 0"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "vocabulary, k-means on the 36,897 training paths, the 2,048 of six sizes"
+  role = "train"
+  n = 2048
+  unit = "paths"
+  built_by = "gallops.drivejepa_b2d_retrain.build_vocab"
+  manifest_sha256 = "9a39f95a8508f2d524dff6fe6ab74019adf17c2f83651ba6dbc7590130ff7f71"
+  note = "b2d_2048.npy, (2048, 40, 3) float32; the agent takes poses[:, 4::5]"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "teacher index: Step A v2, feasible paths with S >= 0.95, capped at 256 per frame, all 39,148 frames"
+  role = "train"
+  n = 39148
+  unit = "frames"
+  built_by = "gallops.drivejepa_b2d_retrain.teachers"
+  manifest_sha256 = "8f1ed0972e6b18fa643297ca7979376beb19fe2fcc91fd00a938ff94a987a22f"
+  note = "teachers_2048_v2.npz; v1's c065c90c5ae4 is superseded and was never trained on"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "base, the LoRA run's 47 held-out clips, graded frames"
+  role = "selection"
+  n = 2251
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+  note = "every epoch's held-out numbers; epoch 18 was taken from them"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "paddock's 50 routes, rep a: the first 13 of the queue finished"
+  role = "eval"
+  n = 13
+  unit = "routes"
+  scene_list = "experiments/H16_drivejepa_b2d_retrain/scripts/closed_loop/queue.txt"
+  note = "PARTIAL: the run was stopped by hand; see the result's note"
+
+  [runs.checkpoint]
+  model = "drivejepa_p2"
+  train_run = "h16-r2-stage2"
+  step = 18
+  step_unit = "epoch"
+  weights_sha256 = "ed07e8a10f6934a20aab3ac3481498a123f7b429ded43ba0087985db7b4fa27a"
+  file = "agent.ckpt"
+  location = "{weights}/drivejepa_p2/h16-r2-stage2/step_000000018/"
+  sidecar = false
+  members = ["ed07e8a10f6934a20aab3ac3481498a123f7b429ded43ba0087985db7b4fa27a  agent.ckpt"]
+
+  [[runs.results]]
+  bench = "neuroncap"
+  metric = "ncap_score"
+  subset = "the gate's closed tier, 15 scenario pairs, one run each"
+  n = 15
+  unit = "scenario pair"
+  baseline = "released Drive-JEPA, the paddock queue's run of 26 Oct"
+  baseline_value = "3.679"
+  value = "1.820"
+  better = "higher"
+  strength = "moderate"
+  t = "-3.24"
+  se = "0.574"
+  headline = true
+  note = "The gate's only closed-loop pair with a result, and nothing was chosen on it. The candidate ran crop native with momentum off, the baseline crop openscene with momentum on, so the pair compares more than the training. A subset, marked invalid as a neuroNCAP score by the gate"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/verdict_ncap.json"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "pick grade, Step A v2, 47 held-out clips, epoch 18"
+  n = 2251
+  unit = "frame"
+  value = "0.8937"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted", "open-loop", "selected-on-report"]
+  note = "A 4 s stand-in, not a driving score. The expert's own grade is .9827 and the best of the 32 proposals .9805. All 20 epochs: tables/p2_05nov_epochs.csv"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/p2_05nov_epochs.csv"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "scorer-pick ADE (3 s), 47 held-out clips, epoch 18, m"
+  n = 2251
+  unit = "frame"
+  value = "2.2316"
+  better = "lower"
+  strength = "moderate"
+  flags = ["adapted", "open-loop", "selected-on-report"]
+  note = "closest-candidate ADE .2398 m; menu variety 2.61 m"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/p2_05nov_epochs.csv"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score, PARTIAL, not a score"
+  subset = "13 of 50 routes, one run each, 2 Hz, stopped by hand on 6 Nov"
+  n = 13
+  unit = "route"
+  baseline = "released Drive-JEPA at 2 Hz, the same 13 routes"
+  baseline_value = "42.16"
+  value = "31.73"
+  better = "higher"
+  strength = "unverified"
+  flags = ["adapted", "smoke"]
+  note = "Run 3A on the same 13: 45.36. RC 63.17 (Run 3A 61.17); 2 of 13 completed. The 13 are positions 1-13 of the queue, which the lane script says opens with the 14 junction-turn routes, so they are not a sample of the 50: released averages 57.60 and Run 3A 63.29 on all 50. One run per route, and runs are not repeatable"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/closed_loop_13_routes.csv"
+
+  [[runs.gate]]
+  date = 2026-11-06
+  tier = "all"
+  verdict = "FAIL"
+  baseline = "released Drive-JEPA, the paddock queue's runs: 23 Oct for KITScenes, nuScenes and NAVSIM, 26 Oct for neuroNCAP and AlpaSim"
+  paddock_commit = "3daf4b9"  # plus drivejepa_p2 copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
+  manifest = "{runs}/b2d_drivejepa/phase2/gate/gate/smoke/drivejepa_p2-ncap/manifest.toml"
+  note = "Run by hand with tools.gate smoke, as three jobs: the queue only runs adapters on a pushed branch. Overall FAIL from the neuroNCAP job and FAIL (not finished: navsim) from the open-loop job, whose manifest is drivejepa_p2-openloop beside this one. neuroNCAP's quick 3 pairs: 3.179 -> 0.098, t -3.21, MDE 5.146, NEUTRAL (cannot ship). NAVSIM has no result: its node did not answer /alive within 15 min on any of 3 attempts. AlpaSim has no result: the quick scene timed out at 60 min (per_scene_timeout_s) and the closed subset's node did not answer /alive within 15 min; verdict_alpasim.json holds no pair. The day's log puts both down to disk load, which it says was not measured directly. Both are to rerun. Bench2Drive's 7 gate routes were left to the 50-route run, as for Run 2 and Run 3A, and that run stopped at 13. PDM terms, outside the verdict: closed neuroNCAP pdm_nc .637 -> .380, pdm_dac .998 -> .831, pdm_ttc .582 -> .304, pdm_style_score .525 -> .231; KITScenes pdm_ep .820 -> .905 (GAIN), pdm_comfort .435 -> .027 (REGRESSION); nuScenes pdm_ep .864 -> .966 (GAIN), pdm_comfort .412 -> .063 (REGRESSION), col_avg .021 -> .024 (NEUTRAL). 37 overlap_train_val samples are left out of KITScenes' verdict by the gate. Against the baselines the candidate's env differs: DRIVEJEPA_IMAGE_GEOMETRY openscene -> native on every pair, DRIVEJEPA_MOMENTUM on -> unset on neuroNCAP's; the runs also used different paddock code."
+
+    [[runs.gate.pairs]]
+    bench = "navsim"
+    verdict = "NOT RUN"
+
+    [[runs.gate.pairs]]
+    bench = "kitscenes"
+    metric = "ade"
+    baseline = 2.537
+    candidate = 3.159
+    t = -2.91
+    mde = 0.604
+    units = 117
+    verdict = "REGRESSION"
+
+    [[runs.gate.pairs]]
+    bench = "nuscenes"
+    metric = "l2_avg"
+    baseline = 2.431
+    candidate = 3.796
+    t = -8.13
+    mde = 0.474
+    units = 143
+    verdict = "REGRESSION"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "ncap_score"
+    baseline = 3.679
+    candidate = 1.820
+    t = -3.24
+    mde = 1.731
+    units = 15
+    verdict = "REGRESSION"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    verdict = "NOT RUN"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    verdict = "NOT RUN"
+
+[[runs]]
+id = "H16.r3"
+label = "p2ft_06nov: as H16.r2, but generator, refiner, scorer and projector start from the released checkpoint; not finished, 8 of 20 epochs recorded"
+started = 2026-11-06
+start_from = "H16.r1, with the planner from released (740335c800e2)"
+trained = ["encoder (the merged ViT, at the backbone rate x 0.1)", "generator and refiner", "scorer", "projector"]
+train_git_sha = "e21f474"
+notes = "NOT FINISHED. Navvrat: 'instead of training the refiner and planner from scratch we fine tune it over b2d score using the same pseudo trajectory'. Same as H16.r2 except the start: train_stage2 --init-released loads the released agent (sha checked), then lays H16.r1's merged encoder over it. Same teachers, Step A v2 grade, Adam 1e-4 / backbone 1e-5, batch 64, same data order. Stopped by hand on 6 Nov, with the box's other processes, at about 15:07, during epoch 9; the last checkpoint is ckpt_epoch08. It was resumed from that checkpoint at 15:33, in a 14 GB memory scope beside M2, so it may be running as this is read: the numbers here are epochs 1 to 8 only. No checkpoint exported, no closed-loop or gate run. The checkpoints sit at the training site in {runs}/b2d_drivejepa/phase2/runs/p2ft_06nov/."
+
+  [runs.code]
+  recipe = "recipes/drivejepa_b2d_retrain.toml#stage2-finetune"
+  modules = ["gallops.drivejepa_b2d_retrain.train_stage2"]
+
+  [runs.code.upstream]
+  repo = "Drive-JEPA (vendored tree with local changes, see POINTERS.md)"
+  commit = "e21f474"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "as H16.r2"
+  role = "train"
+  n = 36897
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "as H16.r2"
+  role = "selection"
+  n = 2251
+  unit = "frames"
+  scene_list = "recipes/drivejepa_b2d_retrain/clips.json"
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "pick grade, Step A v2, 47 held-out clips, epoch 8 of 20 (not finished)"
+  n = 2251
+  unit = "frame"
+  baseline = "H16.r2 at epoch 8, from scratch"
+  baseline_value = "0.8767"
+  value = "0.8917"
+  better = "higher"
+  strength = "unverified"
+  flags = ["adapted", "open-loop"]
+  note = "A 4 s stand-in, not a driving score. Epochs 1-8: tables/p2ft_06nov_epochs.csv. Pick ADE 2.60 m, closest .262 m, best of 32 .9737"
+  source = "experiments/H16_drivejepa_b2d_retrain/tables/p2ft_06nov_epochs.csv"
+
+[[checks]]
+name = "Phase 1 before the long run: step 0, what trains, input contract, resume"
+date = 2026-11-05
+result = "encoder and e50 sha256 match; with the LoRA attached, tokens bit-equal to the released encoder in fp32 and bf16; after 10 warm-up steps base 0 / 292 and LoRA 0 / 192 tensors changed, guesser 151 / 160; after 10 main steps LoRA 192 / 192, base 0 / 292; 20 frames bit-equal between the training loader and the runner's native path, fx, fy 365.6, 371.2; a resume from main step 20 matches the uninterrupted run to 0.00017 over 10 steps"
+source = "experiments/H16_drivejepa_b2d_retrain/scripts/phase1/checks.py; paddock-ops phase1/logs/check{1,2,3,5}.json"
+
+[[checks]]
+name = "LoRA merge"
+date = 2026-11-05
+result = "32 held-out pairs, merged against unmerged: fp32 largest .0158, mean 1.9e-5; bf16 largest 23.3, which is rounding (bf16 against fp32 on the released encoder: 24.6); reload strict, tokens bit-equal; cosine with the released tokens .796"
+decided = "pass 3 merged; Phase 2 starts from it"
+source = "experiments/H16_drivejepa_b2d_retrain/scripts/phase1/merge_check_bf16.py; agent_memory 05-11-26"
+
+[[checks]]
+name = "Vocabularies at six sizes, and the elbow"
+date = 2026-11-05
+result = "k-means on 36,897 training paths at 256 to 8,192; handedness and load checks pass; 33 elbow runs (11 sizes x 3 seeds) show no sharp elbow (held-out error about K^-0.18); held-out and training ADE part after 1,024; entries from one clip 2.1% at 1,024, 7.3% at 2,048, 50.2% at 8,192; along / across error about 2 at every size"
+decided = "the elbow does not settle the size; a 1,024 pick from ADE was withdrawn (Navvrat: 'ade is not a metric, b2d scores are')"
+source = "experiments/H16_drivejepa_b2d_retrain/reports/vocab.md, reports/vocab_elbow.md"
+
+[[checks]]
+name = "Vocabulary size on an early Bench2Drive grade"
+date = 2026-11-05
+result = "298 held-out and 299 training frames. Held-out frames with at least one teacher .862 / .930 / .956 / .966 / .980 at 512 to 8,192, NAVSIM 8,192 .775; held-out turns .451 / .686 / .784 / .843 / .882; training turns with four or more .340 / .574 / .745 / .809 / .915"
+decided = "2,048, taken from Navvrat's 'looks good can we start it'; the size was not named outright, so it is to confirm"
+source = "experiments/H16_drivejepa_b2d_retrain/reports/vocab_b2d_grade.md"
+
+[[checks]]
+name = "Step A v2: the grade on all 39,148 frames"
+date = 2026-11-05
+result = "the expert reaches 0.95 on 94.4% of training and 95.1% of held-out frames (mean .981, .983); at least one teacher on .964 / .958 of frames, turns .864 / .761; at least four .916 / .882, turns .670 / .518. Below 0.95, vehicle fires on 1,100 / 63 frames, outside 642 / 35, static 453 / 8, pedestrian 41 / 8, stop 11 / 0, red 0 / 8, progress 0 / 0"
+decided = "teachers_2048_v2.npz feeds Stage 2"
+source = "experiments/H16_drivejepa_b2d_retrain/tables/step_a_v2_numbers.json, reports/step_a_v2.md"
+
+[[checks]]
+name = "Step A v1, superseded"
+date = 2026-11-05
+result = "v1 measured progress against the best clean path and outside lanes as a share of the 4 s path: the expert reached 0.95 on 93.9% / 93.6% of frames. On frames where the expert passes through the oncoming lane it scored .054 to .248, below stopping. Teacher index c065c90c5ae4 was built and never trained on"
+decided = "spec v2: progress against the expert's distance, outside lanes a share of the route, stop threshold 1.0 m/s, the expert's hits checked against its log"
+source = "experiments/H16_drivejepa_b2d_retrain/reports/step_a_v1.md, specs/phase2_v1.md"
+
+[[checks]]
+name = "The expert's collisions against its log"
+date = 2026-11-05
+result = "39,148 frames, frames with a hit, path / 10 Hz log with the same margins / 10 Hz log with real boxes and no margin: pedestrian 49 / 17 / 17, vehicle 1,131 / 1,121 / 763, static 461 / 406 / 44. So 417 of the path's 461 static hits are not real contact: the 0.3 m static margin. Ego box after the rear-axle shift: the context's centre against the anno box centre, mean -0.008 m along, largest 0.045 m"
+source = "experiments/H16_drivejepa_b2d_retrain/tables/check_expert_log.txt, reports/step_a_v2.md"
+
+[[checks]]
+name = "Three frames where the expert passes through the oncoming lane"
+date = 2026-11-05
+result = "expert S under v1 / v2: Route1147 .054 / .781, Route1103 .226 / .822, Route1203 .248 / .930; best stopping path .537 / .588, .623 / .568, 1.000 / 1.000; teachers under v2: 1 (0 stop), 0, 22 (3 stop)"
+source = "experiments/H16_drivejepa_b2d_retrain/tables/three_frames.json, reports/step_a_v2.md"
+
+[[checks]]
+name = "Step B before the long run: encoder, grade in the loop, inputs, first steps, resume"
+date = 2026-11-05
+result = "merged encoder's sha256 and 292 tensors match; a vocabulary path graded in the training loop against Step A on 6,144 paths: largest S difference 1.8e-7, d 3.8e-6, counts identical; crop bit-identical to Phase 1's cache; speed p50 2.74, p99 10.69, range -2.77 to 14.83 m/s; acceleration p1 -18.78, p99 8.65, range -27.16 to 18.62 m/s2, the extremes real motion (backward roll at clip start, hard stops); 1.44 s a step at batch 64, 11.28 GiB, loader wait .025 s, losses finite; first loss after resume identical (9.94492), the next 9 within .0033"
+decided = "the long run started; this is the spec's check of the kind docs say the preflight makes, and gallops.train.preflight itself did not run"
+source = "experiments/H16_drivejepa_b2d_retrain/tables/checks_1_3_v2.json; agent_memory 05-11-26"
+
+[[checks]]
+name = "The port to src/: what changed against what ran"
+date = 2026-11-06
+result = "ast.unparse of each of the 13 ported modules against the file as it ran, docstrings dropped: 141 changed lines, all import statements and path expressions, apart from five unused locals and one unused assignment target removed for lint, build_vocab's --cache and --out made required, and an exists() guard around a log teachers reads. scorer.py: 0. wiring.py was rewritten by hand to read locations from the environment. On CPU under the training interpreter (Python 3.9.25), against the real tree: every module but the three top-level scripts imports, batch_fix applies, and grade_all's path regrades 9 frames of 3 clips to Step A's files (same feasible paths, every count identical, largest S difference 6e-8). No stage has been run from this repository"
+source = "experiments/H16_drivejepa_b2d_retrain/scripts/port_astdiff.py, scripts/port_check.py, tables/port_check_output.txt"
+
+[[checks]]
+name = "Regression gate on epoch 18"
+date = 2026-11-06
+result = "see H16.r2's gate block: the two jobs that finished a pair each say overall FAIL; NAVSIM, AlpaSim and the gate's Bench2Drive subset have no result"
+source = "experiments/H16_drivejepa_b2d_retrain/tables/verdict_ncap.json, verdict_openloop.json, verdict_alpasim.json"

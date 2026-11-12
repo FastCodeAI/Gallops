@@ -1,0 +1,21 @@
+imported scorer 3 s
+imported grade 3 s
+imported frames 4 s
+imported ade 4 s
+imported samples 4 s
+imported build_cache 4 s
+imported build_vocab 5 s
+imported train_lora 7 s
+imported train_stage2 15 s
+agent class DriveJEPAAgent True
+imported grade_all 944 routes
+HighwayCutIn_Town06_Route300_Weather14 frame 0 paths 344 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+HighwayCutIn_Town06_Route300_Weather14 frame 9 paths 850 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+HighwayCutIn_Town06_Route300_Weather14 frame 18 paths 16 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1103_Weather11 frame 0 paths 344 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1103_Weather11 frame 37 paths 344 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1103_Weather11 frame 74 paths 806 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1444_Weather0 frame 0 paths 344 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1444_Weather0 frame 30 paths 394 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+AccidentTwoWays_Town12_Route1444_Weather0 frame 61 paths 787 max|dS| 5.96e-08 expert |dS| 0.00e+00 count diffs 0
+LARGEST 5.960464477539063e-08 seconds 22

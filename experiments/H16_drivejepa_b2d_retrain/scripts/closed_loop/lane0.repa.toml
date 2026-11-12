@@ -1,0 +1,21 @@
+# Phase 2 Drive-JEPA (drivejepa_p2, epoch 18) on the 50 routes, 06 Nov: run3a/b2d-run3a/lane0.repa.toml with only the model, runs root and ports changed.
+site = "fastcode-navvrat-p2-b2d-lane0-repa"
+[roots]
+repos   = "{repos}"
+runs    = "{runs}/b2d_drivejepa/phase2/closed_loop/repa"
+weights = "{runs}/weights"
+[gpu]
+budget_gb = 90
+serialize = true
+[models.drivejepa_p2]
+env = { DRIVEJEPA_RECORD_DIR = "{runs}/b2d_drivejepa/phase2/closed_loop/repa/calls/lane0-repa", DRIVEJEPA_RECORD_FEATS = "0" }
+[benchmarks.bench2drive]
+python      = "{conda}/envs/b2d/bin/python"
+carla_root  = "{carla}"
+repo        = "{workspace}/Evaluations/Bench2Drive"
+routes_file = "bench2drive220.xml"
+routes_subset = "1852,2509,3410,24240,24795,2534,2539,3307,27582,27515,3813,24816,18356,27529,25857,18311,3800,24333,18305,1711,26956,24211,17752,2802,2201,2050,3564,3936,26990,24252,2084,4183,2086,24224,4669,3380,4468,27018,3572,2286,3749,25378,3373,3575,2790,25863,2273,3378,14194,3364"
+carla_port = "7130"
+tm_port = "13130"
+record = false
+per_route_timeout_s = 3600  # run 2's longest real route took 22 min; its route 2050 hung 10 h on a CARLA TM failure

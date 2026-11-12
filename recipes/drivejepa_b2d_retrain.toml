@@ -1,0 +1,124 @@
+# Drive-JEPA's training rebuilt on Bench2Drive (experiment H16): an encoder LoRA, a path vocabulary, a grade from
+# Bench2Drive's own penalties, and Drive-JEPA's Stage 2 on them.
+#
+#   gallops recipe drivejepa_b2d_retrain                      print every command for this machine
+#   gallops recipe drivejepa_b2d_retrain stage2-train --run   run one stage (only the named ones)
+#
+# Lineage, data, and what was verified: experiments/H16_drivejepa_b2d_retrain/README.md. No stage has been run from
+# this repository: the modules are the as-run scripts with imports and paths changed (the README says how that was
+# checked), and they ran on 5-6 Nov from the training site's own folders. Every stage refuses to overwrite a
+# checkpoint, a cache or an earlier result.
+#
+# What this recipe does not build. The scripts are in experiments/H16_drivejepa_b2d_retrain/scripts/ as they ran; they
+# import site tooling that is not in this repository (POINTERS.md pins each file by sha256), so they are a record:
+#   {vocab}/paths_cache.npz            scripts/vocab/extract_paths.py (Phase 0a's labels, the rear-axle shift)
+#   {out}/phase1/ade_set.pt            scripts/phase1/build_ade_set.py
+#   {built}/context/, inputs/blocked_all.json   scripts/phase2/build_context.py, blocked_all.py
+#   {built}/inputs/ego_inputs.npz      scripts/phase2/build_inputs.py
+#   {built}/inputs/route_len.json      no script survives; POINTERS.md pins the file
+#
+# Site config this needs (gallops.toml):
+#   [python] drivejepa          Drive-JEPA's interpreter (Python 3.9, navsim installed), with an mmcv-full built for the
+#                               GPU (sm_120 here: torch 2.8.0 cu128, mmcv-full 1.7.2) and scikit-learn 1.2.2
+#   [code]   drivejepa          the Drive-JEPA checkout paddock runs (upstream e21f474 and paddock's msda patch)
+#   [code]   gallops_kitscenes  a checkout of this repository at e75aaac, for Sid's lora, players, common, masks2 and
+#                               f_final, which wiring.py imports unchanged
+#   [datasets.navsim]           exp = NAVSIM_EXP_ROOT, holding Drive-JEPA-cache/ with the released agent checkpoint
+#                               and vitl_merge_3dataset_e50.pt
+#   [datasets.b2d_clips]        path = b2d_base/ and b2d_pilot/, each <clip>/camera/rgb_front/ (Phase 0a's local copies)
+
+description = "Drive-JEPA's training rebuilt on Bench2Drive: encoder LoRA, vocabulary, grade, Stage 2"
+
+[vars]
+out = "{runs}/drivejepa_b2d_retrain"
+vocab = "{out}/vocab"
+built = "{out}/data"
+cache = "{out}/frame_cache"
+splits = "{repo}/recipes/drivejepa_b2d_retrain/clips.json"
+
+# ---------------------------------------------------------------------------------------------
+# Stage 1: the encoder. 1,000 guesser-only steps, then 3 passes of hide-and-guess; pass 3 merged.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "frame-cache"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.build_cache"
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}", NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", SID_KITSCENES = "{code.gallops_kitscenes}" }
+args = ["8"]
+
+[[stage]]
+name = "lora-train"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.train_lora"
+after = ["frame-cache"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}", NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", SID_KITSCENES = "{code.gallops_kitscenes}", OMP_NUM_THREADS = "2" }
+args = ["--name", "p1_05nov"]
+
+[[stage]]
+name = "lora-merge"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.merge_lora"
+after = ["lora-train"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}", NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", SID_KITSCENES = "{code.gallops_kitscenes}" }
+args = ["save_0014_pass_03", "pass_03"]
+
+# ---------------------------------------------------------------------------------------------
+# The vocabulary: k-means on the expert's 4 s training paths. All six sizes; Phase 2 reads the 2,048.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "vocabulary"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.build_vocab"
+env = { OMP_NUM_THREADS = "8", OPENBLAS_NUM_THREADS = "8", CUDA_VISIBLE_DEVICES = "" }
+args = ["--cache", "{vocab}/paths_cache.npz", "--out", "{vocab}"]
+
+# ---------------------------------------------------------------------------------------------
+# Step A: every feasible path of the 2,048 on all 39,148 frames, then the teacher index.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "grade"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.grade_all"
+after = ["vocabulary"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}" }
+# The run used two shards, --shard 0 2 and --shard 1 2.
+args = ["--out", "{built}/grade_v2"]
+
+[[stage]]
+name = "teachers"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.teachers"
+after = ["grade"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}" }
+
+# ---------------------------------------------------------------------------------------------
+# Step B: Drive-JEPA's Stage 2. 20 epochs at batch 64; a checkpoint every epoch, chosen by hand.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "stage2-train"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.train_stage2"
+after = ["lora-merge", "teachers"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}", NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", SID_KITSCENES = "{code.gallops_kitscenes}", OMP_NUM_THREADS = "2" }
+args = ["--name", "p2_05nov", "--micro", "64", "--epochs", "20"]
+
+[[stage]]
+name = "stage2-export"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.export_agent"
+after = ["stage2-train"]
+env = { B2D_OUT = "{out}" }
+args = ["18"]
+
+# The same, with generator, refiner, scorer and projector from the released checkpoint; encoder still Phase 1's.
+[[stage]]
+name = "stage2-finetune"
+python = "drivejepa"
+module = "drivejepa_b2d_retrain.train_stage2"
+after = ["lora-merge", "teachers"]
+env = { B2D_SPLITS = "{splits}", B2D_CLIPS = "{data.b2d_clips}", B2D_FRAME_CACHE = "{cache}", B2D_OUT = "{out}", B2D_VOCAB = "{vocab}", B2D_DATA = "{built}", NAVSIM_DEVKIT_ROOT = "{code.drivejepa}/navsim_v2", NAVSIM_EXP_ROOT = "{data.navsim.exp}", SID_KITSCENES = "{code.gallops_kitscenes}", OMP_NUM_THREADS = "2" }
+args = ["--name", "p2ft_06nov", "--micro", "64", "--epochs", "20", "--workers", "4", "--init-released"]

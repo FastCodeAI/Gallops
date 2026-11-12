@@ -1,0 +1,14 @@
+route,queue_position,h16_r2_ds,h16_r2_rc,h16_r2_penalty,h16_r2_status,run3a_ds,run3a_rc,released_ds
+27582,1,32.48,100,0.3248,Completed,18.543,52.98,45.5
+27515,2,35.119,50.17,0.7,Failed - Agent deviated from the route,31.672,48.2,64.87
+27529,3,40.016,50.02,0.8,Failed - Agent deviated from the route,97.724,100,40.016
+26956,4,12.214,79.66,0.1533,Failed - TickRuntime,21.284,22.64,60.0
+2201,5,42.0,100,0.42,Completed,15.12,100,32.144
+2050,6,24.749,65.66,0.3769,Failed - TickRuntime,60.0,100,19.91
+3936,7,21.501,56.64,0.3796,Failed - Agent deviated from the route,55.13,55.13,40.89
+26990,8,22.382,53.29,0.42,Failed - Agent deviated from the route,36.344,51.92,39.59
+2084,9,8.489,50.76,0.1672,Failed - TickRuntime,50.76,50.76,50.76
+4183,10,22.478,53.52,0.42,Failed - Agent deviated from the route,53.52,53.52,37.05
+2086,11,41.88,52.35,0.8,Failed - Agent deviated from the route,41.88,52.35,41.88
+4669,12,54.47,54.47,1.0,Failed - Agent deviated from the route,53.03,53.03,20.76
+4468,13,54.73,54.73,1.0,Failed - Agent deviated from the route,54.73,54.73,54.73

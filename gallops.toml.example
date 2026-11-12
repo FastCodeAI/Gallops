@@ -62,6 +62,9 @@ runs = "/path/to/gallops-runs"
 # [datasets.drivejepa_b2d]
 # path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (experiments/GC04_bench2drive/README.md)
 
+# [datasets.b2d_clips]
+# path = "/path/to/phase0a-labels"            # b2d_base/ and b2d_pilot/: the clips of recipes/drivejepa_b2d_retrain.toml
+
 # ---------------------------------------------------------------------------
 # Interpreters and upstream code, for stages that must run inside a model's own
 # environment. A recipe names them as {python.NAME} and {code.NAME}; see
@@ -74,3 +77,4 @@ runs = "/path/to/gallops-runs"
 
 # [code]
 # drivejepa = "/path/to/Drive-JEPA"
+# gallops_kitscenes = "/path/to/Gallops-at-e75aaac"   # Sid's LoRA code; recipes/drivejepa_b2d_retrain.toml imports it

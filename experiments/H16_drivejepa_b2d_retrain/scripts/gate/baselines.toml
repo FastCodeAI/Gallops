@@ -1,0 +1,32 @@
+# The queue's baselines for drivejepa: job 20261026T232633-naren-4b7a at commit 06870801c05a,
+# written by `python -m tools.gate_queue run`. Not tracked; see docs/queue.md.
+
+model = "drivejepa"
+
+[baseline.neuroncap]
+run = "drivejepa:20261026T232704-7bcf0e"
+results = "{paddock_site}/queue/checkouts/06870801c05a8e43b81887a469d869ce468935ab/results"
+
+[baseline.bench2drive]
+run = "drivejepa:20261026T233957-56d38c"
+results = "{paddock_site}/queue/checkouts/06870801c05a8e43b81887a469d869ce468935ab/results"
+
+[baseline.alpasim]  # continued 27 Oct with the 2 scenes PR #116 swapped in: 8 reused, 2 new
+run = "drivejepa:20261027T005941-d3f828"
+results = "{paddock_site}/queue/checkouts/661901c14b27646b1896e5704e3a39b2e99f62e0/results"
+
+[baseline.neuroncap_quick]  # from the previous baselines, not run by job 20261026T232633-naren-4b7a
+run = "drivejepa:20261026T195633-2a9a76"
+results = "{paddock_site}/queue/checkouts/54306afa92923af01f8f91d7b81b81cf22925632/results"
+
+[baseline.kitscenes]  # from the previous baselines, not run by job 20261026T232633-naren-4b7a
+run = "drivejepa:20261023T195836-e90d98"
+results = "{paddock_site}/queue/checkouts/d889539c90070f44d9690bf49d92a9ffa09b8982/results"
+
+[baseline.nuscenes]  # from the previous baselines, not run by job 20261026T232633-naren-4b7a
+run = "drivejepa:20261023T200508-261359"
+results = "{paddock_site}/queue/checkouts/d889539c90070f44d9690bf49d92a9ffa09b8982/results"
+
+[baseline.navsim]  # from the previous baselines, not run by job 20261026T232633-naren-4b7a
+run = "drivejepa:20261023T202240-de2f00"
+results = "{paddock_site}/queue/checkouts/d889539c90070f44d9690bf49d92a9ffa09b8982/results"
