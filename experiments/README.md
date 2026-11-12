@@ -46,6 +46,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
 | [H15](H15_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | ⏳ running | [H15_prediction_memory/](H15_prediction_memory/) |
+| [H17](H17_generator_scorer_memory/CARD.md) | A memory read by both the generator and the scorer, trained with them, picks better paths | hypothesis | Siddesh | 7 Nov – 12 Nov 2026 | ⏸ parked (negative) | [H17_generator_scorer_memory/](H17_generator_scorer_memory/) |
 <!-- /experiments:index -->
 
 ## Enablers

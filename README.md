@@ -10,7 +10,7 @@
   <a href=".github/workflows/check.yml"><img src="https://img.shields.io/badge/gate-make_check_in_CI-555555.svg" alt="Gate: make check in CI"></a>
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
-  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-8_open_or_tested-1F6FEB.svg" alt="hypotheses: 8 open or tested"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-9_open_or_tested-1F6FEB.svg" alt="hypotheses: 9 open or tested"></a>
   <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-4-B4560A.svg" alt="gated checkpoints: 4"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
@@ -65,6 +65,7 @@ One structural change each, on the agreed base, decided by paddock's regression 
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●●○ strong · open-loop | ⏸ **HOLD** 6 Nov |
+| [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | ⏸ parked (negative) | offline mean grade of the picked path: memory carried vs reset every moment 0.7355 → **0.7313** (n=1,131 moments) | ●●○○ moderate · open-loop | — |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.
