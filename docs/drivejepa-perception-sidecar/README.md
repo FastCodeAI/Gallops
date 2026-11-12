@@ -204,6 +204,12 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     gate's "every column equal" holds on 52% of tokens, not 99.9%. Every discrete column is identical everywhere;
     only EP differs, by at most 1.5e-6, because the plans differ by at most 5e-5 m. Brought to the owner before
     B-1 reads navtest.
+- **12 Nov · B-1's grid on R-clean, and its settings frozen.**
+  - On R-clean's 2,624 known-command windows (city-reweighted, effective n about 630), the ceiling B-1-1 gains
+    +0.24 ± 0.20 points: little room there. Every setting of B-1-2 (6) and of B-1-3 (12) loses, by 0.05 to
+    0.20 points; the vetoes leave NC and TTC failures where they were and cost progress.
+  - By the pre-registered rule the least intrusive settings are frozen: B-1-2 at 0.5 m within 1 s, B-1-3 at
+    0.5 m within 1 s and confidence 0.7 (`recipes/drivejepa_perception/part_b1_frozen.json`).
 
 <a id="open"></a>
 

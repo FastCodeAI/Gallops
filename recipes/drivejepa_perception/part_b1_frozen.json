@@ -1,0 +1,127 @@
+{
+ "rule": "per sub-version, the setting with the highest R-clean selection value (vendored final, human-filtered, reweighted to navtest's cities), B-1-3 by its mean over seeds 0-2; a tie goes to the fewer vetoes, then to the grid's order (D24; PREDICTIONS.md, Part B \u00b7 B-1)",
+ "grid": {
+  "margins": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "horizons": [
+   1.0,
+   2.0
+  ],
+  "confidences": [
+   0.5,
+   0.7
+  ]
+ },
+ "source": {
+  "grid_sha256": "69c1486749f6be858278f07cf2bcd30b64655b5a90afa9d2a433109e9ebed9aa",
+  "split": "fresh",
+  "rows": 2624
+ },
+ "weights": {
+  "target_share": {
+   "sg-one-north": 0.15758274328997202,
+   "us-ma-boston": 0.30717931829408857,
+   "us-nv-las-vegas-strip": 0.3345957516877984,
+   "us-pa-pittsburgh-hazelwood": 0.20064218672814096
+  },
+  "used_share": {
+   "us-ma-boston": 0.36464034401876466,
+   "us-nv-las-vegas-strip": 0.3971853010164191,
+   "us-pa-pittsburgh-hazelwood": 0.23817435496481631
+  },
+  "dropped": [
+   "sg-one-north"
+  ],
+  "rows_per_city": {
+   "us-ma-boston": 133,
+   "us-nv-las-vegas-strip": 2382,
+   "us-pa-pittsburgh-hazelwood": 109
+  },
+  "kish_n_eff": 630.366584407559
+ },
+ "values": {
+  "B-1-2": {
+   "m0.5-h1": {
+    "value": 0.7561317571162753,
+    "veto_rate": 0.012159394054878049
+   },
+   "m0.5-h2": {
+    "value": 0.7554354912956488,
+    "veto_rate": 0.04995950838414634
+   },
+   "m1-h1": {
+    "value": 0.7558720491134547,
+    "veto_rate": 0.022937309451219513
+   },
+   "m1-h2": {
+    "value": 0.75494977339894,
+    "veto_rate": 0.07899437881097561
+   },
+   "m2-h1": {
+    "value": 0.7557273435145005,
+    "veto_rate": 0.04832793445121951
+   },
+   "m2-h2": {
+    "value": 0.7546452904016716,
+    "veto_rate": 0.1300733612804878
+   }
+  },
+  "B-1-3": {
+   "m0.5-h1-c0.5": {
+    "value": 0.7561877583732941,
+    "veto_rate": 0.008439723069105691
+   },
+   "m0.5-h1-c0.7": {
+    "value": 0.7561893192010167,
+    "veto_rate": 0.00766164888211382
+   },
+   "m0.5-h2-c0.5": {
+    "value": 0.7556445222515565,
+    "veto_rate": 0.04436610772357724
+   },
+   "m0.5-h2-c0.7": {
+    "value": 0.7556566798417442,
+    "veto_rate": 0.042063643292682924
+   },
+   "m1-h1-c0.5": {
+    "value": 0.7560505277864352,
+    "veto_rate": 0.01469210492886179
+   },
+   "m1-h1-c0.7": {
+    "value": 0.756056715981073,
+    "veto_rate": 0.013171684451219511
+   },
+   "m1-h2-c0.5": {
+    "value": 0.7551710535822588,
+    "veto_rate": 0.06301209984756097
+   },
+   "m1-h2-c0.7": {
+    "value": 0.7551940769045435,
+    "veto_rate": 0.059256700965447155
+   },
+   "m2-h1-c0.5": {
+    "value": 0.7556946779218321,
+    "veto_rate": 0.03692676575203252
+   },
+   "m2-h1-c0.7": {
+    "value": 0.7557737960774306,
+    "veto_rate": 0.03172240218495934
+   },
+   "m2-h2-c0.5": {
+    "value": 0.7550111708142979,
+    "veto_rate": 0.10810864456300813
+   },
+   "m2-h2-c0.7": {
+    "value": 0.7550702251086667,
+    "veto_rate": 0.09829141260162601
+   }
+  }
+ },
+ "chosen": {
+  "B-1-2": "m0.5-h1",
+  "B-1-3": "m0.5-h1-c0.7"
+ }
+}
