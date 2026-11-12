@@ -136,22 +136,8 @@ def shuffled_rows(token_logs: np.ndarray) -> np.ndarray:
     return perm
 
 
-def subsets(labels: dict, proposals: np.ndarray) -> dict:
-    """The three pre-registered subsets (PREDICTIONS.md), from the labels, not from any model."""
-    n = len(labels["token"])
-    lead, near = np.zeros(n, bool), np.zeros(n, bool)
-    for row in range(n):
-        a = navsim_data.agents_of(labels, row)
-        xy = a["box"][:, :2]
-        lead[row] = bool(
-            ((a["cls"] == 0) & (xy[:, 0] > 0) & (xy[:, 0] < 30) & (np.abs(xy[:, 1]) <= 1.75)).any()
-        )
-        if len(xy):
-            poses = proposals[row, :, :4, :2].reshape(-1, 2)
-            near[row] = bool((np.linalg.norm(poses[:, None] - xy[None], axis=-1) < 10.0).any())
-    speed = labels["ego_speed"]
-    slowing = (speed[:, 0] - speed[:, -1] > 1.0) | (speed[:, 0] < 0.5)
-    return {"lead_30m": lead, "slowing_or_stopped": slowing, "agent_within_10m": near}
+#: The three pre-registered subsets, now numpy-only in navsim_data (tested without torch).
+subsets = navsim_data.subsets
 
 
 def batch_of(data: dict, rows: np.ndarray, device) -> dict:
