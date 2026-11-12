@@ -52,6 +52,10 @@ benchmark reporting should wait for a more stable release.
 
 ### NAVSIM — the most valuable corpus we do not have
 
+> **Correction (2026-11-12):** `navtrain` is now on disk at the training site, with gaps in its
+> images; docs/STRATEGY.md's correction at the top says what was read and what was not checked.
+> The paragraph below is as it was written.
+
 `navtrain` / `trainval_sensor` is a separate, much larger download and is
 absent, as is `synthetic_scenes/` (needed for the two-stage scoring the public
 leaderboard reports). Since NAVSIM at n = 12,146 is the highest-resolution

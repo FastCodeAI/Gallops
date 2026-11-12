@@ -59,6 +59,14 @@ runs = "/path/to/gallops-runs"
 # path = "/path/to/navsim/dataset"
 # exp  = "/path/to/navsim/exp"        # extra keys become {data.navsim.exp}
 
+# [datasets.navtrain]                 # NAVSIM's training split, read by gallops.memory
+# path         = "/path/to/navsim"
+# logs         = "/path/to/navsim/navsim_logs/trainval"     # the log pickles
+# blobs        = "/path/to/navsim/sensor_blobs/trainval"    # the camera images
+# extra_blobs  = "/path/to/a/second/copy"   # optional: searched after `blobs`, for a site whose copy has gaps
+# metric_cache = "/path/to/train_metric_cache"              # the vendor's grader cache; its metadata/ csv lists the graded tokens
+# cache        = "/path/to/memory_cache"   # where gallops.memory writes: ticks/, release/, checks/, probe/
+
 # [datasets.drivejepa_b2d]
 # path = "/path/to/drivejepa_b2d-v1"          # the frozen inputs of recipes/drivejepa_b2d.toml (experiments/GC04_bench2drive/README.md)
 
