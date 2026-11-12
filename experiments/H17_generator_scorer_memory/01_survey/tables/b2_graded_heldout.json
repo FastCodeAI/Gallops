@@ -1,0 +1,41 @@
+{
+ "which": "graded_heldout",
+ "nclips": 355,
+ "tol": {
+  "ego": 0.15,
+  "frame": 0.05
+ },
+ "hist_bins": [
+  0,
+  0.5,
+  1,
+  2,
+  5,
+  10,
+  20
+ ],
+ "hist_counts": [
+  13,
+  326,
+  647,
+  1983,
+  3267,
+  4280,
+  0
+ ],
+ "median": 8.4946245,
+ "share_ge5": 0.7176683149486497,
+ "whole_counts": [
+  0,
+  326,
+  647,
+  1983,
+  3265,
+  4295,
+  0
+ ],
+ "whole_median": 8.5,
+ "whole_share_ge5": 0.7189045264359072,
+ "clips_with_pose_gap": 0,
+ "clips_with_frame_gap": 0
+}

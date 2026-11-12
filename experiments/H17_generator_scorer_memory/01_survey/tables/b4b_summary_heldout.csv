@@ -1,0 +1,5 @@
+clip_type,clips,clips_with_tracks,clip_hours,clip_hours_with_tracks,moments,moments_with_tracks,hb3_events,hb3_per_hour,hb3_clips,hb3_moments,hb3_moment_share_pct,hb4_events,hb4_per_hour,hb4_clips,hb4_moments,hb4_moment_share_pct,hb6_events,hb6_per_hour,hb6_clips,hb6_moments,hb6_moment_share_pct,cut_in_events,cut_in_per_hour,cut_in_clips,cut_in_moments,cut_in_moment_share_pct,crossing_events,crossing_per_hour,crossing_clips,crossing_moments,crossing_moment_share_pct,oov_events,oov_per_hour,oov_clips,oov_moments,oov_moment_share_pct,any_event_moments,any_event_share_pct,any_event_share_pct_tracked
+ordinary,143,2,0.79,0.01,4566,64,10,12.59,10,80,1.75,2,2.52,2,20,0.44,0,0.0,0,0,0.0,0,0.0,0,0,0.0,0,0.0,0,0,0.0,0,0.0,0,0,0.0,84,1.84,0.0
+pull-out,82,82,0.46,0.46,2622,2622,0,0.0,0,0,0.0,0,0.0,0,0,0.0,0,0.0,0,0,0.0,4,8.78,4,31,1.18,7,15.37,2,26,0.99,0,0.0,0,0,0.0,57,2.17,2.17
+reconstructed-type (raw A),75,0,0.42,0.0,2393,0,2,4.8,2,14,0.59,1,2.4,1,10,0.42,1,2.4,1,10,0.42,0,,0,0,,0,,0,0,,0,,0,0,,17,0.71,
+ALL,300,84,1.67,0.47,9581,2686,12,7.2,12,94,0.98,3,1.8,3,30,0.31,1,0.6,1,10,0.1,4,8.57,4,31,1.15,7,15.0,2,26,0.97,0,0.0,0,0,0.0,158,1.65,2.12

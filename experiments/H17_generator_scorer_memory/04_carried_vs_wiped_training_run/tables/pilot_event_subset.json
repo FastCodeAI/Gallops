@@ -1,0 +1,20 @@
+{
+ "rows_event_table": 49,
+ "distinct_event_moments_all_2591": 40,
+ "in_picking_event_moments": 34,
+ "in_picking_graded_event_moments": 34,
+ "in_picking_graded": 1131,
+ "in_picking": 2000,
+ "event_clips_in_picking": 5,
+ "by_type_in_picking": {
+  "crossing": 12,
+  "cut_in": 25,
+  "hb3": 3
+ },
+ "by_type_in_picking_graded": {
+  "crossing": 12,
+  "cut_in": 25,
+  "hb3": 3
+ },
+ "too_small_to_read_lt_50": true
+}

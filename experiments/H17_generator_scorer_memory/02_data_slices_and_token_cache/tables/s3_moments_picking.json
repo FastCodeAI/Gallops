@@ -1,0 +1,40 @@
+{
+ "which": "picking",
+ "moments": 2591,
+ "moments_in_clips_with_tracks": 1503,
+ "clips": 84,
+ "clips_with_tracks": 50,
+ "clip_hours": 0.4666666666666667,
+ "events": {
+  "hb3": 1,
+  "hb4": 0,
+  "hb6": 0,
+  "cut_in": 3,
+  "crossing": 2,
+  "oov": 0
+ },
+ "moments_per_type": {
+  "hb3": 3,
+  "hb4": 0,
+  "hb6": 0,
+  "cut_in": 30,
+  "crossing": 16,
+  "oov": 0
+ },
+ "share_per_type_pct": {
+  "hb3": 0.12,
+  "hb4": 0.0,
+  "hb6": 0.0,
+  "cut_in": 2.0,
+  "crossing": 1.06,
+  "oov": 0.0
+ },
+ "any_event_moments": 40,
+ "any_event_share_pct": 1.54,
+ "rows": 49,
+ "by_type": {
+  "A": 13,
+  "B_pass": 6,
+  "ordinary": 30
+ }
+}

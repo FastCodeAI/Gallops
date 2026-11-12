@@ -1,0 +1,75 @@
+{
+ "started": "2026-11-11 03:28:25",
+ "version": 2,
+ "env_patch": {
+  "applied": true,
+  "was": "{runs}/paddock_sid_moved/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "80778 MiB, 97887 MiB, 99 %",
+ "loadavg": [
+  "45.33",
+  "37.40",
+  "36.58"
+ ],
+ "avail_ram_gb": 50.6,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "reference": {
+  "moments": 2591,
+  "wall_s": 568.6
+ },
+ "motion_source_check": {
+  "pairs": 2494,
+  "max_mismatch_m": 0.13131284525089795,
+  "p99_mismatch_m": 0.03405318481131311,
+  "median_mismatch_m": 0.000675901656423654
+ },
+ "carry": {
+  "vs_018b_cached_forward": {
+   "moments": 2591,
+   "proposals_bit_identical": true,
+   "pred_logit_bit_identical": true,
+   "chosen_bit_identical": true,
+   "picks_equal": 2591,
+   "max_abs_plan_diff_m": 0.0,
+   "max_abs_logit_diff": 0.0,
+   "pass": true
+  },
+  "replay_wall_s": 361.7,
+  "M_read_max_abs_over_all_moments": 4.576397895812988
+ },
+ "wiped": {
+  "vs_018b_cached_forward": {
+   "moments": 2591,
+   "proposals_bit_identical": true,
+   "pred_logit_bit_identical": true,
+   "chosen_bit_identical": true,
+   "picks_equal": 2591,
+   "max_abs_plan_diff_m": 0.0,
+   "max_abs_logit_diff": 0.0,
+   "pass": true
+  },
+  "replay_wall_s": 421.3,
+  "M_read_max_abs_over_all_moments": 3.5601537227630615
+ },
+ "pass": true,
+ "M0_read_at_every_moment": {
+  "carry": 4.576397895812988,
+  "wiped": 3.5601537227630615
+ },
+ "ended": "2026-11-11 03:51:04"
+}

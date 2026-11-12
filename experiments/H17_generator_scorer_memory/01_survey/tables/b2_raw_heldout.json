@@ -1,0 +1,41 @@
+{
+ "which": "raw_heldout",
+ "nclips": 300,
+ "tol": {
+  "ego": 0.15,
+  "frame": 0.05
+ },
+ "hist_bins": [
+  0,
+  0.5,
+  1,
+  2,
+  5,
+  10,
+  20
+ ],
+ "hist_counts": [
+  24,
+  300,
+  600,
+  1800,
+  3000,
+  3842,
+  0
+ ],
+ "median": 8.0,
+ "share_ge5": 0.7152414802425257,
+ "whole_counts": [
+  0,
+  300,
+  600,
+  1800,
+  3000,
+  3866,
+  0
+ ],
+ "whole_median": 8.0,
+ "whole_share_ge5": 0.7177503658791553,
+ "clips_with_pose_gap": 0,
+ "clips_with_frame_gap": 0
+}

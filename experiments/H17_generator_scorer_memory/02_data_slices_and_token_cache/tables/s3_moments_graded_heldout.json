@@ -1,0 +1,40 @@
+{
+ "which": "graded_heldout",
+ "moments": 10516,
+ "moments_in_clips_with_tracks": 10516,
+ "clips": 355,
+ "clips_with_tracks": 355,
+ "clip_hours": 1.971583406944476,
+ "events": {
+  "hb3": 8,
+  "hb4": 2,
+  "hb6": 0,
+  "cut_in": 33,
+  "crossing": 20,
+  "oov": 0
+ },
+ "moments_per_type": {
+  "hb3": 44,
+  "hb4": 4,
+  "hb6": 0,
+  "cut_in": 219,
+  "crossing": 118,
+  "oov": 0
+ },
+ "share_per_type_pct": {
+  "hb3": 0.42,
+  "hb4": 0.04,
+  "hb6": 0.0,
+  "cut_in": 2.08,
+  "crossing": 1.12,
+  "oov": 0.0
+ },
+ "any_event_moments": 373,
+ "any_event_share_pct": 3.55,
+ "rows": 385,
+ "by_type": {
+  "A": 111,
+  "B_pass": 29,
+  "ordinary": 245
+ }
+}

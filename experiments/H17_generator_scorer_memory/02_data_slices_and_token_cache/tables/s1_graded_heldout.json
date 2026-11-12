@@ -1,0 +1,724 @@
+{
+ "summary": {
+  "clips": 355,
+  "chunks": 232,
+  "moments": 10516,
+  "graded_moments": 10468,
+  "hours": 1.9715834069444444,
+  "by_type": {
+   "A": {
+    "moments": 3013,
+    "clips": 99
+   },
+   "B_pass": {
+    "moments": 1173,
+    "clips": 43
+   },
+   "ordinary": {
+    "moments": 6330,
+    "clips": 213
+   }
+  },
+  "moments_per_clip": {
+   "min": 1,
+   "median": 32.0,
+   "max": 32
+  },
+  "anchor_t": {
+   "min": 0.5,
+   "max": 16.0
+  }
+ },
+ "checks": {
+  "chunks_shared_with_train": [],
+  "chunks_shared_with_picking": [],
+  "chunks_shared_with_heldout": [],
+  "chunks_shared_with_exam31": [],
+  "exam_chunks_n": 31,
+  "clips_in_exam": [],
+  "clips_in_our30": [],
+  "clips_shared_with_train": [],
+  "sample_ids_shared_with_train": 0,
+  "clips_shared_with_picking": []
+ },
+ "files": {
+  "slim_present": 10516,
+  "pad_feature_present": 10516,
+  "metric_cache_present": 10468,
+  "metric_cache_present_on_graded": 10468,
+  "graded_without_metric_cache": 0,
+  "ungraded_with_metric_cache": 0,
+  "pad_label2_present": 10468,
+  "clips_with_pool_tracks": 355,
+  "clips": 355
+ },
+ "loaded_sample": [
+  {
+   "sample_id": "600a8cc2_14000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "e96df3d2_10500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "abd45a30_15000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "5361354b_09500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "cca40c7a_10000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "abd45a30_05000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "d3403a81_05500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "0b1b82de_13000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "f0132144_01500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "780ece49_08000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "f23b6d15_13500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "4541cef6_01500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "3264f6cd_16000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "d5e79abb_04000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "4b7f3f25_06000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "e7db8971_01500",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "f23b6d15_14000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "6c0a56c4_09000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "9c89f9c9_11000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  },
+  {
+   "sample_id": "009c69f0_15000",
+   "slim_keys": [
+    "ego_status",
+    "img_shape",
+    "lidar2img",
+    "png1",
+    "png2",
+    "token",
+    "trajectory"
+   ],
+   "shapes": {
+    "lidar2img": [
+     2,
+     4,
+     4
+    ],
+    "img_shape": [
+     2,
+     3
+    ],
+    "ego_status": [
+     4,
+     11
+    ],
+    "trajectory": [
+     8,
+     3
+    ]
+   },
+   "token_ok": true,
+   "metric_cache_type": "MetricCache"
+  }
+ ],
+ "outputs": {
+  "manifest": "{runs}/generator_scorer_memory/slices/manifest_graded_heldout.parquet",
+  "manifest_sha256": "006ec7c81396683f0017c63353b13aa7867f4a21fa41d53048dc52d08c9b36d3",
+  "clips": "{runs}/generator_scorer_memory/slices/graded_heldout_clips.csv",
+  "clips_sha256": "62aa2bed70b472993fdd5f45a456158d2ebe8f9d20b20dde9b3efc3a78c608e8"
+ },
+ "secs": 362.5780291557312
+}

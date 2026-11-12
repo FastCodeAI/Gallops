@@ -1,0 +1,156 @@
+{
+ "started": "2026-11-07 05:28:04",
+ "gpu_before": "48474 MiB, 97887 MiB, 4 %",
+ "p06_sha_verified_s": 4.4,
+ "agent": {
+  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "pass_a": {
+  "moments": 1022,
+  "wall_s": 1820.6,
+  "forward_s_per_moment_batch1_fp32_incl_gen_scorer": 0.03230217752672344
+ },
+ "cache_files": {
+  "clips": 32,
+  "bytes": 839256772,
+  "per_moment_fp32_bytes": 524288,
+  "per_moment_bf16_bytes": 262144,
+  "per_moment_pooled_fp32_bytes": 33792
+ },
+ "exactness": {
+  "fp32": {
+   "pick_agreement_pct": 100.0,
+   "picks_changed": 0,
+   "plan_diff_max_m": 0.0,
+   "plan_diff_mean_m": 0.0,
+   "rating_logit_diff_max": 0.0,
+   "rating_logit_diff_mean_of_max": 0.0,
+   "wall_s": 13.8
+  },
+  "bf16": {
+   "pick_agreement_pct": 99.90215264187867,
+   "picks_changed": 1,
+   "plan_diff_max_m": 1.527923583984375,
+   "plan_diff_mean_m": 0.0004241265414748341,
+   "rating_logit_diff_max": 0.031526923179626465,
+   "rating_logit_diff_mean_of_max": 0.0015395194059237838,
+   "wall_s": 14.0
+  }
+ },
+ "grades": {
+  "graded_moments": 414,
+  "pick_grade_mean_a": 0.784085750579834,
+  "grading_wall_s": 484.2,
+  "fp32": {
+   "pick_grade_mean_b": 0.784085750579834,
+   "picked_plan_grade_changed": 0,
+   "max_abs_grade_change_of_pick": 0.0,
+   "menu_grade_max_abs_change": 0.0
+  },
+  "bf16": {
+   "pick_grade_mean_b": 0.7840860486030579,
+   "picked_plan_grade_changed": 128,
+   "max_abs_grade_change_of_pick": 3.629922866821289e-05,
+   "menu_grade_max_abs_change": 1.0
+  }
+ },
+ "timing_encoder_s_per_moment": {
+  "batch1_fp32": 0.02426909605662028,
+  "batch8_fp32": 0.007742928465207418,
+  "batch8_bf16": 0.002588967482248942,
+  "note": "zeros input; the real cache also reads PNGs from the NAS (pass_a wall time includes that)"
+ },
+ "timing_step_from_cache": {
+  "steps_timed": 30,
+  "warmup": 3,
+  "s_per_step_32_moments": 0.056900159517923994,
+  "s_per_step_std": 0.012317159894726653,
+  "note": "generator forward (train mode, bf16 autocast) + frozen-generator replay + scorer (training mode) + backward into generator and scorer; no grading pool, no data loading (tokens in GPU memory)",
+  "gpu_peak_alloc_gb": 4.007131136
+ },
+ "projection": {
+  "training": {
+   "moments": 126981,
+   "gpu_hours": {
+    "batch1_fp32_full_forward": 1.1393785568113524,
+    "pass_a_wall_incl_loading": 62.83474902152641,
+    "batch1_fp32": 0.8560316906571388,
+    "batch8_fp32": 0.27311244428902864,
+    "batch8_bf16": 0.09131935551762581
+   },
+   "disk_gb": {
+    "fp32": 66.574614528,
+    "bf16": 33.287307264,
+    "pooled_fp32": 4.290941952
+   }
+  },
+  "picking": {
+   "moments": 2000,
+   "gpu_hours": {
+    "batch1_fp32_full_forward": 0.017945654181513022,
+    "pass_a_wall_incl_loading": 0.9896716677538595,
+    "batch1_fp32": 0.01348283114256682,
+    "batch8_fp32": 0.004301626925115232,
+    "batch8_bf16": 0.0014383152679160788
+   },
+   "disk_gb": {
+    "fp32": 1.048576,
+    "bf16": 0.524288,
+    "pooled_fp32": 0.067584
+   }
+  },
+  "graded_heldout": {
+   "moments": 10516,
+   "gpu_hours": {
+    "batch1_fp32_full_forward": 0.09435824968639546,
+    "pass_a_wall_incl_loading": 5.203693629049793,
+    "batch1_fp32": 0.07089272614761634,
+    "batch8_fp32": 0.02261795437225589,
+    "batch8_bf16": 0.0075626616787027425
+   },
+   "disk_gb": {
+    "fp32": 5.513412608,
+    "bf16": 2.756706304,
+    "pooled_fp32": 0.355356672
+   }
+  },
+  "raw_heldout": {
+   "moments": 9600,
+   "gpu_hours": {
+    "batch1_fp32_full_forward": 0.0861391400712625,
+    "pass_a_wall_incl_loading": 4.750424005218526,
+    "batch1_fp32": 0.06471758948432074,
+    "batch8_fp32": 0.020647809240553115,
+    "batch8_bf16": 0.0069039132859971784
+   },
+   "disk_gb": {
+    "fp32": 5.0331648,
+    "bf16": 2.5165824,
+    "pooled_fp32": 0.3244032
+   }
+  },
+  "total": {
+   "moments": 149097,
+   "gpu_hours": {
+    "batch1_fp32_full_forward": 1.3378216007505235,
+    "pass_a_wall_incl_loading": 73.7785383235486,
+    "batch1_fp32": 1.0051248374316426,
+    "batch8_fp32": 0.3206798348269529,
+    "batch8_bf16": 0.10722424575024181
+   },
+   "disk_gb": {
+    "fp32": 78.169767936,
+    "bf16": 39.084883968,
+    "pooled_fp32": 5.038285824
+   }
+  }
+ },
+ "gpu_after": "43893 MiB, 97887 MiB, 75 %",
+ "ended": "2026-11-07 06:35:04"
+}

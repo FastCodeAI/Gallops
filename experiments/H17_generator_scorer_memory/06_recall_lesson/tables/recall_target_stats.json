@@ -1,0 +1,18 @@
+{
+ "source": "{runs}/generator_scorer_memory/cache/training/pooled_training.npy",
+ "moments": 126981,
+ "array_shape": [
+  126981,
+  8448
+ ],
+ "dtype": "float32",
+ "sd_floor": 1e-06,
+ "layout_check_max_abs_diff_vs_clip_file": 0.0,
+ "layout_check_sample": "7f76af86_02500",
+ "computed": "2026-11-11 11:06:55",
+ "mu_abs_mean": 0.7373565626134966,
+ "sd_mean": 0.9509096165827666,
+ "sd_min": 0.5952815851405935,
+ "sd_max": 1.9237087709340623,
+ "wall_s": 157.0
+}

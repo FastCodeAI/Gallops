@@ -1,0 +1,40 @@
+{
+ "started": "2026-11-09 22:03:44",
+ "env_patch": {
+  "applied": true,
+  "was": "{runs}/paddock_sid_moved/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "34549 MiB, 97887 MiB, 68 %",
+ "loadavg": [
+  "8.86",
+  "9.21",
+  "8.12"
+ ],
+ "avail_ram_gb": 83.7,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "new_params": {
+  "generator_read": 263168,
+  "scorer_read_summary": 263424,
+  "rating_head_new_columns": 262144,
+  "update_block": 876801,
+  "total_new": 1665537,
+  "memory_state_values": 4096,
+  "vs_target_pct": 11.0
+ },
+ "target": 1500000
+}

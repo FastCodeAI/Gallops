@@ -1,0 +1,39 @@
+{
+ "which": "raw_heldout2",
+ "moments": 9566,
+ "moments_in_clips_with_tracks": 9566,
+ "clips": 300,
+ "clips_with_tracks": 300,
+ "clip_hours": 1.6660651758333334,
+ "events": {
+  "hb3": 14,
+  "hb4": 4,
+  "hb6": 0,
+  "cut_in": 37,
+  "crossing": 28,
+  "oov": 0
+ },
+ "moments_per_type": {
+  "hb3": 92,
+  "hb4": 24,
+  "hb6": 0,
+  "cut_in": 248,
+  "crossing": 224,
+  "oov": 0
+ },
+ "share_per_type_pct": {
+  "hb3": 0.96,
+  "hb4": 0.25,
+  "hb6": 0.0,
+  "cut_in": 2.59,
+  "crossing": 2.34,
+  "oov": 0.0
+ },
+ "any_event_moments": 540,
+ "any_event_share_pct": 5.64,
+ "rows": 588,
+ "by_type": {
+  "A": 149,
+  "ordinary": 439
+ }
+}
