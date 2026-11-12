@@ -433,3 +433,21 @@ def test_decoded_agents_carry_absolute_path_points():
     assert (
         out["path"][0].tolist() == [[11.0, 2.0], [12.0, 2.5]] and out["path"][1].tolist() == [[5.0, -1.0]] * 2
     )
+
+
+def test_the_optimism_draw_and_rule_are_the_pre_registered_ones():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar as ts
+
+    logs = [f"log{i:03d}" for i in range(200)]
+    drawn = ts.optimism_draw(list(reversed(logs)))
+    assert len(drawn) == 51 and drawn == sorted(drawn) and set(drawn) <= set(logs)
+    assert drawn == ts.optimism_draw(logs)  # the order it is given does not matter
+    seeds = {
+        "s0": {"train": {"f1": 0.75, "causal": 0.90}, "select": {"f1": 0.72, "causal": 0.89}},
+        "s1": {"train": {"f1": 0.76, "causal": 0.90}, "select": {"f1": 0.72, "causal": 0.88}},
+    }
+    verdict = ts.optimism_verdict(seeds)
+    assert verdict["mean_gap"]["f1"] == pytest.approx(0.035) and verdict["crossfit_needed"]
+    seeds["s1"]["train"]["f1"] = 0.74  # mean gap 0.025: under the limit in both
+    assert not ts.optimism_verdict(seeds)["crossfit_needed"]

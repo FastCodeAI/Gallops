@@ -788,6 +788,96 @@ def agents(cfg, args) -> None:
     print(json.dumps(manifest, indent=1))
 
 
+#: B-0-1's train-row optimism (PREDICTIONS.md, Part B · B-0): a seeded draw of this many train logs.
+OPTIMISM_LOGS, OPTIMISM_SEED = 51, 0
+#: Cross-fit if the mean over seeds of train - select exceeds this in F1 or causal recall (D24, B-0 (e)).
+OPTIMISM_LIMIT = 0.03
+
+
+def optimism_draw(train_logs: list) -> list:
+    """The train logs optimism reads: default_rng(OPTIMISM_SEED) over the sorted train logs."""
+    logs = sorted(train_logs)
+    return sorted(np.random.default_rng(OPTIMISM_SEED).choice(logs, OPTIMISM_LOGS, replace=False).tolist())
+
+
+def optimism_verdict(per_seed: dict) -> dict:
+    """The pre-registered rule: cross-fit iff the mean over seeds of train - select exceeds OPTIMISM_LIMIT
+    in F1 or in causal recall (chosen rule)."""
+    gaps = {
+        key: float(np.mean([v["train"][key] - v["select"][key] for v in per_seed.values()]))
+        for key in ("f1", "causal")
+    }
+    return {
+        "mean_gap": gaps,
+        "limit": OPTIMISM_LIMIT,
+        "crossfit_needed": any(g > OPTIMISM_LIMIT for g in gaps.values()),
+    }
+
+
+def optimism(cfg, args) -> None:
+    """B-0-1: how much better the side-car reads on rows it trained on than on select (B-0, Q8)."""
+    from gallops.drivejepa_b2d.provenance import git_sha
+
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists")
+    runs = [Path(r) for r in args.runs.split(",")]
+    run_args = json.loads((runs[0] / "run.json").read_text())["args"]
+    tokens, slot, rows, projections, targets = load(
+        args.tokens, args.labels, run_args["tap"], args.vit_tokens
+    )
+    labels = np.load(Path(args.labels) / "labels.npz")
+    logs = np.array(json.loads((Path(args.labels) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+    drawn = optimism_draw(splits["train"])
+    picked = {"train": np.flatnonzero(np.isin(logs, drawn)), "select": rows["select"]}
+    if np.isin(picked["train"], rows["report"]).any() or not np.isin(picked["train"], rows["train"]).all():
+        raise SystemExit("the optimism draw left the train logs")
+    subsets = {name: importance_subsets(args.labels, projections, targets, r) for name, r in picked.items()}
+    gap = prior_gap(targets, rows["train"])
+    device = torch.device("cuda")
+    per_seed = {}
+    for run in runs:
+        model, epoch = load_run(run)
+        model = model.to(device)
+        entry = {"epoch": epoch}
+        for name, r in picked.items():
+            dataset = Rows(tokens, slot, r, projections, targets)
+            preds = predict(model, dataset, device)
+            gts = [targets[i] for i in r]
+            result = evaluate.readout(preds, gts, gap)
+            result.update(evaluate.recall_of(preds, gts, subsets[name]))
+            rays = evaluate.ray_errors(preds, gts, [projections[i] for i in r])
+            depth = {
+                f"{lo:g}-{hi:g}": float(
+                    np.median(np.abs(rays["depth"][(rays["range"] >= lo) & (rays["range"] < hi)]))
+                )
+                if ((rays["range"] >= lo) & (rays["range"] < hi)).any()
+                else float("nan")
+                for lo, hi in evaluate.RANGE_BINS
+            }
+            entry[name] = {
+                "rows": int(len(r)),
+                "f1": f1(result),
+                "causal": result["recall_causal_chosen"],
+                "median_abs_depth_m": depth,
+            }
+        recorded = [json.loads(line) for line in (run / "metrics.jsonl").read_text().splitlines()]
+        entry["select_f1_recorded"] = [m["f1_30m"] for m in recorded if m["epoch"] == epoch][0]
+        per_seed[run.name] = entry
+        print(run.name, json.dumps({k: entry[k] for k in ("train", "select")}), flush=True)
+    record = {
+        "pass": "optimism",
+        "gallops_sha": git_sha(),
+        "draw": {"logs": drawn, "seed": OPTIMISM_SEED, "n": OPTIMISM_LOGS},
+        "per_seed": per_seed,
+        **optimism_verdict(per_seed),
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=1))
+    print(json.dumps({k: record[k] for k in ("mean_gap", "limit", "crossfit_needed")}, indent=1))
+
+
 def refinish(cfg, args) -> None:
     """Write a trained run's summary from its saved epochs, without retraining (its own args)."""
     out = Path(args.out)
@@ -819,8 +909,11 @@ def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.train_sidecar")
-    parser.add_argument("cmd", choices=("train", "overfit", "agents", "finish", "reread", "sight"))
+    parser.add_argument(
+        "cmd", choices=("train", "overfit", "agents", "finish", "reread", "sight", "optimism")
+    )
     parser.add_argument("--run", default="", help="agents: the A1 run directory to decode")
+    parser.add_argument("--runs", default="", help="optimism: the runs, comma-separated")
     parser.add_argument("--tokens", required=True)
     parser.add_argument("--labels", required=True)
     parser.add_argument("--out", default="")
@@ -866,6 +959,7 @@ def main(argv=None) -> None:
         "finish": refinish,
         "reread": reread,
         "sight": sight,
+        "optimism": optimism,
     }[args.cmd](cfg, args)
 
 

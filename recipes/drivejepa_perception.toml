@@ -1205,3 +1205,15 @@ module = "drivejepa_perception.navtest"
 args = ["compare", "--a", "{out}/part-b/b0/navtest-Rtilde", "--b", "{out}/part-b/b0/navtest-R",
         "--labels", "{out}/labels-navtest-v1", "--gate", "rtilde", "--out", "{out}/part-b/b0/rtilde-gate.json"]
 after = ["part-b-0-score-rtilde", "part-b-0-score-R"]
+
+# B-0-1's train-row optimism (one GPU, minutes): each v3 seed on a seeded draw of 51 train logs and on
+# select. Cross-fitting follows only if PREDICTIONS.md's rule fires (the mean gap over 0.03 in F1 or causal
+# recall); then it trains inside B-0, before B-1 (D24).
+
+[[stage]]
+name = "part-b-0-optimism"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["optimism", "--runs", "{out}/part-a/5b-v3-e24-s0,{out}/part-a/5b-v3-e24-s1,{out}/part-a/5b-v3-e24-s2",
+        "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--out", "{out}/part-b/b0/optimism.json"]
