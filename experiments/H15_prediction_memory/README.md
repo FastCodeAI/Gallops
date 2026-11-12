@@ -64,6 +64,10 @@ released model's. Only a small memory, 0.333 M parameters, is trained. It nudges
 - The carried memory picks better-graded paths than the wiped layer, and the interval excludes zero. But
   the gain is a fifth of the +0.005 set beforehand as useful, and a tenth of the +0.01 predicted:
   **supported, not useful.**
+- **The interval covers logs, not training seeds.** The sign held in all three seeds, but the three
+  per-seed differences (+0.00078, +0.00020, +0.00237) give t = 1.72 on 2 degrees of freedom, and the
+  seeds of one arm differ by up to 0.0045, four times the effect. A fourth seed could remove it, so the
+  record rates it moderate, not strong.
 - Against the released model the carried memory is level on grade (−0.00052 [−0.00298, +0.00206]) and
   flips, and **3.0 points worse on two-frame comfort**. Both trained arms are less comfortable than released.
 - Where a best path brakes and released does not (546 moments), the carried memory picks a braking path
@@ -95,6 +99,19 @@ released model's. Only a small memory, 0.333 M parameters, is trained. It nudges
 What is measured and what is argued: every number above is copied from `evaluate.json` or from the gate's
 own files, as `experiment.toml` records. That the offline gain is too small to change driving is argued
 from those numbers, not measured separately.
+
+**Not checked: that the gate fed the memory what it was trained on.** The adapter's memory layer is
+pinned to gallops' by a fixture (same inputs, same scores), and a zero nudge reproduces the released
+picks. But nothing compared the three inputs the adapter builds at each call (each path's scorer
+input, its six logits, the ego status) with the cache rows the memory trained on. The adapter's hook is
+a transcription of `gallops.memory.cache`, so a mistake there would be shared. If paddock's inputs
+differ on some benchmark, the gate tested a mis-fed layer, and the failed side-crash prediction would
+say nothing about memory. The check is one navtrain val log through the adapter, its inputs and nudges
+compared with the cache and the trainer's scores; it needs the GPU and has not been run.
+
+**What the six sidecars get wrong** (`known_wrong` in the record; the files are not rewritten): the three
+(b) sidecars say `length: 4` where the weights wipe their memory every moment; all six say they trained
+on all 878 train logs, where only the 763 with a graded moment gave a target.
 
 ## Where it stands (12 Nov 2026)
 
