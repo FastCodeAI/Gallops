@@ -1,11 +1,11 @@
 """Build step 1: the graded held-out = reconstructed (NuRec) clips of val_full whose chunk is not among the picking set's 46 chunks.
-Reads manifests read-only; writes manifest_graded_heldout.parquet + graded_heldout_clips.csv to {runs}/generator_scorer_memory/slices/
+Reads manifests read-only; writes manifest_graded_heldout.parquet + graded_heldout_clips.csv to {experiment_store}/slices/
 and a JSON summary to out/. Checks: chunk overlap with train / picking / current held-out / exam (31 chunks, as b3_pool.py:18 derives
 them from clip_index for public_2601 U our 30), clip-id overlap with the 30 scenes, metric cache + slim sample presence (all) and
 loadability (sample 20), pool clipgt tracks presence (all)."""
 import pandas as pd, numpy as np, pyarrow.parquet as pq, json, os, sys, time, lzma, pickle, glob
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; NAS="{runs}/generator_joint_pai"
-AS="{runs}/paddock_sid/Alpasim"; OUT=os.environ["OUT"]; DST="{runs}/generator_scorer_memory/slices"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; NAS="{retrain_store}"
+AS="{paddock_sid}/Alpasim"; OUT=os.environ["OUT"]; DST="{experiment_store}/slices"
 t0=time.time()
 vf=pd.read_parquet(f"{RD}/s3_assembly/val_full/manifest_val_full.parquet"); tr=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet", columns=["clip_uuid","group","sample_id"])
 pk=pd.read_parquet(f"{NAS}/picking/picking_set.parquet"); ho=pd.read_parquet(f"{NAS}/heldout/manifest_heldout.parquet", columns=["clip_uuid","group"])

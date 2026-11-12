@@ -7,8 +7,8 @@ shakaal, 2026-11-07 (run 1: parts A–B; run 2 the same day: parts C–D, OPEN l
 Path abbreviations:
 - `G` = `Gallops-sid/LORA Refiner/Generator-Joint-PAI-alpasim/` (the earlier Physical AI AV lane)
 - `RD` = `Paddock/paddock-sid/Alpasim/analysis_3.0/Retrain-data/`
-- `NAS` = `{runs}/generator_joint_pai/`
-- `PAI` = `{runs}/physicalai/`
+- `NAS` = `{retrain_store}/`
+- `PAI` = `{dataset_store}/`
 - `MEM1` = `Gallops-sid/memory/1_camera_memory_H05/reports/` (camera memory, H05); `MEM2` = `Gallops-sid/memory/2_scorer_memory_H15/reports/` (scorer memory, H15)
 - `src/`, `out/`, `logs/` = the sibling folders of `reports/` in `Gallops-sid/memory/3_generator_scorer_memory_PAI/`
 
@@ -240,7 +240,7 @@ This re-confirms `G/s0_recon/REPORT.md:262-269` (E2) and `G/s1_build/REPORT.md:6
 | clips to fetch | 3,000 ordinary raw clips in 1,254 chunks (0 already on the NAS; none in the exam set, asserted) | `logs/b4b_fetch_plan.log:2` |
 | planned size | 3,000 × 561 KB = 1.68 GB (census figure, `RD/s0_census/REPORT.md:527`); target had 1.7 TB free before and after | `logs/b4b_fetch_plan.log:3-4` |
 | fetched / failed | **3,000 / 0**, 1.659 GB in 1,857 s (8 threads, `taskset -c 0-1 nice 19`) | `logs/b4b_fetch.log` last lines |
-| on disk | `{runs}/physicalai/approach3_tracks/obstacle.offline.members/chunk_NNNN/<uuid>.obstacle.offline.parquet` (1.6 GB by `du`), `download_manifest.csv` 3,000 rows | `du -sh`, `wc -l` |
+| on disk | `{dataset_store}/approach3_tracks/obstacle.offline.members/chunk_NNNN/<uuid>.obstacle.offline.parquet` (1.6 GB by `du`), `download_manifest.csv` 3,000 rows | `du -sh`, `wc -l` |
 | verification | every clip has its file; 3,000 / 3,000 sha256 match the manifest; 3,000 read as parquet with the expected columns; all rows `reference_frame = rig` | `logs/b4b_verify.log`, `out/b4b_fetch_verify.csv` |
 | rows per clip | min 0, p5 258, median 5,208, p95 18,523, max 59,953 (census pull-out members for reference: median 6,742, min 425) | `logs/b4b_verify.log` |
 | tracks per clip (raw ids) | median 90, max 885; label span median 20.0 s | `logs/b4b_verify.log` |
@@ -299,7 +299,7 @@ The ordinary clips' cut-in and crossing rates (16.9 and 15.9 per hour) sit betwe
 10. **val_full and the picking set are not clean** (pass 9 chosen on val_full; `s0_recon:284-287`); the only clean set is the 300-clip raw held-out, which is ungraded (human-distance metrics only).
 11. **Time-range leakage is NOT CHECKABLE** (no shared clock, no session key); only id and chunk checks were possible (B3).
 12. **Out-of-view-and-return is NOT MEASURABLE** from track ids (B4).
-13. **RESOLVED 2026-11-07 (B4b):** agent tracks for the 3,000 ordinary training clips were fetched (3,000 / 0 failed, 1.66 GB, `{runs}/physicalai/approach3_tracks/`); the B4 rates on 1,015 clips are superseded by the all-4,015-clip rates in B4b (cut-in 16.95 /h, crossing 14.57 /h, brake ≥ 3 m/s² 6.37 /h; 4.87 % of training moments within 5 s of an event). Still open on the held-out: 216 of 300 clips have no tracks, so its cut-in/crossing figures cover 84 clips.
+13. **RESOLVED 2026-11-07 (B4b):** agent tracks for the 3,000 ordinary training clips were fetched (3,000 / 0 failed, 1.66 GB, `{dataset_store}/approach3_tracks/`); the B4 rates on 1,015 clips are superseded by the all-4,015-clip rates in B4b (cut-in 16.95 /h, crossing 14.57 /h, brake ≥ 3 m/s² 6.37 /h; 4.87 % of training moments within 5 s of an event). Still open on the held-out: 216 of 300 clips have no tracks, so its cut-in/crossing figures cover 84 clips.
 14. **Clip-count wording mismatch:** `RD/s3_assembly/REPORT.md:14` says 4,018 clips; the manifest has 4,015 (3 NuRec clips lost every moment; `s0_recon:248`).
 15. **History is capped at 16 s by construction** (20 s clips, 4 s future), so "20 s+" can never occur in this data; any memory longer than 16 s is untestable here, against 32 s in NAVSIM's longest chain.
 16. **NOT CHECKED:** total dataset hours (extrapolated from the 149,773-clip scan), the per-sample cache size (du timed out in the lane), and whether the 20 val / 801 val_full clips' durations differ from 20 s (assumed for val; measured for val_full via the held-out mining scan).
@@ -400,7 +400,7 @@ Reading: A and C need no matching and work through the divider as is; B has no w
 - One sample = one slim npz: two PNG frames, `lidar2img` (2, 4, 4), `img_shape` (2, 3), `ego_status` cut to its newest row (1, 11) with acceleration zeroed, `trajectory` (8, 3), `token`, plus `has_label2` and the metric-cache path from the manifest (`dataset_s35.py:190-214, 248-262`). Every key is per moment; the clip id appears only inside the sample id and the cache path.
 - The model never sees a clip id, a previous plan or a recurrent state; `past_ego_simulated_states` is never fed in training or at the checks (`pai_model.py:305`, `drive_jepa_model.py:87-88`), so the car's comfort re-score path is never trained.
 - Step = forward (planner + replay + index read) → grade submit (10 processes) → hide-and-guess forward → grade collect → lessons → one backward, three optimisers (`G/s9_018b_train/src/train_018b.py:218-248`). Timings: 3.09 s/step overlapped at the gate (`G/s9_018b_train/REPORT.md:36`); 3.49 s/step from the log timestamps of steps 25–900 (measured by the trace); the whole run, 5,580 steps and 7 checks (46 min of checks, `run.json: checks[*].time_s`), took 4 h 43 min 58 s (`run.json: start.started, ended`), i.e. 3.05 s/step including checks. **Disagreement** between the two per-step figures: the log-derived 3.49 s/step would give 5.4 h of pure training, more than the run's wall time; the run included one resume (01:49–01:51) and no other gap. The 3.05 s/step (wall, checks included) is the number used below.
-- Cache reads per row: one slim npz ≈ 240 KB (32 per clip, 7.4 MB per clip directory); graded rows add `metric_cache.pkl` ≈ 25 KB and the index file < 1 KB; the hide-and-guess pair stream reads a second npz of another moment (trace of `{runs}/physicalai/s4_train/slim/<clip>/` and `…/s3_assembly/s1/cache/<clip>/<sid>/`).
+- Cache reads per row: one slim npz ≈ 240 KB (32 per clip, 7.4 MB per clip directory); graded rows add `metric_cache.pkl` ≈ 25 KB and the index file < 1 KB; the hide-and-guess pair stream reads a second npz of another moment (trace of `{dataset_store}/s4_train/slim/<clip>/` and `…/s3_assembly/s1/cache/<clip>/<sid>/`).
 
 **Sequences of moments within a clip, with a warm-up.**
 - **Batch construction.** A batch becomes W windows × L consecutive moments of one clip, in time order; the loader reads the L slim npz files of one clip directory (L × 240 KB, one directory, sequential) and the metric caches of the graded moments among them. Keeping 32 moments per step (W × L = 32) keeps the encoder cost per step unchanged; W = 2, L = 16 or W = 4, L = 8.

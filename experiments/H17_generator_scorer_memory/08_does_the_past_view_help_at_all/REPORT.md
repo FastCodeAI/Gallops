@@ -20,7 +20,7 @@ This is much closer to cause A than to cause B, but the rule does not allow call
 
 ## Sample
 
-Source: `out/ceiling_stats.json`, `out/ceiling_results.json`, `{runs}/generator_scorer_memory/runs/ceiling/extract.json`.
+Source: `out/ceiling_stats.json`, `out/ceiling_results.json`, `{experiment_store}/runs/ceiling/extract.json`.
 
 | | count |
 |---|---|
@@ -207,6 +207,6 @@ a lower bound for what a reader with no such cost would find. On my reading the 
   `src/ceiling_chain2.sh`; link-2 functions imported from `src/s10_probe.py`
 - Results: `out/ceiling_stats.json`, `out/ceiling_selftest.json`, `out/ceiling_results.json`,
   `out/ceiling_results_mlp_long.json`, `out/ceiling_posthoc.json`
-- Run folder: `{runs}/generator_scorer_memory/runs/ceiling/` (pooled views, per-fold predictions under `probe/`)
+- Run folder: `{experiment_store}/runs/ceiling/` (pooled views, per-fold predictions under `probe/`)
 - Logs: `logs/ceiling_extract.log`, `logs/ceiling_chain.log`, `logs/ceiling_stats.log`, `logs/ceiling_probe.log`,
   `logs/ceiling_summary.log`, `logs/ceiling_mlp_long.log`

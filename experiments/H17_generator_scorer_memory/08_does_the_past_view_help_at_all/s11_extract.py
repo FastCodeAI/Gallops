@@ -5,7 +5,7 @@ Per clip one read of cache/training/<clip>.pt (tokens (N, 512, 256) of the 16 x 
   fine    the 8 x 16 block means (128 x 256 = 32,768): tokens.reshape(N, 8, 2, 16, 2, 256).mean((2, 4)), float16
   ego     ego_status with the acceleration columns 5:7 zeroed (as s6_data.py:73), traj (8, 3), anchor_t, chain (moments since the start of the
           run of consecutive 0.5 s anchors), clip, chunk (index column "group"), type, source
--> {runs}/generator_scorer_memory/runs/ceiling/{coarse.npy, fine.npy, meta.npz, extract.json}"""
+-> {experiment_store}/runs/ceiling/{coarse.npy, fine.npy, meta.npz, extract.json}"""
 from __future__ import annotations
 import json, sys, time
 from concurrent.futures import ThreadPoolExecutor
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np, pandas as pd, torch
 
 torch.set_num_threads(2)
-CACHE = Path("{runs}/generator_scorer_memory/cache/training"); RUN = Path("{runs}/generator_scorer_memory/runs/ceiling"); STEP_S = 0.5
+CACHE = Path("{experiment_store}/cache/training"); RUN = Path("{experiment_store}/runs/ceiling"); STEP_S = 0.5
 
 
 def avail_gb():

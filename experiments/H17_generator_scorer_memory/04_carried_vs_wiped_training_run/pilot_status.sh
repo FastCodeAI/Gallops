@@ -1,6 +1,6 @@
 #!/bin/bash
 # one status line per arm: step, pass, last check's pick grade, ETA (from the last 100-step progress line's step time and the pass plan)
-R={runs}/generator_scorer_memory/runs/pilot_seed0
+R={experiment_store}/runs/pilot_seed0
 for ARM in carry wiped; do
   L=$R/$ARM/log.txt; S=$R/$ARM/status.json
   if [ ! -f "$L" ]; then echo "$ARM: not started"; continue; fi

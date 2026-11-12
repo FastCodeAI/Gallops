@@ -1,8 +1,8 @@
 # Drive-JEPA memory, approach 3: the pilot, memory carried vs memory wiped (seed 0)
 
-shakaal, 2026-11-09 22:30 – 2026-11-10 23:41 IST. Two arms trained in parallel from 0.1.8b pass 0.6 on the cached tokens (build 2) with the build-3 model and trainer, judged on the picking set only. No held-out slice opened, no closed loop, no docker, no pushes. Writes only in this memory folder and `{runs}/generator_scorer_memory/runs/pilot_seed0/` (`R` below). Pre-registration: `reports/PILOT_PREREG.md` (23:09 IST, amended 23:22 IST for Sid's amended brief, before any training step).
+shakaal, 2026-11-09 22:30 – 2026-11-10 23:41 IST. Two arms trained in parallel from 0.1.8b pass 0.6 on the cached tokens (build 2) with the build-3 model and trainer, judged on the picking set only. No held-out slice opened, no closed loop, no docker, no pushes. Writes only in this memory folder and `{experiment_store}/runs/pilot_seed0/` (`R` below). Pre-registration: `reports/PILOT_PREREG.md` (23:09 IST, amended 23:22 IST for Sid's amended brief, before any training step).
 
-Abbreviations as in `BUILD3_MODEL_TRAINER.md`; `R` = `{runs}/generator_scorer_memory/runs/pilot_seed0/`. Plain names: encoder, generator, scorer, rating head, memory. Every number below is read from a file named in the same row.
+Abbreviations as in `BUILD3_MODEL_TRAINER.md`; `R` = `{experiment_store}/runs/pilot_seed0/`. Plain names: encoder, generator, scorer, rating head, memory. Every number below is read from a file named in the same row.
 
 **Starting model:** `NAS/018b/release/drive_jepa_018b_p06.ckpt`, sha256 `3d566eb2…8e66` verified inside each arm before loading (`R/<arm>/run.json: start.sha256`), 495 / 495 tensors re-compared (`s6_model.load_agent`).
 
@@ -104,7 +104,7 @@ Curves: both arms dip below 0.1.8b in pass 1 and peak at pass 1.216; carry's slo
 
 ### The carry arm with its memory zeroed at check time
 
-The chosen carry checkpoint (`{runs}/generator_scorer_memory/runs/pilot_seed0/carry/ckpt/p01.2.pt`) replayed with `mode = wiped` (M zeroed before every moment, same weights; `s7_pilot_final.py`): pick grade **0.7662** against its own 0.7752 (drop +0.0090); event grade 0.9488; gates 0 / 39.6 % / 0.250 m → FAIL; pick-follows-previous 30.5 % vs 29.2 %. **The pick grade drops by more than 0.002 when the memory is zeroed: the carry model relies on its memory.** (`R/carry/dumps/chosen_memory_zeroed.npz`).
+The chosen carry checkpoint (`{experiment_store}/runs/pilot_seed0/carry/ckpt/p01.2.pt`) replayed with `mode = wiped` (M zeroed before every moment, same weights; `s7_pilot_final.py`): pick grade **0.7662** against its own 0.7752 (drop +0.0090); event grade 0.9488; gates 0 / 39.6 % / 0.250 m → FAIL; pick-follows-previous 30.5 % vs 29.2 %. **The pick grade drops by more than 0.002 when the memory is zeroed: the carry model relies on its memory.** (`R/carry/dumps/chosen_memory_zeroed.npz`).
 
 ### Other diagnostics at the chosen checks
 

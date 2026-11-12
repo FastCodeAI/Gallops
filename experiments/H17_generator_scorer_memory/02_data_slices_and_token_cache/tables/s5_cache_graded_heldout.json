@@ -9,7 +9,7 @@
  ],
  "p06_sha_verified_s": 0.7,
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "tensors": 495,
   "loaded_equal": "495/495",
   "batch_fix": {
@@ -55,8 +55,8 @@
   "nice": 19,
   "affinity": "all cores (one-off exception)",
   "zero_accel": false,
-  "slim_root": "{runs}/physicalai/s4_train/slim",
-  "cache_path": "{runs}/physicalai/s3_assembly/s1/cache",
+  "slim_root": "{dataset_store}/s4_train/slim",
+  "cache_path": "{dataset_store}/s3_assembly/s1/cache",
   "split_guard": "val"
  },
  "gpu_after": "13329 MiB, 97887 MiB, 0 %",

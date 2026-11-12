@@ -2,19 +2,19 @@
 Modes: nurec | braw | ordinary | heldout | graded_heldout | raw_heldout2 (b4c: the two approach-3 slices; loaders only) | picking (pilot, 2026-11-10: the 84
 picking clips = their val_full rows; reconstructed clips through load_nurec (pool clipgt tracks), raw clips through load_raw with the census
 egomotion zips and the census members where a file exists, else tracks = none as in heldout mode; rules unchanged). Only the loaders and the outputs differ from b4_events.py:
- - ordinary: raw clips of type 'ordinary'; obstacle members from {runs}/physicalai/approach3_tracks/ (fetched by b4b_fetch.py)
+ - ordinary: raw clips of type 'ordinary'; obstacle members from {dataset_store}/approach3_tracks/ (fetched by b4b_fetch.py)
  - heldout: the 300 held-out clips (manifest_heldout.parquet); members from the held-out NAS folder where they exist, else tracks = none (ego-only events)
  - writes per-clip event times (out/b4b_<mode>_events.csv) so memory moments can be listed with seconds since the event."""
 import pandas as pd, numpy as np, pyarrow.parquet as pq, json, os, sys, io, zipfile, time, math
-sys.path.insert(0, "{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; HO="{runs}/generator_joint_pai/heldout"; OUT=os.environ["OUT"]; which=sys.argv[1]
+sys.path.insert(0, "{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; HO="{retrain_store}/heldout"; OUT=os.environ["OUT"]; which=sys.argv[1]
 RULES=dict(hard_brake="acc = d/dt of 0.5 s-smoothed speed at 10 Hz; event = >= 3 consecutive samples (0.3 s) with acc <= -THR m/s^2 and speed >= 2 m/s at the run start; runs < 1 s apart merged; THR in {3,4,6}",
   cut_in="vehicle track (not person/stroller/protruding_object/animal/unknown), at sample j: ego speed >= 2 m/s, track ahead 0 < lon <= 40 m in the ego frame, lateral distance to the ego's next-5 s path <= 1.25 m, track speed >= 1 m/s, motion direction within 45 deg of ego heading; and within the previous 2 s the same track had lateral distance >= 2.5 m while ahead (lon > 0); one event per track per 5 s",
   out_of_view_return="same track id: a gap >= 1.0 s between consecutive raw observations, with the track within 60 m of the ego at both ends of the gap; one event per gap",
   crossing="track speed >= 1 m/s, motion direction 60-120 deg from ego heading, ahead 0 < lon <= 50 m, lateral distance to the ego's next-5 s path <= 1.75 m; one event per track",
   memory_relevant_moment="a training moment (anchor) within (t_event, t_event + 5 s]")
 NONVEH={'person','stroller','protruding_object','animal','unknown','rider','bicycle','motorcycle'}
-A3="{runs}/generator_scorer_memory"
+A3="{experiment_store}"
 if which=="heldout":
     tr=pd.read_parquet(f"{HO}/manifest_heldout.parquet"); ZR=f"{HO}/raw/labels/egomotion.offline"; MR=f"{HO}/raw/labels/obstacle.offline.members"
 elif which=="graded_heldout":
@@ -22,7 +22,7 @@ elif which=="graded_heldout":
 elif which=="raw_heldout2":
     tr=pd.read_parquet(f"{A3}/slices/manifest_raw_heldout.parquet"); ZR=f"{HO}/raw/labels/egomotion.offline"; MR=f"{A3}/raw_heldout/raw/labels/obstacle.offline.members"
 elif which=="picking":
-    vf=pd.read_parquet(f"{RD}/s3_assembly/val_full/manifest_val_full.parquet"); pk=pd.read_parquet("{runs}/generator_joint_pai/picking/picking_set.parquet")
+    vf=pd.read_parquet(f"{RD}/s3_assembly/val_full/manifest_val_full.parquet"); pk=pd.read_parquet("{retrain_store}/picking/picking_set.parquet")
     tr=vf[vf.clip_uuid.isin(set(pk.clip_uuid))].copy(); assert tr.clip_uuid.nunique()==84; ZR=f"{P}/s0_census/raw/labels/egomotion.offline"; MR=f"{P}/s0_census/raw/labels/obstacle.offline.members"
 else:
     tr=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet"); ZR=f"{P}/s0_census/raw/labels/egomotion.offline"; MR=f"{P}/s0_census/raw/labels/obstacle.offline.members"

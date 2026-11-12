@@ -1,7 +1,7 @@
 """B4: event census on training clips that have agent tracks on the NAS. Rules are stated in RULES below and in the report."""
 import pandas as pd, numpy as np, pyarrow.parquet as pq, json, os, sys, io, zipfile, time, math
-sys.path.insert(0, "{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; OUT=os.environ["OUT"]; which=sys.argv[1]
+sys.path.insert(0, "{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; OUT=os.environ["OUT"]; which=sys.argv[1]
 RULES=dict(hard_brake="acc = d/dt of 0.5 s-smoothed speed at 10 Hz; event = >= 3 consecutive samples (0.3 s) with acc <= -THR m/s^2 and speed >= 2 m/s at the run start; runs < 1 s apart merged; THR in {3,4,6}",
   cut_in="vehicle track (not person/stroller/protruding_object/animal/unknown), at sample j: ego speed >= 2 m/s, track ahead 0 < lon <= 40 m in the ego frame, lateral distance to the ego's next-5 s path <= 1.25 m, track speed >= 1 m/s, motion direction within 45 deg of ego heading; and within the previous 2 s the same track had lateral distance >= 2.5 m while ahead (lon > 0); one event per track per 5 s",
   out_of_view_return="same track id: a gap >= 1.0 s between consecutive raw observations, with the track within 60 m of the ego at both ends of the gap; one event per gap",

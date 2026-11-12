@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 import numpy as np
-M = Path("{working_folder}"); R = Path("{runs}/generator_scorer_memory/runs/pilot_seed0")
+M = Path("{working_folder}"); R = Path("{experiment_store}/runs/pilot_seed0")
 F = json.load(open(M / "out/pilot_final.json")); comp = F["comparison"]; recs = {a: json.load(open(R / a / "run.json")) for a in ("carry", "wiped")}
 ch = {a: next(c for c in recs[a]["checks"] if c["progress"] == recs[a]["chosen"]["progress"]) for a in recs}
 ev = json.load(open(M / "out/pilot_event_subset.json")); z = comp["carry_memory_zeroed"]

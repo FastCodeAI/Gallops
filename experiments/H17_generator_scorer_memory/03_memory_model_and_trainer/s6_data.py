@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np, pandas as pd, torch
 import pai_common as C
 
-A3 = Path("{runs}/generator_scorer_memory"); CACHE = A3 / "cache"; OUT = Path(__file__).resolve().parents[1] / "out"
+A3 = Path("{experiment_store}"); CACHE = A3 / "cache"; OUT = Path(__file__).resolve().parents[1] / "out"
 WIN, WARM, BATCH_WINDOWS = 16, 4, 2
 STEP_S = 0.5
 

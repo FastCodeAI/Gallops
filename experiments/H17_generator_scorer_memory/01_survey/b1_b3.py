@@ -1,6 +1,6 @@
 import pandas as pd, numpy as np, json, os, time, yaml, glob, io, zipfile
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"
-P="{runs}/physicalai"; NAS="{runs}/generator_joint_pai"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"
+P="{dataset_store}"; NAS="{retrain_store}"
 SNAP=glob.glob(f"{P}/hf_home/hub/datasets--nvidia--PhysicalAI-Autonomous-Vehicles/snapshots/*/")[0]
 OUT="/tmp/{session}/out"; os.makedirs(OUT, exist_ok=True)
 tr=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet"); va=pd.read_parquet(f"{RD}/s3_assembly/val/manifest_val.parquet")
@@ -30,7 +30,7 @@ print("raw_train scanned clips", len(raw), "sum hours", raw.dur.sum()/3600, "med
 # what is physically on NAS
 print("NAS: s3 clips dirs", len(os.listdir(f"{P}/s3_assembly/s1/clips")), "heldout clip dirs", len(os.listdir(f"{NAS}/heldout/clips")), "pool scenes", len(os.listdir(f"{P}/s0_census/pool")))
 # --- B3 leakage by id
-our30=pd.read_csv(f"{RD}/s0_census/b2_our30.csv"); ss=pd.read_csv("{runs}/paddock_sid/Alpasim/alpasim/data/scenes/sim_suites.csv")
+our30=pd.read_csv(f"{RD}/s0_census/b2_our30.csv"); ss=pd.read_csv("{paddock_sid}/Alpasim/alpasim/data/scenes/sim_suites.csv")
 pub=ss[ss.test_suite_id=='public_2601']; pub_ids=set(pub.scene_id.str.replace('clipgt-','')); print("public_2601 scenes", len(pub_ids), "suites", ss.test_suite_id.unique().tolist())
 g10=yaml.safe_load(open("{paddock}-gate/src/paddock/adapters/benchmarks/alpasim/scenes/public_2601_gate10.yaml"))['scenes']; g10=set(s.replace('clipgt-','') for s in g10)
 o30=set(our30.uuid); print("our30", len(o30), "gate10", len(g10), "gate10 subset of our30:", g10<=o30, "our30 subset of public_2601:", o30<=pub_ids)
@@ -45,7 +45,7 @@ for name,df in [("train",tr),("val",va),("val_full",vf),("heldout",ho)]:
     ch=set(df.group.str.replace('chunk_','').astype(int)); print(f"chunk overlap {name} ({len(ch)} chunks) vs exam chunks ({len(ex_chunks)}): {sorted(ch&ex_chunks)}")
 pkch=set(pk.chunk.str.replace('chunk_','').astype(int)); print("chunk overlap picking vs exam chunks:", sorted(pkch&ex_chunks))
 # our30 -> 26.01 artifact uuid -> usdz on NAS
-m=pub.set_index(pub.scene_id.str.replace('clipgt-',''))['uuid']; us=set(os.path.basename(p)[:-5] for p in glob.glob("{runs}/alpasim/nre-artifacts/all-usdzs/*.usdz"))
+m=pub.set_index(pub.scene_id.str.replace('clipgt-',''))['uuid']; us=set(os.path.basename(p)[:-5] for p in glob.glob("{alpasim_store}/nre-artifacts/all-usdzs/*.usdz"))
 have=[(c, m.get(c), (m.get(c) in us)) for c in sorted(o30)]; print("our30 usdz on NAS:", sum(h[2] for h in have), "/30"); json.dump(have, open(f"{OUT}/our30_usdz.json","w"), indent=1)
 # data_collection metadata of our30 vs train (weak proxy)
 dci=dc.set_index(dc.columns[0]) if dc.columns[0]=='clip_id' else dc.set_index('clip_id')

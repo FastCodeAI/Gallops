@@ -1,5 +1,5 @@
 {
- "run": "{runs}/generator_scorer_memory/runs/build5_short",
+ "run": "{experiment_store}/runs/build5_short",
  "stopped": "reached 930 steps",
  "steps_done": 930,
  "resumes": [
@@ -890,7 +890,7 @@
     },
     "batch": 130
    },
-   "ckpt": "{runs}/generator_scorer_memory/runs/build5_short/ckpt/step0310.pt",
+   "ckpt": "{experiment_store}/runs/build5_short/ckpt/step0310.pt",
    "rule": {
     "values": {
      "a": 0.5027037308985041,
@@ -1203,7 +1203,7 @@
     },
     "batch": 130
    },
-   "ckpt": "{runs}/generator_scorer_memory/runs/build5_short/ckpt/step0620.pt",
+   "ckpt": "{experiment_store}/runs/build5_short/ckpt/step0620.pt",
    "rule": {
     "values": {
      "a": 0.4026430422302724,
@@ -1806,7 +1806,7 @@
     },
     "batch": 130
    },
-   "ckpt": "{runs}/generator_scorer_memory/runs/build5_short/ckpt/step0930.pt",
+   "ckpt": "{experiment_store}/runs/build5_short/ckpt/step0930.pt",
    "rule": {
     "values": {
      "a": 0.35457409361590386,
@@ -2408,7 +2408,7 @@
    },
    "batch": 130
   },
-  "ckpt": "{runs}/generator_scorer_memory/runs/build5_short/ckpt/step0930.pt",
+  "ckpt": "{experiment_store}/runs/build5_short/ckpt/step0930.pt",
   "rule": {
    "values": {
     "a": 0.35457409361590386,

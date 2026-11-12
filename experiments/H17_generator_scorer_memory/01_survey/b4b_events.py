@@ -1,11 +1,11 @@
 """B4b: the B4 event census (src/b4_events.py, rules UNCHANGED) on all 4,015 training clips and the 300 held-out clips.
 Modes: nurec | braw | ordinary | heldout. Only the loaders and the outputs differ from b4_events.py:
- - ordinary: raw clips of type 'ordinary'; obstacle members from {runs}/physicalai/approach3_tracks/ (fetched by b4b_fetch.py)
+ - ordinary: raw clips of type 'ordinary'; obstacle members from {dataset_store}/approach3_tracks/ (fetched by b4b_fetch.py)
  - heldout: the 300 held-out clips (manifest_heldout.parquet); members from the held-out NAS folder where they exist, else tracks = none (ego-only events)
  - writes per-clip event times (out/b4b_<mode>_events.csv) so memory moments can be listed with seconds since the event."""
 import pandas as pd, numpy as np, pyarrow.parquet as pq, json, os, sys, io, zipfile, time, math
-sys.path.insert(0, "{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; HO="{runs}/generator_joint_pai/heldout"; OUT=os.environ["OUT"]; which=sys.argv[1]
+sys.path.insert(0, "{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s0_census"); import r3_core as K
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; HO="{retrain_store}/heldout"; OUT=os.environ["OUT"]; which=sys.argv[1]
 RULES=dict(hard_brake="acc = d/dt of 0.5 s-smoothed speed at 10 Hz; event = >= 3 consecutive samples (0.3 s) with acc <= -THR m/s^2 and speed >= 2 m/s at the run start; runs < 1 s apart merged; THR in {3,4,6}",
   cut_in="vehicle track (not person/stroller/protruding_object/animal/unknown), at sample j: ego speed >= 2 m/s, track ahead 0 < lon <= 40 m in the ego frame, lateral distance to the ego's next-5 s path <= 1.25 m, track speed >= 1 m/s, motion direction within 45 deg of ego heading; and within the previous 2 s the same track had lateral distance >= 2.5 m while ahead (lon > 0); one event per track per 5 s",
   out_of_view_return="same track id: a gap >= 1.0 s between consecutive raw observations, with the track within 60 m of the ego at both ends of the gap; one event per gap",

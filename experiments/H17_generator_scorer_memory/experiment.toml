@@ -71,7 +71,7 @@ ended = 2026-11-08
 start_from = "3d566eb211b5"
 frozen = ["all of Drive-JEPA 0.1.8b: encoder, generator and scorer"]
 gpu_hours = 1.15
-notes = """88.6 GB, fp32, one file per clip, under {runs}/generator_scorer_memory/cache; exact against a full \
+notes = """88.6 GB, fp32, one file per clip, under {experiment_store}/cache; exact against a full \
 forward pass at encoder batch 1 on 200 moments per slice. The starting model is identified by its sha256 \
 only (3d566eb2...8b8e66, POINTERS.md): its own training record is not in this repository. The code was in a \
 folder outside git when it ran, so there is no train_git_sha; AS_RUN.sha256 holds each file's hash as it ran."""

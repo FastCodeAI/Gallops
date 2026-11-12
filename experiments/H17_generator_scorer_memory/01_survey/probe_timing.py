@@ -1,6 +1,6 @@
 import pyarrow.parquet as pq, pandas as pd, numpy as np, zipfile, io, time, os, glob
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s3_assembly"
-P="{runs}/physicalai"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s3_assembly"
+P="{dataset_store}"
 tr=pd.read_parquet(f"{RD}/manifest.parquet")
 clips=tr.drop_duplicates('clip_uuid')[['clip_uuid','group','source','type']].copy()
 clips['chunk']=clips.group.str.replace('chunk_','').astype(int) if clips.group.dtype==object else clips.group
@@ -40,7 +40,7 @@ for r in clips.itertuples():
     k=(r.source,r.type); cnt.setdefault(k,[0,0,0]); cnt[k][0]+=1; cnt[k][1]+=os.path.exists(m); cnt[k][2]+=os.path.exists(p)
 print("train clips: (source,type): [n, raw obstacle member on NAS, pool clipgt obstacle on NAS]"); print(cnt)
 # usdz
-us=sorted(glob.glob("{runs}/alpasim/nre-artifacts/all-usdzs/*.usdz"))[:1]
+us=sorted(glob.glob("{alpasim_store}/nre-artifacts/all-usdzs/*.usdz"))[:1]
 t0=time.time(); z=zipfile.ZipFile(us[0]); names=[n for n in z.namelist() if 'clipgt' in n or n.endswith('.json') or n.endswith('.yaml')]; print("usdz members (clipgt/json/yaml):", names[:30])
 e=pd.read_parquet(io.BytesIO(z.read('clipgt/egomotion_estimate.parquet'))); print(f"usdz ego read {time.time()-t0:.2f}s cols {list(e.columns)} n {len(e)}"); print(e.head(2).to_string()[:600])
 print("metadata.yaml:", z.read('metadata.yaml').decode()[:600])

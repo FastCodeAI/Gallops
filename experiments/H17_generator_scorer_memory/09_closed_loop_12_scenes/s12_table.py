@@ -18,9 +18,9 @@ G = pathlib.Path("{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim")
 S5 = G / "s5_diagnosis/src"; sys.argv = sys.argv[:1]
 src = (S5 / "stepb.py").read_text().split("\nrows = []")[0]
 B = {"__file__": str(S5 / "stepb.py")}; exec(compile(src, str(S5 / "stepb.py"), "exec"), B)
-CL12 = "{runs}/generator_scorer_memory/runs/cl12"
+CL12 = "{experiment_store}/runs/cl12"
 ARMS = {"carry": f"{CL12}/runs/memory_carry_{{}}", "reset": f"{CL12}/runs/memory_reset_{{}}",
-        "018bp06": "{runs}/generator_joint_pai/018b/closed_loop/runs/drivejepa_018bp06_{}", "017": B["R17"]}
+        "018bp06": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_{}", "017": B["R17"]}
 if pathlib.Path(f"{CL12}/runs_018bp06").is_dir():          # only if the image check failed and 0.1.8b was rerun
     ARMS["018bp06_rerun"] = f"{CL12}/runs_018bp06/drivejepa_018bp06_{{}}"
 S12 = [l.split()[0] for l in open(G / "s10_018b_closed_loop/tables/scenes_12.txt") if l.strip()]

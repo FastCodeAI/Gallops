@@ -1,5 +1,5 @@
 {
- "source": "{runs}/generator_scorer_memory/cache/training/pooled_training.npy",
+ "source": "{experiment_store}/cache/training/pooled_training.npy",
  "moments": 126981,
  "array_shape": [
   126981,

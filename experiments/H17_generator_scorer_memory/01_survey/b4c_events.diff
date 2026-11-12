@@ -3,7 +3,7 @@
 ---
 > Modes: nurec | braw | ordinary | heldout | graded_heldout | raw_heldout2 (b4c: the two approach-3 slices; loaders only). Only the loaders and the outputs differ from b4_events.py:
 14a15
-> A3="{runs}/generator_scorer_memory"
+> A3="{experiment_store}"
 16a18,21
 > elif which=="graded_heldout":
 >     tr=pd.read_parquet(f"{A3}/slices/manifest_graded_heldout.parquet"); ZR=None; MR=None          # reconstructed clips: pool clipgt tracks (load_nurec)

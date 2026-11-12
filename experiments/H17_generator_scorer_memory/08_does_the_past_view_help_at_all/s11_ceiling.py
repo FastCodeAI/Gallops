@@ -24,7 +24,7 @@ HERE = Path(__file__).resolve().parent; sys.path.insert(0, str(HERE))
 import s10_probe as L2                                                   # targets, history, fold_of, shuffle_across_clips, low_dim, gain_ci, wauc, grids
 
 torch.set_num_threads(2)
-OUT = HERE.parent / "out"; RUN = Path("{runs}/generator_scorer_memory/runs/ceiling"); PDIR = RUN / "probe"
+OUT = HERE.parent / "out"; RUN = Path("{experiment_store}/runs/ceiling"); PDIR = RUN / "probe"
 HIST, N_OUTER, N_INNER, FOLD_SEED, SHUF_SEED, SUB_SEED = 8, 5, 5, 20261114, 20261115, 20261116
 K_PCA, K_MLP, R_LOGIT, OVER = 1024, 256, 600, 64
 LAMS, LAMS_LOGIT = L2.LAMS, L2.LAMS_LOGIT

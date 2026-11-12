@@ -9,7 +9,7 @@
  ],
  "p06_sha_verified_s": 0.6,
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "tensors": 495,
   "loaded_equal": "495/495",
   "batch_fix": {
@@ -56,7 +56,7 @@
   "affinity": "all cores (one-off exception)",
   "zero_accel": false,
   "slim_root": "None",
-  "cache_path": "{runs}/generator_scorer_memory/raw_heldout/cache",
+  "cache_path": "{experiment_store}/raw_heldout/cache",
   "split_guard": "val"
  },
  "gpu_after": "13329 MiB, 97887 MiB, 0 %",

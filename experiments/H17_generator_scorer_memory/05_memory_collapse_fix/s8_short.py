@@ -6,7 +6,7 @@
                               0, 310, 620 on a fixed 20-clip subset of the picking clips and at step 930 on all 84 picking clips (replayed in
                               order from each clip's first moment); at 930 also the full standard check (pick grade, hard-brake picks,
                               pull-away go rate, closest-of-32 ADE (3 s), pick-follows-previous) and the same checkpoint in wiped mode
-                              (memory reset to M0 before every moment). Outputs under {runs}/generator_scorer_memory/runs/build4_short/
+                              (memory reset to M0 before every moment). Outputs under {experiment_store}/runs/build4_short/
                               (run.json, status.json, log.txt, resume.pt, ckpt/step0310.pt ..., dumps/), the rule verdict in out/build4_short.json.
                               Resumable: --resume continues from resume.pt at the next step (RESUMED line in log.txt + run.json); never from
                               step 0 silently. Stops on a non-finite loss or available RAM < 20 GB.

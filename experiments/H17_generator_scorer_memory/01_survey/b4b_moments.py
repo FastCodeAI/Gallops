@@ -3,7 +3,7 @@ Reads out/b4b_<mode>_events.csv + the manifests; a moment is memory-relevant if 
 One row per (moment, event type); for a type with several qualifying events the nearest preceding one is kept.
 Hard braking appears as hb3 / hb4 / hb6 (nested thresholds)."""
 import pandas as pd, numpy as np, json, os, sys
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; HO="{runs}/generator_joint_pai/heldout"; OUT=os.environ["OUT"]
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; HO="{retrain_store}/heldout"; OUT=os.environ["OUT"]
 EV=['hb3','hb4','hb6','cut_in','crossing','oov']; CT={'nurec':'reconstructed','braw':'pull-out','ordinary':'ordinary'}
 def moments(man, ev):
     rows=[]

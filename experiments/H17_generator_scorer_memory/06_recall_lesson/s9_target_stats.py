@@ -4,7 +4,7 @@ means (pooled[:, 1:], BUILD2_CACHE.md) over ALL moments of the TRAINING slice's 
 import json, sys, time
 from pathlib import Path
 import numpy as np, torch
-SRC = Path("{runs}/generator_scorer_memory/cache/training/pooled_training.npy"); OUT = Path(__file__).resolve().parents[1] / "out"
+SRC = Path("{experiment_store}/cache/training/pooled_training.npy"); OUT = Path(__file__).resolve().parents[1] / "out"
 t0 = time.time(); a = np.load(SRC, mmap_mode="r"); assert a.ndim == 2 and a.shape[1] == 33 * 256, a.shape       # stored flat: (moments, 33 x 256)
 # layout check against one clip file: row `pooled_row` of the array = that moment's pooled (33, 256), row-major
 import pandas as pd

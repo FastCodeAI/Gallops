@@ -9,7 +9,7 @@ print(f'load5 {l5:.1f} ram {ram:.1f} GB'); raise SystemExit(0 if (l5 < 32 and ra
 wait_gate() { while ! g=$(gate); do echo "gate closed ($g) $(date)" >> $CH; sleep 300; done; echo "gate open ($g) $(date) gpu: $(nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader)" >> $CH; }
 nas() { python3 -I -c "
 import time,glob,random
-fs=sorted(glob.glob('{runs}/generator_scorer_memory/cache/training/*.pt')); random.seed(int(time.time())); r=[]
+fs=sorted(glob.glob('{experiment_store}/cache/training/*.pt')); random.seed(int(time.time())); r=[]
 for f in random.sample(fs,3):
     t=time.time(); n=len(open(f,'rb').read()); r.append(n/2**20/(time.time()-t))
 print('NAS MB/s', [round(x,1) for x in r])"; }

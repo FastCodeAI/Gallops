@@ -4,7 +4,7 @@ Written **2026-11-11 20:46:10 IST**, before the short check is launched (`src/bu
 
 ## The run
 
-Carry mode, model version 3 (learned start state, spread gates, recall lesson at fixed weight 2.0), seed 0, the first 930 steps of the same seeded pass plan as the pilot and build 4. Starting model 0.1.8b pass 0.6, sha256 `3d566eb2…8b66`, verified inside the job before loading. Learning rates unchanged. Outputs in `{runs}/generator_scorer_memory/runs/build5_short/`. No held-out slice is opened; no closed loop.
+Carry mode, model version 3 (learned start state, spread gates, recall lesson at fixed weight 2.0), seed 0, the first 930 steps of the same seeded pass plan as the pilot and build 4. Starting model 0.1.8b pass 0.6, sha256 `3d566eb2…8b66`, verified inside the job before loading. Learning rates unchanged. Outputs in `{experiment_store}/runs/build5_short/`. No held-out slice is opened; no closed loop.
 
 ## The health rule (step 930, carry mode, all 84 picking clips, picking moments after warm-up)
 

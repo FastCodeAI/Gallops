@@ -2,7 +2,7 @@
 
 Written 2026-11-12 00:49 IST (file time stamp), **before any probe was run on real data**. At this time: the sample is chosen, the forward replays are
 finished, the probe code has been run only on synthetic data (`out/link2_selftest.json`). No probe output exists
-(`{runs}/generator_scorer_memory/runs/link2/probe/` does not exist). The target values of the sample have not been looked at; their
+(`{experiment_store}/runs/link2/probe/` does not exist). The target values of the sample have not been looked at; their
 statistics (`out/link2_stats.json`) are computed by the same job chain immediately before the probes and cannot change anything below.
 
 Code fixed at this point (sha256): `src/s10_probe.py` 80bea062…ccefd0, `src/s10_link2.py` d5059ebc…a9cbb,

@@ -1,10 +1,10 @@
 # Drive-JEPA memory, approach 3: build step 1 — the new slices and a token-cache sample
 
-shakaal, 2026-11-07 (05:00–11:50 IST). CPU work pinned (`taskset -c 0-1 nice -n 19`); one GPU job (step 4, shared GPU). No training, no full cache, no closed loop, no docker, no pushes. Writes only under `{runs}/generator_scorer_memory/` (new) and this memory folder (`src/`, `out/`, `logs/`). The earlier lane folders and `NAS/heldout/` were read, never written.
+shakaal, 2026-11-07 (05:00–11:50 IST). CPU work pinned (`taskset -c 0-1 nice -n 19`); one GPU job (step 4, shared GPU). No training, no full cache, no closed loop, no docker, no pushes. Writes only under `{experiment_store}/` (new) and this memory folder (`src/`, `out/`, `logs/`). The earlier lane folders and `NAS/heldout/` were read, never written.
 
 **How to read this.** Every number is from a file in `out/` or `logs/` of this folder, or from a path cited `path:line`. Scripts in `src/`; their stdout in `logs/`. Plain names: encoder (frozen V-JEPA ViT-L + projector), generator (32-plan menu), scorer (rating head). Distances carry their window, e.g. ADE (3 s).
 
-Path abbreviations: `G` = `Gallops-sid/LORA Refiner/Generator-Joint-PAI-alpasim/`; `RD` = `Paddock/paddock-sid/Alpasim/analysis_3.0/Retrain-data/`; `NAS` = `{runs}/generator_joint_pai/`; `PAI` = `{runs}/physicalai/`; `A3` = `{runs}/generator_scorer_memory/`; `UP` = the vendored upstream model (`Paddock/paddock-sid/Alpasim/adapters/drivejepa/src/navsim_v2/navsim/agents/drive_jepa_perception_based/`); `GM` = `gallops-memory/src/gallops/memory/`.
+Path abbreviations: `G` = `Gallops-sid/LORA Refiner/Generator-Joint-PAI-alpasim/`; `RD` = `Paddock/paddock-sid/Alpasim/analysis_3.0/Retrain-data/`; `NAS` = `{retrain_store}/`; `PAI` = `{dataset_store}/`; `A3` = `{experiment_store}/`; `UP` = the vendored upstream model (`Paddock/paddock-sid/Alpasim/adapters/drivejepa/src/navsim_v2/navsim/agents/drive_jepa_perception_based/`); `GM` = `gallops-memory/src/gallops/memory/`.
 
 **Starting model, verified before any use:** `NAS/018b/release/drive_jepa_018b_p06.ckpt`, 1,273,003,357 bytes, sha256 recomputed at 05:08 = `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` (equals the pin), and again inside the GPU job before loading (`out/s4_cache_sample.json: p06_sha_verified_s`).
 

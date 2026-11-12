@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Closed-loop check, part 2: prove the memory adapter (Paddock/paddock-sid/Alpasim/adapters/drivejepamemory) before any scene.
 
-  s12_adapter_proofs.py build     write the identity test copy (proof A) under {runs}/generator_scorer_memory/runs/cl12/proofs/
+  s12_adapter_proofs.py build     write the identity test copy (proof A) under {experiment_store}/runs/cl12/proofs/
   s12_adapter_proofs.py A         identity: the adapter worker on the test copy (0.1.8b-p06 generator and scorer; generator read output
                                   projection and rating-head new columns set to zero) against the 0.1.8b-p06 adapter worker, on the 64
                                   recorded inputs of the 0.1.8b-p06 equivalence test (NAS release/gate_018/train_side.npz). Two passes:
@@ -21,11 +21,11 @@ import importlib, json, math, os, pathlib, sys, time
 import numpy as np
 
 HERE = pathlib.Path(__file__).resolve().parent; OUT = HERE.parent / "out"; LOGS = HERE.parent / "logs"
-AS = pathlib.Path("{runs}/paddock_sid/Alpasim")
-CL12 = pathlib.Path("{runs}/generator_scorer_memory/runs/cl12")
-B5 = pathlib.Path("{runs}/generator_scorer_memory/runs/build5_short")
-GATE_NPZ = pathlib.Path("{runs}/generator_joint_pai/release/gate_018/train_side.npz")
-SLIM = pathlib.Path("{runs}/physicalai/s4_train/slim")
+AS = pathlib.Path("{paddock_sid}/Alpasim")
+CL12 = pathlib.Path("{experiment_store}/runs/cl12")
+B5 = pathlib.Path("{experiment_store}/runs/build5_short")
+GATE_NPZ = pathlib.Path("{retrain_store}/release/gate_018/train_side.npz")
+SLIM = pathlib.Path("{dataset_store}/s4_train/slim")
 CLIP = "0238dfe4-6545-46be-933d-8eb2ba29358c"
 PLAN_TOL_M = 1e-3
 sys.path.insert(0, str(AS / "adapters"))
@@ -159,7 +159,7 @@ def clip_inputs():
     """The clip's moments in time order as worker feature dicts (dataset_s35.py _slim_decode + _finish with zero_accel), and poses
     chained from each moment's human future (waypoint 0 = the next anchor's pose in this moment's frame)."""
     import cv2, pandas as pd
-    idx = pd.read_parquet("{runs}/generator_scorer_memory/cache/picking/index_picking.parquet")
+    idx = pd.read_parquet("{experiment_store}/cache/picking/index_picking.parquet")
     g = idx[idx["clip"] == CLIP].sort_values("row"); at = g["anchor_t"].to_numpy()
     assert np.allclose(np.diff(at), 0.5), "clip is not one unbroken chain"
     feats, trajs = [], []

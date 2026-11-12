@@ -2,7 +2,7 @@
 consecutive moments exist; the picking set itself holds only ~24 of a clip's 32 moments). Clips are taken in picking-set order
 (sorted by sample_id) until >= 1,000 moments. Writes out/s4_sample_moments.parquet (val_full rows + in_picking flag)."""
 import pandas as pd, os, json
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; NAS="{runs}/generator_joint_pai"; OUT=os.environ["OUT"]
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; NAS="{retrain_store}"; OUT=os.environ["OUT"]
 vf=pd.read_parquet(f"{RD}/s3_assembly/val_full/manifest_val_full.parquet"); pk=pd.read_parquet(f"{NAS}/picking/picking_set.parquet")
 assert set(pk.sample_id)<=set(vf.sample_id)
 clips=sorted(set(pk.clip_uuid)); rows=[]; n=0

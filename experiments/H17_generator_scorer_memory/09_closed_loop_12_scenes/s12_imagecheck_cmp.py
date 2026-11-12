@@ -8,8 +8,8 @@ import glob, json, pathlib, subprocess
 import numpy as np, polars as pl
 
 HERE = pathlib.Path(__file__).resolve().parent
-ORIG = "{runs}/physicalai/s5_trial_017/runs/drivejepa_017_{}"
-NEW = "{runs}/generator_scorer_memory/runs/cl12/imagecheck_017/runs/drivejepa_017_{}"
+ORIG = "{dataset_store}/s5_trial_017/runs/drivejepa_017_{}"
+NEW = "{experiment_store}/runs/cl12/imagecheck_017/runs/drivejepa_017_{}"
 
 
 RUN_IDS = ("rollout_id", "run_uuid", "run_name")   # identify the run itself, so they differ between any two runs; not metrics.

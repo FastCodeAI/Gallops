@@ -1,6 +1,6 @@
 import pyarrow.parquet as pq, pandas as pd, json, time, sys
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s3_assembly"
-NAS="{runs}/generator_joint_pai"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s3_assembly"
+NAS="{retrain_store}"
 def info(name, path):
     t0=time.time(); t=pq.read_table(path); df=t.to_pandas(); 
     print(f"== {name}: {path}\n   rows {len(df)}  cols {list(df.columns)}  read {time.time()-t0:.1f}s")

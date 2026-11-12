@@ -1,7 +1,7 @@
 {
  "started": "2026-11-11 20:29:19",
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
   "tensors": 495,
   "loaded_equal": "495/495",
@@ -15,7 +15,7 @@
   "avail_ram_gb": 59.1
  },
  "build4_step930": {
-  "checkpoint": "{runs}/generator_scorer_memory/runs/build4_short/ckpt/step0930.pt",
+  "checkpoint": "{experiment_store}/runs/build4_short/ckpt/step0930.pt",
   "version": 2,
   "measures": {
    "tag": "build4_step930",
@@ -254,7 +254,7 @@
   }
  },
  "pilot_step930": {
-  "checkpoint": "{runs}/generator_scorer_memory/runs/pilot_seed0/carry/ckpt/p00.2.pt",
+  "checkpoint": "{experiment_store}/runs/pilot_seed0/carry/ckpt/p00.2.pt",
   "version": 1,
   "measures": {
    "tag": "pilot_step930",

@@ -2,16 +2,16 @@
 minus every chunk of the current held-out. The rule is b3_select.py:13-30 (pull-outs up to 100, fast 75 with held >= 16 m/s, the rest
 ordinary to 300, chunk cap 2, seeded draw) with a new seed. Train / val / val_full / exam chunks are already excluded by the strict pool
 (b3_pool.py:23) and re-asserted here. Writes heldout_clips.csv (the name b3_download/b3_convert/b3_manifest expect) under
-{runs}/generator_scorer_memory/raw_heldout/ and a summary JSON."""
+{experiment_store}/raw_heldout/ and a summary JSON."""
 import sys, json, random, pathlib, hashlib, pandas as pd, glob
-H=pathlib.Path("{runs}/generator_joint_pai/heldout"); DST=pathlib.Path("{runs}/generator_scorer_memory/raw_heldout"); RD=pathlib.Path("{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data")
+H=pathlib.Path("{retrain_store}/heldout"); DST=pathlib.Path("{experiment_store}/raw_heldout"); RD=pathlib.Path("{paddock_sid}/Alpasim/analysis_3.0/Retrain-data")
 SEED, N_PULL, N_FAST, N_TOTAL, CAP = 20261107, 100, 75, 300, 2
-snap=glob.glob("{runs}/physicalai/hf_home/hub/datasets--nvidia--PhysicalAI-Autonomous-Vehicles/snapshots/*/clip_index.parquet")[0]; ci=pd.read_parquet(snap)
+snap=glob.glob("{dataset_store}/hf_home/hub/datasets--nvidia--PhysicalAI-Autonomous-Vehicles/snapshots/*/clip_index.parquet")[0]; ci=pd.read_parquet(snap)
 dc=pd.read_parquet(pathlib.Path(snap).parent/"metadata/data_collection.parquet")
 pool=pd.read_csv(H/"pool_clips.csv"); cl=pd.read_csv(H/"mining/clips_scan.csv"); mo=pd.read_csv(H/"mining/moveoffs_actors.csv"); ho=pd.read_csv(H/"heldout_clips.csv")
 tr=pd.read_parquet(RD/"s3_assembly/manifest.parquet", columns=["group"]); vf=pd.read_parquet(RD/"s3_assembly/val_full/manifest_val_full.parquet", columns=["group"]); va=pd.read_parquet(RD/"s3_assembly/val/manifest_val.parquet", columns=["group"])
-gh=pd.read_csv("{runs}/generator_scorer_memory/slices/graded_heldout_clips.csv")
-AS=pathlib.Path("{runs}/paddock_sid/Alpasim"); ss=pd.read_csv(AS/"alpasim/data/scenes/sim_suites.csv"); p2601={s.replace("clipgt-","") for s in ss[ss.test_suite_id=="public_2601"].scene_id}; our30=set(pd.read_csv(RD/"s0_census/b2_our30.csv").uuid); exam=p2601|our30
+gh=pd.read_csv("{experiment_store}/slices/graded_heldout_clips.csv")
+AS=pathlib.Path("{paddock_sid}/Alpasim"); ss=pd.read_csv(AS/"alpasim/data/scenes/sim_suites.csv"); p2601={s.replace("clipgt-","") for s in ss[ss.test_suite_id=="public_2601"].scene_id}; our30=set(pd.read_csv(RD/"s0_census/b2_our30.csv").uuid); exam=p2601|our30
 exam_chunks=set(int(c) for c in ci.loc[[u for u in exam if u in ci.index],"chunk"]); tochunk=lambda s: {int(x.replace("chunk_","")) for x in s}
 excl=tochunk(tr.group)|tochunk(vf.group)|tochunk(va.group)|exam_chunks|set(ho.chunk)|tochunk(gh.chunk)
 cl=cl[(cl.status=="ok")&cl.uuid.isin(pool.uuid)]; before=dict(clips=len(cl), chunks=int(cl.chunk.nunique()))

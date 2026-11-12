@@ -13,7 +13,7 @@ plans, rating logit; graded moments re-graded with the S35 grader (pai_model_b.G
 Timing: encoder-only forward at batch 1 fp32 / batch 8 fp32 / batch 8 bf16-autocast; a training-style step (generator forward in
 train mode under bf16 autocast + frozen-generator replay + scorer in training mode + backward into generator and scorer) on 32
 cached moments, 30 steps after 3 warm-up steps.
-Writes: {runs}/generator_scorer_memory/cache_sample/<clip>.pt (per clip: tokens fp32 + bf16 + pooled), out/s4_cache_sample.json."""
+Writes: {experiment_store}/cache_sample/<clip>.pt (per clip: tokens fp32 + bf16 + pooled), out/s4_cache_sample.json."""
 import os, sys, json, time, hashlib, subprocess
 from pathlib import Path
 import numpy as np, torch
@@ -21,8 +21,8 @@ import pai_common as C
 C.setup_env()
 import pai_model as PM, pai_data as D, pai_slim, pai_model_b as MB
 sys.path.insert(0, "{gallops}/src"); from gallops.memory.probe import pool_map
-OUT=Path(os.environ["OUT"]); DST=Path("{runs}/generator_scorer_memory/cache_sample"); DST.mkdir(parents=True, exist_ok=True)
-P06=Path("{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt"); P06_SHA="3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
+OUT=Path(os.environ["OUT"]); DST=Path("{experiment_store}/cache_sample"); DST.mkdir(parents=True, exist_ok=True)
+P06=Path("{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt"); P06_SHA="3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
 def main():
     R={"started": time.strftime("%F %T"), "gpu_before": subprocess.run(["nvidia-smi","--query-gpu=memory.used,memory.total,utilization.gpu","--format=csv,noheader"], capture_output=True, text=True).stdout.strip()}
     t=time.time(); assert C.sha256_file(P06)==P06_SHA, "p06 sha"; R["p06_sha_verified_s"]=round(time.time()-t,1)

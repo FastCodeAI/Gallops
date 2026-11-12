@@ -1,9 +1,9 @@
 """Build step 3: memory-moment lists for the two approach-3 slices, with b4b_moments.py's rule unchanged (a moment is memory-relevant
 if anchor_t in (t_event, t_event + 5 s]; one row per (moment, event type), nearest preceding event). Usage: s3_moments.py graded_heldout|raw_heldout2|picking (pilot: the 84 picking clips' val_full rows -> out/memory_moments_picking.parquet)"""
 import pandas as pd, numpy as np, json, os, sys
-OUT=os.environ["OUT"]; which=sys.argv[1]; A3="{runs}/generator_scorer_memory"
+OUT=os.environ["OUT"]; which=sys.argv[1]; A3="{experiment_store}"
 if which=="picking":
-    vf=pd.read_parquet("{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s3_assembly/val_full/manifest_val_full.parquet"); pk=pd.read_parquet("{runs}/generator_joint_pai/picking/picking_set.parquet")
+    vf=pd.read_parquet("{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s3_assembly/val_full/manifest_val_full.parquet"); pk=pd.read_parquet("{retrain_store}/picking/picking_set.parquet")
     man=vf[vf.clip_uuid.isin(set(pk.clip_uuid))].copy()
 else:
     man=pd.read_parquet(f"{A3}/slices/manifest_{'graded_heldout' if which=='graded_heldout' else 'raw_heldout'}.parquet")

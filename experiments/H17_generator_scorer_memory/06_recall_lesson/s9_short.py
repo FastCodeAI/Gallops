@@ -16,7 +16,7 @@ Rule measures (in_picking moments after the 4 warm-up moments of a chain; recall
   (e) memory norm ||M read|| / ||M0||                                               >= 0.5      (version 1 has no M0: 64 = 16 rows of norm 16)
   (f) gate mean over the 16 slots >= 0.10; >= 8 slots >= 0.05; max / min >= 3
   (g) no NaN / inf      (h) pick grade on the 1,131 graded moments >= 0.74
-Outputs: {runs}/generator_scorer_memory/runs/build5_short/ (run.json, status.json, log.txt, resume.pt, ckpt/, dumps/), out/build5_short.json."""
+Outputs: {experiment_store}/runs/build5_short/ (run.json, status.json, log.txt, resume.pt, ckpt/, dumps/), out/build5_short.json."""
 from __future__ import annotations
 import argparse, json, math, os, sys, time
 from pathlib import Path

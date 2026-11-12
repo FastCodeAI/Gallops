@@ -1,5 +1,5 @@
 {
- "run": "{runs}/generator_scorer_memory/runs/build4_short",
+ "run": "{experiment_store}/runs/build4_short",
  "stopped": "reached 930 steps",
  "steps_done": 930,
  "resumes": 0,
@@ -178,7 +178,7 @@
    "tag": "step 310 subset 20 clips",
    "mode": "carry",
    "step": 310,
-   "ckpt": "{runs}/generator_scorer_memory/runs/build4_short/ckpt/step0310.pt",
+   "ckpt": "{experiment_store}/runs/build4_short/ckpt/step0310.pt",
    "probe_wall_s": 137.4
   },
   {
@@ -266,7 +266,7 @@
    "tag": "step 620 subset 20 clips",
    "mode": "carry",
    "step": 620,
-   "ckpt": "{runs}/generator_scorer_memory/runs/build4_short/ckpt/step0620.pt",
+   "ckpt": "{experiment_store}/runs/build4_short/ckpt/step0620.pt",
    "probe_wall_s": 83.2
   },
   {
@@ -354,7 +354,7 @@
    "tag": "step 930 all 84 clips",
    "mode": "carry",
    "step": 930,
-   "ckpt": "{runs}/generator_scorer_memory/runs/build4_short/ckpt/step0930.pt",
+   "ckpt": "{experiment_store}/runs/build4_short/ckpt/step0930.pt",
    "check": {
     "pick_grade_mean_map": 0.749567985534668,
     "map_moments": 1131,
@@ -609,7 +609,7 @@
   "tag": "step 930 all 84 clips",
   "mode": "carry",
   "step": 930,
-  "ckpt": "{runs}/generator_scorer_memory/runs/build4_short/ckpt/step0930.pt",
+  "ckpt": "{experiment_store}/runs/build4_short/ckpt/step0930.pt",
   "check": {
    "pick_grade_mean_map": 0.749567985534668,
    "map_moments": 1131,

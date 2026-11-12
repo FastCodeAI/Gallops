@@ -1,7 +1,7 @@
 #!/bin/bash
 # Same interpreter and overlay as the lane's s1_build/run.sh (conda drive-jepa python + torch 2.8.0+cu128 overlay), with the lane's
 # s1_build / s2_train / s8_018b_build sources on PYTHONPATH (pai_common, pai_model, pai_data, pai_slim, pai_model_b: imported, never edited).
-E={runs}/alpasim_bulk/conda-envs
+E={alpasim_bulk}/conda-envs
 G="{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim"
 ENC="{working_notes}/LORA Encoder/Encoder-LoRA-KIT"
 HERE="$(cd "$(dirname "$0")" && pwd)"

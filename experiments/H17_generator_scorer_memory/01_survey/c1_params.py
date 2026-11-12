@@ -1,5 +1,5 @@
 import torch, collections, json, time, os, sys
-P="{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt"
+P="{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt"
 t0=time.time(); sd=torch.load(P, map_location="cpu", weights_only=False, mmap=True)
 sd=sd.get("state_dict", sd); print("loaded", len(sd), "tensors in %.0f s"%(time.time()-t0)); 
 sd={k.replace("agent._pad_model.","",1):v for k,v in sd.items()}

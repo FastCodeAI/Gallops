@@ -31,4 +31,4 @@ Slot diversity (mean pairwise cosine between the 16 slots of the memory read at 
 
 ## Files
 
-`src/s7_pilot.py` (the two arms), `src/run_model_pilot.sh`, `src/b4c_events.py` (mode `picking`, rules unchanged), `src/s3_moments.py` (mode `picking`); outputs `{runs}/generator_scorer_memory/runs/pilot_seed0/{carry,wiped}/`.
+`src/s7_pilot.py` (the two arms), `src/run_model_pilot.sh`, `src/b4c_events.py` (mode `picking`, rules unchanged), `src/s3_moments.py` (mode `picking`); outputs `{experiment_store}/runs/pilot_seed0/{carry,wiped}/`.

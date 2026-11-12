@@ -1,6 +1,6 @@
 """B4b fetch verification: every ordinary clip has its member; sha256 matches the manifest; parquet reads; row counts sane."""
 import pandas as pd, numpy as np, os, json, hashlib
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; DST="{runs}/physicalai/approach3_tracks"; OUT=os.environ["OUT"]
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; DST="{dataset_store}/approach3_tracks"; OUT=os.environ["OUT"]
 tr=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet"); tr['chunk']=tr.group.str.replace('chunk_','').astype(int)
 ordn=tr[(tr.source=='raw')&(tr.type=='ordinary')].drop_duplicates('clip_uuid')[['clip_uuid','chunk']]
 man=pd.read_csv(f"{DST}/download_manifest.csv"); print("manifest rows", len(man), "distinct uuids", man.uuid.nunique(), "all ordinary:", set(man.uuid)==set(ordn.clip_uuid))
@@ -23,5 +23,5 @@ print("tracks per clip: min %d median %d max %d; span s: min %.1f median %.1f ma
 bad=V[(~V.exists)|(~V.sha_ok.fillna(False))|(~V.read_ok.fillna(False))|(~V.cols_ok.fillna(False))|(V.rows.fillna(0)<50)|(V.span_s.fillna(0)<15)]
 print("flagged clips (missing / bad hash / unreadable / < 50 rows / span < 15 s):", len(bad)); print(bad.to_string() if len(bad) else "")
 # compare with the census's pull-out members as a sanity reference
-bo=tr[(tr.source=='raw')&(tr.type=='B_raw')].drop_duplicates('clip_uuid'); ref=[len(pd.read_parquet(f"{runs}/physicalai/s0_census/raw/labels/obstacle.offline.members/chunk_{r.chunk:04d}/{r.clip_uuid}.obstacle.offline.parquet")) for r in bo.head(100).itertuples()]
+bo=tr[(tr.source=='raw')&(tr.type=='B_raw')].drop_duplicates('clip_uuid'); ref=[len(pd.read_parquet(f"{dataset_store}/s0_census/raw/labels/obstacle.offline.members/chunk_{r.chunk:04d}/{r.clip_uuid}.obstacle.offline.parquet")) for r in bo.head(100).itertuples()]
 print("reference: rows per clip on 100 census pull-out members: median %d, min %d, max %d"%(np.median(ref), min(ref), max(ref)))

@@ -2,7 +2,7 @@
 
 2026-11-07, shakaal. Read-only; CPU only (`taskset -c 0-1 nice -n 19`). No runs, no GPU, no docker. The only write is this file.
 
-Path shorthands: `G` = `Gallops/Gallops-sid/LORA Refiner/Generator-Joint-PAI-alpasim`, `AS` = `Paddock/paddock-sid/Alpasim`, `NAS018b` = `{runs}/generator_joint_pai/018b`.
+Path shorthands: `G` = `Gallops/Gallops-sid/LORA Refiner/Generator-Joint-PAI-alpasim`, `AS` = `Paddock/paddock-sid/Alpasim`, `NAS018b` = `{retrain_store}/018b`.
 
 ## Answer
 
@@ -14,24 +14,24 @@ What Sid is most likely remembering is the **0.1.8** 30-scene run of 2026-10-27 
 
 | fact | evidence |
 |---|---|
-| p06 checkpoint path and sha `3d566eb211b5…8e66`, 1,273,003,357 bytes | every p06 run's worker log: `NAS018b/closed_loop/runs/drivejepa_018bp06_8023dce5/driver_worker.log` line "drivejepa-0.1.8b-p06 checkpoint: verified {runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt sha256 3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66 bytes 1273003357 source pinned"; also `G/s10_018b_closed_loop/logs/run_tags.log:7` |
+| p06 checkpoint path and sha `3d566eb211b5…8e66`, 1,273,003,357 bytes | every p06 run's worker log: `NAS018b/closed_loop/runs/drivejepa_018bp06_8023dce5/driver_worker.log` line "drivejepa-0.1.8b-p06 checkpoint: verified {retrain_store}/018b/release/drive_jepa_018b_p06.ckpt sha256 3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66 bytes 1273003357 source pinned"; also `G/s10_018b_closed_loop/logs/run_tags.log:7` |
 | sister snapshots p02 `7469b45d…`, p10 `ff50947e…` | `NAS018b/release/` holds `drive_jepa_018b_{p02,p06,p10,step0}.ckpt`; p02/p10 worker logs cite those shas (table in §3) |
 | the 30 scenes | `AS/analysis_3.0/Retrain-data/s0_census/b2_our30.csv`: 30 rows + header (`wc -l` = 31); lanes: 10 `pilot10`, 20 `ext20` (`cut -d, -f2 \| sort \| uniq -c`) |
 | the 12 diagnosis scenes | `G/s10_018b_closed_loop/tables/scenes_12.txt` (12 lines; the brief's path lacks the leading `Gallops/`) — e3ed554f 8023dce5 5f064b02 e121e37d 048b974e cdd9448c d2715023 bd07fb91 bae463d3 d1a25a99 b1b170d0 04749bb9; two of them (048b974e, 04749bb9) are pilot10 scenes, the other 10 are ext20 (`grep` of each id in `b2_our30.csv`) |
 | native adapter | `AS/adapters/drivejepa018bp06/` (bridge.py, constants.py, planner.py dated 2026-10-31 03:53) |
-| run script | `AS/drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh` (the brief put it under the adapter folder; it is in `drafts/`). Its output root is hard-wired: `OUTROOT={runs}/generator_joint_pai/018b/closed_loop` and `S5A=$OUTROOT/runs` (`run_018bp06_scene.sh:50-51`), so every run this script made is in the known run folder |
+| run script | `AS/drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh` (the brief put it under the adapter folder; it is in `drafts/`). Its output root is hard-wired: `OUTROOT={retrain_store}/018b/closed_loop` and `S5A=$OUTROOT/runs` (`run_018bp06_scene.sh:50-51`), so every run this script made is in the known run folder |
 
 ## 2. Where I searched
 
 | search | command (pinned, nice 19) | result |
 |---|---|---|
 | known run folder | `ls NAS018b/closed_loop/runs` | 36 run dirs + 36 `.preflight_only_*` dirs: 12 scenes × {p02, p06, p10}; the scene set is identical for the three snapshots |
-| local trees by name | `find {checkouts} {home}/data {runs}/alpasim_bulk -maxdepth 8 -iname '*018b*' -o '*0.1.8b*' -o '*drivejepa018b*' -o '*3d566eb2*' -o '*7469b45d*' -o '*ff50947e*' -o 'drive_jepa_018b*'` (prunes .git, venvs) | only the build/adapter/draft folders, `G/s7…s11` work folders, and `Gallops-sid/memory/...` — no run folder outside the known one |
-| local trees by sha prefix | `grep -rl '3d566eb2\|7469b45d\|ff50947e'` over `Paddock Paddock-gate paddock-memory Paddock-retrained-adapter Gallops {home}/data {runs}/alpasim_bulk` (log/yaml/json/md/txt/csv/sh/toml) | 35 files, all in `AS/drafts/drivejepa-0.1.8b-*`, `G/s10_018b_closed_loop/`, `G/CLOSING_REPORT.md`, and the approach-3 memory folder. No run log outside s10 names a 0.1.8b sha |
+| local trees by name | `find {checkouts} {home}/data {alpasim_bulk} -maxdepth 8 -iname '*018b*' -o '*0.1.8b*' -o '*drivejepa018b*' -o '*3d566eb2*' -o '*7469b45d*' -o '*ff50947e*' -o 'drive_jepa_018b*'` (prunes .git, venvs) | only the build/adapter/draft folders, `G/s7…s11` work folders, and `Gallops-sid/memory/...` — no run folder outside the known one |
+| local trees by sha prefix | `grep -rl '3d566eb2\|7469b45d\|ff50947e'` over `Paddock Paddock-gate paddock-memory Paddock-retrained-adapter Gallops {home}/data {alpasim_bulk}` (log/yaml/json/md/txt/csv/sh/toml) | 35 files, all in `AS/drafts/drivejepa-0.1.8b-*`, `G/s10_018b_closed_loop/`, `G/CLOSING_REPORT.md`, and the approach-3 memory folder. No run log outside s10 names a 0.1.8b sha |
 | Paddock run stores by date | `ls <worktree>/results/alpasim/<model>/` for all 17 `Paddock*`/`paddock-memory` worktrees, names ≥ `20261031` | only `paddock-memory/results/alpasim/drivejepa/`: 5 runs dated 2026-11-05/06 (see §4) |
-| NAS, my trees | `ls` of `{nas_store}/{alpasim/paddock-runs, gallops-runs, tmp, workspace-siddesh, checkpoints, memory_cache, paddock-h15-runs}`, `{runs}/generator_joint_pai/*`, `{runs}/physicalai/` | the only closed-loop roots are `generator_joint_pai/{closed_loop (0.1.8, 30 scenes, 2026-10-27), diagnosis (0.1.8-rs), graft (0.1.8-p9), 018b/closed_loop (0.1.8b), 018c/closed_loop (0.1.8c-p04, 12 scenes, 2026-11-03)}` and `paddock-h15-runs/alpasim/drivejepa` (copies of the 5 November bridge runs + a symlink to one 2026-10-27 run) |
+| NAS, my trees | `ls` of `{nas_store}/{alpasim/paddock-runs, gallops-runs, tmp, workspace-siddesh, checkpoints, memory_cache, paddock-h15-runs}`, `{retrain_store}/*`, `{dataset_store}/` | the only closed-loop roots are `generator_joint_pai/{closed_loop (0.1.8, 30 scenes, 2026-10-27), diagnosis (0.1.8-rs), graft (0.1.8-p9), 018b/closed_loop (0.1.8b), 018c/closed_loop (0.1.8c-p04, 12 scenes, 2026-11-03)}` and `paddock-h15-runs/alpasim/drivejepa` (copies of the 5 November bridge runs + a symlink to one 2026-10-27 run) |
 | NAS, shared Paddock store | `ls {paddock_site_nas}/runs/alpasim/drivejepa` | 3 runs, all 2026-10-27/28, `scene_set public_2601_gate10`, checkpoints `<site path:a90f1310>` and `<site path:52e100ac>` (`run_config.json`); dated before p06 existed (exported 2026-10-31 03:53) |
-| NAS, full name search | `find {nas_store} {runs}/physicalai -maxdepth 6 -iname …` | **NOT CHECKED to completion**: killed at 840 s with no hits printed (estimate: > 30 min on this NAS). The shallow listings above cover every root that holds closed-loop runs |
+| NAS, full name search | `find {nas_store} {dataset_store} -maxdepth 6 -iname …` | **NOT CHECKED to completion**: killed at 840 s with no hits printed (estimate: > 30 min on this NAS). The shallow listings above cover every root that holds closed-loop runs |
 
 ## 3. Every 0.1.8b run found
 

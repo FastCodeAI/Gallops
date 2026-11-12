@@ -3,7 +3,7 @@
  "gpu_before": "48474 MiB, 97887 MiB, 4 %",
  "p06_sha_verified_s": 4.4,
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "tensors": 495,
   "loaded_equal": "495/495",
   "batch_fix": {

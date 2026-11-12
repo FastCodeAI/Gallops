@@ -9,7 +9,7 @@
                            wiped:   the memory is reset to the start state (M0; zeros in version 1) before EVERY moment
                          Kept per moment: the memory written after the update at t in both modes (16 x 256), the scorer's summary of the memory
                          READ at t in carry mode (256: what the rating head reads at t) and of the memory written at t (information).
-                         -> {runs}/generator_scorer_memory/runs/link2/{feats_<slice>.npz, mem_<checkpoint>_<slice>.npz, replay.json}
+                         -> {experiment_store}/runs/link2/{feats_<slice>.npz, mem_<checkpoint>_<slice>.npz, replay.json}
 The probes are in s10_probe.py (CPU)."""
 from __future__ import annotations
 import argparse, json, sys, time
@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np, pandas as pd, torch
 
 HERE = Path(__file__).resolve().parent; OUT = HERE.parent / "out"
-A3 = Path("{runs}/generator_scorer_memory"); RUN = A3 / "runs" / "link2"
+A3 = Path("{experiment_store}"); RUN = A3 / "runs" / "link2"
 SEED_PLAN, PASS, N_STEPS = 0, 1, 930
 SAMPLE_SEED, N_SAMPLE, WARM = 20261111, 300, 4
 CKPTS = {"build5": A3 / "runs/build5_short/ckpt/step0930.pt", "build4": A3 / "runs/build4_short/ckpt/step0930.pt",

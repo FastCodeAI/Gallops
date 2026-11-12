@@ -1,7 +1,7 @@
 #!/bin/bash
 # run_model.sh with the core pin taken from CORES (default 0-1): the pilot runs two arms in parallel, each on its own two cores
 # (carry CORES=0-1, wiped CORES=2-3; Sid's one-off exception for this pilot). nice 19, same interpreter / overlay / PYTHONPATH.
-E={runs}/alpasim_bulk/conda-envs
+E={alpasim_bulk}/conda-envs
 G="{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim"
 ENC="{working_notes}/LORA Encoder/Encoder-LoRA-KIT"
 HERE="$(cd "$(dirname "$0")" && pwd)"

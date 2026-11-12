@@ -14,7 +14,7 @@ written the first loader batch is encoded at the encoder batch (ENC_BS) and agai
 so the job stopped (out/s5_cache_training_STOP.json, logs/s5_cache_training_batch8_STOP.log) and was relaunched with ENC_BS=1, the only
 setting under which the cache can reproduce the check forward bit for bit; the loader still delivers batches of 8.
 
-Files: {runs}/generator_scorer_memory/cache/<slice>/<clip>.pt = {"sample_id", "anchor_t", "tokens" (N,512,256), "pooled" (N,33,256),
+Files: {experiment_store}/cache/<slice>/<clip>.pt = {"sample_id", "anchor_t", "tokens" (N,512,256), "pooled" (N,33,256),
 "ego_status" (N,11), "trajectory" (N,8,3), "has_label2"} in time order; index_<slice>.parquet (sample_id, clip, anchor_t, file, row,
 sha256, ...); pooled_<slice>.npy (N, 8448) = every moment's pooled copy in index order (one array per slice).
 Resumable: a clip whose file exists and whose sha256 equals the one in index_partial.jsonl is skipped.
@@ -27,8 +27,8 @@ import pai_common as C
 C.setup_env()
 import pai_model as PM, pai_data as D, pai_slim
 sys.path.insert(0, "{gallops}/src"); from gallops.memory.probe import pool_map
-OUT=Path(os.environ["OUT"]); A3=Path("{runs}/generator_scorer_memory"); CACHE=A3/"cache"
-P06=Path("{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt"); P06_SHA="3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
+OUT=Path(os.environ["OUT"]); A3=Path("{experiment_store}"); CACHE=A3/"cache"
+P06=Path("{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt"); P06_SHA="3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
 BS=8; WORKERS=8; PROGRESS_CLIPS=500; ENC_BS=int(os.environ.get("ENC_BS","1"))   # loader batch 8; encoder batch from ENC_BS (see docstring)
 
 def slice_manifest(which):
@@ -36,7 +36,7 @@ def slice_manifest(which):
     if which=="training":
         man=pd.read_parquet(C.MANIFEST); cfg=dict(cache=C.CACHE, slim=C.SLIM, split="train")
     elif which=="picking":   # the 84 picking clips as WHOLE clips: every val_full moment of those clips, the picking moments flagged
-        vf=pd.read_parquet(C.VAL_FULL); pk=pd.read_parquet("{runs}/generator_joint_pai/picking/picking_set.parquet")
+        vf=pd.read_parquet(C.VAL_FULL); pk=pd.read_parquet("{retrain_store}/picking/picking_set.parquet")
         assert set(pk.sample_id)<=set(vf.sample_id) and pk.clip_uuid.nunique()==84
         man=vf[vf.clip_uuid.isin(set(pk.clip_uuid))].copy(); man["in_picking"]=man.sample_id.isin(set(pk.sample_id)); cfg=dict(cache=C.CACHE, slim=C.SLIM, split="val")
     elif which=="graded_heldout":

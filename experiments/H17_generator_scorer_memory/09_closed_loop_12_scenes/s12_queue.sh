@@ -4,12 +4,12 @@
 #      the first of these runs rebuilds the missing simulator image. Compared by s12_imagecheck_cmp.py.
 #   2. the 12 diagnosis scenes, carry then reset for each scene (so an interrupted queue leaves complete pairs).
 # Resumable: a scene whose run folder already holds rollouts is skipped. A run that produced no rollout stops the queue (no retry loop).
-# STOP file: {runs}/generator_scorer_memory/runs/cl12/STOP. Log: logs/cl12_queue.log
+# STOP file: {experiment_store}/runs/cl12/STOP. Log: logs/cl12_queue.log
 set -uo pipefail
 M="{working_folder}"
 G="{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim"
-AS={runs}/paddock_sid/Alpasim; SID={runs}/paddock_sid
-CL12={runs}/generator_scorer_memory/runs/cl12; RUNNER="$AS/adapters/drivejepamemory/launch/run_memory_scene.sh"
+AS={paddock_sid}/Alpasim; SID={paddock_sid}
+CL12={experiment_store}/runs/cl12; RUNNER="$AS/adapters/drivejepamemory/launch/run_memory_scene.sh"
 T17="$AS/analysis_3.0/Retrain-data/s5_trial/runs_017"
 EXT20="$SID/scene_sets/sim_scenes_ext20_26p01.csv"; P10="$AS/drafts/drivejepa-0.1.4/smoke_01d503d4/sim_scenes_pilot10_26p01.csv"
 S12F="$G/s10_018b_closed_loop/tables/scenes_12.txt"
@@ -28,7 +28,7 @@ log "pre-registration sha256 $(sha256sum "$M/reports/CL12_MEMORY_PREREG.md" | cu
 
 # ---- 1. image check (Sid's rule of 2026-10-27, as s11_018c/logs/imagecheck_017.sh) ----
 grep -q "READY" "$T17/logs/check_only.log" && grep -q '"gate_1_under_2cm": true' "$T17/tables/gate_017.json" || { log "FATAL: 0.1.7 build checks"; exit 3; }
-[ "$(sha256sum {runs}/physicalai/s10_retrain/ckpt/drive_jepa_s10_gen.ckpt | cut -d' ' -f1)" = 29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916 ] || { log "FATAL: 0.1.7 checkpoint sha256"; exit 3; }
+[ "$(sha256sum {dataset_store}/s10_retrain/ckpt/drive_jepa_s10_gen.ckpt | cut -d' ' -f1)" = 29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916 ] || { log "FATAL: 0.1.7 checkpoint sha256"; exit 3; }
 log "image before: $(docker image inspect alpasim-base:0.134.0 --format '{{.Id}} {{.Created}}' 2>&1 | head -1)"
 for short in 04749bb9 acd22430 d2715023 b44a4a44; do
   read -r _ scene lane < <(grep "^$short " "$G/s4_closed_loop/tables/scenes_30.txt"); csv="$EXT20"; [ "$lane" = P10 ] && csv="$P10"

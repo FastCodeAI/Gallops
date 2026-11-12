@@ -116,17 +116,20 @@ it is a record of the originals, so `sha256sum -c` does not pass against the com
 
 | Placeholder | Stands for |
 |---|---|
-| `{runs}/generator_scorer_memory` | the training site's network store for this experiment: cache, slices, run folders |
-| `{runs}/generator_joint_pai` | the store of the earlier retrain that produced the starting model |
-| `{runs}/physicalai` | the store holding the dataset download and the earlier retrain's training set |
-| `{runs}/paddock_sid`, `{runs}/paddock_sid_moved` | a personal working tree inside a paddock checkout, and the part of it that was moved to the network store |
-| `{runs}/alpasim`, `{runs}/alpasim_bulk` | simulator results on the network store, and the bulk disk holding the environments |
+| `{experiment_store}` | the training site's network store for this experiment: cache, slices, run folders |
+| `{retrain_store}` | the store of the earlier retrain that produced the starting model |
+| `{dataset_store}` | the store holding the dataset download and the earlier retrain's training set |
+| `{paddock_sid}`, `{paddock_sid_moved}` | a personal working tree inside a paddock checkout, and the part of it that was moved to the network store |
+| `{alpasim_store}`, `{alpasim_bulk}` | simulator results on the network store, and the bulk disk holding the environments |
 | `{working_folder}` | the folder these files were written in, with `reports/`, `src/`, `out/` and `logs/` |
 | `{working_notes}`, `{gallops}`, `{gallops_main}`, `{checkouts}`, `{paddock}` | the personal notes folder, two gallops checkouts, their parent folder, a paddock checkout |
 | `{data.navtrain.cache}` | H05's saved outputs of the released model |
 | `{home}`, `{nas}`, `{nas_store}`, `{bulk_disk}`, `{paddock_site}`, `{paddock_site_nas}`, `/tmp/{session}` | a home directory, a mount, a personal folder on it, a disk, paddock's site folders, one session's temporary directory |
 
-Only `{runs}` and `{weights}` are variables `gallops.config` expands. The rest are labels.
+Of these, only `{data.navtrain.cache}` and the `{weights}` in the checkpoints' template locations are
+variables `gallops.config` expands. The rest are labels on purpose: they name where things sit at the
+training site, and none of those folders is under that site's `[roots.runs]`, so writing them as
+`{runs}/...` would expand to folders that do not exist.
 
 ## Where this came from
 

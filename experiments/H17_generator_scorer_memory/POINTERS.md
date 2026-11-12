@@ -4,11 +4,12 @@ Nothing below is committed: checkpoints and arrays by rule (`.gitignore`, `docs/
 cache because it is derived from NVIDIA Physical AI AV, logs by convention, and tables over 100 KB for size.
 Each row gives a location, a size in bytes and a sha256, so a copy can be recognised wherever it ends up.
 
-**Locations are templates, not paths.** `{weights}` and `{runs}` are `[roots.weights]` and `[roots.runs]`
-from `gallops.toml`. At the site that ran this experiment nothing has been moved into the `{weights}`
-layout: every file sits under that site's store for this experiment, written
-`{runs}/generator_scorer_memory` here and in the as-run files. The "where it sits" lines give the folder
-under it. Hashes were computed on 12 Nov 2026 from the files on that store.
+**Two kinds of location.** A *template location* starts with `{weights}`, which is `[roots.weights]` in
+`gallops.toml`: where a copy belongs in this repository's layout. Nothing has been moved there yet. *Where
+it sits* is a label, not a variable `gallops.config` expands: `{experiment_store}` is the training site's
+network store for this experiment, `{retrain_store}` that of the earlier retrain; the README's
+placeholder table lists every label. Neither store is under that site's `[roots.runs]`. Hashes were
+computed on 12 Nov 2026 from the files on those stores.
 
 ## The starting model
 
@@ -17,7 +18,7 @@ repository yet. It is identified here by its sha256 only.
 
 | Item | Where it sits | Bytes | sha256 |
 |---|---|---:|---|
-| Starting model, merged checkpoint | `{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt` | 1273003357 | `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` |
+| Starting model, merged checkpoint | `{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt` | 1273003357 | `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` |
 
 ## Checkpoints
 
@@ -27,7 +28,7 @@ Trainer format: the generator, the scorer and the memory blocks, without the fro
 ### H17.r2, first training run, memory carried
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r2-carried/`. Where it sits:
-`{runs}/generator_scorer_memory/runs/pilot_seed0/carry/`. The file names give the pass (`p01.2` is pass
+`{experiment_store}/runs/pilot_seed0/carry/`. The file names give the pass (`p01.2` is pass
 1.2); the chosen check is `ckpt/p01.2.pt`, step 5,218, which the record pins. `resume.pt` is the trainer's
 resume state.
 
@@ -49,7 +50,7 @@ resume state.
 ### H17.r2, first training run, memory wiped at every moment
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r2-wiped/`. Where it sits:
-`{runs}/generator_scorer_memory/runs/pilot_seed0/wiped/`. The chosen check is `ckpt/p01.2.pt`.
+`{experiment_store}/runs/pilot_seed0/wiped/`. The chosen check is `ckpt/p01.2.pt`.
 
 | File | Bytes | sha256 |
 |---|---:|---|
@@ -69,7 +70,7 @@ Template location `{weights}/drivejepa_physicalai_memory/h17-r2-wiped/`. Where i
 ### H17.r3, the memory-collapse fix, 930 steps
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r3-collapse-fix/`. Where it sits:
-`{runs}/generator_scorer_memory/runs/build4_short/`. The record pins `ckpt/step0930.pt`.
+`{experiment_store}/runs/build4_short/`. The record pins `ckpt/step0930.pt`.
 
 | File | Bytes | sha256 |
 |---|---:|---|
@@ -81,7 +82,7 @@ Template location `{weights}/drivejepa_physicalai_memory/h17-r3-collapse-fix/`. 
 ### H17.r4, the recall lesson, 930 steps
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r4-recall-lesson/`. Where it sits:
-`{runs}/generator_scorer_memory/runs/build5_short/`. The record pins `ckpt/step0930.pt`, the checkpoint
+`{experiment_store}/runs/build5_short/`. The record pins `ckpt/step0930.pt`, the checkpoint
 the headline result was measured on.
 
 | File | Bytes | sha256 |
@@ -99,17 +100,17 @@ and moment.
 
 | Slice | Where it sits | Clip files | Index file | Bytes | sha256 of the index |
 |---|---|---:|---|---:|---|
-| training | `{runs}/generator_scorer_memory/cache/training/` | 4015 | `index_training.parquet` | 2049402 | `ac5561cdb42ecafb6af91cca71d066e591aebc4dc51be3294011753ba7921613` |
-| picking | `{runs}/generator_scorer_memory/cache/picking/` | 84 | `index_picking.parquet` | 50400 | `97c5a1dfb6e3b946060bb76a1272625c636d6ae64fc271a120efe39ee0be044f` |
-| graded heldout | `{runs}/generator_scorer_memory/cache/graded_heldout/` | 355 | `index_graded_heldout.parquet` | 187178 | `52422a939a35e1c402bd1f1b85eb69469ed3341d623e59d0f7a68f183a7f3654` |
-| raw heldout | `{runs}/generator_scorer_memory/cache/raw_heldout/` | 300 | `index_raw_heldout.parquet` | 166245 | `2de890c7facf71eb6946fe8f01f0c889ed683518365d7a99610c633ad38361f6` |
+| training | `{experiment_store}/cache/training/` | 4015 | `index_training.parquet` | 2049402 | `ac5561cdb42ecafb6af91cca71d066e591aebc4dc51be3294011753ba7921613` |
+| picking | `{experiment_store}/cache/picking/` | 84 | `index_picking.parquet` | 50400 | `97c5a1dfb6e3b946060bb76a1272625c636d6ae64fc271a120efe39ee0be044f` |
+| graded heldout | `{experiment_store}/cache/graded_heldout/` | 355 | `index_graded_heldout.parquet` | 187178 | `52422a939a35e1c402bd1f1b85eb69469ed3341d623e59d0f7a68f183a7f3654` |
+| raw heldout | `{experiment_store}/cache/raw_heldout/` | 300 | `index_raw_heldout.parquet` | 166245 | `2de890c7facf71eb6946fe8f01f0c889ed683518365d7a99610c633ad38361f6` |
 
 | Slice manifest | Where it sits | Bytes | sha256 |
 |---|---|---:|---|
-| `manifest_graded_heldout.parquet` | `{runs}/generator_scorer_memory/slices/manifest_graded_heldout.parquet` | 172964 | `006ec7c81396683f0017c63353b13aa7867f4a21fa41d53048dc52d08c9b36d3` |
-| `manifest_raw_heldout.parquet` | `{runs}/generator_scorer_memory/slices/manifest_raw_heldout.parquet` | 155896 | `2a916fc04eb45df8c704c775b4965d976b5c5a63c24419c56ce98fafbb197d9f` |
-| `manifest_heldout.parquet` | `{runs}/generator_scorer_memory/raw_heldout/manifest_heldout.parquet` | 155896 | `2a916fc04eb45df8c704c775b4965d976b5c5a63c24419c56ce98fafbb197d9f` |
-| `manifest_heldout_tags.parquet` | `{runs}/generator_scorer_memory/raw_heldout/manifest_heldout_tags.parquet` | 256907 | `f48769797ae723eca992d920aeaf731d0285bc80424743007195b651af403c61` |
+| `manifest_graded_heldout.parquet` | `{experiment_store}/slices/manifest_graded_heldout.parquet` | 172964 | `006ec7c81396683f0017c63353b13aa7867f4a21fa41d53048dc52d08c9b36d3` |
+| `manifest_raw_heldout.parquet` | `{experiment_store}/slices/manifest_raw_heldout.parquet` | 155896 | `2a916fc04eb45df8c704c775b4965d976b5c5a63c24419c56ce98fafbb197d9f` |
+| `manifest_heldout.parquet` | `{experiment_store}/raw_heldout/manifest_heldout.parquet` | 155896 | `2a916fc04eb45df8c704c775b4965d976b5c5a63c24419c56ce98fafbb197d9f` |
+| `manifest_heldout_tags.parquet` | `{experiment_store}/raw_heldout/manifest_heldout_tags.parquet` | 256907 | `f48769797ae723eca992d920aeaf731d0285bc80424743007195b651af403c61` |
 
 ## Tables and arrays left out
 
@@ -232,7 +233,7 @@ Whole directories, so no single hash.
 
 | Item | Where it sits | Contents |
 |---|---|---|
-| The memory saved at each moment, for the test of what the memory holds | `{runs}/generator_scorer_memory/runs/link2/` | replays and reader outputs |
-| Pooled past views and reader outputs, for the test of what the past view holds | `{runs}/generator_scorer_memory/runs/ceiling/` | arrays and reader outputs |
-| Step-0 reference dump of the model checks | `{runs}/generator_scorer_memory/runs/build3_tests/` | one dump per check |
-| 12-scene closed-loop check | `{runs}/generator_scorer_memory/runs/cl12/` | not finished when this was recorded; nothing from it is hashed or cited |
+| The memory saved at each moment, for the test of what the memory holds | `{experiment_store}/runs/link2/` | replays and reader outputs |
+| Pooled past views and reader outputs, for the test of what the past view holds | `{experiment_store}/runs/ceiling/` | arrays and reader outputs |
+| Step-0 reference dump of the model checks | `{experiment_store}/runs/build3_tests/` | one dump per check |
+| 12-scene closed-loop check | `{experiment_store}/runs/cl12/` | not finished when this was recorded; nothing from it is hashed or cited |

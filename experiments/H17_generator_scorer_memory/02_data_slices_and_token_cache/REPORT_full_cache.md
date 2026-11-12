@@ -1,8 +1,8 @@
 # Drive-JEPA memory, approach 3: build step 2, the full token cache
 
-shakaal, 2026-11-08 (00:05–04:27 IST). One GPU job (the cache of the four slices plus its exactness check, one chain). No training, no closed loop, no docker, no pushes. Sid's change of plan during the step: **part 1 only**; the history check was not pre-registered, fitted or run, and nothing of it was started. Writes only under `{runs}/generator_scorer_memory/cache/` (new) and this memory folder (`src/`, `out/`, `logs/`). Nothing large on shakaal's local disk.
+shakaal, 2026-11-08 (00:05–04:27 IST). One GPU job (the cache of the four slices plus its exactness check, one chain). No training, no closed loop, no docker, no pushes. Sid's change of plan during the step: **part 1 only**; the history check was not pre-registered, fitted or run, and nothing of it was started. Writes only under `{experiment_store}/cache/` (new) and this memory folder (`src/`, `out/`, `logs/`). Nothing large on shakaal's local disk.
 
-Path abbreviations as in `APPROACH3_RECON.md` (`G`, `RD`, `NAS`, `PAI`, `UP`, `GM` = `gallops-memory/src/gallops/memory/`); `A3` = `{runs}/generator_scorer_memory/`. Plain names: encoder, generator, scorer. Every number below is read from a file named in the same row.
+Path abbreviations as in `APPROACH3_RECON.md` (`G`, `RD`, `NAS`, `PAI`, `UP`, `GM` = `gallops-memory/src/gallops/memory/`); `A3` = `{experiment_store}/`. Plain names: encoder, generator, scorer. Every number below is read from a file named in the same row.
 
 **Read first (verified):** `reports/BUILD1_SLICES_CACHE.md` step 4 (what is cached, the exactness method, the timings); `reports/APPROACH3_RECON.md` D4 (read, not acted on: part 2 was dropped). **Starting model:** `NAS/018b/release/drive_jepa_018b_p06.ckpt`, sha256 recomputed at 00:05 = `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` (equals the pin; session `sha256sum`), and again inside every job before loading (`out/s5_cache_<slice>.json: p06_sha_verified_s`); the 495 loaded tensors re-compared with the file after loading, 495 / 495 equal (`agent.loaded_equal`).
 

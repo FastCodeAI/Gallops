@@ -1,5 +1,5 @@
 import pandas as pd, numpy as np, json, os, sys, zipfile, io, time
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; NAS="{runs}/generator_joint_pai"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; NAS="{retrain_store}"
 OUT=os.environ["OUT"]; which=sys.argv[1]; NSAMP=int(sys.argv[2]) if len(sys.argv)>2 else 0
 if which=="train":
     man=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet"); ZR=f"{P}/s0_census/raw/labels/egomotion.offline"; CL=f"{P}/s3_assembly/s1/clips"

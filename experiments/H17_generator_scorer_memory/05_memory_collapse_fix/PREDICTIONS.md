@@ -8,7 +8,7 @@ Written: 2026-11-11 02:43 IST
 
 The pilot (`reports/PILOT_SEED0.md`, flag 2) found the memory collapsed: at the carry arm's chosen checkpoint the 16 slots were 99.96 % alike
 (mean pairwise cosine 0.9996) and the gate mean per slot was 0.006, i.e. the memory barely changed after the first moments. At step 930 of
-that arm (`{runs}/generator_scorer_memory/runs/pilot_seed0/carry/run.json`, check at step 930, pass 0.217): cosine 0.99998, gate mean 0.0167
+that arm (`{experiment_store}/runs/pilot_seed0/carry/run.json`, check at step 930, pass 0.217): cosine 0.99998, gate mean 0.0167
 on every slot, memory norm 18.5.
 
 Build 4 changes two things (Sid's decisions 1 and 2, `src/s6_model.py` version 2; the pilot's checkpoints stay version 1 and load unchanged):
@@ -25,7 +25,7 @@ Everything else is the pilot's trainer as built (reads, losses, windows of 16 mo
 ## The short check
 
 Carry mode only, version 2, seed 0, the first 930 steps of the pilot's seeded pass-1 plan (same batch order as the pilot's carry arm).
-Outputs under `{runs}/generator_scorer_memory/runs/build4_short/`. No held-out slice, no closed loop, no further training.
+Outputs under `{experiment_store}/runs/build4_short/`. No held-out slice, no closed loop, no further training.
 
 Measures at step 930 on the 84 picking clips replayed in order from each clip's first moment, on the in_picking moments after the 4
 warm-up moments of a chain (the pilot's population for slot diversity, 1,705 moments):

@@ -2,7 +2,7 @@
 import json, re, sys, time
 from pathlib import Path
 import numpy as np
-M = Path("{working_folder}"); R = Path("{runs}/generator_scorer_memory/runs/pilot_seed0")
+M = Path("{working_folder}"); R = Path("{experiment_store}/runs/pilot_seed0")
 F = json.load(open(M / "out/pilot_final.json")); recs = {a: json.load(open(R / a / "run.json")) for a in ("carry", "wiped")}
 comp = F["comparison"]; A = F["arms"]; V = {}
 f = lambda x, d=4: "—" if x is None else f"{x:.{d}f}"

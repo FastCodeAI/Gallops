@@ -5,7 +5,7 @@ Trainer = build 3 as built and tested (s6_train.window_step: 2 windows x 16 mome
 memory only through its own summary, grading pool of 10 on the arm's two cores). Rules: up to 2 passes (Sid's lean plan); a check every 930 steps and at
 each pass end; stop after 6 checks without a better choosable pick; chosen = best pick grade among checks passing the safety gates
 (hard-brake picks above 10 m/s = 0, pull-away go rate >= 0.66). Event over-sampling on. Seed 0.
-Outputs under {runs}/generator_scorer_memory/runs/pilot_seed0/<arm>/: ckpt/p<pass>.pt (+ .json: mode flag, start sha, seed, step),
+Outputs under {experiment_store}/runs/pilot_seed0/<arm>/: ckpt/p<pass>.pt (+ .json: mode flag, start sha, seed, step),
 dumps/p<pass>.npz (the check's 2,591 plans / logits / picks) + p<pass>_grades.npy, run.json (every check), status.json, resume.pt
 (weights + optimiser states + sampler position + counters), log.txt (a progress line every 100 steps). Resumable: --resume continues from
 resume.pt at the next step of the same pass plan (seeded, deterministic); it never restarts from step 0 silently (RESUMED line + run.json).

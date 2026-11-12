@@ -2,7 +2,7 @@
 
 Written 2026-11-12, 04:20 IST (file time stamp 04:20:41), **before any probe was run on real data**. At this time: the pooled
 views are extracted from the cache, the sample is counted (`out/ceiling_stats.json`), the probe code has run only on synthetic data
-(`out/ceiling_selftest.json`). No probe output exists (`{runs}/generator_scorer_memory/runs/ceiling/probe/` does not exist).
+(`out/ceiling_selftest.json`). No probe output exists (`{experiment_store}/runs/ceiling/probe/` does not exist).
 
 Code fixed at this point (sha256 prefix): `src/s11_ceiling.py` bf11edb16439, `src/s11_extract.py` 3b4739cf241f,
 `src/s10_probe.py` 80bea0621571 (the link-2 probe, imported).

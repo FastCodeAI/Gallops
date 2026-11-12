@@ -2,7 +2,7 @@
 import json, re, sys
 from pathlib import Path
 import numpy as np
-M = Path("{working_folder}"); R = Path("{runs}/generator_scorer_memory/runs/build4_short")
+M = Path("{working_folder}"); R = Path("{experiment_store}/runs/build4_short")
 J = lambda n: json.load(open(M / "out" / n))
 PA, T1, T2, T3, T4, BEF, SH = J("s6_params_v2.json"), J("s6_t1_v2.json"), J("s6_t2_map_v2.json"), J("s6_t2t3_v2.json"), J("s6_t4_v2.json"), J("build4_before.json"), J("build4_short.json")
 run = json.load(open(R / "run.json")); V = {}

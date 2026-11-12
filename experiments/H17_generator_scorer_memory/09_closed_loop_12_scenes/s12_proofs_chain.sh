@@ -1,7 +1,7 @@
 #!/bin/bash
 # Closed-loop check, part 2: adapter proofs A, B, C in order, each behind the machine gate (5-minute load < 32, available RAM > 40 GB).
 # Stops at the first proof that fails. Log: logs/cl12_proofs_chain.log
-M="{working_folder}"; AS={runs}/paddock_sid/Alpasim
+M="{working_folder}"; AS={paddock_sid}/Alpasim
 exec >> "$M/logs/cl12_proofs_chain.log" 2>&1
 log() { echo "[$(date -Is)] $*"; }
 gate() { while :; do L=$(awk '{print int($2)}' /proc/loadavg); R=$(free -g | awk '/^Mem:/{print $7}'); [ "$L" -lt 32 ] && [ "$R" -gt 40 ] && { log "gate open: load5 $L, RAM $R GB"; return; }; log "gate closed: load5 $L, RAM $R GB"; sleep 120; done; }

@@ -53,7 +53,7 @@ import torch, torch.nn as nn, torch.nn.functional as F
 import pai_common as C
 import pai_model as PM
 
-P06 = Path("{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt")
+P06 = Path("{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt")
 P06_SHA = "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
 N_SLOTS, D, HEADS, FFN = 16, 256, 4, 1024
 GRID_H, GRID_W, POOL_H, POOL_W = 16, 32, 4, 8                 # probe.py:51-52

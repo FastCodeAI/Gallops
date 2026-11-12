@@ -25,7 +25,7 @@ import numpy as np, pandas as pd, torch
 
 torch.set_num_threads(2)
 HERE = Path(__file__).resolve().parent; OUT = HERE.parent / "out"
-RUN = Path("{runs}/generator_scorer_memory/runs/link2"); PDIR = RUN / "probe"
+RUN = Path("{experiment_store}/runs/link2"); PDIR = RUN / "probe"
 WARM, N_OUTER, N_INNER, FOLD_SEED, BOOT, BOOT_SEED, SHUF_SEED = 4, 5, 5, 20261111, 2000, 20261112, 20261113
 LAMS = [10.0 ** e for e in np.arange(-3, 3.01, 0.5)]                 # ridge strengths (kernel diagonal ~ number of penalised blocks)
 LAMS_LOGIT = [10.0 ** e for e in np.arange(-2, 3.01, 1.0)]; R_LOGIT = 600

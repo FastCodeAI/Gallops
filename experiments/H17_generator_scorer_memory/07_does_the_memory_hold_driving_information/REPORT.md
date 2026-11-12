@@ -29,7 +29,7 @@ All numbers below are from `out/link2_results.json` unless another file is named
 | Picking clips | 84 | 2,591 | 1,705 (picking moments only) | 29 | 5 | 3.4 % |
 
 Sources: `out/link2_sample.json` (clip list, selection counts: 1,611 clips used by the 930 steps, 2,403 unused),
-`out/link2_stats.json`, `{runs}/generator_scorer_memory/runs/link2/replay.json`. Starting model sha256 3d566eb2…2b8e66 verified,
+`out/link2_stats.json`, `{experiment_store}/runs/link2/replay.json`. Starting model sha256 3d566eb2…2b8e66 verified,
 495/495 tensors equal (`replay.json`). In the replays the pick differs between carried and wiped on 12.8 % of primary moments
 (build 5), 10.3 % (build 4), 3.9 % (pilot).
 
@@ -158,5 +158,5 @@ the ego history already gives (PH+C vs PH is flat).
 
 - Code: `src/s10_link2.py` (sample, replays), `src/s10_probe.py` (probes), `src/link2_chain1.sh`, `src/link2_chain2.sh`.
 - Out: `out/link2_sample.{json,csv}`, `out/link2_stats.json`, `out/link2_selftest.json`, `out/link2_results.json`, `out/link2_posthoc.json`.
-- Run: `{runs}/generator_scorer_memory/runs/link2/` (features, memories, per-set out-of-fold predictions in `probe/`).
+- Run: `{experiment_store}/runs/link2/` (features, memories, per-set out-of-fold predictions in `probe/`).
 - Logs: `logs/link2_chain.log`, `logs/link2_replay.log`, `logs/link2_stats.log`, `logs/link2_probe.log`, `logs/link2_summary.log`.

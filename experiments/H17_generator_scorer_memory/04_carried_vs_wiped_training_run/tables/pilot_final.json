@@ -6,7 +6,7 @@
     "progress": 1.216,
     "step": 5218,
     "pick_grade": 0.7752012610435486,
-    "ckpt": "{runs}/generator_scorer_memory/runs/pilot_seed0/carry/ckpt/p01.2.pt"
+    "ckpt": "{experiment_store}/runs/pilot_seed0/carry/ckpt/p01.2.pt"
    },
    "stopped": "reached 2 passes",
    "passes_trained": 2.0,
@@ -22,7 +22,7 @@
     "progress": 1.216,
     "step": 5218,
     "pick_grade": 0.7638952136039734,
-    "ckpt": "{runs}/generator_scorer_memory/runs/pilot_seed0/wiped/ckpt/p01.2.pt"
+    "ckpt": "{experiment_store}/runs/pilot_seed0/wiped/ckpt/p01.2.pt"
    },
    "stopped": "reached 2 passes",
    "passes_trained": 2.0,
@@ -35,7 +35,7 @@
   }
  },
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
   "tensors": 495,
   "loaded_equal": "495/495",

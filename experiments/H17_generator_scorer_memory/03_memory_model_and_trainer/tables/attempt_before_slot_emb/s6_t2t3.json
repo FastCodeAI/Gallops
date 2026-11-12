@@ -2,7 +2,7 @@
  "started": "2026-11-09 14:26:41",
  "env_patch": {
   "applied": true,
-  "was": "{runs}/paddock_sid/Alpasim/adapters/drivejepa/src/navsim_v2"
+  "was": "{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2"
  },
  "gpu_before": "81816 MiB, 97887 MiB, 99 %",
  "loadavg": [
@@ -18,7 +18,7 @@
  "nice": 19,
  "seed": 0,
  "agent": {
-  "init_checkpoint": "{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt",
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
   "tensors": 495,
   "loaded_equal": "495/495",

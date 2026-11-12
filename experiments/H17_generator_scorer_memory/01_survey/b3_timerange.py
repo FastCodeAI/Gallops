@@ -1,11 +1,11 @@
 import pandas as pd, numpy as np, json, os, glob, zipfile, yaml, time
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; NAS="{runs}/generator_joint_pai"
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; NAS="{retrain_store}"
 OUT=os.environ["OUT"]; SNAP=glob.glob(f"{P}/hf_home/hub/datasets--nvidia--PhysicalAI-Autonomous-Vehicles/snapshots/*/")[0]
 dc=pd.read_parquet(f"{SNAP}/metadata/data_collection.parquet").reset_index().set_index('clip_id')
 ci=pd.read_parquet(f"{SNAP}/clip_index.parquet").reset_index().set_index('clip_id')
 our=json.load(open(f"{OUT}/our30_usdz.json")); t0=time.time(); test=[]
 for clip, art, ok in our:
-    z=zipfile.ZipFile(f"{runs}/alpasim/nre-artifacts/all-usdzs/{art}.usdz"); m=yaml.safe_load(z.read('metadata.yaml'))
+    z=zipfile.ZipFile(f"{alpasim_store}/nre-artifacts/all-usdzs/{art}.usdz"); m=yaml.safe_load(z.read('metadata.yaml'))
     di=json.loads(z.read('data_info.json')) if 'data_info.json' in z.namelist() else {}
     test.append(dict(clip=clip, start=m['time_range']['start'], end=m['time_range']['end'], scene_id=m.get('scene_id'), in_raw=clip in ci.index, country=dc.country.get(clip), month=dc.month.get(clip), hour=dc.hour_of_day.get(clip)))
 test=pd.DataFrame(test); print(f"30 usdz metadata read {time.time()-t0:.1f}s"); print(test.to_string())

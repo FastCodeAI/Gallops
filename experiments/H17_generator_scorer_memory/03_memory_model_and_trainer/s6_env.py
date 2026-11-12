@@ -1,12 +1,12 @@
 """Build 3 environment shim (2026-11-09). A root-disk relief move replaced Paddock/paddock-sid/Alpasim/analysis_3.0 with a symlink to
-{runs}/paddock_sid_moved/Alpasim/analysis_3.0 (_move_log_20261109.txt). s35_common.py (read-only, in that tree) locates the vendored
+{paddock_sid_moved}/Alpasim/analysis_3.0 (_move_log_20261109.txt). s35_common.py (read-only, in that tree) locates the vendored
 navsim through its own resolved path (s35_common.py:6-11: RETRAIN.parents[1] / "adapters/drivejepa/src/navsim_v2"), which now points at
 a NAS folder that does not exist (adapters/ stayed local). Nothing under the earlier lanes is edited: this module re-points the module
 constant at the local tree before s35_common.setup_env() runs, in this process (patch) and in every spawned grading worker (init_worker
 wraps pai_model_b._init_worker, which calls s35_common.setup_env() in the child). Import this module FIRST."""
 import pathlib, sys
-TRAIN_PATCH_S35 = pathlib.Path("{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s3_5_smoke/train_patch")
-LOCAL_NAVSIM = pathlib.Path("{runs}/paddock_sid/Alpasim/adapters/drivejepa/src/navsim_v2")
+TRAIN_PATCH_S35 = pathlib.Path("{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s3_5_smoke/train_patch")
+LOCAL_NAVSIM = pathlib.Path("{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2")
 PATCHED = {"applied": False, "was": None}
 
 

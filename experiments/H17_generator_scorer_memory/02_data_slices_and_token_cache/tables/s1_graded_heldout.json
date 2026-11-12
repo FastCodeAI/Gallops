@@ -715,9 +715,9 @@
   }
  ],
  "outputs": {
-  "manifest": "{runs}/generator_scorer_memory/slices/manifest_graded_heldout.parquet",
+  "manifest": "{experiment_store}/slices/manifest_graded_heldout.parquet",
   "manifest_sha256": "006ec7c81396683f0017c63353b13aa7867f4a21fa41d53048dc52d08c9b36d3",
-  "clips": "{runs}/generator_scorer_memory/slices/graded_heldout_clips.csv",
+  "clips": "{experiment_store}/slices/graded_heldout_clips.csv",
   "clips_sha256": "62aa2bed70b472993fdd5f45a456158d2ebe8f9d20b20dde9b3efc3a78c608e8"
  },
  "secs": 362.5780291557312

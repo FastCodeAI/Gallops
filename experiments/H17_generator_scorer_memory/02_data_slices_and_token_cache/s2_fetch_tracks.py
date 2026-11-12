@@ -1,9 +1,9 @@
 """Build step 2c: obstacle.offline members (agent tracks) for the fresh raw held-out's 300 clips, with the census range-reader
 (s0_census/hfrange.py open_zip / fetch_member, r3_rawio.url) exactly as b4b_fetch.py:29-44 / r3_raw_actors.py:25-38.
-Writes only under {runs}/generator_scorer_memory/raw_heldout/raw/labels/obstacle.offline.members/chunk_NNNN/ + download_manifest_tracks.csv."""
+Writes only under {experiment_store}/raw_heldout/raw/labels/obstacle.offline.members/chunk_NNNN/ + download_manifest_tracks.csv."""
 import os, sys, csv, time, hashlib, threading, concurrent.futures as cf, pandas as pd
-sys.path.insert(0, "{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data/s0_census"); import hfrange, r3_rawio as rio
-DST="{runs}/generator_scorer_memory/raw_heldout"; MAN=f"{DST}/download_manifest_tracks.csv"; LOCK=threading.Lock(); PER_CLIP_KB=561
+sys.path.insert(0, "{paddock_sid}/Alpasim/analysis_3.0/Retrain-data/s0_census"); import hfrange, r3_rawio as rio
+DST="{experiment_store}/raw_heldout"; MAN=f"{DST}/download_manifest_tracks.csv"; LOCK=threading.Lock(); PER_CLIP_KB=561
 df=pd.read_csv(f"{DST}/heldout_clips.csv"); print(f"clips {len(df)} chunks {df.chunk.nunique()}; planned {len(df)*PER_CLIP_KB/1e6:.2f} GB (census per-clip figure)")
 def dst(u,ch): return f"{DST}/raw/labels/obstacle.offline.members/chunk_{ch:04d}/{u}.obstacle.offline.parquet"
 def man_add(u, member, n, p, sha):

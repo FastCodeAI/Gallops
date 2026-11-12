@@ -8,8 +8,8 @@ Does build 5's model drive differently, in closed loop, when its memory is carri
 
 ## Model (both arms, identical weights)
 
-- Encoder: 0.1.8b pass 0.6, merged, run live on the camera frames. File `{runs}/generator_joint_pai/018b/release/drive_jepa_018b_p06.ckpt`, sha256 `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` (re-hashed today).
-- Generator, scorer, memory blocks: build 5, step 930, model version 3. File `{runs}/generator_scorer_memory/runs/build5_short/ckpt/step0930.pt`, sha256 `84359783ef502e1ccc3a2dcff013bf45d215f9fb11e046cc8110c64581434e21` (hashed today). The training-only read-out is not loaded.
+- Encoder: 0.1.8b pass 0.6, merged, run live on the camera frames. File `{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt`, sha256 `3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66` (re-hashed today).
+- Generator, scorer, memory blocks: build 5, step 930, model version 3. File `{experiment_store}/runs/build5_short/ckpt/step0930.pt`, sha256 `84359783ef502e1ccc3a2dcff013bf45d215f9fb11e046cc8110c64581434e21` (hashed today). The training-only read-out is not loaded.
 - **Offline, this checkpoint is below its starting point:** pick grade 0.7313 with the memory carried and 0.7355 with the memory reset every moment, against 0.7685 for 0.1.8b pass 0.6 (`reports/BUILD5_RECALL_LESSON.md` sections 3.1 and 3.3; 0.7685 from `LORA Refiner/Generator-Joint-PAI-alpasim/s9_018b_train/REPORT.md` line 4). This is stated beside every result.
 - Adapter: `Paddock/paddock-sid/Alpasim/adapters/drivejepamemory/`, a copy of the 0.1.8b-p06 native adapter with a memory switch. Frame selection, ego row, zeroed acceleration, batch fix, bonnet mask and the comfort re-score (on) are the 0.1.8b-p06 adapter's.
 
@@ -19,12 +19,12 @@ Does build 5's model drive differently, in closed loop, when its memory is carri
 |---|---|---|
 | carry | memory carried per session; reset to the start state at session start, session close, and when the previous call is not 0.45–0.55 s back in simulated time | new runs |
 | reset | same weights, memory read from the start state at every call | new runs |
-| 0.1.8b (reference) | pass 0.6, 12-scene mean 0.5919 | existing runs `{runs}/generator_joint_pai/018b/closed_loop/runs/drivejepa_018bp06_*` if the image check passes; otherwise rerun |
+| 0.1.8b (reference) | pass 0.6, 12-scene mean 0.5919 | existing runs `{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_*` if the image check passes; otherwise rerun |
 | 0.1.7 (reference) | 12-scene mean 0.6742 | existing runs, not rerun |
 
 - Scenes: the 12 diagnosis scenes of `LORA Refiner/Generator-Joint-PAI-alpasim/s10_018b_closed_loop/tables/scenes_12.txt`, unchanged.
 - One rollout per scene and arm, native harness, the same wizard command, scene files, 20 Hz referee settings and run-script gates as 0.1.8b's 12 runs (the run script is a copy of 0.1.8b's with names, output folder, provenance checks and a machine gate changed).
-- The mode comes from a sidecar file beside the checkpoint (`{runs}/generator_scorer_memory/runs/cl12/model/{carry,reset}/memory_mode.json`); the two folders differ in that one field.
+- The mode comes from a sidecar file beside the checkpoint (`{experiment_store}/runs/cl12/model/{carry,reset}/memory_mode.json`); the two folders differ in that one field.
 - A completed rollout is never rerun. A scene whose run produces no rollout (machine, docker or wizard failure) is started again and the first attempt is listed in the report.
 
 ## Measures
@@ -54,7 +54,7 @@ Twelve scenes with one rollout each detect only large effects. Most scenes score
 On 2026-11-12 the machine holds no simulator image (`docker images` lists none), as on 2026-11-03. The run script rebuilds it on the first run. Check, same rule as 2026-10-27 and 2026-11-03, fixed before looking: 0.1.7 is re-run on 04749bb9, acd22430, d2715023 and b44a4a44 on the rebuilt image and must equal its original runs, scores to 3 decimals and per-tick metrics bit-identical.
 
 - Pass: the existing 0.1.8b and 0.1.7 runs are used as references.
-- Fail: 0.1.8b pass 0.6 is rerun on the 12 scenes on the new image (its own adapter, a copy of its run script writing under `{runs}/generator_scorer_memory/runs/cl12/`), the 0.1.7 figure is flagged "different simulator build", and carry vs reset is still read by the rule above since both arms run on the same image.
+- Fail: 0.1.8b pass 0.6 is rerun on the 12 scenes on the new image (its own adapter, a copy of its run script writing under `{experiment_store}/runs/cl12/`), the 0.1.7 figure is flagged "different simulator build", and carry vs reset is still read by the rule above since both arms run on the same image.
 
 ## Before any scene
 

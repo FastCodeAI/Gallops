@@ -9,7 +9,7 @@ wait_gate() { while ! g=$(gate); do echo "gate closed ($g) $(date)" >> $CH; slee
 gpu() { nvidia-smi --query-gpu=memory.used,utilization.gpu --format=csv,noheader; }
 nas() { python3 -I -c "
 import time,glob,random
-fs=sorted(glob.glob('{runs}/generator_scorer_memory/cache/training/*.pt')); random.seed(int(time.time())); r=[]
+fs=sorted(glob.glob('{experiment_store}/cache/training/*.pt')); random.seed(int(time.time())); r=[]
 for f in random.sample(fs,3):
     t=time.time(); n=len(open(f,'rb').read()); r.append(n/2**20/(time.time()-t))
 print('NAS MB/s', [round(x,1) for x in r])"; }

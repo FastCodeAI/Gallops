@@ -166,5 +166,5 @@ max / min 25.7 ≥ 3 holds; (c) 0.042 < 0.05 **fails**; (d) no NaN / inf holds; 
 - `src/s6_model.py` (version 2 behind `version`; `StartState`, `Update(version)`, `init_memory`, checkpoint `version` key), `src/s6_train.py` (two extra measures in the step record), `src/s6_tests.py` (`MEMORY_VERSION`), `src/s8_short.py`, `src/build4_chain.sh`, `src/s8_fill_report.py`
 - `out/s6_params_v2.json`, `out/s6_t1_v2.json`, `out/s6_t2_map_v2.json`, `out/s6_t2t3_v2.json`, `out/s6_t4_v2.json`, `out/build4_before.json`, `out/build4_short.json`
 - `logs/build4_chain.log`, `logs/build4_tests.log`, `logs/build4_before.log`, `logs/build4_short.log`
-- `{runs}/generator_scorer_memory/runs/build4_short/{run.json,status.json,log.txt,resume.pt,ckpt/step0310.pt,step0620.pt,step0930.pt (+.json),dumps/step0930.npz,step0930_grades.npy,step0930_wiped.npz,step0930_wiped_grades.npy}`
+- `{experiment_store}/runs/build4_short/{run.json,status.json,log.txt,resume.pt,ckpt/step0310.pt,step0620.pt,step0930.pt (+.json),dumps/step0930.npz,step0930_grades.npy,step0930_wiped.npz,step0930_wiped_grades.npy}`
 - `reports/BUILD4_PREREG.md`

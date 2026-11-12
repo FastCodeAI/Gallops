@@ -43,7 +43,7 @@ Weight 2.0 was re-read against these ratios and left unchanged, as instructed. S
 
 ## 3. The short check
 
-Carry, version 3, seed 0, first 930 steps of the same pass plan, starting model 0.1.8b pass 0.6 (sha256 verified in every job, 495/495 tensors). Files: `{runs}/generator_scorer_memory/runs/build5_short/` (`run.json`, `log.txt`, `ckpt/step0310|0620|0930.pt`, `dumps/`), summary `out/build5_short.json`. Mean step 3.77 s; machine shared throughout.
+Carry, version 3, seed 0, first 930 steps of the same pass plan, starting model 0.1.8b pass 0.6 (sha256 verified in every job, 495/495 tensors). Files: `{experiment_store}/runs/build5_short/` (`run.json`, `log.txt`, `ckpt/step0310|0620|0930.pt`, `dumps/`), summary `out/build5_short.json`. Mean step 3.77 s; machine shared throughout.
 
 ### 3.1 Rule at step 930 (84 picking clips, 1,705 moments after warm-up) with the "before" columns
 

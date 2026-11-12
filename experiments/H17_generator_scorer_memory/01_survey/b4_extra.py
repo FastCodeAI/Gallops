@@ -1,5 +1,5 @@
 import pandas as pd, numpy as np, pyarrow.parquet as pq, os, json
-RD="{runs}/paddock_sid/Alpasim/analysis_3.0/Retrain-data"; P="{runs}/physicalai"; OUT=os.environ["OUT"]
+RD="{paddock_sid}/Alpasim/analysis_3.0/Retrain-data"; P="{dataset_store}"; OUT=os.environ["OUT"]
 tr=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet").sort_values(['clip_uuid','anchor_t'])
 # hard braking from manifest speeds (all 4,015 clips): decel between consecutive anchors 0.5 s apart
 tr['dv']=tr.groupby('clip_uuid').speed.diff(); tr['dt']=tr.groupby('clip_uuid').anchor_t.diff(); ok=(tr.dt.round(2)==0.5)

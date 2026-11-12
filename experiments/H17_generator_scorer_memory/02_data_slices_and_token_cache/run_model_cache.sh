@@ -1,7 +1,7 @@
 #!/bin/bash
 # run_model.sh without the 2-core pin: the full-cache job's 8 spawned loader workers may use all cores (Sid's one-off exception for
 # this job only); nice 19 is kept. Same interpreter, overlay and PYTHONPATH as run_model.sh.
-E={runs}/alpasim_bulk/conda-envs
+E={alpasim_bulk}/conda-envs
 G="{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim"
 ENC="{working_notes}/LORA Encoder/Encoder-LoRA-KIT"
 HERE="$(cd "$(dirname "$0")" && pwd)"

@@ -1,8 +1,8 @@
 # Drive-JEPA memory, approach 3: build step 3, the memory model and the in-order trainer
 
-shakaal, 2026-11-09 (22:03–22:18 IST). GPU used only for the tests below (step-0 replays, routing, 2 × 50 smoke steps). No pilot run, no checkpoint choice, no closed loop, no docker, no pushes. Writes only in this memory folder (`src/`, `out/`, `logs/`) and `{runs}/generator_scorer_memory/runs/build3_tests/` (the step-0 dump). Both held-out slices were not opened.
+shakaal, 2026-11-09 (22:03–22:18 IST). GPU used only for the tests below (step-0 replays, routing, 2 × 50 smoke steps). No pilot run, no checkpoint choice, no closed loop, no docker, no pushes. Writes only in this memory folder (`src/`, `out/`, `logs/`) and `{experiment_store}/runs/build3_tests/` (the step-0 dump). Both held-out slices were not opened.
 
-Abbreviations as in `APPROACH3_RECON.md` (`G`, `RD`, `NAS`, `PAI`, `UP`, `GM`), `A3` = `{runs}/generator_scorer_memory/`, `AG` = `RD/s10_retrain/train_patch/drive_jepa_agent_s10.py`. Plain names: encoder, generator, scorer, rating head, memory. Every number is read from a file named in the same row.
+Abbreviations as in `APPROACH3_RECON.md` (`G`, `RD`, `NAS`, `PAI`, `UP`, `GM`), `A3` = `{experiment_store}/`, `AG` = `RD/s10_retrain/train_patch/drive_jepa_agent_s10.py`. Plain names: encoder, generator, scorer, rating head, memory. Every number is read from a file named in the same row.
 
 **Read first (verified):** `APPROACH3_RECON.md` C1–C5; `BUILD1_SLICES_CACHE.md`; `BUILD2_CACHE.md` (cache layout). Reused by import, never edited: `G/s1_build/src/pai_model.py`, `pai_data.py`, `G/s8_018b_build/src/pai_model_b.py`, `G/s9_018b_train/src/pai_model_c.py`, `train_018b.py`, `G/s2_train/src/pai_train.py`. **Starting model:** `NAS/018b/release/drive_jepa_018b_p06.ckpt`, sha256 `3d566eb2…8e66` verified inside every test before loading (`out/s6_*.json: agent.sha256`); 495 / 495 tensors re-compared after the strict load (`s6_model.load_agent`, = `s4_cache_sample.py:30-38`).
 
