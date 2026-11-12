@@ -1153,6 +1153,17 @@ args = ["anchor", "--replay", "{out}/part-b/b0/navtest-R", "--live", "{out}/part
         "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/anchor"]
 after = ["part-b-0-score-R", "part-b-0-live-R"]
 
+# B0-G9 as amended (D26, 12 Nov): the as-written check above failed on EP alone (identical discrete columns,
+# EP within 1.5e-6). Its record stays; the amended check writes beside it, and B-1's navtest stage reads this one.
+
+[[stage]]
+name = "part-b-0-anchor-d26"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["anchor", "--replay", "{out}/part-b/b0/navtest-R", "--live", "{out}/part-b/b0/navtest-R-live",
+        "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/part-b/b0/anchor-d26"]
+after = ["part-b-0-score-R", "part-b-0-live-R"]
+
 # Part B's data preflight (one GPU, minutes): each split's passes held to the code and the live model before
 # anything reads them (B0-G5's live check; the labels, the lists, the PDM labels re-scored on 5 rows).
 
@@ -1305,8 +1316,8 @@ name = "part-b-1-navtest"
 python = "drivejepa"
 module = "drivejepa_perception.veto"
 args = ["navtest", "--root", "{out}", "--grid", "{out}/part-b/b1/grid-fresh", "--verified", "{out}/part-b/b0/navtest-cache-verify",
-        "--anchor", "{out}/part-b/b0/anchor", "--r", "{out}/part-b/b0/navtest-R", "--out", "{out}/part-b/b1/navtest"]
-after = ["part-b-1-freeze", "part-b-0-anchor"]
+        "--anchor", "{out}/part-b/b0/anchor-d26", "--r", "{out}/part-b/b0/navtest-R", "--out", "{out}/part-b/b1/navtest"]
+after = ["part-b-1-freeze", "part-b-0-anchor-d26"]
 
 [[stage]]
 name = "part-b-1-analysis-fresh"

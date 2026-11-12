@@ -183,6 +183,13 @@ optimism rule below calls for cross-fitting. These are its gates, and the rule t
 | B0-G8 | **the anchor:** the release's picks, replayed through the official scorer, give EPDMS with the human filter 87.78 ± 0.02 and navsim's CSV score 84.49 ± 0.02 | stop. Nothing on navtest is compared; navsim at `548bb82` is compared with this site's `e21f474` |
 | B0-G9 | the live release through the same scorer: complete; its pick equals the token pass's on ≥ 99.9% of tokens; where its plan and its successor's plan equal the replay's within 1 mm, every score column is equal on ≥ 99.9% of tokens; its EPDMS is within 0.02 of the replay's | stop, as for B0-G8 |
 | B0-G10 | R̃ − R: ≥ 99% of picks equal, and \|ΔEPDMS\| ≤ 0.05 points | B-2 and later wait. B-1 does not read R̃ |
+
+**B0-G9 amended on 12 Nov 2026 (D26), after it failed as written.** "Every score column equal" held on 52.2% of
+tokens, not 99.9%: every discrete column (NC, DAC, DDC, TLC, TTC, LK, HC, EC) was identical on every token, and only
+EP, which is continuous in the plan, differed, by at most 1.5e-6, because the live plans differ from the token
+pass's by up to 5e-5 m. The owner amended the column test, knowing the result: **the discrete columns equal on
+99.9% of the tokens whose plans agree, and EP within 1e-5**. The picks and EPDMS criteria are unchanged. The
+as-written result stays recorded beside the amended one.
 | B0-G11 | if cross-fitting runs: each fold's side-car reads a select F1, at its kept epoch, within 0.02 of seed 0's recorded value | stop before any fold's agents are used |
 
 ### The train-row optimism rule (decision (e))

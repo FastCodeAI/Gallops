@@ -210,6 +210,11 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     0.20 points; the vetoes leave NC and TTC failures where they were and cost progress.
   - By the pre-registered rule the least intrusive settings are frozen: B-1-2 at 0.5 m within 1 s, B-1-3 at
     0.5 m within 1 s and confidence 0.7 (`recipes/drivejepa_perception/part_b1_frozen.json`).
+- **12 Nov · B0-G9 amended (D26).**
+  - **Asked and answered:** the live-release gate failed as written on EP alone (every discrete column identical,
+    EP within 1.5e-6, EPDMS within 6e-8). The owner amended it, knowing the result: discrete columns equal on
+    99.9%, EP within 1e-5. The as-written record stays beside the amended one; PREDICTIONS.md carries the
+    amendment, dated. B-1 then reads navtest once.
 
 <a id="open"></a>
 
@@ -241,7 +246,7 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D25 for this work |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D26 for this work |
 
 ## How this set is kept
 

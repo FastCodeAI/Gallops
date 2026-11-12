@@ -166,9 +166,13 @@ def test_dumps_are_read_with_their_repeats(tmp_path):
 def test_the_live_comparison_reads_only_tokens_whose_plans_agree():
     plan = np.zeros((8, 3))
     moved = plan + np.array([0.0, 0.01, 0.0])  # 1 cm: not the same plan
-    replay = {t: {"epdms_hf": 1.0, "csv": 1.0, "NC": 1.0, "EC": float("nan")} for t in "abc"}
-    live = {t: dict(v) for t, v in replay.items()}
+    base = {"epdms_hf": 1.0, "csv": 1.0, **{k: 1.0 for k in navtest.SHORT}, "EC": float("nan")}
+    replay = {t: dict(base) for t in "abc"}
+    live = {t: dict(base) for t in "abc"}
     live["c"]["epdms_hf"], live["c"]["NC"] = 0.0, 0.0  # c differs, but its plan differs too
+    live["b"]["EP"] = (
+        1.0 - 2e-6
+    )  # EP, continuous in the plan, a little off: equal as amended (D26), not as written
     replay_plans = {"a": plan, "b": plan, "c": plan}
     live_plans = {
         "token": ["a", "b", "c"],
@@ -177,7 +181,9 @@ def test_the_live_comparison_reads_only_tokens_whose_plans_agree():
     }
     got = navtest.compare_live(replay, live, replay_plans, live_plans, {"a": 3, "b": 3, "c": 3}, {"a": "b"})
     assert got["picks_equal"] == pytest.approx(2 / 3)
-    assert got["comparable"] == 2 and got["columns_equal"] == 1.0  # a (and its successor b) and b
+    assert got["comparable"] == 2  # a (with its successor b) and b
+    assert got["columns_equal"] == 0.5 and got["discrete_columns_equal"] == 1.0
+    assert got["ep_max_gap"] == pytest.approx(2e-6) and got["ep_max_gap"] <= navtest.LIVE_EP
     assert got["epdms_gap"] == pytest.approx(100 / 3)
 
 

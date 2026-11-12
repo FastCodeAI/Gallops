@@ -563,6 +563,11 @@ ANCHOR = {"epdms_human_filter": 87.78, "csv_score": 84.49}
 ANCHOR_TOLERANCE = 0.02
 #: B0-G9: the live release against its replayed picks.
 LIVE_PICKS_EQUAL, LIVE_COLUMNS_EQUAL, LIVE_EPDMS = 0.999, 0.999, 0.02
+#: B0-G9 as amended on 12 Nov (D26), after the as-written check failed on EP alone: the discrete columns
+#: must be equal, and EP, which is continuous in the plan, within LIVE_EP (the live plans differ from the
+#: token pass's by up to 5e-5 m, batch 1 against batch 16).
+DISCRETE = ("NC", "DAC", "DDC", "TLC", "TTC", "LK", "HC", "EC")
+LIVE_EP = 1e-5
 #: A token's EC is scored against its successor: the next frame of its log, under 0.55 s later.
 SUCCESSOR_US = 550_000
 
@@ -812,6 +817,11 @@ def compare_live(
     comparable = [t for t in tokens if same_plan(t) and (t not in after or same_plan(after[t]))]
     columns = [k for k in replay[tokens[0]] if k != "epdms_hf"]
     equal = [t for t in comparable if all(_same(replay[t][k], live[t][k]) for k in columns)]
+    discrete = [t for t in comparable if all(_same(replay[t][k], live[t][k]) for k in DISCRETE)]
+    ep_gap = max(
+        (abs(replay[t]["EP"] - live[t]["EP"]) for t in comparable if not math.isnan(replay[t]["EP"])),
+        default=0.0,
+    )
     mean_r = 100 * mean([replay[t]["epdms_hf"] for t in tokens])
     mean_l = 100 * mean([live[t]["epdms_hf"] for t in tokens])
     return {
@@ -820,6 +830,8 @@ def compare_live(
         "comparable": len(comparable),
         "columns_equal": len(equal) / max(1, len(comparable)),
         "unequal_sample": [t for t in comparable if t not in set(equal)][:20],
+        "discrete_columns_equal": len(discrete) / max(1, len(comparable)),
+        "ep_max_gap": ep_gap,
         "epdms_replay": mean_r,
         "epdms_live": mean_l,
         "epdms_gap": abs(mean_r - mean_l),
@@ -853,14 +865,25 @@ def anchor(replay_dir: Path, live_dir: Path, tokens_dir: Path, labels_dir: Path,
     g9 = compare_live(
         replay, live, load_plans(replay_m["plans"]), live_plans, release_pick, successors(labels_dir)
     )
+    complete = (
+        g9["tokens"] == len(live) and g9["picks_equal"] >= LIVE_PICKS_EQUAL and g9["epdms_gap"] <= LIVE_EPDMS
+    )
     gates = {
         "B0-G8": all(v["within"] for v in a1.values()),
-        "B0-G9": g9["tokens"] == len(live)
-        and g9["picks_equal"] >= LIVE_PICKS_EQUAL
-        and g9["columns_equal"] >= LIVE_COLUMNS_EQUAL
-        and g9["epdms_gap"] <= LIVE_EPDMS,
+        # D26: the as-written column test is recorded beside the amended one, never in its place.
+        "B0-G9": complete
+        and g9["discrete_columns_equal"] >= LIVE_COLUMNS_EQUAL
+        and g9["ep_max_gap"] <= LIVE_EP,
     }
-    record = {"anchor": a1, "live": g9, "gates": gates, "tolerance": ANCHOR_TOLERANCE}
+    as_written = complete and g9["columns_equal"] >= LIVE_COLUMNS_EQUAL
+    record = {
+        "anchor": a1,
+        "live": g9,
+        "gates": gates,
+        "B0-G9_as_written": as_written,
+        "B0-G9_amended": "D26, 12 Nov: discrete columns equal on 99.9%, EP within 1e-5",
+        "tolerance": ANCHOR_TOLERANCE,
+    }
     out.mkdir(parents=True)
     (out / "anchor.json").write_text(json.dumps(record, indent=1))
     print(json.dumps(record, indent=1))
