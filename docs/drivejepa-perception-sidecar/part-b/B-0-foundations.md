@@ -228,6 +228,34 @@ and on the R-clean split.
   - Also: whether the side-car found each scene's causal agents (`importance.py`).
 - **BEV drawings:** a seeded draw of the scenes whose pick changed, and the largest gains and losses.
 
+## What has run (11 Nov)
+
+Every pass is a stage `part-b-0-*` of `recipes/drivejepa_perception.toml`, writing under
+`{runs}/drivejepa_perception/`. Gates are PREDICTIONS.md's (Part B · B-0), committed before the first pass.
+
+| Gate | What | Result |
+|---|---|---|
+| B0-G1 | the lists | **holds.** `navtest.json`: 136 logs, 12,146 tokens, pinned to the vendor's filter (sha256 `61284edf…`). `fresh.json`: 118 candidate logs, 58 routed, 11,340 windows (Las Vegas 9,895, Pittsburgh 975, Boston 470): B-0's counts exactly, scripted for the first time (*counted*) |
+| B0-G2 | labels | **holds.** navtest 12,146 rows, R-clean 11,340; 0 problems on 60 windows each against NAVSIM's code |
+| B0-G3 | Paddock's navtest cache | **holds.** One entry per navtest token; its builder's filter equals this site's `navtest.yaml`; 32 seeded tokens cached again here score bit-equal against it (vendored scorer, eight plans each; official scorer, the human's plan) |
+| B0-G5 | token passes | **holds on navtest; R-clean's live check waits for its PDM labels.** Batched equals batch 1 on 32 rows (proposals within 4e-5 m, every pick equal); the pick is the argmax of the saved scores on every row; ViT-out equals its taps exactly; a live forward of 6 navtest rows equals the cache (tokens to fp16 rounding, picks 6 of 6, scores within 3e-6) |
+| B0-G6 | PDM labels | **holds on navtest:** 12,146 rows, 50 re-scored exactly. R-clean's wait for its cache |
+| B0-G7 | the side-car's agents | **holds:** each seed, decoded by the pass's own code, gives exactly the select F1 it recorded (0.7195, 0.7182, 0.7132); select, navtest and R-clean decoded; no report row |
+| B0-G8 | the anchor | **the replay reproduces it:** EPDMS (human filter) **87.783**, CSV **84.495**, against H04's 87.78 and 84.49 (*measured*, 12,146 tokens, every replayed plan equal to the store). NC 0.985, TTC 0.979, DAC 0.986, EC 0.479, as H04 recorded. The gate's formal check waits for the live release |
+| B0-G10 | R̃ − R | **holds:** picks equal on 99.975% of scenes; ΔEPDMS +0.0014 ± 0.0011 points (*measured*). R̃'s proposals are within 5.7 mm of the token pass's |
+
+**Train-row optimism (B-0-1; *measured*).** On a seeded draw of 51 train logs (6,615 rows), each seed reads
+F1 0.800–0.805 and causal recall 0.945–0.946; on select, 0.713–0.720 and 0.897–0.903. The mean gaps, 0.085 and
+0.046, exceed 0.03, so by D24 five cross-fit side-cars train now, one per fold of the train logs, before B-1.
+
+**Headroom on navtest (B-0-3; *measured*, from the release's labels only).**
+- The release's pick fails NC on 186 scenes and TTC on 254: NC or TTC on 275 (2.3%).
+- 271 of the 275 have a proposal among the 32 that passes both: the room for a better pick.
+- Behind 156 of those 271 is a labelled agent in CAM_F0's view within 50 m (58%; B-0 argued for a half to two
+  thirds); 94 are out of view or range, 14 not among the labels, 7 static objects.
+- The side-car's seeds found 127, 133 and 135 of the 156.
+- Best-of-32 beats the pick by 7.4 points of the vendored final (6.5 under the human filter), over all terms.
+
 ## The protocol every experiment follows
 
 1. **One question per experiment, and arms that isolate it.**

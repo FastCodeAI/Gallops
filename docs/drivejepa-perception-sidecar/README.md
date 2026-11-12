@@ -70,7 +70,7 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 | ID | The question | What changes | What trains | Status | Plan | Needs |
 |---|---|---|---|---|---|---|
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | nothing, unless cross-fitting is needed | **running** (D24) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
-| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | approved (D24); waits for B-0 | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
+| B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | built and pre-registered; waits for B-0 | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
 | B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
 | B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
@@ -175,7 +175,22 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     - The side-car names only vehicles, pedestrians and cyclists. A collision with a static object is room for
       B-1-1 but not for B-1-2 or B-1-3, and B-0-3 counts it apart.
   - **Pre-registered:** B-0's gates and its cross-fit rule, in PREDICTIONS.md, before any B-0 pass. B-1's section
-    is written after B-0's review, before B-1 reads R-clean.
+    is written before B-1 reads R-clean.
+- **11 Nov · B-0 runs; the anchor reproduces here.** Details, gate by gate, in
+  [B-0's "What has run"](part-b/B-0-foundations.md#what-has-run-11-nov).
+  - **Done:** the two lists (B-0's counts, scripted for the first time), labels, token and ViT passes, the
+    side-car's agents for both splits; Paddock's navtest cache verified; navtest's PDM labels.
+  - **The anchor:** the release's own picks, replayed through the official scorer here, give EPDMS (human filter)
+    87.783 and CSV 84.495, against H04's 87.78 and 84.49. R̃, the cached path the trained arms start from,
+    differs from R by +0.0014 ± 0.0011 points.
+  - **Headroom (B-0-3):** of 275 navtest scenes whose pick fails NC or TTC, 271 have a safe proposal among the
+    32; 156 of those name an agent in CAM_F0's view within 50 m, and the side-car found 127–135 of them.
+  - **Cross-fitting runs:** the side-car reads 0.085 better in F1 on rows it trained on (limit 0.03), so five
+    cross-fit side-cars train now (D24), before B-1.
+  - **B-1 is built and pre-registered:** `veto.py`, a smoke run on select (chooses nothing), and its PREDICTIONS.md
+    section, committed before any R-clean read.
+  - **Waiting:** R-clean's metric cache, PDM labels and preflight; the live release (B0-G9); the cross-fit
+    side-cars; B-0-4.
 
 <a id="open"></a>
 
