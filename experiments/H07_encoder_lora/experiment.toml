@@ -1,5 +1,5 @@
 # H07 -- a LoRA on the encoder closes the domain gap (Siddesh). Priority 7 on the 21 Oct list.
-# exp1 is the encoder LoRA the item names; exp2a, exp2b and exp3 are adjacent runs on the same branch,
+# exp1 is the encoder LoRA the item names; exp2a, exp2b and exp3 are adjacent runs in this folder,
 # mapped here by inference (they train the generator and scorer as well).
 # Sources: README.md and the step folders here (step reports, 11_regression_gate/
 # RESULTS.md and results.json); sha256s from POINTERS.md. Numbers are
