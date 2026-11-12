@@ -938,3 +938,24 @@ module = "drivejepa_perception.tokens"
 args = ["--vit-out-all", "--labels", "{out}/labels-fresh-v1", "--tokens", "{out}/tokens-fresh-v1",
         "--out", "{out}/tokens-vit-fresh-v1", "--workers", "24", "--batch", "16"]
 after = ["part-b-0-tokens-fresh"]
+
+# The metric caches (CPU). navtest's is Paddock's (D24, B-0 (c)), held to this site first: one entry
+# per navtest token, the builder's filter equal to navtest.yaml, and 32 seeded tokens cached again
+# here scoring bit-equal against both caches (B0-G3). R-clean's is built by navsim's own
+# run_metric_caching.py on a filter generated from fresh.json, and refused unless it holds exactly the
+# list's windows (B0-G4).
+
+[[stage]]
+name = "part-b-0-verify-navtest-cache"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["verify-cache", "--cache", "{data.navsim_navtest_metric_cache}", "--labels", "{out}/labels-navtest-v1",
+        "--out", "{out}/part-b/b0/navtest-cache-verify", "--rebuild", "32"]
+after = ["part-b-0-labels-navtest"]
+
+[[stage]]
+name = "part-b-0-fresh-cache"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["build-cache", "--labels", "{out}/labels-fresh-v1", "--out", "{out}/metric-cache-fresh-v2", "--workers", "32"]
+after = ["part-b-0-labels-fresh"]

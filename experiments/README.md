@@ -83,6 +83,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.geometry` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.importance` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.navsim_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
+| `gallops.drivejepa_perception.navtest` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.nuscenes_data` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.ood` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.pdm_labels` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
