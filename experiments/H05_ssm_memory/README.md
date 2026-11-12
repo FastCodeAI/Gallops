@@ -52,7 +52,8 @@ Training lives in gallops; paddock only runs the checkpoint. Momentum-aware sele
 
 ## What step 0 did (3–5 Nov 2026)
 
-These runs are recorded as H05.r1 and H05.r2 in [experiment.toml](experiment.toml). All numbers are
+These runs are recorded as H05.r1 and H05.r2 in [experiment.toml](experiment.toml); the files they wrote
+are off the repository and listed, with sizes and hashes, in [POINTERS.md](POINTERS.md). All numbers are
 open loop, on the 176 vendor val logs that have 4 s of history, for the events slice (moments where the
 human's speed changes by more than 1 m/s within 2 s), with paired, log-clustered 95% intervals.
 
