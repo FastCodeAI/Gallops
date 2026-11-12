@@ -45,7 +45,8 @@ AV dataset. Its own record is not in this repository yet, so it is pinned here b
 7. **What the memory holds** (`07_does_the_memory_hold_driving_information`). No training: simple readers
    predict the driver's next 3 s with and without the trained memory.
 8. **What the past view holds** (`08_does_the_past_view_help_at_all`). The same readers are given the
-   true past camera view directly. That is the most any memory of these views could offer.
+   true past camera view directly: the most a memory of these views could offer to a linear reader of
+   pooled views. A reader that uses the views differently could find more.
 9. **Closed loop** (`09_closed_loop_12_scenes`). The same weights driven on 12 simulator scenes with the
    memory carried and with it reset at every call. Not finished when this was recorded: the folder holds
    the rule written beforehand and the scripts, and no result.
@@ -60,21 +61,32 @@ scores 0.7685.
   health condition written beforehand: its slots are distinct, its gates are open, and it recalls the
   view 2 s and 4 s back better than a memory reset each moment (6.0 % and 10.5 % lower error). On the same
   weights the pick grade is 0.7313 with the memory carried and 0.7355 with it reset every moment:
-  carried is 0.0042 lower. This is the headline. Both are below the starting model.
-- **The first run's gap came from a collapsed memory.** Carried scored 0.7752 and wiped 0.7639. But the
+  carried is 0.0042 lower, 95 % interval −0.0103 to +0.0012. So: no gain, and not shown to be a loss.
+  This is the headline. Both are below the starting model. (The interval was computed after review,
+  by the first run's own bootstrap code: `06_recall_lesson/interval_after_review.py`.)
+- **The first run's gap came with a collapsed memory.** Carried scored 0.7752 and wiped 0.7639. But the
   carried memory's 16 slots were 99.96 % alike and its gates were almost shut, so the gap is not the
-  memory working. Its 95 % interval, −0.008 to +0.032, crosses zero, and on the 34 moments after an event
-  the carried copy was lower. The rule written beforehand said stop.
-- **The collapse fix alone gave the same picture:** 0.7496 carried, 0.7520 reset.
-- **The trained memory adds nothing for predicting the driver** beyond the current view and the car's own
-  motion history (−2.8 % to +0.6 % across six targets). By the rule written beforehand: no.
-- **The true past view adds little.** Views from 2 s and 4 s ago improve a linear reader's speed
-  prediction by 1 to 2 %, and add nothing on braking, sideways offset or heading. By the rule written
-  beforehand: unclear, because the small gain on speed is real but below the bar.
+  memory working as designed. Its 95 % interval, −0.008 to +0.032, crosses zero, and on the 34 moments
+  after an event the carried copy was lower. The rule written beforehand said stop. That model did use
+  what its memory held, though: zeroed at test time, the same weights score 0.7662, and they pull away
+  from a standstill in 39.6 % of cases instead of 74.5 %.
+- **The collapse fix alone gave the same picture:** 0.7496 carried, 0.7520 reset (interval −0.0090 to
+  +0.0039).
+- **The trained memory adds nothing linearly readable for predicting the driver** beyond the current
+  view and the car's own motion history (−2.8 % to +0.6 % across six targets). By the rule written
+  beforehand: no. The rule file limits that answer to a linear reader.
+- **The true past view adds little to a linear reader.** Views from 2 s and 4 s ago improve its speed
+  prediction by 1 to 2 % on all moments. On moments after a cut-in, a crossing or a hard brake, the view
+  from 2 s ago alone improves speed at +3 s by 3.9 % (2.1 to 5.5), the largest gain found. Nothing on
+  braking, sideways offset or heading. By the rule written beforehand: unclear, because the gain on speed
+  is real but below the bar. The small network reader gained nothing even with the true past view, so
+  it does not bound what a better reader could find.
 
 What is measured and what is argued:
 
 - Measured: every number above, each copied from the json file named in `experiment.toml`.
+- Argued: that the first run's gap is not the memory working. The collapse is measured; the zeroed-memory
+  test above points the other way, so this stays argued.
 - Argued: that the low ceiling is why training did not find a use for the memory. The tests show the
   memory holds little that helps and that the past view offers little; they do not show one causes the other.
 - Not established: that the recall lesson caused the pick grade to fall below the starting model. The
@@ -105,6 +117,14 @@ They are a record of what ran. They import the earlier Physical AI AV training c
 `s35_common`, `batch_fix`, `b3_common` and the patched agent `drive_jepa_agent_s10`. Two scripts
 (`s4_cache_sample.py`, `s5_cache_full.py`) also import `gallops.memory.probe.pool_map`, which is in this
 repository. When they ran, all scripts sat in one folder, `src/`, and imported each other by name.
+
+**Not every script is the version every run used.** `s6_model.py`, `s6_train.py`, `s6_tests.py`,
+`s7_pilot.py` and `s8_short.py` were edited for the collapse fix and again for the recall lesson; the step
+folders hold their last versions, which keep the older behaviour behind a `version` switch (argued from
+the code, not re-run). Copies taken before the recall-lesson edits are in
+`05_memory_collapse_fix/as_run_before_recall_lesson/`; that they are what the collapse-fix run used is
+argued from times (taken 4 h after it ended; no run recorded a hash of its code). No copy from the first
+training run was kept.
 
 ## Reading a path in these files
 
