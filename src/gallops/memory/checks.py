@@ -203,6 +203,7 @@ def dump(args) -> int:
 
 
 def determinism(args) -> int:
+    from gallops.config import REPO_ROOT
     from gallops.memory import cache
 
     cfg = _cfg()
@@ -212,7 +213,7 @@ def determinism(args) -> int:
     for path in paths:
         command = [sys.executable, "-m", "gallops.memory.checks", "dump", "--run", str(args.run)]
         command += ["--n", str(args.n), "--npz", str(path), "--device", args.device]
-        subprocess.run(command, check=True, cwd=Path(__file__).resolve().parents[3], env=os.environ.copy())
+        subprocess.run(command, check=True, cwd=REPO_ROOT, env=os.environ.copy())
     a, b = np.load(paths[0]), np.load(paths[1])
     diffs = {name: float(np.max(np.abs(a[name] - b[name]))) for name in cache.ARRAYS}
     verdict = {

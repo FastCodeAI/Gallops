@@ -6,7 +6,9 @@
 together. A memory would let the picker see further back. That is only worth building if the
 last 2-4 s predict what the human driver does next better than the last 1 s does. So: predict
 the human's speed at +1, +2 and +3 s, and whether they start braking within 2 s, from the last
-k moments, k in {1, 2, 4, 8}, and compare every k with k = 2 (1 s, the released model's view).
+k moments, k in {1, 2, 4, 8}, and compare every k with k = 2 (1 s), as the rule written before the
+probe says. The released model's own view is k = 1: one moment, which is the frame now and the
+frame 0.5 s ago.
 
 **Per-moment features** (`pool`, `pca`). The cached encoder map is 16 x 32 tokens of 256
 (the 512 x 256 front image in 16-pixel patches, row-major). Pooled to its global mean (256) and a
