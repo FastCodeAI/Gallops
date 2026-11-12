@@ -959,3 +959,38 @@ python = "drivejepa"
 module = "drivejepa_perception.navtest"
 args = ["build-cache", "--labels", "{out}/labels-fresh-v1", "--out", "{out}/metric-cache-fresh-v2", "--workers", "32"]
 after = ["part-b-0-labels-fresh"]
+
+# The vendored PDM labels of the release's 32 proposals (CPU), from each split's own metric cache, with
+# the agent behind every NC and TTC failure; each re-scored on 50 rows, exactly (B0-G6).
+
+[[stage]]
+name = "part-b-0-pdm-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.pdm_labels"
+args = ["build", "--root", "{data.navsim_navtest_metric_cache}", "--tokens", "{out}/tokens-navtest-v1",
+        "--labels", "{out}/labels-navtest-v1", "--out", "{out}/pdm-navtest-v1", "--workers", "48"]
+after = ["part-b-0-tokens-navtest", "part-b-0-verify-navtest-cache"]
+
+[[stage]]
+name = "part-b-0-check-pdm-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.pdm_labels"
+args = ["check", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--out", "{out}/pdm-navtest-v1", "--rows", "50"]
+after = ["part-b-0-pdm-navtest"]
+
+[[stage]]
+name = "part-b-0-pdm-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.pdm_labels"
+args = ["build", "--root", "{out}/metric-cache-fresh-v2", "--tokens", "{out}/tokens-fresh-v1",
+        "--labels", "{out}/labels-fresh-v1", "--out", "{out}/pdm-fresh-v1", "--workers", "48"]
+after = ["part-b-0-tokens-fresh", "part-b-0-fresh-cache"]
+
+[[stage]]
+name = "part-b-0-check-pdm-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.pdm_labels"
+args = ["check", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
+        "--out", "{out}/pdm-fresh-v1", "--rows", "50"]
+after = ["part-b-0-pdm-fresh"]
