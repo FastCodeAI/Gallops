@@ -38,6 +38,7 @@ MACHINE_ROOTS = (
     "/home/",
     "/proj/",
     "/scratch/",
+    "/srv/",
     "/Users/",
 )
 
