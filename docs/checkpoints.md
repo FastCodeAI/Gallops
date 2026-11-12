@@ -67,7 +67,7 @@ while a trainer is writing.
 
 | field | required | what it is for |
 |---|---|---|
-| `model` | ✅ | family, not run. Becomes the paddock adapter name, so it must be stable across steps and safe as a directory name. |
+| `model` | ✅ | family, not run. Names a paddock adapter or a variant of one, so it must be stable across steps and safe as a directory name. |
 | `step` | ✅ | orders checkpoints within a run. |
 | `train_git_sha` | ✅ | without it a result cannot be reproduced even with the data and the seed. |
 | `train_run` | ✅ | groups a sweep in a report. |

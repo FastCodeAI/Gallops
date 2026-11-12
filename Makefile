@@ -4,7 +4,8 @@
 # runs on every PR, in a clean environment with no site gallops.toml. The two
 # must agree, so anything that can reject work belongs in this target and not
 # in a workflow's own command list. That rule is paddock's, and it is the reason
-# a green local run and a green PR are the same claim there.
+# a green local run and a green PR are the same claim there. The one exception
+# is results-pr.yml: a PR's title and description exist only on GitHub.
 #
 # Every target runs against whichever environment is active — an activated
 # venv, an activated conda env, or the repo's own .venv as a fallback.

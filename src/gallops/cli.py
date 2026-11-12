@@ -7,8 +7,9 @@ paddock's `adding-a-model` guide prescribes for adapters: get the boring path
 green first, so that when something moves you know it was the model.
 """
 
-from __future__ import annotations
-
+# No `from __future__ import annotations` here: it turns every hint into a string, and under Drive-JEPA's
+# Python 3.9 typer then resolves them without their `Annotated` metadata. An option with no default
+# becomes an argument and an `envvar` is dropped, which is how `experiments pr-check` broke there.
 import json
 from typing import Annotated, Optional
 
@@ -196,6 +197,54 @@ def experiments_new(
                 text = text.replace(key, value)
             path.write_text(text)
     typer.echo(f"created {folder.relative_to(exps.REPO_ROOT)}/ -- write PREDICTIONS.md before the first run")
+
+
+@experiments_app.command("pr")
+def experiments_pr(
+    ref: Annotated[str, typer.Argument(help="an experiment (its headline) or one run: H04, H04.run3a")],
+) -> None:
+    """Print a results PR rendered from the record: the title on line 1, the body from line 3.
+
+    The ID and the numbers are copied from the record. Replace each TODO(author): before opening the PR;
+    CI holds the title and the rendered block to the record (docs/experiments.md#results-pr).
+    """
+    reg = _registry()
+    for problem in reg.errors:
+        typer.secho(problem, fg=typer.colors.RED, err=True)
+    if reg.errors:
+        raise typer.Exit(1)
+    try:
+        typer.echo(exps.render_pr(reg, ref), nl=False)
+    except ValueError as exc:
+        typer.secho(str(exc), fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+
+
+@experiments_app.command("pr-check")
+def experiments_pr_check(
+    base: Annotated[str, typer.Option(help="the commit this PR adds to; CI passes its merge's first parent")],
+    title: Annotated[str, typer.Option(envvar="PR_TITLE", help="the PR's title")] = "",
+    body: Annotated[str, typer.Option(envvar="PR_BODY", help="the PR's description")] = "",
+) -> None:
+    """Hold a PR's title and description to the record. CI runs this; it is not part of `make check`.
+
+    A title and a description exist only on GitHub, so no local target can check them. They arrive in
+    the environment, not on a command line a workflow builds, because a PR's text is not to be trusted.
+    """
+    import subprocess
+
+    reg = _registry()
+    try:
+        changed = exps.changed_results(reg, base)
+    except subprocess.CalledProcessError as exc:
+        typer.secho(f"cannot read {base}: {exc.stderr.strip()}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(2) from exc
+    problems = exps.check_pr(reg, title, body, changed)
+    for problem in problems:
+        typer.secho(problem, fg=typer.colors.RED, err=True)
+    if problems:
+        raise typer.Exit(1)
+    typer.echo(f"ok: results changed in {', '.join(changed)}" if changed else "ok: no results changed")
 
 
 #: What a weights file in a step directory is called, by the trainers this repo has.

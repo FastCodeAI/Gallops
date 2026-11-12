@@ -2,8 +2,9 @@
 
 **Owner:** Naren · **Priority:** 5 of 11 · **Started:** 21 Oct 2026 (planned) · **Status:** parked, inconclusive (hypothesis) · step 0 run by Siddesh, 3–5 Nov 2026
 
-The facts are in [experiment.toml](experiment.toml). Everything below is transcribed from Renesas
-Progress and Plan, 22 Oct 2026 ("Next steps", item 5, and "Naren · hypothesis to test"); nothing has run.
+The facts are in [experiment.toml](experiment.toml). The why, the hypothesis and the plan below are
+transcribed from Renesas Progress and Plan, 22 Oct 2026 ("Next steps", item 5, and "Naren · hypothesis to
+test"). Only the plan's step 0 has run; "What step 0 did" says what it found.
 
 ## Why
 
@@ -51,7 +52,8 @@ Training lives in gallops; paddock only runs the checkpoint. Momentum-aware sele
 
 ## What step 0 did (3–5 Nov 2026)
 
-These runs are recorded as H05.r1 and H05.r2 in [experiment.toml](experiment.toml). All numbers are
+These runs are recorded as H05.r1 and H05.r2 in [experiment.toml](experiment.toml); the files they wrote
+are off the repository and listed, with sizes and hashes, in [POINTERS.md](POINTERS.md). All numbers are
 open loop, on the 176 vendor val logs that have 4 s of history, for the events slice (moments where the
 human's speed changes by more than 1 m/s within 2 s), with paired, log-clustered 95% intervals.
 

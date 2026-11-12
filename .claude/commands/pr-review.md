@@ -57,11 +57,14 @@ Read the description and every doc the PR changes before the code, so you check
 
 ```bash
 env -u VIRTUAL_ENV -u CONDA_PREFIX -u GALLOPS_CONFIG make check; echo "exit=$?"
-ls .github/workflows 2>/dev/null || echo "no CI"
+gh pr checks <N>
 ```
 
 - **Check the exit code directly.** A failing `make check` is the first finding,
-  and it is 🔴. Report it with the output; do not work around it.
+  and it is 🔴. Report it with the output; do not work around it. A red check in
+  CI is a 🔴 too, `results-pr` included. No checks at all means the PR conflicts
+  with its base, or neither side has the workflows yet, so your run is its only
+  one: say so.
 - **If the PR touches torch code,** a green run proves nothing about it (§1).
   Check that the structural guard covers the classes it touches, or run a smoke
   of a few steps under the training interpreter. Add `[train]` to the venv only

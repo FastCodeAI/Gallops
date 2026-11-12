@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#gap-closing-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Evidence for:** D05 ([decision log](../../README.md#decision-log))
+**Evidence for:** D05 ([decision log](../README.md#decision-log))
 
 ## Question
 
