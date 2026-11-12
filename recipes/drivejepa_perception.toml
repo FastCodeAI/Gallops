@@ -1171,3 +1171,37 @@ module = "drivejepa_perception.preflight"
 args = ["data", "--labels", "{out}/labels-fresh-v1", "--tokens", "{out}/tokens-fresh-v1",
         "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--pdm", "{out}/pdm-fresh-v1", "--out", "{out}/part-b/b0/preflight-fresh.json"]
 after = ["part-b-0-vit-fresh", "part-b-0-pdm-fresh"]
+
+# R-tilde (B-0, Q6): the release through the cached path every trained arm runs, adapters at zero (one GPU,
+# minutes), its picks replayed through the official scorer and paired with R's (B0-G10).
+
+[[stage]]
+name = "part-b-0-rtilde-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.cached_release"
+args = ["--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1", "--out", "{out}/rtilde-navtest-v1"]
+after = ["part-b-0-tokens-navtest"]
+
+[[stage]]
+name = "part-b-0-plans-rtilde"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["plans", "--arm", "R-tilde", "--tokens", "{out}/rtilde-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--out", "{out}/part-b/b0/plans-Rtilde"]
+after = ["part-b-0-rtilde-navtest"]
+
+[[stage]]
+name = "part-b-0-score-rtilde"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["score", "--plans", "{out}/part-b/b0/plans-Rtilde", "--verified", "{out}/part-b/b0/navtest-cache-verify",
+        "--name", "R-tilde", "--out", "{out}/part-b/b0/navtest-Rtilde", "--workers", "32"]
+after = ["part-b-0-plans-rtilde"]
+
+[[stage]]
+name = "part-b-0-rtilde-gate"
+python = "drivejepa"
+module = "drivejepa_perception.navtest"
+args = ["compare", "--a", "{out}/part-b/b0/navtest-Rtilde", "--b", "{out}/part-b/b0/navtest-R",
+        "--labels", "{out}/labels-navtest-v1", "--gate", "rtilde", "--out", "{out}/part-b/b0/rtilde-gate.json"]
+after = ["part-b-0-score-rtilde", "part-b-0-score-R"]

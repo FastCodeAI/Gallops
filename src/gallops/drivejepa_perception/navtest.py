@@ -567,15 +567,16 @@ LIVE_PICKS_EQUAL, LIVE_COLUMNS_EQUAL, LIVE_EPDMS = 0.999, 0.999, 0.02
 SUCCESSOR_US = 550_000
 
 
-def release_plans(tokens_dir: Path, labels_dir: Path, out: Path) -> Path:
-    """R's plan store: the release's own pick of its 32 proposals for every navtest row."""
+def release_plans(tokens_dir: Path, labels_dir: Path, out: Path, arm: str = "R") -> Path:
+    """A release arm's plan store: its pick of its own 32 proposals for every navtest row. R reads the
+    token pass; R-tilde reads `cached_release`'s pass, which holds the same files."""
     labels = np.load(Path(labels_dir) / "labels.npz")
     proposals = np.load(Path(tokens_dir) / "proposals.npy", mmap_mode="r")
     pick = np.load(Path(tokens_dir) / "pick.npy").astype(np.int64)
     rows = np.arange(len(pick))
     meta = {
-        "arm": "R",
-        "what": "the release's pick of its 32 proposals, from the token pass",
+        "arm": arm,
+        "what": f"the release's pick of its 32 proposals, from {Path(tokens_dir).name}",
         "proposals": str(tokens_dir),
         "proposals_sha256": _sha256(Path(tokens_dir) / "proposals.npy"),
         "pick_sha256": _sha256(Path(tokens_dir) / "pick.npy"),
@@ -868,6 +869,74 @@ def anchor(replay_dir: Path, live_dir: Path, tokens_dir: Path, labels_dir: Path,
     return record
 
 
+#: B0-G10: R-tilde against R.
+RTILDE_PICKS_EQUAL, RTILDE_EPDMS = 0.99, 0.05
+
+
+def paired(a_dir: Path, b_dir: Path, labels_dir: Path) -> dict:
+    """Two scored runs (`score` outputs) paired per navtest token: the mean difference A - B in EPDMS
+    (human filter) and the CSV score, in points, each with its SE clustered by log, and each sub-score's."""
+    from gallops.drivejepa_perception.b_report import clustered_se
+
+    labels = np.load(Path(labels_dir) / "labels.npz")
+    logs = np.array(json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    log_of = {str(t): log for t, log in zip(labels["token"], logs)}  # noqa: B905 -- Python 3.9
+    runs = []
+    for d in (a_dir, b_dir):
+        m = json.loads((Path(d) / "manifest.json").read_text())
+        runs.append(per_token(str(Path(d) / m["csv"])))
+    a, b = runs
+    tokens = sorted(set(a) & set(b))
+    if len(tokens) != len(a) or len(tokens) != len(b):
+        raise SystemExit(f"the runs score different tokens: {len(a)} and {len(b)}, {len(tokens)} shared")
+    clusters = np.array([log_of[t] for t in tokens])
+    out = {"tokens": len(tokens), "logs": len(set(clusters.tolist()))}
+    for key in ["epdms_hf", "csv", *SHORT]:
+        x = np.array([a[t][key] for t in tokens], np.float64)
+        y = np.array([b[t][key] for t in tokens], np.float64)
+        both = ~(np.isnan(x) | np.isnan(y))
+        d = (x - y)[both]
+        scale = 100.0 if key in ("epdms_hf", "csv") else 1.0
+        out[key] = {
+            "a": float(np.nanmean(x)) * scale,
+            "b": float(np.nanmean(y)) * scale,
+            "a_minus_b": float(d.mean()) * scale,
+            "se": clustered_se(d, clusters[both]) * scale,
+            "n": int(both.sum()),
+        }
+    return out
+
+
+def compare(a_dir: Path, b_dir: Path, labels_dir: Path, out: Path, gate: str = "") -> dict:
+    """`paired`, written once; with gate "rtilde", B0-G10 on R-tilde (A) against R (B)."""
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists")
+    record = {"a": str(a_dir), "b": str(b_dir), "paired": paired(a_dir, b_dir, labels_dir)}
+    if gate == "rtilde":
+        a_plans = np.load(
+            Path(json.loads((Path(a_dir) / "manifest.json").read_text())["plans"]) / "plans.npz"
+        )
+        b_plans = np.load(
+            Path(json.loads((Path(b_dir) / "manifest.json").read_text())["plans"]) / "plans.npz"
+        )
+        if not np.array_equal(a_plans["token"], b_plans["token"]):
+            raise SystemExit("the two plan stores hold different token orders")
+        picks = float((a_plans["pick"] == b_plans["pick"]).mean())
+        gap = abs(record["paired"]["epdms_hf"]["a_minus_b"])
+        record["gate"] = {
+            "B0-G10": picks >= RTILDE_PICKS_EQUAL and gap <= RTILDE_EPDMS,
+            "picks_equal": picks,
+            "epdms_gap": gap,
+        }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=1))
+    print(json.dumps(record, indent=1))
+    if gate and not record["gate"]["B0-G10"]:
+        raise SystemExit(f"R-tilde is not the release: {record['gate']}; B-2 to B-4 wait")
+    return record
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
@@ -882,10 +951,17 @@ def main(argv=None) -> None:
     p.add_argument("--labels", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--workers", type=int, default=32)
-    p = sub.add_parser("plans", help="R's plan store: the release's pick of its own 32, every navtest row")
-    p.add_argument("--tokens", required=True)
+    p = sub.add_parser("plans", help="a release arm's plan store: its pick of its own 32, every navtest row")
+    p.add_argument("--tokens", required=True, help="the token pass (R) or cached_release's pass (R-tilde)")
     p.add_argument("--labels", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--arm", default="R")
+    p = sub.add_parser("compare", help="two scored runs paired per token, SE clustered by log")
+    p.add_argument("--a", required=True)
+    p.add_argument("--b", required=True)
+    p.add_argument("--labels", required=True)
+    p.add_argument("--out", required=True)
+    p.add_argument("--gate", default="", choices=("", "rtilde"))
     p = sub.add_parser("score", help="a plan store through the official scorer, via the replay agent")
     p.add_argument("--plans", required=True)
     p.add_argument("--verified", required=True, help="verify-cache's output for the navtest cache")
@@ -919,7 +995,10 @@ def main(argv=None) -> None:
             Path(args.json).write_text(json.dumps(out, indent=2))
         return
     if args.cmd == "plans":
-        release_plans(Path(args.tokens), Path(args.labels), Path(args.out))
+        release_plans(Path(args.tokens), Path(args.labels), Path(args.out), args.arm)
+        return
+    if args.cmd == "compare":
+        compare(Path(args.a), Path(args.b), Path(args.labels), Path(args.out), args.gate)
         return
     if args.cmd == "anchor":
         anchor(Path(args.replay), Path(args.live), Path(args.tokens), Path(args.labels), Path(args.out))

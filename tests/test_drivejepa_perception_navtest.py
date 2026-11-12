@@ -179,3 +179,29 @@ def test_the_live_comparison_reads_only_tokens_whose_plans_agree():
     assert got["picks_equal"] == pytest.approx(2 / 3)
     assert got["comparable"] == 2 and got["columns_equal"] == 1.0  # a (and its successor b) and b
     assert got["epdms_gap"] == pytest.approx(100 / 3)
+
+
+def _run(tmp_path, name: str, scores: dict) -> Path:
+    """A `score` output: its manifest names its CSV, whose rows give each token one NC value."""
+    d = tmp_path / name
+    d.mkdir()
+    rows = [row(t, (nc, 1, 1, 1), (1, 1, 1, 1, 1), nc) for t, nc in scores.items()]
+    write_csv(d / "run.csv", rows)
+    (d / "manifest.json").write_text(json.dumps({"csv": "run.csv"}))
+    return d
+
+
+def test_two_runs_are_paired_per_token_and_clustered_by_log(tmp_path):
+    labels = tmp_path / "labels"
+    labels.mkdir()
+    np.savez(labels / "labels.npz", token=np.array(["a", "b", "c", "d"]), log_id=np.array([0, 0, 1, 1]))
+    (labels / "manifest.json").write_text(json.dumps({"logs": ["log0", "log1"]}))
+    a = _run(tmp_path, "A", {"a": 1, "b": 1, "c": 1, "d": 0})
+    b = _run(tmp_path, "B", {"a": 1, "b": 0, "c": 1, "d": 0})
+    got = navtest.paired(a, b, labels)
+    assert (got["tokens"], got["logs"]) == (4, 2)
+    assert got["epdms_hf"]["a_minus_b"] == pytest.approx(25.0)  # one scene of four gains a full point
+    assert got["NC"]["a"] == pytest.approx(0.75) and got["NC"]["b"] == pytest.approx(0.5)
+    assert got["epdms_hf"]["se"] > 0
+    with pytest.raises(SystemExit, match="different tokens"):
+        navtest.paired(a, _run(tmp_path, "C", {"a": 1}), labels)
