@@ -203,7 +203,7 @@ prerequisite, not a detail, and it has a long lead time.
 | dataset | what we hold | usable for training? |
 |---|---|---|
 | **nuScenes** | full 850 scenes, 34,149 keyframes | **Yes** — the one real corpus. Camera-only: no `sweeps/`, zero radar files, lidar 7,044 keyframes short of the keyframe count. |
-| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly.** The re-ranker ([First target](#first-target--taken-drive-jepas-selection-not-its-head)) trained on 5,711 keyframes from those 373. By 2026-10-16, 532 of the 534 scenes `train.txt` lists were on disk; the KITScenes retraining ([drivejepa-kitscenes.md](drivejepa-kitscenes.md)) trained on 482 of them. |
+| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly.** The re-ranker ([First target](#first-target--taken-drive-jepas-selection-not-its-head)) trained on 5,711 keyframes from those 373. By 2026-10-16, 532 of the 534 scenes `train.txt` lists were on disk; the KITScenes retraining ([H07](../experiments/H07_encoder_lora/README.md)) trained on 482 of them. |
 | **NAVSIM / OpenScene** | `navtest` only (136 logs, 12,146 scenes) | **No.** `navtrain` and `trainval_sensor` are absent, as is `synthetic_scenes/`. |
 
 Two long-lead items follow directly: a KITScenes `train` pull is 2.38 TB and

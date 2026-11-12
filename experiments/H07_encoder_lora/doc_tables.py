@@ -1,10 +1,10 @@
-"""Render the tables that docs/drivejepa-kitscenes.md quotes, from the committed result files.
+"""Render the tables that experiments/H07_encoder_lora/README.md quotes, from the committed result files.
 
 The doc's numbers are copied from this script's output, never typed by hand, and
 tests/test_drivejepa_kitscenes.py checks that every table below appears in the doc
 character for character. Standard library only, so it runs under `make check`.
 
-    python experiments/drivejepa_kitscenes/doc_tables.py
+    python experiments/H07_encoder_lora/doc_tables.py
 """
 
 from __future__ import annotations

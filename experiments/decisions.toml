@@ -204,7 +204,7 @@ decision = """The encoder + generator + scorer checkpoint trained on KITScenes f
 AlpaSim regress); its checkpoints stay a research record, not for deployment."""
 by = ["Siddesh"]
 evidence = ["H07.exp3"]
-source = "branch train/drivejepa-kitscenes, docs/drivejepa-kitscenes.md"
+source = "experiments/H07_encoder_lora/README.md"
 
 [[decision]]
 id = "D19"

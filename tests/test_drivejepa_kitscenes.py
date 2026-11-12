@@ -1,6 +1,6 @@
 """The Drive-JEPA KITScenes record: what can be checked with no GPU and no data.
 
-The three experiments under experiments/drivejepa_kitscenes/ need a GPU, the
+The three experiments under experiments/H07_encoder_lora/ need a GPU, the
 released 3.7 GB checkpoint and the KITScenes Multimodal scenes to run, so nothing
 here runs them. What is tested is the part of their claims the committed files
 can prove on their own:
@@ -26,12 +26,12 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXP = REPO_ROOT / "experiments" / "drivejepa_kitscenes"
-DOC = REPO_ROOT / "docs" / "drivejepa-kitscenes.md"
+EXP = REPO_ROOT / "experiments" / "H07_encoder_lora"
+DOC = EXP / "README.md"
 SPLITS = EXP / "02_encoder_build" / "out" / "splits.json"
 HELDOUT = EXP / "09_heldout_comparison" / "heldout_moments.csv"
 
-# The checkpoints the doc names, by sha256 (docs/drivejepa-kitscenes.md, "Checkpoints").
+# The checkpoints the doc names, by sha256 (H07 README.md, "Checkpoints").
 CHECKPOINTS = {
     "released": "740335c800e248598949c2f3c70700da79fe52f5fdc282b887d08fe112d30d05",
     "encoder only": "2568101fb234cc25f4e6781834c72659283cb8c5df5569cc9e42f248b9e2aaf0",

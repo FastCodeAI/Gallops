@@ -3,7 +3,7 @@
 Three ways of retraining parts of the released Drive-JEPA model on KITScenes Multimodal, evaluated on
 223 held-out moments, and the regression-gate result for the one checkpoint that went through it.
 The working record (scripts, step reports, result tables) is
-[experiments/drivejepa_kitscenes/](../experiments/drivejepa_kitscenes/README.md).
+[RECORD.md](RECORD.md).
 
 **In one paragraph.** On held-out KITScenes moments, the path the model finally chooses moved from
 2.372 m average error over 3 s (released) to 0.596 m (encoder, generator and scorer trained
@@ -16,7 +16,7 @@ the two open-loop driving logs (KITScenes, nuScenes) and regresses on NAVSIM, Be
 **These checkpoints are a research record, not for deployment.** None has a `checkpoint.json`
 sidecar, none was written into `{weights}`, and the one tested in closed loop failed the gate.
 Their locations and sha256 are in
-[POINTERS.md](../experiments/drivejepa_kitscenes/POINTERS.md).
+[POINTERS.md](POINTERS.md).
 
 ---
 
@@ -279,7 +279,7 @@ KITScenes number also differs for the same reason (2.537 m through the gate, 2.3
 
 **A research record, not for deployment.** No `checkpoint.json`; nothing in `{weights}`. Sizes,
 full sha256 and where each file sits are in
-[POINTERS.md](../experiments/drivejepa_kitscenes/POINTERS.md), with the runs tried and dropped.
+[POINTERS.md](POINTERS.md), with the runs tried and dropped.
 
 | Name | Contains | Starts from | sha256 (first 16) | How to load |
 |---|---|---|---|---|

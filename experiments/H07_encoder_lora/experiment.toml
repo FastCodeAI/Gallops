@@ -1,8 +1,8 @@
 # H07 -- a LoRA on the encoder closes the domain gap (Siddesh). Priority 7 on the 21 Oct list.
 # exp1 is the encoder LoRA the item names; exp2a, exp2b and exp3 are adjacent runs on the same branch,
 # mapped here by inference (they train the generator and scorer as well).
-# Sources: docs/drivejepa-kitscenes.md and experiments/drivejepa_kitscenes/ (step reports, 11_regression_gate/
-# RESULTS.md and results.json) on branch train/drivejepa-kitscenes; sha256s from its POINTERS.md. Numbers are
+# Sources: README.md and the step folders here (step reports, 11_regression_gate/
+# RESULTS.md and results.json); sha256s from POINTERS.md. Numbers are
 # copied, never re-derived. Page-only facts from the team's gap-review page (22 Oct) are flagged no-record.
 
 schema = 1
@@ -30,10 +30,9 @@ learned = """So far, open loop on 223 held-out KITScenes moments, the LoRA alone
 then the scorer took the pick to 0.596 m. The only closed-loop test is of exp3, which also retrained the \
 generator and scorer: the gate FAILs it (AlpaSim 0.4344 -> 0.1158, Bench2Drive 59.0360 -> 0.2686, NAVSIM \
 0.8572 -> 0.7533). The hypothesis' own tests, the LoRA alone in AlpaSim and a LoRA on WA-JEPA, have not run."""
-narrative = "docs/drivejepa-kitscenes.md"
-branch = "train/drivejepa-kitscenes"
+narrative = "experiments/H07_encoder_lora/README.md"
 external = [
-  "Weights, frame caches and per-moment results: off-repo at the training site, each with bytes and sha256 in experiments/drivejepa_kitscenes/POINTERS.md. None has a checkpoint.json sidecar or sits in {weights}.",
+  "Weights, frame caches and per-moment results: off-repo at the training site, each with bytes and sha256 in experiments/H07_encoder_lora/POINTERS.md. None has a checkpoint.json sidecar or sits in {weights}.",
   "Gate job 20261027T215457-siddesh-94f0 in paddock's queue site folder (verdict.json, gate.log, baseline.toml, smoke/manifest.toml); candidate runs under paddock's runs root, <bench>/drivejepa/<run>.",
   "The vendored Drive-JEPA tree (upstream e21f474) every experiment imports has local changes in no git history: two modified attention files and three untracked files, the KITScenes adapter among them; sha256 in POINTERS.md.",
   "Siddesh's page 'Drive-JEPA Encoder LoRA on KIT', quoted on the team's 22 Oct page: 96 moments better, 55 worse, 72 within 10 cm; 1.4 GPU-hours (no-record).",
@@ -51,12 +50,12 @@ params_trained_m = 6.3
 notes = "Guesser-only warm-up, then passes of 587 steps at batch 32 (LoRA AdamW 2e-4, guesser AdamW 1e-4); stopped after 6 passes (3 without gain); pass 3 chosen on the 103 picking moments (pick ADE 2.392 -> 1.873). Training finished 16 Oct 23:45; controls 17 Oct. 03_encoder_training/REPORT.md counts 95 better / 55 worse by more than 10 cm, the page 96 / 55. Merged encoder alone: sha256 31db4e8dbf846a34d42d0042416ddd51ec11c8a36036054d88ffe3de6ee5d854."
 
   [runs.code]
-  entry = "experiments/drivejepa_kitscenes/03_encoder_training/src/train.py"
+  entry = "experiments/H07_encoder_lora/03_encoder_training/src/train.py"
   as_run = [
-    "experiments/drivejepa_kitscenes/01_encoder_survey/",
-    "experiments/drivejepa_kitscenes/02_encoder_build/",
-    "experiments/drivejepa_kitscenes/03_encoder_training/",
-    "experiments/drivejepa_kitscenes/04_encoder_checks/",
+    "experiments/H07_encoder_lora/01_encoder_survey/",
+    "experiments/H07_encoder_lora/02_encoder_build/",
+    "experiments/H07_encoder_lora/03_encoder_training/",
+    "experiments/H07_encoder_lora/04_encoder_checks/",
   ]
 
   [runs.code.upstream]
@@ -69,7 +68,7 @@ notes = "Guesser-only warm-up, then passes of 587 steps at batch 32 (LoRA AdamW 
   role = "train"
   n = 18757
   unit = "frame pairs"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -77,7 +76,7 @@ notes = "Guesser-only warm-up, then passes of 587 steps at batch 32 (LoRA AdamW 
   role = "selection"
   n = 103
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -85,7 +84,7 @@ notes = "Guesser-only warm-up, then passes of 587 steps at batch 32 (LoRA AdamW 
   role = "held-out"
   n = 223
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/09_heldout_comparison/heldout_moments.csv"
+  scene_list = "experiments/H07_encoder_lora/09_heldout_comparison/heldout_moments.csv"
   note = "read once, after the checkpoint was fixed; 221 of 223 below 15 m/s"
 
   [runs.checkpoint]
@@ -111,7 +110,7 @@ notes = "Guesser-only warm-up, then passes of 587 steps at batch 32 (LoRA AdamW 
   flags = ["adapted", "open-loop"]
   headline = true
   note = "paired -0.493 [-0.687, -0.313] (bootstrap over whole scenes); closest-candidate ADE 0.374 -> 0.378 (+0.004 [-0.009, +0.018]): the menu did not move, the pick did"
-  source = "docs/drivejepa-kitscenes.md, held-out tables (recomputed by the author from the per-moment files)"
+  source = "experiments/H07_encoder_lora/README.md, held-out tables (recomputed by the author from the per-moment files)"
 
 [[runs]]
 id = "H07.exp2a"
@@ -124,12 +123,12 @@ frozen = ["encoder (exp1's LoRA merged)", "projector", "scorer"]
 notes = "† An adjacent run, mapped to H07 by inference: it trains the generator, not the encoder. Loss: upstream's winner-takes-all to the human path only (KITScenes has no vocabulary grades). The fast-rate run (Adam 1e-4) was dropped after 1 pass when variety fell 28% (limit 10%); stay-term runs (0.3, 1.0) dropped. Chosen on the 1,763 picking moments (slow closest FDE 0.572 -> 0.346 m); held-out read 20 Oct."
 
   [runs.code]
-  entry = "experiments/drivejepa_kitscenes/07_generator_only_gentle_rate/src/rerun.py"
+  entry = "experiments/H07_encoder_lora/07_generator_only_gentle_rate/src/rerun.py"
   as_run = [
-    "experiments/drivejepa_kitscenes/05_generator_survey/",
-    "experiments/drivejepa_kitscenes/06_generator_only_fast_rate/",
-    "experiments/drivejepa_kitscenes/07_generator_only_gentle_rate/",
-    "experiments/drivejepa_kitscenes/09_heldout_comparison/",
+    "experiments/H07_encoder_lora/05_generator_survey/",
+    "experiments/H07_encoder_lora/06_generator_only_fast_rate/",
+    "experiments/H07_encoder_lora/07_generator_only_gentle_rate/",
+    "experiments/H07_encoder_lora/09_heldout_comparison/",
   ]
 
   [runs.code.upstream]
@@ -142,7 +141,7 @@ notes = "† An adjacent run, mapped to H07 by inference: it trains the generato
   role = "train"
   n = 13937
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -150,7 +149,7 @@ notes = "† An adjacent run, mapped to H07 by inference: it trains the generato
   role = "selection"
   n = 1763
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -158,7 +157,7 @@ notes = "† An adjacent run, mapped to H07 by inference: it trains the generato
   role = "held-out"
   n = 223
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/09_heldout_comparison/heldout_moments.csv"
+  scene_list = "experiments/H07_encoder_lora/09_heldout_comparison/heldout_moments.csv"
 
   [runs.checkpoint]
   model = "drivejepa_kitscenes"
@@ -182,7 +181,7 @@ notes = "† An adjacent run, mapped to H07 by inference: it trains the generato
   strength = "moderate"
   flags = ["adapted", "open-loop"]
   note = "paired -0.733 [-0.930, -0.545]"
-  source = "docs/drivejepa-kitscenes.md"
+  source = "experiments/H07_encoder_lora/README.md"
 
   [[runs.results]]
   bench = "kitscenes"
@@ -196,7 +195,7 @@ notes = "† An adjacent run, mapped to H07 by inference: it trains the generato
   strength = "moderate"
   flags = ["adapted", "open-loop"]
   note = "paired -0.185 [-0.231, -0.146]; variety fell 2.82 -> 1.63 m"
-  source = "docs/drivejepa-kitscenes.md"
+  source = "experiments/H07_encoder_lora/README.md"
 
 [[runs]]
 id = "H07.exp2b"
@@ -209,10 +208,10 @@ frozen = ["projector", "scorer"]
 notes = "† An adjacent run, mapped to H07 by inference. Generator Adam 3e-5, LoRA AdamW 1e-4, plus hide-and-guess; stopped at 3 passes after two turn checks failed in a row; best qualifying check 0.355 m at 1 pass on the picking moments. Its control, generator only trained longer, reached 0.340 m at 0.5 more passes and was dropped."
 
   [runs.code]
-  entry = "experiments/drivejepa_kitscenes/08_generator_and_encoder_together/src/phase2.py"
+  entry = "experiments/H07_encoder_lora/08_generator_and_encoder_together/src/phase2.py"
   as_run = [
-    "experiments/drivejepa_kitscenes/08_generator_and_encoder_together/",
-    "experiments/drivejepa_kitscenes/09_heldout_comparison/",
+    "experiments/H07_encoder_lora/08_generator_and_encoder_together/",
+    "experiments/H07_encoder_lora/09_heldout_comparison/",
   ]
 
   [runs.code.upstream]
@@ -225,7 +224,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator Adam 3e-5, L
   role = "train"
   n = 13937
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -233,7 +232,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator Adam 3e-5, L
   role = "selection"
   n = 1763
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -241,7 +240,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator Adam 3e-5, L
   role = "held-out"
   n = 223
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/09_heldout_comparison/heldout_moments.csv"
+  scene_list = "experiments/H07_encoder_lora/09_heldout_comparison/heldout_moments.csv"
 
   [runs.checkpoint]
   model = "drivejepa_kitscenes"
@@ -265,7 +264,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator Adam 3e-5, L
   strength = "unverified"
   flags = ["adapted", "open-loop"]
   note = "paired -0.045 [-0.114, +0.026]: not resolved"
-  source = "docs/drivejepa-kitscenes.md"
+  source = "experiments/H07_encoder_lora/README.md"
 
 [[runs]]
 id = "H07.exp3"
@@ -278,10 +277,10 @@ frozen = ["projector", "the rest of the scorer"]
 notes = "† An adjacent run, mapped to H07 by inference. Generator and scorer start from the release, not from exp2. Scorer target: softmax(-d_k / 0.5 m) over the 32 by mean distance to the human path, replacing upstream's safety-and-progress grades. One backward pass of three equal-weight losses; the scorer loss sends zero gradient to all 41 generator tensors (checked before training). Stopped by rule after 7.5 passes; the 4.5-pass check (slow pick ADE 0.602 m on the picking moments) was fixed before the held-out read. Training-format checkpoint p04.5.pt: sha256 dc6c99d5b0298d32bf26f77f14f228969a7efb53822fcdd5feecac32b096eb45. The record pins the merged export the gate loaded, driven by paddock's drivejepa node with DRIVEJEPA_CHECKPOINT; {nas} is the branch's placeholder for the network store."
 
   [runs.code]
-  entry = "experiments/drivejepa_kitscenes/10_encoder_generator_scorer/src/allthree.py"
+  entry = "experiments/H07_encoder_lora/10_encoder_generator_scorer/src/allthree.py"
   as_run = [
-    "experiments/drivejepa_kitscenes/10_encoder_generator_scorer/",
-    "experiments/drivejepa_kitscenes/11_regression_gate/",
+    "experiments/H07_encoder_lora/10_encoder_generator_scorer/",
+    "experiments/H07_encoder_lora/11_regression_gate/",
   ]
 
   [runs.code.upstream]
@@ -294,7 +293,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator and scorer s
   role = "train"
   n = 13937
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -302,7 +301,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator and scorer s
   role = "selection"
   n = 1763
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/02_encoder_build/out/splits.json"
+  scene_list = "experiments/H07_encoder_lora/02_encoder_build/out/splits.json"
 
   [[runs.data]]
   dataset = "kitscenes"
@@ -310,7 +309,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator and scorer s
   role = "held-out"
   n = 223
   unit = "moments"
-  scene_list = "experiments/drivejepa_kitscenes/09_heldout_comparison/heldout_moments.csv"
+  scene_list = "experiments/H07_encoder_lora/09_heldout_comparison/heldout_moments.csv"
 
   [runs.checkpoint]
   model = "drivejepa_kitscenes"
@@ -334,7 +333,7 @@ notes = "† An adjacent run, mapped to H07 by inference. Generator and scorer s
   strength = "moderate"
   flags = ["adapted", "open-loop"]
   note = "paired -0.505 [-0.631, -0.383]; against exp2a -0.550 [-0.664, -0.439]; released model 2.372. Slow turns (37): 1.764 -> 0.819. The scorer now ranks by closeness to the human path, not by safety"
-  source = "docs/drivejepa-kitscenes.md"
+  source = "experiments/H07_encoder_lora/README.md"
 
   [[runs.gate]]
   date = 2026-10-28
@@ -436,27 +435,27 @@ name = "Random-LoRA control (04)"
 date = 2026-10-17
 result = "five random LoRAs of the same size all pick worse: ADE (3 s) 2.41-2.53 m on the picking moments, against 1.873 for the trained one"
 decided = "the training itself matters"
-source = "docs/drivejepa-kitscenes.md; experiments/drivejepa_kitscenes/04_encoder_checks/REPORT.md"
+source = "experiments/H07_encoder_lora/README.md; experiments/H07_encoder_lora/04_encoder_checks/REPORT.md"
 
 [[checks]]
 name = "Same-software re-run of the released model (04)"
 date = 2026-10-17
 result = "reproduces the earlier evaluation of it to within one changed pick"
-source = "docs/drivejepa-kitscenes.md; experiments/drivejepa_kitscenes/04_encoder_checks/REPORT.md"
+source = "experiments/H07_encoder_lora/README.md; experiments/H07_encoder_lora/04_encoder_checks/REPORT.md"
 
 [[checks]]
 name = "Gate KITScenes against the held-out evaluation (11, Part E)"
 date = 2026-10-28
 result = "same 223 moments and human paths: 0.920 m through the gate against 0.596 m, from the gate's straight command, zero acceleration and sideways speed and fixed 2.2 m camera height; on the 184 truly-straight moments the gap is still 0.27 m. Whether these inputs contribute to the closed-loop failures is not verified"
-source = "experiments/drivejepa_kitscenes/11_regression_gate/RESULTS.md"
+source = "experiments/H07_encoder_lora/11_regression_gate/RESULTS.md"
 
 [[checks]]
 name = "Bench2Drive near zero: real or broken? (11, Part B)"
 date = 2026-10-28
 result = "real: simulator and model server healthy on every route, yet the car moved 0.0 m on 6 of 7; that its plans asked for no motion is argued from the controller code, as the plans were not recorded"
-source = "experiments/drivejepa_kitscenes/11_regression_gate/RESULTS.md"
+source = "experiments/H07_encoder_lora/11_regression_gate/RESULTS.md"
 
 [[checks]]
 name = "The hypothesis' own tests (page, priority 7)"
 result = "not run: the merged LoRA encoder alone in AlpaSim (30 scenes), and a LoRA on WA-JEPA's encoder. No record on the branch (last commit 30 Oct) or in paddock's git log through 3 Nov"
-source = "team gap-review page (22 Oct); docs/drivejepa-kitscenes.md; paddock git log"
+source = "team gap-review page (22 Oct); experiments/H07_encoder_lora/README.md; paddock git log"

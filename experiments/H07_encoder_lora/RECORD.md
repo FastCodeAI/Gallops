@@ -1,7 +1,7 @@
 # Drive-JEPA, retrained on KITScenes — the working record
 
 The scripts, reports and result tables of three experiments, as they were written. The account of
-what was done and what it measured is [docs/drivejepa-kitscenes.md](../../docs/drivejepa-kitscenes.md);
+what was done and what it measured is [README.md](README.md) in this folder;
 start there.
 
 **This is a record, not a package.** It sits outside `src/gallops/` and outside `make lint`, like
