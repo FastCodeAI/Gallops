@@ -1,8 +1,11 @@
 # H15 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
 # Owner Naren.
 # Sources: Naren's plan of 5 Nov 2026 (paddock checkout, memory-layer-plan.md, "Rewritten 5 Nov 2026",
-# appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Sid's decisions
-# D10-D17 of 5 Nov, which are pinned below. Numbers about the saved data are from H05.r1's cache.
+# appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Siddesh's choices
+# of 5 Nov, which are pinned below. Numbers about the saved data are from H05.r1's cache. Those choices were
+# numbered in his working notes; the numbers are written "choice 10" here, because D10, D11, ... name other
+# decisions in experiments/decisions.toml. PREDICTIONS.md and GATE_EXPECTATIONS.md were committed before the
+# runs and keep the old labels ("Sid D23", "Sid D29", "Sid D30"): they mean these choices, not the decision log.
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
 schema = 1
@@ -40,17 +43,17 @@ predictions = "experiments/H15_prediction_memory/PREDICTIONS.md"
 narrative = "experiments/H15_prediction_memory/README.md"
 parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 
-# Pinned before anything runs (Sid, 5 Nov; Naren's agreement assumed on D10-D12):
-#   D10 momentum OFF for arms a, b, c offline; ON for every arm in the gate.
-#   D11 the motivation numbers (0.003 gap, 45 % flips) are predicted scores with momentum off; they are
+# Pinned before anything runs (Siddesh, 5 Nov; Naren's agreement assumed on choices 10-12):
+#   choice 10: momentum OFF for arms a, b, c offline; ON for every arm in the gate.
+#   choice 11: the motivation numbers (0.003 gap, 45 % flips) are predicted scores with momentum off; they are
 #       re-measured after grading with true grades and momentum-on states.
-#   D12 navtest re-grade check: grade without the anchors load; compare shared sub-scores with run
+#   choice 12: navtest re-grade check: grade without the anchors load; compare shared sub-scores with run
 #       navsim/drivejepa/20261023T202240-de2f00 within a tolerance set from the 200-token timing run.
-#   D15 go/no-go: P1 (mean true grade of the pick, (a) vs (b)) is primary and must have a CI excluding 0;
+#   choice 15: go/no-go: P1 (mean true grade of the pick, (a) vs (b)) is primary and must have a CI excluding 0;
 #       flips and comfort are secondary, reported with CIs, each with its own n; 3 seeds, the bootstrap
 #       is of the seed mean, and each seed is shown.
-#   D16 memory lengths 1, 2, 4 ("no limit" dropped); warm-up 1-16.
-#   D17 grading on 4 cores (taskset -c 0-3, 4 workers); training stays on 2 cores.
+#   choice 16: memory lengths 1, 2, 4 ("no limit" dropped); warm-up 1-16.
+#   choice 17: grading on 4 cores (taskset -c 0-3, 4 workers); training stays on 2 cores.
 #
 # Code still to come (plan appendix, "Gallops PR 2"): gallops.memory.align, .grade, .model, .train,
 # .evaluate; each is claimed by the run that first uses it. The adapter record goes under
