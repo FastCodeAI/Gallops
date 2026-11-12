@@ -1,8 +1,11 @@
 # H15 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
 # Owner Naren.
 # Sources: Naren's plan of 5 Nov 2026 (paddock checkout, memory-layer-plan.md, "Rewritten 5 Nov 2026",
-# appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Sid's decisions
-# D10-D17 of 5 Nov, which are pinned below. Numbers about the saved data are from H05.r1's cache.
+# appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Siddesh's choices
+# of 5 Nov, which are pinned below. Numbers about the saved data are from H05.r1's cache. Those choices were
+# numbered in his working notes; the numbers are written "choice 10" here, because D10, D11, ... name other
+# decisions in experiments/decisions.toml. PREDICTIONS.md and GATE_EXPECTATIONS.md were committed before the
+# runs and keep the old labels ("Sid D23", "Sid D29", "Sid D30"): they mean these choices, not the decision log.
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
 schema = 1
@@ -40,20 +43,20 @@ predictions = "experiments/H15_prediction_memory/PREDICTIONS.md"
 narrative = "experiments/H15_prediction_memory/README.md"
 parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 
-# Pinned before anything runs (Sid, 5 Nov; Naren's agreement assumed on D10-D12):
-#   D10 momentum OFF for arms a, b, c offline; ON for every arm in the gate.
-#   D11 the motivation numbers (0.003 gap, 45 % flips) are predicted scores with momentum off; they are
+# Pinned before anything runs (Siddesh, 5 Nov; Naren's agreement assumed on choices 10-12):
+#   choice 10: momentum OFF for arms a, b, c offline; ON for every arm in the gate.
+#   choice 11: the motivation numbers (0.003 gap, 45 % flips) are predicted scores with momentum off; they are
 #       re-measured after grading with true grades and momentum-on states.
-#   D12 navtest re-grade check: grade without the anchors load; compare shared sub-scores with run
+#   choice 12: navtest re-grade check: grade without the anchors load; compare shared sub-scores with run
 #       navsim/drivejepa/20261023T202240-de2f00 within a tolerance set from the 200-token timing run.
-#   D15 go/no-go: P1 (mean true grade of the pick, (a) vs (b)) is primary and must have a CI excluding 0;
+#   choice 15: go/no-go: P1 (mean true grade of the pick, (a) vs (b)) is primary and must have a CI excluding 0;
 #       flips and comfort are secondary, reported with CIs, each with its own n; 3 seeds, the bootstrap
 #       is of the seed mean, and each seed is shown.
-#   D16 memory lengths 1, 2, 4 ("no limit" dropped); warm-up 1-16.
-#   D17 grading on 4 cores (taskset -c 0-3, 4 workers); training stays on 2 cores.
+#   choice 16: memory lengths 1, 2, 4 ("no limit" dropped); warm-up 1-16.
+#   choice 17: grading on 4 cores (taskset -c 0-3, 4 workers); training stays on 2 cores.
 #
 # Code: gallops.memory.grade (H15.r1), .align (H15.r2), .model, .train, .evaluate (H15.r3). The gate
-# runs (a) and (b) seed 0 by hand from a throwaway paddock checkout (Sid D28-D30, 5 Nov); paddock gets
+# runs (a) and (b) seed 0 by hand from a throwaway paddock checkout (Siddesh's choices 28-30, 5 Nov); paddock gets
 # no PR (paddock rule of 4 Nov: released checkpoints only).
 
 [[runs]]
@@ -64,14 +67,14 @@ start_from = "H05.r1"
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 notes = """The vendor's training-time grader (compute_navsim_score: simulate, score_proposals, \
 after_score_proposals) on H05.r1's cached proposals with the train metric cache, without the anchors \
-load: the strict grade H15 trains on (Sid D22). Also stored per path: lane keeping and traffic light \
+load: the strict grade H15 trains on (Siddesh's choice 22). Also stored per path: lane keeping and traffic light \
 the benchmark's way (lane keeping checked every 0.1 s, not 0.5 s; either set to 1 where the human \
 driver's own path fails it), and the human path's own scores. States keep x, y relative to a float64 \
 origin. Navtest check (200 picks of navsim/drivejepa/20261023T202240-de2f00 against its CSV): the \
 five gates-and-comfort sub-scores and the forgiving lane keeping and traffic light agree exactly on \
 200/200, progress within 1e-4 on 199; strict lane keeping (33) and traffic light (3) differ only \
 ours 0 against the CSV's 1, all explained: 30 by the human filter, 6 by the coarse 0.5 s lane check, \
-and the progress case by the human filter (the human fails driving direction). Tolerance (Sid D23) \
+and the progress case by the human filter (the human fails driving direction). Tolerance (Siddesh's choice 23) \
 set on those same 200 tokens. Batches: val (214 logs), selection (100), rest (878)."""
 
   [runs.code]
@@ -103,13 +106,13 @@ started = 2026-11-05
 start_from = "released"
 trained = ["memory picker (new: per-path input MLP, keep gate, nudge MLP with a zero-started last layer)"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
-notes = """Strict final grade as the BCE target (Sid D22), graded moments of the 878 train logs that are \
+notes = """Strict final grade as the BCE target (Siddesh's choice 22), graded moments of the 878 train logs that are \
 not selection logs; windows along chains, warm-up 1-16; 8 epochs; length and epoch count chosen on the \
-100 selection logs by the rule in PREDICTIONS.md; momentum off for every arm offline (Sid D10). \
+100 selection logs by the rule in PREDICTIONS.md; momentum off for every arm offline (Siddesh's choice 10). \
 Selection (seed 0): L = 4 and 6 epochs by the rule; the three lengths' best selection losses differ by \
 5e-6 (0.288801 / 0.288804 / 0.288806), so the length is a coin toss; released 0.30156. Preflight passed \
 (untrained = released on 200/200 val moments, carry = reset on 256 chain starts). Trained on GPU with \
-cores 0-1 (Sid D27), 2.7 min for the six final runs. Checkpoints are runs H15.r3-a-s0 ... H15.r3-b-s2. \
+cores 0-1 (Siddesh's choice 27), 2.7 min for the six final runs. Checkpoints are runs H15.r3-a-s0 ... H15.r3-b-s2. \
 Evaluated on the 214 val logs (15,320 graded moments in 179 of them), momentum off, 3-seed mean, \
 log-clustered paired bootstrap, 2,000 draws. Verdict: P1 supported but not useful; (a) level with \
 released on grade, -3.0 pts on two-frame comfort; matching rule: go to gate."""
@@ -243,7 +246,7 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
   manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
-  note = "By hand from a throwaway paddock worktree (Sid D28-D30), momentum on, one lane. neuroNCAP quick first failed to start its renderer (port 8900 held by another user's process) and was re-run on port 8950 (Sid). The Bench2Drive and AlpaSim crash checks ran cleanly (one unit: no verdict). Beside the scores, NAVSIM's no-at-fault-collisions term is a REGRESSION, 0.993 to 0.988 (t -2.19); per-term pairs never decide the gate."
+  note = "By hand from a throwaway paddock worktree (Siddesh's choices 28-30), momentum on, one lane. neuroNCAP quick first failed to start its renderer (port 8900 held by another user's process) and was re-run on port 8950 (Sid). The Bench2Drive and AlpaSim crash checks ran cleanly (one unit: no verdict). Beside the scores, NAVSIM's no-at-fault-collisions term is a REGRESSION, 0.993 to 0.988 (t -2.19); per-term pairs never decide the gate."
 
     [[runs.gate.pairs]]
     bench = "kitscenes"
