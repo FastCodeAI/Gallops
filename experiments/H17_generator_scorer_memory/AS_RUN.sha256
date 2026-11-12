@@ -1,5 +1,9 @@
 # sha256 of each file as it ran, before machine paths were replaced by placeholders, against its path in the
 # working folder (reports/, src/, out/, logs/). Files not listed were copied byte for byte.
+# Five scripts (s6_model, s6_train, s6_tests, s7_pilot, s8_short) were edited after the first training run and
+# again for the recall lesson: the copies in the step folders are the last versions. The copies taken before the
+# recall lesson are in 05_memory_collapse_fix/as_run_before_recall_lesson/ (out/src_before_build5/ below).
+# No copy of them from the first training run was kept.
 9979ae8b4083c178be9434d58c07f6b09be0d2a53a7f94ef3dbc7214253784dc  logs/b4c_events.diff
 da20a3982ad8dde70057cc736d746007e6d4de469f51ec39c6967cc58c168f89  out/attempt_before_slot_emb/s6_params.json
 2c3d9e8bdbb19a14431c453fd443acabf5d9128e89c383da6d4de44945ca52ef  out/attempt_before_slot_emb/s6_t1.json
@@ -33,6 +37,10 @@ d5cec60a0554d54ed479a92fc30c031bb9b3e9eca13dbde2424174beae7820a3  out/s6_t2_map_
 b44ffada797c47b1a159bba80893e25e6b348e96ded2e23df996f3de85d96f4e  out/s6_t2t3.json
 2e8a01df4eee99f740ed9fbbf11d2f2db59fdca16094dbc0def2517586d485be  out/s6_t2t3_v2.json
 bb4db0c56d4f15cd6600125669ab5d42d193f71cf3998e771dad999ba759e2bc  out/s6_t2t3_v3.json
+6264cdb859c892cf686c4727c34c088a79cf5ea861bc925298537cd252af56eb  out/src_before_build5/s6_model.py
+382f09ede3e36f98f71472e73f51ee7806fa866ce0a88516687e0ade88bf6da5  out/src_before_build5/s6_train.py
+d4b1165c44991d0c212d202a70b02b123a0bbb0bef1c0692ac4c87334b20c0f6  out/src_before_build5/s7_pilot.py
+5fc7dd25641ff20e068baa8564e7adb1fd0629798a040d77950591693b8e84df  out/src_before_build5/s8_short.py
 e8a82f2507522fb0a30b0000ca945f151da1633b8d1e2c519a27cb4598ca479e  reports/APPROACH3_RECON.md
 7ad1b3fc44f8a133851571d0160462c2148cf99d676b77cc34186e92bd22a3ea  reports/ARM_C_CHECK.md
 9b641bc6bd3a037a18e6d29c54b44094ba64b5690d915abbd6cd152d832e979b  reports/BUILD1_SLICES_CACHE.md
