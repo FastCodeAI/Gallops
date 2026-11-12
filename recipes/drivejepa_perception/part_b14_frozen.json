@@ -1,0 +1,101 @@
+{
+ "rule": "the setting with the highest R-clean selection value, mean over seeds 0-2 (as B-1); a tie goes to the fewer switches, then to the grid's order (D27; PREDICTIONS.md, Part B \u00b7 B-1-4)",
+ "source": {
+  "grid_sha256": "23f151ce2d3359faf9298c2d3720c05570dfcf9cd961fce8c030a879814062d9",
+  "split": "fresh",
+  "rows": 2624
+ },
+ "weights": {
+  "target_share": {
+   "sg-one-north": 0.15758274328997202,
+   "us-ma-boston": 0.30717931829408857,
+   "us-nv-las-vegas-strip": 0.3345957516877984,
+   "us-pa-pittsburgh-hazelwood": 0.20064218672814096
+  },
+  "used_share": {
+   "us-ma-boston": 0.36464034401876466,
+   "us-nv-las-vegas-strip": 0.3971853010164191,
+   "us-pa-pittsburgh-hazelwood": 0.23817435496481631
+  },
+  "dropped": [
+   "sg-one-north"
+  ],
+  "rows_per_city": {
+   "us-ma-boston": 133,
+   "us-nv-las-vegas-strip": 2382,
+   "us-pa-pittsburgh-hazelwood": 109
+  },
+  "kish_n_eff": 630.366584407559
+ },
+ "values": {
+  "B-1-4": {
+   "l0.1-m0.5-b0-h1": {
+    "value": 0.7565839258754746,
+    "veto_rate": 0.008130081300813009
+   },
+   "l0.1-m0.5-b0-h2": {
+    "value": 0.7563970113000288,
+    "veto_rate": 0.03010670731707317
+   },
+   "l0.1-m0.5-b0.05-h1": {
+    "value": 0.7564056099519143,
+    "veto_rate": 0.014608739837398374
+   },
+   "l0.1-m0.5-b0.05-h2": {
+    "value": 0.7556808941463332,
+    "veto_rate": 0.044715447154471545
+   },
+   "l0.1-m1-b0-h1": {
+    "value": 0.7564028138956461,
+    "veto_rate": 0.014227642276422764
+   },
+   "l0.1-m1-b0-h2": {
+    "value": 0.7557832465546945,
+    "veto_rate": 0.0391260162601626
+   },
+   "l0.1-m1-b0.05-h1": {
+    "value": 0.7562229373612924,
+    "veto_rate": 0.02426321138211382
+   },
+   "l0.1-m1-b0.05-h2": {
+    "value": 0.7554613823861454,
+    "veto_rate": 0.05627540650406504
+   },
+   "l0.3-m0.5-b0-h1": {
+    "value": 0.75654791489805,
+    "veto_rate": 0.008511178861788619
+   },
+   "l0.3-m0.5-b0-h2": {
+    "value": 0.7560770908109968,
+    "veto_rate": 0.032266260162601625
+   },
+   "l0.3-m0.5-b0.05-h1": {
+    "value": 0.7561616381145094,
+    "veto_rate": 0.01486280487804878
+   },
+   "l0.3-m0.5-b0.05-h2": {
+    "value": 0.7549719194932839,
+    "veto_rate": 0.0467479674796748
+   },
+   "l0.3-m1-b0-h1": {
+    "value": 0.7560703845372752,
+    "veto_rate": 0.014735772357723576
+   },
+   "l0.3-m1-b0-h2": {
+    "value": 0.7553762251042085,
+    "veto_rate": 0.04052337398373984
+   },
+   "l0.3-m1-b0.05-h1": {
+    "value": 0.7558156350311785,
+    "veto_rate": 0.02464430894308943
+   },
+   "l0.3-m1-b0.05-h2": {
+    "value": 0.7545347993096669,
+    "veto_rate": 0.05792682926829268
+   }
+  }
+ },
+ "chosen": {
+  "B-1-4": "l0.1-m0.5-b0-h1"
+ }
+}
