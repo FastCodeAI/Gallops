@@ -6,6 +6,8 @@
         [--stop-after N] [--no-report] [--rows train|tap] [--blind]
     python -m gallops.drivejepa_perception.train_sidecar reread --tokens T --labels L --run R [--which kept]
     python -m gallops.drivejepa_perception.train_sidecar sight --tokens T --labels L --run R
+    python -m gallops.drivejepa_perception.train_sidecar agents --tokens T --labels L --run R \
+        [--vit-tokens V] --row-set all|select|train|train+select --out O
 
 Only the side-car trains; the ViT, the projector and the whole planner are not even loaded. The
 recipe is H04's (train_agent_decoder.py): AdamW 2e-4, weight decay 0.01, batch 64, fp16 autocast,
@@ -34,6 +36,15 @@ is under 0.5 m and their class accuracy over 95%, or 4,000 steps. The sight chec
 training: with the tokens zeroed, the detections should all but vanish.
 
 `--blind` zeroes the tokens throughout: the no-camera baseline, trained identically.
+
+**The agents pass (phase B).** A run's kept epoch decoded on a row set of any source's caches
+(`navsim_data` sources: navtrain, navtest, fresh), into the format arm O builds from the labels.
+- It decodes only the rows asked for; a navtrain row set never includes a report row (`row_set`).
+- Before decoding, the run is read on its own select rows by this pass's decoding, then by
+  `evaluate.readout`, and must give the select F1 its training recorded for that epoch (B0-G7 in
+  PREDICTIONS.md): the check that the model, the epoch and the decoding are the ones that were
+  measured. The new split's inputs are held to the live model by `preflight.run_data`.
+- The manifest names its inputs (paths and their manifests' sha256) and the check's numbers.
 """
 
 from __future__ import annotations
@@ -156,12 +167,19 @@ def load(tokens_dir: Path, labels_dir: Path, tap: str, vit_tokens=None):
     """
     tokens_dir, labels_dir = Path(tokens_dir), Path(labels_dir)
     labels = dict(np.load(labels_dir / "labels.npz"))
-    logs = json.loads((labels_dir / "manifest.json").read_text())["logs"]
+    lmanifest = json.loads((labels_dir / "manifest.json").read_text())
+    logs = lmanifest["logs"]
     token_logs = np.array([logs[i] for i in labels["log_id"]])
-    splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
-    rows = {name: np.flatnonzero(np.isin(token_logs, splits[name])) for name in ("train", "select", "report")}
     tap_rows = np.load(tokens_dir / "tap_rows.npy")
-    rows["tap"] = np.intersect1d(tap_rows, rows["train"])
+    if navsim_data.source_of(lmanifest) == "navtrain":
+        splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
+        rows = {
+            name: np.flatnonzero(np.isin(token_logs, splits[name])) for name in ("train", "select", "report")
+        }
+        rows["tap"] = np.intersect1d(tap_rows, rows["train"])
+    else:
+        # Part B's other sources have no log splits: nothing trains on them, and all of them is read.
+        rows = {"all": np.arange(len(token_logs))}
     if tap == "post" or (tap == "vit_out" and vit_tokens):
         source = Path(vit_tokens) / "vit_out.npy" if tap == "vit_out" else tokens_dir / "tokens.npy"
         tokens = np.load(source, mmap_mode="r")
@@ -611,7 +629,7 @@ def load_run(run: Path) -> tuple:
 
 
 @torch.no_grad()
-def agent_arrays(model, tokens, slot, rows, projections, device) -> dict:
+def agent_arrays(model, tokens, slot, rows, projections, device, chunk: int = 256) -> dict:
     """The side-car's last-layer output on `rows`, decoded into the agents format phase B reads.
 
     The format arm O builds from the labels (train_scorer.truth_agents): class, confidence, centre,
@@ -632,9 +650,10 @@ def agent_arrays(model, tokens, slot, rows, projections, device) -> dict:
     }
     arrays = {k: np.zeros((n, *shape), dtype) for k, (shape, dtype) in keys.items()}
     rows = np.asarray(rows)
+    step = chunk
     with torch.autocast("cuda", dtype=torch.float16):
-        for i in range(0, len(rows), 256):
-            chunk = rows[i : i + 256]
+        for i in range(0, len(rows), step):
+            chunk = rows[i : i + step]
             # fp32 in, so the CPU runs it too; on the GPU autocast casts back to fp16 exactly.
             tok = (
                 torch.from_numpy(
@@ -659,32 +678,110 @@ def agent_arrays(model, tokens, slot, rows, projections, device) -> dict:
     return arrays
 
 
+def row_set(spec: str, rows: dict, source: str) -> np.ndarray:
+    """The rows an agents pass decodes. Off navtrain, `all`; on navtrain, `select`, `train` or
+    `train+select`, never a report row (the report logs are read once, by Part A's step 6)."""
+    if source != "navtrain":
+        if spec != "all":
+            raise SystemExit(f"a {source} pass decodes all its rows, not {spec!r}")
+        return rows["all"]
+    named = {"select": ["select"], "train": ["train"], "train+select": ["train", "select"]}
+    if spec not in named:
+        raise SystemExit(f"a navtrain pass decodes select, train or train+select, not {spec!r}")
+    picked = np.sort(np.concatenate([rows[name] for name in named[spec]]))
+    if np.isin(picked, rows["report"]).any():
+        raise SystemExit("a report-log row is in the row set")
+    return picked
+
+
+def decoded(arrays: dict, row: int) -> dict:
+    """One row of `agent_arrays`' output in `evaluate.decode`'s terms (absolute path points)."""
+    xyz = arrays["xyz"][row]
+    return {
+        "conf": arrays["conf"][row],
+        "cls": arrays["cls"][row],
+        "xyz": xyz,
+        "vel": arrays["vel"][row],
+        "path": xyz[:, None, :2] + arrays["path"][row],
+    }
+
+
+def select_f1_check(model, run: Path, epoch: int, device) -> dict:
+    """The run's kept epoch decoded by `agent_arrays` on its own select rows, read by `evaluate.readout`:
+    the select F1 its training recorded for that epoch, within 1e-6 (B0-G7).
+
+    The rows are decoded in batches of 128 in their order, as `predict` read them in training, so the
+    two forwards see identical batches.
+    """
+    run_args = json.loads((run / "run.json").read_text())["args"]
+    tokens, slot, rows, projections, targets = load(
+        run_args["tokens"], run_args["labels"], run_args["tap"], run_args.get("vit_tokens", "")
+    )
+    select = rows["select"]
+    arrays = agent_arrays(model, tokens, slot, select, projections, device, chunk=128)
+    result = evaluate.readout(
+        [decoded(arrays, r) for r in select], [targets[r] for r in select], prior_gap(targets, rows["train"])
+    )
+    records = [json.loads(line) for line in (run / "metrics.jsonl").read_text().splitlines()]
+    recorded = [r["f1_30m"] for r in records if r["epoch"] == epoch][0]
+    now = f1(result)
+    return {
+        "select_rows": int(len(select)),
+        "epoch": epoch,
+        "recorded": recorded,
+        "now": now,
+        "gap": abs(now - recorded),
+    }
+
+
+def _manifest_sha(directory) -> str:
+    import hashlib
+
+    path = Path(directory) / "manifest.json"
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else ""
+
+
 def agents(cfg, args) -> None:
-    """The agents pass: an A1 run's kept epoch decoded on every row, for phase B's arms F and S."""
+    """The agents pass: a run's kept epoch decoded on a row set, for phase B (module docstring)."""
     from gallops.drivejepa_b2d.provenance import git_sha
 
     out = Path(args.out)
     if out.exists():
         raise SystemExit(f"{out} exists; a pass never overwrites one")
+    sha = git_sha()
     run = Path(args.run)
     meta = json.loads((run / "run.json").read_text())
     run_args = meta["args"]
-    tokens, slot, rows, projections, _ = load(
-        args.tokens, args.labels, run_args["tap"], run_args.get("vit_tokens", "")
-    )
+    vit_tokens = args.vit_tokens or run_args.get("vit_tokens", "")
+    device = torch.device("cuda")
     model, epoch = load_run(run)
-    arrays = agent_arrays(model, tokens, slot, np.arange(len(projections)), projections, torch.device("cuda"))
+    check = select_f1_check(model, run, epoch, device)
+    print(f"select F1 check: {check}", flush=True)
+    if check["gap"] > 1e-6:
+        raise SystemExit(f"the run, decoded here, does not give the select F1 it recorded: {check}")
+    tokens, slot, rows, projections, _ = load(args.tokens, args.labels, run_args["tap"], vit_tokens)
+    source = navsim_data.source_of(json.loads((Path(args.labels) / "manifest.json").read_text()))
+    picked = row_set(args.row_set, rows, source)
+    arrays = agent_arrays(model, tokens, slot, picked, projections, device)
     staging = out.with_name(out.name + ".staging")
     staging.mkdir(parents=True)
     np.savez(staging / "agents.npz", **arrays)
     manifest = {
         "run": str(run),
         "epoch": epoch,
-        "gallops_sha": git_sha(),
-        "rows": len(projections),
+        "gallops_sha": sha,
         "train_git_sha": meta["train_git_sha"],
+        "source": source,
+        "row_set": args.row_set,
+        "rows": len(projections),
+        "rows_decoded": int(len(picked)),
+        "inputs": {
+            name: {"path": str(path), "manifest_sha256": _manifest_sha(path)}
+            for name, path in (("tokens", args.tokens), ("labels", args.labels), ("vit_tokens", vit_tokens))
+        },
+        "select_f1_check": check,
         "threshold": evaluate.THR,
-        "agents_per_row": float(arrays["mask"].sum(1).mean()),
+        "agents_per_row": float(arrays["mask"][picked].sum(1).mean()) if len(picked) else 0.0,
     }
     (staging / "manifest.json").write_text(json.dumps(manifest, indent=1))
     staging.rename(out)
@@ -753,6 +850,11 @@ def main(argv=None) -> None:
     )
     parser.add_argument(
         "--vit-tokens", default="", help="a ViT-out pass over every row (tokens --vit-out-all)"
+    )
+    parser.add_argument(
+        "--row-set",
+        default="all",
+        help="agents: all (navtest, fresh) or select|train|train+select (navtrain)",
     )
     args = parser.parse_args(argv)
     resolve_architecture(args)

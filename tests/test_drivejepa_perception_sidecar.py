@@ -399,3 +399,37 @@ def test_per_sample_counts_read_one_class_within_thirty_metres():
     assert vehicles["detections"][0] == 2 and vehicles["right"][0] == 2
     every = evaluate.per_sample_counts([pred], [gt])
     assert every["targets"][0] == 3 and every["hits"][0] == 3
+
+
+def test_an_agents_pass_never_decodes_a_report_row():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar as ts
+
+    rows = {"train": np.array([0, 4]), "select": np.array([2]), "report": np.array([1, 3])}
+    assert ts.row_set("train+select", rows, "navtrain").tolist() == [0, 2, 4]
+    assert ts.row_set("select", rows, "navtrain").tolist() == [2]
+    with pytest.raises(SystemExit, match="not 'all'"):
+        ts.row_set("all", rows, "navtrain")  # all of navtrain includes the report logs
+    leaky = dict(rows, select=np.array([2, 3]))
+    with pytest.raises(SystemExit, match="report-log row"):
+        ts.row_set("select", leaky, "navtrain")
+    assert ts.row_set("all", {"all": np.arange(3)}, "navtest").tolist() == [0, 1, 2]
+    with pytest.raises(SystemExit, match="decodes all"):
+        ts.row_set("select", {"all": np.arange(3)}, "fresh")
+
+
+def test_decoded_agents_carry_absolute_path_points():
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception import train_sidecar as ts
+
+    arrays = {
+        "conf": np.array([[0.9, 0.1]]),
+        "cls": np.array([[0, 1]]),
+        "xyz": np.array([[[10.0, 2.0, 0.5], [5.0, -1.0, 0.0]]]),
+        "vel": np.zeros((1, 2, 2)),
+        "path": np.array([[[[1.0, 0.0], [2.0, 0.5]], [[0.0, 0.0], [0.0, 0.0]]]]),
+    }
+    out = ts.decoded(arrays, 0)
+    assert (
+        out["path"][0].tolist() == [[11.0, 2.0], [12.0, 2.5]] and out["path"][1].tolist() == [[5.0, -1.0]] * 2
+    )

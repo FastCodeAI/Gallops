@@ -994,3 +994,76 @@ module = "drivejepa_perception.pdm_labels"
 args = ["check", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
         "--out", "{out}/pdm-fresh-v1", "--rows", "50"]
 after = ["part-b-0-pdm-fresh"]
+
+# The side-car's agents (one GPU): each v3 seed at its kept epoch, decoded on navtrain's select rows (for
+# B-1's smoke run), on navtest and on R-clean. Each pass first decodes the run on its own select rows and
+# requires the select F1 its training recorded (B0-G7); a navtrain row set never holds a report row.
+
+[[stage]]
+name = "part-b-0-agents-select-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--vit-tokens", "{out}/tokens-vit-v1", "--row-set", "select", "--out", "{out}/agents-select-v3-s0"]
+
+[[stage]]
+name = "part-b-0-agents-select-s1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s1", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--vit-tokens", "{out}/tokens-vit-v1", "--row-set", "select", "--out", "{out}/agents-select-v3-s1"]
+
+[[stage]]
+name = "part-b-0-agents-select-s2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s2", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--vit-tokens", "{out}/tokens-vit-v1", "--row-set", "select", "--out", "{out}/agents-select-v3-s2"]
+
+[[stage]]
+name = "part-b-0-agents-navtest-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s0", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1", "--row-set", "all", "--out", "{out}/agents-navtest-v3-s0"]
+after = ["part-b-0-vit-navtest"]
+
+[[stage]]
+name = "part-b-0-agents-navtest-s1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s1", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1", "--row-set", "all", "--out", "{out}/agents-navtest-v3-s1"]
+after = ["part-b-0-vit-navtest"]
+
+[[stage]]
+name = "part-b-0-agents-navtest-s2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s2", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1", "--row-set", "all", "--out", "{out}/agents-navtest-v3-s2"]
+after = ["part-b-0-vit-navtest"]
+
+[[stage]]
+name = "part-b-0-agents-fresh-s0"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s0", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
+        "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--row-set", "all", "--out", "{out}/agents-fresh-v3-s0"]
+after = ["part-b-0-vit-fresh"]
+
+[[stage]]
+name = "part-b-0-agents-fresh-s1"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s1", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
+        "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--row-set", "all", "--out", "{out}/agents-fresh-v3-s1"]
+after = ["part-b-0-vit-fresh"]
+
+[[stage]]
+name = "part-b-0-agents-fresh-s2"
+python = "drivejepa"
+module = "drivejepa_perception.train_sidecar"
+args = ["agents", "--run", "{out}/part-a/5b-v3-e24-s2", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
+        "--vit-tokens", "{out}/tokens-vit-fresh-v1", "--row-set", "all", "--out", "{out}/agents-fresh-v3-s2"]
+after = ["part-b-0-vit-fresh"]
