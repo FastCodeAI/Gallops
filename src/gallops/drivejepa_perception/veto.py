@@ -24,6 +24,12 @@ on ties as the release's argmax; if every proposal is vetoed, the release's own 
 **The settings** (D24, B-1 (a)): margins 0.5, 1, 2 m; horizons 1, 2 s; confidence 0.5, 0.7 for the
 side-car. They are chosen on R-clean only (`grid`, then `freeze`), never on navtest.
 
+**The rows chosen on** (D25): R-clean's windows whose driving command is one navtest uses (left,
+straight, right). On the other 77% the command is "unknown", which neither navtrain nor navtest ever has,
+so the release's input there is out of distribution (its pick fails NC on 4.0% of them, on 0.65% of the
+rest): 2,624 windows over 20 logs remain. `known_command` reads the command from the release's own input
+(the token pass's `ego_status`).
+
 **The selection value** of a pick on R-clean is its vendored PDM final score under the human filter
 (`filtered_final`): every term the human's own plan fails is forgiven, as navsim's filter forgives it,
 recombined without EC (the vendored scorer has none). Its mean is reweighted to navtest's city mix
@@ -57,6 +63,9 @@ CONFIDENCES = (0.5, 0.7)
 #: The plan's poses are 0.5 s apart, the first at 0.5 s: H seconds is its first H / 0.5 times.
 STEP_S = 0.5
 SEEDS = (0, 1, 2)
+#: The driving command's one-hot slots in the release's own `ego_status` (its last frame): left, straight,
+#: right, unknown. navtrain and navtest never use "unknown"; B-1 chooses only on the others (D25).
+COMMAND_SLOTS, UNKNOWN_COMMAND = slice(7, 11), 3
 #: The vendored labels' columns (pdm_labels.COLUMNS) and the final score's weights.
 NC, DAC, TLC, DDC, EP, TTC, LK, HC, FINAL = range(9)
 
@@ -191,15 +200,28 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def split_rows(split: str, labels_dir: Path) -> np.ndarray:
-    """The rows B-1 reads: every row of fresh and navtest; navtrain's select rows for the smoke."""
+def known_command(tokens_dir: Path) -> np.ndarray:
+    """(N,) True where the release's input carries a driving command navtest uses (D25); refuses a row
+    whose command is not one-hot."""
+    command = np.load(Path(tokens_dir) / "ego_status.npy", mmap_mode="r")[:, -1, COMMAND_SLOTS]
+    command = np.asarray(command)
+    if not (np.isin(command, [0.0, 1.0]).all(1) & (command.sum(1) == 1)).all():
+        raise SystemExit(f"{tokens_dir}: a driving command is not one-hot")
+    return command.argmax(1) != UNKNOWN_COMMAND
+
+
+def split_rows(split: str, labels_dir: Path, tokens_dir=None) -> np.ndarray:
+    """The rows B-1 reads: R-clean's known-command windows (D25); every navtest row; navtrain's select rows
+    for the smoke."""
     from gallops.drivejepa_perception import navsim_data
 
     labels = np.load(Path(labels_dir) / "labels.npz")
     manifest = json.loads((Path(labels_dir) / "manifest.json").read_text())
     if navsim_data.source_of(manifest) != ("navtrain" if split == "select" else split):
         raise SystemExit(f"{labels_dir} is not {split}'s labels pass")
-    if split != "select":
+    if split == "fresh":
+        return np.flatnonzero(known_command(tokens_dir))
+    if split == "navtest":
         return np.arange(len(labels["token"]))
     splits = json.loads((REPO / "recipes/drivejepa_perception/splits.json").read_text())
     token_logs = np.array(manifest["logs"])[labels["log_id"]]
@@ -214,7 +236,7 @@ def load_split(out_root: Path, split: str) -> dict:
     tok, lab, pdm_name, _ = O_DIRS[split]
     out_root = Path(out_root)
     labels_dir = out_root / lab
-    rows = split_rows(split, labels_dir)
+    rows = split_rows(split, labels_dir, out_root / tok)
     labels = np.load(labels_dir / "labels.npz")
     manifest = json.loads((labels_dir / "manifest.json").read_text())
     scores = tokens.release_scores(out_root / tok)

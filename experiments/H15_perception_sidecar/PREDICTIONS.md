@@ -225,6 +225,13 @@ Nothing trains. B-1 reads navtest once, after its settings are frozen on R-clean
 
 ### How the settings are chosen (on R-clean only)
 
+**Amended 12 Nov 2026 (D25), before any B-1 rule read R-clean.** B-0's check of R-clean found 77% of its windows
+carrying the "unknown" driving command, which navtrain and navtest never have (the release's input is out of
+distribution there), and 55% with the ego stopped (navtest 7%). The owner restricted B-1's selection to R-clean's
+windows whose command navtest also uses (left, straight, right): **2,624 windows over 20 logs**, still reweighted to
+navtest's cities (`veto.known_command`). Caveats, stated before the read: 58% of them still have the ego stopped, and
+they almost all drive straight (133 left, 3 right). Nothing else below changed.
+
 - **The value of a pick** is its vendored PDM final score under the human filter: each of the eight terms the
   human's own plan fails is forgiven, then NC·DAC·TLC·DDC·(5 EP + 5 TTC + 2 LK + 2 HC)/14 (`veto.filtered_final`;
   the vendored scorer has no EC).

@@ -106,6 +106,8 @@ the release's proposals that come too close to them, and leave a better pick?
 
 **Q8. How are the settings chosen without fooling ourselves?**
 - On the R-clean split (B-0, Q3): never on navtest, and never on navtrain, where there is no room.
+- **Only on its windows with a driving command navtest uses (D25, 12 Nov).** 77% of R-clean carries the "unknown"
+  command, which navtrain and navtest never have: 2,624 windows over 20 logs remain.
 - The release's 32 proposals there get PDM labels once (vendored). Then any setting's pick is scored by lookup:
   a full grid costs CPU minutes.
 - The setting with the best R-clean EPDMS, reweighted to navtest's cities, is frozen. Navtest is read once, by

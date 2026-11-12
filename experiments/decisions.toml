@@ -303,3 +303,21 @@ by = ["Shreedhar"]
 evidence = ["H15.r4", "H15.r5"]
 next = ["H15"]
 source = "the owner, 11 Nov 2026"
+
+[[decision]]
+id = "D25"
+date = 2026-11-12
+short = "H15 B-1: settings are chosen on R-clean's known-command windows only"
+decision = """B-0's check of the R-clean split before use (docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md, \
+B-0-1) found it unlike navtest: 77% of its 11,340 windows carry the 'unknown' driving command, which neither navtrain \
+nor navtest ever has, so the release's input there is out of distribution (its pick fails NC on 4.0% of them, on 0.65% \
+of the rest); 55% have the ego stopped (navtest 7%); it holds 39 pedestrians per window (navtest 9). Before any B-1 \
+rule read R-clean, the owner chose to restrict B-1's selection to the windows whose command is one navtest uses (left, \
+straight, right): 2,624 windows over 20 logs, still reweighted to navtest's cities. This amends D24's B-0 (a) for B-1's \
+choice only; B-0's own counts and the R-clean labels stay as built. Stated caveats: 58% of the kept windows still have \
+the ego stopped, and almost all of them drive straight (133 left, 3 right). PREDICTIONS.md's B-1 section records the \
+amendment, dated, before the grid."""
+by = ["Shreedhar"]
+evidence = ["H15.r5"]
+next = ["H15"]
+source = "the owner, 12 Nov 2026"

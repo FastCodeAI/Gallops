@@ -188,3 +188,15 @@ def test_a_frozen_name_is_a_setting_of_the_grid():
     assert veto.setting_of("B-1-2", "m0.5-h2") == (0.5, 2.0, None)
     with pytest.raises(SystemExit, match="not a setting"):
         veto.setting_of("B-1-2", "m3-h1")
+
+
+def test_b1_chooses_only_where_the_command_is_one_navtest_uses(tmp_path):
+    ego = np.zeros((4, 4, 11), np.float32)
+    for row, slot in enumerate((0, 1, 2, 3)):  # left, straight, right, unknown
+        ego[row, -1, 7 + slot] = 1.0
+    np.save(tmp_path / "ego_status.npy", ego)
+    assert veto.known_command(tmp_path).tolist() == [True, True, True, False]
+    ego[1, -1, 7:11] = 0.0  # no command at all
+    np.save(tmp_path / "ego_status.npy", ego)
+    with pytest.raises(SystemExit, match="not one-hot"):
+        veto.known_command(tmp_path)

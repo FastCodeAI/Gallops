@@ -191,6 +191,19 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     section, committed before any R-clean read.
   - **Waiting:** R-clean's metric cache, PDM labels and preflight; the live release (B0-G9); the cross-fit
     side-cars; B-0-4.
+- **12 Nov · R-clean is unlike navtest; B-1 chooses on its known-command windows (D25).**
+  - **Found** (B-0-1's check of R-clean before use): 77% of its windows carry the "unknown" driving command, which
+    navtrain and navtest never have, and 55% have the ego stopped (navtest 7%). On those windows the release's
+    input is out of distribution: its pick fails NC four to six times as often.
+  - **Asked and answered:** which windows B-1's grid chooses on. The owner: only those whose command navtest uses,
+    2,624 windows over 20 logs, still city-reweighted. PREDICTIONS.md's B-1 section is amended, dated, before any
+    B-1 rule read R-clean.
+  - **Done since:** R-clean's cache (B0-G4), labels and live preflight (B0-G5, B0-G6); the five cross-fit
+    side-cars (select F1 0.700–0.708, within 0.02 of seed 0's: B0-G11); B-0-4 on R against R̃.
+  - **The live release (B0-G9):** picks equal on every token and EPDMS within 6e-8 points of the replay, but the
+    gate's "every column equal" holds on 52% of tokens, not 99.9%. Every discrete column is identical everywhere;
+    only EP differs, by at most 1.5e-6, because the plans differ by at most 5e-5 m. Brought to the owner before
+    B-1 reads navtest.
 
 <a id="open"></a>
 
@@ -222,7 +235,7 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D24 for this work |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D25 for this work |
 
 ## How this set is kept
 
