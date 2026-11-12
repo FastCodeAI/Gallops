@@ -20,7 +20,10 @@ printed logs are not committed; [POINTERS.md](../POINTERS.md) lists them.
 
 ## Running them again
 
-Check out paddock at `0fae534`, copy `src/` from here over it, and run the gate with
+Check out paddock at `0fae534` and copy `src/` from here over it. Build the test array first:
+`<drive-jepa python> experiments/H15_prediction_memory/scripts/make_memory_fixture.py
+src/paddock/adapters/models/drivejepa/tests/fixtures/memory_fixture.npz`; without it, nine of the 14
+memory tests skip and the run looks green. Then run the gate with
 `--model drivejepa --env DRIVEJEPA_MEMORY=<checkpoint directory>` (the H15 report,
 `MEMORY_H15_GATE.md`, has the exact commands and the site config). Momentum stays on, as `model.yaml`
 sets it. Do not commit them there.

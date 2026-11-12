@@ -33,7 +33,7 @@ seed's value is shown beside it.
 | P1 | **primary** | offline, 214 val logs, every graded moment (n = 15,320) | mean true PDM grade of the pick (vendor `get_sub_score` final score) | (b) | **(a) − (b) = +0.01** (strict grade) | (a) − (b) > 0 and its CI excludes 0 | the CI includes 0, or (a) − (b) < 0 |
 | P2a | secondary | the same logs, every back-to-back pair (n = 18,798) | flip rate: pick-to-pick distance > 1 m (mean waypoint distance over the 3.5 s two plans share, ego-motion aligned) | (b) | (a) better than (b) | reported with its CI; not required to exclude 0 | — |
 | P2b | secondary | the same logs, pairs where both moments are graded (n = 12,768) | two-frame extended comfort of the picks | (b) | (a) better than (b) | reported with its CI; not required to exclude 0 | — |
-| P3 | gate | paddock's regression gate, every benchmark, quick tier then closed tier | each benchmark's own score | released (`/srv/paddock/queue/baselines/drivejepa.toml`) | no change | no REGRESSION on any benchmark | any REGRESSION |
+| P3 | gate | paddock's regression gate, every benchmark, quick tier then closed tier | each benchmark's own score | released (`{paddock_site}/queue/baselines/drivejepa.toml`) | no change | no REGRESSION on any benchmark | any REGRESSION |
 | P4 | gate | neuroNCAP closed tier, side pairs 0103 and 0110 | score; when braking starts; speed at impact | (b) | (a) above (b) | (a) > (b) and (a) brakes no later | (a) ≤ (b), or (a) brakes later |
 
 **P1's magnitude** (pinned 5 Nov 2026 by Sid, after the val logs were graded and before any training step).
