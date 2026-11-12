@@ -39,7 +39,7 @@ a module in `src/gallops` was used by no experiment. The validation is in
 | Track | ID | What it is |
 |---|---|---|
 | `gap-closing` | `GCnn` | Phase 1, closed. Each person took some benchmarks and tried to close released Drive-JEPA's gap there. |
-| `hypothesis` | `Hnn` | Phase 2, from the 4-camera approach (16 Oct) on. One structural claim, tested on the agreed base and decided by the regression gate. |
+| `hypothesis` | `Hnn` | Phase 2, from the 4-camera approach (16 Oct) on. One structural claim, tested against the base and decided by the regression gate. |
 | `enabler` | `Hnn` | Phase 2 work that a hypothesis needs before it can be decided: the gate itself, shared storage, a benchmark, teacher data. |
 
 Hypotheses and enablers share one numbering because the team prioritised them together on
@@ -132,9 +132,11 @@ says SHIP against the current base, and each later SHIP against the then-current
 `N`. The promotion is a row in the decision log with `version` set, and the README's "Where we
 are" reads it from there. Until the first SHIP there is no gallops version, and the README says so.
 
-The queue compares with its own baselines, and today those are released Drive-JEPA only: a
-`--baseline` job takes no `--env`. So a SHIP from the queue beats the released model, not the base,
-and earns no version. Record it and decide on it; `version` waits until the base has baselines there.
+The base is released Drive-JEPA (D20), and the queue's baselines are that model, so the first SHIP
+from the queue earns `gallops-v0.1`. A later version needs a SHIP against the version before it, and
+the queue cannot give that yet: a `--baseline` job runs the released model and takes no `--env`. After
+`gallops-v0.1`, record a queue SHIP and decide on it; `version` waits until the queue can compare with
+the current version.
 
 Paddock's driver versions (`0.1.4b`, `0.1.7`) name the driver that feeds a model in AlpaSim, not
 a checkpoint. A record names them in `shipped_as`.
@@ -284,7 +286,7 @@ HOLD has four causes, and the job's output says which.
 | **HOLD**, a pair undecided | a pair did not reach GAIN, NEUTRAL or REGRESSION (a clean crash check's TOO FEW UNITS is normal) | No verdict yet. Fix that pair, then run it again. Paddock `docs/gate.md` says what each verdict means. |
 | **HOLD**, on the quick tier | every pair decided, and this is the best quick can do: its closed-loop pairs may not ship | The expected good result. Run `--tier all` if you would ship this checkpoint. |
 | **HOLD**, on the closed tier | every pair decided, nothing regressed, and no closed-loop pair that may ship gained | Read each NEUTRAL with its MDE: it may only mean the subset is too small. Add a decision row: run a stronger version as the next run, or close it as `inconclusive`. |
-| **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row, with `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. Set `version` only for a SHIP against the current base: see [Versions](#versions). |
+| **SHIP** | every pair decided, none regressed, and a closed-loop pair that may ship gained | Add a decision row, with `version` set if this is the first SHIP ([why only then](#versions)), and `baseline` if the base changes. `status = "done"`, `verdict = "positive"`. |
 
 `make check` refuses a `done` hypothesis with no gate verdict on any run, or with no decision citing
 it dated on or after its last gate. It also refuses `verdict = "none"`, and `positive` without a SHIP.

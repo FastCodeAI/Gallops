@@ -96,7 +96,7 @@ and side hazards, brake then swerve onto free road for oncoming ones — as the 
 by = ["Naren"]
 evidence = ["GC07.sighted-v1"]
 next = ["GC08"]
-source = "branch expert/v6-imitation, docs/brake-swerve-expert.md §1; Renesas Progress and Plan (\"approved 13 Oct\")"
+source = "experiments/GC08_expert_v6_imitation/README.md §1; Renesas Progress and Plan (\"approved 13 Oct\")"
 
 [[decision]]
 id = "D09"
@@ -116,7 +116,7 @@ decision = """Concluded negative: the swerve is learned on the five training sce
 (round 2 on 0103: 2.31 against 3.01 released), and each new reconstructed scene costs about 7.5 GPU-hours."""
 by = ["Naren"]
 evidence = ["GC08.v6-r1a-loso0075", "GC08.v6-r1b-all", "GC08.v6-r2-short"]
-source = "branch expert/v6-imitation, docs/brake-swerve-expert.md, Conclusion; Renesas Progress and Plan"
+source = "experiments/GC08_expert_v6_imitation/README.md, Conclusion; Renesas Progress and Plan"
 
 [[decision]]
 id = "D11"
@@ -215,3 +215,16 @@ closed unmerged, and their records are removed, as they served no experiment her
 reused; the code is at those PRs' heads."""
 by = ["Naren"]
 source = "the closing comments on gallops #18 and #19"
+
+[[decision]]
+id = "D20"
+date = 2026-11-06
+short = "Base: released Drive-JEPA"
+decision = """The base is released Drive-JEPA, not the 4-camera stack D11 named. The queue's baselines are already \
+released Drive-JEPA, so every gate comparison is against the base. Navvrat runs the stack through the gate next. \
+Records from before this decision say `the base` for that stack."""
+by = ["Naren"]
+evidence = ["H02.timing", "H07.exp3"]
+next = ["H01"]
+baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first"
+source = "Naren, 6 Nov 2026"

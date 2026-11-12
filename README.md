@@ -20,12 +20,12 @@ We are building a JEPA-based driving model, and this repo is its evidence: every
 experiment, who ran it, and what it showed. Click an ID for that experiment's card,
 with its data, code, checkpoint sha256, results and gate verdicts.
 
-![Gap closing leads to an agreed base. Hypotheses of one change each are then judged by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
+![Gap closing comes first. Hypotheses of one change each are then judged against the base by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
 
 ## Where we are
 
 <!-- experiments:status -->
-- **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA.
+- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
 - **Last gate run:** 28 Oct · [H07.exp3](experiments/H07_encoder_lora/CARD.md) · ⛔ **FAIL** — regressed on NAVSIM, Bench2Drive, AlpaSim.
 - **In progress:** 6 hypotheses, 3 enablers. Next by priority: [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory.
@@ -52,12 +52,12 @@ Each of us took some benchmarks and tried to close released Drive-JEPA's gap on 
 
 ## Hypothesis experiments
 
-One structural change each, on the agreed base, decided by paddock's regression gate.
+One structural change each, judged against the base by paddock's regression gate.
 
 <!-- experiments:hypotheses -->
 | ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |
 |---|---|---|---|---|---|---|
-| [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera base (WA-JEPA + DJ planner) | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera stack (WA-JEPA + DJ planner) | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | ⏳ running | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren, Siddesh | ⏸ parked (inconclusive) | offline human speed at +2 s, RMSE, events slice: camera history k = 4 vs k = 2 with the car state now only (control V3) 0.5001 → **0.4992** (n=3,302 moments) | ●●○○ moderate · open-loop | — |
 | [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | ⏳ running | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |

@@ -1,6 +1,7 @@
 # GC08 -- expert v6 (brake; brake then swerve for oncoming cars) and the imitation rounds 1A, 1B and 2 (Naren).
-# On branch expert/v6-imitation: every number is copied from sections 2-5 and the conclusion of
-# docs/brake-swerve-expert.md there. Checkpoint blocks from `gallops experiments checkpoint` on each step
+# Every number is copied from sections 2-5 and the conclusion of the account, README.md here, except the tick
+# counts in [[runs.data]], which are read from the label files: `n` is the ticks marked usable_for_imitation,
+# what the trainer read. manifest_sha256 is POINTERS.md's digest of each label folder. Checkpoint blocks from `gallops experiments checkpoint` on each step
 # directory; run dates from each run's metrics.jsonl (UTC). The paddock run dirs in `external` were matched to
 # their checkpoint by the digest paddock writes in place of the DRIVEJEPA_CHECKPOINT path.
 
@@ -19,19 +20,21 @@ question = """On neuroNCAP the seeing model should brake for a parked and a cros
 car brake first, then steer round it. Can it learn that by imitating one consistent expert (v6), proven in an \
 offline copy of the simulator, from the 5 reconstructed training scenes, and does what it learns transfer to \
 a street it has not seen?"""
+predictions = "none: run before the registry asked for predictions, and none were written down first"
 learned = """Imitating v6 teaches brake-then-swerve on the scenes it trained on (round 1B on new seeds: frontal \
 clear in 10 of 20 runs, against 4 of 50 released), but it did not transfer: round 1A on held-out 0075 learned \
 to brake for the side car and not to swerve, and on 0103 round 2 scored 2.31 against 3.01, all on 3-10 runs a \
 shape. The likely cause, argued and not tested, is too few scenes (5, from 2 cities; NeuRAD measured 7.5 h \
 per new scene on this machine)."""
-narrative = "docs/brake-swerve-expert.md"
-branch = "expert/v6-imitation"
+narrative = "experiments/GC08_expert_v6_imitation/README.md"
 parents = ["GC07"]
 external = [
   "neuroNCAP runs on 0103 (3 per shape), paddock run dirs under the site's paddock runs root, committed to no repository: neuroncap/drivejepa/20261014T153543-0d6a7b (1A epoch 1), 20261015T055256-49c277 (1B epoch 2), 20261016T180740-bf1796 (round 2); and 20261012T205915-7153f0, the released seeing model on seeds 0-2, whose scores match the doc's baseline (the doc names no run).",
   "nuScenes open loop of 1B epoch 2: paddock run dir nuscenes/drivejepa/20261015T074632-198187, committed to no repository.",
   "Round 1A on 0075 (10 runs per shape): the gallops collection collect_r1a_eval under {runs}; which 1A epoch drove it is not recorded.",
-  "Labelled data (labelled_r0cam_v6, labelled_expert_v6, labelled_r2_v6, labelled_nusc) and candidate dumps: under {runs}, listed per run in each sidecar's notes.sources.",
+  "Labelled data (labelled_r0cam_v6, labelled_expert_v6, labelled_r2_v6, labelled_nusc) and candidate dumps: under {runs}, listed per run in each sidecar's notes.sources, and with bytes and sha256 in POINTERS.md.",
+  "experiments/GC08_expert_v6_imitation/paddock/: paddock's dump adapter drivejepa_ncapdump, its DRIVEJEPA_DRIVE=expert mode included, which was never committed in paddock.",
+  "experiments/GC08_expert_v6_imitation/scripts/: the chain behind Gate B, the probe and the expert-driven collection, as it ran. The Gate A and Gate B reports stay on the site's store, pinned in POINTERS.md.",
 ]
 
 [[runs]]
@@ -47,6 +50,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -64,20 +68,29 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   dataset = "neuroncap-actor-insertion"
   split = "round 0, 4 of the 5 rendered training scenes (0075 held out)"
   role = "train"
+  n = 6454
+  unit = "ticks"
   built_by = "gallops.expert.label"
-  note = "driven by the released seeing model, relabelled by v6; the doc gives 8,402 ticks over 150 episodes for round 0, of which 0075's are held out"
+  manifest_sha256 = "6534a97e02175e7cb8a3493cea4f5ddd1b4827d9d942b5a3dcd59afdfc5e1d42"
+  note = "driven by the released seeing model, relabelled by v6; 6,454 usable of 6,888 labelled, as the sidecar's preflight counted them; the folder holds all of round 0, 0075 included"
 
   [[runs.data]]
   dataset = "nuscenes"
   split = "train, real driving (human source)"
   role = "train"
+  n = 18015
+  unit = "ticks"
+  built_by = "gallops.data.nuscenes_real"
+  manifest_sha256 = "ba54386f0b59bc47f825dce31f0e3cd16f35d6440ee3e176f21e7b6df8a8668c"
   note = "33% kept each epoch; the target is the human's path"
 
   [[runs.data]]
   dataset = "neuroncap-actor-insertion"
   split = "scene 0075"
   role = "held-out"
-  note = "training curves, and 10 closed-loop runs per shape"
+  n = 1478
+  unit = "ticks"
+  note = "usable, of 1,514 labelled: training curves; and 10 closed-loop runs per shape"
 
   [[runs.data]]
   dataset = "neuroncap"
@@ -90,6 +103,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   model = "drivejepa_swerve"
   train_run = "v6-r1a-loso0075"
   step = 15684
+  step_unit = "pass"
   weights_sha256 = "cd4fc891749717b707ec4847b27370dcd27e57ce348ebeecbb4698abc92f9ca5"
   file = "agent.ckpt"
   members = [
@@ -113,7 +127,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "10/10 clear against 0/10; it brakes for the side car. Checkpoint epoch not recorded"
-  source = "docs/brake-swerve-expert.md §4 (branch)"
+  source = "experiments/GC08_expert_v6_imitation/README.md §4"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -128,7 +142,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "0/10 clear either way: no swerve learned on the unseen street; stationary 5.00 for both"
-  source = "docs/brake-swerve-expert.md §4 (branch)"
+  source = "experiments/GC08_expert_v6_imitation/README.md §4"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -143,7 +157,7 @@ notes = "The checkpoint is pinned by agent.ckpt, the file paddock loads (model.p
   strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
   note = "3/3 hit either way; side 0.00 (3/3 hit) against 1.67 (2/3 hit); stationary 5.00 for both"
-  source = "docs/brake-swerve-expert.md §4 (branch); paddock run neuroncap/drivejepa/20261014T153543-0d6a7b"
+  source = "experiments/GC08_expert_v6_imitation/README.md §4; paddock run neuroncap/drivejepa/20261014T153543-0d6a7b"
 
 [[runs]]
 id = "GC08.v6-r1b-all"
@@ -154,10 +168,11 @@ start_from = "released Drive-JEPA (seeing)"
 trained = ["refiner", "scorer"]
 frozen = ["encoder"]
 train_git_sha = "048d49c"
-notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading one frame-cache file from the NAS; the epoch-2 checkpoint is the one evaluated. Training curves: nearest-candidate distance to the v6 plan 1.03 → 0.40 m. On 0103 frontal one run braked to 2.6 m/s and moved 3.3 m left (the intended manoeuvre), one swerved 3 m right without braking, one was hit; one stationary run veered 3.1 m left with no need. Every tick stayed on the drivable area. Step counts one-tick forward passes, not optimizer steps."
+notes = "Recipe as 1A. Stopped about 78% of the way through epoch 3 (last logged step 96,075) on OSError [Errno 5] reading one frame-cache file from the NAS; the epoch-2 checkpoint is the one evaluated. Training curves: nearest-candidate distance to the v6 plan 1.03 → 0.40 m. On 0103 frontal one run braked to 2.6 m/s and moved 3.3 m left (the intended manoeuvre), one swerved 3 m right without braking, one was hit; one stationary run veered 3.1 m left with no need. Every tick stayed on the drivable area. Step counts one-tick forward passes, not optimizer steps."
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -176,10 +191,11 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   dataset = "neuroncap-actor-insertion"
   split = "round 0, 5 rendered training scenes (0053 0058 0064 0070 0075)"
   role = "train"
-  n = 8402
+  n = 7932
   unit = "ticks"
   built_by = "gallops.expert.label"
-  note = "driven by the released seeing model, relabelled by v6, 150 episodes"
+  manifest_sha256 = "6534a97e02175e7cb8a3493cea4f5ddd1b4827d9d942b5a3dcd59afdfc5e1d42"
+  note = "driven by the released seeing model, relabelled by v6, 150 episodes; 7,932 usable of the 8,402 labelled"
 
   [[runs.data]]
   dataset = "neuroncap-actor-insertion"
@@ -187,12 +203,18 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   role = "train"
   n = 9234
   unit = "ticks"
-  note = "150 episodes driven by v6 through neuroNCAP with the renderer (paddock DRIVEJEPA_DRIVE=expert)"
+  built_by = "gallops.expert.label"
+  manifest_sha256 = "5a356c179c959c3f951d3cff95dc4179cb04394b76a5cc39767d45dae7fdc65f"
+  note = "150 episodes driven by v6 through neuroNCAP with the renderer (paddock DRIVEJEPA_DRIVE=expert); 9,234 usable of 9,558 labelled. With round 0's 7,932 that is the sidecar's 17,166 rendered ticks"
 
   [[runs.data]]
   dataset = "nuscenes"
   split = "train, real driving (human source)"
   role = "train"
+  n = 18015
+  unit = "ticks"
+  built_by = "gallops.data.nuscenes_real"
+  manifest_sha256 = "ba54386f0b59bc47f825dce31f0e3cd16f35d6440ee3e176f21e7b6df8a8668c"
   note = "33% kept each epoch"
 
   [[runs.data]]
@@ -213,6 +235,7 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   model = "drivejepa_swerve"
   train_run = "v6-r1b-all"
   step = 69186
+  step_unit = "pass"
   weights_sha256 = "69061f9ced807d6baa988379ccbe35fb46129bc6d4ffb98c0f4810a37868d06e"
   file = "agent.ckpt"
   members = [
@@ -235,8 +258,8 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   better = "higher"
   strength = "moderate"
   flags = ["smoke", "adapted", "no-record"]
-  note = "+0.059 over 9 paired runs, paired SE 0.749 (recomputed from the two runs' samples.jsonl, 49c277 against 7153f0, in the #25 review; the doc on #17 gives 1.01, which is the unpaired SE). Frontal 4.21 (1/3 hit) vs 2.36 (3/3), side 0.00 (3/3 hit) vs 1.67 (2/3); the frontal gain and the side loss cancel"
-  source = "docs/brake-swerve-expert.md §4-5 (branch); paddock run neuroncap/drivejepa/20261015T055256-49c277"
+  note = "+0.059 over 9 paired runs, paired SE 0.749 (recomputed from the two runs' samples.jsonl, 49c277 against 7153f0, in the #25 review and again when the account moved). Frontal 4.21 (1/3 hit) vs 2.36 (3/3), side 0.00 (3/3 hit) vs 1.67 (2/3); the frontal gain and the side loss cancel"
+  source = "experiments/GC08_expert_v6_imitation/README.md §4-5; paddock run neuroncap/drivejepa/20261015T055256-49c277"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -251,7 +274,7 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   strength = "moderate"
   flags = ["adapted", "no-record"]
   note = "scenes it trained on; different seeds and run counts (10 of 20 against 4 of 50). Mean 2.85; stationary 16 of 20 (4.16) against 46 of 50"
-  source = "docs/brake-swerve-expert.md §5 (branch)"
+  source = "experiments/GC08_expert_v6_imitation/README.md §5"
 
   [[runs.results]]
   bench = "nuscenes"
@@ -266,7 +289,7 @@ notes = "Recipe as 1A. Stopped at 93% of epoch 3 on OSError [Errno 5] reading on
   strength = "moderate"
   flags = ["open-loop", "adapted", "no-record"]
   note = "1B trained on real nuScenes train driving; collisions 1.2% against 1.4%, not significant"
-  source = "docs/brake-swerve-expert.md §4 (branch); paddock run nuscenes/drivejepa/20261015T074632-198187"
+  source = "experiments/GC08_expert_v6_imitation/README.md §4; paddock run nuscenes/drivejepa/20261015T074632-198187"
 
 [[runs]]
 id = "GC08.v6-r2-short"
@@ -281,6 +304,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
 
   [runs.code]
   entry = "gallops.train.swerve"
+  as_run = ["experiments/GC08_expert_v6_imitation/paddock/", "experiments/GC08_expert_v6_imitation/scripts/"]
   modules = [
     "gallops.train.swerve_data",
     "gallops.train.preflight",
@@ -298,10 +322,11 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   dataset = "neuroncap-actor-insertion"
   split = "round 2: 1B epoch 2 driving the 5 training scenes, frontal and stationary, seeds 10-13 (40 episodes)"
   role = "train"
-  n = 2466
+  n = 2402
   unit = "ticks"
   built_by = "gallops.expert.label"
-  note = "v6 labels: 1,135 brake, 507 brake then swerve, 288 least-impact; plus a quarter of round 0 and of the expert-driven set, a tenth of real nuScenes"
+  manifest_sha256 = "14dd32e70911567a9cd16d6024c364f445ad7888ea679057bcdfc0acbeb5bdee"
+  note = "2,402 usable of 2,466 labelled. v6 labels: 1,135 brake, 507 brake then swerve, 288 least-impact; plus a quarter of round 0 and of the expert-driven set, a tenth of real nuScenes"
 
   [[runs.data]]
   dataset = "neuroncap"
@@ -314,6 +339,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   model = "drivejepa_swerve"
   train_run = "v6-r2-short"
   step = 11377
+  step_unit = "pass"
   weights_sha256 = "305892faf6bbb864dfffb06422029ce73b63bd0316deb437c4c48981da62f33e"
   file = "agent.ckpt"
   members = [
@@ -322,7 +348,7 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   ]
   location = "{weights}/drivejepa_swerve/v6-r2-short/step_000011377/"
   sidecar = true
-  known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only"
+  known_wrong = "trained_on names only the rendered round-0 collection; notes.sources lists all four sources (round 0, real nuScenes, expert-driven, round 2). Read from the sidecar; the doc's list covers 1A and 1B only. --accumulate and --subsample-source are not recorded: round 2 kept a quarter of round 0 and of the expert-driven set and a tenth of the real driving each epoch, and the sidecar reads as all of each"
 
   [[runs.results]]
   bench = "neuroncap"
@@ -338,30 +364,30 @@ notes = "Continues 1B for one epoch on the round-2 ticks plus a quarter of round
   flags = ["smoke", "adapted", "no-record"]
   headline = true
   note = "frontal 1.79 (3/3 hit), side 0.13 (3/3 hit), stationary 5.00. Lost 1B's swerve: widest frontal move 1.1 m against ~3 m; the needless stationary veer is gone (0.6 m against 3.1 m)"
-  source = "docs/brake-swerve-expert.md §5 (branch); paddock run neuroncap/drivejepa/20261016T180740-bf1796"
+  source = "experiments/GC08_expert_v6_imitation/README.md §5; paddock run neuroncap/drivejepa/20261016T180740-bf1796"
 
 [[checks]]
 name = "Expert v6, Gate A: replay"
 result = "each round-0 episode's driven plans, replayed through neuro-ncap's own Engine.step, vehicle model, evaluator and collision checker without the renderer (expert/rollout.py), reproduce its ego_poses.json and metrics.json: 150/150 episodes, worst 0.07 mm, metrics exact"
-source = "docs/brake-swerve-expert.md §2 (branch expert/v6-imitation)"
+source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Expert v6, Gate B: v6 drives all 150 training episodes (trigger T = 3.5 s)"
 result = "no contact frontal 42/50, stationary 50/50, side 23/50, against 4/50, 46/50, 25/50 for the released seeing model; 0 off-road ticks, 0 side flips; with memory cleared the same decision on 98.3% / 100% / 97.3% of ticks. Frontal failures are all 0058 (road too narrow to pass; v6 brakes, 1.56); most side failures are a crossing car at a 36–45° bearing, outside the front camera's 32.6°"
 decided = "side is left as it is; v6 approved as the teacher (13 Oct, per the team's status page)"
-source = "docs/brake-swerve-expert.md §2 (branch expert/v6-imitation)"
+source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Expert v6 in the real engine"
-result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
-source = "docs/brake-swerve-expert.md §2 (branch expert/v6-imitation)"
+result = "expert-driven collection (paddock's analysis adapter, DRIVEJEPA_DRIVE=expert, copied in paddock/ here) replays v6 through neuroNCAP with the renderer and asserts the pose stays within 2 cm of the offline rollout; the first smoke differed by 0.000 mm over 70 ticks and scored the same"
+source = "experiments/GC08_expert_v6_imitation/README.md §2"
 
 [[checks]]
 name = "Probe: does the frozen encoder see what v6 decides?"
-result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. Strong on the Boston scenes, weak on Singapore"
-source = "docs/brake-swerve-expert.md §2 (branch expert/v6-imitation)"
+result = "linear probe on pooled tokens, v6's decision on a held-out scene, balanced accuracy with the image / ego state alone: 0053 0.29/0.26, 0058 0.45/0.38, 0064 0.67/0.55, 0070 0.53/0.61, 0075 0.93/0.58. The image helps on four of the five, most on 0075, and trails ego state on 0070"
+source = "experiments/GC08_expert_v6_imitation/README.md §2; scripts/probe_v6.py, output scripts/probe_v6.json"
 
 [[checks]]
 name = "Round 2's init preflight"
 result = "a DAgger round driven by the --init weights is fidelity-checked against them once they load: 1B's weights held to what 1B drove on 45/45 ticks, 0.0 m apart"
-source = "docs/brake-swerve-expert.md §3, §5 (branch expert/v6-imitation)"
+source = "experiments/GC08_expert_v6_imitation/README.md §3, §5"

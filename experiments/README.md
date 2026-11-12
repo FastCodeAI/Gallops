@@ -105,6 +105,7 @@ What the team decided, in date order, on what evidence. It is kept in
 | **D17** | 26 Oct 2026 | **Momentum-aware selection on by default.** Paddock's Drive-JEPA adapter selects with momentum by default, as the published method does; Drive-JEPA baselines from here on include it. | Siddesh | — | — |
 | **D18** | 28 Oct 2026 | **KITScenes exp 3 fails the gate.** The encoder + generator + scorer checkpoint trained on KITScenes fails the gate (NAVSIM, Bench2Drive and AlpaSim regress); its checkpoints stay a research record, not for deployment. | Siddesh | [H07.exp3](H07_encoder_lora/CARD.md) | — |
 | **D19** | 6 Nov 2026 | **H12 and H13 removed.** The nuScenes scene selector (H12) and the Alpamayo teacher (H13) are not this repo's work: #19 and #18 closed unmerged, and their records are removed, as they served no experiment here. The two IDs stay retired, never reused; the code is at those PRs' heads. | Naren | — | — |
+| **D20** | 6 Nov 2026 | **Base: released Drive-JEPA.** The base is released Drive-JEPA, not the 4-camera stack D11 named. The queue's baselines are already released Drive-JEPA, so every gate comparison is against the base. Navvrat runs the stack through the gate next. Records from before this decision say `the base` for that stack. | Naren | [H02.timing](H02_smallest_valid_gate/CARD.md), [H07.exp3](H07_encoder_lora/CARD.md) | [H01](H01_four_camera_base/CARD.md) |
 <!-- /experiments:decisions -->
 
 ## How to read the results
@@ -159,7 +160,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.cli` | — | shared |
 | `gallops.compat` | H05.r1 | experiment |
 | `gallops.config` | — | shared |
-| `gallops.data.nuscenes_real` | GC06.v3_nusc | experiment |
+| `gallops.data.nuscenes_real` | GC06.v3_nusc, GC07.sighted-v1, GC08.v6-r1a-loso0075, GC08.v6-r1b-all | experiment |
 | `gallops.data.rerank` | GC01.kitscenes-train-h128-t1 | experiment |
 | `gallops.drivejepa_b2d.batch_fix` | GC04.final | experiment |
 | `gallops.drivejepa_b2d.check_data` | GC04.split-v4, GC04.final | experiment |
@@ -174,14 +175,16 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
-| `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5 | experiment |
-| `gallops.expert.drivable` | GC03.l5 | experiment |
+| `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.expert.drivable` | GC03.l5, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
 | `gallops.expert.fastgrade` | GC06.v1, GC06.v2, GC06.v3_nusc | experiment |
-| `gallops.expert.grader` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.expert.label` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.expert.lanes` | GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
+| `gallops.expert.grader` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.expert.label` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.expert.lanes` | GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.expert.rollout` | GC08.v6-r1b-all | experiment |
 | `gallops.expert.rounds` | GC03.s3 | experiment |
 | `gallops.expert.scenarios` | GC03.stageA | experiment |
+| `gallops.expert.teacher` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
 | `gallops.memory.cache` | H05.r1 | experiment |
 | `gallops.memory.checks` | H05.r1 | experiment |
 | `gallops.memory.inputs` | H05.r1 | experiment |
@@ -190,14 +193,17 @@ command line serve every experiment and are listed as shared.
 | `gallops.memory.ticks` | H05.r1 | experiment |
 | `gallops.recipe` | — | shared |
 | `gallops.train.export` | GC03.stageA, GC03.v4, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.train.losses` | GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.train.preflight` | GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
+| `gallops.train.frame_cache` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.train.losses` | GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC07.sighted-v1, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.train.preflight` | GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC07.sighted-v1, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
 | `gallops.train.reach` | GC03.stageA, GC03.v4 | experiment |
 | `gallops.train.rerank` | GC01.kitscenes-train-h128-t1 | experiment |
 | `gallops.train.safety_check` | GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.train.scorer_cache` | GC06.v1, GC06.v2, GC06.v3_nusc | experiment |
-| `gallops.train.scorer_folds` | GC06.v1 | experiment |
-| `gallops.train.scorer_labels` | GC06.v1, GC06.v2, GC06.v3_nusc | experiment |
-| `gallops.train.swerve` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
-| `gallops.train.swerve_data` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3 | experiment |
+| `gallops.train.scorer_cache` | GC06.v1, GC06.v2, GC06.v3_nusc, GC07.sighted-v1 | experiment |
+| `gallops.train.scorer_folds` | GC06.v1, GC07.sighted-v1 | experiment |
+| `gallops.train.scorer_labels` | GC06.v1, GC06.v2, GC06.v3_nusc, GC07.sighted-v1 | experiment |
+| `gallops.train.scorer_train` | GC07.sighted-v1 | experiment |
+| `gallops.train.subscorer` | GC07.sighted-v1 | experiment |
+| `gallops.train.swerve` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.train.swerve_data` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC03.s1, GC03.s2, GC03.s3, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
 <!-- /experiments:code-map -->
