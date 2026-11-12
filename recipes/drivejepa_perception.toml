@@ -1295,3 +1295,31 @@ args = ["train", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "
         "--tap", "vit_out", "--variant", "v3", "--seed", "0", "--epochs", "24", "--no-report",
         "--crossfit-fold", "4", "--optimism", "{out}/part-b/b0/optimism.json", "--out", "{out}/part-b/b0/crossfit-v3-f4"]
 after = ["part-b-0-optimism"]
+
+# B-1 on navtest, once (CPU; five official runs, 5 min each), and the frozen settings taken apart on both
+# splits. The navtest stage refuses unless part_b1_frozen.json and B-1's PREDICTIONS.md section are
+# committed and unedited and B-0's anchor holds; it resumes arm by arm and refuses a second read.
+
+[[stage]]
+name = "part-b-1-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["navtest", "--root", "{out}", "--grid", "{out}/part-b/b1/grid-fresh", "--verified", "{out}/part-b/b0/navtest-cache-verify",
+        "--anchor", "{out}/part-b/b0/anchor", "--r", "{out}/part-b/b0/navtest-R", "--out", "{out}/part-b/b1/navtest"]
+after = ["part-b-1-freeze", "part-b-0-anchor"]
+
+[[stage]]
+name = "part-b-1-analysis-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["analyse", "--root", "{out}", "--split", "fresh", "--grid", "{out}/part-b/b1/grid-fresh",
+        "--out", "{out}/part-b/b1/analysis-fresh.json"]
+after = ["part-b-1-freeze"]
+
+[[stage]]
+name = "part-b-1-analysis-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.veto"
+args = ["analyse", "--root", "{out}", "--split", "navtest", "--grid", "{out}/part-b/b1/grid-fresh",
+        "--out", "{out}/part-b/b1/analysis-navtest.json"]
+after = ["part-b-1-navtest"]

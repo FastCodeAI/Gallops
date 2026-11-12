@@ -517,6 +517,252 @@ def freeze(grid_dir: Path, write: Path) -> dict:
     return record
 
 
+# ------------------------------------------------------------------------------ navtest, once
+
+
+def committed_clean(rel: str) -> list:
+    """Why a file may not stand behind a navtest read: not committed, or edited since."""
+    tracked = subprocess.run(
+        ["git", "-C", str(REPO), "ls-files", "--error-unmatch", rel], capture_output=True
+    )
+    if tracked.returncode:
+        return [f"{rel} is not committed"]
+    dirty = subprocess.run(
+        ["git", "-C", str(REPO), "status", "--porcelain", rel], capture_output=True, text=True
+    )
+    return [f"{rel} has uncommitted changes"] if dirty.stdout.strip() else []
+
+
+def setting_of(source: str, name: str):
+    """The setting a frozen name stands for."""
+    named = {setting_name(s): s for s in settings(source)}
+    if name not in named:
+        raise SystemExit(f"{source}: {name!r} is not a setting of the grid")
+    return named[name]
+
+
+def frozen_picks(out_root: Path, split: str, frozen: dict) -> tuple:
+    """Each arm's pick on a split at the frozen settings: (data, arm -> pick, veto, who, setting, source)."""
+    data = load_split(out_root, split)
+    failing = ceiling_vetoed(data["pdm"])
+    pick, _ = pick_with_veto(data["scores"], failing, data["pick"])
+    arms = {"B-1-1": {"pick": pick, "veto": failing, "who": None, "setting": None, "source": None}}
+    sources = agent_sources(out_root, split)
+    for source, names in (("B-1-2", ["truth"]), ("B-1-3", [f"s{k}" for k in SEEDS])):
+        m, h, c = setting_of(source, frozen["chosen"][source])
+        for name in names:
+            agents, path = sources[name]
+            per_time, who = clearance_arrays(data["proposals"], agents, data["rows"], c)
+            v = vetoed(per_time, m, h)
+            pick, _ = pick_with_veto(data["scores"], v, data["pick"])
+            arm = source if name == "truth" else f"{source}-{name}"
+            arms[arm] = {
+                "pick": pick,
+                "veto": v,
+                "who": who,
+                "per_time": per_time,
+                "setting": (m, h, c),
+                "source": name,
+            }
+    return data, arms
+
+
+def verdicts(pairs: dict) -> dict:
+    """V1 to V5 and B-1-4's trigger, by PREDICTIONS.md's rules (Part B · B-1)."""
+
+    def d(arm, key="epdms_hf"):
+        return pairs[arm][key]["a_minus_b"], pairs[arm][key]["se"]
+
+    seeds = [f"B-1-3-s{k}" for k in SEEDS]
+    v1, v1se = d("B-1-1")
+    v2, v2se = d("B-1-2")
+    v3 = {arm: d(arm) for arm in seeds}
+    ep = {arm: d(arm, "EP") for arm in seeds}
+    v5 = float(np.mean([-100 * ep[arm][0] for arm in seeds]))
+    return {
+        "V1": {
+            "b11_minus_r": v1,
+            "se": v1se,
+            "supports": v1 > 2 * v1se,
+            "note": "the ceiling: reads the answer",
+        },
+        "V2": {"b12_minus_r": v2, "se": v2se, "supports": v2 > 2 * v2se, "refutes": v2 < -2 * v2se},
+        "V3": {
+            "per_seed": {arm: {"b13_minus_r": x, "se": se} for arm, (x, se) in v3.items()},
+            "supports": all(x > 2 * se for x, se in v3.values()),
+            "refutes": any(x < -2 * se for x, se in v3.values()),
+        },
+        "V4": {"share_kept": float(np.mean([x for x, _ in v3.values()]) / v2) if v2 else float("nan")},
+        "V5": {"ep_lost_points": v5, "refutes": v5 > 0.6},
+        "B-1-4_runs": v5 > 0.6 or any(x < -2 * se for x, se in ep.values()),
+    }
+
+
+def read_navtest(
+    cfg,
+    out_root: Path,
+    grid_dir: Path,
+    verified: Path,
+    anchor_dir: Path,
+    r_dir: Path,
+    out: Path,
+    workers: int,
+) -> dict:
+    """B-1 on navtest, once: each arm's picks at the frozen settings, scored officially, paired with R."""
+    from gallops.drivejepa_perception import navtest
+
+    problems = predictions_committed() + committed_clean(FROZEN)
+    frozen = load_frozen(REPO / FROZEN, grid_dir)
+    anchor = json.loads((Path(anchor_dir) / "anchor.json").read_text())
+    if not all(anchor["gates"].values()):
+        problems.append(f"B-0's anchor does not hold: {anchor['gates']}")
+    out = Path(out)
+    if (out / "navtest.json").exists():
+        problems.append(f"{out} holds a finished read: navtest is read once")
+    if problems:
+        raise SystemExit("B-1 may not read navtest:\n- " + "\n- ".join(problems))
+    out.mkdir(parents=True, exist_ok=True)  # resumes arm by arm: a scored arm is never scored again
+    data, arms = frozen_picks(out_root, "navtest", frozen)
+    empty, _ = pick_with_veto(data["scores"], np.zeros_like(data["scores"], bool), data["pick"])
+    if not np.array_equal(empty, data["pick"]):
+        raise SystemExit("an empty veto changes a navtest pick")
+    labels_dir = Path(out_root) / O_DIRS["navtest"][1]
+    tokens = [str(t) for t in data["token"]]
+    n = np.arange(len(tokens))
+    pairs, rates = {}, {}
+    for arm, a in arms.items():
+        plans = out / f"plans-{arm}"
+        if not plans.exists():
+            meta = {
+                "arm": arm,
+                "setting": None if a["setting"] is None else setting_name(a["setting"]),
+                "frozen_sha256": _sha256(REPO / FROZEN),
+                "proposals": data["inputs"]["tokens"],
+            }
+            navtest.write_plans(
+                plans,
+                tokens,
+                np.asarray(data["proposals"][data["rows"], a["pick"]]),
+                meta,
+                pick=a["pick"],
+                row=data["rows"],
+            )
+        scored = out / f"score-{arm}"
+        if not scored.exists():
+            navtest.score_plans(cfg, plans, verified, scored, workers, arm)
+        pairs[arm] = navtest.paired(scored, r_dir, labels_dir)
+        rates[arm] = {
+            "veto_rate": float(a["veto"].mean()),
+            "all_vetoed_rate": float(a["veto"].all(1).mean()),
+            "switch_rate": float((a["pick"] != data["pick"]).mean()),
+            "vendored_final_minus_release": float(
+                (data["pdm"][n, a["pick"], FINAL] - data["pdm"][n, data["pick"], FINAL]).mean() * 100
+            ),
+        }
+    record = {
+        "pass": "veto-navtest",
+        "when": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "frozen": frozen["chosen"],
+        "frozen_sha256": _sha256(REPO / FROZEN),
+        "r": str(r_dir),
+        "pairs": pairs,
+        "rates": rates,
+        "verdicts": verdicts(pairs),
+    }
+    (out / "navtest.json").write_text(json.dumps(record, indent=1))
+    print(json.dumps(record["verdicts"], indent=1))
+    return record
+
+
+# ------------------------------------------------------------------------------------ analysis
+
+
+def vetoing_agent(a: dict, data: dict) -> np.ndarray:
+    """Per row, the agent index behind the veto of the release's own pick (-1 where it was not vetoed):
+    the agent at the time within the horizon where that proposal's clearance is smallest."""
+    n = np.arange(len(data["pick"]))
+    steps = horizon_steps(a["setting"][1])
+    per_time = a["per_time"][n, data["pick"], :steps]
+    when = per_time.argmin(1)
+    who = a["who"][n, data["pick"], :steps][n, when]
+    return np.where(a["veto"][n, data["pick"]], who, -1)
+
+
+def analyse(out_root: Path, split: str, grid_dir: Path, out: Path, official_dir=None) -> dict:
+    """The frozen settings, taken apart on a split: rates, the confusion against B-1-1, EP lost on switched
+    rows by the class and range of the agent behind the veto, false alarms (B-1-3), the three subsets."""
+    from gallops.drivejepa_perception import evaluate, navsim_data
+    from gallops.drivejepa_perception import targets as tg
+
+    out = Path(out)
+    if out.exists():
+        raise SystemExit(f"{out} exists")
+    frozen = load_frozen(REPO / FROZEN, grid_dir)
+    data, arms = frozen_picks(out_root, split, frozen)
+    tok, lab, _, _ = O_DIRS[split]
+    labels = dict(np.load(Path(out_root) / lab / "labels.npz"))
+    projections = tg.front_projection(np.load(Path(out_root) / tok / "lidar2img.npy"))
+    sources = agent_sources(out_root, split)
+    proposals = np.asarray(data["proposals"][data["rows"]])
+    subsets = navsim_data.subsets(labels, proposals)
+    failing = ceiling_vetoed(data["pdm"])
+    n = np.arange(len(data["pick"]))
+    record = {"split": split, "rows": int(len(n)), "frozen": frozen["chosen"], "arms": {}}
+    for arm, a in arms.items():
+        switched = a["pick"] != data["pick"]
+        ep_lost = (data["pdm"][n, data["pick"], EP] - data["pdm"][n, a["pick"], EP]) * switched
+        entry = {
+            "veto_rate": float(a["veto"].mean()),
+            "all_vetoed_rate": float(a["veto"].all(1).mean()),
+            "switch_rate": float(switched.mean()),
+            "confusion": confusion(a["veto"], failing),
+            "pick_vetoes_right": int((switched & failing[n, data["pick"]]).sum()),
+            "pick_vetoes_wrong": int((switched & ~failing[n, data["pick"]]).sum()),
+            "ep_lost_points": float(ep_lost.mean() * 100),
+            "subsets": {
+                name: {
+                    "rows": int(m.sum()),
+                    "switch_rate": float(switched[m].mean()) if m.any() else float("nan"),
+                }
+                for name, m in subsets.items()
+            },
+        }
+        if a["who"] is not None:
+            agents = sources[a["source"]][0]
+            who = vetoing_agent(a, data)
+            by = {}
+            false_alarm, real = 0, 0
+            for r in np.flatnonzero(switched & (who >= 0)):
+                row, q = int(data["rows"][r]), int(who[r])
+                xy = agents["xyz"][row][q, :2].astype(np.float64)
+                reach = float(np.hypot(*xy))
+                band = next((f"{lo:g}-{hi:g}" for lo, hi in evaluate.RANGE_BINS if lo <= reach < hi), ">50")
+                key = f"{navsim_data.CLASSES[int(agents['cls'][row][q])]}|{band}"
+                by[key] = by.get(key, 0.0) + float(ep_lost[r])
+                if a["source"] != "truth":
+                    target = tg.build(navsim_data.agents_of(labels, row), projections[row])
+                    m = target["mask"]
+                    gxy, gcls = target["box"][m, :2].astype(np.float64), target["cls"][m]
+                    one = {
+                        "conf": np.array([1.0]),
+                        "cls": agents["cls"][row][q : q + 1],
+                        "xyz": agents["xyz"][row][q : q + 1],
+                    }
+                    _, tp, _ = evaluate.match(one["conf"], one["cls"], one["xyz"][:, :2], gxy, gcls)
+                    real += int(tp.any())
+                    false_alarm += int(not tp.any())
+            entry["ep_lost_by_agent_points"] = {k: v / len(n) * 100 for k, v in sorted(by.items())}
+            if a["source"] != "truth":
+                entry["switches_by_a_real_agent"] = real
+                entry["switches_by_a_false_alarm"] = false_alarm
+        record["arms"][arm] = entry
+    if official_dir is not None:
+        record["official"] = str(official_dir)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(record, indent=1))
+    return record
+
+
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(prog="gallops.drivejepa_perception.veto")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -533,6 +779,19 @@ def main(argv=None) -> None:
     p = sub.add_parser("freeze")
     p.add_argument("--grid", required=True)
     p.add_argument("--write", required=True)
+    p = sub.add_parser("navtest", help="B-1 on navtest, once, at the frozen settings")
+    p.add_argument("--root", required=True)
+    p.add_argument("--grid", required=True)
+    p.add_argument("--verified", required=True)
+    p.add_argument("--anchor", required=True)
+    p.add_argument("--r", required=True, help="R's official run (navtest score)")
+    p.add_argument("--out", required=True)
+    p.add_argument("--workers", type=int, default=32)
+    p = sub.add_parser("analyse", help="the frozen settings taken apart on a split")
+    p.add_argument("--root", required=True)
+    p.add_argument("--split", choices=("fresh", "navtest"), required=True)
+    p.add_argument("--grid", required=True)
+    p.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     if args.cmd == "clearances":
         from gallops.config import SiteConfig
@@ -541,8 +800,29 @@ def main(argv=None) -> None:
     elif args.cmd == "grid":
         record = run_grid(Path(args.root), args.split, Path(args.clearances), Path(args.out), args.smoke)
         print(json.dumps({k: record[k] for k in ("split", "smoke", "rows", "logs", "weights")}, indent=1))
-    else:
+    elif args.cmd == "freeze":
         freeze(Path(args.grid), Path(args.write))
+    elif args.cmd == "navtest":
+        from gallops.config import SiteConfig
+
+        read_navtest(
+            SiteConfig.load(),
+            Path(args.root),
+            Path(args.grid),
+            Path(args.verified),
+            Path(args.anchor),
+            Path(args.r),
+            Path(args.out),
+            args.workers,
+        )
+    else:
+        record = analyse(Path(args.root), args.split, Path(args.grid), Path(args.out))
+        print(
+            json.dumps(
+                {arm: {k: v for k, v in e.items() if k != "subsets"} for arm, e in record["arms"].items()},
+                indent=1,
+            )
+        )
 
 
 if __name__ == "__main__":

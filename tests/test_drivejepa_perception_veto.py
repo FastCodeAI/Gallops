@@ -148,3 +148,43 @@ def test_settings_are_never_chosen_on_navtest(tmp_path):
         veto.run_grid(tmp_path, "navtest", tmp_path, tmp_path / "out", smoke=False)
     with pytest.raises(SystemExit, match="smoke run"):
         veto.run_grid(tmp_path, "select", tmp_path, tmp_path / "out", smoke=False)
+
+
+def _pair(d, se=0.1, ep=0.0, ep_se=0.01):
+    return {"epdms_hf": {"a_minus_b": d, "se": se}, "EP": {"a_minus_b": ep, "se": ep_se}}
+
+
+def test_the_verdicts_follow_predictions():
+    pairs = {
+        "B-1-1": _pair(1.2),
+        "B-1-2": _pair(0.5),
+        "B-1-3-s0": _pair(0.25),
+        "B-1-3-s1": _pair(0.30),
+        "B-1-3-s2": _pair(0.21, ep=-0.002),
+    }
+    v = veto.verdicts(pairs)
+    assert v["V1"]["supports"] and v["V2"]["supports"] and not v["V2"]["refutes"]
+    assert v["V3"]["supports"] and not v["V3"]["refutes"]
+    assert v["V4"]["share_kept"] == pytest.approx((0.25 + 0.30 + 0.21) / 3 / 0.5)
+    assert v["V5"]["ep_lost_points"] == pytest.approx(0.2 / 3) and not v["B-1-4_runs"]
+    pairs["B-1-3-s1"] = _pair(-0.3, ep=-0.03)  # one seed loses beyond 2 SE, in EPDMS and in progress
+    v = veto.verdicts(pairs)
+    assert v["V3"]["refutes"] and not v["V3"]["supports"] and v["B-1-4_runs"]
+
+
+def test_the_agent_behind_a_veto_is_at_the_closest_time_within_the_horizon():
+    per_time = np.full((2, 2, 8), 10.0)
+    who = np.full((2, 2, 8), -1, np.int16)
+    per_time[0, 1, 1], who[0, 1, 1] = 0.2, 7  # row 0: the release's pick (1) passes agent 7 at 1.0 s
+    per_time[0, 1, 3], who[0, 1, 3] = 0.1, 9  # and agent 9 at 2.0 s, beyond a 1 s horizon
+    a = {"setting": (1.0, 1.0, None), "per_time": per_time, "who": who}
+    a["veto"] = veto.vetoed(per_time, 1.0, 1.0)
+    data = {"pick": np.array([1, 0])}
+    assert veto.vetoing_agent(a, data).tolist() == [7, -1]
+
+
+def test_a_frozen_name_is_a_setting_of_the_grid():
+    assert veto.setting_of("B-1-3", "m2-h1-c0.7") == (2.0, 1.0, 0.7)
+    assert veto.setting_of("B-1-2", "m0.5-h2") == (0.5, 2.0, None)
+    with pytest.raises(SystemExit, match="not a setting"):
+        veto.setting_of("B-1-2", "m3-h1")
