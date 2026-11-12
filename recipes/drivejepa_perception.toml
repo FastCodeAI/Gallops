@@ -1217,3 +1217,31 @@ module = "drivejepa_perception.train_sidecar"
 args = ["optimism", "--runs", "{out}/part-a/5b-v3-e24-s0,{out}/part-a/5b-v3-e24-s1,{out}/part-a/5b-v3-e24-s2",
         "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
         "--out", "{out}/part-b/b0/optimism.json"]
+
+# ---------------------------------------------------------------------------------------------
+# Part B · B-0-3, the headroom check, and the R-clean split's profile beside navtest (CPU, minutes).
+# navtest's failures are the official scorer's own, on the release's replayed picks; R-clean has no
+# official run, so its are the vendored labels'. Reads the release's labels only; chooses nothing.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "part-b-0-headroom-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.headroom"
+args = ["count", "--root", "{out}", "--split", "navtest", "--official", "{out}/part-b/b0/navtest-R",
+        "--out", "{out}/part-b/b0/headroom-navtest.json"]
+after = ["part-b-0-score-R", "part-b-0-pdm-navtest", "part-b-0-agents-navtest-s0"]
+
+[[stage]]
+name = "part-b-0-headroom-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.headroom"
+args = ["count", "--root", "{out}", "--split", "fresh", "--out", "{out}/part-b/b0/headroom-fresh.json"]
+after = ["part-b-0-pdm-fresh", "part-b-0-agents-fresh-s0"]
+
+[[stage]]
+name = "part-b-0-profile"
+python = "drivejepa"
+module = "drivejepa_perception.headroom"
+args = ["profile", "--root", "{out}", "--out", "{out}/part-b/b0/profile.json"]
+after = ["part-b-0-pdm-navtest", "part-b-0-pdm-fresh"]
