@@ -96,7 +96,7 @@ and side hazards, brake then swerve onto free road for oncoming ones — as the 
 by = ["Naren"]
 evidence = ["GC07.sighted-v1"]
 next = ["GC08"]
-source = "branch expert/v6-imitation, docs/brake-swerve-expert.md §1; Renesas Progress and Plan (\"approved 13 Oct\")"
+source = "experiments/GC08_expert_v6_imitation/README.md §1; Renesas Progress and Plan (\"approved 13 Oct\")"
 
 [[decision]]
 id = "D09"
@@ -116,7 +116,7 @@ decision = """Concluded negative: the swerve is learned on the five training sce
 (round 2 on 0103: 2.31 against 3.01 released), and each new reconstructed scene costs about 7.5 GPU-hours."""
 by = ["Naren"]
 evidence = ["GC08.v6-r1a-loso0075", "GC08.v6-r1b-all", "GC08.v6-r2-short"]
-source = "branch expert/v6-imitation, docs/brake-swerve-expert.md, Conclusion; Renesas Progress and Plan"
+source = "experiments/GC08_expert_v6_imitation/README.md, Conclusion; Renesas Progress and Plan"
 
 [[decision]]
 id = "D11"
