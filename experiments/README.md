@@ -76,6 +76,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
+| `gallops.drivejepa_perception.b_analysis` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.b_report` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.cached_release` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |
 | `gallops.drivejepa_perception.env` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5 | experiment |

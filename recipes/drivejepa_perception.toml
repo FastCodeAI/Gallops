@@ -1337,3 +1337,13 @@ args = ["crossfit-agents",
         "--reference", "{out}/part-a/5b-v3-e24-s0", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
         "--vit-tokens", "{out}/tokens-vit-v1", "--out", "{out}/agents-train-crossfit-v3"]
 after = ["part-b-0-crossfit-f0", "part-b-0-crossfit-f1", "part-b-0-crossfit-f2", "part-b-0-crossfit-f3", "part-b-0-crossfit-f4"]
+
+# B-0-4's proposal analysis, first on R against R-tilde (CPU, minutes).
+
+[[stage]]
+name = "part-b-0-analysis-R-Rtilde"
+python = "drivejepa"
+module = "drivejepa_perception.b_analysis"
+args = ["compare", "--root", "{out}", "--split", "navtest", "--a", "R=tokens-navtest-v1", "--b", "R-tilde=rtilde-navtest-v1",
+        "--pdm-a", "pdm-navtest-v1", "--out", "{out}/part-b/b0/analysis-R-Rtilde.json"]
+after = ["part-b-0-rtilde-navtest", "part-b-0-pdm-navtest"]
