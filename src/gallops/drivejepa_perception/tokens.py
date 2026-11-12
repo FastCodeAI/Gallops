@@ -11,13 +11,21 @@ row i there. Per row:
 | `pooled.npy` | (32, 256) fp16 | the scorer's input: pass-4 queries max-pooled per candidate | B1 |
 | `proposals.npy` | (32, 8, 3) fp32 | the release's 32 candidates, the ones it scores | B1, S0.8 |
 | `logits.npy` | (32, 6) fp32 | the release's scorer logits; the last one picks | B1, S0.8 |
+| `scores.npy` | (32,) fp32 | the release's own `pdm_score`, sigmoid(last logit): what it argmaxes | B-1 |
 | `pick.npy` | int16 | argmax of sigmoid(last logit): the release's choice | S0.8 |
 | `lidar2img.npy` | (4, 4, 4) fp32 | the cameras' projections; the model keeps slot 1, CAM_F0 | A, B2 |
 | `img_shape.npy`, `ego_status.npy` | (4, 3), (4, 11) fp32 | the rest of what the refiner reads | B2 |
 
 A0's taps, for the rows in `tap_rows.npy` only: `tap_vit_out.npy` (the ViT's own output, before the
-projector) and `tap_block12.npy` (block 12 of 24), both (512, 1024) fp16. The rows are all the
-select logs' samples plus a seeded 10,000 of the train logs'.
+projector) and `tap_block12.npy` (block 12 of 24), both (512, 1024) fp16. On navtrain the rows are
+all the select logs' samples plus a seeded 10,000 of the train logs'; on Part B's other sources
+(navtest, fresh) TAP_UNIFORM rows spread evenly over the pass, which is what `--vit-out-all` is held
+to. The labels pass's manifest names the source, and with it the data split read.
+
+`scores.npy` (passes from 11 Nov) is the vendor's `pdm_score` itself, so B-1's "highest score among
+the rest" ranks exactly what the release ranked; the pass refuses to finish unless its pick is that
+array's argmax (first index on ties) on every row. Earlier passes have no `scores`: the same values
+are torch's fp32 sigmoid of the last logit (`release_scores`).
 
 **Batched with batch_fix, held to batch 1; eval mode; a fresh feature dict per forward.** The vendor
 mixes samples within a batch (drivejepa_b2d/batch_fix.py; a median 1.49 m off at batch 64 without
@@ -62,6 +70,7 @@ ARRAYS = {
     "pooled": ((32, 256), np.float16),
     "proposals": ((32, 8, 3), np.float32),
     "logits": ((32, 6), np.float32),
+    "scores": ((32,), np.float32),
     "pick": ((), np.int16),
     "lidar2img": ((4, 4, 4), np.float32),
     "img_shape": ((4, 3), np.float32),
@@ -72,6 +81,9 @@ TAPS = {"vit_out": ((512, 1024), np.float16), "block12": ((512, 1024), np.float1
 TAP_TRAIN_ROWS = 10_000
 TAP_SEED = 0
 TAP_BLOCK = 11  # zero-based: the 12th of 24 blocks
+#: Off navtrain there is no A0 probe: this many tap rows, evenly spread, hold `--vit-out-all` to the
+#: full forward.
+TAP_UNIFORM = 64
 
 
 def tap_rows(token_logs: list, splits: dict) -> np.ndarray:
@@ -83,6 +95,35 @@ def tap_rows(token_logs: list, splits: dict) -> np.ndarray:
         in_train, min(TAP_TRAIN_ROWS, len(in_train)), replace=False
     )
     return np.sort(np.concatenate([np.flatnonzero(in_select), picked])).astype(np.int64)
+
+
+def tap_rows_uniform(n: int, count: int = TAP_UNIFORM) -> np.ndarray:
+    """Tap rows for a pass off navtrain: `count` rows evenly spread over its `n`."""
+    return np.unique(np.linspace(0, n - 1, min(count, n)).astype(np.int64))
+
+
+def release_scores(tokens_dir: Path) -> np.ndarray:
+    """The release's 32 scores per row, as it ranked them: the saved `scores.npy`, or (passes before
+    it existed) torch's fp32 sigmoid of the cached logits, last column, in the vendor's order
+    (`sigmoid(pred_logit)[:, :, -1]`). That reproduces `pick.npy` on all 103,288 rows of tokens-v1,
+    where an argmax of the raw logits misses 5 (they tie after the sigmoid). Torch's CPU sigmoid can
+    differ in the last bit between memory layouts, so the order is the vendor's, and a caller checks
+    the pick (`pick_problems`)."""
+    tokens_dir = Path(tokens_dir)
+    if (tokens_dir / "scores.npy").exists():
+        return np.load(tokens_dir / "scores.npy")
+    logits = np.load(tokens_dir / "logits.npy")
+    return torch.sigmoid(torch.from_numpy(logits))[..., -1].numpy()
+
+
+def pick_problems(scores: np.ndarray, pick: np.ndarray) -> list:
+    """Rows whose recorded pick is not the scores' argmax (first index on ties, as torch's argmax)."""
+    bad = np.flatnonzero(np.asarray(scores).argmax(1) != np.asarray(pick))
+    return (
+        [f"{len(bad)} rows' pick is not the argmax of their scores, e.g. rows {bad[:5].tolist()}"]
+        if len(bad)
+        else []
+    )
 
 
 #: Rows on which the fast input path is held to the vendor's before the pass starts.
@@ -142,7 +183,7 @@ def use_fast_geometry():
     return original
 
 
-def check_fast_features(samples: list, navsim_root: Path) -> dict:
+def check_fast_features(samples: list, navsim_root: Path, data_split: str = "trainval") -> dict:
     """Every input the model reads is the same, exactly, with the fast path and with the vendor's.
 
     The only key allowed to differ is `camera_feature`, the tensor the fast path does not build.
@@ -159,9 +200,9 @@ def check_fast_features(samples: list, navsim_root: Path) -> dict:
     sensors = DriveJEPAAgent.get_sensor_config(None)
     problems = []
     for log, token in samples:
-        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs/trainval", {token})[token]
+        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs" / data_split, {token})[token]
         agent_input = AgentInput.from_scene_dict_list(
-            frames, navsim_root / "sensor_blobs/trainval", navsim_data.HISTORY, sensors
+            frames, navsim_root / "sensor_blobs" / data_split, navsim_data.HISTORY, sensors
         )
         vendor = builder.compute_features(agent_input)
         original = use_fast_geometry()
@@ -185,7 +226,7 @@ PARITY_ROWS = 32
 PARITY_LIMITS = {"proposals": 1e-3, "logits": 1e-3}
 
 
-def _features(samples: list, navsim_root: Path) -> list:
+def _features(samples: list, navsim_root: Path, data_split: str = "trainval") -> list:
     """The model inputs of (log, token) samples, built by the vendor's code (fast geometry on)."""
     from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
     from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
@@ -198,9 +239,9 @@ def _features(samples: list, navsim_root: Path) -> list:
     sensors = DriveJEPAAgent.get_sensor_config(None)
     out = []
     for log, token in samples:
-        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs/trainval", {token})[token]
+        frames = navsim_data.log_windows(log, navsim_root / "navsim_logs" / data_split, {token})[token]
         agent_input = AgentInput.from_scene_dict_list(
-            frames, navsim_root / "sensor_blobs/trainval", navsim_data.HISTORY, sensors
+            frames, navsim_root / "sensor_blobs" / data_split, navsim_data.HISTORY, sensors
         )
         out.append(builder.compute_features(agent_input))
     return out
@@ -220,6 +261,7 @@ def _forward(model, captured: dict, items: list, tap_slot=None) -> list:
         "pooled": captured["pooled"].half().cpu().numpy(),
         "proposals": out["proposals"].float().cpu().numpy(),
         "logits": out["pred_logit"].float().cpu().numpy(),
+        "scores": out["pdm_score"].float().cpu().numpy(),
         "pick": out["pdm_score"].argmax(1).cpu().numpy(),
     }
     results = [{key: value[b] for key, value in arrays.items()} for b in range(size)]
@@ -291,11 +333,18 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
     token_logs = [logs[i] for i in labels["log_id"]]
     tokens = [str(t) for t in labels["token"]]
     n = len(tokens) if not limit else min(limit, len(tokens))
-    splits = navsim_data.load_splits(
-        REPO / "recipes/drivejepa_perception/splits.json",
-        navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
-    )
-    taps = tap_rows(token_logs[:n], splits)
+    source = navsim_data.source_of(lmanifest)
+    data_split = navsim_data.DATA_SPLIT[source]
+    if source == "navtrain":
+        splits = navsim_data.load_splits(
+            REPO / "recipes/drivejepa_perception/splits.json",
+            navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
+        )
+        taps = tap_rows(token_logs[:n], splits)
+        tap_rule = f"select-log rows + default_rng({TAP_SEED}) choice of {TAP_TRAIN_ROWS} train-log rows"
+    else:
+        taps = tap_rows_uniform(n)
+        tap_rule = f"{len(taps)} rows evenly spread over the pass (tap_rows_uniform)"
 
     staging = out.with_name(out.name + ".staging")
     fresh = not staging.exists()
@@ -321,6 +370,7 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
     fast_check = check_fast_features(
         [(token_logs[r], tokens[r]) for r in np.linspace(0, n - 1, FAST_CHECK_ROWS).astype(int)],
         Path(entered["navsim_root"]),
+        data_split,
     )
     print(f"fast inputs equal the vendor's on {fast_check['rows']} rows", flush=True)
 
@@ -331,8 +381,8 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
             plan.setdefault(token_logs[row], []).append((row, tokens[row]))
     dataset = _Samples(
         sorted(plan.items()),
-        Path(entered["navsim_root"]) / "navsim_logs/trainval",
-        Path(entered["navsim_root"]) / "sensor_blobs/trainval",
+        Path(entered["navsim_root"]) / "navsim_logs" / data_split,
+        Path(entered["navsim_root"]) / "sensor_blobs" / data_split,
     )
     loader = iter(
         torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=workers, prefetch_factor=4)
@@ -367,7 +417,11 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
         list(
             zip(  # noqa: B905 -- Python 3.9
                 parity_rows,
-                _features([(token_logs[r], tokens[r]) for r in parity_rows], Path(entered["navsim_root"])),
+                _features(
+                    [(token_logs[r], tokens[r]) for r in parity_rows],
+                    Path(entered["navsim_root"]),
+                    data_split,
+                ),
             )
         ),
         batch,
@@ -378,7 +432,7 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
 
     def write(items):
         for (row, features), result in zip(items, _forward(model, captured, items, tap_slot)):  # noqa: B905
-            for key in ("tokens", "pooled", "proposals", "logits", "pick"):
+            for key in ("tokens", "pooled", "proposals", "logits", "scores", "pick"):
                 mm[key][row] = result[key]
             for key in ("lidar2img", "img_shape", "ego_status"):
                 mm[key][row] = features[key].float().numpy()
@@ -411,6 +465,9 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
     np.save(done_path, done)
     if not done.all():
         raise SystemExit(f"{int((~done).sum())} rows not written; rerun to resume")
+    problems = pick_problems(mm["scores"], mm["pick"])
+    if problems:
+        raise SystemExit("; ".join(problems))
 
     manifest = {
         "pass": "tokens",
@@ -420,11 +477,14 @@ def run(cfg, labels_dir: Path, out: Path, workers: int, limit: int, batch: int) 
         "entered": entered,
         "release_sha256": _sha256(Path(entered["release"])),
         "labels": str(labels_dir),
+        "source": source,
+        "data_split": data_split,
         "rows": n,
         "arrays": {key: [list(shape), np.dtype(dtype).name] for key, (shape, dtype) in ARRAYS.items()},
         "taps": {key: [list(shape), np.dtype(dtype).name] for key, (shape, dtype) in TAPS.items()},
         "tap_rows": int(len(taps)),
-        "tap_rule": f"select-log rows + default_rng({TAP_SEED}) choice of {TAP_TRAIN_ROWS} train-log rows",
+        "tap_rule": tap_rule,
+        "pick_is_argmax_of_scores": True,
         "batch": batch,
         "batch_fix": True,
         "batched_equals_batch1": parity,
@@ -458,8 +518,12 @@ def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int
         raise SystemExit(f"{out} exists; a pass never overwrites one")
     started, sha = time.strftime("%Y-%m-%dT%H:%M:%S"), git_sha()
     entered = env.enter(cfg)
+    from gallops.drivejepa_perception import navsim_data
+
     labels = np.load(Path(labels_dir) / "labels.npz")
-    logs = json.loads((Path(labels_dir) / "manifest.json").read_text())["logs"]
+    lmanifest = json.loads((Path(labels_dir) / "manifest.json").read_text())
+    logs = lmanifest["logs"]
+    data_split = navsim_data.DATA_SPLIT[navsim_data.source_of(lmanifest)]
     token_logs = [logs[i] for i in labels["log_id"]]
     tokens = [str(t) for t in labels["token"]]
     n = len(tokens)
@@ -477,8 +541,8 @@ def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int
             plan.setdefault(token_logs[row], []).append((row, tokens[row]))
     dataset = _Samples(
         sorted(plan.items()),
-        Path(entered["navsim_root"]) / "navsim_logs/trainval",
-        Path(entered["navsim_root"]) / "sensor_blobs/trainval",
+        Path(entered["navsim_root"]) / "navsim_logs" / data_split,
+        Path(entered["navsim_root"]) / "sensor_blobs" / data_split,
     )
     loader = iter(
         torch.utils.data.DataLoader(dataset, batch_size=None, num_workers=workers, prefetch_factor=4)
@@ -507,6 +571,7 @@ def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int
     feats = _features(
         [(token_logs[int(tap_rows[i])], tokens[int(tap_rows[i])]) for i in picked],
         Path(entered["navsim_root"]),
+        data_split,
     )
     with torch.no_grad():
         mine = np.concatenate([vit_of(feats[i : i + batch]) for i in range(0, len(feats), batch)]).astype(
@@ -554,6 +619,7 @@ def run_vit_out(cfg, labels_dir: Path, tokens_dir: Path, out: Path, workers: int
         "gallops_sha": sha,
         "entered": entered,
         "labels": str(labels_dir),
+        "data_split": data_split,
         "reference_tokens": str(tokens_dir),
         "rows": n,
         "array": [[512, 1024], "float16"],

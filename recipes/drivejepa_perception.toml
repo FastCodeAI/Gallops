@@ -903,3 +903,38 @@ python = "drivejepa"
 module = "drivejepa_perception.navsim_data"
 args = ["check", "--labels", "{out}/labels-fresh-v1"]
 after = ["part-b-0-labels-fresh"]
+
+# The token and ViT-out passes for navtest and R-clean (one GPU; launched with CUDA_VISIBLE_DEVICES
+# set by whoever runs them). Each reads its data split from the labels pass's manifest, saves the
+# release's own scores, and refuses to finish unless its pick is their argmax on every row (B0-G5).
+# The ViT-out pass is held to the token pass's evenly spread tap rows before it writes a row.
+
+[[stage]]
+name = "part-b-0-tokens-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--labels", "{out}/labels-navtest-v1", "--out", "{out}/tokens-navtest-v1", "--workers", "24", "--batch", "16"]
+after = ["part-b-0-labels-navtest"]
+
+[[stage]]
+name = "part-b-0-vit-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--vit-out-all", "--labels", "{out}/labels-navtest-v1", "--tokens", "{out}/tokens-navtest-v1",
+        "--out", "{out}/tokens-vit-navtest-v1", "--workers", "24", "--batch", "16"]
+after = ["part-b-0-tokens-navtest"]
+
+[[stage]]
+name = "part-b-0-tokens-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--labels", "{out}/labels-fresh-v1", "--out", "{out}/tokens-fresh-v1", "--workers", "24", "--batch", "16"]
+after = ["part-b-0-labels-fresh"]
+
+[[stage]]
+name = "part-b-0-vit-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.tokens"
+args = ["--vit-out-all", "--labels", "{out}/labels-fresh-v1", "--tokens", "{out}/tokens-fresh-v1",
+        "--out", "{out}/tokens-vit-fresh-v1", "--workers", "24", "--batch", "16"]
+after = ["part-b-0-tokens-fresh"]
