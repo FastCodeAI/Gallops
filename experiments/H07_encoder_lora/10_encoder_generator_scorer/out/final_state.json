@@ -1,0 +1,30 @@
+{
+ "preflight": {
+  "load5": 10.734375,
+  "ram_gb": 86.1,
+  "disk_gb": 236.3,
+  "gpu_wait_s": 0.2
+ },
+ "chosen_check": 4.5,
+ "gate_A_generator_only_unchanged": {
+  "bit_identical_to_saved_p9.5_dump": "103 / 103",
+  "closest_fde3_103_now": 0.402655873168921,
+  "closest_fde3_103_s4_record": 0.402655873168921,
+  "s4_record_pass": true,
+  "wrapper_path_bit_identical": "103 / 103",
+  "s4_wrapper_record": "103 / 103",
+  "pass": true
+ },
+ "gate_B_checkpoint_reproduces_its_dump": {
+  "bit_identical_103": "103 / 103",
+  "pass": true
+ },
+ "heldout": {
+  "wall_s": 103.4,
+  "scenes": {
+   "val": 117,
+   "overlap_train_val": 23
+  },
+  "moments": 223
+ }
+}

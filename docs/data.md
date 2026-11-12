@@ -15,7 +15,7 @@ Measured on this workspace, not assumed.
 | dataset | held here | usable for training |
 |---|---|---|
 | **nuScenes** | full 850 scenes, 34,149 keyframes, ~54 GB | **Yes** — the one real corpus we have. |
-| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences | **Partly** — enough to train the re-ranker (5,711 keyframes from those 373); not re-measured since. |
+| **KITScenes** | 127 of 1,006 sequences from `val` / `overlap_train_val`, and since 2026-09 at least 373 of the 533 `train` sequences; 532 by 2026-10-16 | **Partly** — enough to train the re-ranker (5,711 keyframes from those 373) and the KITScenes retraining (13,937 moments from 482 scenes). |
 | **NAVSIM / OpenScene** | `navtest` only: 136 logs, 12,146 scenes | **No** — evaluation split only. |
 
 ### nuScenes — usable, with caveats
@@ -34,6 +34,14 @@ hold part of `train`:** at least the 373 sequences the re-ranker trained on, the
 first to finish downloading in 2026-09. A full pull only fits on the largest
 available volume. Since the subset follows no rule, a checkpoint trained on it
 records the scenes it read (`notes.train_scenes`), not just the split.
+
+By 2026-10-16, 532 of the 534 scenes the `default_geo_split_v1_0` `train.txt`
+lists were on disk (two are missing). The KITScenes retraining
+([H07](../experiments/H07_encoder_lora/README.md)) trained on 482 of them and
+held 50 out to choose checkpoints; both lists are committed in
+`experiments/H07_encoder_lora/02_encoder_build/out/splits.json`. It read
+`val` and `overlap_train_val` only for its 223-moment held-out comparison, and
+never read `test` or `test-e2e`.
 
 Two properties that matter for training:
 

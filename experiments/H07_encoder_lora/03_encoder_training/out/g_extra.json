@@ -1,0 +1,543 @@
+{
+ "chosen_pass": 3,
+ "interval_s": 0.5,
+ "selection_103": {
+  "1_ade": {
+   "before": {
+    "n": 103,
+    "mean": 2.3921765067852556,
+    "median": 1.4138354899329284
+   },
+   "after": {
+    "n": 103,
+    "mean": 1.8732948781716308,
+    "median": 1.0013018329000987
+   },
+   "better_by_more_than_10cm": 48,
+   "worse_by_more_than_10cm": 31,
+   "within_10cm": 24,
+   "better_by_more_than_1cm": 58,
+   "worse_by_more_than_1cm": 41
+  },
+  "2_pick_distance_m": {
+   "moments_pick_changed": 74,
+   "changed": {
+    "n": 74,
+    "mean": 2.1566935000869494,
+    "median": 1.6607400292942238
+   },
+   "unchanged_pick_same_index": {
+    "n": 29,
+    "mean": 0.21754381959326832,
+    "median": 0.1677052752465632
+   },
+   "ade_change_where_pick_changed": {
+    "n": 74,
+    "mean": -0.737116940839112,
+    "median": -0.5451593038049514
+   },
+   "ade_change_where_pick_same": {
+    "n": 29,
+    "mean": 0.037994685341066564,
+    "median": 0.033357636626259124
+   }
+  },
+  "3_best_of_32_ade": {
+   "after": {
+    "n": 103,
+    "mean": 0.5632779216035154,
+    "median": 0.3034932318344315
+   },
+   "after_regret_pick_minus_best": {
+    "n": 103,
+    "mean": 1.3100169565681152,
+    "median": 0.7810799010538243
+   },
+   "before": {
+    "n": 103,
+    "mean": 0.5734020690854773,
+    "median": 0.3048356849037484
+   },
+   "before_regret_pick_minus_best": {
+    "n": 103,
+    "mean": 1.8187744376997788,
+    "median": 1.0306327151141195
+   },
+   "best_of_32_better_by_more_than_10cm": 5,
+   "best_of_32_worse_by_more_than_10cm": 7
+  },
+  "4_plan": {
+   "speed_mps": {
+    "before": {
+     "n": 103,
+     "mean": 5.8712745037556,
+     "median": 5.799904301330198
+    },
+    "after": {
+     "n": 103,
+     "mean": 6.169043278264739,
+     "median": 5.774807297028203
+    },
+    "human": {
+     "n": 103,
+     "mean": 6.691893661573323,
+     "median": 6.175488028013691
+    }
+   },
+   "end_distance_m": {
+    "before": {
+     "n": 103,
+     "mean": 23.36632582027731,
+     "median": 22.96039504016683
+    },
+    "after": {
+     "n": 103,
+     "mean": 24.57162980469568,
+     "median": 22.820853794725277
+    },
+    "human": {
+     "n": 103,
+     "mean": 26.60802438180719,
+     "median": 24.515861917746168
+    }
+   },
+   "after_faster_share": 0.6504854368932039,
+   "ade_change_where_plan_faster": {
+    "n": 67,
+    "mean": -0.8473465363388046,
+    "median": -0.2235638714626269
+   },
+   "ade_change_where_plan_not_faster": {
+    "n": 36,
+    "mean": 0.09242806076379309,
+    "median": 0.09938017032753482
+   },
+   "corr_speed_change_vs_ade_change": -0.5898593260730254,
+   "error_at_3s_forward_x_m": {
+    "before": {
+     "n": 103,
+     "mean": 4.212312205465124,
+     "median": 2.8712541845285493
+    },
+    "after": {
+     "n": 103,
+     "mean": 3.3343294080873966,
+     "median": 2.20460057317176
+    }
+   },
+   "error_at_3s_lateral_y_m": {
+    "before": {
+     "n": 103,
+     "mean": 0.6383874067350193,
+     "median": 0.23937444089299653
+    },
+    "after": {
+     "n": 103,
+     "mean": 0.6347756451998083,
+     "median": 0.2596316539930257
+    }
+   }
+  }
+ },
+ "per_pass": [
+  {
+   "pass": 1,
+   "mean_abs_grade_change_vs_zero": 0.06896429508924484,
+   "mean_abs_grade_change_vs_previous_pass": 0.06896429508924484,
+   "best_of_32_ade_mean": 0.5602745927954553,
+   "picks_changed_vs_previous": 57
+  },
+  {
+   "pass": 2,
+   "mean_abs_grade_change_vs_zero": 0.07707035541534424,
+   "mean_abs_grade_change_vs_previous_pass": 0.028663594275712967,
+   "best_of_32_ade_mean": 0.5599493149094252,
+   "picks_changed_vs_previous": 41
+  },
+  {
+   "pass": 3,
+   "mean_abs_grade_change_vs_zero": 0.089518241584301,
+   "mean_abs_grade_change_vs_previous_pass": 0.023678487166762352,
+   "best_of_32_ade_mean": 0.5632779216035154,
+   "picks_changed_vs_previous": 37
+  },
+  {
+   "pass": 4,
+   "mean_abs_grade_change_vs_zero": 0.09255058318376541,
+   "mean_abs_grade_change_vs_previous_pass": 0.019684944301843643,
+   "best_of_32_ade_mean": 0.5593519187190289,
+   "picks_changed_vs_previous": 33
+  },
+  {
+   "pass": 5,
+   "mean_abs_grade_change_vs_zero": 0.09659156203269958,
+   "mean_abs_grade_change_vs_previous_pass": 0.024466276168823242,
+   "best_of_32_ade_mean": 0.5618519942453992,
+   "picks_changed_vs_previous": 35
+  },
+  {
+   "pass": 6,
+   "mean_abs_grade_change_vs_zero": 0.09912300854921341,
+   "mean_abs_grade_change_vs_previous_pass": 0.023632463067770004,
+   "best_of_32_ade_mean": 0.5593118730281559,
+   "picks_changed_vs_previous": 34
+  }
+ ],
+ "zero_lora_best_of_32_ade_mean": 0.5734020690854773,
+ "final_223": {
+  "val": {
+   "1_ade": {
+    "before": {
+     "n": 186,
+     "mean": 2.3693136714452736,
+     "median": 1.4672668414957273
+    },
+    "after": {
+     "n": 186,
+     "mean": 1.9033774541188222,
+     "median": 1.2493428573996923
+    },
+    "better_by_more_than_10cm": 83,
+    "worse_by_more_than_10cm": 45,
+    "within_10cm": 58,
+    "better_by_more_than_1cm": 106,
+    "worse_by_more_than_1cm": 68
+   },
+   "2_pick_distance_m": {
+    "note": "August pickle has no pick index; distance shown for every moment",
+    "all": {
+     "n": 186,
+     "mean": 1.3539846031077174,
+     "median": 0.6504696008391323
+    },
+    "moments_moved_more_than_1cm": 181,
+    "moved_more_than_1cm": {
+     "n": 181,
+     "mean": 1.3911380775985223,
+     "median": 0.7115481958172338
+    }
+   },
+   "3_best_of_32_ade": {
+    "after": {
+     "n": 186,
+     "mean": 0.391715473993965,
+     "median": 0.30748054504398414
+    },
+    "after_regret_pick_minus_best": {
+     "n": 186,
+     "mean": 1.5116619801248568,
+     "median": 0.8897116175394079
+    },
+    "before": "UNAVAILABLE: August pickle stores only the chosen trajectory"
+   },
+   "4_plan": {
+    "speed_mps": {
+     "before": {
+      "n": 186,
+      "mean": 6.127400802718013,
+      "median": 6.017325812892171
+     },
+     "after": {
+      "n": 186,
+      "mean": 6.4875667463683655,
+      "median": 6.631778740428074
+     },
+     "human": {
+      "n": 186,
+      "mean": 6.995123216647862,
+      "median": 6.861542566157423
+     }
+    },
+    "end_distance_m": {
+     "before": {
+      "n": 186,
+      "mean": 24.39609639278164,
+      "median": 23.958138442480937
+     },
+     "after": {
+      "n": 186,
+      "mean": 25.85535271459654,
+      "median": 26.52566161704503
+     },
+     "human": {
+      "n": 186,
+      "mean": 27.82339913397159,
+      "median": 27.3199252846441
+     }
+    },
+    "after_faster_share": 0.6881720430107527,
+    "ade_change_where_plan_faster": {
+     "n": 128,
+     "mean": -0.6449231049978879,
+     "median": -0.09765228569086559
+    },
+    "ade_change_where_plan_not_faster": {
+     "n": 58,
+     "mean": -0.07093067212052392,
+     "median": -0.0016200148466684605
+    },
+    "corr_speed_change_vs_ade_change": -0.5634153236175249,
+    "error_at_3s_forward_x_m": {
+     "before": {
+      "n": 186,
+      "mean": 3.9468131563071207,
+      "median": 2.443073294082792
+     },
+     "after": {
+      "n": 186,
+      "mean": 3.2360946536707895,
+      "median": 2.3629926459856985
+     }
+    },
+    "error_at_3s_lateral_y_m": {
+     "before": {
+      "n": 186,
+      "mean": 0.8809002751849642,
+      "median": 0.3238475922325289
+     },
+     "after": {
+      "n": 186,
+      "mean": 0.7886032620125369,
+      "median": 0.3056418901813467
+     }
+    }
+   }
+  },
+  "overlap_train_val": {
+   "1_ade": {
+    "before": {
+     "n": 37,
+     "mean": 2.334893309490976,
+     "median": 0.9909117465824956
+    },
+    "after": {
+     "n": 37,
+     "mean": 1.7585210320103315,
+     "median": 1.1219243980480413
+    },
+    "better_by_more_than_10cm": 12,
+    "worse_by_more_than_10cm": 10,
+    "within_10cm": 15,
+    "better_by_more_than_1cm": 21,
+    "worse_by_more_than_1cm": 16
+   },
+   "2_pick_distance_m": {
+    "note": "August pickle has no pick index; distance shown for every moment",
+    "all": {
+     "n": 37,
+     "mean": 1.2487297319165542,
+     "median": 0.30841407362717715
+    },
+    "moments_moved_more_than_1cm": 37,
+    "moved_more_than_1cm": {
+     "n": 37,
+     "mean": 1.2487297319165542,
+     "median": 0.30841407362717715
+    }
+   },
+   "3_best_of_32_ade": {
+    "after": {
+     "n": 37,
+     "mean": 0.31125657315045385,
+     "median": 0.2946970069618603
+    },
+    "after_regret_pick_minus_best": {
+     "n": 37,
+     "mean": 1.4472644588598775,
+     "median": 0.796263225051991
+    },
+    "before": "UNAVAILABLE: August pickle stores only the chosen trajectory"
+   },
+   "4_plan": {
+    "speed_mps": {
+     "before": {
+      "n": 37,
+      "mean": 6.968064573305123,
+      "median": 7.161988356725222
+     },
+     "after": {
+      "n": 37,
+      "mean": 7.5036876864310615,
+      "median": 7.965870225965371
+     },
+     "human": {
+      "n": 37,
+      "mean": 7.626548554442995,
+      "median": 7.965831421158559
+     }
+    },
+    "end_distance_m": {
+     "before": {
+      "n": 37,
+      "mean": 27.73770050496739,
+      "median": 28.646562485129667
+     },
+     "after": {
+      "n": 37,
+      "mean": 29.954507876488883,
+      "median": 31.77811146201131
+     },
+     "human": {
+      "n": 37,
+      "mean": 30.453613702224477,
+      "median": 31.800984957230504
+     }
+    },
+    "after_faster_share": 0.7837837837837838,
+    "ade_change_where_plan_faster": {
+     "n": 29,
+     "mean": -0.7490893972036138,
+     "median": -0.0532172424705617
+    },
+    "ade_change_where_plan_not_faster": {
+     "n": 8,
+     "mean": 0.04972728151511629,
+     "median": 0.0012122437003981856
+    },
+    "corr_speed_change_vs_ade_change": -0.8342860495842281,
+    "error_at_3s_forward_x_m": {
+     "before": {
+      "n": 37,
+      "mean": 4.034459005053205,
+      "median": 2.0017114644998983
+     },
+     "after": {
+      "n": 37,
+      "mean": 3.0524450552241493,
+      "median": 2.08108822368548
+     }
+    },
+    "error_at_3s_lateral_y_m": {
+     "before": {
+      "n": 37,
+      "mean": 0.5820046425403808,
+      "median": 0.2601951989822151
+     },
+     "after": {
+      "n": 37,
+      "mean": 0.5358260291087031,
+      "median": 0.2556515405642452
+     }
+    }
+   }
+  },
+  "all": {
+   "1_ade": {
+    "before": {
+     "n": 223,
+     "mean": 2.36360266968604,
+     "median": 1.3918057161822857
+    },
+    "after": {
+     "n": 223,
+     "mean": 1.8793429804954402,
+     "median": 1.2459788948800392
+    },
+    "better_by_more_than_10cm": 95,
+    "worse_by_more_than_10cm": 55,
+    "within_10cm": 73,
+    "better_by_more_than_1cm": 127,
+    "worse_by_more_than_1cm": 84
+   },
+   "2_pick_distance_m": {
+    "note": "August pickle has no pick index; distance shown for every moment",
+    "all": {
+     "n": 223,
+     "mean": 1.3365207903988696,
+     "median": 0.5034903447040658
+    },
+    "moments_moved_more_than_1cm": 218,
+    "moved_more_than_1cm": {
+     "n": 218,
+     "mean": 1.3669678537901147,
+     "median": 0.5558821182769959
+    }
+   },
+   "3_best_of_32_ade": {
+    "after": {
+     "n": 223,
+     "mean": 0.378365790894369,
+     "median": 0.3068324286853885
+    },
+    "after_regret_pick_minus_best": {
+     "n": 223,
+     "mean": 1.5009771896010708,
+     "median": 0.8688386108018491
+    },
+    "before": "UNAVAILABLE: August pickle stores only the chosen trajectory"
+   },
+   "4_plan": {
+    "speed_mps": {
+     "before": {
+      "n": 223,
+      "mean": 6.266883132366996,
+      "median": 6.5019636608843285
+     },
+     "after": {
+      "n": 223,
+      "mean": 6.656160803688186,
+      "median": 6.916619161511123
+     },
+     "human": {
+      "n": 223,
+      "mean": 7.099888855654231,
+      "median": 6.981720239162957
+     }
+    },
+    "end_distance_m": {
+     "before": {
+      "n": 223,
+      "mean": 24.95053294951201,
+      "median": 25.748076959898743
+     },
+     "after": {
+      "n": 223,
+      "mean": 26.535481597959844,
+      "median": 27.592288709584466
+     },
+     "human": {
+      "n": 223,
+      "mean": 28.25980244798664,
+      "median": 27.845808838315683
+     }
+    },
+    "after_faster_share": 0.7040358744394619,
+    "ade_change_where_plan_faster": {
+     "n": 157,
+     "mean": -0.6641640124753785,
+     "median": -0.0815822890438822
+    },
+    "ade_change_where_plan_not_faster": {
+     "n": 66,
+     "mean": -0.05630546561923422,
+     "median": -0.0016200148466684605
+    },
+    "corr_speed_change_vs_ade_change": -0.6222564354753454,
+    "error_at_3s_forward_x_m": {
+     "before": {
+      "n": 223,
+      "mean": 3.9613552926461573,
+      "median": 2.3874622847254052
+     },
+     "after": {
+      "n": 223,
+      "mean": 3.2056236440630514,
+      "median": 2.3304798014029835
+     }
+    },
+    "error_at_3s_lateral_y_m": {
+     "before": {
+      "n": 223,
+      "mean": 0.8313077262708405,
+      "median": 0.30753913046978454
+     },
+     "after": {
+      "n": 223,
+      "mean": 0.7466626448939637,
+      "median": 0.30060229435976904
+     }
+    }
+   }
+  }
+ }
+}

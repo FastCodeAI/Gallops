@@ -1,0 +1,244 @@
+{
+ "gpu": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+ "torch": "2.8.0+cu128",
+ "free_mib_start": 21760,
+ "agent_build_s": 71.0,
+ "B2": [
+  {
+   "scene": "03091b73-f4a1-bb6f-cc0d-4ccce524603a",
+   "keyframe": 40,
+   "bit_equal": true,
+   "max_abs_diff": 0.0
+  },
+  {
+   "scene": "0d99e104-caed-a38e-38d1-7f5d05b8738c",
+   "keyframe": 40,
+   "bit_equal": true,
+   "max_abs_diff": 0.0
+  },
+  {
+   "scene": "16a3d521-a853-0b86-26f2-f85040099da4",
+   "keyframe": 40,
+   "bit_equal": true,
+   "max_abs_diff": 0.0
+  }
+ ],
+ "control_plain_twice_bit_equal": true,
+ "T1": {
+  "bit_equal": true,
+  "max_abs_diff": 0.0,
+  "batch": [
+   3,
+   2,
+   3,
+   256,
+   512
+  ],
+  "dtype": "torch.float32"
+ },
+ "T2": [
+  {
+   "scene": "03091b73-f4a1-bb6f-cc0d-4ccce524603a",
+   "keyframe": 40,
+   "trajectory_bit_equal": true,
+   "proposals_bit_equal": true,
+   "pred_logit_bit_equal": true,
+   "proposals_shape": [
+    1,
+    32,
+    8,
+    3
+   ]
+  },
+  {
+   "scene": "0d99e104-caed-a38e-38d1-7f5d05b8738c",
+   "keyframe": 40,
+   "trajectory_bit_equal": true,
+   "proposals_bit_equal": true,
+   "pred_logit_bit_equal": true,
+   "proposals_shape": [
+    1,
+    32,
+    8,
+    3
+   ]
+  },
+  {
+   "scene": "16a3d521-a853-0b86-26f2-f85040099da4",
+   "keyframe": 40,
+   "trajectory_bit_equal": true,
+   "proposals_bit_equal": true,
+   "pred_logit_bit_equal": true,
+   "proposals_shape": [
+    1,
+    32,
+    8,
+    3
+   ]
+  }
+ ],
+ "T3": {
+  "ok": true,
+  "trainable_tensors": 192,
+  "non_lora_trainable": [],
+  "lora_layers": 96,
+  "lora_layers_off_target": [],
+  "projector_requires_grad": false
+ },
+ "E_batch": [
+  [
+   "0f08f233-a577-c64b-7a32-69098821b294",
+   81
+  ],
+  [
+   "0f85b1c2-85e1-822a-956b-858906894648",
+   10
+  ]
+ ],
+ "E2_warmup": {
+  "loss": 0.6280574798583984,
+  "per_mask": [
+   0.6370508670806885,
+   0.6190641522407532
+  ],
+  "guesser_tensors_nonzero_grad": 151,
+  "guesser_tensors": 160,
+  "lora_A_nonzero_grad": 0,
+  "lora_B_nonzero_grad": 0,
+  "lora_layers": 96,
+  "base_encoder_grads_not_None": 0,
+  "answer_key_grads_not_None": 0,
+  "agent_grads_not_None": 0
+ },
+ "E3_main": {
+  "step1_before_optimizer": {
+   "loss": 0.6280574798583984,
+   "per_mask": [
+    0.6370508670806885,
+    0.6190641522407532
+   ],
+   "guesser_tensors_nonzero_grad": 151,
+   "guesser_tensors": 160,
+   "lora_A_nonzero_grad": 0,
+   "lora_B_nonzero_grad": 96,
+   "lora_layers": 96,
+   "base_encoder_grads_not_None": 0,
+   "answer_key_grads_not_None": 0,
+   "agent_grads_not_None": 0
+  },
+  "momentum": {
+   "m": 0.99925,
+   "max_abs_err_vs_rule": 0.0,
+   "base_identical": true,
+   "key_B_nonzero_after": 96
+  },
+  "step2_after_one_update": {
+   "loss": 0.6050976514816284,
+   "guesser_tensors_nonzero_grad": 151,
+   "guesser_tensors": 160,
+   "lora_A_nonzero_grad": 96,
+   "lora_B_nonzero_grad": 96,
+   "lora_layers": 96,
+   "base_encoder_grads_not_None": 0,
+   "answer_key_grads_not_None": 0,
+   "agent_grads_not_None": 0
+  }
+ },
+ "E4_initial_warmup_loss": {
+  "batches": [
+   {
+    "loss": 0.6048338413238525,
+    "per_mask": [
+     0.6025676131248474,
+     0.6071000695228577
+    ],
+    "hidden_tokens": [
+     281,
+     304
+    ]
+   },
+   {
+    "loss": 0.6182700395584106,
+    "per_mask": [
+     0.6180124282836914,
+     0.6185275912284851
+    ],
+    "hidden_tokens": [
+     298,
+     272
+    ]
+   },
+   {
+    "loss": 0.6120021343231201,
+    "per_mask": [
+     0.5998672246932983,
+     0.6241370439529419
+    ],
+    "hidden_tokens": [
+     289,
+     336
+    ]
+   },
+   {
+    "loss": 0.6143406629562378,
+    "per_mask": [
+     0.5948593020439148,
+     0.633821964263916
+    ],
+    "hidden_tokens": [
+     277,
+     336
+    ]
+   },
+   {
+    "loss": 0.6161516904830933,
+    "per_mask": [
+     0.6035870909690857,
+     0.6287162899971008
+    ],
+    "hidden_tokens": [
+     278,
+     288
+    ]
+   },
+   {
+    "loss": 0.599313497543335,
+    "per_mask": [
+     0.5922212600708008,
+     0.6064056754112244
+    ],
+    "hidden_tokens": [
+     304,
+     240
+    ]
+   },
+   {
+    "loss": 0.6304522156715393,
+    "per_mask": [
+     0.6144976615905762,
+     0.6464067697525024
+    ],
+    "hidden_tokens": [
+     292,
+     288
+    ]
+   },
+   {
+    "loss": 0.6091288328170776,
+    "per_mask": [
+     0.5895916223526001,
+     0.6286660432815552
+    ],
+    "hidden_tokens": [
+     192,
+     288
+    ]
+   }
+  ],
+  "mean": 0.6130616143345833,
+  "e50_pretraining_final_loss_for_reference": 0.48458
+ },
+ "free_mib_end": 12278,
+ "max_memory_allocated_mib": 6109,
+ "wall_s": 188.1
+}

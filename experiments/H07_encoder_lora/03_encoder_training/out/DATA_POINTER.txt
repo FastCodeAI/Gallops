@@ -1,0 +1,2 @@
+Large Stage 2 files (frame cache, checkpoints, selection features) live on the local NVMe:
+{runs}/drivejepa_kitscenes/encoder_lora_kit/s2/

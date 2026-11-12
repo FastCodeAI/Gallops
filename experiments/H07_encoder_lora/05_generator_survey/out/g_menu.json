@@ -1,0 +1,400 @@
+{
+ "gpu_wait_s": 0.037836551666259766,
+ "drift_check": {
+  "moments": 103,
+  "wrapper_features_bit_equal_to_cached": 103,
+  "wrapper_human_path_bit_equal_to_cached": 103,
+  "wrapper_compute_trajectory_eq_dump_pick (original)": 103,
+  "original: wrapper dump == cached-feature dump (bit)": 103,
+  "original: cached-feature dump now == s2 saved zero dump (bit)": 103,
+  "pass3 unmerged: wrapper dump == cached-feature dump (bit)": 103,
+  "pass3 unmerged: now == s2 saved pass-3 dump (bit)": 103,
+  "pass3 unmerged now vs saved": {
+   "samples": 103,
+   "mean_proposal_shift_m": 0.0,
+   "max_proposal_shift_m": 0.0,
+   "mean_grade_change": 0.0,
+   "chosen_changed": 0
+  },
+  "pass3 merged vs unmerged": {
+   "samples": 103,
+   "mean_proposal_shift_m": 1.761826328907042e-06,
+   "max_proposal_shift_m": 0.00012807629096383332,
+   "mean_grade_change": 3.2608722815814527e-07,
+   "chosen_changed": 0
+  },
+  "pass3 ADE mean now (s2 recorded 1.8732948781716308)": 1.8732948781716308
+ },
+ "menu": {
+  "original": {
+   "n": 103,
+   "best_ade": {
+    "mean": 0.5734020690854773,
+    "median": 0.3048356849037484
+   },
+   "best_ade_fde3": {
+    "mean": 1.0612910631460906,
+    "median": 0.4548525069696434
+   },
+   "min_fde3": {
+    "mean": 0.8993846178220473,
+    "median": 0.30306690789473173
+   },
+   "n_below_1m": {
+    "mean": 9.893203883495145,
+    "median": 11.0
+   },
+   "n_below_2m": {
+    "mean": 18.009708737864077,
+    "median": 20.0
+   },
+   "variety_m": {
+    "mean": 2.8324455208158796,
+    "median": 3.0003550886682655
+   },
+   "chosen_ade": {
+    "mean": 2.3921765067852556,
+    "median": 1.4138354899329284
+   },
+   "worst20": {
+    "n": 21,
+    "rule": "top ceil(0.2 n) moments by the original model's closest-of-32 ADE",
+    "best_ade": 1.8128946264180164,
+    "best_ade_fde3": 3.538105388786614,
+    "keys": [
+     [
+      "e964e075-d6d4-a37d-20d6-e85ca9a845ca",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      220
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      130
+     ],
+     [
+      "4a1ada44-2628-3077-d10d-084fe64da563",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      130
+     ],
+     [
+      "87537280-3cf0-b802-a24c-8b182616e3d7",
+      130
+     ],
+     [
+      "c5679dbf-baf6-8d15-ece7-db0b06ac2f4f",
+      130
+     ],
+     [
+      "8f20f94d-b58e-b8cf-cb18-4e5178dfe51d",
+      40
+     ],
+     [
+      "ab9ebedc-a3c2-b908-b976-3972e58f8464",
+      220
+     ],
+     [
+      "a53e5024-9ba3-c953-5c4c-fc1747a9db6b",
+      40
+     ],
+     [
+      "a657f1f9-6d87-bf80-427b-8ab140256460",
+      40
+     ],
+     [
+      "804115ba-b268-7413-6a20-a374306bcf56",
+      130
+     ],
+     [
+      "44152a07-ac6e-1a5b-75f4-ba53465b2112",
+      40
+     ],
+     [
+      "6b43d3d3-85de-1583-7cd5-00bfe0e1bcbe",
+      130
+     ],
+     [
+      "9329a480-7bde-2d67-fd5f-a0c1f3d99109",
+      130
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      400
+     ],
+     [
+      "303a44ec-148b-8320-d06f-d6acaba2448f",
+      40
+     ],
+     [
+      "f79ac82f-bfae-d92c-a35d-d9abe03067e7",
+      40
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      220
+     ]
+    ]
+   }
+  },
+  "pass3_unmerged": {
+   "n": 103,
+   "best_ade": {
+    "mean": 0.5632779216035154,
+    "median": 0.3034932318344315
+   },
+   "best_ade_fde3": {
+    "mean": 1.0359177215103328,
+    "median": 0.48920088841545567
+   },
+   "min_fde3": {
+    "mean": 0.8780010535003884,
+    "median": 0.3464141940929899
+   },
+   "n_below_1m": {
+    "mean": 9.912621359223301,
+    "median": 11.0
+   },
+   "n_below_2m": {
+    "mean": 18.262135922330096,
+    "median": 20.0
+   },
+   "variety_m": {
+    "mean": 2.822488352163904,
+    "median": 2.975231538688608
+   },
+   "chosen_ade": {
+    "mean": 1.8732948781716308,
+    "median": 1.0013018329000987
+   },
+   "worst20": {
+    "n": 21,
+    "rule": "top ceil(0.2 n) moments by the original model's closest-of-32 ADE",
+    "best_ade": 1.7239107457513017,
+    "best_ade_fde3": 3.328640526617504,
+    "keys": [
+     [
+      "e964e075-d6d4-a37d-20d6-e85ca9a845ca",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      220
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      130
+     ],
+     [
+      "4a1ada44-2628-3077-d10d-084fe64da563",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      130
+     ],
+     [
+      "87537280-3cf0-b802-a24c-8b182616e3d7",
+      130
+     ],
+     [
+      "c5679dbf-baf6-8d15-ece7-db0b06ac2f4f",
+      130
+     ],
+     [
+      "8f20f94d-b58e-b8cf-cb18-4e5178dfe51d",
+      40
+     ],
+     [
+      "ab9ebedc-a3c2-b908-b976-3972e58f8464",
+      220
+     ],
+     [
+      "a53e5024-9ba3-c953-5c4c-fc1747a9db6b",
+      40
+     ],
+     [
+      "a657f1f9-6d87-bf80-427b-8ab140256460",
+      40
+     ],
+     [
+      "804115ba-b268-7413-6a20-a374306bcf56",
+      130
+     ],
+     [
+      "44152a07-ac6e-1a5b-75f4-ba53465b2112",
+      40
+     ],
+     [
+      "6b43d3d3-85de-1583-7cd5-00bfe0e1bcbe",
+      130
+     ],
+     [
+      "9329a480-7bde-2d67-fd5f-a0c1f3d99109",
+      130
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      400
+     ],
+     [
+      "303a44ec-148b-8320-d06f-d6acaba2448f",
+      40
+     ],
+     [
+      "f79ac82f-bfae-d92c-a35d-d9abe03067e7",
+      40
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      220
+     ]
+    ]
+   }
+  },
+  "pass3_merged": {
+   "n": 103,
+   "best_ade": {
+    "mean": 0.56327789642518,
+    "median": 0.30349322928926503
+   },
+   "best_ade_fde3": {
+    "mean": 1.035917820833399,
+    "median": 0.4892022668833446
+   },
+   "min_fde3": {
+    "mean": 0.8780009987714213,
+    "median": 0.34641470765158744
+   },
+   "n_below_1m": {
+    "mean": 9.912621359223301,
+    "median": 11.0
+   },
+   "n_below_2m": {
+    "mean": 18.262135922330096,
+    "median": 20.0
+   },
+   "variety_m": {
+    "mean": 2.822488377637169,
+    "median": 2.9752315400733895
+   },
+   "chosen_ade": {
+    "mean": 1.8732947970944172,
+    "median": 1.0013010879409132
+   },
+   "worst20": {
+    "n": 21,
+    "rule": "top ceil(0.2 n) moments by the original model's closest-of-32 ADE",
+    "best_ade": 1.723910917237231,
+    "best_ade_fde3": 3.3286413833055355,
+    "keys": [
+     [
+      "e964e075-d6d4-a37d-20d6-e85ca9a845ca",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      40
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      220
+     ],
+     [
+      "79fcee45-8e41-ca09-04cf-6a85b0fd8627",
+      130
+     ],
+     [
+      "4a1ada44-2628-3077-d10d-084fe64da563",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      40
+     ],
+     [
+      "1c6518d9-6617-02a2-ba79-36eb6f4fde49",
+      130
+     ],
+     [
+      "87537280-3cf0-b802-a24c-8b182616e3d7",
+      130
+     ],
+     [
+      "c5679dbf-baf6-8d15-ece7-db0b06ac2f4f",
+      130
+     ],
+     [
+      "8f20f94d-b58e-b8cf-cb18-4e5178dfe51d",
+      40
+     ],
+     [
+      "ab9ebedc-a3c2-b908-b976-3972e58f8464",
+      220
+     ],
+     [
+      "a53e5024-9ba3-c953-5c4c-fc1747a9db6b",
+      40
+     ],
+     [
+      "a657f1f9-6d87-bf80-427b-8ab140256460",
+      40
+     ],
+     [
+      "804115ba-b268-7413-6a20-a374306bcf56",
+      130
+     ],
+     [
+      "44152a07-ac6e-1a5b-75f4-ba53465b2112",
+      40
+     ],
+     [
+      "6b43d3d3-85de-1583-7cd5-00bfe0e1bcbe",
+      130
+     ],
+     [
+      "9329a480-7bde-2d67-fd5f-a0c1f3d99109",
+      130
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      400
+     ],
+     [
+      "303a44ec-148b-8320-d06f-d6acaba2448f",
+      40
+     ],
+     [
+      "f79ac82f-bfae-d92c-a35d-d9abe03067e7",
+      40
+     ],
+     [
+      "2498d199-a868-a8fe-9f48-2612f42a6bde",
+      220
+     ]
+    ]
+   }
+  }
+ },
+ "wall_s": 179.7
+}

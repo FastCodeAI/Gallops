@@ -1,0 +1,304 @@
+{
+ "started": "2026-10-21 00:23:44",
+ "preflight": {
+  "load5": 7.8759765625,
+  "ram_gb": 79.0,
+  "disk_gb": 248.2,
+  "gpu_wait_s": 0.0
+ },
+ "trainable_values": 9995593,
+ "pick_rule": "upstream (argmax sigmoid(last pred_score logit)); G0a: upstream uses the last logit alone",
+ "G1": {
+  "menus_1763_bit_identical_to_s2_start_dump": true,
+  "103_equals_s0_g_menu_pass3_merged": true,
+  "103_equals_s0_g_menu_pass3_unmerged (record only)": false,
+  "1763_equals_s1_phase1_start_row": true,
+  "1763_equals_s2_phase1_rerun_start_row": true,
+  "pass": true,
+  "this_run_pick_rule": "same as upstream (G0a): step 0 under this run's rule is the same row"
+ },
+ "G2": {
+  "gridmask_applied_on_this_batch": 0,
+  "replay_bev_max_abs_diff": 0.0,
+  "replay_bev_bit_identical": true,
+  "replay_logit_bit_identical": true,
+  "d_k_waypoints_used": 6,
+  "target_row_sum_max_abs_err": 2.384185791015625e-07,
+  "argmin_d_is_argmax_target_rows": "32 / 32",
+  "scorer_loss": 3.6331121921539307,
+  "loss_finite": true,
+  "d_k_equals_6_waypoint_recompute": true,
+  "d_k_differs_from_8_waypoints": true,
+  "logit_grad_nonzero_columns": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "scorer_loss_alone": {
+   "generator": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 41
+   },
+   "pred_score": {
+    "nonzero": 10,
+    "any": 10,
+    "total": 10
+   },
+   "lora": {
+    "nonzero": 192,
+    "any": 192,
+    "total": 192
+   },
+   "other_scorer_heads": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 20
+   },
+   "projector": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 2
+   },
+   "answer_key": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 484
+   },
+   "guesser": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 160
+   },
+   "encoder_base": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 292
+   },
+   "fixed_grids": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 4
+   }
+  },
+  "generator_loss_alone": {
+   "generator": {
+    "nonzero": 41,
+    "any": 41,
+    "total": 41
+   },
+   "pred_score": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 10
+   },
+   "lora": {
+    "nonzero": 192,
+    "any": 192,
+    "total": 192
+   },
+   "other_scorer_heads": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 20
+   },
+   "projector": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 2
+   },
+   "answer_key": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 484
+   },
+   "guesser": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 160
+   },
+   "encoder_base": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 292
+   },
+   "fixed_grids": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 4
+   }
+  },
+  "hide_and_guess_alone": {
+   "generator": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 41
+   },
+   "pred_score": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 10
+   },
+   "lora": {
+    "nonzero": 192,
+    "any": 192,
+    "total": 192
+   },
+   "other_scorer_heads": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 20
+   },
+   "projector": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 2
+   },
+   "answer_key": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 484
+   },
+   "guesser": {
+    "nonzero": 151,
+    "any": 151,
+    "total": 160
+   },
+   "encoder_base": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 292
+   },
+   "fixed_grids": {
+    "nonzero": 0,
+    "any": 0,
+    "total": 4
+   }
+  },
+  "with_gridmask_applied": {
+   "stream_seed": 1,
+   "applied": 1,
+   "bev_bit_identical": true,
+   "logit_bit_identical": true
+  },
+  "pass": true
+ },
+ "G3": {
+  "steps": [
+   {
+    "gen_loss": 0.9412045478820801,
+    "scorer_loss": 3.6119437217712402,
+    "game_loss": 0.47303861379623413,
+    "generator_nonzero": 41,
+    "pred_score_nonzero": 10,
+    "lora_nonzero": 192,
+    "guesser_zero_grad": [
+     "mask_tokens.1",
+     "mask_tokens.2",
+     "mask_tokens.3",
+     "mask_tokens.4",
+     "mask_tokens.5",
+     "mask_tokens.6",
+     "mask_tokens.7",
+     "mask_tokens.8",
+     "mask_tokens.9"
+    ],
+    "guesser_total": 160
+   },
+   {
+    "gen_loss": 0.770171046257019,
+    "scorer_loss": 3.4950687885284424,
+    "game_loss": 0.47327643632888794,
+    "generator_nonzero": 41,
+    "pred_score_nonzero": 10,
+    "lora_nonzero": 192,
+    "guesser_zero_grad": [
+     "mask_tokens.1",
+     "mask_tokens.2",
+     "mask_tokens.3",
+     "mask_tokens.4",
+     "mask_tokens.5",
+     "mask_tokens.6",
+     "mask_tokens.7",
+     "mask_tokens.8",
+     "mask_tokens.9"
+    ],
+    "guesser_total": 160
+   },
+   {
+    "gen_loss": 1.8013885021209717,
+    "scorer_loss": 3.54677152633667,
+    "game_loss": 0.46912962198257446,
+    "generator_nonzero": 41,
+    "pred_score_nonzero": 10,
+    "lora_nonzero": 192,
+    "guesser_zero_grad": [
+     "mask_tokens.1",
+     "mask_tokens.2",
+     "mask_tokens.3",
+     "mask_tokens.4",
+     "mask_tokens.5",
+     "mask_tokens.6",
+     "mask_tokens.7",
+     "mask_tokens.8",
+     "mask_tokens.9"
+    ],
+    "guesser_total": 160
+   },
+   {
+    "gen_loss": 1.594314694404602,
+    "scorer_loss": 3.4774842262268066,
+    "game_loss": 0.4602474570274353,
+    "generator_nonzero": 41,
+    "pred_score_nonzero": 10,
+    "lora_nonzero": 192,
+    "guesser_zero_grad": [
+     "mask_tokens.1",
+     "mask_tokens.2",
+     "mask_tokens.3",
+     "mask_tokens.4",
+     "mask_tokens.5",
+     "mask_tokens.6",
+     "mask_tokens.7",
+     "mask_tokens.8",
+     "mask_tokens.9"
+    ],
+    "guesser_total": 160
+   },
+   {
+    "gen_loss": 0.9239089488983154,
+    "scorer_loss": 3.3790526390075684,
+    "game_loss": 0.4681180715560913,
+    "generator_nonzero": 41,
+    "pred_score_nonzero": 10,
+    "lora_nonzero": 192,
+    "guesser_zero_grad": [
+     "mask_tokens.1",
+     "mask_tokens.2",
+     "mask_tokens.3",
+     "mask_tokens.4",
+     "mask_tokens.5",
+     "mask_tokens.6",
+     "mask_tokens.7",
+     "mask_tokens.8",
+     "mask_tokens.9"
+    ],
+    "guesser_total": 160
+   }
+  ],
+  "generator_grad_from": {
+   "generator": 41,
+   "scorer": 0,
+   "hide_and_guess": 0
+  },
+  "peak_allocated_GiB": 9.05,
+  "s_per_step_after_first": 3.317,
+  "restored_bit_exact": true,
+  "pass": true
+ },
+ "stopped": "no improvement in SLOW scorer pick ADE (3 s) for 6 checks (pass 7.5)",
+ "chosen": 4.5
+}

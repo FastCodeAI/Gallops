@@ -1,0 +1,41 @@
+{
+ "rule": "t%5==0, t>=15, t+40<=N-1; future times within 0.02s of k*0.5s",
+ "train": {
+  "scenes": 482,
+  "scenes_with_pose_rows_ne_frames": 0,
+  "pose_ts_vs_frame_ts_max_abs_diff_s": 5.007100000042897e-05,
+  "frame_step_min_max_s": [
+   0.0999999999999659,
+   0.10000000000002274
+  ],
+  "moments": 13937,
+  "moments_dropped_bad_timing": 0,
+  "scenes_with_zero_moments": 0,
+  "moving_moments": 12410,
+  "moving_with_x_forward": 12410,
+  "median_of_scene_median_heading_error_deg": 1.4127372695537321
+ },
+ "selection": {
+  "scenes": 50,
+  "scenes_with_pose_rows_ne_frames": 0,
+  "pose_ts_vs_frame_ts_max_abs_diff_s": 4.8515000003135356e-05,
+  "frame_step_min_max_s": [
+   0.09999999999999432,
+   0.10000000000000853
+  ],
+  "moments": 1763,
+  "moments_dropped_bad_timing": 0,
+  "scenes_with_zero_moments": 0,
+  "moving_moments": 1536,
+  "moving_with_x_forward": 1536,
+  "median_of_scene_median_heading_error_deg": 1.3478096615710324
+ },
+ "frame_cache_scene_frame_count_mismatches": 0,
+ "frame_cache_index_keys": [
+  "dtype",
+  "frame_shape",
+  "index",
+  "scene_frames"
+ ],
+ "wall_s": 25.8
+}

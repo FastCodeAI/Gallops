@@ -1,0 +1,7 @@
+{
+ "moments": 13937,
+ "turning_moments": 2296,
+ "sign_y_equals_sign_heading": 2290,
+ "left_turns (heading > 0.3)": 1150,
+ "right_turns (heading < -0.3)": 1146
+}

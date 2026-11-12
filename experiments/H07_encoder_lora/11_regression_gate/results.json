@@ -1,0 +1,1866 @@
+{
+ "job": "20261027T215457-siddesh-94f0",
+ "run_ids": {
+  "kitscenes": {
+   "baseline": "20261023T195836-e90d98",
+   "candidate": "20261027T221934-41f714"
+  },
+  "nuscenes": {
+   "baseline": "20261023T200508-261359",
+   "candidate": "20261027T220152-404b46"
+  },
+  "navsim": {
+   "baseline": "20261023T202240-de2f00",
+   "candidate": "20261027T215542-59375a"
+  },
+  "neuroncap_quick": {
+   "baseline": "20261026T195633-2a9a76",
+   "candidate": "20261027T220137-fc8654"
+  },
+  "bench2drive_quick": {
+   "baseline": "20261026T233957-56d38c",
+   "candidate": "20261027T220735-ccf106"
+  },
+  "alpasim_quick": {
+   "baseline": "20261027T005941-d3f828",
+   "candidate": "20261027T221606-98bbe7"
+  },
+  "neuroncap": {
+   "baseline": "20261026T232704-7bcf0e",
+   "candidate": "20261027T222610-aff320"
+  },
+  "bench2drive": {
+   "baseline": "20261026T233957-56d38c",
+   "candidate": "20261027T222440-49bb8c"
+  },
+  "alpasim": {
+   "baseline": "20261027T005941-d3f828",
+   "candidate": "20261027T230105-487c55"
+  }
+ },
+ "A": {
+  "overall": "FAIL",
+  "unfinished": [],
+  "pairs": [
+   {
+    "bench": "kitscenes",
+    "metric": "ade",
+    "verdict": "GAIN",
+    "baseline_mean": 2.5375,
+    "candidate_mean": 0.9204,
+    "diff": 1.617,
+    "se": 0.1816,
+    "t": 8.9063,
+    "t_crit": 1.9807,
+    "mde": 0.5131,
+    "units": 117.0,
+    "unit_name": "scenes",
+    "matched": 186.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 1.0,
+    "crash_check": 0.0,
+    "subset": "kitscenes",
+    "baseline_run": "drivejepa:20261023T195836-e90d98",
+    "candidate_run": "drivejepa:20261027T221934-41f714",
+    "notes": [
+     "candidate run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "model.yaml env differs: DRIVEJEPA_MOMENTUM None -> 'on'",
+     "candidate sets DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (d889539c9 vs 9585f816c): an adapter change between them is part of the difference",
+     "37 sample(s) of overlap_train_val left out of this verdict (overlap_train_val: places in the training data); on them alone, better by 1.593, t 3.76"
+    ],
+    "pdm": [
+     {
+      "slot": "ep",
+      "metric": "pdm_ep",
+      "baseline_mean": 0.8201,
+      "candidate_mean": 0.9254,
+      "diff": 0.1053,
+      "se": 0.0208,
+      "t": 5.0516,
+      "t_crit": 1.9807,
+      "verdict": "GAIN"
+     },
+     {
+      "slot": "comfort",
+      "metric": "pdm_comfort",
+      "baseline_mean": 0.4355,
+      "candidate_mean": 0.5591,
+      "diff": 0.1237,
+      "se": 0.0461,
+      "t": 2.6851,
+      "t_crit": 1.9807,
+      "verdict": "GAIN"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   },
+   {
+    "bench": "nuscenes",
+    "metric": "l2_avg",
+    "verdict": "GAIN",
+    "baseline_mean": 2.4314,
+    "candidate_mean": 0.9152,
+    "diff": 1.5162,
+    "se": 0.104,
+    "t": 14.5788,
+    "t_crit": 1.9769,
+    "mde": 0.2934,
+    "units": 143.0,
+    "unit_name": "units",
+    "matched": 1000.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 1.0,
+    "crash_check": 0.0,
+    "subset": "nuscenes",
+    "baseline_run": "drivejepa:20261023T200508-261359",
+    "candidate_run": "drivejepa:20261027T220152-404b46",
+    "notes": [
+     "baseline run is marked invalid: 1000 samples named by PADDOCK_NUSCENES_SAMPLES; a subset, not a nuScenes score; --limit 1000: a subset of the benchmark, run to test the pipeline",
+     "candidate run is marked invalid: 1000 samples named by PADDOCK_NUSCENES_SAMPLES; a subset, not a nuScenes score; --limit 1000: a subset of the benchmark, run to test the pipeline; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "model.yaml env differs: DRIVEJEPA_MOMENTUM None -> 'on'",
+     "candidate sets DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (d889539c9 vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "col_avg",
+      "baseline_mean": 0.0213,
+      "candidate_mean": 0.0023,
+      "diff": 0.019,
+      "se": 0.0059,
+      "t": 3.2058,
+      "t_crit": 1.9769,
+      "verdict": "GAIN"
+     },
+     {
+      "slot": "ep",
+      "metric": "pdm_ep",
+      "baseline_mean": 0.864,
+      "candidate_mean": 0.9477,
+      "diff": 0.0837,
+      "se": 0.0132,
+      "t": 6.3392,
+      "t_crit": 1.9769,
+      "verdict": "GAIN"
+     },
+     {
+      "slot": "comfort",
+      "metric": "pdm_comfort",
+      "baseline_mean": 0.412,
+      "candidate_mean": 0.584,
+      "diff": 0.172,
+      "se": 0.0242,
+      "t": 7.1218,
+      "t_crit": 1.9769,
+      "verdict": "GAIN"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   },
+   {
+    "bench": "navsim",
+    "metric": "epdms",
+    "verdict": "REGRESSION",
+    "baseline_mean": 0.8572,
+    "candidate_mean": 0.7533,
+    "diff": -0.1039,
+    "se": 0.0112,
+    "t": -9.3114,
+    "t_crit": 1.9792,
+    "mde": 0.0315,
+    "units": 126.0,
+    "unit_name": "units",
+    "matched": 1018.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 1.0,
+    "crash_check": 0.0,
+    "subset": "navsim",
+    "baseline_run": "drivejepa:20261023T202240-de2f00",
+    "candidate_run": "drivejepa:20261027T215542-59375a",
+    "notes": [
+     "baseline run is marked invalid: --limit 1018: a subset of the benchmark, run to test the pipeline",
+     "candidate run is marked invalid: --limit 1018: a subset of the benchmark, run to test the pipeline; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "model.yaml env differs: DRIVEJEPA_MOMENTUM None -> 'on'",
+     "candidate sets DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (d889539c9 vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "no_at_fault_collisions",
+      "baseline_mean": 0.9931,
+      "candidate_mean": 0.9877,
+      "diff": -0.0054,
+      "se": 0.0035,
+      "t": -1.5349,
+      "t_crit": 1.9792,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "dac",
+      "metric": "drivable_area_compliance",
+      "baseline_mean": 0.9774,
+      "candidate_mean": 0.8998,
+      "diff": -0.0776,
+      "se": 0.0127,
+      "t": -6.1097,
+      "t_crit": 1.9792,
+      "verdict": "REGRESSION"
+     },
+     {
+      "slot": "ttc",
+      "metric": "time_to_collision_within_bound",
+      "baseline_mean": 0.9882,
+      "candidate_mean": 0.9676,
+      "diff": -0.0206,
+      "se": 0.0063,
+      "t": -3.2691,
+      "t_crit": 1.9792,
+      "verdict": "REGRESSION"
+     },
+     {
+      "slot": "ep",
+      "metric": "ego_progress",
+      "baseline_mean": 0.8673,
+      "candidate_mean": 0.7366,
+      "diff": -0.1306,
+      "se": 0.0122,
+      "t": -10.6678,
+      "t_crit": 1.9792,
+      "verdict": "REGRESSION"
+     },
+     {
+      "slot": "comfort",
+      "metric": "history_comfort",
+      "baseline_mean": 0.9774,
+      "candidate_mean": 0.9745,
+      "diff": -0.0029,
+      "se": 0.003,
+      "t": -0.9734,
+      "t_crit": 1.9792,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "score",
+      "metric": "pdm_style_score",
+      "baseline_mean": 0.9212,
+      "candidate_mean": 0.8141,
+      "diff": -0.1072,
+      "se": 0.0123,
+      "t": -8.7242,
+      "t_crit": 1.9792,
+      "verdict": "REGRESSION"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": [
+     "drivable_area_compliance",
+     "time_to_collision_within_bound",
+     "ego_progress",
+     "pdm_style_score"
+    ]
+   },
+   {
+    "bench": "neuroncap",
+    "metric": "ncap_score",
+    "verdict": "NEUTRAL",
+    "baseline_mean": 3.1794,
+    "candidate_mean": 2.2194,
+    "diff": -0.96,
+    "se": 2.1984,
+    "t": -0.4367,
+    "t_crit": 4.303,
+    "mde": 11.7924,
+    "units": 3.0,
+    "unit_name": "scenario pairs",
+    "matched": 3.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 0.0,
+    "crash_check": 0.0,
+    "subset": "neuroncap_quick",
+    "baseline_run": "drivejepa:20261026T195633-2a9a76",
+    "candidate_run": "drivejepa:20261027T220137-fc8654",
+    "notes": [
+     "baseline run is marked invalid: 3 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes)",
+     "candidate run is marked invalid: 3 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (54306afa9 vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "pdm_nc",
+      "baseline_mean": 0.4167,
+      "candidate_mean": 0.3611,
+      "diff": -0.0556,
+      "se": 0.5298,
+      "t": -0.1049,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "dac",
+      "metric": "pdm_dac",
+      "baseline_mean": 1.0,
+      "candidate_mean": 0.9785,
+      "diff": -0.0215,
+      "se": 0.0215,
+      "t": -1.0,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "ttc",
+      "metric": "pdm_ttc",
+      "baseline_mean": 0.3201,
+      "candidate_mean": 0.3222,
+      "diff": 0.0021,
+      "se": 0.5402,
+      "t": 0.0039,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "ep",
+      "metric": "pdm_ep",
+      "baseline_mean": 0.3826,
+      "candidate_mean": 0.208,
+      "diff": -0.1746,
+      "se": 0.3759,
+      "t": -0.4645,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "comfort",
+      "metric": "pdm_comfort",
+      "baseline_mean": 0.8569,
+      "candidate_mean": 1.0,
+      "diff": 0.1431,
+      "se": 0.0387,
+      "t": 3.6961,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "score",
+      "metric": "pdm_style_score",
+      "baseline_mean": 0.3515,
+      "candidate_mean": 0.2811,
+      "diff": -0.0704,
+      "se": 0.4676,
+      "t": -0.1506,
+      "t_crit": 4.303,
+      "verdict": "NEUTRAL"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   },
+   {
+    "bench": "bench2drive",
+    "metric": "driving_score",
+    "verdict": "TOO FEW UNITS",
+    "baseline_mean": 37.67,
+    "candidate_mean": 18.47,
+    "diff": -19.2,
+    "se": null,
+    "t": null,
+    "t_crit": null,
+    "mde": null,
+    "units": 1.0,
+    "unit_name": "routes",
+    "matched": 1.0,
+    "only_baseline": 6.0,
+    "only_candidate": 0.0,
+    "can_ship": 0.0,
+    "crash_check": 1.0,
+    "subset": "bench2drive_quick",
+    "baseline_run": "drivejepa:20261026T233957-56d38c",
+    "candidate_run": "drivejepa:20261027T220735-ccf106",
+    "notes": [
+     "baseline run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)",
+     "candidate run is marked invalid: 1 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (06870801c vs 9585f816c): an adapter change between them is part of the difference",
+     "the runs cover different sample sets; only the shared samples are paired",
+     "too few units: 1 independent unit, and a standard error needs at least 2",
+     "unpaired samples left out: 6 baseline-only, 0 candidate-only"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "collision_rate",
+      "baseline_mean": 0.0,
+      "candidate_mean": 1.0,
+      "diff": -1.0,
+      "se": null,
+      "t": null,
+      "t_crit": null,
+      "verdict": "TOO FEW UNITS"
+     },
+     {
+      "slot": "ep",
+      "metric": "route_completion",
+      "baseline_mean": 37.67,
+      "candidate_mean": 58.17,
+      "diff": 20.5,
+      "se": null,
+      "t": null,
+      "t_crit": null,
+      "verdict": "TOO FEW UNITS"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   },
+   {
+    "bench": "alpasim",
+    "metric": "scene_score",
+    "verdict": "TOO FEW UNITS",
+    "baseline_mean": 0.9295,
+    "candidate_mean": 0.0,
+    "diff": -0.9295,
+    "se": null,
+    "t": null,
+    "t_crit": null,
+    "mde": null,
+    "units": 1.0,
+    "unit_name": "units",
+    "matched": 1.0,
+    "only_baseline": 9.0,
+    "only_candidate": 0.0,
+    "can_ship": 0.0,
+    "crash_check": 1.0,
+    "subset": "alpasim_quick",
+    "baseline_run": "drivejepa:20261027T005941-d3f828",
+    "candidate_run": "drivejepa:20261027T221606-98bbe7",
+    "notes": [
+     "baseline run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env); resumed: 9 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only",
+     "candidate run is marked invalid: 1 of the 10 clips of public_2601_gate10 (--scene); a subset, not an AlpaSim score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (1561b66ac vs 9585f816c): an adapter change between them is part of the difference",
+     "the runs cover different sample sets; only the shared samples are paired",
+     "too few units: 1 independent unit, and a standard error needs at least 2",
+     "unpaired samples left out: 9 baseline-only, 0 candidate-only"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "collision_at_fault",
+      "baseline_mean": 0.0,
+      "candidate_mean": 1.0,
+      "diff": -1.0,
+      "se": null,
+      "t": null,
+      "t_crit": null,
+      "verdict": "TOO FEW UNITS"
+     },
+     {
+      "slot": "dac",
+      "metric": "offroad",
+      "baseline_mean": 0.0,
+      "candidate_mean": 0.0,
+      "diff": 0.0,
+      "se": null,
+      "t": null,
+      "t_crit": null,
+      "verdict": "TOO FEW UNITS"
+     },
+     {
+      "slot": "ep",
+      "metric": "progress",
+      "baseline_mean": 0.7436,
+      "candidate_mean": 0.7091,
+      "diff": -0.0345,
+      "se": null,
+      "t": null,
+      "t_crit": null,
+      "verdict": "TOO FEW UNITS"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   },
+   {
+    "bench": "neuroncap",
+    "metric": "ncap_score",
+    "verdict": "NEUTRAL",
+    "baseline_mean": 3.6792,
+    "candidate_mean": 2.7265,
+    "diff": -0.9527,
+    "se": 0.7555,
+    "t": -1.2611,
+    "t_crit": 2.145,
+    "mde": 2.2762,
+    "units": 15.0,
+    "unit_name": "scenario pairs",
+    "matched": 15.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 1.0,
+    "crash_check": 0.0,
+    "subset": "neuroncap",
+    "baseline_run": "drivejepa:20261026T232704-7bcf0e",
+    "candidate_run": "drivejepa:20261027T222610-aff320",
+    "notes": [
+     "baseline run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)",
+     "candidate run is marked invalid: 15 of the 20 official scenario-scene pairs; a subset, not a neuroNCAP score (stationary 10 scenes, frontal 5 scenes, side 5 scenes); site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (06870801c vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "pdm_nc",
+      "baseline_mean": 0.6369,
+      "candidate_mean": 0.5578,
+      "diff": -0.0792,
+      "se": 0.1434,
+      "t": -0.552,
+      "t_crit": 2.145,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "dac",
+      "metric": "pdm_dac",
+      "baseline_mean": 0.9985,
+      "candidate_mean": 0.8364,
+      "diff": -0.1621,
+      "se": 0.0589,
+      "t": -2.7498,
+      "t_crit": 2.145,
+      "verdict": "REGRESSION"
+     },
+     {
+      "slot": "ttc",
+      "metric": "pdm_ttc",
+      "baseline_mean": 0.5821,
+      "candidate_mean": 0.4804,
+      "diff": -0.1017,
+      "se": 0.1534,
+      "t": -0.6631,
+      "t_crit": 2.145,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "ep",
+      "metric": "pdm_ep",
+      "baseline_mean": 0.4485,
+      "candidate_mean": 0.4039,
+      "diff": -0.0445,
+      "se": 0.115,
+      "t": -0.3872,
+      "t_crit": 2.145,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "comfort",
+      "metric": "pdm_comfort",
+      "baseline_mean": 0.9184,
+      "candidate_mean": 1.0,
+      "diff": 0.0816,
+      "se": 0.0198,
+      "t": 4.1123,
+      "t_crit": 2.145,
+      "verdict": "GAIN"
+     },
+     {
+      "slot": "score",
+      "metric": "pdm_style_score",
+      "baseline_mean": 0.5251,
+      "candidate_mean": 0.411,
+      "diff": -0.1141,
+      "se": 0.1284,
+      "t": -0.8889,
+      "t_crit": 2.145,
+      "verdict": "NEUTRAL"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": [
+     "pdm_dac"
+    ]
+   },
+   {
+    "bench": "bench2drive",
+    "metric": "driving_score",
+    "verdict": "REGRESSION",
+    "baseline_mean": 59.036,
+    "candidate_mean": 0.2686,
+    "diff": -58.7674,
+    "se": 11.4065,
+    "t": -5.1521,
+    "t_crit": 2.447,
+    "mde": 38.246,
+    "units": 7.0,
+    "unit_name": "routes",
+    "matched": 7.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 0.0,
+    "crash_check": 0.0,
+    "subset": "bench2drive",
+    "baseline_run": "drivejepa:20261026T233957-56d38c",
+    "candidate_run": "drivejepa:20261027T222440-49bb8c",
+    "notes": [
+     "baseline run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env)",
+     "candidate run is marked invalid: 7 of the 220 routes this site runs (--scene/--scenarios); a subset, not a score; site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (06870801c vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "collision_rate",
+      "baseline_mean": 0.2857,
+      "candidate_mean": 0.1429,
+      "diff": 0.1429,
+      "se": 0.2608,
+      "t": 0.5477,
+      "t_crit": 2.447,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "ep",
+      "metric": "route_completion",
+      "baseline_mean": 72.2343,
+      "candidate_mean": 1.3786,
+      "diff": -70.8557,
+      "se": 11.8802,
+      "t": -5.9642,
+      "t_crit": 2.447,
+      "verdict": "REGRESSION"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": [
+     "route_completion"
+    ]
+   },
+   {
+    "bench": "alpasim",
+    "metric": "scene_score",
+    "verdict": "REGRESSION",
+    "baseline_mean": 0.4344,
+    "candidate_mean": 0.1158,
+    "diff": -0.3186,
+    "se": 0.1268,
+    "t": -2.5132,
+    "t_crit": 2.262,
+    "mde": 0.3986,
+    "units": 10.0,
+    "unit_name": "units",
+    "matched": 10.0,
+    "only_baseline": 0.0,
+    "only_candidate": 0.0,
+    "can_ship": 1.0,
+    "crash_check": 0.0,
+    "subset": "alpasim",
+    "baseline_run": "drivejepa:20261027T005941-d3f828",
+    "candidate_run": "drivejepa:20261027T230105-487c55",
+    "notes": [
+     "baseline run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT (values in config.model_env); resumed: 9 episode(s) reused from an earlier attempt, so started_utc and duration_s describe this attempt only",
+     "candidate run is marked invalid: site env override may change what was measured: DRIVEJEPA_CHECKPOINT, DRIVEJEPA_CHECKPOINT_SOURCE (values in config.model_env)",
+     "candidate sets DRIVEJEPA_CHECKPOINT_SOURCE and the baseline does not: the baseline ran model.yaml's default for it",
+     "the runs used different paddock code (1561b66ac vs 9585f816c): an adapter change between them is part of the difference"
+    ],
+    "pdm": [
+     {
+      "slot": "nc",
+      "metric": "collision_at_fault",
+      "baseline_mean": 0.2,
+      "candidate_mean": 0.3,
+      "diff": -0.1,
+      "se": 0.1795,
+      "t": -0.5571,
+      "t_crit": 2.262,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "dac",
+      "metric": "offroad",
+      "baseline_mean": 0.1,
+      "candidate_mean": 0.3,
+      "diff": -0.2,
+      "se": 0.1333,
+      "t": -1.5,
+      "t_crit": 2.262,
+      "verdict": "NEUTRAL"
+     },
+     {
+      "slot": "ep",
+      "metric": "progress",
+      "baseline_mean": 0.4536,
+      "candidate_mean": 0.2921,
+      "diff": -0.1615,
+      "se": 0.0801,
+      "t": -2.016,
+      "t_crit": 2.262,
+      "verdict": "NEUTRAL"
+     }
+    ],
+    "pdm_worse_beyond_t_crit": []
+   }
+  ]
+ },
+ "B": {
+  "baseline": {
+   "run": "20261026T233957-56d38c",
+   "routes": [
+    {
+     "route": "17598-Town12-SequentialLaneChange",
+     "status": "Failed - TickRuntime",
+     "entry_status": "Finished",
+     "route_completion": 65.01,
+     "infraction_penalty": 1.0,
+     "driving_score": 65.01,
+     "infractions": {
+      "min_speed_infractions": 10
+     },
+     "game_s": 200.05,
+     "wall_s": 998.2,
+     "distance_m": 77.9,
+     "top_speed_mps": 11.94,
+     "stopped_s": 185.7,
+     "frames": 4000
+    },
+    {
+     "route": "18356-Town12-ParkingCutIn",
+     "status": "Completed",
+     "entry_status": "Finished",
+     "route_completion": 100.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 100.0,
+     "infractions": {
+      "min_speed_infractions": 19
+     },
+     "game_s": 24.1,
+     "wall_s": 299.2,
+     "distance_m": 131.3,
+     "top_speed_mps": 10.88,
+     "stopped_s": 0.9,
+     "frames": 482
+    },
+    {
+     "route": "24258-Town07-HazardAtSideLaneTwoWays",
+     "status": "Completed",
+     "entry_status": "Finished",
+     "route_completion": 100.0,
+     "infraction_penalty": 0.36,
+     "driving_score": 36.0,
+     "infractions": {
+      "collisions_vehicle": 2,
+      "min_speed_infractions": 19
+     },
+     "game_s": 30.25,
+     "wall_s": 173.0,
+     "distance_m": 130.8,
+     "top_speed_mps": 11.12,
+     "stopped_s": 3.2,
+     "frames": 605
+    },
+    {
+     "route": "28111-Town04-T_Junction",
+     "status": "Completed",
+     "entry_status": "Finished",
+     "route_completion": 100.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 100.0,
+     "infractions": {
+      "min_speed_infractions": 17
+     },
+     "game_s": 17.3,
+     "wall_s": 87.9,
+     "distance_m": 84.6,
+     "top_speed_mps": 10.28,
+     "stopped_s": 1.2,
+     "frames": 346
+    },
+    {
+     "route": "3255-Town13-ParkingCrossingPedestrian",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 70.97,
+     "infraction_penalty": 0.6,
+     "driving_score": 42.582,
+     "infractions": {
+      "collisions_vehicle": 1,
+      "min_speed_infractions": 13,
+      "vehicle_blocked": 1
+     },
+     "game_s": 80.1,
+     "wall_s": 716.6,
+     "distance_m": 83.5,
+     "top_speed_mps": 9.49,
+     "stopped_s": 60.7,
+     "frames": 1602
+    },
+    {
+     "route": "3482-Town13-VehicleOpensDoorTwoWays",
+     "status": "Failed - TickRuntime",
+     "entry_status": "Finished",
+     "route_completion": 31.99,
+     "infraction_penalty": 1.0,
+     "driving_score": 31.99,
+     "infractions": {
+      "min_speed_infractions": 5
+     },
+     "game_s": 200.05,
+     "wall_s": 998.0,
+     "distance_m": 41.6,
+     "top_speed_mps": 10.02,
+     "stopped_s": 188.8,
+     "frames": 4000
+    },
+    {
+     "route": "3717-Town13-VehicleTurningRoute",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 37.67,
+     "infraction_penalty": 1.0,
+     "driving_score": 37.67,
+     "infractions": {
+      "min_speed_infractions": 7,
+      "vehicle_blocked": 1
+     },
+     "game_s": 77.75,
+     "wall_s": 565.0,
+     "distance_m": 29.4,
+     "top_speed_mps": 6.5,
+     "stopped_s": 65.7,
+     "frames": 1555
+    }
+   ]
+  },
+  "candidate": {
+   "run": "20261027T222440-49bb8c",
+   "routes": [
+    {
+     "route": "17598-Town12-SequentialLaneChange",
+     "status": "Failed - TickRuntime",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {},
+     "game_s": 200.05,
+     "wall_s": 2500.6,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.01,
+     "stopped_s": 200.0,
+     "frames": 4000
+    },
+    {
+     "route": "18356-Town12-ParkingCutIn",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {
+      "vehicle_blocked": 1
+     },
+     "game_s": 60.05,
+     "wall_s": 436.2,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.0,
+     "stopped_s": 60.0,
+     "frames": 1201
+    },
+    {
+     "route": "24258-Town07-HazardAtSideLaneTwoWays",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {
+      "vehicle_blocked": 1
+     },
+     "game_s": 60.05,
+     "wall_s": 278.0,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.0,
+     "stopped_s": 60.0,
+     "frames": 1201
+    },
+    {
+     "route": "28111-Town04-T_Junction",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {
+      "vehicle_blocked": 1
+     },
+     "game_s": 60.05,
+     "wall_s": 167.5,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.0,
+     "stopped_s": 60.0,
+     "frames": 1201
+    },
+    {
+     "route": "3255-Town13-ParkingCrossingPedestrian",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {
+      "vehicle_blocked": 1
+     },
+     "game_s": 60.05,
+     "wall_s": 501.4,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.0,
+     "stopped_s": 60.0,
+     "frames": 1201
+    },
+    {
+     "route": "3482-Town13-VehicleOpensDoorTwoWays",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 0.0,
+     "infraction_penalty": 1.0,
+     "driving_score": 0.0,
+     "infractions": {
+      "vehicle_blocked": 1
+     },
+     "game_s": 60.05,
+     "wall_s": 748.8,
+     "distance_m": 0.0,
+     "top_speed_mps": 0.0,
+     "stopped_s": 60.0,
+     "frames": 1201
+    },
+    {
+     "route": "3717-Town13-VehicleTurningRoute",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 9.65,
+     "infraction_penalty": 0.1949,
+     "driving_score": 1.8804,
+     "infractions": {
+      "collisions_layout": 1,
+      "outside_route_lanes": 1,
+      "min_speed_infractions": 1,
+      "vehicle_blocked": 1
+     },
+     "game_s": 65.45,
+     "wall_s": 497.1,
+     "distance_m": 8.4,
+     "top_speed_mps": 4.06,
+     "stopped_s": 61.8,
+     "frames": 1309
+    }
+   ]
+  },
+  "candidate_crash_check": {
+   "run": "20261027T220735-ccf106",
+   "routes": [
+    {
+     "route": "3717-Town13-VehicleTurningRoute",
+     "status": "Failed - Agent got blocked",
+     "entry_status": "Finished",
+     "route_completion": 58.17,
+     "infraction_penalty": 0.3175,
+     "driving_score": 18.47,
+     "infractions": {
+      "collisions_layout": 1,
+      "collisions_vehicle": 1,
+      "outside_route_lanes": 1,
+      "min_speed_infractions": 10,
+      "vehicle_blocked": 1
+     },
+     "game_s": 70.25,
+     "wall_s": 510.2,
+     "distance_m": 41.4,
+     "top_speed_mps": 10.29,
+     "stopped_s": 62.2,
+     "frames": 1405
+    }
+   ]
+  }
+ },
+ "C": {
+  "baseline_run": "20261027T005941-d3f828",
+  "candidate_run": "20261027T230105-487c55",
+  "scenes": [
+   {
+    "clip": "clipgt-e121e37d-b03f-4f25-aa09-5ba5b74b8afb",
+    "baseline": {
+     "scene_score": 0.9413,
+     "progress": 0.7531,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 3.9758,
+     "duration_frac_20s": 0.84
+    },
+    "candidate": {
+     "scene_score": 0.4436,
+     "progress": 0.3549,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 4.0021,
+     "duration_frac_20s": 0.225
+    },
+    "scene_score_diff": -0.4977,
+    "class": "worse",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 12.98,
+     "plan_speed_first_0p5s_mps": 11.33,
+     "plan_speed_avg_3s_mps": 10.4,
+     "command": "LEFT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 23,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 12.98,
+     "plan_speed_first_0p5s_mps": 12.95,
+     "plan_speed_avg_3s_mps": 12.42,
+     "command": "LEFT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-e121e37d-b03f-4f25-aa09-5ba5b74b8afb/rollouts/clipgt-e121e37d-b03f-4f25-aa09-5ba5b74b8afb/a8b58a06-d25a-11f1-b304-0f58678caf4a/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-e121e37d-b03f-4f25-aa09-5ba5b74b8afb.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-bae463d3-655b-4b54-ac8e-1c982219d829",
+    "baseline": {
+     "scene_score": 0.0,
+     "progress": 0.1725,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 1.0,
+     "dist_to_gt_trajectory": 0.5201,
+     "duration_frac_20s": 0.3275
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.1687,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 1.0,
+     "dist_to_gt_trajectory": 0.3094,
+     "duration_frac_20s": 0.265
+    },
+    "scene_score_diff": 0.0,
+    "class": "same",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 34,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 1.36,
+     "plan_speed_first_0p5s_mps": 1.01,
+     "plan_speed_avg_3s_mps": 2.0,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 27,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 1.36,
+     "plan_speed_first_0p5s_mps": 1.43,
+     "plan_speed_avg_3s_mps": 1.54,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-bae463d3-655b-4b54-ac8e-1c982219d829/rollouts/clipgt-bae463d3-655b-4b54-ac8e-1c982219d829/414d3502-d25b-11f1-ae06-553afc642827/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-bae463d3-655b-4b54-ac8e-1c982219d829.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-d1a25a99-0f02-4730-a076-96f067e92874",
+    "baseline": {
+     "scene_score": 0.331,
+     "progress": 0.2648,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 4.0094,
+     "duration_frac_20s": 0.45
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.3246,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 1.0,
+     "dist_to_gt_trajectory": 3.2361,
+     "duration_frac_20s": 0.2075
+    },
+    "scene_score_diff": -0.331,
+    "class": "worse",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 31,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 5.06,
+     "plan_speed_first_0p5s_mps": 0.07,
+     "plan_speed_avg_3s_mps": 0.04,
+     "command": "LEFT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 31,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 5.06,
+     "plan_speed_first_0p5s_mps": 5.15,
+     "plan_speed_avg_3s_mps": 3.92,
+     "command": "LEFT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-d1a25a99-0f02-4730-a076-96f067e92874/rollouts/clipgt-d1a25a99-0f02-4730-a076-96f067e92874/cbc6547a-d25b-11f1-a4ca-23875e1d0c57/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-d1a25a99-0f02-4730-a076-96f067e92874.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-cdd9448c-8808-46b1-85c1-883bcc5862ff",
+    "baseline": {
+     "scene_score": 0.9607,
+     "progress": 0.7686,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 4.0054,
+     "duration_frac_20s": 0.6675
+    },
+    "candidate": {
+     "scene_score": 0.4776,
+     "progress": 0.3821,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 4.0069,
+     "duration_frac_20s": 0.275
+    },
+    "scene_score_diff": -0.4831,
+    "class": "worse",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 27,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.46,
+     "plan_speed_first_0p5s_mps": 2.42,
+     "plan_speed_avg_3s_mps": 3.67,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.46,
+     "plan_speed_first_0p5s_mps": 2.61,
+     "plan_speed_avg_3s_mps": 3.55,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-cdd9448c-8808-46b1-85c1-883bcc5862ff/rollouts/clipgt-cdd9448c-8808-46b1-85c1-883bcc5862ff/6ab37360-d25c-11f1-a708-4598fbb98897/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-cdd9448c-8808-46b1-85c1-883bcc5862ff.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+    "baseline": {
+     "scene_score": 1.0,
+     "progress": 1.0,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 3.2994,
+     "duration_frac_20s": 0.8375
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.3088,
+     "collision_at_fault": 1.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 2.4007,
+     "duration_frac_20s": 0.135
+    },
+    "scene_score_diff": -1.0,
+    "class": "worse",
+    "moved_more_than_0p55": true,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 18,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 8.23,
+     "plan_speed_first_0p5s_mps": 7.94,
+     "plan_speed_avg_3s_mps": 8.72,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 8.23,
+     "plan_speed_first_0p5s_mps": 8.35,
+     "plan_speed_avg_3s_mps": 8.33,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9/rollouts/clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9/16479a9e-d25d-11f1-8e13-fd96eb5cb910/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-98dd56b2-3e60-49ec-9366-70b610dd93cc",
+    "baseline": {
+     "scene_score": 0.1575,
+     "progress": 0.126,
+     "collision_at_fault": 0.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 0.2693,
+     "duration_frac_20s": 0.27
+    },
+    "candidate": {
+     "scene_score": 0.2339,
+     "progress": 0.1871,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 4.0461,
+     "duration_frac_20s": 0.2775
+    },
+    "scene_score_diff": 0.0764,
+    "class": "better",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 25,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.33,
+     "plan_speed_first_0p5s_mps": 2.91,
+     "plan_speed_avg_3s_mps": 4.02,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.33,
+     "plan_speed_first_0p5s_mps": 2.47,
+     "plan_speed_avg_3s_mps": 3.6,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-98dd56b2-3e60-49ec-9366-70b610dd93cc/rollouts/clipgt-98dd56b2-3e60-49ec-9366-70b610dd93cc/affaec86-d25d-11f1-ac58-77072210ee8e/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-98dd56b2-3e60-49ec-9366-70b610dd93cc.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739",
+    "baseline": {
+     "scene_score": 0.9295,
+     "progress": 0.7436,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 1.2906,
+     "duration_frac_20s": 0.84
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.7091,
+     "collision_at_fault": 1.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 2.7378,
+     "duration_frac_20s": 0.455
+    },
+    "scene_score_diff": -0.9295,
+    "class": "worse",
+    "moved_more_than_0p55": true,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 6.38,
+     "plan_speed_first_0p5s_mps": 6.13,
+     "plan_speed_avg_3s_mps": 6.39,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 29,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 6.38,
+     "plan_speed_first_0p5s_mps": 6.52,
+     "plan_speed_avg_3s_mps": 5.76,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739/rollouts/clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739/7ad04370-d25e-11f1-a497-69519f79f8c4/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-b44a4a44-0d00-4795-8a66-7acb0fdf46a2",
+    "baseline": {
+     "scene_score": 0.0,
+     "progress": 0.0021,
+     "collision_at_fault": 1.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 0.0037,
+     "duration_frac_20s": 0.33
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.0069,
+     "collision_at_fault": 1.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 0.1544,
+     "duration_frac_20s": 0.33
+    },
+    "scene_score_diff": 0.0,
+    "class": "same",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 7,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 0.0,
+     "plan_speed_first_0p5s_mps": 0.08,
+     "plan_speed_avg_3s_mps": 0.02,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 5,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 0.0,
+     "plan_speed_first_0p5s_mps": 0.03,
+     "plan_speed_avg_3s_mps": 0.0,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-b44a4a44-0d00-4795-8a66-7acb0fdf46a2/rollouts/clipgt-b44a4a44-0d00-4795-8a66-7acb0fdf46a2/0c6fafc8-d25f-11f1-bc07-53223a1613e8/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-b44a4a44-0d00-4795-8a66-7acb0fdf46a2.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d",
+    "baseline": {
+     "scene_score": 0.0,
+     "progress": 0.6865,
+     "collision_at_fault": 1.0,
+     "collision_rate": 1.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 1.6757,
+     "duration_frac_20s": 0.1925
+    },
+    "candidate": {
+     "scene_score": 0.0,
+     "progress": 0.4763,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 1.0,
+     "dist_to_gt_trajectory": 0.1699,
+     "duration_frac_20s": 0.1
+    },
+    "scene_score_diff": 0.0,
+    "class": "same",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 28,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.1,
+     "plan_speed_first_0p5s_mps": 1.96,
+     "plan_speed_avg_3s_mps": 2.39,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 18,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 2.1,
+     "plan_speed_first_0p5s_mps": 2.25,
+     "plan_speed_avg_3s_mps": 1.99,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d/rollouts/clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d/8e84ae6e-d25f-11f1-8d88-998ac43a08fe/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d.replans.jsonl"
+   },
+   {
+    "clip": "clipgt-d2715023-a903-4e67-9b80-e6c76dbbbd99",
+    "baseline": {
+     "scene_score": 0.0236,
+     "progress": 0.0189,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 0.2922,
+     "duration_frac_20s": 0.84
+    },
+    "candidate": {
+     "scene_score": 0.0028,
+     "progress": 0.0023,
+     "collision_at_fault": 0.0,
+     "collision_rate": 0.0,
+     "offroad": 0.0,
+     "dist_to_gt_trajectory": 0.0122,
+     "duration_frac_20s": 0.84
+    },
+    "scene_score_diff": -0.0208,
+    "class": "same",
+    "moved_more_than_0p55": false,
+    "replans_baseline": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 6,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 0.0,
+     "plan_speed_first_0p5s_mps": 0.13,
+     "plan_speed_avg_3s_mps": 0.03,
+     "command": "STRAIGHT"
+    },
+    "replans_candidate": {
+     "replans": 39,
+     "warm_up": 5,
+     "momentum_fed": 38,
+     "pick_index_changes": 0,
+     "first_after_warmup_replan": 6,
+     "speed_sent_mps": 0.0,
+     "plan_speed_first_0p5s_mps": 0.01,
+     "plan_speed_avg_3s_mps": 0.0,
+     "command": "STRAIGHT"
+    },
+    "rollout_asl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-d2715023-a903-4e67-9b80-e6c76dbbbd99/rollouts/clipgt-d2715023-a903-4e67-9b80-e6c76dbbbd99/086d4772-d260-11f1-981d-2f031bbb362b/rollout.asl",
+    "replans_jsonl": "{paddock_runs}/alpasim/drivejepa/20261027T230105-487c55/clipgt-d2715023-a903-4e67-9b80-e6c76dbbbd99.replans.jsonl"
+   }
+  ],
+  "momentum_counts_run_level": {
+   "candidate": {
+    "replans": 390,
+    "fed": 380,
+    "no_previous": 10,
+    "out_of_window": 0,
+    "picks_changed": 99
+   },
+   "baseline": {
+    "replans": 39,
+    "fed": 38,
+    "no_previous": 1,
+    "out_of_window": 0,
+    "picks_changed": 0
+   }
+  }
+ },
+ "D": {
+  "neuroncap": [
+   {
+    "scenario": "stationary-0099",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 7.8365
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 7.8365
+    }
+   },
+   {
+    "scenario": "stationary-0101",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 9.6536
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 9.6536
+    }
+   },
+   {
+    "scenario": "frontal-0103",
+    "baseline": {
+     "ncap_score": 2.1009,
+     "collision": true,
+     "impact_speed_mps": 6.3045,
+     "reference_speed_mps": 13.2792
+    },
+    "candidate": {
+     "ncap_score": 1.6583,
+     "collision": true,
+     "impact_speed_mps": 7.7739,
+     "reference_speed_mps": 13.2792
+    }
+   },
+   {
+    "scenario": "side-0103",
+    "baseline": {
+     "ncap_score": 2.4373,
+     "collision": true,
+     "impact_speed_mps": 3.1689,
+     "reference_speed_mps": 8.1113
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 8.1113
+    }
+   },
+   {
+    "scenario": "frontal-0106",
+    "baseline": {
+     "ncap_score": 1.6729,
+     "collision": true,
+     "impact_speed_mps": 5.651,
+     "reference_speed_mps": 9.7134
+    },
+    "candidate": {
+     "ncap_score": 0.0,
+     "collision": true,
+     "impact_speed_mps": 11.5851,
+     "reference_speed_mps": 9.7134
+    }
+   },
+   {
+    "scenario": "side-0108",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 2.153
+    },
+    "candidate": {
+     "ncap_score": 0.0,
+     "collision": true,
+     "impact_speed_mps": 7.1233,
+     "reference_speed_mps": 2.153
+    }
+   },
+   {
+    "scenario": "frontal-0110",
+    "baseline": {
+     "ncap_score": 1.372,
+     "collision": true,
+     "impact_speed_mps": 11.8596,
+     "reference_speed_mps": 18.0514
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 18.0514
+    }
+   },
+   {
+    "scenario": "side-0110",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 9.491
+    },
+    "candidate": {
+     "ncap_score": 0.0,
+     "collision": true,
+     "impact_speed_mps": 10.2152,
+     "reference_speed_mps": 9.491
+    }
+   },
+   {
+    "scenario": "side-0278",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 4.773
+    },
+    "candidate": {
+     "ncap_score": 0.0,
+     "collision": true,
+     "impact_speed_mps": 7.02,
+     "reference_speed_mps": 4.773
+    }
+   },
+   {
+    "scenario": "stationary-0331",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 7.5906
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 7.5906
+    }
+   },
+   {
+    "scenario": "frontal-0346",
+    "baseline": {
+     "ncap_score": 1.3193,
+     "collision": true,
+     "impact_speed_mps": 7.4423,
+     "reference_speed_mps": 11.1052
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 11.1052
+    }
+   },
+   {
+    "scenario": "stationary-0796",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 11.8549
+    },
+    "candidate": {
+     "ncap_score": 0.9524,
+     "collision": true,
+     "impact_speed_mps": 9.0323,
+     "reference_speed_mps": 11.8549
+    }
+   },
+   {
+    "scenario": "side-0921",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 2.9818
+    },
+    "candidate": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 2.9818
+    }
+   },
+   {
+    "scenario": "frontal-0923",
+    "baseline": {
+     "ncap_score": 1.2853,
+     "collision": true,
+     "impact_speed_mps": 14.2591,
+     "reference_speed_mps": 21.01
+    },
+    "candidate": {
+     "ncap_score": 0.5973,
+     "collision": true,
+     "impact_speed_mps": 17.8728,
+     "reference_speed_mps": 21.01
+    }
+   },
+   {
+    "scenario": "stationary-0966",
+    "baseline": {
+     "ncap_score": 5.0,
+     "collision": false,
+     "impact_speed_mps": 0.0,
+     "reference_speed_mps": 7.3073
+    },
+    "candidate": {
+     "ncap_score": 2.6895,
+     "collision": true,
+     "impact_speed_mps": 2.394,
+     "reference_speed_mps": 7.3073
+    }
+   }
+  ],
+  "navsim": {
+   "no_at_fault_collisions": {
+    "baseline_mean": 0.9931,
+    "candidate_mean": 0.9877,
+    "baseline_below_1": 7,
+    "candidate_below_1": 13,
+    "baseline_zero": 7,
+    "candidate_zero": 12
+   },
+   "drivable_area_compliance": {
+    "baseline_mean": 0.9774,
+    "candidate_mean": 0.8998,
+    "baseline_below_1": 23,
+    "candidate_below_1": 102,
+    "baseline_zero": 23,
+    "candidate_zero": 102
+   },
+   "driving_direction_compliance": {
+    "baseline_mean": 0.9862,
+    "candidate_mean": 0.9695,
+    "baseline_below_1": 24,
+    "candidate_below_1": 45,
+    "baseline_zero": 4,
+    "candidate_zero": 17
+   },
+   "traffic_light_compliance": {
+    "baseline_mean": 0.9971,
+    "candidate_mean": 0.999,
+    "baseline_below_1": 3,
+    "candidate_below_1": 1,
+    "baseline_zero": 3,
+    "candidate_zero": 1
+   },
+   "ego_progress": {
+    "baseline_mean": 0.8673,
+    "candidate_mean": 0.7366,
+    "baseline_below_1": 565,
+    "candidate_below_1": 728,
+    "baseline_zero": 31,
+    "candidate_zero": 113
+   },
+   "time_to_collision_within_bound": {
+    "baseline_mean": 0.9882,
+    "candidate_mean": 0.9676,
+    "baseline_below_1": 12,
+    "candidate_below_1": 33,
+    "baseline_zero": 12,
+    "candidate_zero": 33
+   },
+   "lane_keeping": {
+    "baseline_mean": 0.9597,
+    "candidate_mean": 0.946,
+    "baseline_below_1": 41,
+    "candidate_below_1": 55,
+    "baseline_zero": 41,
+    "candidate_zero": 55
+   },
+   "history_comfort": {
+    "baseline_mean": 0.9774,
+    "candidate_mean": 0.9745,
+    "baseline_below_1": 23,
+    "candidate_below_1": 26,
+    "baseline_zero": 23,
+    "candidate_zero": 26
+   },
+   "epdms": {
+    "baseline_mean": 0.8572,
+    "candidate_mean": 0.7533,
+    "baseline_below_1": 683,
+    "candidate_below_1": 827,
+    "baseline_zero": 69,
+    "candidate_zero": 158
+   },
+   "baseline_any_hard_gate_fail": 55,
+   "baseline_epdms_zero_all_terms_one": 33,
+   "candidate_any_hard_gate_fail": 147,
+   "candidate_epdms_zero_all_terms_one": 30,
+   "n": 1018
+  }
+ },
+ "E": {
+  "max_ground_truth_diff_m": 1.6209256159527285e-14,
+  "by_split": {
+   "val": {
+    "n": 186,
+    "ours_ade3s": 0.61,
+    "gate_ade3s": 0.9204,
+    "released_gate_ade3s": 2.5375,
+    "gap": 0.3104,
+    "gate_worse_count": 128,
+    "same_pick_index": 89,
+    "corr": 0.5026
+   },
+   "overlap_train_val": {
+    "n": 37,
+    "ours_ade3s": 0.5266,
+    "gate_ade3s": 0.8463,
+    "released_gate_ade3s": 2.4394,
+    "gap": 0.3197,
+    "gate_worse_count": 23,
+    "same_pick_index": 19,
+    "corr": 0.5956
+   },
+   "all": {
+    "n": 223,
+    "ours_ade3s": 0.5962,
+    "gate_ade3s": 0.9082,
+    "released_gate_ade3s": 2.5212,
+    "gap": 0.312,
+    "gate_worse_count": 151,
+    "same_pick_index": 108,
+    "corr": 0.5186
+   }
+  },
+  "by_true_command": {
+   "left": {
+    "n": 21,
+    "ours_ade3s": 0.7524,
+    "gate_ade3s": 1.2983,
+    "released_gate_ade3s": 3.8773,
+    "gap": 0.5459,
+    "gate_worse_count": 17,
+    "same_pick_index": 3,
+    "corr": 0.4903
+   },
+   "straight": {
+    "n": 184,
+    "ours_ade3s": 0.5615,
+    "gate_ade3s": 0.8289,
+    "released_gate_ade3s": 2.3461,
+    "gap": 0.2674,
+    "gate_worse_count": 123,
+    "same_pick_index": 102,
+    "corr": 0.413
+   },
+   "right": {
+    "n": 18,
+    "ours_ade3s": 0.7682,
+    "gate_ade3s": 1.2631,
+    "released_gate_ade3s": 2.7288,
+    "gap": 0.4949,
+    "gate_worse_count": 11,
+    "same_pick_index": 3,
+    "corr": 0.8256
+   }
+  },
+  "gate_momentum_fed": 0
+ }
+}
