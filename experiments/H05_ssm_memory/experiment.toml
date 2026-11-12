@@ -14,7 +14,7 @@ owner = "Naren"
 benchmarks = ["navsim", "neuroncap", "bench2drive", "alpasim"]
 contributors = ["Siddesh"]
 started = 2026-10-21
-ended = 2026-11-04
+ended = 2026-11-05
 status = "parked"
 verdict = "inconclusive"
 priority = 5
@@ -40,7 +40,9 @@ past helped (0.007 m/s); camera history added nothing (CI includes 0). Braking w
 moment; the rise with longer camera windows is likely overfitting. Limits: 128-number pooled summaries, \
 ordinary driving, no crossing-car events; the probe could not see what a trained memory could. The \
 registered step-0 refutation ("stops improving at k = 2") was not met by ridge speed, which still improved \
-from k = 2 to k = 4 (0.0070 m/s [0.0023, 0.0120]); control (c) puts that gain on the car state's past."""
+from k = 2 to k = 4 (0.0070 m/s [0.0023, 0.0120]), so the rule returned GO; control (c), designed after \
+that result was seen, puts that gain on the car state's past. Parked on that by choice (Siddesh, who ran \
+step 0), not by the rule, and provisionally until the owner agrees."""
 
 [[runs]]
 id = "H05.r1"
@@ -79,7 +81,11 @@ notes = """Probe ran at af3d58e (54 min), control (c) and the k = 1 refit at 8e3
 rebased onto b2d2c59 as 2c3a94b / ecfaaa9 with src/gallops/memory unchanged (empty diff). The refit \
 reproduced all 80 stored values and CIs exactly before computing differences. Pooled encoder map (mean + 4x8) \
 -> PCA 128 fitted on train moments, plus ego 11, per moment; windows of k moments along chains. Paired, \
-log-clustered bootstrap, 2,000 draws, seed 0. k = 1 is the model's own view (now and 0.5 s ago)."""
+log-clustered bootstrap, 2,000 draws, seed 0. k = 1 is the model's own view (now and 0.5 s ago). \
+Future frames are taken by index (+2, +4, +6 at 2 Hz), not by time: 154 of the 43,172 rows look 3.05 s or \
+more ahead for "+3 s", the largest 3.50 s (targets.npz, gap_s); the same rows serve every arm, so paired \
+differences are unaffected. Cross-validation chose the smallest penalty on the ridge grid (0.01) in 22 of \
+the 24 speed fits, so the ridge is in effect least squares (probe.json, fitted)."""
 
   [runs.code]
   modules = ["gallops.memory.probe", "gallops.memory.probe_control"]
@@ -112,7 +118,7 @@ log-clustered bootstrap, 2,000 draws, seed 0. k = 1 is the model's own view (now
   strength = "moderate"
   flags = ["open-loop"]
   headline = true
-  source = "{data}/memory_cache/probe/c/control_c.json; paired difference -0.0009 [-0.0045, +0.0025]"
+  source = "{data}/memory_cache/probe/c/control_c.json; paired difference -0.0009 [-0.0045, +0.0025]. Control (c) was designed after the probe's val result was seen, on the same 176 val logs"
 
   [[runs.results]]
   bench = "offline"

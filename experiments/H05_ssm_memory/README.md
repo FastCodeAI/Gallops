@@ -76,8 +76,16 @@ human's speed changes by more than 1 m/s within 2 s), with paired, log-clustered
 
 ## Where it stands (5 Nov 2026)
 
-Parked, verdict inconclusive. The probe reads ordinary driving through a lossy 128-number summary and
-cannot see a crossing car, so it neither supports nor rules out a trained scene memory. The follow-on
+Parked, verdict inconclusive, **by choice and not by the rule.** The rule written before the probe
+returned GO (`probe.json`: "overall": "GO", "only ridge meets the rule"): one of its eight comparisons,
+ridge on speed at +2 s with four moments against two, improved with an interval clear of zero. Control
+(c), designed after that result was seen, put the gain on the car's own past rather than the camera's.
+On that, Siddesh, who ran step 0, chose not to build the camera layer and to try H15 instead. Naren
+owns H05; the parking is provisional until he agrees, and no row in `experiments/decisions.toml`
+records it yet.
+
+The probe reads ordinary driving through a lossy 128-number summary and cannot see a crossing car, so
+it neither supports nor rules out a trained scene memory. The follow-on
 design carries the planner's own outputs forward instead of the camera; that is a different claim, so
 it is recorded as H15. Any later "more or longer camera history" work stays here as a new run.
 
@@ -89,5 +97,6 @@ merged 21 Oct); whether that covers the path the page meant was not checked.
 
 ## How it will be decided
 
-Step 0 decided not to build the camera layer now. If H05 is resumed, steps 2 and 3 decide whether to
-keep it, through paddock's regression gate, with (b) as the control that separates memory from capacity.
+Step 0's rule said go; the camera layer was not built by choice (above). If H05 is resumed, steps 2 and
+3 decide whether to keep it, through paddock's regression gate, with (b) as the control that separates
+memory from capacity.
