@@ -5,6 +5,7 @@ clearance veto does not pick better than the release: with labelled agents it lo
 0.19 to 0.25, and softened into a penalty (B-1-4) 0.15 to 0.16. The ceiling, which reads the grader's labels, gains
 1.58.
 - [The overview](../README.md) holds the tracker, the naming and the log.
+- **Explained on real scenes,** the rule step by step with good and bad examples: [B-1, explained](B-1-explained.md).
 - This plan stands on [B-0, the foundations](B-0-foundations.md).
 - It was C4 in [the ideas](ideas.md). The owner chose it first on 11 Nov.
 

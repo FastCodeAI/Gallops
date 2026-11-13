@@ -2,6 +2,8 @@
 
 **Status (11 Nov 2026): running.** The owner approved execution on 11 Nov (D24): all of B-0, then B-1, with the
 recommended choices below, except (c). What has run is logged in [the overview](../README.md#log).
+- **Explained on real scenes,** with every pre- and post-processing step drawn and every number traced:
+  [B-0, explained](B-0-explained.md).
 - **Where it sits:**
   - The common record is [the overview](../README.md): the tracker, the naming and the
     discussion log.

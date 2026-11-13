@@ -238,6 +238,19 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
   - **B-1's answer:** with perfect front-camera agents or the side-car's, removed or penalised, a clearance rule at
     the pick does not beat the release on navtest. The room is real (the ceiling: +1.58), but the rule does not find
     it. Next is the owner's review of B-1, before B-2 to B-4.
+- **13 Nov · B-0 and B-1 explained on real scenes.**
+  - **The owner asked:** "the numbers alone don't make complete sense". Show the predictions over the input images,
+    every pre- and post-processing step, how the metrics were computed and the conclusions derived, with good and
+    bad examples; no new code in the pipeline, all of it in new documents.
+  - **Done:** [B-0, explained](part-b/B-0-explained.md) and [B-1, explained](part-b/B-1-explained.md), with 14
+    figures drawn from the passes' own outputs by one script
+    (`experiments/H15_perception_sidecar/scripts/part_b_explained_figures.py`; `src/` unchanged). Each example is the
+    extreme of a stated rule, written with its numbers to `figures/part-b-explained-examples.json`.
+  - **What the pictures add to the numbers** (*argued* from them, not counted):
+    - B-1's best switch is right partly by luck: the veto fired on the car beside the ego, not the car ahead;
+    - round footprints make two cars in adjacent lanes "overlap" (−0.12 m as circles, +1.40 m as rectangles);
+    - the worst switches fall back to proposals the release ranked 28th or 29th, which then fail another term;
+    - the missed failures include cut-ins that a 1 s path and constant velocity cannot foresee.
 
 <a id="open"></a>
 
@@ -264,6 +277,8 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/ideas.md](part-b/ideas.md) | every idea for Part B, B-1 to B-16 |
 | [part-b/B-0-foundations.md](part-b/B-0-foundations.md) | **B-0**: the foundations and the protocol every experiment shares |
 | [part-b/B-1-veto.md](part-b/B-1-veto.md) | **B-1**, the analytic veto |
+| [part-b/B-0-explained.md](part-b/B-0-explained.md) | B-0 on real scenes: what each model reads and outputs, how it is scored, how the conclusions follow |
+| [part-b/B-1-explained.md](part-b/B-1-explained.md) | B-1 on real scenes: the rule step by step, good and bad examples, every number traced |
 | [part-b/B-2-scorer.md](part-b/B-2-scorer.md) | **B-2**, the agents into the scorer |
 | [part-b/B-3-refiner.md](part-b/B-3-refiner.md) | **B-3**, the agents into the refiner |
 | [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
