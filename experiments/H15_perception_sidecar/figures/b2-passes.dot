@@ -1,0 +1,71 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): the refiner's four passes, where
+// the side-car read writes, and which loss reaches each write. One shared module runs four times; the hook adds δk
+// before pass k's BEVFormer layer. Proposals are decoded from the queries before that pass's layer, so p1 is
+// agent-blind, δ1..δ3 shape p2..p4, and δ4 reaches only the scorer. Grey: the release. Green: what trains.
+// Red: the planning loss (mtd_loss) on the proposals. Amber: the score loss on the pick.
+// Read in code: traj_refiner.py (decode, then Bev_refiner), drive_jepa_model.py, train_refiner.py, train_generator.mtd_loss.
+// Render: dot -Tsvg b2-passes.dot -o b2-passes.svg && dot -Tpng:cairo -Gdpi=192 b2-passes.dot -o b2-passes.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_passes {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.3, ranksep=0.36, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>Where the side-car enters the refiner, pass by pass, and which loss trains each write</B><BR/><FONT POINT-SIZE="9.5">grey: the release · green: the read (adapter) and what trains · red: the planning loss on proposals · amber: the score loss on the pick</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.1,0.05"];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0, fontname="Helvetica", fontsize=8.5];
+
+  q0 [shape=box, style="filled", fillcolor="white", label=<<B>q₀</B><BR/><FONT POINT-SIZE="9">initial queries<BR/>+ the ego</FONT>>];
+
+  d1 [label=<<B>decode</B><BR/><FONT POINT-SIZE="9">p₁ = MLP(q₀)</FONT>>];
+  a1 [color="#059669", fillcolor="#d1fae5", label=<<B>read δ₁</B><BR/><FONT POINT-SIZE="9">(q₀, p₁, tokens)</FONT>>];
+  b1 [label=<<B>BEVFormer</B><BR/><FONT POINT-SIZE="9">q₁</FONT>>];
+  d2 [label=<<B>decode</B><BR/><FONT POINT-SIZE="9">p₂ = MLP(q₁)</FONT>>];
+  a2 [color="#059669", fillcolor="#d1fae5", label=<<B>read δ₂</B>>];
+  b2 [label=<<B>BEVFormer</B><BR/><FONT POINT-SIZE="9">q₂</FONT>>];
+  d3 [label=<<B>decode</B><BR/><FONT POINT-SIZE="9">p₃ = MLP(q₂)</FONT>>];
+  a3 [color="#059669", fillcolor="#d1fae5", label=<<B>read δ₃</B>>];
+  b3 [label=<<B>BEVFormer</B><BR/><FONT POINT-SIZE="9">q₃</FONT>>];
+  d4 [label=<<B>decode</B><BR/><FONT POINT-SIZE="9">p₄ = MLP(q₃)</FONT>>];
+  a4 [color="#059669", fillcolor="#d1fae5", penwidth=1.8, label=<<B>read δ₄</B><BR/><FONT POINT-SIZE="9">the only write the<BR/>scorer alone sees</FONT>>];
+  b4 [label=<<B>BEVFormer</B><BR/><FONT POINT-SIZE="9">q₄</FONT>>];
+  sc [label=<<B>scorer</B><BR/><FONT POINT-SIZE="9">max over 8 poses of q₄<BR/>→ 32 scores → the pick</FONT>>];
+
+  p1 [shape=box, style="filled", fillcolor="white", color="#b91c1c", label=<<FONT POINT-SIZE="9"><B>p₁</B> agent-blind<BR/>loss weight 0.001</FONT>>];
+  p2 [shape=box, style="filled", fillcolor="white", color="#b91c1c", label=<<FONT POINT-SIZE="9"><B>p₂</B> sees δ₁<BR/>weight 0.01</FONT>>];
+  p3 [shape=box, style="filled", fillcolor="white", color="#b91c1c", label=<<FONT POINT-SIZE="9"><B>p₃</B> sees δ₁, δ₂<BR/>weight 0.1</FONT>>];
+  p4 [shape=box, style="filled", fillcolor="white", color="#b91c1c", penwidth=1.6, label=<<FONT POINT-SIZE="9"><B>p₄: the 32 plans</B><BR/>sees δ₁ … δ₃ · weight 1</FONT>>];
+
+  mtd [shape=note, fillcolor="#fef2f2", color="#b91c1c",
+       label=<<B>the planning loss (mtd_loss), on p₁ … p₄</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9">winner-takes-all L1 (x, y, heading): the proposal nearest the human is pulled to it<BR ALIGN="LEFT"/>+ 0.5 × the same toward up to 4 good anchors (teachers)<BR ALIGN="LEFT"/>each earlier pass discounted × 0.1 (p₃ 0.1, p₂ 0.01, p₁ 0.001)<BR ALIGN="LEFT"/>no NC or TTC term; it trains δ₁ … δ₃, never δ₄<BR ALIGN="LEFT"/></FONT>>];
+  score [shape=note, fillcolor="#fef3c7", color="#d97706",
+         label=<<B>the score loss, on the pick</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9">BCE of each proposal's final score against its PDM score<BR ALIGN="LEFT"/>the release trained it jointly: it reaches q₄, so δ₄,<BR ALIGN="LEFT"/>and through the shared weights every pass<BR ALIGN="LEFT"/></FONT>>];
+  recipes [shape=note, fillcolor="#ecfdf5", color="#059669",
+           label=<<B>so, by recipe, the side-car's route into the pick (δ₄) is trained by</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9"><B>B-2-1, joint:</B> the score loss, at every step, with the planning loss and the auxiliaries<BR ALIGN="LEFT"/><B>B-2-2, B-2-3:</B> stage 1 (planning loss) leaves δ₄ untrained for scoring; stage 3 trains<BR ALIGN="LEFT"/>   a pass-4-only copy of the read with the scorer, on the score loss, passes 1–3 frozen,<BR ALIGN="LEFT"/>   so p₄ and its labels stay exactly as dumped<BR ALIGN="LEFT"/>without stage 3's copy, a two-stage recipe would test imitation, not choosing<BR ALIGN="LEFT"/></FONT>>];
+
+  // One row per pass, left to right: decode -> its proposals | the read -> the BEVFormer layer.
+  q0 -> d1;
+  d1 -> p1 [color="#b91c1c"];  d1 -> a1;  a1 -> b1 [color="#059669", penwidth=1.3, label=" + δ₁"];
+  b1 -> d2 [label=" q₁"];
+  d2 -> p2 [color="#b91c1c"];  d2 -> a2;  a2 -> b2 [color="#059669", penwidth=1.3, label=" + δ₂"];
+  b2 -> d3 [label=" q₂"];
+  d3 -> p3 [color="#b91c1c"];  d3 -> a3;  a3 -> b3 [color="#059669", penwidth=1.3, label=" + δ₃"];
+  b3 -> d4 [label=" q₃"];
+  d4 -> p4 [color="#b91c1c"];  d4 -> a4;  a4 -> b4 [color="#059669", penwidth=1.6, label=" + δ₄"];
+  b4 -> sc [label=" q₄"];
+  sc -> score [color="#d97706", style=dashed];
+  score -> a4 [color="#d97706", style=dashed, constraint=false, label=" gradient"];
+  p1 -> mtd [style=invis];
+  sc -> recipes [style=invis];
+
+  { rank=same; d1; p1; a1; b1; mtd; }
+  { rank=same; d2; p2; a2; b2; }
+  { rank=same; d3; p3; a3; b3; }
+  { rank=same; d4; p4; a4; b4; }
+  { rank=same; sc; score; }
+  p1 -> a1 [style=invis];  b1 -> mtd [style=invis];
+  p2 -> a2 [style=invis];
+  p3 -> a3 [style=invis];
+  p4 -> a4 [style=invis];
+  d1 -> d2 -> d3 -> d4 [style=invis, weight=10];
+  a1 -> a2 -> a3 -> a4 [style=invis, weight=10];
+}

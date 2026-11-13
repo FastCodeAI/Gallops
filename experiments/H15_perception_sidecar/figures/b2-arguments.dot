@@ -1,0 +1,48 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): why the side-car's hidden layer
+// might, or might not, make the planner better. Each argument carries its evidence, the evidence's label (counted,
+// read, measured, argued) and the arm or check that tests it. Green: for. Red: against. Amber: what decides it.
+// Render: dot -Tsvg b2-arguments.dot -o b2-arguments.svg && dot -Tpng:cairo -Gdpi=192 b2-arguments.dot -o b2-arguments.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_arguments {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.5, ranksep=0.32, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>Why B-2 might, or might not, work: each argument, its evidence, and what tests it</B><BR/><FONT POINT-SIZE="9.5">green: for · red: against · amber: what decides it · labels: <I>counted</I> on disk · <I>read</I> in code or a record · <I>measured</I> by a run · <I>argued</I></FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07", width=5.0];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  hyp [width=7.5, color="#374151", fillcolor="white", penwidth=1.6,
+       label=<<B>The hypothesis</B><BR/><FONT POINT-SIZE="9.5">B-1 lost because the agents reached the planner as a decoded list. Given the side-car's hidden layer instead,<BR/>in the module that makes the proposals, with the planner fine-tuned downstream, it plans better on navtest.</FONT>>];
+
+  // For.
+  f1 [color="#059669", fillcolor="#ecfdf5", label=<<B>Decoding discards evidence</B><BR/><FONT POINT-SIZE="9">slots a row at confidence ≥ 0.1: 36.4 · ≥ 0.3: 12.7 · ≥ 0.5 (the list): 4.75<BR/>argmax class, point box, 1 s path, no uncertainty · <I>counted</I>, train rows<BR/><B>tested by:</B> HD − D (the primary) · H6, all 128 slots</FONT>>];
+  f2 [color="#059669", fillcolor="#ecfdf5", label=<<B>The side-car reads what the projector may drop</B><BR/><FONT POINT-SIZE="9">it reads the 1024-d ViT tokens; the planner reads their 256-d projection · <I>read</I><BR/><B>tested by:</B> HD − D</FONT>>];
+  f3 [color="#059669", fillcolor="#ecfdf5", label=<<B>A learned reader is not bound to a 1 s clearance</B><BR/><FONT POINT-SIZE="9">B-1's rule caught 1,949 of 40,595 failing proposals on navtest · <I>measured</I><BR/><B>tested by:</B> D − C, and O − C</FONT>>];
+  f4 [color="#059669", fillcolor="#ecfdf5", label=<<B>Planners elsewhere read agent queries, not boxes</B><BR/><FONT POINT-SIZE="9">UniAD, VAD, SparseDrive: content + position · <I>argued</I><BR/>(they train perception and planning together, on far more data)<BR/><B>tested by:</B> H6 and HD</FONT>>];
+  f5 [color="#059669", fillcolor="#ecfdf5", label=<<B>Retraining the refiner helped out of domain</B><BR/><FONT POINT-SIZE="9">first pass: 0.28–0.36 m closer to the human at 3 s on nuScenes,<BR/>with or without agents · <I>measured</I> (now B-14)<BR/><B>tested by:</B> C − R, on navtest and nuScenes</FONT>>];
+
+  // Against.
+  a1 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>B-1's pre-registered rule already fired</B><BR/><FONT POINT-SIZE="9">labelled agents through a rule: −0.21 ± 0.05 on navtest; V2 not supported:<BR/>"a learned use is unlikely to show a NAVSIM gain" · <I>measured</I><BR/><B>so:</B> going on is the owner's decision, D28</FONT>>];
+  a2 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>The release already learned this, more directly</B><BR/><FONT POINT-SIZE="9">each proposal's feature predicts its collision and TTC agents every 0.1 s<BR/>over 4 s, from all logged agents, out of view included (agent_pred) · <I>read</I><BR/><B>tested by:</B> O − C, the phase-1 gate</FONT>>];
+  a3 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>The room is in the pick, not the proposals</B><BR/><FONT POINT-SIZE="9">271 of 275 failing navtest scenes have a safe proposal among the 32 · <I>measured</I><BR/>the refiner's loss has no NC or TTC term · <I>read</I><BR/><B>answered by:</B> B-2-1's score loss; B-2-2's pass-4 read</FONT>>];
+  a4 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>The planner is in-sample on navtrain</B><BR/><FONT POINT-SIZE="9">its pick fails NC or TTC on 0.81% of train rows (vendored, <I>counted</I>),<BR/>2.3% of navtest scenes (official, <I>measured</I>): it is taught where it needs no help<BR/><B>not fixed by cross-fitting;</B> read in C − R</FONT>>];
+  a5 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>Slots hold corrections, not positions</B><BR/><FONT POINT-SIZE="9">a slot's centre lives in its reference point, beside a; the ViT's position<BR/>code is RoPE, inside attention · <I>read</I><BR/><B>answered by:</B> every H arm carries the centre; H6 must learn the forecast</FONT>>];
+  a6 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>B-1's failures are about horizon and view</B><BR/><FONT POINT-SIZE="9">they come after 1 s; 35% involve agents out of view · <I>measured</I><BR/>the slots see the same camera, trained to 1 s<BR/><B>not answered here:</B> B-6 (forecasts), B-12 (closed loop)</FONT>>];
+  a7 [color="#b91c1c", fillcolor="#fef2f2", label=<<B>Seed noise may hide a real effect</B><BR/><FONT POINT-SIZE="9">first pass, F − C: −0.21 to +0.24 across seeds · <I>measured</I><BR/>3 seeds against 3 resolve about 0.3–0.4 · <I>argued</I><BR/><B>answered by:</B> phase 1's noise floor; more seeds (decision)</FONT>>];
+
+  decide [width=7.5, color="#d97706", fillcolor="#fef3c7", penwidth=1.4,
+          label=<<B>What decides it</B><BR/><FONT POINT-SIZE="9.5"><B>phase 1:</B> O − C under B-2-1, the gate: is there room for any agent input to a learned planner?<BR/><B>the primary:</B> HD − D under B-2-1, every seed beyond D's seed range and 2 SE: does the hidden layer add to the list?<BR/><B>then, only if it holds:</B> HD − C · meets or beats R · H6 − HD · H3 − H6<BR/><B>at test, no retraining:</B> no slots · another log's slots · another fold's side-car</FONT>>];
+
+  hyp -> f1 [color="#059669", label=" for"];
+  hyp -> a1 [color="#b91c1c", label=" against"];
+  f1 -> f2 -> f3 -> f4 -> f5 [style=invis, weight=10];
+  a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 [style=invis, weight=10];
+  f5 -> decide [color="#059669"];
+  a7 -> decide [color="#b91c1c"];
+  f1 -> a1 [style=invis];
+  { rank=same; f1; a1; }
+  { rank=same; f2; a2; }
+  { rank=same; f3; a3; }
+  { rank=same; f4; a4; }
+  { rank=same; f5; a5; }
+}

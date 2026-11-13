@@ -1,0 +1,66 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): one decoder layer of the side-car,
+// to show what its hidden layer holds. The content stream a (solid) and the reference point ref (dashed) travel side by
+// side; the position code reaches only the attention's queries and keys, never a itself. So a holds what an agent is
+// and how to move its reference point, not where it is: every hidden arm carries the slot's centre beside a.
+// Read in code: src/gallops/drivejepa_perception/sidecar.py (DecoderLayer.forward, SideCar.forward).
+// Render: dot -Tsvg b2-slot.dot -o b2-slot.svg && dot -Tpng:cairo -Gdpi=192 b2-slot.dot -o b2-slot.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_slot {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.4, ranksep=0.34, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>What the side-car's hidden layer holds: one decoder layer ℓ, for the 128 slots</B><BR/><FONT POINT-SIZE="9.5">solid: the content stream a · dashed: the reference point and its position code · blue: the side-car, frozen · read in sidecar.py</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#2563eb", fillcolor="#dbeafe", margin="0.12,0.06"];
+  edge  [color="#2563eb", arrowsize=0.6, penwidth=1.2, fontname="Helvetica", fontsize=8.5];
+
+  ain  [shape=box, style="filled", fillcolor="white", penwidth=1.6,
+        label=<<B>aℓ₋₁</B><BR/><FONT POINT-SIZE="9">128 × 384 · the content stream</FONT>>];
+  rin  [shape=box, style="dashed,filled", fillcolor="white",
+        label=<<B>refℓ₋₁</B><BR/><FONT POINT-SIZE="9">128 × 3 · each slot's centre (x, y, z), metres<BR/>detached from the previous layer</FONT>>];
+  pos  [style="rounded,dashed,filled", fillcolor="white",
+        label=<<B>position code</B><BR/><FONT POINT-SIZE="9">pos = MLP(refℓ₋₁ × scale): 128 × 384</FONT>>];
+  mem  [shape=box, style="filled", fillcolor="white",
+        label=<<B>the 512 image tokens</B><BR/><FONT POINT-SIZE="9">keys: memory + ray code · values: memory alone<BR/>(the ViT's own position code is RoPE: none added)</FONT>>];
+
+  sa   [label=<<B>self-attention among the 128 slots</B><BR/><FONT POINT-SIZE="9">queries and keys: LN(a) + pos · values: LN(a)</FONT>>];
+  ca   [label=<<B>cross-attention to the image</B><BR/><FONT POINT-SIZE="9">queries: LN(a) + pos · keys: tokens + rays · values: tokens</FONT>>];
+  ffn  [label=<<B>feed-forward</B><BR/><FONT POINT-SIZE="9">LN(a) → 1536 → 384, added back</FONT>>];
+  aout [shape=box, style="filled", fillcolor="white", penwidth=1.8,
+        label=<<B>aℓ: the hidden layer</B><BR/><FONT POINT-SIZE="9">128 × 384 · no final normalisation<BR/>what B-2's HD, H6 (ℓ = 6) and H3 (ℓ = 3) read</FONT>>];
+  refmlp [label=<<B>ref_mlp(aℓ)</B><BR/><FONT POINT-SIZE="9">a 3-number move, starting at zero</FONT>>];
+  rout [shape=box, style="dashed,filled", fillcolor="white", penwidth=1.6,
+        label=<<B>refℓ = refℓ₋₁ + ref_mlp(aℓ)</B><BR/><FONT POINT-SIZE="9">128 × 3 · the box's centre at layer ℓ<BR/>detached before layer ℓ + 1</FONT>>];
+  heads [label=<<B>heads on aℓ</B><BR/><FONT POINT-SIZE="9">class (3 + none) · size and heading · velocity<BR/>path offsets at 0.5 and 1.0 s, from the centre</FONT>>];
+
+  holds [shape=note, fillcolor="#eff6ff", color="#2563eb",
+         label=<<B>So aℓ holds</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9">what the agent is: class, size, heading, motion, its 1 s path<BR ALIGN="LEFT"/>how far to move its reference point: the move ref_mlp reads<BR ALIGN="LEFT"/>its slot's identity: the learned query it started from<BR ALIGN="LEFT"/><B>not</B> where it is: the centre lives in refℓ<BR ALIGN="LEFT"/></FONT>>];
+  hand [shape=note, fillcolor="#ecfdf5", color="#059669",
+        label=<<B>What each arm hands the refiner</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9"><B>H6, H3:</B> aℓ + a code of refℓ + log confidence, all 128 slots<BR ALIGN="LEFT"/><B>HD:</B> a₆ appended to D's decoded agent: the centre comes with it<BR ALIGN="LEFT"/><B>D:</B> the decoded list alone: refℓ, the heads, and clearances<BR ALIGN="LEFT"/></FONT>>];
+
+  ain -> sa [penwidth=1.6];
+  sa -> ca [penwidth=1.6, label=" + residual"];
+  ca -> ffn [penwidth=1.6, label=" + residual"];
+  ffn -> aout [penwidth=1.6, label=" + residual"];
+  rin -> pos [style=dashed];
+  pos -> sa [style=dashed, label=" queries, keys"];
+  pos -> ca [style=dashed, label=" queries"];
+  mem -> ca;
+  aout -> refmlp;
+  rin -> rout [style=dashed];
+  refmlp -> rout [style=dashed];
+  aout -> heads;
+  rout -> heads [style=dashed, label=" the centre"];
+  aout -> holds [style=invis];
+  heads -> hand [style=invis];
+
+  { rank=same; ain; rin; }
+  { rank=same; sa; pos; }
+  { rank=same; ca; mem; }
+  { rank=same; aout; refmlp; }
+  { rank=same; heads; rout; }
+  { rank=same; holds; hand; }
+  ain -> rin [style=invis];
+  sa -> pos [style=invis];
+  ca -> mem [style=invis];
+  aout -> refmlp [style=invis];
+}

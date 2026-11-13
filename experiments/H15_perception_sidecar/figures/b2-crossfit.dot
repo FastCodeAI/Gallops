@@ -1,0 +1,54 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): which side-car reads which row.
+// Hidden states are each model's own coordinates, so the reader must meet the same side-cars at test that it trained
+// on: B-2 reads the five cross-fit side-cars (B-0-1, H15.r8) everywhere, never the full seed-k ones. Blue: the
+// side-cars. Grey: the rows. Amber: the alignment check that decides one shared input map or five.
+// Render: dot -Tsvg b2-crossfit.dot -o b2-crossfit.svg && dot -Tpng:cairo -Gdpi=192 b2-crossfit.dot -o b2-crossfit.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_crossfit {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.3, ranksep=0.4, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>Fold-matched cross-fitting: every row's slots come from a side-car that never saw its log</B><BR/><FONT POINT-SIZE="9.5">blue: the five cross-fit side-cars (v3, seed 0, each without one fold) · grey: rows · amber: the alignment check, run first</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.12,0.06"];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0, fontname="Helvetica", fontsize=8.5];
+
+  logs [width=9.5, label=<<B>navtrain's 1,071 train logs, in five folds</B><BR/><FONT POINT-SIZE="9">fold 0: 215 logs · folds 1–4: 214 each · 94,195 train rows in all (<I>counted</I>, H15.r8)</FONT>>];
+
+  sc0 [color="#2563eb", fillcolor="#dbeafe", label=<<B>side-car 0</B><BR/><FONT POINT-SIZE="9">trained on folds 1–4<BR/>select F1 0.7043</FONT>>];
+  sc1 [color="#2563eb", fillcolor="#dbeafe", label=<<B>side-car 1</B><BR/><FONT POINT-SIZE="9">trained on folds 0, 2–4<BR/>select F1 0.7005</FONT>>];
+  sc2 [color="#2563eb", fillcolor="#dbeafe", label=<<B>side-car 2</B><BR/><FONT POINT-SIZE="9">trained on folds 0, 1, 3, 4<BR/>select F1 0.7038</FONT>>];
+  sc3 [color="#2563eb", fillcolor="#dbeafe", label=<<B>side-car 3</B><BR/><FONT POINT-SIZE="9">trained on folds 0–2, 4<BR/>select F1 0.7077</FONT>>];
+  sc4 [color="#2563eb", fillcolor="#dbeafe", label=<<B>side-car 4</B><BR/><FONT POINT-SIZE="9">trained on folds 0–3<BR/>select F1 0.7067</FONT>>];
+
+  r0 [shape=box, style="filled", fillcolor="white", label=<<FONT POINT-SIZE="9">fold 0's train rows</FONT>>];
+  r1 [shape=box, style="filled", fillcolor="white", label=<<FONT POINT-SIZE="9">fold 1's train rows</FONT>>];
+  r2 [shape=box, style="filled", fillcolor="white", label=<<FONT POINT-SIZE="9">fold 2's train rows</FONT>>];
+  r3 [shape=box, style="filled", fillcolor="white", label=<<FONT POINT-SIZE="9">fold 3's train rows</FONT>>];
+  r4 [shape=box, style="filled", fillcolor="white", label=<<FONT POINT-SIZE="9">fold 4's train rows</FONT>>];
+
+  rest [width=9.5, label=<<B>select, R-clean and navtest: logs no side-car trained on</B><BR/><FONT POINT-SIZE="9">each log is assigned to one fold's side-car by a fixed seeded rule, written once and committed before any read;<BR/>every arm (D included) reads the same assignment · the counterfactual "another fold's side-car" swaps it at test</FONT>>];
+
+  align [width=9.5, color="#d97706", fillcolor="#fef3c7",
+         label=<<B>B-2-0's alignment check, before anything trains</B><BR/><FONT POINT-SIZE="9">on select rows, every side-car's slots are matched to side-car 0's: by decoded centre (Hungarian), and by slot index<BR/>(all five started from the same seed-0 slots) · a linear map is fitted (ridge, or orthogonal Procrustes) · R² read on R-clean</FONT>>];
+  yes [color="#059669", fillcolor="#ecfdf5", label=<<B>if the five align</B> (R² at or over a bar set before the check)<BR/><FONT POINT-SIZE="9">every side-car's slots mapped into side-car 0's space;<BR/>the read has one input map (LayerNorm + projection), learned on all 94,195 rows</FONT>>];
+  no  [color="#059669", fillcolor="#ecfdf5", label=<<B>if they do not</B><BR/><FONT POINT-SIZE="9">one input map per side-car, each learned on its own fold's rows (about 19,000);<BR/>the rest of the read is shared</FONT>>];
+
+  why [shape=note, fillcolor="white", color="#9ca3af", width=9.5,
+       label=<<B>Why not the full seed-k side-cars, as B-1 read?</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9">decoded agents are in metres and classes, the same for any side-car; hidden states are each model's own coordinates.<BR ALIGN="LEFT"/>A reader trained on the fold side-cars' slots cannot read another model's. So the fold side-cars are read at test too.<BR ALIGN="LEFT"/><B>Recorded as departures from B-0's Q8:</B> the side-car's seed is no longer sampled (all five are seed 0, select F1 0.700–0.708<BR ALIGN="LEFT"/>against the full seeds' 0.713–0.720), and arm D here is not B-1-3's input<BR ALIGN="LEFT"/></FONT>>];
+
+  logs -> sc0 [label=" not fold 0"]; logs -> sc1 [label=" not fold 1"]; logs -> sc2 [label=" not fold 2"];
+  logs -> sc3 [label=" not fold 3"]; logs -> sc4 [label=" not fold 4"];
+  sc0 -> r0 [color="#2563eb", penwidth=1.3]; sc1 -> r1 [color="#2563eb", penwidth=1.3];
+  sc2 -> r2 [color="#2563eb", penwidth=1.3]; sc3 -> r3 [color="#2563eb", penwidth=1.3];
+  sc4 -> r4 [color="#2563eb", penwidth=1.3];
+  r0 -> rest [style=invis]; r2 -> rest [style=invis]; r4 -> rest [style=invis];
+  sc0 -> rest [color="#2563eb", style=dashed, constraint=false];
+  sc4 -> rest [color="#2563eb", style=dashed, constraint=false];
+  rest -> align;
+  align -> yes; align -> no;
+  yes -> why [style=invis]; no -> why [style=invis];
+
+  { rank=same; sc0; sc1; sc2; sc3; sc4; }
+  { rank=same; r0; r1; r2; r3; r4; }
+  { rank=same; yes; no; }
+}

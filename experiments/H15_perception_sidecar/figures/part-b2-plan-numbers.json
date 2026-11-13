@@ -1,0 +1,268 @@
+{
+ "slots_per_row": {
+  "cuts": [
+   0.1,
+   0.2,
+   0.3,
+   0.5,
+   0.7
+  ],
+  "train_rows_crossfit": [
+   36.38254684431233,
+   20.38257869313658,
+   12.680736769467593,
+   4.751664101066936,
+   2.494792717235522
+  ],
+  "navtest_seed0": [
+   33.389016960316155,
+   16.913387123332786,
+   9.70204182446896,
+   3.3330314506833525,
+   1.909517536637576
+  ],
+  "train_rows": 94195,
+  "navtest_rows": 12146,
+  "slots": 128,
+  "decoded_cut": 0.5
+ },
+ "room": {
+  "pick_fails_nc_or_ttc_vendored_percent": {
+   "train": 0.8068368809384787,
+   "navtest": 2.313518853943685
+  },
+  "best_of_32_minus_pick_vendored_points": {
+   "train": 3.7477485835552216,
+   "navtest": 7.408944517374039
+  },
+  "navtest_funnel_official": {
+   "failing": 275,
+   "with_safe_proposal": 271,
+   "in_view_50m": 156,
+   "found_by_seed": [
+    127,
+    133,
+    135
+   ]
+  },
+  "source": "train rows: pdm-v1 and tokens-v1 (counted here); navtest: headroom-navtest.json (B-0-3's record)"
+ },
+ "scenes": {
+  "evidence": {
+   "row": 5711,
+   "token": "baf0c6e99bec57db",
+   "track": 2747844065702962163,
+   "step": 8,
+   "nearest_sub_slot_m": 0.26098743081092834,
+   "sub_slot": 8,
+   "sub_slot_conf": 0.1812872290611267,
+   "sub_slot_class": "vehicle",
+   "log": "2021.09.09.17.18.51_veh-48_01248_01450",
+   "slots_at_0.1_to_0.5": 21,
+   "decoded": 7,
+   "rule": "among navtest scenes whose release pick fails NC or TTC (official) with a safe proposal among its 32, behind which is a labelled agent in CAM_F0's view within 50 m that side-car seed 0 missed at 0.5 (B-0-3's own test): the one with a slot at confidence 0.1 to 0.5 nearest that agent's centre"
+  },
+  "noise": {
+   "row": 1365,
+   "token": "abe4fa26de85552d",
+   "false_slots_on_path": 10,
+   "false_slots": [
+    17,
+    43,
+    58,
+    59,
+    80,
+    90,
+    107,
+    110,
+    116,
+    117
+   ],
+   "false_slot_conf": [
+    0.115,
+    0.17,
+    0.148,
+    0.112,
+    0.246,
+    0.152,
+    0.111,
+    0.175,
+    0.155,
+    0.166
+   ],
+   "log": "2021.06.03.12.02.06_veh-35_00233_00609",
+   "slots_at_0.1_to_0.5": 17,
+   "decoded": 3,
+   "rule": "among navtest scenes whose release pick passes NC and TTC (official), the one with the most slots at confidence 0.1 to 0.5 within 2 m of the picked plan's poses and 2 m or more from every labelled object"
+  }
+ },
+ "predictions_argued": [
+  {
+   "contrast": "0 \u00b7 the gate: O \u2212 C",
+   "low": 0.0,
+   "high": 0.4
+  },
+  {
+   "contrast": "1 \u00b7 the primary: HD \u2212 D",
+   "low": -0.1,
+   "high": 0.2
+  },
+  {
+   "contrast": "2 \u00b7 HD \u2212 C",
+   "low": -0.1,
+   "high": 0.3
+  },
+  {
+   "contrast": "3 \u00b7 HD \u2212 R (meets: low end \u2265 \u22120.4)",
+   "low": -0.4,
+   "high": 0.3
+  },
+  {
+   "contrast": "4 \u00b7 H6 \u2212 HD",
+   "low": -0.3,
+   "high": 0.1
+  },
+  {
+   "contrast": "5 \u00b7 H3 \u2212 H6",
+   "low": -0.1,
+   "high": 0.1
+  },
+  {
+   "contrast": "D \u2212 C",
+   "low": -0.1,
+   "high": 0.3
+  },
+  {
+   "contrast": "C \u2212 R: the adaptation alone",
+   "low": -0.5,
+   "high": 0.3
+  },
+  {
+   "contrast": "HD, B-2-2 \u2212 B-2-1 (descriptive)",
+   "low": -0.3,
+   "high": 0.2
+  },
+  {
+   "contrast": "HD, B-2-3 \u2212 B-2-1 (descriptive)",
+   "low": -0.4,
+   "high": 0.2
+  }
+ ],
+ "b1_measured": {
+  "B-1-1, the ceiling (reads the labels)": {
+   "minus_R": 1.5830332357074828,
+   "se": 0.1921180393904423
+  },
+  "B-1-2, labelled agents, a rule": {
+   "minus_R": -0.21166664063544177,
+   "se": 0.050301409208336416
+  },
+  "B-1-3, side-car, a rule, seed 0": {
+   "minus_R": -0.2501468354005622,
+   "se": 0.04682549731999845
+  },
+  "B-1-3, side-car, a rule, seed 1": {
+   "minus_R": -0.1915687209890688,
+   "se": 0.04144870632404686
+  },
+  "B-1-3, side-car, a rule, seed 2": {
+   "minus_R": -0.25401467862011146,
+   "se": 0.04594448677147659
+  },
+  "B-1-4, side-car, a penalty, seed 0": {
+   "minus_R": -0.16448339742687448,
+   "se": 0.03314498332404668
+  },
+  "B-1-4, side-car, a penalty, seed 1": {
+   "minus_R": -0.14962550300261715,
+   "se": 0.032280643524655164
+  },
+  "B-1-4, side-car, a penalty, seed 2": {
+   "minus_R": -0.16166955484651935,
+   "se": 0.03533417085702866
+  }
+ },
+ "grid": {
+  "cells": {
+   "C | B-2-1 \u00b7 joint": {
+    "phase": "1",
+    "seeds": 3
+   },
+   "O | B-2-1 \u00b7 joint": {
+    "phase": "1",
+    "seeds": 3
+   },
+   "D | B-2-1 \u00b7 joint": {
+    "phase": "2a",
+    "seeds": 3
+   },
+   "HD | B-2-1 \u00b7 joint": {
+    "phase": "2a",
+    "seeds": 3
+   },
+   "H6 | B-2-1 \u00b7 joint": {
+    "phase": "2a",
+    "seeds": 3
+   },
+   "H3 | B-2-1 \u00b7 joint": {
+    "phase": "2a",
+    "seeds": 1
+   },
+   "C | B-2-2 \u00b7 two stages, LoRA": {
+    "phase": "2b",
+    "seeds": 3
+   },
+   "D | B-2-2 \u00b7 two stages, LoRA": {
+    "phase": "2b",
+    "seeds": 3
+   },
+   "HD | B-2-2 \u00b7 two stages, LoRA": {
+    "phase": "2b",
+    "seeds": 3
+   },
+   "C | B-2-3 \u00b7 two stages, full": {
+    "phase": "2b",
+    "seeds": 3
+   },
+   "D | B-2-3 \u00b7 two stages, full": {
+    "phase": "2b",
+    "seeds": 3
+   },
+   "HD | B-2-3 \u00b7 two stages, full": {
+    "phase": "2b",
+    "seeds": 3
+   }
+  },
+  "hours_per_run_estimate": {
+   "B-2-1 \u00b7 joint": [
+    1.0,
+    1.5
+   ],
+   "B-2-2 \u00b7 two stages, LoRA": [
+    0.75,
+    1.2
+   ],
+   "B-2-3 \u00b7 two stages, full": [
+    0.75,
+    1.2
+   ]
+  },
+  "totals_by_phase": {
+   "1": {
+    "runs": 6,
+    "hours_low": 6.0,
+    "hours_high": 9.0
+   },
+   "2a": {
+    "runs": 10,
+    "hours_low": 10.0,
+    "hours_high": 15.0
+   },
+   "2b": {
+    "runs": 18,
+    "hours_low": 13.5,
+    "hours_high": 21.6
+   }
+  }
+ }
+}

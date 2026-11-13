@@ -1,0 +1,81 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): the new B-2 in one picture.
+// Left, Drive-JEPA as it runs at inference; right, the side-car (Part A, v3); between them, what each arm hands the
+// refiner, and what each recipe trains. Grey: the release, frozen. Blue: the side-car and what it hands over.
+// Green: what trains. Every green output starts at zero, so at step 0 every arm is the release's cached path (R-tilde).
+// Render: dot -Tsvg b2-overview.dot -o b2-overview.svg && dot -Tpng:cairo -Gdpi=192 b2-overview.dot -o b2-overview.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_overview {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.45, ranksep=0.42, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>B-2: the side-car's hidden layer into the module that makes the proposals, the planner downstream fine-tuned</B><BR/><FONT POINT-SIZE="9.5">grey: the release, frozen · blue: the side-car and what it hands over · green: trains, and starts at zero (step 0 is the release)</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  // Drive-JEPA, top to bottom.
+  cam     [label=<<B>CAM_F0</B><BR/><FONT POINT-SIZE="9">now and 0.5 s earlier</FONT>>, width=3.3];
+  vit     [label=<<B>ViT-L (V-JEPA), frozen</B><BR/><FONT POINT-SIZE="9">512 tokens × 1024</FONT>>, width=3.3];
+  proj    [label=<<B>projector, frozen</B><BR/><FONT POINT-SIZE="9">a 16 × 32 map of 256</FONT>>, width=3.3];
+  init    [label=<<B>initial queries</B><BR/><FONT POINT-SIZE="9">32 proposals × 8 poses<BR/>+ the ego's status</FONT>>];
+  refiner [label=<<B>refiner: one module, 4 passes</B><BR/><FONT POINT-SIZE="9">each pass decodes 32 proposals × 8 poses (4 s),<BR/>then a BEVFormer layer: self-attention and<BR/>deformable attention to the map<BR/><B>trains:</B> LoRA (B-2-1, B-2-2) or its weights (B-2-3)</FONT>>,
+           color="#059669", fillcolor="#ecfdf5", width=3.3];
+  scorer  [label=<<B>scorer, refit downstream</B><BR/><FONT POINT-SIZE="9">max over each proposal's 8 poses, an MLP: 6 logits<BR/><B>trains:</B> LoRA (B-2-1, B-2-2) or its weights (B-2-3);<BR/>B-2-2 and B-2-3 add a pass-4 copy of the read</FONT>>,
+           color="#059669", fillcolor="#ecfdf5", width=3.3];
+  pick    [label=<<B>pick</B><BR/><FONT POINT-SIZE="9">the highest final score: one 4 s plan<BR/>navtest EPDMS 87.78 for the release</FONT>>, width=3.3];
+
+  // The adapter: where the side-car enters.
+  adapter [label=<<B>the side-car read (the adapter)</B><BR/><FONT POINT-SIZE="9">before every BEVFormer layer, on all 4 passes:<BR/>each of the 256 pose-queries attends to the arm's tokens<BR/>and adds δ to itself · its output layer starts at zero<BR/>its own half (query + pose) runs in every arm, C included</FONT>>,
+           color="#059669", fillcolor="#d1fae5", width=4.0];
+
+  // The side-car, on the right.
+  sidecar [label=<<B>side-car v3, frozen</B><BR/><FONT POINT-SIZE="9">the same ViT tokens, before the projector<BR/>6 decoder layers · 128 slots · d 384 · 18.4 M<BR/>fold k: the one that never saw this row's log</FONT>>,
+           color="#2563eb", fillcolor="#dbeafe", width=3.6];
+  slots   [label=<<B>its hidden layer</B><BR/><FONT POINT-SIZE="9">a₆ (and a₃): 128 slots × 384<BR/>+ each slot's centre (its reference point)<BR/>+ its confidence</FONT>>,
+           color="#2563eb", fillcolor="#dbeafe", width=3.6];
+  decoded [label=<<B>its decoded list</B><BR/><FONT POINT-SIZE="9">the heads on a₆: class · box · velocity · 1 s path<BR/>kept at confidence ≥ 0.5: 4.75 a row<BR/>+ clearances from every pose</FONT>>,
+           color="#2563eb", fillcolor="#dbeafe"];
+  labels  [label=<<B>labelled agents</B><BR/><FONT POINT-SIZE="9">in CAM_F0's view, within 50 m<BR/>arm O only: not deployable</FONT>>,
+           style="rounded,dashed,filled", color="#2563eb", fillcolor="white"];
+
+  arms [shape=plaintext, style="", margin=0, label=<
+    <TABLE BORDER="1" COLOR="#2563eb" CELLBORDER="0" CELLSPACING="0" CELLPADDING="4" BGCOLOR="#eff6ff">
+      <TR><TD COLSPAN="3"><B>the arms: what each hands the refiner</B></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>C</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">nothing</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">the adaptation alone</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>O</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">labelled agents, as D's tokens</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">the ceiling: run first, a gate</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>D</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">the decoded list, clearance-biased</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">the 11 Nov design</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>HD</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">D + each kept agent's slot a₆</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9"><B>primary: HD − D</B>, the hidden content alone</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>H6</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">all 128 slots a₆ + centre + confidence</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">learned geometry, no threshold</FONT></TD></TR>
+      <TR><TD ALIGN="LEFT"><B>H3</B></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">as H6, from layer 3</FONT></TD><TD ALIGN="LEFT"><FONT POINT-SIZE="9">an earlier layer (likely ≈ H6)</FONT></TD></TR>
+    </TABLE>>];
+
+  recipes [shape=note, fillcolor="white", color="#059669", width=4.0,
+           label=<<B>the recipes, all three compared</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9"><B>B-2-1 · joint (primary):</B> the release's own objective, resumed:<BR ALIGN="LEFT"/>   trajectory + final score on online PDM labels + its collision-agent<BR ALIGN="LEFT"/>   and area auxiliaries; the adapter and both LoRAs train together<BR ALIGN="LEFT"/><B>B-2-2 · two stages, LoRA:</B> refiner (adapter + LoRA, planning loss)<BR ALIGN="LEFT"/>   → dump and label the 32 → scorer LoRA + a pass-4 copy of the read<BR ALIGN="LEFT"/><B>B-2-3 · two stages, full:</B> as B-2-2, the weights themselves trained<BR ALIGN="LEFT"/></FONT>>];
+
+  // The planner's flow.
+  cam -> vit -> proj -> refiner -> scorer -> pick;
+  init -> refiner;
+
+  // The side-car's flow, down the right.
+  vit -> sidecar [color="#2563eb", label="1024-d\ntokens"];
+  sidecar -> slots [color="#2563eb"];
+  slots -> decoded [color="#2563eb", label=" the heads"];
+  slots -> arms [color="#2563eb", penwidth=1.3];
+  decoded -> arms [color="#2563eb", penwidth=1.3];
+  labels -> arms [color="#2563eb", style=dashed];
+
+  // Left to right on the refiner's row: refiner | adapter | arms (dir=back keeps the arrows pointing inward).
+  refiner -> adapter [dir=back, color="#059669", penwidth=1.6, label="+ δ to the queries,\nbefore every\nBEVFormer layer"];
+  adapter -> arms [dir=back, color="#2563eb", penwidth=1.4, label="tokens"];
+  scorer -> recipes [style=invis];
+
+  { rank=same; vit; sidecar; }
+  { rank=same; init; proj; slots; }
+  { rank=same; decoded; labels; }
+  { rank=same; refiner; adapter; arms; }
+  { rank=same; scorer; recipes; }
+  init -> proj -> slots [style=invis];
+  decoded -> labels [style=invis];
+
+  cam [group=dj]; vit [group=dj]; proj [group=dj]; refiner [group=dj]; scorer [group=dj]; pick [group=dj];
+  sidecar [group=sc]; slots [group=sc]; arms [group=sc];
+}

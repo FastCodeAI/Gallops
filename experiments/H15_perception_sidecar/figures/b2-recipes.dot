@@ -1,0 +1,60 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): the three fine-tuning recipes side
+// by side, each run on the same arms and read the same way. Per recipe: the steps, the losses and their weights, what
+// trains (parameters, learning rates), how many steps, and the cost. Green: what trains. Grey: frozen or a fixed pass.
+// Amber: where PDM labels come from. Loss weights are the release's own (drive_jepa_config.py); the planning loss is
+// drivejepa_b2d.train_generator.mtd_loss; counts are the LoRA primer's. Costs are estimates.
+// Render: dot -Tsvg b2-recipes.dot -o b2-recipes.svg && dot -Tpng:cairo -Gdpi=192 b2-recipes.dot -o b2-recipes.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_recipes {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.35, ranksep=0.3, pad=0.3, bgcolor="white", newrank=true,
+         labelloc="t", fontsize=13,
+         label=<<B>B-2's three fine-tuning recipes, side by side</B><BR/><FONT POINT-SIZE="9.5">green: trains · grey: frozen, or a fixed pass · amber: where the PDM labels come from · every recipe starts at R-tilde exactly, keeps its last epoch, and reads train rows only</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.12,0.06", width=3.9];
+  edge  [color="#6b7280", arrowsize=0.6, penwidth=1.0, fontname="Helvetica", fontsize=8.5];
+
+  subgraph cluster_j {
+    label=<<B>B-2-1 · joint fine-tuning</B> <FONT POINT-SIZE="9">(primary)</FONT>>; fontsize=11.5; style="rounded"; color="#059669"; penwidth=1.6;
+    j1 [label=<<B>each step: a batch of 64 train rows</B><BR/>4 passes from cached tokens, the read on every pass<BR/>→ the 32 proposals p₄ and the scorer's 32 scores>];
+    j2 [color="#d97706", fillcolor="#fef3c7",
+        label=<<B>label the 32, online</B><BR/>the vendored PDM scorer on CPU workers,<BR/>against each row's metric cache<BR/>+ the auxiliaries' targets (collision, TTC agents; area)>];
+    j3 [color="#059669", fillcolor="#ecfdf5",
+        label=<<B>the release's own objective</B><BR ALIGN="LEFT"/>   1 × planning loss (L1 to the human + 0.5 × teachers)<BR ALIGN="LEFT"/>   1 × final-score BCE against the PDM label<BR ALIGN="LEFT"/>   1 × agents' presence BCE + 0.1 × their corners' L1<BR ALIGN="LEFT"/>   2 × drivable-area BCE · sub-scores at 0, as released<BR ALIGN="LEFT"/>>];
+    j4 [color="#059669", fillcolor="#d1fae5",
+        label=<<B>what trains, together</B><BR/>the read (adapter), every pass · 1e-4<BR/>refiner LoRA, rank 16: 177,200 · 1e-4<BR/>scorer LoRA, rank 16: 69,728 · 2e-5<BR/>auxiliary heads frozen: their losses shape the features>];
+    j5 [label=<<B>3 epochs · about 4,400 steps</B><BR/>AdamW, weight decay 0.01, cosine, clip 10<BR/>about 1–1.5 h a run (<I>estimate</I>): GPU + 48 CPU workers>];
+    j1 -> j2 -> j3 -> j4 -> j5;
+  }
+
+  subgraph cluster_l {
+    label=<<B>B-2-2 · two stages, LoRA</B> <FONT POINT-SIZE="9">(was B-4-1)</FONT>>; fontsize=11.5; style="rounded"; color="#059669"; penwidth=1.6;
+    l1 [color="#059669", fillcolor="#d1fae5",
+        label=<<B>stage 1 · the refiner</B><BR/>the read (adapter) + refiner LoRA (177,200) · 1e-4<BR/>planning loss only (mtd_loss) · batch 64, 3 epochs<BR/>about 15–25 min of GPU (<I>estimate</I>)>];
+    l2 [color="#d97706", fillcolor="#fef3c7",
+        label=<<B>stage 2 · dump and label, once</B><BR/>every row's p₄ (32 × 8 × 3) and q₃ for stage 3<BR/>vendored PDM labels, 32 × 9, on train, select,<BR/>R-clean and navtest · about 10–15 min of CPU>];
+    l3 [color="#059669", fillcolor="#d1fae5",
+        label=<<B>stage 3 · the pick</B><BR/>passes 1–3 frozen: p₄ and its labels fixed<BR/>a pass-4-only copy of the read · 1e-4<BR/>+ scorer LoRA (69,728) and own half · 2e-5<BR/>final-score BCE · batch 64, 3 epochs>];
+    l4 [label=<<B>logits re-based</B> on stage 2's: step 0 of stage 3<BR/>picks exactly as stage 1's refiner with the release's scorer<BR/>about 20–30 min of GPU (<I>estimate</I>)>];
+    l1 -> l2 -> l3 -> l4;
+  }
+
+  subgraph cluster_f {
+    label=<<B>B-2-3 · two stages, full</B> <FONT POINT-SIZE="9">(the first pass's "full" mode)</FONT>>; fontsize=11.5; style="rounded"; color="#059669"; penwidth=1.6;
+    f1 [color="#059669", fillcolor="#d1fae5",
+        label=<<B>stage 1 · the refiner's own weights</B><BR/>the refiner (2.32 M), initial queries and ego encoder (0.07 M) · 2e-5<BR/>+ the read (adapter) · 1e-4<BR/>planning loss only · batch 64, 3 epochs>];
+    f2 [color="#d97706", fillcolor="#fef3c7",
+        label=<<B>stage 2 · dump and label, once</B><BR/>as B-2-2>];
+    f3 [color="#059669", fillcolor="#d1fae5",
+        label=<<B>stage 3 · the scorer's own weights</B><BR/>the scorer MLP (1.32 M) · 2e-5<BR/>+ a pass-4-only copy of the read · 1e-4<BR/>final-score BCE · batch 64, 3 epochs>];
+    f4 [label=<<B>why it is here</B><BR/>the first pass's full refiner brought the release's pick<BR/>0.28–0.36 m closer to the human on nuScenes (<I>measured</I>):<BR/>the largest gain, and the most room to drift>];
+    f1 -> f2 -> f3 -> f4;
+  }
+
+  common [shape=note, fillcolor="white", color="#9ca3af", width=12,
+          label=<<B>the same in every recipe</B><BR ALIGN="LEFT"/><FONT POINT-SIZE="9">every arm (C, O, D, HD, H6, H3) starts at R-tilde exactly: the read's output layer at zero, LoRA's B at zero, full copies of the release · the last epoch is kept: nothing chosen<BR ALIGN="LEFT"/>train rows only (94,195), never a report row · the preflight first: the untrained model equals R-tilde bit for bit, slots recomputed live equal the stored ones, the fold rule,<BR ALIGN="LEFT"/>the teachers equal their files, PDM labels re-score exactly · <B>comparisons across recipes are descriptive:</B> they differ in steps, parameters, labels and auxiliaries<BR ALIGN="LEFT"/></FONT>>];
+
+  { rank=same; j1; l1; f1; }
+  j5 -> common [style=invis];
+  l4 -> common [style=invis];
+  f4 -> common [style=invis];
+}

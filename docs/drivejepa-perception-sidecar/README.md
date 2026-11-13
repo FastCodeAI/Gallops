@@ -1,6 +1,6 @@
 # H15 · The perception side-car: overview, tracker and discussion log
 
-**Updated 11 Nov 2026.** This is the common record of H15. Every document of this work links here.
+**Updated 13 Nov 2026.** This is the common record of H15. Every document of this work links here.
 - Every change to one of them adds a dated line to the [log](#log) and updates the [tracker](#tracker).
 - A decision also gets its D-number in [experiments/decisions.toml](../../experiments/decisions.toml).
 
@@ -11,7 +11,7 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
   will be in a second?
 - **Part B.** Given that account, does Drive-JEPA's planner plan better on scenes it never trained on?
 
-## Where it stands (11 Nov)
+## Where it stands (13 Nov)
 
 - **Part A, the side-car.**
   - Steps 1–5 are done: v3, 18.4 M parameters, 24 epochs, select F1 0.717 over three seeds.
@@ -19,13 +19,21 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
     NAVSIM's camera did not help.
   - Step 6, reading the report logs once, waits for the owner.
 - **Part B, the side-car in the planner.**
-  - Four experiments are chosen and planned, one document each, in this order: B-1, B-2, B-3, B-4.
   - They share one plan of foundations, B-0, and a LoRA primer.
   - **B-0 is done (12 Nov):** the anchor reproduces here (87.783 against 87.78), R̃ equals R, and the headroom is
     counted (`H15.r6`–`r8`).
   - **B-1 is done (`H15.r9`, `H15.r10`):** a clearance veto loses 0.15 to 0.25 points on navtest, with labelled
-    agents or the side-car's, removed or penalised; the ceiling gains 1.58. B-2 to B-4 wait for the owner's review of
-    B-1. What has run is in the [log](#log).
+    agents or the side-car's, removed or penalised; the ceiling gains 1.58.
+  - **B-2 is re-planned (13 Nov, D28):** the side-car's last hidden layer goes into the refiner, and the planner
+    downstream is fine-tuned. Arms C, O, D, HD, H6 and H3 run under three recipes.
+    [Its plan](part-b/B-2-hidden-refiner.md) has 14 figures for review. It is documents only, and waits for the
+    owner's shortlist.
+  - **The other ideas were renumbered (D28):**
+    - B-2 absorbs the 11 Nov B-3, B-4 and B-5;
+    - the scorer alone is now B-3, not scheduled;
+    - B-4 to B-14 are the rest.
+
+    The [naming table](#naming) translates. What has run is in the [log](#log).
 
 ![H15: Part A, and Part B's four experiments in order](../../experiments/H15_perception_sidecar/figures/b-overview.png)
 
@@ -36,8 +44,8 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 **Part B's experiments are named `B-<n>-<v>`.**
 - `n` is the experiment:
   - 0 is the shared foundations;
-  - 1 to 4 are the four chosen first, in the owner's order;
-  - 5 to 16 are the other ideas, not chosen yet.
+  - 1 and 2 are chosen: the veto (done) and the hidden layer into the refiner (planned);
+  - 3 to 14 are the other ideas, not scheduled (renumbered on 13 Nov, D28; the table below translates).
 - `v` is a sub-version within it: 1, 2, and so on. For example, B-1-3 is the veto with the side-car's agents.
 - **Runs** in `experiment.toml` keep the registry's IDs, `H15.r6` onward. Each run's label names its `B-<n>-<v>`.
 - **The arms** of a trained experiment:
@@ -47,8 +55,11 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
   | R | the released model |
   | R̃ | the release run through the same cached path, every adapter at zero |
   | C | the identical adaptation, without agents |
-  | F | with the side-car's agents |
+  | F | with the side-car's agents (B-1 and the 11 Nov plans) |
   | O | with the labelled agents |
+  | D | B-2: the side-car's decoded list, as F's input was |
+  | HD | B-2: D, with each kept agent's hidden slot a₆ appended |
+  | H6, H3 | B-2: all 128 hidden slots of layer 6 or layer 3, with each slot's centre and confidence |
 
 **Old labels, and what they are now:**
 
@@ -62,7 +73,18 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 | the 10 Nov plan's steps B1 (data) and B2 (headroom) | B-0-1, B-0-2 and B-0-3 | the foundations |
 | that plan's B3 (the veto) | B-1 | |
 | that plan's B4–B8 | each experiment's own pre-registration, runs, navtest read and close | |
-| the first pass's B1, B2, B3, B3.2 (3–4 Nov) | **unchanged** | recorded runs `H15.b1`, `H15.b2`, `H15.b3`, `H15.b32`, always written with "the first pass" or the run ID. Their lineage: B-2 continues the first pass's B1; B-3 its B2 |
+| the first pass's B1, B2, B3, B3.2 (3–4 Nov) | **unchanged** | recorded runs `H15.b1`, `H15.b2`, `H15.b3`, `H15.b32`, always written with "the first pass" or the run ID. Their lineage: B-3 continues the first pass's B1; B-2 its B2 |
+
+**Renumbered on 13 Nov (D28).** Records written before then keep their own numbers: PREDICTIONS.md, D22–D27, run
+notes and dated log lines.
+
+| Until 13 Nov | Now | Note |
+|---|---|---|
+| B-2, agents into the scorer | **B-3** | the scorer alone; its plan kept, not scheduled |
+| B-3, agents into the refiner | **B-2** | arm D of the new B-2 |
+| B-4, both with LoRA | **B-2** | its two stages are B-2-2, its joint training B-2-1 |
+| B-5, agent-aware initial proposals | **B-2** | a later variant: pass 1 sees the slots |
+| B-6 to B-16 | **B-4 to B-14** | in order: B-6 → B-4 (token map) … B-8 → B-6 (4 s forecasts), B-9 → B-7 (uncertainty), B-13 → B-11 (named agent), B-14 → B-12 (closed loop), B-16 → B-14 (refiner retrain) |
 
 <a id="tracker"></a>
 
@@ -74,14 +96,15 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
 |---|---|---|---|---|---|---|
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
 | B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **done: no** (`H15.r9`, `r10`); for the owner's review | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
-| B-2 | Does a scorer that reads the agents pick better? | the scorer | an adapter + LoRA: 0.28 M (C) to 0.42 M (F, O) | planned | [B-2, the scorer](part-b/B-2-scorer.md) | B-0; B-1 is its bar |
-| B-3 | Do the proposals themselves get better? | the refiner | an adapter + LoRA: 0.38 M (C) to 0.51 M (F, O) | planned | [B-3, the refiner](part-b/B-3-refiner.md) | B-0 |
-| B-4 | Both together: does it meet or beat the release? | refiner and scorer | both, in two stages | planned | [B-4, both with LoRA](part-b/B-4-joint-lora.md) | B-2, B-3 |
-| B-5 to B-16 | the other ideas | — | — | not chosen | [the ideas](part-b/ideas.md) | by what B-1 to B-4 show |
+| B-2 | Does the side-car's hidden layer, given to the refiner with the planner fine-tuned downstream, plan better than its decoded list? | the refiner and the scorer | the read (adapter) + LoRA or weights, by recipe | **re-planned** (13 Nov, D28); documents only, for the owner's shortlist | [B-2, the hidden layer into the refiner](part-b/B-2-hidden-refiner.md) | B-0; B-1 |
+| B-3 | Does a scorer that reads the agents pick better, the proposals fixed? | the scorer | an adapter + LoRA | not scheduled (was B-2) | [B-3, the scorer alone](part-b/B-2-scorer.md) | by what B-2 shows |
+| B-4 to B-14 | the other ideas | — | — | not scheduled | [the ideas](part-b/ideas.md) | by what B-2 shows |
 
-- **What B-2, B-3 and B-4 adapt, and how:** [the LoRA primer](part-b/lora-primer.md).
-- **Order of work:** B-0, then B-1, a review and the go-ahead to train, then B-2, B-3 and B-4, each closed by a
-  review.
+- **What B-2 and B-3 adapt, and how:** [the LoRA primer](part-b/lora-primer.md).
+- **Order of work:**
+  - B-0, then B-1, then the owner's review.
+  - B-2: its shortlist and go-ahead, then B-2-0, phase 1 (a gate), phase 2, each closed by a review
+    ([B-2's phases](part-b/B-2-hidden-refiner.md#pictures)).
 
 ![Part B's order of work, with the owner's reviews](../../experiments/H15_perception_sidecar/figures/b-steps.png)
 
@@ -251,6 +274,46 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     - round footprints make two cars in adjacent lanes "overlap" (−0.12 m as circles, +1.40 m as rectangles);
     - the worst switches fall back to proposals the release ranked 28th or 29th, which then fail another term;
     - the missed failures include cut-ins that a 1 s path and constant velocity cannot foresee.
+- **13 Nov · B-2 re-planned: the side-car's hidden layer into the refiner (D28); the ideas renumbered.**
+  - **The owner asked:**
+    - B-1 did not bring the value expected. In B-2, give the proposal network the side-car's last hidden layer
+      instead of the decoded agents.
+    - Think through why it might or might not work.
+    - Propose fine-tuning recipes, asking questions while planning.
+  - **Asked and answered** (nine questions, three rounds):
+    - the module that makes the proposals (the refiner) reads the hidden layer, and the planner downstream is
+      fine-tuned;
+    - try three tensor options: layer-6 slots, slots with the decoded geometry, layer-3 slots;
+    - keep the decoded list as arm D;
+    - fold-matched cross-fitting;
+    - compare three recipes;
+    - this is the new B-2: the other ideas renumbered compactly;
+    - the absorbed 11 Nov plans (B-3, B-4) deleted; the scorer plan kept as B-3;
+    - documents only.
+
+    Approving the plan, the owner asked for a new branch, pushed, and detailed visualizations for review.
+  - **Found while planning** (*read* or *counted*; [B-2's plan](part-b/B-2-hidden-refiner.md)):
+    - A side-car slot's centre is not in its hidden vector. It lives in a reference point carried beside it, so every
+      hidden arm carries the centre.
+    - The release already trained each proposal's feature to predict its collision and TTC agents over 4 s
+      (`agent_pred`). That is the strongest reason against.
+    - In the two-stage recipes the planning loss never trains the read's route into the pick (pass 4). Stage 3 gets
+      a pass-4 copy, and the joint recipe is primary.
+    - `mtd_loss` discounts earlier passes geometrically (0.1, 0.01, 0.001), not "each at 0.1" as the 11 Nov plans
+      said.
+    - Decoding keeps 4.75 of 128 slots a row on the train rows; 36.4 clear confidence 0.1 (*counted*).
+  - **An independent review, checked against the code,** added:
+    - one primary contrast (HD − D) with gatekeeping;
+    - C and O first, as a gate;
+    - test-time swaps instead of a trained S arm;
+    - the five fold side-cars' alignment check.
+  - **Done:**
+    - [B-2's plan](part-b/B-2-hidden-refiner.md): nine diagrams and five charts; the charts by
+      `experiments/H15_perception_sidecar/scripts/part_b2_plan_figures.py`, their numbers in
+      `figures/part-b2-plan-numbers.json`;
+    - D28;
+    - the branch `drivejepa/auxilliary-head-part-b2`;
+    - the renumbering across the documents and figures.
 
 <a id="open"></a>
 
@@ -261,9 +324,8 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
 | Part A | step 6, the report logs, read once; retrain the no-camera control in fp32; weighting what matters (11.9); head changes (11.11); test the warp's three changes apart (plan A §9.3) |
 | B-0 | decided on 11 Nov (D24) |
 | B-1 | decided on 11 Nov (D24) |
-| B-2 | which sub-versions run (B-2-1 always; B-2-2 and B-2-3 or not); whether the scorer's sub-score heads train |
-| B-3 | which sub-versions run; LoRA on the sampling offsets, or not |
-| B-4 | two stages or joint; whether B-4-3 waits for B-2 and B-3 to differ |
+| B-2 | the shortlist and go-ahead; (a) the primary contrast; (b) the phase-1 gate; (c) H3; (d) navtest's side-car; (e) more seeds; (f) B-2-1's auxiliary heads; (g) the grid; (h) the later variants; (i) nuScenes; (j) momentum |
+| B-3 | none until it is scheduled |
 
 Each experiment's own document gives these decisions in full, with a recommendation.
 
@@ -274,17 +336,16 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [first-pass-plan.md](first-pass-plan.md) | the first pass's plan (3 Nov), kept as it was |
 | [part-a/plan.md](part-a/plan.md) | Part A's plan, in reviewed steps, with what has run (§9) |
 | [part-a/executive-update.md](part-a/executive-update.md) | Part A's executive update (9 Nov) |
-| [part-b/ideas.md](part-b/ideas.md) | every idea for Part B, B-1 to B-16 |
+| [part-b/ideas.md](part-b/ideas.md) | every idea for Part B, B-1 to B-14 |
 | [part-b/B-0-foundations.md](part-b/B-0-foundations.md) | **B-0**: the foundations and the protocol every experiment shares |
 | [part-b/B-1-veto.md](part-b/B-1-veto.md) | **B-1**, the analytic veto |
 | [part-b/B-0-explained.md](part-b/B-0-explained.md) | B-0 on real scenes: what each model reads and outputs, how it is scored, how the conclusions follow |
 | [part-b/B-1-explained.md](part-b/B-1-explained.md) | B-1 on real scenes: the rule step by step, good and bad examples, every number traced |
-| [part-b/B-2-scorer.md](part-b/B-2-scorer.md) | **B-2**, the agents into the scorer |
-| [part-b/B-3-refiner.md](part-b/B-3-refiner.md) | **B-3**, the agents into the refiner |
-| [part-b/B-4-joint-lora.md](part-b/B-4-joint-lora.md) | **B-4**, both with LoRA |
+| [part-b/B-2-hidden-refiner.md](part-b/B-2-hidden-refiner.md) | **B-2**, the side-car's hidden layer into the refiner, the planner fine-tuned downstream (13 Nov), with its figures |
+| [part-b/B-2-scorer.md](part-b/B-2-scorer.md) | **B-3**, the agents into the scorer alone (the 11 Nov B-2's plan), not scheduled |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
-| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D27 for this work |
+| [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D28 for this work |
 
 ## How this set is kept
 

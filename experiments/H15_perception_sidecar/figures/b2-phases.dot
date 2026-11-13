@@ -1,0 +1,43 @@
+// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md): the order of work, each block
+// closed by the owner's review before the next opens. Grey: not yet run. Amber diamonds: the owner's reviews.
+// Red: a read of navtest (each happens once, after every run it covers has finished). Nothing trains before the
+// owner's shortlist and go-ahead; this plan is documents only.
+// Render: dot -Tsvg b2-phases.dot -o b2-phases.svg && dot -Tpng:cairo -Gdpi=192 b2-phases.dot -o b2-phases.png
+// (not rsvg-convert: version 2.50 drops the space after a bold run)
+digraph b2_phases {
+  graph [rankdir=TB, fontname="Helvetica", nodesep=0.35, ranksep=0.28, pad=0.3, bgcolor="white",
+         labelloc="t", fontsize=13,
+         label=<<B>B-2's order of work: passes, a gate, the grid, one navtest read per phase, and the owner's reviews</B><BR/><FONT POINT-SIZE="9.5">grey: a step, not yet run · amber: the owner's review · red border: a navtest read, once · green: what trains</FONT><BR/> >];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
+         color="#6b7280", fillcolor="#f3f4f6", margin="0.16,0.07", width=7.2];
+  edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
+
+  R0 [shape=diamond, style="filled", width=3.6, height=0.7, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>owner: shortlist this plan · go-ahead</B></FONT>>];
+  S0 [label=<<B>B-2-0 · passes and their gates (no training)</B><BR/><FONT POINT-SIZE="9">the hidden-state pass: layers 3 and 6, slots + centres + confidences, by the fold side-cars (GPU minutes)<BR/>gate: the stored slots, decoded by the model's own heads, equal its stored agents and give each fold's recorded select F1<BR/>the fold-assigned decoded passes for D · the fold assignment of select, R-clean and navtest, committed<BR/>the alignment check (one input map or five) · no report-log row anywhere</FONT>>];
+  S1 [label=<<B>pre-register</B><BR/><FONT POINT-SIZE="9">PREDICTIONS.md, Part B · B-2: the primary contrast, the gatekeeping order, every prediction,<BR/>the phase-1 gate's rule · committed before the first training step</FONT>>];
+  P1 [color="#059669", fillcolor="#ecfdf5",
+      label=<<B>phase 1 · the gate: arms C and O, under B-2-1 (joint), seeds 0–2</B><BR/><FONT POINT-SIZE="9">6 runs · the preflight first · each run's curves (losses, gradient norms, the read's "no agent" share)<BR/>C's seed spread on R-clean's known-command windows and on select: the noise floor, before any H arm is spent</FONT>>];
+  N1 [color="#b91c1c", penwidth=1.8,
+      label=<<B>navtest, once, for C and O</B><BR/><FONT POINT-SIZE="9">official scorer, paired per scene against R and R-tilde, SE clustered by log · O is a ceiling, as B-1-1 and B-1-2 were</FONT>>];
+  R1 [shape=diamond, style="filled", width=3.6, height=0.7, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>owner: is there room (O − C)? go on?</B></FONT>>];
+  P2a [color="#059669", fillcolor="#ecfdf5",
+       label=<<B>phase 2a · arms D, HD, H6 under B-2-1, seeds 0–2; H3 by decision</B><BR/><FONT POINT-SIZE="9">10 runs with H3 as a seed-0 pilot (12 at three seeds) · arms fixed in advance: nothing here is chosen on a read</FONT>>];
+  P2b [color="#059669", fillcolor="#ecfdf5",
+       label=<<B>phase 2b · the other two recipes: B-2-2 and B-2-3 on C, D, HD, seeds 0–2</B><BR/><FONT POINT-SIZE="9">18 runs: stage 1, dump and label, stage 3 · compared across recipes descriptively</FONT>>];
+  N2 [color="#b91c1c", penwidth=1.8,
+      label=<<B>navtest, once, after every phase-2 run</B><BR/><FONT POINT-SIZE="9">the primary first: HD − D under B-2-1, every seed beyond D's seed range and 2 SE<BR/>only if it holds: HD − C, then meets or beats R, then H6 − HD, then H3 − H6 · the rest reported</FONT>>];
+  A [label=<<B>analysis</B><BR/><FONT POINT-SIZE="9">B-0-4 on every arm: best of 32, the share passing NC and TTC, spread, moved proposals, pick switches and steadiness (EC)<BR/>counterfactuals at test, no retraining: no slots · another log's slots · another fold's side-car · labelled agents into D<BR/>nuScenes: the pick's L2 at 1, 2 and 3 s, collisions within 3 s, minADE of the 32, with the fold side-cars</FONT>>];
+  Rec [label=<<B>record</B><BR/><FONT POINT-SIZE="9">runs H15.r&lt;n&gt;, labels "B-2-1", "B-2-2", "B-2-3", each checkpoint pinned by sha256 · a line in the overview's log</FONT>>];
+  R2 [shape=diamond, style="filled", width=3.6, height=0.7, fixedsize=true, color="#d97706", fillcolor="#fef3c7",
+      label=<<FONT POINT-SIZE="9.5"><B>owner: close B-2 · the gate (B-12)?</B></FONT>>];
+
+  cost [shape=note, fillcolor="white", color="#9ca3af", width=3.6,
+        label=<<B>cost</B> (<I>estimate</I>)<BR ALIGN="LEFT"/><FONT POINT-SIZE="9">B-2-0: about 1 GPU-hour, ~25 GB<BR ALIGN="LEFT"/>phase 1: 6 joint runs, 6–9 h<BR ALIGN="LEFT"/>phase 2a: 10 joint runs, 10–15 h<BR ALIGN="LEFT"/>phase 2b: 18 two-stage runs, 14–22 h<BR ALIGN="LEFT"/>34 runs, about 30–46 h in all<BR ALIGN="LEFT"/>official reads: ~12 CPU-hours<BR ALIGN="LEFT"/>on one shared GPU: days, not hours<BR ALIGN="LEFT"/></FONT>>];
+
+  R0 -> S0 -> S1 -> P1 -> N1 -> R1 -> P2a -> P2b -> N2 -> A -> Rec -> R2;
+  R1 -> R2 [style=dashed, color="#d97706", label=" no room: stop, record", constraint=false];
+  P1 -> cost [style=invis];
+  { rank=same; P1; cost; }
+}

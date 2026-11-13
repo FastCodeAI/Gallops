@@ -356,3 +356,27 @@ by = ["Shreedhar"]
 evidence = ["H15.r9"]
 next = ["H15"]
 source = "the owner, 12 Nov 2026"
+
+[[decision]]
+id = "D28"
+date = 2026-11-13
+short = "H15 B-2 re-planned: the side-car's hidden layer into the refiner, the planner downstream fine-tuned; the ideas renumbered"
+decision = """B-1 closed (H15.r9, H15.r10), and by its pre-registered rule (V2 not supported) a learned use of the agents \
+is unlikely to show a NAVSIM gain, the closed-loop gate being the place. Knowing this, the owner judged the decoded list \
+(class, confidence, box, velocity, 1 s path, cut at 0.5) a possible bottleneck and changed B-2: the side-car's last \
+hidden layer goes into the module that makes the proposals (the refiner), and the planner downstream is fine-tuned. \
+Asked and answered: try three tensor options (layer-6 slots, slots with the decoded geometry, layer-3 slots); keep the \
+decoded list as arm D; fold-matched cross-fitting (every row, at test too, reads the cross-fit side-car that never saw \
+its log); compare three recipes (joint with online PDM labels, two stages with LoRA, two stages full). An independent \
+review, checked against the code, added: the joint recipe as primary, and a pass-4 copy of the read in the two-stage \
+recipes' scorer stage, since the planning loss never trains the read's route into the pick; one primary contrast, HD - D, \
+with the rest gatekept; arms C and O first, as a gate; test-time swaps instead of a trained S arm; an alignment check of \
+the five fold side-cars. Departures from B-0's Q8, recorded: the side-car's seed is no longer sampled (the five folds are \
+seed 0) and arm D is not B-1-3's input. B-2 absorbs the 11 Nov B-3 (the refiner), B-4 (both, LoRA) and idea B-5, whose \
+plans are deleted (git keeps them); the scorer alone becomes B-3, and B-6 to B-16 become B-4 to B-14 (the overview's \
+naming table translates). Documents only: nothing is coded or trained before the owner shortlists the plan \
+(docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md) and gives the go-ahead."""
+by = ["Shreedhar"]
+evidence = ["H15.r9", "H15.r10"]
+next = ["H15"]
+source = "the owner, 13 Nov 2026"
