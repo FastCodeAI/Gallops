@@ -8,27 +8,28 @@ recommended choices below, except (c). What has run is logged in [the overview](
   - The common record is [the overview](../README.md): the tracker, the naming and the
     discussion log.
   - The ideas are in [the ideas](ideas.md).
-- **The experiments that stand on it:**
-  - [B-1, the veto](B-1-veto.md);
-  - [B-2, the scorer](B-2-scorer.md);
-  - [B-3, the refiner](B-3-refiner.md);
-  - [B-4, both with LoRA](B-4-joint-lora.md).
-- Until 11 Nov this page was the whole Part B plan. Its B-LoRA sections moved to B-4's document.
+- **The experiments that stand on it** (renumbered on 13 Nov, D28; the overview's naming table translates):
+  - [B-1, the veto](B-1-veto.md): done;
+  - [B-2, the side-car's hidden layer into the refiner](B-2-hidden-refiner.md), the planner fine-tuned downstream:
+    re-planned on 13 Nov;
+  - [B-3, the scorer alone](B-3-scorer.md): not scheduled.
+- Until 11 Nov this page was the whole Part B plan. Its B-LoRA sections moved to the 11 Nov B-4's document, which
+  B-2 absorbed on 13 Nov.
 
 ## The four experiments, in one picture
 
-![Part B's four experiments, and where each fits inside Drive-JEPA](../../../experiments/H15_perception_sidecar/figures/b0-four-experiments.png)
+![Part B's experiments, and where each fits inside Drive-JEPA](../../../experiments/H15_perception_sidecar/figures/b0-four-experiments.png)
 
 **How to read it.**
 - **Down the left is Drive-JEPA as it runs today:** the ViT, the projector, the refiner's four passes, the scorer
   and the pick. In every experiment all of it stays frozen, except what LoRA adapts.
-- **On the right is the side-car.** It reads the same frozen ViT tokens and lists the agents ahead, with each one's
-  clearance to every proposal.
+- **On the right is the side-car.** It reads the same frozen ViT tokens.
+  - It lists the agents ahead, with each one's clearance to every proposal.
+  - Beneath that list is its hidden layer, which B-2 reads.
 - **Between them, each experiment sits beside the part of the planner it changes:**
   - B-1 acts before the pick;
-  - B-2 acts in the scorer;
-  - B-3 acts in the refiner;
-  - B-4 changes both, through B-3's refiner and B-2's scorer, retrained on the new proposals.
+  - B-2 acts in the refiner, on every pass, and refits the scorer downstream;
+  - B-3 acts in the scorer alone, with the proposals fixed (not scheduled).
 - **Each card says** what changes, what trains, the one question it tests, and what is read. They run in their
   numbers' order, B-1 first, each closed by the owner's review.
 - **This page, B-0, makes their answers comparable:**
@@ -201,7 +202,7 @@ For the release's pick on navtest (official CSV per token) and its 32 proposals 
 | Count | Tells |
 |---|---|
 | scenes failing NC, TTC, DAC, EP… by term | where the points go |
-| of the NC or TTC failures, how many have a proposal among the 32 that passes both | the room for a better pick (B-1, B-2) |
+| of the NC or TTC failures, how many have a proposal among the 32 that passes both | the room for a better pick (B-1; B-2's refit scorer; B-3) |
 | of those, how many have the at-fault agent in CAM_F0's view within 50 m (`targets.seen`) | the room for an agent input |
 | of those, how many failed on a static object | room for a pick (B-1-1) but not for an agent input: the side-car names only vehicles, pedestrians and cyclists |
 | of those, how many the side-car found, per seed | the room for this side-car |

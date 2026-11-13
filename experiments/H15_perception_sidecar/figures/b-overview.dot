@@ -1,6 +1,6 @@
 // H15 overview (docs/drivejepa-perception-sidecar/README.md): Part A, the side-car, and Part B, its uses in the
-// planner, as experiments B-<n>-<v>. Blue: done. Grey: planned, not run. Amber diamonds: the owner's reviews.
-// Nothing in Part B trains before the owner's go-ahead.
+// planner, as experiments B-<n>-<v> (renumbered on 13 Nov, D28). Blue: done. Grey: planned, not run. Amber diamonds:
+// the owner's reviews. Nothing in Part B trains before the owner's go-ahead.
 // Render: dot -Tsvg b-overview.dot -o b-overview.svg && dot -Tpng:cairo -Gdpi=192 b-overview.dot -o b-overview.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)
 digraph b_overview {
@@ -20,25 +20,20 @@ digraph b_overview {
   }
 
   subgraph cluster_b {
-    label=<<B>Part B · the side-car in the planner</B><BR/><FONT POINT-SIZE="9">one document each · nothing trains before the go-ahead</FONT>>;
+    label=<<B>Part B · the side-car in the planner</B><BR/><FONT POINT-SIZE="9">one document each · nothing trains before the go-ahead · renumbered 13 Nov (D28)</FONT>>;
     fontname="Helvetica"; fontsize=10; style="rounded,dashed"; color="#9ca3af";
-    b0 [label=<<B>B-0 · foundations</B><BR/><FONT POINT-SIZE="9">data · official scoring · 87.78 reproduced<BR/>headroom check · no training</FONT>>];
-    b1 [label=<<B>B-1 · the veto</B><BR/><FONT POINT-SIZE="9">a rule picks around agents<BR/>no training · was C4</FONT>>];
-    b2 [label=<<B>B-2 · agents into the scorer</B><BR/><FONT POINT-SIZE="9">the pick learns from agents<BR/>adapter + LoRA · was C2</FONT>>];
-    b3 [label=<<B>B-3 · agents into the refiner</B><BR/><FONT POINT-SIZE="9">the proposals learn from agents<BR/>adapter + LoRA · was C1</FONT>>];
-    b4 [label=<<B>B-4 · both, with LoRA</B><BR/><FONT POINT-SIZE="9">proposals and pick together<BR/>two stages · was C3</FONT>>];
+    b0 [label=<<B>B-0 · foundations</B><BR/><FONT POINT-SIZE="9">data · official scoring · 87.78 reproduced<BR/>headroom check · done</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+    b1 [label=<<B>B-1 · the veto</B><BR/><FONT POINT-SIZE="9">a rule picks around agents<BR/>done: −0.15 to −0.25 · was C4</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
     r1 [shape=diamond, style="filled", width=1.9, height=0.55, fixedsize=true, color="#d97706", fillcolor="#fef3c7", label=<<FONT POINT-SIZE="9"><B>review</B></FONT>>];
+    b2 [label=<<B>B-2 · the hidden layer into the refiner</B><BR/><FONT POINT-SIZE="9">the planner fine-tuned downstream · re-planned 13 Nov<BR/>absorbs the 11 Nov B-3, B-4, B-5 · was C1, C3</FONT>>];
     r2 [shape=diamond, style="filled", width=1.9, height=0.55, fixedsize=true, color="#d97706", fillcolor="#fef3c7", label=<<FONT POINT-SIZE="9"><B>review</B></FONT>>];
-    r3 [shape=diamond, style="filled", width=1.9, height=0.55, fixedsize=true, color="#d97706", fillcolor="#fef3c7", label=<<FONT POINT-SIZE="9"><B>review</B></FONT>>];
-    b0 -> b1 -> r1 -> b2 -> r2 -> b3 -> r3 -> b4;
+    b0 -> b1 -> r1 -> b2 -> r2;
   }
 
-  later [label=<<B>later, by what B-1…B-4 show</B><BR/><FONT POINT-SIZE="9">B-5…B-16 (the ideas) · the gate (B-14)</FONT>>, style="rounded,dashed", fillcolor="white"];
-  primer [label=<<B>the LoRA primer</B><BR/><FONT POINT-SIZE="9">what B-2, B-3 and B-4 adapt, and how</FONT>>, shape=note, fillcolor="white"];
+  later [label=<<B>later, by what B-2 shows</B><BR/><FONT POINT-SIZE="9">B-3, the scorer alone (was B-2, C2) · B-4…B-14 (the ideas)<BR/>the gate (B-12)</FONT>>, style="rounded,dashed", fillcolor="white"];
+  primer [label=<<B>the LoRA primer</B><BR/><FONT POINT-SIZE="9">what B-2 and B-3 adapt, and how</FONT>>, shape=note, fillcolor="white"];
 
   a15 -> b0 [label="the agents"];
-  b4 -> later;
+  r2 -> later;
   primer -> b2 [style=dashed, arrowhead=none];
-  primer -> b3 [style=dashed, arrowhead=none];
-  primer -> b4 [style=dashed, arrowhead=none];
 }

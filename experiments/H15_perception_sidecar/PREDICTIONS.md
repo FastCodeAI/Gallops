@@ -3,6 +3,13 @@
 **Commit this file before anything trains.** Its commit date is the evidence that the predictions
 came first; a prediction written after the result is not one.
 
+**A naming note (13 Nov 2026, D28).** Each section below keeps the Part B numbers of the day it was written. None of
+its pre-registered text changes.
+- Since 13 Nov, B-2 is the side-car's hidden layer into the refiner. It absorbs the 11 Nov B-3, B-4 and B-5.
+- The 11 Nov B-2, the scorer alone, is B-3.
+- B-6 to B-16 are B-4 to B-14: B-8 is B-6, B-9 is B-7, and B-14 (closed loop) is B-12.
+- [The overview's naming table](../../docs/drivejepa-perception-sidecar/README.md#naming) translates the rest.
+
 - **Written:** 2026-11-03.
   - Drafted by Claude from the estimates in the plan (`docs/drivejepa-perception-sidecar/first-pass-plan.md`), at
     the request of the owner, Shreedhar, who approved committing them as H15's pre-registration.

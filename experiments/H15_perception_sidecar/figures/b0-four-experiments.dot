@@ -1,13 +1,14 @@
-// H15 Part B (docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md, top): the four experiments in one picture. Left, Drive-JEPA as it
+// H15 Part B (docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md, top): the experiments in one picture, as
+// renumbered on 13 Nov (D28; the file keeps its name). Left, Drive-JEPA as it
 // runs at inference, frozen; right, the side-car and its agents; between them, each experiment beside the part of the
 // planner it changes, with what it tests. Grey: the release, frozen. Blue: the side-car and its agents. Green: an
-// experiment that trains (an adapter + LoRA). Amber: a rule that trains nothing.
+// experiment that trains (an adapter, with LoRA or weights). Amber: a rule that trains nothing. Dashed card: not scheduled.
 // Render: dot -Tsvg b0-four-experiments.dot -o b0-four-experiments.svg && dot -Tpng:cairo -Gdpi=192 b0-four-experiments.dot -o b0-four-experiments.png
 // (not rsvg-convert: version 2.50 drops the space after a bold run)
 digraph b0_four_experiments {
   graph [rankdir=TB, fontname="Helvetica", nodesep=0.45, ranksep=0.42, pad=0.3, bgcolor="white", newrank=true,
          labelloc="t", fontsize=13,
-         label=<<B>Part B's four experiments, and where each fits inside Drive-JEPA</B><BR/><FONT POINT-SIZE="9.5">grey: the release, frozen · blue: the side-car and its agents · green: trains an adapter + LoRA · amber: a rule, trains nothing</FONT><BR/> >];
+         label=<<B>Part B's experiments, and where each fits inside Drive-JEPA</B> <FONT POINT-SIZE="9.5">(renumbered 13 Nov, D28)</FONT><BR/><FONT POINT-SIZE="9.5">grey: the release, frozen · blue: the side-car · green: trains an adapter, with LoRA or weights · amber: a rule, trains nothing · dashed: not scheduled</FONT><BR/> >];
   node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
          color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
   edge  [color="#6b7280", arrowsize=0.65, penwidth=1.0, fontname="Helvetica", fontsize=9];
@@ -21,22 +22,20 @@ digraph b0_four_experiments {
   scorer  [label=<<B>scorer</B><BR/><FONT POINT-SIZE="9">max over each proposal's 8 poses,<BR/>an MLP: a final score each</FONT>>, width=3.2];
   pick    [label=<<B>pick</B><BR/><FONT POINT-SIZE="9">the highest score: one 4 s plan<BR/>navtest EPDMS 87.78 today</FONT>>, width=3.2];
 
-  // The four experiments, each beside what it changes.
-  b3 [label=<<B>B-3 · the agents into the refiner</B> <FONT POINT-SIZE="9">(third)</FONT><BR/><FONT POINT-SIZE="9">changes: the 32 proposals, from every pass on<BR/>trains: an adapter + LoRA on the refiner<BR/><B>tests: do the proposals themselves get better?</B><BR/>read: the best of the 32, with agents (F) against without (C)</FONT>>,
+  // The experiments, each beside what it changes.
+  b2 [label=<<B>B-2 · the side-car's hidden layer into the refiner</B> <FONT POINT-SIZE="9">(re-planned 13 Nov)</FONT><BR/><FONT POINT-SIZE="9">changes: the 32 proposals, on every pass, and the pick: the scorer refit downstream<BR/>trains: the read (an adapter) + LoRA or weights; three recipes<BR/><B>tests: does the hidden layer add to the decoded list (HD − D)?</B><BR/>read: EPDMS against C, D and the release; how the 32 change</FONT>>,
       color="#059669", fillcolor="#d1fae5", width=4.3];
-  b4 [label=<<B>B-4 · both, with LoRA</B> <FONT POINT-SIZE="9">(fourth)</FONT><BR/><FONT POINT-SIZE="9">changes: proposals and pick together; B-3's refiner,<BR/>then B-2's scorer retrained on its proposals<BR/>trains: both, in two stages<BR/><B>tests: does it meet or beat 87.78, because of the agents?</B><BR/>read: EPDMS, F against C and against the release;<BR/>how the 32 proposals change</FONT>>,
-      color="#059669", fillcolor="#d1fae5", width=4.3];
-  b2 [label=<<B>B-2 · the agents into the scorer</B> <FONT POINT-SIZE="9">(second)</FONT><BR/><FONT POINT-SIZE="9">changes: which of the release's own 32 is picked<BR/>trains: an adapter + LoRA on the scorer<BR/><B>tests: does a scorer that reads the agents pick better?</B><BR/>read: the pick's EPDMS, F against C, and against B-1</FONT>>,
-      color="#059669", fillcolor="#d1fae5", width=4.3];
-  b1 [label=<<B>B-1 · the analytic veto</B> <FONT POINT-SIZE="9">(first)</FONT><BR/><FONT POINT-SIZE="9">changes: removes proposals that come too close to an agent<BR/>trains: nothing; a rule on clearances<BR/><B>tests: do the agents know of collisions the scorer misses?</B><BR/>read: the pick's EPDMS against the release</FONT>>,
+  b3 [label=<<B>B-3 · the agents into the scorer alone</B> <FONT POINT-SIZE="9">(was B-2; not scheduled)</FONT><BR/><FONT POINT-SIZE="9">changes: which of the release's own 32 is picked<BR/>trains: an adapter + LoRA on the scorer<BR/><B>tests: does a scorer that reads the agents pick better?</B><BR/>read: the pick's EPDMS, F against C, and against B-1</FONT>>,
+      style="rounded,dashed,filled", color="#059669", fillcolor="#ecfdf5", width=4.3];
+  b1 [label=<<B>B-1 · the analytic veto</B> <FONT POINT-SIZE="9">(done: no)</FONT><BR/><FONT POINT-SIZE="9">changes: removes proposals that come too close to an agent<BR/>trains: nothing; a rule on clearances<BR/><B>tested: do the agents know of collisions the scorer misses?</B><BR/>read: −0.15 to −0.25 on navtest; the ceiling +1.58</FONT>>,
       color="#d97706", fillcolor="#fef3c7", width=4.3];
 
   // The side-car, on the right.
   sidecar [label=<<B>side-car (Part A, v3)</B><BR/><FONT POINT-SIZE="9">the same frozen ViT tokens<BR/>18.4 M · 128 slots</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
-  agents  [label=<<B>agents</B><BR/><FONT POINT-SIZE="9">class · box · velocity<BR/>1 s path · confidence<BR/>clearance to every proposal</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
+  agents  [label=<<B>agents, and beneath them the hidden layer</B><BR/><FONT POINT-SIZE="9">the decoded list: class · box · velocity<BR/>1 s path · confidence; clearance to every proposal<BR/>its hidden layer: 128 slots × 384 (B-2)</FONT>>, color="#2563eb", fillcolor="#dbeafe"];
 
   b0 [shape=note, fillcolor="white", color="#9ca3af", width=9.5,
-      label=<<B>B-0 reads all four alike</B><FONT POINT-SIZE="9">: settings chosen on the R-clean split; navtest read once, by NAVSIM's official scorer,<BR/>after the release's 87.78 is reproduced there; every trained arm starts as the release, exactly</FONT>>];
+      label=<<B>B-0 reads them all alike</B><FONT POINT-SIZE="9">: settings chosen on the R-clean split; navtest read once, by NAVSIM's official scorer,<BR/>after the release's 87.78 is reproduced there; every trained arm starts as the release, exactly</FONT>>];
 
   // The planner's flow.
   cam -> vit -> proj -> refiner -> scorer -> pick;
@@ -45,29 +44,25 @@ digraph b0_four_experiments {
   sidecar -> agents;
 
   // Each experiment beside its stage: the arrow points into the planner.
-  refiner -> b3 [dir=back, color="#059669", style=dashed, penwidth=1.4, label="before every\nBEVFormer layer"];
-  scorer -> b2 [dir=back, color="#059669", style=dashed, penwidth=1.4, label="into each\nproposal's feature"];
+  refiner -> b2 [dir=back, color="#059669", style=dashed, penwidth=1.4, label="before every\nBEVFormer layer;\nthe scorer refit"];
+  scorer -> b3 [dir=back, color="#059669", style=dashed, penwidth=1.4, label="into each\nproposal's feature"];
   pick -> b1 [dir=back, color="#d97706", style=dashed, penwidth=1.4, label="before the pick"];
-  // B-4 is B-3's refiner and B-2's scorer, together: it reaches the planner through both.
-  b3 -> b4 [dir=back, color="#059669", style=dashed, penwidth=1.4, label="its refiner"];
-  b4 -> b2 [color="#059669", style=dashed, penwidth=1.4, label="its scorer,\nretrained on\nthe new proposals"];
 
-  // The agents feed every experiment.
-  agents -> b3 [color="#2563eb", penwidth=1.1];
-  agents -> b4 [color="#2563eb", penwidth=1.1];
+  // The side-car feeds every experiment.
   agents -> b2 [color="#2563eb", penwidth=1.1];
+  agents -> b3 [color="#2563eb", penwidth=1.1];
   agents -> b1 [color="#2563eb", penwidth=1.1];
 
   { rank=same; vit; sidecar; }
   { rank=same; init; proj; agents; }
-  { rank=same; refiner; b3; b4; }
-  { rank=same; scorer; b2; }
+  { rank=same; refiner; b2; }
+  { rank=same; scorer; b3; }
   { rank=same; pick; b1; }
   pick -> b0 [style=invis];
 
   // Columns: the planner straight down; the experiments in one column beside it.
   cam [group=dj]; vit [group=dj]; proj [group=dj]; refiner [group=dj]; scorer [group=dj]; pick [group=dj];
-  b3 [group=exp]; b2 [group=exp]; b1 [group=exp];
-  b3 -> b2 -> b1 [style=invis, weight=8];
+  b2 [group=exp]; b3 [group=exp]; b1 [group=exp];
+  b2 -> b3 -> b1 [style=invis, weight=8];
   init -> proj [style=invis];
 }

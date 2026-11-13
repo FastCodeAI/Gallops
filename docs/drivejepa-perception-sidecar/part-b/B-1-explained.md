@@ -137,7 +137,7 @@ EPDMS loss.*
 - **Nothing is vetoed:** within 1 s every proposal is more than 0.5 m clear of every agent.
 - **The forecast cannot see the cut-in either.** It keeps the car straight at constant velocity after 1 s, in its own
   lane, so even at 3.5 s the release's pick is 0.8 m clear. A longer horizon alone would not have caught it; a
-  forecast that turns would (B-8).
+  forecast that turns would (B-6).
 - **101 navtest scenes are like this** on seed 0: the release's pick collides with an agent the side-car found, and
   the veto keeps the pick.
 
@@ -278,14 +278,14 @@ margin, and removes nothing.
 | Round footprints make it veto beside cars | the arithmetic in §2; the worst example; the losses sit on vehicles within 20 m | argued; not counted |
 | Switching picks costs comfort | EC is half the loss; the EC example | measured; the mechanism read from navsim's EC |
 | The room is real | the ceiling: +1.58 when the rule knows which proposals fail | measured, but it reads the answer |
-| A learned use of the agents (B-2 to B-4) is unlikely to show a NAVSIM gain, and the closed-loop gate (B-14) becomes the place | PREDICTIONS.md's decision rule for V2 not supported | **argued**, by a rule set in advance |
+| A learned use of the agents (then B-2 to B-4; now B-2 and B-3) is unlikely to show a NAVSIM gain, and the closed-loop gate (then B-14; now B-12) becomes the place | PREDICTIONS.md's decision rule for V2 not supported | **argued**, by a rule set in advance |
 
 **What would have to change for a rule to help** (*argued*; each is a new idea, not B-1):
 - footprints as rectangles;
-- a horizon and a forecast that reach the failures, which happen at 2–4 s and include cut-ins (B-8, longer
+- a horizon and a forecast that reach the failures, which happen at 2–4 s and include cut-ins (B-6, longer
   forecasts);
 - a pick that stays steady from frame to frame;
-- or a learned scorer that weighs all of this against progress (B-2).
+- or a learned scorer that weighs all of this against progress (B-3; and B-2's refit scorer).
 
 <a id="7"></a>
 

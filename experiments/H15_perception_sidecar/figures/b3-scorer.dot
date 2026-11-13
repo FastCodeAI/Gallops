@@ -1,8 +1,9 @@
-// H15 Part B, B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-scorer.md): the side-car's agents into the release's scorer.
+// H15 Part B, B-3 (docs/drivejepa-perception-sidecar/part-b/B-3-scorer.md; planned as B-2 on 11 Nov, renumbered on
+// 13 Nov, D28): the side-car's agents into the release's scorer alone.
 // The release's 32 proposals are kept; only the pick among them can change. Grey: the release, frozen. Blue: the
 // agents. Green: what trains (every green output layer starts at zero, so step 0 is the release's pick).
-// Render: dot -Tsvg b2-scorer.dot -o b2-scorer.svg && dot -Tpng:cairo -Gdpi=192 b2-scorer.dot -o b2-scorer.png
-digraph b2_scorer {
+// Render: dot -Tsvg b3-scorer.dot -o b3-scorer.svg && dot -Tpng:cairo -Gdpi=192 b3-scorer.dot -o b3-scorer.png
+digraph b3_scorer {
   graph [rankdir=LR, fontname="Helvetica", nodesep=0.3, ranksep=0.42, pad=0.3, bgcolor="white"];
   node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10.5, penwidth=1.2,
          color="#6b7280", fillcolor="#f3f4f6", margin="0.14,0.07"];
@@ -14,7 +15,7 @@ digraph b2_scorer {
   own [label=<<B>own half</B><BR/><FONT POINT-SIZE="9">f + the proposal's shape,<BR/>the ego status, the logits<BR/>(every arm)</FONT>>, color="#059669", fillcolor="#d1fae5"];
   read [label=<<B>agent half</B><BR/><FONT POINT-SIZE="9">attention to the agents, biased by clearance<BR/>+ 13 clearance features (F, O)</FONT>>, color="#059669", fillcolor="#d1fae5"];
   delta [label=<<B>δ</B><BR/><FONT POINT-SIZE="9">added to f</FONT>>, color="#059669", fillcolor="#d1fae5"];
-  head [label=<<B>scorer MLP</B><BR/><FONT POINT-SIZE="9">256 → 1024 → 1024 → 6<BR/>frozen + LoRA (B-2-1)<BR/>or replaced (B-2-2)</FONT>>, color="#059669", fillcolor="#ecfdf5"];
+  head [label=<<B>scorer MLP</B><BR/><FONT POINT-SIZE="9">256 → 1024 → 1024 → 6<BR/>frozen + LoRA (B-3-1)<BR/>or replaced (B-3-2)</FONT>>, color="#059669", fillcolor="#ecfdf5"];
   logits [label=<<B>logits</B><BR/><FONT POINT-SIZE="9">release's + (new head(f + δ) − release head(f))<BR/>= the release's, exactly, at step 0</FONT>>];
   pick [label=<<B>the pick</B><BR/><FONT POINT-SIZE="9">argmax σ(final)</FONT>>];
 

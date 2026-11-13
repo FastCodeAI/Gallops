@@ -1,12 +1,20 @@
-# H15 Part B: where the side-car could connect to Drive-JEPA (the ideas, B-1 to B-16)
+# H15 Part B: where the side-car could connect to Drive-JEPA (the ideas, B-1 to B-14)
 
-**Status (11 Nov 2026): the catalogue of ideas.** On 11 Nov the owner chose four to plan first, in this order:
-- **B-1, the analytic veto** (was B-1): [its plan](B-1-veto.md);
-- **B-2, the agents into the scorer** (was B-2): [its plan](B-2-scorer.md);
-- **B-3, the agents into the refiner** (was B-3): [its plan](B-3-refiner.md);
-- **B-4, both with LoRA** (was B-4, "B-LoRA"): [its plan](B-4-joint-lora.md).
+**Status (13 Nov 2026): the catalogue of ideas, renumbered (D28).**
+- **Chosen:**
+  - **B-1, the analytic veto:** done (`H15.r9`, `H15.r10`); [its plan and result](B-1-veto.md).
+  - **B-2, the side-car's hidden layer into the refiner, with the planner fine-tuned downstream:** re-planned on 13 Nov;
+    [its plan](B-2-hidden-refiner.md). It absorbs three 11 Nov ideas, whose catalogue notes are kept under B-2 below:
+    - B-3, the refiner;
+    - B-4, both with LoRA;
+    - B-5, agent-aware initial proposals.
+- **Not scheduled:**
+  - B-3, the agents into the scorer alone (the 11 Nov B-2; [its plan](B-3-scorer.md));
+  - B-4 to B-14, the 11 Nov B-6 to B-16, in order.
+- **On 11 Nov** the owner had chosen four to plan first, in this order: the veto, the scorer, the refiner, both with
+  LoRA (then B-1 to B-4). The overview's [naming table](../README.md#naming) translates every number written before
+  13 Nov.
 
-The rest keep their numbers, B-5 to B-16 (were B-5 to B-16), until chosen.
 - **What they share:** [B-0, the foundations](B-0-foundations.md).
 - **The tracker, the naming and the discussion log:** [the overview](../README.md).
 - Part A, the side-car itself: [the plan](../part-a/plan.md) and
@@ -34,33 +42,34 @@ with it on scenes it never trained on.
 
 | # | Idea | Connects at | Aims at | Trains | Cost at inference | Evidence so far | Main risk | Suggested |
 |---|---|---|---|---|---|---|---|---|
-| **B-1** | **analytic veto** | after the scorer | NC, TTC | nothing | clearances only | never run as a rule | false alarms cost progress | **chosen: first** |
-| **B-2** | **agents shape the pick** | scorer | NC, TTC of the pick | adapter + LoRA | one attention | first-pass B1: neutral in-sample; a refitted scorer cost 0.2–0.4 m on nuScenes | fitting the scorer to navtrain | **chosen: second** |
-| **B-3** | **agents shape the proposals** | refiner, all 4 passes | NC, TTC, best of 32 | adapter + LoRA | one attention per pass | first-pass B2: neutral in-sample | the release's scorer picks worse among new proposals | **chosen: third** |
-| **B-4** | **both, with LoRA ("B-LoRA")** | refiner + scorer | NC, TTC, EP | adapters + LoRA, two stages | B-3 + B-2 | none jointly; H04's Run 3A comes closest | H07's regression; the agents are better on the train rows than at test | **chosen: fourth** |
-| B-5 | agent-aware initial proposals | the 32 × 8 initial queries | best of 32 | adapter | one pooling | none | small beyond B-3 | a B-3 variant (B-3-3) |
-| B-6 | agents written into the token map | the projected tokens | everything downstream | adapter + LoRA | one scatter | none | errors enter the image path | later |
-| B-7 | the side-car as a teacher | training only | the planner's own features | auxiliary losses | none | the release's own auxiliaries; H14 cancelled (D19) | little beyond the release's auxiliaries | later |
-| B-8 | 4 s forecasts | the side-car's path head | the clearances B-1 to B-4 read | a labels pass + the side-car | none | 1 s paths beat constant velocity by 4–5% | reopens Part A | if B-1 or B-4 shows reliance |
-| B-9 | uncertainty and calibration | side-car heads → B-1 to B-4 | fewer false vetoes | the side-car | none | over-confident below 0.7 | reopens Part A | if B-1's false alarms dominate |
-| B-10 | tracks over frames, steadier plans | the side-car over time | EC (0.478), velocity | a tracker | per frame | none | EC is mostly the pick's consistency, not perception | later |
-| B-11 | a road-structure side-car | a second side-car | DAC, LK, DDC | new labels and a model | one more decoder | none | a Part A of its own | separate question |
-| B-12 | data | outside the planner | where no metric cache exists | the side-car labels video | none | step 7 tells how far it transfers | pseudo-labels are only as good as the side-car | with B-14 |
-| B-13 | the named agent as an explanation | the scorer's attention | none (a product) | comes with B-2 or B-4 | none | first-pass B1.6: faithful in-sample | explains a pick that is no better | with B-4 |
-| B-14 | closed loop | the gate | collisions in neuroNCAP and Bench2Drive | nothing new | none | the first pass's own advice | needs Paddock's adapter (phase C) | after B-1 or B-4 |
-| B-15 | ViT LoRA shared with the planner | the encoder | everything | LoRA | none | first-pass B3: nothing | none worth the cost | **no** |
-| B-16 | the refiner-retrain finding | refiner, no agents | nuScenes L2 and collisions | the refiner | none | 0.3 m better at 3 s on nuScenes, unexplained | it is not about agents | B-3's and B-4's arm C |
+| **B-1** | **analytic veto** | after the scorer | NC, TTC | nothing | clearances only | **done: loses 0.15–0.25 points on navtest; the ceiling gains 1.58** (`H15.r9`, `r10`) | false alarms cost progress | **chosen first: done** |
+| **B-2** | **the side-car's hidden layer into the refiner, the planner fine-tuned downstream** | the refiner, all 4 passes; the scorer refit | NC, TTC, the pick | the read (adapter) + LoRA or weights, three recipes | one attention per pass | the absorbed ideas' (below); B-1: a rule on decoded agents lost | the release already learned per-proposal collision agents; the room is in the pick | **chosen (13 Nov): re-planned** |
+| B-3 | agents shape the pick (the scorer alone; was B-2) | scorer | NC, TTC of the pick | adapter + LoRA | one attention | first-pass B1: neutral in-sample; a refitted scorer cost 0.2–0.4 m on nuScenes | fitting the scorer to navtrain | not scheduled: by what B-2 shows |
+| B-4 | agents written into the token map (was B-6) | the projected tokens | everything downstream | adapter + LoRA | one scatter | none | errors enter the image path | later |
+| B-5 | the side-car as a teacher (was B-7) | training only | the planner's own features | auxiliary losses | none | the release's own auxiliaries; H14 cancelled (D19) | little beyond the release's auxiliaries | later |
+| B-6 | 4 s forecasts (was B-8) | the side-car's path head | the clearances B-1 and B-2 read | a labels pass + the side-car | none | 1 s paths beat constant velocity by 4–5% | reopens Part A | if B-1 or B-2 shows reliance |
+| B-7 | uncertainty and calibration (was B-9) | side-car heads → B-1 to B-3 | fewer false vetoes | the side-car | none | over-confident below 0.7 | reopens Part A | if false alarms dominate |
+| B-8 | tracks over frames, steadier plans (was B-10) | the side-car over time | EC (0.478), velocity | a tracker | per frame | none | EC is mostly the pick's consistency, not perception | later |
+| B-9 | a road-structure side-car (was B-11) | a second side-car | DAC, LK, DDC | new labels and a model | one more decoder | none | a Part A of its own | separate question |
+| B-10 | data (was B-12) | outside the planner | where no metric cache exists | the side-car labels video | none | step 7 tells how far it transfers | pseudo-labels are only as good as the side-car | with B-12 |
+| B-11 | the named agent as an explanation (was B-13) | the scorer's attention | none (a product) | comes with B-2 or B-3 | none | first-pass B1.6: faithful in-sample | explains a pick that is no better | with B-2 |
+| B-12 | closed loop (was B-14) | the gate | collisions in neuroNCAP and Bench2Drive | nothing new | none | the first pass's own advice | needs Paddock's adapter (phase C) | after B-1 or B-2 |
+| B-13 | ViT LoRA shared with the planner (was B-15) | the encoder | everything | LoRA | none | first-pass B3: nothing | none worth the cost | **no** |
+| B-14 | the refiner-retrain finding (was B-16) | refiner, no agents | nuScenes L2 and collisions | the refiner | none | 0.3 m better at 3 s on nuScenes, unexplained | it is not about agents | B-2's arm C |
 
-**The owner's choice (11 Nov).** B-1, B-2, B-3 and B-4, in that order, each with its own plan.
+**The owner's choice (11 Nov), as numbered then.** B-1, B-2, B-3 and B-4, in that order, each with its own plan.
 - B-0-3, the headroom check, comes first in the foundations. It counts how many of the release's navtest collisions
   and TTC failures involve an agent the side-car could see.
 - On 10 Nov this page had suggested the headroom check and the veto first, then B-LoRA. The owner kept the veto
   first, and put the scorer and the refiner alone before both together.
 
+**Since 13 Nov (D28).** B-2 is re-planned: the side-car's last hidden layer into the refiner, with the planner
+fine-tuned downstream. It absorbs the 11 Nov B-3, B-4 and B-5. The scorer alone is B-3, and the rest are B-4 to B-14.
+
 **What waits.**
-- B-5 to B-11, until B-1 to B-4 show whether explicit agents carry information the planner uses.
-- B-14, until there is a model worth gating.
-- B-15 is not recommended.
+- B-3 to B-11, until B-2 shows whether the side-car carries information a learned planner uses.
+- B-12, until there is a model worth gating.
+- B-13 is not recommended.
 
 ![Where the side-car's agents could connect to Drive-JEPA's planner](../../../experiments/H15_perception_sidecar/figures/b-connections.png)
 
@@ -158,7 +167,7 @@ Part A, v3 for 24 epochs, select logs, three seeds (*measured*; the executive up
   Any idea read on nuScenes reads it with that input.
 - **Far agents are placed badly in depth.** A rule that vetoes on clearance (B-1) would act on false alarms
   2–4 m from real cars: 45% of the false alarms are such misplacements. Margins must widen with range, or come
-  from an uncertainty head (B-9).
+  from an uncertainty head (B-7).
 - **The forecast is short.** The planner plans 4 s, and `geometry.agent_centres` extrapolates beyond 1 s at
   the predicted velocity (*read*), as PDM simulates other agents. Turning and braking beyond 1 s are guessed.
 - **The agents on the train logs are better than at test.** The side-car trained on those rows. A planner
@@ -173,7 +182,9 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 
 ### B-1 · An analytic veto (no training)
 
-**Chosen first (11 Nov); planned in full in [its own document](B-1-veto.md).** The notes below are the catalogue's.
+**Chosen first (11 Nov); planned in full in [its own document](B-1-veto.md).** **Done (12 Nov; `H15.r9`,
+`H15.r10`):** a rule on decoded agents loses 0.15 to 0.25 points on navtest, with labelled agents or the side-car's;
+the ceiling gains 1.58. The notes below are the catalogue's, written before the result.
 
 - **What.** No learning.
   - For each proposal, the clearance to each forecast agent over its first 2 s (`geometry.terms`).
@@ -185,7 +196,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
     not.
   - A rule on forecasts is how PDM-Closed scores well on NAVSIM.
   - It explains itself: "vetoed: agent 3 is 1.2 m away at 1.5 s".
-  - It is the baseline any learned B-2 to B-4 must beat.
+  - It is the baseline any learned use (now B-2, B-3) must beat.
 - **How.** Cached proposals and agents; the veto; scored offline and then by the official scorer.
 - **Cost.** Minutes of CPU per setting, after the data step.
 - **Evidence so far.** first-pass B1's frozen adapter read these features, and was neutral in-sample. Never tried as a
@@ -197,38 +208,60 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 - **Test.** The pick's EPDMS with the veto, against R. O's version (labelled agents) bounds what perception
   could give.
 - **What it tells, either way.**
-  - O's veto does not beat R on navtest: there is no agent headroom left on NAVSIM, and B-2 to B-4 are unlikely to
-    show one. Go to B-14.
-  - O's veto beats R and the side-car's does not: perception is the limit. Go to B-8 or B-9 before B-4.
-  - Both beat R: B-4 has something to learn, and B-1 is its bar.
+  - O's veto does not beat R on navtest: there is no agent headroom left on NAVSIM, and the learned uses (then B-2 to
+    B-4) are unlikely to show one. Go to closed loop (now B-12). **This is what happened (V2 not supported).**
+  - O's veto beats R and the side-car's does not: perception is the limit. Go to forecasts or uncertainty (now B-6,
+    B-7) before the learned uses.
+  - Both beat R: the learned uses have something to learn, and B-1 is their bar.
 
-### B-2 · Agents shape the pick (scorer input)
+### B-2 · The side-car's hidden layer into the refiner, with the planner fine-tuned downstream
 
-**Chosen second (11 Nov); planned in full in [its own document](B-2-scorer.md).** The notes below are the catalogue's.
+**Chosen (13 Nov, D28); planned in full in [its own document](B-2-hidden-refiner.md),** with 14 figures for review.
+The notes below are the catalogue's.
 
-- **What.** The scorer reads the agents to score each of the 32 proposals.
-  - Attention over agents is biased by clearance.
-  - 13 geometric features per proposal: the smallest clearance at each time, the overall minimum and its time,
-    and the minimum within 1 s and 2 s.
-- **Why it might help.**
-  - NC and TTC are functions of the agents' future positions against the proposal.
-  - The release's scorer infers them from pooled features; explicit clearances make them direct.
-- **How.** first-pass B1's `Adapter`, in four modes: frozen (adapter only), LoRA, full, or a replacement scorer with named
-  sub-score heads.
-- **Cost.** Minutes a run, from cached features.
-- **Evidence so far.**
-  - first-pass B1, in-sample: neutral in all four modes. Full mode, F − C was −0.13, −0.11 and −0.00 points by seed.
-  - Ground-truth agents were neutral too.
-  - On nuScenes, refitting the scorer cost 0.23–0.44 m at 3 s, with or without agents. The replacement scorer
-    transferred best.
-- **Risks.** The scorer fits navtrain and loses out of domain.
-- **Test.** The pick's EPDMS, F against C, on navtest, and on the pre-registered subsets: a lead vehicle in
-  lane, the human slowing, an agent within 10 m of a proposal.
-- **What would kill it.** As B-3, read on the pick.
+- **What:**
+  - The module that makes the proposals, the refiner, reads the side-car's last hidden layer: 128 slots of 384, each
+    with its centre and confidence. It reads it through an adapter on all four passes.
+  - The scorer is refit downstream.
+  - The arms:
 
-### B-3 · Agents shape the proposals (refiner input)
+    | Arm | What the refiner reads |
+    |---|---|
+    | C | nothing from the side-car |
+    | O | labelled agents |
+    | D | the decoded list |
+    | HD | D, plus each agent's hidden slot |
+    | H6 | all 128 hidden slots of layer 6 |
+    | H3 | all 128 hidden slots of layer 3 |
 
-**Chosen third (11 Nov); planned in full in [its own document](B-3-refiner.md).** The notes below are the catalogue's.
+- **Why it might help:**
+  - The decoded list keeps 4.75 of 128 slots a row; 36.4 clear confidence 0.1 (*counted*, 13 Nov).
+  - A learned reader can weigh evidence that a list drops and a rule never sees.
+- **Why it might not:**
+  - The release already trained each proposal's feature to predict its collision and TTC agents over 4 s, from all
+    logged agents (`agent_pred`, *read*).
+  - The room is in the pick (271 of 275 failing navtest scenes have a safe proposal).
+  - B-1's rule fired.
+- **How:** three recipes, all compared:
+  - joint fine-tuning with online PDM labels (primary);
+  - two stages with LoRA;
+  - two stages, full.
+
+  The side-cars are cross-fitted by fold, at test too.
+- **Test:**
+  - The gate is O − C.
+  - The primary contrast is HD − D: every seed, beyond D's seed range and 2 SE.
+  - The rest are gatekept.
+- **Cost:** 34 runs, about 30–46 h of wall time on the shared GPU (*estimate*).
+
+#### Absorbed on 13 Nov: the 11 Nov B-3, B-4 and B-5
+
+*Kept as the catalogue wrote them on 11 Nov.* The numbers in them are 11 Nov's: their B-2 is today's B-3, and B-16
+is B-14. The overview's naming table translates. What B-2 keeps of each is in [its plan](B-2-hidden-refiner.md#changed).
+
+#### The 11 Nov B-3 · Agents shape the proposals (refiner input)
+
+**Chosen third (11 Nov); planned in full in its own document (deleted on 13 Nov; git keeps it).** The notes below are the catalogue's.
 
 - **What.** The side-car's agents enter each of the refiner's 4 passes, so the 32 proposals are formed knowing
   where every agent is and will be.
@@ -262,9 +295,9 @@ release has headroom and never trained: navtest, read once, and an R-clean split
   navtest.
 - **What would kill it.** F ≈ C on navtest, with ground-truth agents (O) ≈ C as well.
 
-### B-4 · B-LoRA: both together, with LoRA
+#### The 11 Nov B-4 · B-LoRA: both together, with LoRA
 
-**Chosen fourth (11 Nov); planned in full in [its own document](B-4-joint-lora.md).** The notes below are the catalogue's.
+**Chosen fourth (11 Nov); planned in full in its own document (deleted on 13 Nov; git keeps it).** The notes below are the catalogue's.
 
 - **What.** The agents go into the refiner (B-3) and the scorer (B-2). LoRA adapts both; the rest is frozen.
 - **Why it might help.**
@@ -298,7 +331,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 - **What would kill it.** F ≈ C at navtest's resolution, with O ≈ C too: the agents carry nothing this planner
   can use on NAVSIM.
 
-### B-5 · Agent-aware initial proposals
+#### The 11 Nov B-5 · Agent-aware initial proposals
 
 - **What.** A pooled summary of the agents is added to the 32 × 8 initial queries.
 - **Why.**
@@ -310,7 +343,32 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 - **Evidence.** None.
 - **Suggested.** A variant inside B-4 if B-4 shows the agents are used.
 
-### B-6 · Agents written into the token map
+### B-3 · Agents shape the pick (scorer input; was B-2)
+
+**Chosen second on 11 Nov, as B-2; planned in full in [its own document](B-3-scorer.md). Not scheduled since B-2
+was re-planned (13 Nov, D28).** The notes below are the catalogue's.
+
+- **What.** The scorer reads the agents to score each of the 32 proposals.
+  - Attention over agents is biased by clearance.
+  - 13 geometric features per proposal: the smallest clearance at each time, the overall minimum and its time,
+    and the minimum within 1 s and 2 s.
+- **Why it might help.**
+  - NC and TTC are functions of the agents' future positions against the proposal.
+  - The release's scorer infers them from pooled features; explicit clearances make them direct.
+- **How.** first-pass B1's `Adapter`, in four modes: frozen (adapter only), LoRA, full, or a replacement scorer with named
+  sub-score heads.
+- **Cost.** Minutes a run, from cached features.
+- **Evidence so far.**
+  - first-pass B1, in-sample: neutral in all four modes. Full mode, F − C was −0.13, −0.11 and −0.00 points by seed.
+  - Ground-truth agents were neutral too.
+  - On nuScenes, refitting the scorer cost 0.23–0.44 m at 3 s, with or without agents. The replacement scorer
+    transferred best.
+- **Risks.** The scorer fits navtrain and loses out of domain.
+- **Test.** The pick's EPDMS, F against C, on navtest, and on the pre-registered subsets: a lead vehicle in
+  lane, the human slowing, an agent within 10 m of a proposal.
+- **What would kill it.** As the refiner's (now within B-2), read on the pick: F ≈ C, with labelled agents ≈ C too.
+
+### B-4 · Agents written into the token map (was B-6)
 
 - **What.** Each detection's embedding is added to the 16 × 32 map's cells its box covers.
 - **Why.** No new attention path: the planner's own deformable sampling reads object-level features exactly
@@ -320,7 +378,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 - **Risks.** The side-car's errors enter the image path, and the effect is hard to read.
 - **Suggested.** Later.
 
-### B-7 · The side-car as a teacher, at training only
+### B-5 · The side-car as a teacher, at training only (was B-7)
 
 - **What.** The side-car's outputs, or the labels, become extra targets for the planner's own features while it
   is fine-tuned. For example, the collision-agent head's targets come from the side-car's forecasts.
@@ -331,21 +389,21 @@ release has headroom and never trained: navtest, read once, and an R-clean split
     its code.
 - **Suggested.** Later; little is expected beyond the release's own auxiliaries.
 
-### B-8 · 4 s forecasts
+### B-6 · 4 s forecasts (was B-8)
 
 - **What.** The side-car's path head grows from 1 s to 4 s (8 steps of 0.5 s), the planner's horizon.
 - **Why.**
   - NC and TTC are graded against the agents' logged futures over 4 s.
-  - Beyond 1 s, B-1 to B-4 now use constant velocity. A learned forecast could turn and brake.
+  - Beyond 1 s, B-1 and B-2 use constant velocity. A learned forecast could turn and brake.
 - **How.** A labels pass with 4 s tracks, then the side-car retrained, about 1.75 h per seed (*measured* in step
   5).
 - **Evidence.** The 1 s paths beat constant velocity by only 4–5%; longer horizons are harder.
-- **Suggested.** If B-1 or B-4 shows the planner relies on the agents.
+- **Suggested.** If B-2 shows the planner relies on the agents.
 
-### B-9 · Uncertainty and calibration
+### B-7 · Uncertainty and calibration (was B-9)
 
 - **What.** Per-agent position uncertainty (Part A §4.3's Laplace scales, choice 11.11, still open) and
-  calibrated confidence. B-1 to B-4 then weigh agents and set margins by them.
+  calibrated confidence. B-1 to B-3 then weigh agents and set margins by them.
 - **Why.**
   - Depth error grows with range.
   - The side-car is over-confident below 0.7.
@@ -353,7 +411,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
     one.
 - **Suggested.** If B-1's false vetoes dominate its result.
 
-### B-10 · Tracks over frames, and steadier plans
+### B-8 · Tracks over frames, and steadier plans (was B-10)
 
 - **What.**
   - The side-car runs on consecutive frames and associates its detections into tracks.
@@ -365,14 +423,14 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 - **Risks.** EC is mostly about whether consecutive picks agree, which perception does not decide.
 - **Suggested.** Later; H05's memory layer is related.
 
-### B-11 · A road-structure side-car
+### B-9 · A road-structure side-car (was B-11)
 
 - **What.** A second side-car for lanes, road edges and drivable area.
 - **Why.** DAC (0.986) and LK (0.976) on navtest are not agent problems: together about 1.5 points (*argued*).
   The release's BEV-map auxiliary exists but is off (`bev_map=False`, *read*).
 - **Suggested.** A separate question, with its own Part A.
 
-### B-12 · Data
+### B-10 · Data (was B-12)
 
 - **What.**
   - (a) The side-car as an auto-labeller of agents in unlabelled driving video. That allows a collision- and
@@ -388,9 +446,9 @@ release has headroom and never trained: navtest, read once, and an R-clean split
     - Only 58 of them have a routed window; 11,340 windows in all.
     - By city: Las Vegas 9,895, Pittsburgh 975, Boston 470, Singapore none.
     - So it is small, 87% Las Vegas, and has no left-hand traffic.
-- **Suggested.** (b) is part of the B plan's data step; (a) goes with B-14.
+- **Suggested.** (b) is part of the B plan's data step; (a) goes with B-12.
 
-### B-13 · The named agent, as an explanation
+### B-11 · The named agent, as an explanation (was B-13)
 
 - **What.** The agent the scorer attended to most for its pick, shown with the plan. Separately, the side-car's
   confidence as a runtime monitor.
@@ -399,11 +457,11 @@ release has headroom and never trained: navtest, read once, and an R-clean split
   - deleting the named agent moved the pick 3.1–4.9× as often as deleting a random one;
   - the named agent was real 86% of the time.
 - **Risks.** It explains a pick that is no better.
-- **Suggested.** It comes with B-4. Read it on navtest.
+- **Suggested.** It comes with B-2 (or B-3). Read it on navtest.
 
-### B-14 · Closed loop
+### B-12 · Closed loop (was B-14)
 
-- **What.** Put a side-car-equipped planner (from B-1 or B-4) through neuroNCAP and Bench2Drive.
+- **What.** Put a side-car-equipped planner (from B-1 or B-2) through neuroNCAP and Bench2Drive.
 - **Why.**
   - Open-loop NAVSIM grades one 4 s plan against logged agents.
   - Agent awareness should matter most where agents threaten: neuroNCAP's collision scenarios.
@@ -413,22 +471,22 @@ release has headroom and never trained: navtest, read once, and an R-clean split
   - the release's logits kept beside the new ones;
   - a declared `DRIVEJEPA_SIDECAR`.
 - **Cost.** A 200-sample neuroNCAP run is about 10.6 h (`CLAUDE.md`). It is a gate, not a training signal.
-- **Suggested.** After B-1 or B-4 gives a model worth gating.
+- **Suggested.** After B-1 or B-2 gives a model worth gating.
 
-### B-15 · ViT LoRA shared with the planner (first-pass B3)
+### B-13 · ViT LoRA shared with the planner (first-pass B3) (was B-15)
 
 - **Evidence.**
   - first-pass B3.1: LoRA on the last 4 blocks moved recall by +0.001.
   - first-pass B3.2: shared with the release's planner, the pick moved by −0.02 points (SE 0.09).
 - **Suggested.** Not again.
 
-### B-16 · The refiner-retrain finding
+### B-14 · The refiner-retrain finding (was B-16)
 
 - **What.** Retraining the refiner on navtrain with no agents (first-pass B2's arm C) made the release plan better on
   nuScenes.
   - L2 at 3 s was 0.28–0.36 m lower in full mode.
   - Collisions were 0.5–0.8 points fewer.
-- **Why it matters here.** It is B-4's arm C. Any F − R gain has to be told apart from it.
+- **Why it matters here.** It is B-2's arm C. Any F − R gain has to be told apart from it.
 - **Its own test.** Two candidate causes, untested: training through `batch_fix`, or H15's draw of the
   teachers. One arm each, about 15 minutes a run.
 
@@ -446,7 +504,7 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 | cross-fitted agents for the train rows, if the optimism matters | no | about 5 × 1.2–1.7 h per seed |
 | a trainer for the refiner and scorer together | no | a module |
 
-## 6. The order chosen (11 Nov)
+## 6. The order chosen (11 Nov), as numbered then
 
 1. **B-0, the foundations:** the data, the official scorer and the anchor, the headroom check (B-0-3). None of
    it trains.
@@ -462,3 +520,17 @@ release has headroom and never trained: navtest, read once, and an R-clean split
 On 10 Nov this page suggested the veto before B-LoRA, because it costs no training and makes B-LoRA's result
 readable. The owner's order of 11 Nov keeps that, and puts the scorer and the refiner alone before the two
 together.
+
+## 7. The order since 13 Nov (D28)
+
+1. **B-0, the foundations:** done (`H15.r6`–`r8`).
+2. **B-1, the veto:** done (`H15.r9`, `H15.r10`). A rule on decoded agents does not beat the release on navtest.
+3. **B-2, the side-car's hidden layer into the refiner, the planner fine-tuned downstream:**
+   - re-planned, documents only;
+   - then the owner's shortlist, B-2-0, phase 1 (the gate, O − C) and phase 2;
+   - each closed by a review.
+4. **Then, by what B-2 shows:**
+   - if the hidden layer adds (HD − D holds): B-3, the scorer alone, with slots; and B-12, the gate;
+   - if perception is the limit (O ≫ D): B-6 or B-7;
+   - if nothing moves: the remaining room is the pick's horizon, so B-6 (4 s forecasts) or B-12 (closed loop);
+   - B-11 either way, if its explanations hold on navtest.

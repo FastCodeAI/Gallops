@@ -13,15 +13,16 @@ account: why, what was done, what it showed, and what was decided.
 - **The predictions**, committed before anything trained: [PREDICTIONS.md](PREDICTIONS.md).
 - **Start here: [the overview](../../docs/drivejepa-perception-sidecar/README.md)**, the common record of this
   work: the tracker, the naming (`B-<n>-<v>`), every discussion and decision, and the open questions.
-- **Phase B, planned (10–11 Nov, D22, D23):** four experiments, in the owner's order, each with its own plan:
-  - [B-1, the veto](../../docs/drivejepa-perception-sidecar/part-b/B-1-veto.md);
-  - [B-2, the scorer](../../docs/drivejepa-perception-sidecar/part-b/B-2-scorer.md);
-  - [B-3, the refiner](../../docs/drivejepa-perception-sidecar/part-b/B-3-refiner.md);
-  - [B-4, both with LoRA](../../docs/drivejepa-perception-sidecar/part-b/B-4-joint-lora.md).
+- **Phase B, planned (10–11 Nov, D22, D23), re-planned for B-2 (13 Nov, D28),** each experiment with its own plan:
+  - [B-1, the veto](../../docs/drivejepa-perception-sidecar/part-b/B-1-veto.md): done (`H15.r9`, `H15.r10`);
+  - [B-2, the side-car's hidden layer into the refiner](../../docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md):
+    the planner fine-tuned downstream; it absorbs the 11 Nov B-3 (the refiner) and B-4 (both, with LoRA);
+  - [B-3, the scorer alone](../../docs/drivejepa-perception-sidecar/part-b/B-3-scorer.md): the 11 Nov B-2,
+    not scheduled.
 - **What they share:**
   - [B-0, the foundations](../../docs/drivejepa-perception-sidecar/part-b/B-0-foundations.md);
   - [a LoRA primer](../../docs/drivejepa-perception-sidecar/part-b/lora-primer.md);
-  - [the ideas, B-1 to B-16](../../docs/drivejepa-perception-sidecar/part-b/ideas.md).
+  - [the ideas, B-1 to B-14](../../docs/drivejepa-perception-sidecar/part-b/ideas.md), renumbered on 13 Nov (D28).
 
 ## The rerun: Part A, one reviewed step at a time (from 4 Nov)
 

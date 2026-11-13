@@ -1,6 +1,10 @@
-# H15 Part B · B-2: the agents into the scorer. Can a scorer that reads them pick better?
+# H15 Part B · B-3: the agents into the scorer alone. Can a scorer that reads them pick better?
 
-**Status (11 Nov 2026): planned, not run. Nothing trains before the owner's go-ahead.**
+**Status (13 Nov 2026): not scheduled.** Planned on 11 Nov as B-2. It was renumbered B-3 when B-2 was re-planned
+(D28). Nothing trains before the owner's go-ahead.
+- Since 13 Nov, [B-2](B-2-hidden-refiner.md) gives the refiner the side-car's hidden layer and refits the scorer
+  downstream. This plan is the scorer alone, with the proposals fixed.
+- If scheduled, it would read whichever of B-2's inputs (decoded or hidden) B-2 shows to be used.
 - [The overview](../README.md) holds the tracker, the naming and the log.
 - This plan stands on [B-0, the foundations](B-0-foundations.md).
 - B-1's result is its bar: [B-1, the veto](B-1-veto.md).
@@ -34,9 +38,9 @@
   - A scorer that beats B-1's rule uses the agents in ways a rule cannot, for example trading a little clearance
     for progress.
   - One that does not, says the rule is enough.
-  - Either way, it says whether the scorer's named agent (B-13) is faithful out of sample.
+  - Either way, it says whether the scorer's named agent (B-11) is faithful out of sample.
 
-![B-2: the agents into the release's scorer](../../../experiments/H15_perception_sidecar/figures/b2-scorer.png)
+![B-3: the agents into the release's scorer](../../../experiments/H15_perception_sidecar/figures/b3-scorer.png)
 
 ## The concepts, question by question
 
@@ -73,9 +77,9 @@
 
 | Sub-version | Trains | Parameters |
 |---|---|---|
-| B-2-1 | the adapter + rank-16 LoRA on the scorer MLP's 3 layers | 277,600 in arm C, 415,460 in F and O: the adapter (207,872 or 345,732) + LoRA 69,728 (*counted*) |
-| B-2-2 | a replacement scorer: 8 named sub-score heads and attention across the 32 proposals, the final score by NAVSIM's own formula | 0.27 M (*read*: the first pass's count) |
-| B-2-3 | the adapter alone; the scorer frozen | 207,872 (C) or 345,732 (F, O) (*counted*) |
+| B-3-1 | the adapter + rank-16 LoRA on the scorer MLP's 3 layers | 277,600 in arm C, 415,460 in F and O: the adapter (207,872 or 345,732) + LoRA 69,728 (*counted*) |
+| B-3-2 | a replacement scorer: 8 named sub-score heads and attention across the 32 proposals, the final score by NAVSIM's own formula | 0.27 M (*read*: the first pass's count) |
+| B-3-3 | the adapter alone; the scorer frozen | 207,872 (C) or 345,732 (F, O) (*counted*) |
 
 **Q6. What does it learn from?**
 - The PDM labels of the release's 32 proposals on navtrain's train rows (`pdm-v1`, vendored scorer, *read*), as
@@ -92,7 +96,7 @@
 
 **Q8. What is different from the first pass?**
 
-| | First pass B1 | B-2 |
+| | First pass B1 | B-3 |
 |---|---|---|
 | Where it is read | report logs, in-sample for the release | navtest, once; out of sample |
 | The agents | v1 side-car, seed 0 | v3, the planner's seed k reads side-car seed k |
@@ -108,7 +112,7 @@
   rule, guard against reading one seed.
 
 **Q10. How is it read?**
-- Each arm's navtest pick is replayed through the official scorer, once, after all of B-2's runs.
+- Each arm's navtest pick is replayed through the official scorer, once, after all of B-3's runs.
 - The vendored labels give every proposal's score for the analysis.
 - nuScenes gives L2 and collisions out of domain.
 
@@ -118,9 +122,9 @@
 
 | ID | What | Arms × seeds | Recommended |
 |---|---|---|---|
-| **B-2-1** | adapter + LoRA on the scorer MLP | C, F, O × 0–2 | yes: the owner's interest, and the reference |
-| **B-2-2** | a replacement scorer with named sub-scores | C, F, O × 0–2 | yes: it transferred best |
-| B-2-3 | adapter only | C, F × 0–2 | if B-2-1 wins, to see how little suffices |
+| **B-3-1** | adapter + LoRA on the scorer MLP | C, F, O × 0–2 | yes: the owner's interest, and the reference |
+| **B-3-2** | a replacement scorer with named sub-scores | C, F, O × 0–2 | yes: it transferred best |
+| B-3-3 | adapter only | C, F × 0–2 | if B-3-1 wins, to see how little suffices |
 
 ### Steps
 
@@ -138,17 +142,17 @@
 5. **Navtest, once:** every arm and seed's pick, replayed and officially scored.
 6. **Analysis:**
    - B-0-4, on the pick;
-   - the named agent (B-13): delete it, or a random detected agent, and count how often the pick moves; is it
+   - the named agent (B-11): delete it, or a random detected agent, and count how often the pick moves; is it
      real, within 2 m of a labelled agent?
    - the sub-scores' AUC against PDM's NC and TTC, if trained.
 7. **nuScenes:** the picks, scored by L2 at 1, 2 and 3 s and collisions within 3 s.
-8. **Record** `H15.r<n>`, labels "B-2-1", "B-2-2"…, and a line in the overview's log.
+8. **Record** `H15.r<n>`, labels "B-3-1", "B-3-2"…, and a line in the overview's log.
 
 ### Success criteria (a draft)
 
 | # | What | Predicted | Supports if | Refutes if |
 |---|---|---|---|---|
-| S1 | F − C, B-2-1, navtest EPDMS | +0.0 to +0.3 | beyond C's seed range and 2 SE, every seed (H15's rule) | negative beyond 2 SE, any seed |
+| S1 | F − C, B-3-1, navtest EPDMS | +0.0 to +0.3 | beyond C's seed range and 2 SE, every seed (H15's rule) | negative beyond 2 SE, any seed |
 | S2 | F − R: meets or beats | −0.3 to +0.4 | meets: the 95% interval's low end ≥ −0.4, every seed; beats: above 0, every seed | high end < 0, any seed |
 | S3 | C − R | −0.4 to +0.2 | reported | — |
 | S4 | F − B-1-3: a learned use against a rule | −0.3 to +0.3 | reported | — |
@@ -161,8 +165,8 @@
 
 | | Decision | Recommended |
 |---|---|---|
-| (a) | sub-versions | B-2-1 and B-2-2; B-2-3 only if B-2-1 wins |
-| (b) | train the sub-score heads (NC, TTC, EP) beside the final score | yes, in B-2-2, where they are the design; not in B-2-1, so it stays the first pass's |
+| (a) | sub-versions | B-3-1 and B-3-2; B-3-3 only if B-3-1 wins |
+| (b) | train the sub-score heads (NC, TTC, EP) beside the final score | yes, in B-3-2, where they are the design; not in B-3-1, so it stays the first pass's |
 | (c) | the last epoch, or one chosen on R-clean | the last; a choice would borrow R-clean's noise for a small gain |
 | (d) | read nuScenes | yes: it is where the first pass found the cost |
 
@@ -177,7 +181,7 @@
 
 After B-0: 9 runs per sub-version, 5–15 min of GPU each; one official scoring run per run.
 
-## Questions B-2 can answer
+## Questions B-3 can answer
 
 | Question | Read from |
 |---|---|
@@ -186,11 +190,11 @@ After B-0: 9 runs per sub-version, 5–15 min of GPU each; one official scoring 
 | Does it trade clearance for progress differently from the rule? | NC, TTC and EP of the pick, F against B-1-3 |
 | Is the pick the limit, or the proposals? | the gap between best of 32 and the pick, before and after |
 | Does refitting the scorer on navtrain cost out of sample? | C − R on navtest and nuScenes |
-| Which form transfers: LoRA on the release's head, or a new head? | B-2-1 against B-2-2 |
+| Which form transfers: LoRA on the release's head, or a new head? | B-3-1 against B-3-2 |
 | Can the scorer explain its pick by an agent, faithfully, on scenes it never saw? | S6 |
 | How much would better perception add? | O − F |
 
-## What B-2 does not answer
+## What B-3 does not answer
 
-- **Whether better proposals exist to be picked:** B-3, and B-4 together.
-- **Closed loop:** B-14.
+- **Whether better proposals exist to be picked:** B-2, the refiner, with the scorer refit downstream.
+- **Closed loop:** B-12.

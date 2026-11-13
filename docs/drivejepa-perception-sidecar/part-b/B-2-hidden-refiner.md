@@ -7,7 +7,7 @@ owner shortlists this plan and gives the go-ahead.**
   - [B-0, the foundations](B-0-foundations.md);
   - B-1's result, in [B-1, the veto](B-1-veto.md) and [B-1, explained](B-1-explained.md).
 - It replaces three of the 11 Nov plans and one idea:
-  - B-2, the agents into the scorer alone, which becomes [B-3](B-2-scorer.md), not scheduled;
+  - B-2, the agents into the scorer alone, which becomes [B-3](B-3-scorer.md), not scheduled;
   - B-3, the agents into the refiner;
   - B-4, both with LoRA;
   - B-5, agent-aware initial proposals.
@@ -577,7 +577,7 @@ rounds:
 
 | 11 Nov | 13 Nov |
 |---|---|
-| B-2, the agents into the scorer alone | B-3, its plan kept: [B-3](B-2-scorer.md), not scheduled |
+| B-2, the agents into the scorer alone | B-3, its plan kept: [B-3](B-3-scorer.md), not scheduled |
 | B-3-1, `RefinerAdapter` + LoRA | arm D's adapter, in every recipe |
 | B-3-2, H04's agent look | not carried over |
 | B-3-3 (agents into the initial queries) and idea B-5 | a later variant: pass 1 sees the slots |

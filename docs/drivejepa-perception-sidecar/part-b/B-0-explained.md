@@ -244,7 +244,7 @@ at-fault agent out of CAM_F0's view or beyond 50 m; the first token*):
 | Count | Bounds |
 |---|---|
 | 275 scenes fail NC or TTC | everything an agent rule could fix (about 2.3 points at most) |
-| 271 have a safe alternative | a better *pick* (B-1, B-2) |
+| 271 have a safe alternative | a better *pick* (B-1; B-2's refit scorer; B-3) |
 | 156 of those name an in-view agent | an *agent input* from this camera |
 | 127–135 of those the side-car found | *this* side-car |
 
@@ -333,4 +333,4 @@ Part B means.
 | R-clean is a poor stand-in for navtest, and only its known-command part was used | §6 | measured; the choice is the owner's (D25) |
 | Agents learned on train rows would flatter a planner trained on them | optimism 0.085 > 0.03 | measured; cross-fitting answers it |
 
-**Not concluded here:** whether agents help the planner. That is B-1's question, and B-2's to B-4's.
+**Not concluded here:** whether agents help the planner. That is B-1's question, and B-2's and B-3's (numbered since 13 Nov, D28).

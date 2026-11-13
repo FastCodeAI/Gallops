@@ -1,11 +1,14 @@
-# H15 Part B · A primer on LoRA, for B-2, B-3 and B-4
+# H15 Part B · A primer on LoRA, for B-2 and B-3
 
 **Status (11 Nov 2026): a primer, written for these experiments.** Every count below is *counted* on 11 Nov from the
 release's own modules, unless labelled otherwise.
 - [The overview](../README.md) holds the tracker, the naming and the log.
-- It serves [B-2, the scorer](B-2-scorer.md),
-  [B-3, the refiner](B-3-refiner.md) and
-  [B-4, both](B-4-joint-lora.md).
+- It serves [B-2, the side-car's hidden layer into the refiner](B-2-hidden-refiner.md), which adapts the refiner and
+  the scorer, and [B-3, the scorer alone](B-3-scorer.md).
+- It was written for the 11 Nov plans: the scorer (then B-2), the refiner (then B-3) and both (then B-4).
+  - On 13 Nov B-2 absorbed the refiner and both, and the scorer alone became B-3 (D28).
+  - Its tables keep the 11 Nov designs, labelled.
+  - B-2's new reader for the hidden arms is counted when it is built.
 
 ## The crux
 
@@ -98,7 +101,7 @@ LoRA keeps the release's weights, and learns a bounded change.
 ![Where LoRA can attach in the release's refiner and scorer](../../../experiments/H15_perception_sidecar/figures/lora-where.png)
 
 **Q7. Why there, and not elsewhere?**
-- **The refiner and the scorer** are what must learn to use a new input: B-3 and B-2.
+- **The refiner and the scorer** are what must learn to use a new input: B-2 adapts both, B-3 the scorer alone.
 - **Not the ViT or the projector.**
   - They are frozen and read from caches.
   - The first pass's B3 put LoRA on the ViT's last four blocks and found nothing for the side-car (recall
@@ -115,8 +118,8 @@ LoRA keeps the release's weights, and learns a bounded change.
 - Four of the refiner's layers compute the deformable attention's sampling offsets and weights: where around each
   pose it reads the image.
 - LoRA there lets the agents change *where* the refiner looks. That is powerful, and can drift from the release.
-- B-3's plan keeps them adapted, as the first pass did. Its variant B-3-4 leaves them frozen: "look where the
-  release looks, take something different".
+- B-2's recipes keep them adapted, as the first pass did. A later variant of B-2 (the 11 Nov B-3-4) leaves them
+  frozen: "look where the release looks, take something different".
 
 **Q10. How does LoRA differ from the adapters?**
 
@@ -125,15 +128,15 @@ LoRA keeps the release's weights, and learns a bounded change.
 | What it is | new modules: an own half (every arm) and an agent half (F, O) | a low-rank change to existing linear layers |
 | What it adds | a new input, the agents, and a path for it | room for the existing paths to use what the adapter adds |
 | How it starts | output layers at zero | B at zero |
-| Parameters, refiner (B-3-1) | 198,144 (C) · 336,004 (F, O) | 177,200 |
-| Parameters, scorer (B-2-1) | 207,872 (C) · 345,732 (F, O) | 69,728 |
+| Parameters, refiner (11 Nov B-3-1; B-2's arm D) | 198,144 (C) · 336,004 (F, O) | 177,200 |
+| Parameters, scorer (B-3-1, the 11 Nov B-2-1) | 207,872 (C) · 345,732 (F, O) | 69,728 |
 
 - Arms C and F share the same LoRA and the same own half; only the agent half differs. That is why F − C is the
   agents' effect, not the adaptation's.
 
 **Q11. What does LoRA learn from, and how fast?** H15's first-pass settings, fixed:
 
-| | B-2-1 · scorer | B-3-1 · refiner | B-4-1 · both |
+| | B-3-1 · the scorer alone (11 Nov B-2-1) | the refiner (11 Nov B-3-1; B-2-2's stage 1) | both, two stages (11 Nov B-4-1) |
 |---|---|---|---|
 | loss | BCE on each proposal's PDM final score | `mtd_loss`: winner-takes-all to the human + good-anchor teachers | each stage its own |
 | learning rate | 1e-4 adapter · 2e-5 head LoRA | 1e-4 adapter and LoRA | each stage its own |
@@ -157,7 +160,8 @@ LoRA keeps the release's weights, and learns a bounded change.
 - **Little to learn.** The release already fits navtrain, so LoRA may stay near zero, or fit noise. C − R̃ and the
   curves show which.
 - **Overfitting to navtrain:** read on navtest and nuScenes, never on navtrain.
-- **Drift of where the refiner looks:** B-3-4 is the check.
+- **Drift of where the refiner looks:** B-2's later variant without LoRA on the sampling offsets (the 11 Nov B-3-4) is
+  the check.
 - **Seed variance.** In the first pass, the scorer's LoRA mode was the most variable: F − C from −0.21 to +0.24
   points. Three seeds, and H15's rule.
 - **Tiny layers:** Q6's oddity.
@@ -167,7 +171,7 @@ LoRA keeps the release's weights, and learns a bounded change.
   with the release's layer shapes.
 - **The adapters do not merge.** They are new modules with a new input, so a checkpoint needs:
   - its `checkpoint.json` (the contract with Paddock, `docs/checkpoints.md`);
-  - and Paddock's Drive-JEPA adapter extended to feed the agents (B-14).
+  - and Paddock's Drive-JEPA adapter extended to feed the agents (B-12).
 - `drivejepa_b2d/write_checkpoint.py` writes a vendor checkpoint today; a merge step is still to write.
 
 **Q15. How is this different from H07's LoRA, and from the first pass's B3?**

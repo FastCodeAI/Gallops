@@ -32,10 +32,10 @@ the release's proposals that come too close to them, and leave a better pick?
   - *Argued*: −0.3 to +0.4.
 - **What it is worth either way:**
   - If B-1-2 does not beat the release on navtest, agents carry little that the release's own scorer has not
-    already used. B-2 to B-4 are then unlikely to show a NAVSIM gain, and the closed-loop gate (B-14) becomes
-    the place.
-  - If B-1-3 beats it, B-2 to B-4 have a bar to clear: a learned use of the agents must do better than a
-    rule.
+    already used. B-2 to B-4 (as numbered then; now B-2 and B-3) are then unlikely to show a NAVSIM gain, and the
+    closed-loop gate (then B-14, now B-12) becomes the place.
+  - If B-1-3 beats it, the learned uses (now B-2 and B-3) have a bar to clear: a learned use of the agents must do
+    better than a rule.
 
 ![B-1, the analytic veto: three sources of agents, one rule](../../../experiments/H15_perception_sidecar/figures/b1-veto-flow.png)
 
@@ -247,7 +247,8 @@ was at or below R; the least intrusive was frozen: λ 0.1, 0.5 m, no widening, 1
 
 **What it says** (PREDICTIONS.md's decision rules; *argued*):
 - V2 not supported: a rule on explicit agents near the ego adds nothing the release's scorer has not used, on NAVSIM.
-  By the rule, B-2 to B-4 are unlikely to show a NAVSIM gain, and the closed-loop gate (B-14) becomes the place.
+  By the rule, B-2 to B-4 (as numbered then; now B-2 and B-3) are unlikely to show a NAVSIM gain, and the closed-loop
+  gate (then B-14, now B-12) becomes the place. On 13 Nov the owner re-planned B-2 knowing this (D28).
 - The room is real (B-1-1, +1.58), but a clearance rule at 1 s does not find it. A rule that reads failures later
   in the plan, or a learned one, is a different question.
 
@@ -260,11 +261,11 @@ was at or below R; the least intrusive was frozen: λ 0.1, 0.5 m, no widening, 1
 | Is this side-car good enough to use, by a rule? | B-1-3 against B-1-2 and R |
 | Do its false alarms (depth) or its misses cost more? | the confusion of vetoes, by range |
 | Which agents matter on navtest: vehicles or pedestrians, near or far, moving or parked? | the vetoes that were right, by class and range |
-| Would a longer forecast help (B-8)? | B-1-1 − B-1-2 on scenes whose at-fault agent turns or brakes after 1 s |
-| What is the bar for a learned scorer (B-2)? | B-1-3's navtest EPDMS |
+| Would a longer forecast help (B-6)? | B-1-1 − B-1-2 on scenes whose at-fault agent turns or brakes after 1 s |
+| What is the bar for a learned use: B-2's refit scorer, or the scorer alone (B-3)? | B-1-3's navtest EPDMS |
 
 ## What B-1 does not answer
 
-- **Whether agents can make the proposals themselves better:** B-3.
-- **Whether a learned scorer can trade safety against progress better than a rule:** B-2.
-- **Anything in closed loop,** where the agents react: B-14.
+- **Whether agents can make the proposals themselves better:** B-2.
+- **Whether a learned scorer can trade safety against progress better than a rule:** B-2's refit scorer; B-3.
+- **Anything in closed loop,** where the agents react: B-12.

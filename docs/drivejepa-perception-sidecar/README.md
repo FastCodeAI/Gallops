@@ -97,7 +97,7 @@ notes and dated log lines.
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
 | B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **done: no** (`H15.r9`, `r10`); for the owner's review | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
 | B-2 | Does the side-car's hidden layer, given to the refiner with the planner fine-tuned downstream, plan better than its decoded list? | the refiner and the scorer | the read (adapter) + LoRA or weights, by recipe | **re-planned** (13 Nov, D28); documents only, for the owner's shortlist | [B-2, the hidden layer into the refiner](part-b/B-2-hidden-refiner.md) | B-0; B-1 |
-| B-3 | Does a scorer that reads the agents pick better, the proposals fixed? | the scorer | an adapter + LoRA | not scheduled (was B-2) | [B-3, the scorer alone](part-b/B-2-scorer.md) | by what B-2 shows |
+| B-3 | Does a scorer that reads the agents pick better, the proposals fixed? | the scorer | an adapter + LoRA | not scheduled (was B-2) | [B-3, the scorer alone](part-b/B-3-scorer.md) | by what B-2 shows |
 | B-4 to B-14 | the other ideas | — | — | not scheduled | [the ideas](part-b/ideas.md) | by what B-2 shows |
 
 - **What B-2 and B-3 adapt, and how:** [the LoRA primer](part-b/lora-primer.md).
@@ -342,7 +342,7 @@ Each experiment's own document gives these decisions in full, with a recommendat
 | [part-b/B-0-explained.md](part-b/B-0-explained.md) | B-0 on real scenes: what each model reads and outputs, how it is scored, how the conclusions follow |
 | [part-b/B-1-explained.md](part-b/B-1-explained.md) | B-1 on real scenes: the rule step by step, good and bad examples, every number traced |
 | [part-b/B-2-hidden-refiner.md](part-b/B-2-hidden-refiner.md) | **B-2**, the side-car's hidden layer into the refiner, the planner fine-tuned downstream (13 Nov), with its figures |
-| [part-b/B-2-scorer.md](part-b/B-2-scorer.md) | **B-3**, the agents into the scorer alone (the 11 Nov B-2's plan), not scheduled |
+| [part-b/B-3-scorer.md](part-b/B-3-scorer.md) | **B-3**, the agents into the scorer alone (the 11 Nov B-2's plan), not scheduled |
 | [part-b/lora-primer.md](part-b/lora-primer.md) | LoRA, for these experiments |
 | [experiments/H15_perception_sidecar/](../../experiments/H15_perception_sidecar/) | the record: README, PREDICTIONS.md, experiment.toml, the notebooks, the figures |
 | [experiments/decisions.toml](../../experiments/decisions.toml) | the decisions, D19–D28 for this work |
