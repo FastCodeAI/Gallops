@@ -71,3 +71,81 @@ def test_the_sidecar_hands_over_its_hidden_layer_beside_its_outputs():
     last = outs[-1]
     layer = car.layers[-1]
     assert torch.allclose(last["logits"], layer.cls_head(last["hidden"]).float())
+
+
+def _context(torch, b: int, a: int, arm: str) -> dict:
+    """A plausible context for every arm: agents ahead within 30 m, slots with confidences and folds."""
+    g = torch.Generator().manual_seed(1)
+    xyz = torch.rand(b, a, 3, generator=g) * torch.tensor([30.0, 10.0, 1.0]) + torch.tensor([5.0, -5.0, 0.0])
+    ctx = {
+        "cls": torch.zeros(b, a, dtype=torch.long),
+        "conf": torch.rand(b, a, generator=g),
+        "xyz": xyz,
+        "lwh": torch.ones(b, a, 3) * torch.tensor([4.5, 1.9, 1.6]),
+        "yaw": torch.zeros(b, a),
+        "vel": torch.zeros(b, a, 2),
+        "path": torch.zeros(b, a, 2, 2),
+        "mask": torch.rand(b, a, generator=g) > 0.5,
+        "hidden": torch.randn(b, a, 384, generator=g),
+        "centre": xyz,
+        "fold": torch.tensor([i % 5 for i in range(b)]),
+    }
+    return ctx
+
+
+@pytest.mark.parametrize("arm", ["C", "O", "D", "HD", "H6", "H3"])
+def test_every_arm_starts_as_the_release(arm):
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception.train_b2 import B2Adapter
+
+    adapter = B2Adapter(arm)
+    adapter.context = _context(torch, 2, 128, arm)
+    proposals = torch.randn(2, 32, 8, 3)
+    queries = torch.randn(2, 256, 256)
+    assert torch.equal(adapter(proposals, queries), torch.zeros(2, 256, 256))
+
+
+def test_a_blank_read_attends_only_its_null_token():
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception.train_b2 import SlotRead
+
+    read = SlotRead(d_query=8, d=8, heads=2)
+    out, null_share = read(
+        torch.randn(1, 3, 8), torch.randn(1, 5, 8), torch.zeros(1, 3, 5), torch.zeros(1, 5, dtype=torch.bool)
+    )
+    assert float(null_share) == pytest.approx(1.0)
+    assert out.shape == (1, 3, 8)
+
+
+def test_the_pass_hook_sends_pass_four_alone_to_the_copy():
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception.train_b2 import PassHook
+
+    calls = []
+
+    class Spy(torch.nn.Module):
+        def __init__(self, name):
+            super().__init__()
+            self.name = name
+
+        def forward(self, proposals, queries):
+            calls.append(self.name)
+            return torch.zeros_like(queries)
+
+    hook = PassHook(Spy("stage 1"), Spy("pass-4 copy"))
+    for _ in range(4):
+        hook(None, (torch.zeros(1, 32, 8, 3), torch.zeros(1, 256, 256), None))
+    assert calls == ["stage 1", "stage 1", "stage 1", "pass-4 copy"]
+
+
+def test_each_row_reads_its_own_folds_input_map():
+    torch = pytest.importorskip("torch")
+    from gallops.drivejepa_perception.train_b2 import B2Adapter
+
+    adapter = B2Adapter("H6")
+    ctx = _context(torch, 5, 4, "H6")
+    with torch.no_grad():
+        tokens = adapter.hidden_tokens(ctx)
+        for row in range(5):
+            alone = adapter.norm(ctx["hidden"][row]) @ adapter.maps[row % 5] + adapter.map_bias[row % 5]
+            assert torch.allclose(tokens[row], alone, atol=1e-5)

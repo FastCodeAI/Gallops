@@ -97,6 +97,7 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_perception.sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
 | `gallops.drivejepa_perception.targets` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
 | `gallops.drivejepa_perception.tokens` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
+| `gallops.drivejepa_perception.train_b2` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
 | `gallops.drivejepa_perception.train_refiner` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
 | `gallops.drivejepa_perception.train_scorer` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |
 | `gallops.drivejepa_perception.train_sidecar` | H15.s0, H15.a0, H15.a1, H15.a2, H15.b1, H15.b2, H15.b3, H15.b32, H15.ood, H15.r1, H15.r2, H15.r3, H15.r4, H15.r5, H15.r6, H15.r7, H15.r8, H15.r9, H15.r10 | experiment |

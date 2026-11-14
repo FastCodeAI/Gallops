@@ -386,6 +386,189 @@ def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
     return report
 
 
+#: B-2's slots, decoded again live in a small batch, against the stored pass (fp16, another batch's rounding).
+B2_HIDDEN_ATOL, B2_CENTRE_ATOL = 0.05, 0.05
+
+
+def run_b2(cfg, args, src, rows: np.ndarray, pool) -> dict:
+    """B-2's preflight (B2-G3, PREDICTIONS.md, Part B · B-2), before a run's first step; every problem listed.
+
+    - the code committed, and the suite passing under this interpreter;
+    - the splits and the fold record re-derived; the hidden pass written under this fold record; every train
+      row from a train log, none from a report log, each reading the side-car that did not train on its log;
+    - the gathered teachers equal to their files on 16 rows;
+    - the untrained model (arm, recipe, stage) equal, bit for bit, to the same cached path without its new
+      part on 64 select rows, and that path within REFINER_LIMITS of the token pass;
+    - stage 3: its stage 1's proposals recomputed equal to the dump it trains on;
+    - the joint recipe: the online labeller giving exactly `pdm-v1`'s labels for the release's own 32 on 16
+      rows;
+    - an arm that reads the side-car: its stored slots equal to the fold's side-car decoding them live, 8
+      rows.
+    """
+    import torch
+
+    from gallops.drivejepa_perception import (
+        b2_inputs,
+        env,
+        navsim_data,
+        train_b2,
+        train_refiner,
+        train_sidecar,
+    )
+    from gallops.train.preflight import code_checks
+
+    report, problems = {}, []
+    report["code"], found = code_checks(REPO)
+    problems += found
+    entered = env.enter(cfg)
+    splits = navsim_data.load_splits(
+        REPO / "recipes/drivejepa_perception/splits.json",
+        navsim_data.navtrain_filter(Path(entered["code"]))["log_names"],
+    )
+    record = b2_inputs.load_folds()
+    if src.hidden_manifest["folds_sha256"] != record["sha256"]:
+        problems.append(f"{src.hidden_dir} was written under another fold record")
+    logs = src.token_logs[rows]
+    if not np.isin(logs, splits["train"]).all():
+        problems.append("a training row is not from a train log")
+    problems += report_guard(src.token_logs, {"train": rows}, splits["report"])
+    expected = np.array([record["train"][str(log)] for log in logs], np.int8)
+    wrong = int((src.fold[rows] != expected).sum())
+    report["folds"] = {"rows": int(len(rows)), "wrong_fold": wrong}
+    if wrong:
+        problems.append(f"{wrong} train rows read a side-car that trained on their log")
+
+    out_root = Path(cfg.resolve("{runs}/drivejepa_perception"))
+    anchors = np.load(out_root / "anchors-v1" / "anchors.npy")
+    count = np.load(out_root / "anchors-v1" / "count.npy")
+    picked = np.random.default_rng(0).choice(rows, 16, replace=False)
+    unequal = []
+    for row in picked:
+        path = train_refiner._anchor_file(
+            train_refiner.anchors_root(cfg), src.token_logs[row], src.tokens[row]
+        )
+        if not np.array_equal(anchors[row, : count[row]], train_refiner._read_anchors(path)):
+            unequal.append(int(row))
+    report["anchors"] = {"rows": 16, "unequal": unequal}
+    if unequal:
+        problems.append(f"the gathered anchors differ from their files on rows {unequal}")
+
+    device = torch.device("cuda")
+    select = train_b2.select_rows(src)[:64]
+    stage = args.stage
+    agent, model, adapter, hook = train_b2.build(entered, args.recipe, args.arm, stage)
+    if stage == 3:
+        train_b2.load_weights(model, adapter, hook, Path(args.stage1) / "weights.pt", pass4=False)
+    model, adapter = model.to(device).eval(), adapter.to(device).eval()
+    model._backbone = model._backbone.cpu()
+    with torch.no_grad():
+        if stage == 3:
+            base_props, _, base_scored = train_b2.forward(model, src, select, device, hook)
+            hook.pass4 = __import__("copy").deepcopy(adapter)
+            props, _, scored = train_b2.forward(model, src, select, device, hook)
+        else:
+            props, _, scored = train_b2.forward(model, src, select, device, hook)
+            saved = adapter.forward
+            adapter.forward = lambda proposals, queries: torch.zeros_like(queries)
+            base_props, _, base_scored = train_b2.forward(model, src, select, device, hook)
+            adapter.forward = saved
+    same = float((props[-1] - base_props[-1]).abs().max())
+    same_logits = float((scored[0] - base_scored[0]).abs().max())
+    release = np.asarray(src.release["proposals"][select])
+    gap = float(np.abs(base_props[-1].float().cpu().numpy() - release).max())
+    pick = torch.sigmoid(base_scored[0][..., -1]).argmax(1).cpu().numpy()
+    share = float((pick == src.release["pick"][select]).mean())
+    report["identity"] = {
+        "rows": int(len(select)),
+        "untrained_minus_base_proposals": same,
+        "untrained_minus_base_logits": same_logits,
+        "base_minus_token_pass_m": gap,
+        "base_picks_equal_share": share,
+    }
+    if same != 0.0 or same_logits != 0.0:
+        problems.append(f"the untrained model is not its base path, bit for bit: {report['identity']}")
+    if stage != 3 and (gap > REFINER_LIMITS["proposals_m"] or share < REFINER_LIMITS["picks_share"]):
+        problems.append(f"the cached path does not reproduce the token pass: {report['identity']}")
+    if stage == 3:
+        dumped = np.load(Path(args.stage1) / "dump-train" / "dump.npz")
+        at = {int(r): i for i, r in enumerate(dumped["rows"])}
+        some = rows[:16]
+        with torch.no_grad():
+            p3, _, _ = train_b2.forward(model, src, some, device, hook)
+        moved = float(
+            np.abs(p3[-1].float().cpu().numpy() - dumped["proposals"][[at[int(r)] for r in some]]).max()
+        )
+        report["stage1_dump"] = {"rows": 16, "proposals_max_m": moved}
+        if moved > 1e-3:
+            problems.append(
+                f"stage 1's proposals, recomputed, moved {moved:.2g} m from the dump stage 3 reads"
+            )
+    del model, agent
+    torch.cuda.empty_cache()
+
+    if pool is not None:
+        pdm = np.load(src.pdm_dir / "pdm.npz")["candidates"]
+        some = rows[:16]
+        got = train_b2.online_targets(
+            pool, some, np.asarray(src.release["proposals"][some], np.float32), torch.device("cpu")
+        )[0].numpy()
+        report["online_labels"] = {"rows": 16, "unequal": int((got != pdm[some]).sum())}
+        if report["online_labels"]["unequal"]:
+            problems.append(f"the online labeller differs from pdm-v1: {report['online_labels']}")
+
+    if args.arm in ("D", "HD", "H6", "H3"):
+        manifest = src.hidden_manifest
+        runs = [Path(r) for r in manifest["runs"]]
+        run_args = json.loads((runs[0] / "run.json").read_text())["args"]
+        tokens, slot, _, projections, _ = train_sidecar.load(
+            manifest["inputs"]["tokens"],
+            manifest["inputs"]["labels"],
+            run_args["tap"],
+            manifest["inputs"]["vit_tokens"],
+        )
+        some = select[:8]
+        worst = {"hidden": 0.0, "centre": 0.0, "mask_unequal": 0}
+        stored = {
+            "hidden6": np.load(src.hidden_dir / "hidden6.npy", mmap_mode="r"),
+            "centre6": np.load(src.hidden_dir / "centre6.npy", mmap_mode="r"),
+            "mask": np.load(src.hidden_dir / "agents.npz")["mask"],
+        }
+        for k in sorted(set(src.fold[some].tolist())):
+            mine = some[src.fold[some] == k]
+            model_k, _ = train_sidecar.load_run(runs[k])
+            n, q = len(mine), model_k.query.shape[0]
+            sink = {key: np.zeros((n, q, *shape), dtype) for key, (shape, dtype) in b2_inputs.KEYS.items()}
+            for layer in b2_inputs.LAYERS:
+                sink[f"hidden{layer}"] = np.zeros((n, q, model_k.query.shape[1]), np.float16)
+                sink[f"centre{layer}"] = np.zeros((n, q, 3), np.float32)
+                sink[f"conf{layer}"] = np.zeros((n, q), np.float32)
+            b2_inputs.decode_rows(model_k, tokens, slot, mine, projections, device, sink, at=np.arange(n))
+            worst["hidden"] = max(
+                worst["hidden"],
+                float(
+                    np.abs(
+                        sink["hidden6"].astype(np.float32) - stored["hidden6"][mine].astype(np.float32)
+                    ).max()
+                ),
+            )
+            worst["centre"] = max(
+                worst["centre"], float(np.abs(sink["centre6"] - stored["centre6"][mine]).max())
+            )
+            worst["mask_unequal"] += int((sink["mask"] != stored["mask"][mine]).sum())
+            del model_k
+        report["slots_live"] = {"rows": int(len(some)), **worst}
+        if worst["hidden"] > B2_HIDDEN_ATOL or worst["centre"] > B2_CENTRE_ATOL or worst["mask_unequal"]:
+            problems.append(
+                f"the stored slots differ from the fold side-cars run live: {report['slots_live']}"
+            )
+        torch.cuda.empty_cache()
+
+    report["problems"] = problems
+    if problems:
+        raise SystemExit("preflight failed:\n- " + "\n- ".join(problems))
+    return report
+
+
 #: B3.1: how far A1's select F1, read through the frozen branch on the fp16 block-20 cache, may sit
 #: from the F1 it recorded on the fp16 ViT-out cache. One point; the measured gap is recorded.
 VIT_LORA_F1_LIMIT = 0.01
