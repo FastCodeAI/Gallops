@@ -962,3 +962,45 @@ notes = "D27; PREDICTIONS.md, Part B · B-1-4 (committed 65127a8 before any read
   strength = "strong"
   flags = ["open-loop"]
   note = "seeds -0.164 +- 0.033, -0.150 +- 0.032, -0.162 +- 0.035. V6 predicted -0.25 to +0.05; refuted on every seed (under 0 beyond 2 SE). Less of a loss than B-1-3's -0.232"
+
+[[runs]]
+id = "H15.r11"
+label = "Part B, B-2-0: the side-car's hidden layer for B-2 -- the fold rule, the hidden-state passes (layers 3 and 6, by the five cross-fit side-cars, fold-matched) and their alignment check; nothing trains"
+started = 2026-11-13
+ended = 2026-11-13
+start_from = "released"
+trained = []
+frozen = ["everything"]
+train_git_sha = "032d0c0"
+notes = "D29; PREDICTIONS.md, Part B · B-2 (committed 032d0c0 before the alignment check). B2-G2: part_b2_folds.json written and derived again equal: train rows by their cross-fit fold (215, 214, 214, 214, 214 logs); select (51 logs), navtest (136) and R-clean (58) dealt round robin from a seeded permutation. B2-G1 holds: each of the five fold side-cars, decoded by the pass's own code, gives exactly the select F1 it recorded (gap 0); on navtrain's 94,195 train rows the decoded list equals agents-train-crossfit-v3 in every value (0 unequal); 4,457 select rows, all 12,146 navtest and all 11,340 R-clean rows decoded; no report-log row; about 25 GB (hidden vectors in fp16, layers 3 and 6). B2-G4: the five side-cars' layer-6 spaces do not align. On 2,000 R-clean rows (125,551 slots at confidence >= 0.1), every fold against fold 0: the identity R-squared is -0.09 to -0.19 matched by slot index (-0.16 to -0.36 by centre), and a ridge map fitted on select reaches 0.47 to 0.55; by the pre-registered rule each fold gets its own input map ('per-fold'). Their shared seed-0 start did not keep the slot spaces aligned."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  recipe = "recipes/drivejepa_perception.toml#part-b-2-0-hidden-navtrain"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain train logs (splits.json), each row by the cross-fit side-car that did not train on its log; select logs"
+  role = "train"
+  unit = "samples"
+  n = 98652
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest (the vendor's filter, read from the test data split)"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "R-clean (fresh): trainval logs no NAVSIM filter names, every routed window"
+  role = "selection"
+  unit = "windows"
+  n = 11340
+  scene_list = "recipes/drivejepa_perception/fresh.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"

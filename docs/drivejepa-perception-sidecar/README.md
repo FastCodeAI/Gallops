@@ -330,6 +330,22 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     - the side-car hands over its hidden layer beside its outputs;
     - `part_b2_folds.json`, written and re-derived;
     - recipe stages `part-b-2-0-*`.
+- **13 Nov · B-2-0 done (`H15.r11`): the inputs built and checked; the five side-cars do not align.**
+  - **B2-G1 holds:**
+    - each fold reproduces its recorded select F1 exactly;
+    - on all 94,195 train rows the decoded list equals B-0's cross-fit agents in every value;
+    - 4,457 select, 12,146 navtest and 11,340 R-clean rows decoded; no report row;
+    - about 25 GB.
+  - **B2-G4: the side-cars' hidden spaces are not one space.** Every fold against fold 0, on 2,000 R-clean rows:
+    - matched slot for slot, R² is −0.09 to −0.19;
+    - a fitted linear map reaches only 0.47 to 0.55.
+
+    By the pre-registered rule each fold gets its own input map. A reader trained on one side-car's slots cannot
+    read another's, which is why B-2 reads the fold side-cars at test too.
+  - **The trainer's preflight (B2-G3) holds on a smoke run:**
+    - the untrained model equals its base path bit for bit;
+    - the online labeller equals `pdm-v1` exactly;
+    - the stored slots equal the side-cars run live, within fp16.
 
 <a id="open"></a>
 
