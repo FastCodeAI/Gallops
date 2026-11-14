@@ -301,6 +301,9 @@ def build(entered: dict, recipe: str, arm: str, stage: int):
         _BATCH_FIXED.append(True)
     agent = DriveJEPAAgent(config=DriveJEPAConfig(), lr=1e-4, checkpoint_path=entered["release"])
     agent.initialize()
+    # The agent builds its score loss only when constructed for training (an empty checkpoint path), which
+    # also opens a pool and a metric-cache index this trainer does not use; set exactly what that path sets.
+    agent.bce_logit_loss = nn.BCEWithLogitsLoss()
     model = agent._pad_model.eval()
     model._backbone = model._backbone.cpu()  # never run: the tokens are cached
     for p in model.parameters():
