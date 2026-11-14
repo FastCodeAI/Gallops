@@ -177,8 +177,11 @@ class Source:
             out["mask"] = out["mask"].bool()
         if self.layer is not None:
             out["hidden"] = torch.from_numpy(np.asarray(self.hidden[src], dtype=np.float32)).to(device)
-            out["centre"] = torch.from_numpy(np.asarray(self.centre[src])).to(device)
-            out["conf"] = torch.from_numpy(np.asarray(self.conf[src])).to(device)
+            # H6 and H3 read the slots' own centre and confidence. HD keeps its list's: the same layer's,
+            # equal on every row of every pass (checked on 13 Nov), and the only ones labelled agents have.
+            if self.agents is None:
+                out["centre"] = torch.from_numpy(np.asarray(self.centre[src])).to(device)
+                out["conf"] = torch.from_numpy(np.asarray(self.conf[src])).to(device)
             out["fold"] = torch.from_numpy(self.fold[src].astype(np.int64)).to(device)
             if (out["fold"] < 0).any():
                 raise SystemExit(f"{self.split}: a row without a fold's slots was read")
