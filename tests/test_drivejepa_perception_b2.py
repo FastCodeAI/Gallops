@@ -149,3 +149,20 @@ def test_each_row_reads_its_own_folds_input_map():
         for row in range(5):
             alone = adapter.norm(ctx["hidden"][row]) @ adapter.maps[row % 5] + adapter.map_bias[row % 5]
             assert torch.allclose(tokens[row], alone, atol=1e-5)
+
+
+def test_stage_three_reads_each_rows_labels_by_row_id(tmp_path):
+    pytest.importorskip("torch")
+    from gallops.drivejepa_perception.train_b2 import stage3_labels
+
+    dump = tmp_path / "dump-train"
+    dump.mkdir()
+    rows = np.array([3, 7, 9])
+    candidates = np.random.default_rng(0).random((3, 32, 9)).astype(np.float32)
+    np.savez(dump / "dump.npz", rows=rows)
+    np.savez(dump / "labels.npz", candidates=candidates)
+    labels = stage3_labels(tmp_path, rows, 12)
+    assert np.array_equal(labels[7], candidates[1, :, -1])  # row 7 is the dump's second, not its eighth
+    assert np.isnan(labels[[0, 1, 2, 4, 5, 6, 8, 10, 11]]).all()
+    with pytest.raises(SystemExit):
+        stage3_labels(tmp_path, np.array([3, 7]), 12)

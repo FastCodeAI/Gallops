@@ -399,7 +399,8 @@ def run_b2(cfg, args, src, rows: np.ndarray, pool, root) -> dict:
     - the gathered teachers equal to their files on 16 rows;
     - the untrained model (arm, recipe, stage) equal, bit for bit, to the same cached path without its new
       part on 64 select rows, and that path within REFINER_LIMITS of the token pass;
-    - stage 3: its stage 1's proposals recomputed equal to the dump it trains on;
+    - stage 3: its stage 1's proposals recomputed equal to the dump it trains on, and the targets the trainer
+      reads for 16 rows equal to the vendored scorer run live on those rows' dumped proposals;
     - the joint recipe: the online labeller giving exactly `pdm-v1`'s labels for the release's own 32 on 16
       rows;
     - an arm that reads the side-car: its stored slots equal to the fold's side-car decoding them live, 8
@@ -411,6 +412,7 @@ def run_b2(cfg, args, src, rows: np.ndarray, pool, root) -> dict:
         b2_inputs,
         env,
         navsim_data,
+        pdm_labels,
         train_b2,
         train_refiner,
         train_sidecar,
@@ -492,16 +494,34 @@ def run_b2(cfg, args, src, rows: np.ndarray, pool, root) -> dict:
     if stage == 3:
         dumped = np.load(Path(args.stage1) / "dump-train" / "dump.npz")
         at = {int(r): i for i, r in enumerate(dumped["rows"])}
-        some = rows[:16]
+        # Spread over the rows: on the first few, a row id and a position in the dump can coincide.
+        some = rows[np.linspace(0, len(rows) - 1, 16).astype(int)]
         with torch.no_grad():
             p3, _, _ = train_b2.forward(model, src, some, device, hook)
-        moved = float(
-            np.abs(p3[-1].float().cpu().numpy() - dumped["proposals"][[at[int(r)] for r in some]]).max()
+        held = dumped["proposals"][[at[int(r)] for r in some]]
+        moved = float(np.abs(p3[-1].float().cpu().numpy() - held).max())
+        targets = train_b2.stage3_labels(Path(args.stage1), rows, len(src.tokens))[some]
+        live = np.stack(
+            [
+                pdm_labels.score_detail(
+                    pdm_labels.metric_cache_path(root, src.token_logs[r], src.tokens[r]),
+                    held[j].astype(np.float64),
+                )["scores"][:, -1]
+                for j, r in enumerate(some)
+            ]
         )
-        report["stage1_dump"] = {"rows": 16, "proposals_max_m": moved}
+        report["stage1_dump"] = {
+            "rows": 16,
+            "proposals_max_m": moved,
+            "targets_unequal": int((live != targets).sum()),
+        }
         if moved > 1e-3:
             problems.append(
                 f"stage 1's proposals, recomputed, moved {moved:.2g} m from the dump stage 3 reads"
+            )
+        if report["stage1_dump"]["targets_unequal"]:
+            problems.append(
+                f"stage 3's targets differ from the vendored scorer on its proposals: {report['stage1_dump']}"
             )
     del model, agent
     torch.cuda.empty_cache()

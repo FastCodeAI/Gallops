@@ -414,6 +414,19 @@ def online_targets(pool, src: Source, root: Path, rows: np.ndarray, proposals: n
 # ------------------------------------------------------------------------------------------ training
 
 
+def stage3_labels(stage1: Path, rows: np.ndarray, n: int) -> np.ndarray:
+    """Stage 3's targets by row id: each train row's 32 vendored finals from its stage 1's train dump. The
+    dump holds its rows in order, by position; the trainer indexes by row id, so the two are matched here."""
+    dump = Path(stage1) / "dump-train"
+    dumped = np.load(dump / "dump.npz")["rows"]
+    if not np.array_equal(dumped, rows):
+        raise SystemExit(f"{dump} does not hold this run's train rows")
+    candidates = np.load(dump / "labels.npz")["candidates"]
+    labels = np.full((n, candidates.shape[1]), np.nan, np.float32)
+    labels[dumped] = candidates[..., -1]
+    return labels
+
+
 def lr_lambda(total: int):
     return lambda s: 0.5 * (1 + math.cos(math.pi * min(s, total) / total))
 
@@ -463,10 +476,7 @@ def train(cfg, args) -> None:
     if args.recipe == "joint":
         # The workers fork before CUDA is touched, and each scores one row's 32 plans per job.
         pool = get_context("fork").Pool(args.workers)
-    labels3 = None
-    if stage == 3:
-        dump = Path(args.stage1) / "dump-train"
-        labels3 = np.load(dump / "labels.npz")["candidates"]
+    labels3 = stage3_labels(Path(args.stage1), rows, len(src.tokens)) if stage == 3 else None
     from gallops.drivejepa_perception import preflight
 
     report = preflight.run_b2(cfg, args, src, rows, pool, root)
@@ -544,7 +554,7 @@ def train(cfg, args) -> None:
             elif stage == 1:
                 loss = parts["planning"]
             else:
-                target = torch.from_numpy(labels3[chunk][..., -1]).to(device)
+                target = torch.from_numpy(labels3[chunk]).to(device)
                 parts["final"] = F.binary_cross_entropy_with_logits(pred_logit[..., -1].float(), target)
                 loss = parts["final"]
             optimiser.zero_grad(set_to_none=True)
