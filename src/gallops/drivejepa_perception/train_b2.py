@@ -356,9 +356,15 @@ def build(entered: dict, recipe: str, arm: str, stage: int):
 
 
 def trainable(model, adapter, hook, recipe: str, stage: int) -> list:
-    """The optimiser's groups for this recipe and stage; everything else stays frozen."""
+    """The optimiser's groups for this recipe and stage; everything else stays frozen, LoRA's new parameters
+    included (they are created trainable): stage 3's loss then reaches only pass 4's read and the scorer."""
     refiner = model._trajectory_head[0]
     head = model.scorer.pred_score.mlp
+    others = list(model.parameters()) + list(adapter.parameters())
+    if hook.pass4 is not None:
+        others += list(hook.pass4.parameters())
+    for p in others:
+        p.requires_grad_(False)
     groups = []
     if stage in (0, 1):
         groups.append({"params": list(adapter.parameters()), "lr": LR, "name": "adapter"})
@@ -631,12 +637,14 @@ def train(cfg, args) -> None:
 
 
 def restore(entered: dict, run: Path, device):
-    """A finished run's model, from its run.json and weights (a stage-3 run brings its stage 1 along)."""
+    """A finished run's model, from its run.json and weights. A stage-3 run saved only what it trained (pass
+    4's read and the scorer), so its stage 1 (the refiner's LoRA or weights, and the read) is loaded first."""
     meta = json.loads((run / "run.json").read_text())
     a = meta["args"]
     stage = meta["stage"]
     agent, model, adapter, hook = build(entered, a["recipe"], a["arm"], stage)
     if stage == 3:
+        load_weights(model, adapter, hook, Path(a["stage1"]) / "weights.pt", pass4=False)
         hook.pass4 = copy.deepcopy(adapter)
     load_weights(model, adapter, hook, run / "weights.pt")
     model, adapter = model.to(device).eval(), adapter.to(device).eval()
@@ -696,7 +704,21 @@ def dump(cfg, args) -> dict:
 
         root = navtest.verified_cache(out_root / "part-b/b0/navtest-cache-verify")
     device = torch.device("cuda")
-    _, model, hook = restore(entered, run, device)
+    meta, model, hook = restore(entered, run, device)
+    if meta["stage"] == 3:
+        # Stage 3 trains pass 4's read and the scorer only: its proposals must be its stage 1's, which also
+        # checks that restore brought stage 1 along.
+        _, model1, hook1 = restore(entered, Path(meta["args"]["stage1"]), device)
+        some = rows[:BATCH]
+        mine = forward(model, src, some, device, hook, swap=swap)[0][-1]
+        theirs = forward(model1, src, some, device, hook1, swap=swap)[0][-1]
+        moved = float((mine - theirs).abs().max())
+        if moved > 1e-3:
+            raise SystemExit(
+                f"a stage-3 run's proposals moved {moved:.2g} m from its stage 1's: not restored"
+            )
+        del model1, hook1
+        torch.cuda.empty_cache()
     n = len(rows)
     proposals = np.zeros((n, 32, 8, 3), np.float32)
     logits = np.zeros((n, 32, 6), np.float32)

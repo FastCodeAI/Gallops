@@ -397,3 +397,19 @@ by = ["Shreedhar"]
 evidence = ["H15.r9", "H15.r10"]
 next = ["H15"]
 source = "the owner, 13 Nov 2026"
+
+[[decision]]
+id = "D30"
+date = 2026-11-14
+short = "H15 B-2: phase 2 runs despite the K0 gate, at the owner's instruction"
+decision = """After phase 1 (H15.r12), whose gate K0 stopped B-2 by its pre-registered rule (O - C at or below 0 on \
+every seed), the owner: "you must run the side-car's hidden layer integration and finetuning and measure results. \
+once done, do a deep analysis with detailed visualizations and report. continue until done all the phases for b-2". \
+Phase 2 runs as pre-registered, knowing K0's result: D, HD and H6 under B-2-1 at seeds 0-2 and H3 as a seed-0 pilot; \
+because the noise floor fired (C's R-clean range 2.48 > 0.3), C, D and HD under B-2-1 also run seeds 3 and 4, and H15's \
+rule reads five seeds; B-2-2 and B-2-3 on C, D and HD at seeds 0-2. The chain K1-K5 is read by PREDICTIONS.md's rules, \
+unchanged. K0's verdict stands as recorded (refuted): every phase-2 result is read knowing the gate said stop."""
+by = ["Shreedhar"]
+evidence = ["H15.r12"]
+next = ["H15"]
+source = "the owner, 14 Nov 2026"
