@@ -5,6 +5,7 @@
         --out {out}/part-b/b2/navtest-phase1
     python -m gallops.drivejepa_perception.b2_read nusc --runs-root {out}/part-b/b2/runs --out FILE
     python -m gallops.drivejepa_perception.b2_read swaps --runs-root {out}/part-b/b2/runs --out FILE
+    python -m gallops.drivejepa_perception.b2_read analyse --runs-root {out}/part-b/b2/runs --out FILE
 
 PREDICTIONS.md, Part B · B-2 (committed before any run). A run is named `b2-<v>-<arm>-s<seed>` (v: 1 joint, 2
 two stages with LoRA, 3 two stages full; a two-stage run's name is its stage 3's) and lives in
@@ -21,6 +22,10 @@ The chain (K0 to K5) is judged by PREDICTIONS.md's rules, written in `verdicts`.
 **nuScenes** is read as the first pass read its refiners there (`ood.read_b2`): each run's pick against the
 human at 1, 2 and 3 s, its collisions with the labelled boxes within 3 s, and the best of 32 by ADE over 3 s,
 each minus the release's on the same keyframes, SE clustered by scene. Reported, never claimed.
+
+**The analysis** is B-0-4 (`b_analysis`) on every run's navtest dump against R: the 32's spread, minADE and
+misses, the pick's steadiness between frames (an EC proxy), best of 32 and the share passing NC and TTC; and
+from R, the Hungarian-matched moves (by R's score rank) and the pick's switches.
 
 **The swaps** (B-2's Q7) read each run again on navtest with its input replaced at test (`train_b2 dump
 --swap`): none, another log's, another fold's side-car, labelled agents (D and HD). Vendored, against the
@@ -399,6 +404,61 @@ def nusc_read(cfg, args) -> dict:
     return result
 
 
+# -------------------------------------------------------------------------------------------- analysis
+
+
+def analyse(cfg, args) -> dict:
+    """B-0-4 on every run's navtest dump, against R (module docstring)."""
+    from gallops.drivejepa_perception import b_analysis, tokens, veto
+
+    out_root = Path(cfg.resolve("{runs}/drivejepa_perception"))
+    lab = out_root / veto.O_DIRS["navtest"][1]
+    labels = np.load(lab / "labels.npz")
+    logs = np.array(json.loads((lab / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    human, stamps = labels["ego_future"].astype(np.float64), labels["timestamp"]
+    r_dir = out_root / "tokens-navtest-v1"
+    r = {
+        "proposals": np.load(r_dir / "proposals.npy"),
+        "pick": np.load(r_dir / "pick.npy").astype(np.int64),
+        "scores": tokens.release_scores(r_dir),
+        "pdm": np.load(out_root / "pdm-navtest-v1" / "pdm.npz")["candidates"],
+    }
+    n = np.arange(len(r["pick"]))
+    result = {
+        "R": b_analysis.arm_summary(r["proposals"], r["pick"], human, logs, stamps, human[:, 0], r["pdm"]),
+        "runs": {},
+    }
+    for run in sorted(Path(args.runs_root).glob("b2-*")):
+        d = run / "dump-navtest"
+        if not (d / "labels.npz").exists():
+            continue
+        dump = np.load(d / "dump.npz")
+        if not np.array_equal(dump["rows"], n):
+            raise SystemExit(f"{d} does not cover navtest in order")
+        pdm = np.load(d / "labels.npz")["candidates"]
+        moves = b_analysis.hungarian_moves(r["proposals"], dump["proposals"], r["scores"])
+        pick_moved = np.linalg.norm(
+            r["proposals"][n, r["pick"], :, :2] - dump["proposals"][n, dump["pick"], :, :2], axis=-1
+        ).mean(-1)
+        result["runs"][run.name] = {
+            **b_analysis.arm_summary(dump["proposals"], dump["pick"], human, logs, stamps, human[:, 0], pdm),
+            "from_R": {
+                "matched_ade_m": moves["matched_ade_m"],
+                "matched_ade_by_rank_quarter_m": moves["matched_ade_by_rank_quarter_m"],
+                "pick_switch_rate": float((dump["pick"] != r["pick"]).mean()),
+                "pick_moved_m": {
+                    "mean": float(pick_moved.mean()),
+                    "p99": float(np.quantile(pick_moved, 0.99)),
+                },
+            },
+        }
+        print(run.name, json.dumps(result["runs"][run.name]["from_R"]), flush=True)
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, indent=1))
+    return result
+
+
 # ----------------------------------------------------------------------------------------------- swaps
 
 
@@ -466,9 +526,15 @@ def main(argv=None) -> None:
     p = sub.add_parser("swaps")
     p.add_argument("--runs-root", required=True)
     p.add_argument("--out", required=True)
+    p = sub.add_parser("analyse")
+    p.add_argument("--runs-root", required=True)
+    p.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     if args.cmd == "swaps":
         swaps(SiteConfig.load(), args)
+        return
+    if args.cmd == "analyse":
+        analyse(SiteConfig.load(), args)
         return
     if args.cmd == "rclean":
         rclean(SiteConfig.load(), args)
