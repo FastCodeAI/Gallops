@@ -1428,6 +1428,16 @@ args = ["hidden", "--source", "fresh", "--tokens", "{out}/tokens-fresh-v1", "--l
 after = ["part-b-2-0-folds"]
 
 [[stage]]
+name = "part-b-2-0-hidden-nusc"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+# The out-of-domain read's inputs: each nuScenes scene dealt a fold by the same rule (b2_inputs.NUSC_RULE).
+args = ["hidden", "--source", "nusc", "--nusc", "{out}/nusc-v1",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--out", "{out}/b2-hidden-nusc-v1"]
+after = ["part-b-2-0-folds"]
+
+[[stage]]
 name = "part-b-2-0-align"
 python = "drivejepa"
 module = "drivejepa_perception.b2_inputs"

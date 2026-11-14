@@ -3,6 +3,7 @@
     python -m gallops.drivejepa_perception.b2_read rclean --runs-root {out}/part-b/b2/runs --out FILE
     python -m gallops.drivejepa_perception.b2_read navtest --phase 1 --runs-root {out}/part-b/b2/runs \
         --out {out}/part-b/b2/navtest-phase1
+    python -m gallops.drivejepa_perception.b2_read nusc --runs-root {out}/part-b/b2/runs --out FILE
 
 PREDICTIONS.md, Part B · B-2 (committed before any run). A run is named `b2-<v>-<arm>-s<seed>` (v: 1 joint, 2
 two stages with LoRA, 3 two stages full; a two-stage run's name is its stage 3's) and lives in
@@ -15,6 +16,10 @@ floor: over 0.3 points, C, D and HD under B-2-1 run seeds 3 and 4 too.
 **Navtest** is read once per phase. Each run's picks are replayed through the official scorer (B-0-2's
 pipeline, as B-1 read them) and paired per scene with R and with the arm the chain names, SE clustered by log.
 The chain (K0 to K5) is judged by PREDICTIONS.md's rules, written in `verdicts`.
+
+**nuScenes** is read as the first pass read its refiners there (`ood.read_b2`): each run's pick against the
+human at 1, 2 and 3 s, its collisions with the labelled boxes within 3 s, and the best of 32 by ADE over 3 s,
+each minus the release's on the same keyframes, SE clustered by scene. Reported, never claimed.
 """
 
 from __future__ import annotations
@@ -171,9 +176,8 @@ def verdicts(phase: str, pairs: dict, vs_r: dict) -> dict:
     """PREDICTIONS.md's chain, on what this phase read."""
 
     def spread(version: str, arm: str) -> float:
-        xs = [
-            vs_r[name(version, arm, s)]["epdms_hf"]["a"] for s in (0, 1, 2) if name(version, arm, s) in vs_r
-        ]
+        # Every seed read: 0-2, or 0-4 when the noise floor fired (PREDICTIONS.md: "H15's rule reads five").
+        xs = [vs_r[name(version, arm, s)]["epdms_hf"]["a"] for s in range(5) if name(version, arm, s) in vs_r]
         return float(max(xs) - min(xs)) if len(xs) > 1 else 0.0
 
     out = {}
@@ -233,7 +237,7 @@ def navtest_read(cfg, args) -> dict:
         problems.append(f"{out} holds a finished read: navtest is read once per phase")
     runs = [name(v, arm, s) for v, arm, seeds in PHASES[args.phase] for s in seeds]
     if args.phase == "2" and args.extra_seeds:
-        runs += [name("1", arm, s) for arm in ("D", "HD") for s in (3, 4)]
+        runs += [name("1", arm, s) for arm in ("C", "D", "HD") for s in (3, 4)]
     missing = [r for r in runs if not (root / r / "dump-navtest" / "labels.npz").exists()]
     if missing:
         problems.append(f"runs without a labelled navtest dump: {missing}")
@@ -309,6 +313,75 @@ def navtest_read(cfg, args) -> dict:
     return record
 
 
+# -------------------------------------------------------------------------------------------- nuScenes
+
+
+def nusc_numbers(proposals: np.ndarray, pick: np.ndarray, expert: np.ndarray, boxes: list) -> dict:
+    """Per keyframe: the pick's L2 to the human at 1, 2 and 3 s, its collision within 3 s, and min ADE over 3
+    s of the 32 (`ood.read_b2`'s `numbers`)."""
+    from gallops.drivejepa_perception import nuscenes_data as nd
+
+    plans = proposals[np.arange(len(pick)), pick]
+    gap = np.linalg.norm(plans[:, :, :2] - expert[:, :, :2], axis=-1)
+    return {
+        "l2_1s": gap[:, 1],
+        "l2_2s": gap[:, 3],
+        "l2_3s": gap[:, 5],
+        "collision_3s": nd.collided(plans, boxes, steps=6).astype(np.float64),
+        "min_ade_3s": nd.min_ade(proposals, expert, steps=6),
+    }
+
+
+def nusc_read(cfg, args) -> dict:
+    """Every run's nuScenes dump against the release on the same keyframes (module docstring)."""
+    import pickle
+
+    from gallops.drivejepa_perception import b_report
+
+    out_root = Path(cfg.resolve("{runs}/drivejepa_perception"))
+    nusc = out_root / "nusc-v1"
+    out = Path(args.out)
+    if out.exists():
+        raise SystemExit(f"{out} exists; a readout never overwrites one")
+    outputs = np.load(nusc / "outputs.npz")
+    rows = np.flatnonzero(outputs["built"])
+    scenes = outputs["scene"][rows]
+    expert = np.load(nusc / "labels.npz")["ego_future"][rows]
+    with open(nusc / "future_boxes.pkl", "rb") as fh:
+        future = pickle.load(fh)
+    boxes = [future[r] for r in rows]
+    release = nusc_numbers(outputs["proposals"][rows], outputs["pick"][rows], expert, boxes)
+    result = {
+        "pass": "b2-nusc",
+        "rows": int(len(rows)),
+        "scenes": int(len(set(scenes.tolist()))),
+        "release": {k: float(v.mean()) for k, v in release.items()},
+        "runs": {},
+    }
+    for run in sorted(Path(args.runs_root).glob("b2-*")):
+        path = run / "dump-nusc" / "dump.npz"
+        if not path.exists():
+            continue
+        dump = np.load(path)
+        if not np.array_equal(dump["rows"], rows):
+            raise SystemExit(f"{path} does not cover the built keyframes in order")
+        mine = nusc_numbers(dump["proposals"], dump["pick"], expert, boxes)
+        result["runs"][run.name] = {
+            **{k: float(v.mean()) for k, v in mine.items()},
+            "minus_release": {
+                k: {
+                    "mean": float((mine[k] - release[k]).mean()),
+                    "se": b_report.clustered_se(mine[k] - release[k], scenes),
+                }
+                for k in mine
+            },
+        }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, indent=1))
+    print(json.dumps({k: v["minus_release"]["l2_3s"] for k, v in result["runs"].items()}, indent=1))
+    return result
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
@@ -326,9 +399,15 @@ def main(argv=None) -> None:
     p.add_argument("--extra-seeds", action="store_true", help="the noise-floor rule fired: seeds 3 and 4 too")
     p.add_argument("--workers", type=int, default=48)
     p.add_argument("--out", required=True)
+    p = sub.add_parser("nusc")
+    p.add_argument("--runs-root", required=True)
+    p.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     if args.cmd == "rclean":
         rclean(SiteConfig.load(), args)
+        return
+    if args.cmd == "nusc":
+        nusc_read(SiteConfig.load(), args)
         return
     navtest_read(SiteConfig.load(), args)
 

@@ -9,8 +9,9 @@ Each run is `python -m gallops.drivejepa_perception.train_b2`, one process, its 
 - B-2-1 (joint): `train --recipe joint`.
 - B-2-2, B-2-3 (two stages): `train --stage 1` into <run>-stage1, `dump --split train` of it into
   <run>-stage1/dump-train, then `train --stage 3 --stage1 <run>-stage1` into <run>.
-Every finished run is then dumped on navtest, R-clean and select, each with its vendored labels. A step whose
-output exists is skipped, so the driver resumes; a failed step stops that run's chain and is reported.
+Every finished run is then dumped on navtest, R-clean and select, each with its vendored labels, and on
+nuScenes' keyframes (no labels: `b2_read nusc` reads them). A step whose output exists is skipped, so the
+driver resumes; a failed step stops that run's chain and is reported.
 
 The phases' runs are b2_read.PHASES (phase 2's H3 is a seed-0 pilot); `--seeds/--arms` adds the noise-floor
 rule's extra seeds.
@@ -35,7 +36,7 @@ from gallops.config import SiteConfig  # noqa: E402
 from gallops.drivejepa_perception import b2_read  # noqa: E402
 
 RECIPE = {"1": "joint", "2": "lora2", "3": "full2"}
-DUMPS = ("navtest", "fresh", "select")
+DUMPS = ("navtest", "fresh", "select", "nusc")
 
 
 def call(args: list, log: Path, gpu: str) -> int:
@@ -140,7 +141,7 @@ def chain(run: str, version: str, arm: str, seed: int, root: Path, logs: Path, a
     for split in DUMPS:
         steps.append(
             (
-                out / f"dump-{split}" / "labels.npz",
+                out / f"dump-{split}" / ("dump.npz" if split == "nusc" else "labels.npz"),
                 [
                     py,
                     "-m",

@@ -5,6 +5,7 @@
     python -m gallops.drivejepa_perception.train_b2 dump --run RUN --split train --out RUN/dump-train
     python -m gallops.drivejepa_perception.train_b2 train --recipe lora2 --stage 3 --stage1 RUN ...
     python -m gallops.drivejepa_perception.train_b2 dump --run RUN --split navtest --out RUN/dump-navtest
+    python -m gallops.drivejepa_perception.train_b2 dump --run RUN --split nusc --out RUN/dump-nusc
 
 (stage 1, its stage-2 dump of the train rows, then stage 3, for the two-stage recipes.)
 
@@ -72,6 +73,8 @@ SPLITS = {
     "navtest": ("tokens-navtest-v1", "labels-navtest-v1", "pdm-navtest-v1", "b2-hidden-navtest-v1"),
     "fresh": ("tokens-fresh-v1", "labels-fresh-v1", "pdm-fresh-v1", "b2-hidden-fresh-v1"),
 }
+#: nuScenes (the out-of-domain read): `ood`'s keyframe cache, and B-2's hidden pass over it.
+NUSC = ("nusc-v1", "b2-hidden-nusc-v1")
 _BATCH_FIXED: list = []
 
 
@@ -93,38 +96,58 @@ class Source:
         from gallops.drivejepa_perception import navsim_data
         from gallops.drivejepa_perception import targets as tg
 
-        tok, lab, pdm, hid = SPLITS[split]
         root = Path(out_root)
         self.split, self.arm = split, arm
-        self.tokens_dir, self.labels_dir, self.pdm_dir, self.hidden_dir = (
-            root / d for d in (tok, lab, pdm, hid)
-        )
-        self.labels = dict(np.load(self.labels_dir / "labels.npz"))
-        manifest = json.loads((self.labels_dir / "manifest.json").read_text())
-        if navsim_data.source_of(manifest) != split:
-            raise SystemExit(f"{self.labels_dir} is not {split}'s labels pass")
-        self.token_logs = np.array(manifest["logs"])[self.labels["log_id"]]
-        self.tokens = [str(t) for t in self.labels["token"]]
-        self.data = {
-            "tokens": np.load(self.tokens_dir / "tokens.npy", mmap_mode="r"),
-            "lidar2img": np.load(self.tokens_dir / "lidar2img.npy"),
-            "img_shape": np.load(self.tokens_dir / "img_shape.npy"),
-            "ego": np.load(self.tokens_dir / "ego_status.npy")[:, -1].astype(np.float32),
-            "spatial": torch.tensor([[16, 32]], dtype=torch.long),
-            "level": torch.tensor([0], dtype=torch.long),
-        }
+        if split == "nusc":
+            from gallops.drivejepa_perception import ood
+
+            nusc, hid = NUSC
+            self.labels_dir, self.hidden_dir = root / nusc, root / hid
+            outputs = np.load(self.labels_dir / "outputs.npz")
+            self.labels = dict(np.load(self.labels_dir / "labels.npz"))
+            # A scene stands in for a log: the fold, the swap and the clustering all go by it.
+            self.token_logs = outputs["scene"]
+            self.tokens = [str(t) for t in self.labels["sample"]]
+            self.data = {
+                "tokens": outputs["tokens"],
+                "lidar2img": outputs["lidar2img"],
+                "img_shape": outputs["img_shape"],
+                "ego": outputs["ego_status"].astype(np.float32),
+            }
+            self.release = {"proposals": outputs["proposals"], "pick": outputs["pick"].astype(np.int64)}
+            front = outputs["lidar2img"][:, tg.FRONT_SLOT].astype(np.float64)
+            projections = tg.to_512(*ood.NUSC_SIZE) @ front
+        else:
+            tok, lab, pdm, hid = SPLITS[split]
+            self.tokens_dir, self.labels_dir, self.pdm_dir, self.hidden_dir = (
+                root / d for d in (tok, lab, pdm, hid)
+            )
+            self.labels = dict(np.load(self.labels_dir / "labels.npz"))
+            manifest = json.loads((self.labels_dir / "manifest.json").read_text())
+            if navsim_data.source_of(manifest) != split:
+                raise SystemExit(f"{self.labels_dir} is not {split}'s labels pass")
+            self.token_logs = np.array(manifest["logs"])[self.labels["log_id"]]
+            self.tokens = [str(t) for t in self.labels["token"]]
+            self.data = {
+                "tokens": np.load(self.tokens_dir / "tokens.npy", mmap_mode="r"),
+                "lidar2img": np.load(self.tokens_dir / "lidar2img.npy"),
+                "img_shape": np.load(self.tokens_dir / "img_shape.npy"),
+                "ego": np.load(self.tokens_dir / "ego_status.npy")[:, -1].astype(np.float32),
+            }
+            self.release = {
+                "proposals": np.load(self.tokens_dir / "proposals.npy", mmap_mode="r"),
+                "pick": np.load(self.tokens_dir / "pick.npy").astype(np.int64),
+            }
+            projections = tg.front_projection(self.data["lidar2img"])
+        self.data["spatial"] = torch.tensor([[16, 32]], dtype=torch.long)
+        self.data["level"] = torch.tensor([0], dtype=torch.long)
         self.human = self.labels["ego_future"].astype(np.float32)
-        self.release = {
-            "proposals": np.load(self.tokens_dir / "proposals.npy", mmap_mode="r"),
-            "pick": np.load(self.tokens_dir / "pick.npy").astype(np.int64),
-        }
         self.hidden_manifest = json.loads((self.hidden_dir / "manifest.json").read_text())
         self.fold = np.load(self.hidden_dir / "fold.npy")
         self.agents = None
         if arm in ("D", "HD"):
             self.agents = dict(np.load(self.hidden_dir / "agents.npz"))
         elif arm == "O":
-            projections = tg.front_projection(self.data["lidar2img"])
             self.agents = tg.truth_agents(self.labels, projections, fill="constant_velocity")
             self.agents.pop("path_ok")
         layer = {"HD": 6, "H6": 6, "H3": 3}.get(arm)
@@ -633,6 +656,8 @@ def dump(cfg, args) -> dict:
         rows = train_rows(src)
     elif args.split == "select":
         rows = select_rows(src)
+    elif split == "nusc":
+        rows = np.flatnonzero(np.load(src.labels_dir / "outputs.npz")["built"])
     else:
         rows = np.arange(len(src.tokens))
     swap = None
@@ -665,7 +690,7 @@ def dump(cfg, args) -> dict:
     staging.mkdir(parents=True)
     np.savez(staging / "dump.npz", rows=rows, proposals=proposals, logits=logits, scores=scores, pick=pick)
     labelled = None
-    if not args.no_labels:
+    if not args.no_labels and split != "nusc":  # nuScenes has no metric cache: `b2_read nusc` reads it
         jobs = [
             (
                 pdm_labels.metric_cache_path(root, src.token_logs[r], src.tokens[r]),
@@ -722,7 +747,7 @@ def main(argv=None) -> None:
     p.add_argument("--out", required=True)
     p = sub.add_parser("dump")
     p.add_argument("--run", required=True)
-    p.add_argument("--split", required=True, choices=("train", "select", "navtest", "fresh"))
+    p.add_argument("--split", required=True, choices=("train", "select", "navtest", "fresh", "nusc"))
     p.add_argument("--swap", default="", choices=("", "none", "log"))
     p.add_argument("--no-labels", action="store_true")
     p.add_argument("--workers", type=int, default=64)

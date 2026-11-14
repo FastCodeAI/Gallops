@@ -5,6 +5,8 @@
     python -m gallops.drivejepa_perception.b2_inputs hidden --source navtrain --tokens {out}/tokens-v1 \
         --labels {out}/labels-v1 --vit-tokens {out}/tokens-vit-v1 --runs R0,R1,R2,R3,R4 \
         --crossfit {out}/agents-train-crossfit-v3 --out {out}/b2-hidden-navtrain-v1
+    python -m gallops.drivejepa_perception.b2_inputs hidden --source nusc --nusc {out}/nusc-v1 \
+        --runs R0,R1,R2,R3,R4 --out {out}/b2-hidden-nusc-v1
     python -m gallops.drivejepa_perception.b2_inputs align --runs R0,...,R4 \
         --out {out}/part-b/b2/alignment.json ...
 
@@ -21,6 +23,10 @@ same chunks, fp16 autocast), and writes, beside the decoded list (layer 6, the a
 of layers 3 and 6: each slot's hidden vector (fp16), its centre (the reference point, `box[..., :3]`) and its
 confidence (1 - p(none)). Its gates: each fold reproduces the select F1 it recorded, and on navtrain's train
 rows the decoded list equals `agents-train-crossfit-v3` exactly. No report-log row is decoded.
+
+**nuScenes** (the out-of-domain read, `ood`'s keyframes): no fold record holds its scenes, so the pass deals
+them by the same rule (NUSC_RULE) and writes the table and its sha into its manifest. Its gate: each fold's
+decoded list equals `train_sidecar.agent_arrays` run by the same model on the same rows.
 
 **The alignment check** decides whether the five side-cars' layer-6 spaces are one space (ALIGN_BAR,
 pre-registered in PREDICTIONS.md, Part B · B-2): fitted on select rows, read on R-clean rows, every fold
@@ -46,6 +52,10 @@ FOLD_RULE = (
     "train rows: the cross-fit fold of their log (train_sidecar.crossfit_folds over splits.json's train "
     "logs); select, navtest and R-clean logs: each split's sorted logs in "
     f"default_rng({FOLD_SEED}).permutation, dealt round robin into 5 folds"
+)
+NUSC_RULE = (
+    f"nuScenes keyframes: their sorted scenes in default_rng({FOLD_SEED}).permutation, dealt round robin "
+    "into 5 folds (FOLD_RULE's rule for a non-train split)"
 )
 LAYERS = (3, 6)
 #: The alignment rule (PREDICTIONS.md, Part B · B-2): R-squared on R-clean's slots at confidence >= 0.1.
@@ -172,15 +182,29 @@ def hidden(cfg, args) -> dict:
     if len(runs) != 5:
         raise SystemExit("five cross-fit side-cars, fold 0 to 4")
     run_args = json.loads((runs[0] / "run.json").read_text())["args"]
-    tokens, slot, rows, projections, _ = train_sidecar.load(
-        args.tokens, args.labels, run_args["tap"], args.vit_tokens
-    )
-    labels = np.load(Path(args.labels) / "labels.npz")
-    manifest = json.loads((Path(args.labels) / "manifest.json").read_text())
-    source = navsim_data.source_of(manifest)
-    if source != args.source:
-        raise SystemExit(f"{args.labels} is {source}'s labels pass, not {args.source}'s")
-    token_logs = np.array(manifest["logs"])[labels["log_id"]]
+    tables = dict(record)
+    if args.source == "nusc":
+        from gallops.drivejepa_perception import ood
+        from gallops.drivejepa_perception import targets as tg
+
+        nusc = Path(args.nusc)
+        outputs = np.load(nusc / "outputs.npz")
+        tokens, slot = np.load(nusc / "vit_out.npy", mmap_mode="r"), int
+        front = outputs["lidar2img"][:, tg.FRONT_SLOT].astype(np.float64)
+        projections = (tg.to_512(*ood.NUSC_SIZE) @ front).astype(np.float32)
+        rows = {"all": np.flatnonzero(outputs["built"])}
+        token_logs, source = outputs["scene"], "nusc"
+        tables["nusc"] = fold_of_logs(sorted(set(token_logs.tolist())))
+    else:
+        tokens, slot, rows, projections, _ = train_sidecar.load(
+            args.tokens, args.labels, run_args["tap"], args.vit_tokens
+        )
+        labels = np.load(Path(args.labels) / "labels.npz")
+        manifest = json.loads((Path(args.labels) / "manifest.json").read_text())
+        source = navsim_data.source_of(manifest)
+        if source != args.source:
+            raise SystemExit(f"{args.labels} is {source}'s labels pass, not {args.source}'s")
+        token_logs = np.array(manifest["logs"])[labels["log_id"]]
     n = len(projections)
     if source == "navtrain":
         parts = {"train": rows["train"], "select": rows["select"]}
@@ -190,7 +214,7 @@ def hidden(cfg, args) -> dict:
         parts = {source: rows["all"]}
     fold = np.full(n, -1, np.int8)
     for name, picked in parts.items():
-        fold[picked] = row_folds(record, name, token_logs, picked)
+        fold[picked] = row_folds(tables, name, token_logs, picked)
     staging = out.with_name(out.name + ".staging")
     staging.mkdir(parents=True)
     d = run_args.get("d_model") or 256
@@ -204,7 +228,7 @@ def hidden(cfg, args) -> dict:
         sink[f"centre{layer}"] = np.zeros((n, q, 3), np.float32)
         sink[f"conf{layer}"] = np.zeros((n, q), np.float32)
     device = torch.device("cuda")
-    checks = []
+    checks, nusc_gate = [], {}
     t0 = time.time()
     for k, run in enumerate(runs):
         meta = json.loads((run / "run.json").read_text())["args"]
@@ -222,9 +246,16 @@ def hidden(cfg, args) -> dict:
             mine = picked[fold[picked] == k]
             decode_rows(model, tokens, slot, mine, projections, device, sink)
             print(f"fold {k}, {name}: {len(mine)} rows ({time.time() - t0:.0f} s)", flush=True)
+            if source == "nusc":
+                plain = train_sidecar.agent_arrays(model, tokens, slot, mine, projections, device)
+                nusc_gate[str(k)] = {key: int((sink[key][mine] != plain[key][mine]).sum()) for key in KEYS}
         del model
         torch.cuda.empty_cache()
     gate = {}
+    if source == "nusc":
+        gate["folds_equal_agent_arrays"] = nusc_gate
+        if any(v for per in nusc_gate.values() for v in per.values()):
+            raise SystemExit(f"the decoded list differs from agent_arrays on the same rows: {nusc_gate}")
     if source == "navtrain":
         crossfit = np.load(Path(args.crossfit) / "agents.npz")
         train_rows = parts["train"]
@@ -245,6 +276,15 @@ def hidden(cfg, args) -> dict:
         "runs": [str(r) for r in runs],
         "folds_file": FOLDS_FILE,
         "folds_sha256": record["sha256"],
+        **(
+            {
+                "nusc_rule": NUSC_RULE,
+                "nusc_folds": tables["nusc"],
+                "nusc_folds_sha256": _sha([f"{s} {f}" for s, f in sorted(tables["nusc"].items())]),
+            }
+            if source == "nusc"
+            else {}
+        ),
         "rows": n,
         "rows_decoded": {name: int(len(p)) for name, p in parts.items()},
         "rows_per_fold": {str(k): int((fold == k).sum()) for k in range(5)},
@@ -254,7 +294,9 @@ def hidden(cfg, args) -> dict:
         "slots": q,
         "select_f1_checks": checks,
         "gate": gate,
-        "inputs": {
+        "inputs": {"nusc": str(args.nusc)}
+        if source == "nusc"
+        else {
             "tokens": str(args.tokens),
             "labels": str(args.labels),
             "vit_tokens": str(args.vit_tokens),
@@ -388,10 +430,11 @@ def main(argv=None) -> None:
     p = sub.add_parser("folds")
     p.add_argument("--write", required=True, help="the committed fold record; if it exists, derived again")
     p = sub.add_parser("hidden")
-    p.add_argument("--source", required=True, choices=("navtrain", "navtest", "fresh"))
-    p.add_argument("--tokens", required=True)
-    p.add_argument("--labels", required=True)
-    p.add_argument("--vit-tokens", required=True)
+    p.add_argument("--source", required=True, choices=("navtrain", "navtest", "fresh", "nusc"))
+    p.add_argument("--tokens", default="")
+    p.add_argument("--labels", default="")
+    p.add_argument("--vit-tokens", default="")
+    p.add_argument("--nusc", default="", help="nusc: `ood`'s keyframe cache (outputs.npz, vit_out.npy)")
     p.add_argument("--runs", required=True)
     p.add_argument(
         "--crossfit", default="", help="navtrain: the cross-fit agents pass the train rows must equal"
@@ -422,6 +465,10 @@ def main(argv=None) -> None:
     if args.cmd == "hidden":
         if args.source == "navtrain" and not args.crossfit:
             parser.error("navtrain's pass is held to the cross-fit agents: pass --crossfit")
+        if args.source == "nusc" and not args.nusc:
+            parser.error("nusc reads `ood`'s keyframe cache: pass --nusc")
+        if args.source != "nusc" and not (args.tokens and args.labels and args.vit_tokens):
+            parser.error("a NAVSIM source needs --tokens, --labels and --vit-tokens")
         hidden(SiteConfig.load(), args)
         return
     align(SiteConfig.load(), args)
