@@ -307,3 +307,135 @@ order. Written once to `recipes/drivejepa_perception/part_b14_frozen.json` and c
 
 Navtest is read once, for B-1-4 alone, with the gates of B-1 (the anchor, the empty-change check, every plan store
 covering navtest and replayed exactly).
+
+## Part B · B-2, the side-car's hidden layer into the refiner (written 13 Nov 2026)
+
+**Committed before B-2-0's alignment check and before B-2's first training step.** The owner's go-ahead (D29):
+"go ahead and complete the b-2 experiments". It takes the plan's recommendation for every one of decisions (a)–(j).
+The momentum read of (j) is deferred: no momentum replay exists, and B-1 had none.
+- **The plan:** `docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md`.
+- **What had been read when this was written:**
+  - B-0's records (`H15.r6`–`r8`) and B-1's navtest results (`H15.r9`, `r10`);
+  - the counts of 13 Nov on navtrain's train rows: slots per row by confidence; failing proposals; the release's
+    pick failing NC or TTC on 0.81%;
+  - nothing of B-2.
+
+### Design, fixed before any run
+
+**The arms.** Each is the 11 Nov refiner adapter (an own half for every arm, and a read of the arm's tokens on every
+pass, output layer at zero):
+
+| Arm | Its tokens |
+|---|---|
+| C | none |
+| O | labelled agents in CAM_F0's view within 50 m, B-1-2's format, read as D reads its list |
+| D | the side-car's decoded list (confidence ≥ 0.5): clearance-biased, with the 13 clearance features |
+| HD | D, with each kept slot's layer-6 hidden vector (LayerNorm, projected to 128) added to its token |
+| H6 | all 128 slots of layer 6: hidden vector + a code of the slot's centre; bias log(confidence); no clearance |
+| H3 | H6 from layer 3 |
+
+**The recipes:**
+- **B-2-1, joint:**
+  - the planning loss (`mtd_loss`) + the final-score BCE against online labels (the release's own scorer, called
+    with `test=False`) + its collision-agent (×1 presence, ×0.1 corners) and area (×2) auxiliaries;
+  - the adapter (1e-4), and rank-16 LoRA on the refiner (1e-4) and on the scorer MLP (2e-5); auxiliary heads frozen;
+  - 3 epochs, batch 64, AdamW 0.01, cosine, clip 10.
+- **B-2-2, two stages, LoRA:**
+  - stage 1: the adapter + refiner LoRA, `mtd_loss` only, as above;
+  - stage 2: dump and label every train row's 32 (vendored);
+  - stage 3: passes 1–3 frozen; a pass-4 copy of the read (starting as stage 1's) + scorer LoRA, on the final-score
+    BCE, 3 epochs, batch 64.
+- **B-2-3, two stages, full:** as B-2-2, with the refiner path's and the scorer MLP's own weights at 2e-5 in place of
+  LoRA.
+
+The last epoch is kept; nothing is chosen.
+
+**The grid:**
+
+| Phase | Recipe | Arms | Seeds |
+|---|---|---|---|
+| 1 | B-2-1 | C, O | 0–2 |
+| 2a | B-2-1 | D, HD, H6 | 0–2 |
+| 2a | B-2-1 | H3 | 0, a pilot |
+| 2b | B-2-2, B-2-3 | C, D, HD | 0–2 |
+
+**The side-cars:** the five cross-fit side-cars of `H15.r8`, every row reading its fold's, at test too, by
+`recipes/drivejepa_perception/part_b2_folds.json`.
+
+**The reads:**
+- navtest, once after phase 1 (C, O) and once after phase 2 (every other run);
+- by the official scorer through the replay agent, paired per scene, SE clustered by log, momentum off;
+- the train rows only for training; select and R-clean for health; no report-log row anywhere.
+
+### Gates (each must hold, or B-2 stops)
+
+| # | What must hold |
+|---|---|
+| B2-G1 | the hidden pass: each fold, decoded by the pass's own code, gives exactly the select F1 it recorded; on navtrain's train rows the decoded list equals `agents-train-crossfit-v3` exactly; no report-log row |
+| B2-G2 | the folds: `part_b2_folds.json` re-derives from its rule; every train row reads the side-car that did not train on its log |
+| B2-G3 | the preflight, before each run's first step |
+| B2-G4 | the alignment check decides the hidden arms' input map before any hidden arm trains (below) |
+
+**B2-G3, the preflight, checks:**
+- code committed, and the suite passing under the training interpreter;
+- the untrained model, for the run's arm and recipe, equal to the same cached path without the adapter, bit for bit,
+  on 64 select rows;
+- that path within the 11 Nov refiner limits of the token pass (5 cm, picks equal on ≥ 95%);
+- B-2-1's online labeller giving exactly `pdm-v1`'s labels for the release's own 32 on 16 train rows;
+- the hidden inputs equal to a live fold side-car on 8 rows;
+- the gathered teachers equal to their files;
+- no report-log row.
+
+**The alignment rule.** R² is read on 2,000 R-clean rows (the fit on select rows), every fold against fold 0, on
+slots at confidence ≥ 0.1:
+
+| If | Then |
+|---|---|
+| the index-matched identity R² ≥ 0.9 for every fold | one shared input map |
+| else the best ridge R² ≥ 0.9 for every fold | each fold mapped into fold 0's space, then one shared map |
+| else | one input map per fold |
+
+### The phase-1 gate and the noise floor
+
+- **K0, the gate.** O − C under B-2-1 on navtest, per seed. If it is at or below 0 (the point estimate) on every seed,
+  B-2 stops after phase 1: there is no room for an agent input to a learned planner, and phase 2 does not run.
+- **The noise floor.** C's seed range (the largest minus the smallest of seeds 0–2) in B-1's R-clean value:
+  - the vendored final under the human filter;
+  - on R-clean's 2,624 known-command windows;
+  - reweighted to navtest's cities.
+
+  If it exceeds 0.3 points, C, D and HD under B-2-1 also run seeds 3 and 4, and H15's rule reads five seeds.
+
+### Predictions
+
+Navtest, the official scorer, paired per scene, SE clustered by log, every seed, under B-2-1 unless named; points of
+EPDMS (human filter).
+
+| # | What | Predicted | Supports if | Refutes if |
+|---|---|---|---|---|
+| K0 | O − C, the gate | 0.0 to +0.4 | above 0 beyond 2 SE, every seed | at or below 0, every seed (B-2 stops) |
+| K1 | HD − D, the primary | −0.1 to +0.2 | beyond D's seed range and 2 SE, every seed | below 0 beyond 2 SE, any seed |
+| K2 | HD − C | −0.1 to +0.3 | beyond C's seed range and 2 SE, every seed | below 0 beyond 2 SE, any seed |
+| K3 | HD against R | −0.4 to +0.3 | meets: the low end ≥ −0.4, every seed; beats: above 0 beyond 2 SE, every seed | the high end below 0, any seed |
+| K4 | H6 − HD | −0.3 to +0.1 | beyond HD's seed range and 2 SE, every seed | — |
+| K5 | H3 − H6 | −0.1 to +0.1 | reported (a pilot) | — |
+
+**Reported, never claimed:**
+- D − C: −0.1 to +0.3;
+- C − R: −0.5 to +0.3;
+- best of 32 (vendored), HD − C: 0 to +0.3;
+- the share of the 32 passing NC and TTC, HD − C: 0 to +1.5 percentage points;
+- EC, HD − R: within ± 0.02 (flagged if lower by more than 0.02);
+- the 32's lateral spread at 4 s, HD against R̃: within ± 10% (collapse if below by more than 20%);
+- HD under B-2-2 and B-2-3 against B-2-1: −0.3 to +0.2 and −0.4 to +0.2, descriptive;
+- nuScenes L2 at 3 s, HD − R: −0.3 to +0.3 m;
+- another log's slots change HD's navtest pick on ≥ 5% of scenes (the input is unused if under 1%).
+
+### Decision rules
+
+- **The chain, in order:** K1, then K2, then K3, then K4. A step is read as a claim only if every step above it holds.
+  Everything else is reported.
+- **H15's rule:** "supports" means every seed beyond the reference arm's seed range and twice the SE.
+- **K1 refuted:** the hidden layer adds nothing measurable to the decoded list. Its scorer alone (B-3) is not run with
+  slots.
+- **K0 stops B-2:** the room on NAVSIM belongs to the pick's horizon, not to agent inputs; B-6 or B-12 next.

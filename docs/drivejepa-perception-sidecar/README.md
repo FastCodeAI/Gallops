@@ -314,6 +314,22 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     - D28;
     - the branch `drivejepa/auxilliary-head-part-b2`;
     - the renumbering across the documents and figures.
+- **13 Nov · B-2 goes ahead (D29); pre-registered before any run.**
+  - **The owner:** "go ahead and complete the b-2 experiments … let me know when the results are ready to review".
+  - **Taken as** the plan's recommendations, (a) to (j). Momentum's second read is deferred: no momentum replay exists,
+    and B-1 had none.
+  - **Pre-registered** in PREDICTIONS.md (Part B · B-2), before B-2-0's alignment check and the first training step:
+    - the design;
+    - the gates B2-G1 to B2-G4;
+    - the alignment rule;
+    - the phase-1 gate (O − C at or below 0 on every seed stops B-2);
+    - the noise-floor rule;
+    - predictions K0 to K5 and the reported ones.
+  - **Code for B-2-0:**
+    - `b2_inputs.py`: the fold rule, the hidden pass and its gates, the alignment check;
+    - the side-car hands over its hidden layer beside its outputs;
+    - `part_b2_folds.json`, written and re-derived;
+    - recipe stages `part-b-2-0-*`.
 
 <a id="open"></a>
 

@@ -1383,3 +1383,58 @@ module = "drivejepa_perception.veto"
 args = ["soft-navtest", "--root", "{out}", "--grid", "{out}/part-b/b1/grid-b14-fresh", "--verified", "{out}/part-b/b0/navtest-cache-verify",
         "--anchor", "{out}/part-b/b0/anchor-d26", "--r", "{out}/part-b/b0/navtest-R", "--out", "{out}/part-b/b1/navtest-b14"]
 after = ["part-b-1-4-freeze"]
+
+# ---------------------------------------------------------------------------------------------
+# B-2 (docs/drivejepa-perception-sidecar/part-b/B-2-hidden-refiner.md; PREDICTIONS.md, Part B · B-2): the side-car's
+# hidden layer into the refiner. B-2-0 builds what the arms read, by the five cross-fit side-cars, fold-matched.
+# ---------------------------------------------------------------------------------------------
+
+[[stage]]
+name = "part-b-2-0-folds"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+# Written once; run again, it derives the record anew and refuses an edited file.
+args = ["folds", "--write", "recipes/drivejepa_perception/part_b2_folds.json"]
+
+[[stage]]
+name = "part-b-2-0-hidden-navtrain"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+# B2-G1: each fold reproduces its select F1; the train rows' decoded list equals the cross-fit agents exactly.
+args = ["hidden", "--source", "navtrain", "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1",
+        "--vit-tokens", "{out}/tokens-vit-v1",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--crossfit", "{out}/agents-train-crossfit-v3", "--out", "{out}/b2-hidden-navtrain-v1"]
+after = ["part-b-0-crossfit-agents", "part-b-2-0-folds"]
+
+[[stage]]
+name = "part-b-2-0-hidden-navtest"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+args = ["hidden", "--source", "navtest", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--out", "{out}/b2-hidden-navtest-v1"]
+after = ["part-b-2-0-folds"]
+
+[[stage]]
+name = "part-b-2-0-hidden-fresh"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+args = ["hidden", "--source", "fresh", "--tokens", "{out}/tokens-fresh-v1", "--labels", "{out}/labels-fresh-v1",
+        "--vit-tokens", "{out}/tokens-vit-fresh-v1",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--out", "{out}/b2-hidden-fresh-v1"]
+after = ["part-b-2-0-folds"]
+
+[[stage]]
+name = "part-b-2-0-align"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+# B2-G4: the rule (ALIGN_BAR) is PREDICTIONS.md's, committed before this runs.
+args = ["align",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--tokens", "{out}/tokens-v1", "--labels", "{out}/labels-v1", "--vit-tokens", "{out}/tokens-vit-v1",
+        "--fresh-tokens", "{out}/tokens-fresh-v1", "--fresh-labels", "{out}/labels-fresh-v1",
+        "--fresh-vit-tokens", "{out}/tokens-vit-fresh-v1", "--out", "{out}/part-b/b2/alignment.json"]
+after = ["part-b-2-0-folds"]

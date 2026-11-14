@@ -134,7 +134,9 @@ class SideCar(nn.Module):
         return self.ray_mlp(points)
 
     def forward(self, tokens, projection):
-        """tokens (B, 512, d_in), projection (B, 4, 4) -> per layer: logits, box (8), vel, path."""
+        """tokens (B, 512, d_in), projection (B, 4, 4) -> per layer: logits, box (8), vel, path, and the
+        hidden layer itself (`hidden`, B x queries x d: what the heads read, B-2's input). A slot's centre
+        is box[..., :3], the reference point carried beside `hidden`, not a function of it alone."""
         b = tokens.shape[0]
         x = tokens if torch.is_autocast_enabled() else tokens.to(self.ln_tok.weight.dtype)
         mem = self.ln_tok(self.proj(x))
@@ -152,6 +154,7 @@ class SideCar(nn.Module):
                     "box": torch.cat([ref_new, layer.box_head(a).float()], -1),
                     "vel": layer.vel_head(a).float(),
                     "path": layer.path_head(a).float().view(b, -1, PATH_STEPS, 2),
+                    "hidden": a,
                 }
             )
             ref = ref_new.detach()

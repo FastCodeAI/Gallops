@@ -380,3 +380,20 @@ by = ["Shreedhar"]
 evidence = ["H15.r9", "H15.r10"]
 next = ["H15"]
 source = "the owner, 13 Nov 2026"
+
+[[decision]]
+id = "D29"
+date = 2026-11-13
+short = "H15 B-2: the owner's go-ahead, taking the plan's recommendations"
+decision = """The owner: "go ahead and complete the b-2 experiments if not done already. finish and let me know when the \
+results are ready to review." Taken as the go-ahead for B-2 with the plan's recommendation for every decision: (a) the \
+primary contrast is HD - D; (b) the phase-1 gate stops B-2 if O - C is at or below 0 on every seed; (c) H3 runs as a \
+seed-0 pilot; (d) at test each log reads one fold's side-car; (e) C, D and HD under B-2-1 run five seeds if C's seed \
+range on R-clean exceeds 0.3 points; (f) B-2-1's auxiliary heads stay frozen with their losses kept; (g) the staged \
+grid; (h) no later variant; (i) nuScenes is read; (j) momentum off, as the anchor, its second read deferred because no \
+momentum replay exists (B-1 had none). PREDICTIONS.md's Part B · B-2 section, with B-2-0's gates, the alignment rule, \
+the phase-1 gate and every prediction, is committed before the alignment check and before the first training step."""
+by = ["Shreedhar"]
+evidence = ["H15.r9", "H15.r10"]
+next = ["H15"]
+source = "the owner, 13 Nov 2026"
