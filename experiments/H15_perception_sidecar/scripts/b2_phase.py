@@ -4,7 +4,8 @@
         [--parallel 6] [--workers 40] [--gpu 1] [--only b2-1-C-s0,...] [--seeds 3,4 --arms D,HD]
 
 Each run is `python -m gallops.drivejepa_perception.train_b2`, one process, its log in
-{runs}/drivejepa_perception/part-b/logs/<run>.log; its directory {runs}/drivejepa_perception/part-b/b2/runs/<run>/.
+{runs}/drivejepa_perception/part-b/logs/<run>.log; its directory
+{runs}/drivejepa_perception/part-b/b2/runs/<run>/.
 - B-2-1 (joint): `train --recipe joint`.
 - B-2-2, B-2-3 (two stages): `train --stage 1` into <run>-stage1, `dump --split train` of it into
   <run>-stage1/dump-train, then `train --stage 3 --stage1 <run>-stage1` into <run>.

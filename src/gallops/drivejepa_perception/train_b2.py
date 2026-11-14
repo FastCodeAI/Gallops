@@ -724,8 +724,8 @@ def main(argv=None) -> None:
 
 
 if __name__ == "__main__":
-    # Run as the package's module, never as __main__: the preflight imports this module by name, and two copies
-    # would keep two sets of process state (batch_fix's once-per-process patch, among others).
+    # Run as the package's module, never as __main__: the preflight imports this module by name, and two
+    # copies would keep two sets of process state (batch_fix's once-per-process patch, among others).
     from gallops.drivejepa_perception import train_b2
 
     train_b2.main()
