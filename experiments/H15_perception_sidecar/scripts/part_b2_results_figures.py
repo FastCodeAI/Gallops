@@ -17,6 +17,8 @@ R-clean, nuScenes, the swaps and each run's telemetry) and draws
   number of agents the side-car decodes, and by whether R's pick fails NC or TTC (official, per scene);
 - b2r-failures.png: R's 275 navtest scenes whose pick fails NC or TTC: how many each run fixes, by the object
   behind the failure (B-0-3's rule), and how many new failures it makes among R's passing scenes;
+- b2r-hidden-scenes.jpg: the primary contrast scene by scene: where HD beats D on every paired seed, and where
+  it loses on every one, with the fold side-car's slots and what HD's read attends to;
 - b2r-scenes.jpg: three scenes, each the extreme of a rule in SCENE_RULES: where the fine-tune gains on
   navtest, where it loses, and an R-clean window it newly drives against the traffic direction.
 Each draws what has been read so far (phase 1 alone, or both phases). Every number behind a chart is written
@@ -76,7 +78,7 @@ MEETS = -0.4
 NOT_RUN = "not run: the phase-1 gate (K0) stopped B-2"
 SUBSCORES = ("NC", "DAC", "DDC", "TTC", "EP", "LK", "HC", "EC")
 SEED_OFFSET = 0.22
-#: Seeds side by side within an arm's column (strip charts): seed k at x + JITTER * (k - 1).
+#: Seeds side by side within an arm's column (strip charts): seed k at x + JITTER * (k - 2).
 JITTER = 0.09
 BACKING = {"fc": views.SURFACE, "ec": "none", "pad": 0.8, "alpha": 0.9}
 
@@ -149,7 +151,7 @@ def forest(ax, rows: list, xlim: tuple) -> None:
         if lo is not None:
             ax.plot([lo, hi], [y, y], color="#86b6ef", lw=9, solid_capstyle="butt", zorder=2, alpha=0.9)
         for seed, d, se in points:
-            yy = y + SEED_OFFSET * (1 - seed) if seed < 3 else y - SEED_OFFSET * (seed - 1.5)
+            yy = y + SEED_OFFSET * (2 - seed) * 0.6  # seeds 0-4 top to bottom, inside the row
             ax.plot([d - 2 * se, d + 2 * se], [yy, yy], color=views.INK_2, lw=1.2, zorder=3)
             ax.plot(d, yy, marker="o", ms=5.5, color=views.INK, mec=views.SURFACE, mew=1.2, zorder=4)
         if points:
@@ -264,7 +266,7 @@ def fig_subscores(r: dict) -> None:
     if not present:
         return
     numbers = {}
-    fig, axes = plt.subplots(2, 4, figsize=(12, 6.2), sharey=False)
+    fig, axes = plt.subplots(2, 4, figsize=(max(12, 1.1 * len(present) * 4), 6.6), sharey=False)
     for ax, key in zip(axes.ravel(), SUBSCORES):  # noqa: B905 -- Python 3.9
         numbers[key] = {}
         for i, (v, arm) in enumerate(present):
@@ -273,7 +275,7 @@ def fig_subscores(r: dict) -> None:
                 if parse(run)[:2] == (v, arm):
                     d, se = p[key]["a_minus_b"] * 100, p[key]["se"] * 100
                     vals.append(d)
-                    x = i + JITTER * (parse(run)[2] - 1)
+                    x = i + JITTER * (parse(run)[2] - 2)
                     ax.plot([x, x], [d - 2 * se, d + 2 * se], color=ARM_COLOURS[arm], lw=1.2, alpha=0.8)
                     ax.plot(x, d, marker="o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
                     numbers[key][run] = {"minus_R_pp": d, "se_pp": se}
@@ -425,7 +427,13 @@ def fig_health() -> None:
         "select_rows": int(len(select)),
     }
     groups = [(v, arm) for v in ("1", "2", "3") for arm in ARMS]
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.0))
+    shown = {
+        (v, arm)
+        for v, arm in groups
+        for k in list(sel) + list(rc["runs"] if rc else [])
+        if parse(k)[:2] == (v, arm)
+    }
+    fig, axes = plt.subplots(1, 2, figsize=(max(12, 1.1 * len(shown) * 2), 4.2))
     panels = (
         (axes[0], sel, f"select ({len(select):,} rows): the pick's vendored final minus R's {r_select:.2f}"),
         (
@@ -437,8 +445,10 @@ def fig_health() -> None:
     for ax, values, title in panels:
         present = [(v, arm) for v, arm in groups if any(parse(k)[:2] == (v, arm) for k in values)]
         for i, (v, arm) in enumerate(present):
-            ys = [x for k, x in sorted(values.items()) if parse(k)[:2] == (v, arm)]
-            ax.plot([i] * len(ys), ys, "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
+            for k, x in sorted(values.items()):
+                if parse(k)[:2] == (v, arm):
+                    xx = i + JITTER * (parse(k)[2] - 2)
+                    ax.plot(xx, x, "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
         ax.axhline(0, color=views.INK_2, lw=1)
         ax.set_xticks(range(len(present)))
         ax.set_xticklabels([f"{arm}\nB-2-{v}" for v, arm in present], fontsize=7)
@@ -487,11 +497,13 @@ def fig_readouts(r: dict) -> None:
     )
     groups = [(v, arm) for v in ("1", "2", "3") for arm in ARMS]
     present = [(v, arm) for v, arm in groups if any(parse(run)[:2] == (v, arm) for run in r["readouts"])]
-    fig, axes = plt.subplots(1, len(panels), figsize=(15, 4.0))
+    fig, axes = plt.subplots(1, len(panels), figsize=(max(15, 0.75 * len(present) * len(panels)), 4.2))
     for ax, (key, title) in zip(axes, panels):  # noqa: B905 -- Python 3.9
         for i, (v, arm) in enumerate(present):
-            vals = [x[key] for run, x in sorted(r["readouts"].items()) if parse(run)[:2] == (v, arm)]
-            ax.plot([i] * len(vals), vals, "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
+            for run, x in sorted(r["readouts"].items()):
+                if parse(run)[:2] == (v, arm):
+                    xx = i + JITTER * (parse(run)[2] - 2)
+                    ax.plot(xx, x[key], "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
         ax.axhline(reference[key], color=views.INK_2, lw=1, ls=(0, (3, 2)))
         ax.text(
             len(present) - 0.5, reference[key], " R", fontsize=7.5, color=views.INK_2, va="bottom", ha="right"
@@ -524,14 +536,14 @@ def fig_nusc() -> None:
     )
     groups = [(v, arm) for v in ("1", "2", "3") for arm in ARMS]
     present = [(v, arm) for v, arm in groups if any(parse(run)[:2] == (v, arm) for run in r["runs"])]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 4.0))
+    fig, axes = plt.subplots(1, 3, figsize=(max(13, 0.95 * len(present) * 3), 4.2))
     for ax, (key, title) in zip(axes, keys):  # noqa: B905 -- Python 3.9
         for i, (v, arm) in enumerate(present):
             for run, x in sorted(r["runs"].items()):
                 if parse(run)[:2] != (v, arm):
                     continue
                 d, se = x["minus_release"][key]["mean"], x["minus_release"][key]["se"]
-                xx = i + JITTER * (parse(run)[2] - 1)
+                xx = i + JITTER * (parse(run)[2] - 2)
                 ax.plot([xx, xx], [d - 2 * se, d + 2 * se], color=ARM_COLOURS[arm], lw=1.2, alpha=0.8)
                 ax.plot(xx, d, "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
         ax.axhline(0, color=views.INK_2, lw=1)
@@ -790,9 +802,9 @@ def fig_attention() -> None:
         p4 = e["passes"]["4"]
         for ax, key in ((axes[1], "conf"), (axes[2], "dist")):
             ratio = [m / u if u > 0 else np.nan for m, u in zip(p4[f"{key}_mass"], p4[f"{key}_uniform"])]  # noqa: B905
-            xs = np.arange(len(ratio)) + JITTER * (seed - 1) + 0.04 * (ARMS.index(arm) - 3)
+            xs = np.arange(len(ratio)) + JITTER * (seed - 2) + 0.04 * (ARMS.index(arm) - 3)
             ax.plot(xs, ratio, "o", color=ARM_COLOURS[arm], ms=4.5, mec=views.SURFACE, mew=0.8)
-        x = ARMS.index(arm) + JITTER * (seed - 1)
+        x = ARMS.index(arm) + JITTER * (seed - 2)
         axes[3].plot(x, p4["near_share"] / max(p4["near_uniform"], 1e-9), "o", color=ARM_COLOURS[arm], ms=5)
     some = runs[0][1]
     axes[0].set_xticks([1, 2, 3, 4])
@@ -1153,7 +1165,7 @@ def fig_failures(table: dict, official: dict) -> None:
         for i, (v, arm) in enumerate(present):
             for run, x in sorted(rows.items()):
                 if parse(run)[:2] == (v, arm):
-                    xx = i + JITTER * (parse(run)[2] - 1)
+                    xx = i + JITTER * (parse(run)[2] - 2)
                     ax.plot(xx, x[key], "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
         ax.set_xticks(range(len(present)))
         ax.set_xticklabels([f"{arm}\nB-2-{v}" for v, arm in present], fontsize=7)
@@ -1191,6 +1203,232 @@ def fig_failures(table: dict, official: dict) -> None:
     px.save(fig, "b2r-failures.png")
 
 
+#: b2r-hidden-scenes' rules: the paired seeds' official EPDMS, HD minus D, scene by scene.
+HIDDEN_RULES = {
+    "gain": "among navtest scenes where HD's official EPDMS (human filter) is above D's on every paired "
+    "seed, the one with the largest mean gain",
+    "loss": "among navtest scenes where HD's official EPDMS is below D's on every paired seed, the one with "
+    "the largest mean loss",
+}
+SUB = 0.1
+
+
+def attention_on_row(run: str, row: int) -> np.ndarray:
+    """HD's read on one navtest row: pass 4's attention per token, averaged over the 256 queries and the heads
+    (b2_attention's own capture), as the run's dumps restore it."""
+    import torch
+    from b2_attention import Capture, Spy
+
+    from gallops.drivejepa_perception import env, train_b2, train_refiner
+
+    entered = env.enter(px.CFG)
+    device = torch.device("cuda")
+    meta, model, hook = train_b2.restore(entered, RUNS / run, device)
+    src = train_b2.Source(OUT, "navtest", meta["args"]["arm"])
+    weights, proposals = [], []
+    Capture(hook.adapter.read, weights)
+    adapter = hook.adapter
+    hook.adapter = Spy(adapter, proposals)
+    with torch.no_grad():
+        adapter.context = src.context(np.array([row]), device)
+        hook.k = 0
+        train_refiner.forward(model, src.data, np.array([row]), device)
+    out = weights[3][0].float().cpu().numpy().mean(0)[:-1]
+    del model, hook
+    torch.cuda.empty_cache()
+    return out
+
+
+def fig_hidden_scenes(table: dict, official: dict) -> None:
+    import textwrap
+
+    from gallops.drivejepa_perception import env
+
+    tokens = table["tokens"]
+    seeds = [
+        s
+        for s in range(5)
+        if b2_read.name("1", "D", s) in official and b2_read.name("1", "HD", s) in official
+    ]
+    if not seeds:
+        return
+    env.enter(px.CFG)
+
+    def epdms(run):
+        return np.array([official[run][t]["epdms_hf"] for t in tokens], float)
+
+    d = np.stack([epdms(b2_read.name("1", "HD", s)) - epdms(b2_read.name("1", "D", s)) for s in seeds])
+    mean = d.mean(0)
+    chosen = {}
+    for key, agree, sign in (("gain", (d > 0).all(0), 1.0), ("loss", (d < 0).all(0), -1.0)):
+        score = np.where(agree & np.isfinite(mean), sign * mean, -np.inf)
+        if not np.isfinite(score).any() or score.max() == -np.inf:
+            continue
+        r = int(np.argmax(score))
+        chosen[key] = {
+            "row": r,
+            "token": tokens[r],
+            "seeds": seeds,
+            "hd_minus_d": [float(x) for x in d[:, r]],
+            "scenes_meeting_rule": int(agree.sum()),
+            "rule": HIDDEN_RULES[key],
+        }
+    if not chosen:
+        return
+    nav = px.Split("navtest")
+    slots = dict(np.load(OUT / "b2-hidden-navtest-v1" / "agents.npz"))
+    fold = np.load(OUT / "b2-hidden-navtest-v1" / "fold.npy")
+    fig, axes = plt.subplots(
+        2,
+        len(chosen),
+        figsize=(8.6 * len(chosen), 12.5),
+        squeeze=False,
+        gridspec_kw={"height_ratios": [1.0, 2.0]},
+    )
+    heads = {"gain": "Where HD beats D on every seed", "loss": "Where HD loses to D on every seed"}
+    for i, (key, ex) in enumerate(chosen.items()):
+        r = ex["row"]
+        conf = slots["conf"][r]
+        decoded = np.flatnonzero(conf >= 0.5)
+        sub = np.flatnonzero((conf >= SUB) & (conf < 0.5))
+        att = attention_on_row(b2_read.name("1", "HD", 0), r)
+        ex["fold"] = int(fold[r])
+        ex["decoded"] = int(len(decoded))
+        ex["slots_0.1_to_0.5"] = int(len(sub))
+        ex["hd_s0_attention_on_decoded"] = {int(q): float(att[q]) for q in decoded}
+        boxes = [px.det_box(slots, q) for q in np.r_[decoded, sub]]
+        colours = [views.CLASS_COLOURS[int(slots["cls"][r, q])] for q in np.r_[decoded, sub]]
+        lws = [1.8] * len(decoded) + [0.8] * len(sub)
+        styles = ["-"] * len(decoded) + [(0, (2, 2))] * len(sub)
+        cam, ax = axes[0, i], axes[1, i]
+        px.image_boxes(cam, views.model_view(nav.image(r)), nav.projection(r), boxes, colours, lws, styles)
+        official_terms = {
+            name: [official[b2_read.name("1", name, s)][ex["token"]]["epdms_hf"] for s in seeds]
+            for name in ("D", "HD")
+        }
+        ex["official_epdms"] = official_terms
+        cam.set_title(f"{heads[key]} · {ex['token']}", loc="left", fontsize=10.5, fontweight="bold")
+        detail = (
+            f"Official EPDMS (human filter), seeds {', '.join(map(str, seeds))}: D "
+            + ", ".join(f"{v:.2f}" for v in official_terms["D"])
+            + "; HD "
+            + ", ".join(f"{v:.2f}" for v in official_terms["HD"])
+            + f". Fold {ex['fold']}'s side-car: {len(decoded)} slots at ≥ 0.5 (solid: D's list, and HD's), "
+            f"{len(sub)} at 0.1–0.5 (dashed). {ex['scenes_meeting_rule']} scenes meet the rule."
+        )
+        cam.text(
+            0,
+            -0.03,
+            textwrap.fill(detail, 95),
+            transform=cam.transAxes,
+            fontsize=8,
+            color=views.INK_2,
+            va="top",
+        )
+        cache = nav.cache(r)
+        px.draw_road(ax, cache)
+        px.grader_agents(ax, cache)
+        top = att[decoded].max() if len(decoded) else 1.0
+        for q in decoded:
+            u, v = px.xy_to_plot(views.footprint(px.det_box(slots, q)[None])[0])
+            ax.fill(u, v, fc=views.CLASS_COLOURS[int(slots["cls"][r, q])], alpha=0.35, lw=0, zorder=4)
+            ax.plot(
+                np.r_[u, u[:1]],
+                np.r_[v, v[:1]],
+                color=views.INK,
+                lw=0.6 + 3.0 * att[q] / max(top, 1e-9),
+                zorder=5,
+            )
+        for q in sub:
+            u, v = px.xy_to_plot(views.footprint(px.det_box(slots, q)[None])[0])
+            ax.plot(np.r_[u, u[:1]], np.r_[v, v[:1]], color=views.GREY, lw=0.8, ls=(0, (2, 1.5)), zorder=4)
+        props, pick_hd, failing = run_32("navtest", b2_read.name("1", "HD", 0), r)
+        for k in range(32):
+            u, v = px.xy_to_plot(props[k, :, :2])
+            ax.plot(
+                u,
+                v,
+                color=px.FAIL if failing[k] else px.PASS,
+                lw=0.8,
+                alpha=0.85 if failing[k] else 0.45,
+                zorder=5,
+            )
+        d_props, pick_d, _ = run_32("navtest", b2_read.name("1", "D", 0), r)
+        picks = {
+            "human": np.asarray(nav.labels["ego_future"][r][:, :2]),
+            "R": np.asarray(nav.proposals[r, nav.pick[r], :, :2]),
+            "D": d_props[pick_d, :, :2],
+            "HD": props[pick_hd, :, :2],
+        }
+        for name, colour, lw, ls, marker in (
+            ("human", views.INK_2, 1.5, (0, (1, 2)), "x"),
+            ("R", views.GREY, 3.2, "-", "s"),
+            ("D", ARM_COLOURS["D"], 2.0, (0, (4, 2)), "^"),
+            ("HD", ARM_COLOURS["HD"], 2.2, "-", "o"),
+        ):
+            u, v = px.xy_to_plot(picks[name])
+            ax.plot(np.r_[0, u], np.r_[0, v], color=colour, lw=lw, ls=ls, zorder=8, solid_capstyle="round")
+            ax.plot(
+                u, v, ls="none", marker=marker, ms=4.5, color=colour, mec=views.SURFACE, mew=0.6, zorder=9
+            )
+        ax.plot([0], [0], marker="^", color=views.INK, ms=9, zorder=10)
+        ahead = max(25.0, float(max(v[:, 0].max() for v in picks.values())) + 8.0)
+        half = max(12.0, 0.45 * (ahead + 4.0))
+        px.bev(
+            ax,
+            (-half, half),
+            (-4.0, ahead),
+            "from above: HD seed 0's 32; agent outlines weighted by HD's read",
+        )
+        ex["travel_4s_m"] = {k: float(np.linalg.norm(v[-1])) for k, v in picks.items()}
+    handles = [
+        Patch(color=views.INK_2, alpha=0.25, label="agents at t, as the grader reads them"),
+        *[
+            Patch(color=c, alpha=0.5, label=f"a decoded slot: {n}")
+            for c, n in zip(views.CLASS_COLOURS, views.CLASS_NAMES)  # noqa: B905 -- Python 3.9
+        ],
+        Line2D(
+            [], [], color=views.INK, lw=2.5, label="its outline: heavier = more of HD's attention (pass 4)"
+        ),
+        Line2D(
+            [],
+            [],
+            color=views.GREY,
+            lw=0.8,
+            ls=(0, (2, 1.5)),
+            label="a slot at 0.1–0.5 (H6 reads it; D, HD not)",
+        ),
+        Line2D([], [], color=px.PASS, lw=1.2, label="HD's proposal, passing (vendored)"),
+        Line2D([], [], color=px.FAIL, lw=1.2, label="HD's proposal failing NC, DAC, DDC or TTC"),
+        Line2D([], [], color=views.GREY, lw=3.2, marker="s", ms=4.5, label="R's pick"),
+        Line2D(
+            [],
+            [],
+            color=ARM_COLOURS["D"],
+            lw=2.0,
+            ls=(0, (4, 2)),
+            marker="^",
+            ms=4.5,
+            label="D seed 0's pick",
+        ),
+        Line2D([], [], color=ARM_COLOURS["HD"], lw=2.2, marker="o", ms=4.5, label="HD seed 0's pick"),
+        Line2D(
+            [], [], color=views.INK_2, lw=1.5, ls=(0, (1, 2)), marker="x", ms=4.5, label="the human's plan"
+        ),
+    ]
+    fig.legend(handles=handles, loc="lower center", ncol=4, fontsize=8, bbox_to_anchor=(0.5, -0.01))
+    NUMBERS["hidden_scenes"] = chosen
+    fig.suptitle(
+        "The primary contrast, HD − D, scene by scene: each scene the extreme of a rule (the JSON's "
+        '"hidden_scenes"); the marks are a plan\'s poses, 0.5 s apart',
+        x=0.01,
+        ha="left",
+        fontsize=11,
+    )
+    fig.tight_layout(rect=(0, 0.05, 1, 0.98))
+    px.save(fig, "b2r-hidden-scenes.jpg")
+
+
 def main() -> None:
     views.use_style()
     r = reads()
@@ -1219,6 +1457,7 @@ def main() -> None:
         table = scene_table()
         fig_where(table, official)
         fig_failures(table, official)
+        fig_hidden_scenes(table, official)
     NUMBERS["noise_limit"] = b2_read.NOISE_LIMIT
     (FIGURES / "part-b2-results-numbers.json").write_text(json.dumps(NUMBERS, indent=1, default=float) + "\n")
     print(f"wrote {FIGURES / 'part-b2-results-numbers.json'}")
