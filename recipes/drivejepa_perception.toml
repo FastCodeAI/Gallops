@@ -1418,6 +1418,17 @@ args = ["hidden", "--source", "navtest", "--tokens", "{out}/tokens-navtest-v1", 
 after = ["part-b-2-0-folds"]
 
 [[stage]]
+name = "part-b-2-0-hidden-navtest-shift1"
+python = "drivejepa"
+module = "drivejepa_perception.b2_inputs"
+# A test-time swap (B-2's Q7, "another fold's side-car"): every navtest row read by fold (f + 1) mod 5.
+args = ["hidden", "--source", "navtest", "--tokens", "{out}/tokens-navtest-v1", "--labels", "{out}/labels-navtest-v1",
+        "--vit-tokens", "{out}/tokens-vit-navtest-v1",
+        "--runs", "{out}/part-b/b0/crossfit-v3-f0,{out}/part-b/b0/crossfit-v3-f1,{out}/part-b/b0/crossfit-v3-f2,{out}/part-b/b0/crossfit-v3-f3,{out}/part-b/b0/crossfit-v3-f4",
+        "--fold-shift", "1", "--out", "{out}/b2-hidden-navtest-shift1-v1"]
+after = ["part-b-2-0-folds"]
+
+[[stage]]
 name = "part-b-2-0-hidden-fresh"
 python = "drivejepa"
 module = "drivejepa_perception.b2_inputs"

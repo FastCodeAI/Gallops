@@ -7,6 +7,8 @@
         --crossfit {out}/agents-train-crossfit-v3 --out {out}/b2-hidden-navtrain-v1
     python -m gallops.drivejepa_perception.b2_inputs hidden --source nusc --nusc {out}/nusc-v1 \
         --runs R0,R1,R2,R3,R4 --out {out}/b2-hidden-nusc-v1
+    python -m gallops.drivejepa_perception.b2_inputs hidden --source navtest ... --fold-shift 1 \
+        --out {out}/b2-hidden-navtest-shift1-v1
     python -m gallops.drivejepa_perception.b2_inputs align --runs R0,...,R4 \
         --out {out}/part-b/b2/alignment.json ...
 
@@ -27,6 +29,9 @@ rows the decoded list equals `agents-train-crossfit-v3` exactly. No report-log r
 **nuScenes** (the out-of-domain read, `ood`'s keyframes): no fold record holds its scenes, so the pass deals
 them by the same rule (NUSC_RULE) and writes the table and its sha into its manifest. Its gate: each fold's
 decoded list equals `train_sidecar.agent_arrays` run by the same model on the same rows.
+
+**A shifted pass** (`--fold-shift k`, navtest only) decodes each row by fold (f + k) mod 5 in place of its own
+fold f: a test-time swap, "another fold's side-car" (B-2's Q7), read through that fold's input map.
 
 **The alignment check** decides whether the five side-cars' layer-6 spaces are one space (ALIGN_BAR,
 pre-registered in PREDICTIONS.md, Part B · B-2): fitted on select rows, read on R-clean rows, every fold
@@ -215,6 +220,10 @@ def hidden(cfg, args) -> dict:
     fold = np.full(n, -1, np.int8)
     for name, picked in parts.items():
         fold[picked] = row_folds(tables, name, token_logs, picked)
+    if args.fold_shift:
+        if source != "navtest":
+            raise SystemExit("a shifted pass is a test-time swap: navtest only")
+        fold[fold >= 0] = (fold[fold >= 0] + args.fold_shift) % 5
     staging = out.with_name(out.name + ".staging")
     staging.mkdir(parents=True)
     d = run_args.get("d_model") or 256
@@ -288,6 +297,7 @@ def hidden(cfg, args) -> dict:
         "rows": n,
         "rows_decoded": {name: int(len(p)) for name, p in parts.items()},
         "rows_per_fold": {str(k): int((fold == k).sum()) for k in range(5)},
+        "fold_shift": int(args.fold_shift),
         "layers": list(LAYERS),
         "hidden_dtype": "float16",
         "d_model": d,
@@ -435,6 +445,7 @@ def main(argv=None) -> None:
     p.add_argument("--labels", default="")
     p.add_argument("--vit-tokens", default="")
     p.add_argument("--nusc", default="", help="nusc: `ood`'s keyframe cache (outputs.npz, vit_out.npy)")
+    p.add_argument("--fold-shift", type=int, default=0, help="navtest: every row read by fold (f + k) mod 5")
     p.add_argument("--runs", required=True)
     p.add_argument(
         "--crossfit", default="", help="navtrain: the cross-fit agents pass the train rows must equal"

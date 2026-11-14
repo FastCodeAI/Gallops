@@ -1,7 +1,7 @@
 """H15 B-2: run one phase's training and dumps (PREDICTIONS.md, Part B · B-2), in parallel on one GPU.
 
     <[python] drivejepa> experiments/H15_perception_sidecar/scripts/b2_phase.py --phase 1
-        [--parallel 6] [--workers 40] [--gpu 1] [--only b2-1-C-s0,...] [--seeds 3,4 --arms D,HD]
+        [--parallel 6] [--workers 40] [--gpu 1] [--only b2-1-C-s0,...] [--seeds 3,4 --arms D,HD] [--swaps]
 
 Each run is `python -m gallops.drivejepa_perception.train_b2`, one process, its log in
 {runs}/drivejepa_perception/part-b/logs/<run>.log; its directory
@@ -12,6 +12,9 @@ Each run is `python -m gallops.drivejepa_perception.train_b2`, one process, its 
 Every finished run is then dumped on navtest, R-clean and select, each with its vendored labels, and on
 nuScenes' keyframes (no labels: `b2_read nusc` reads them). A step whose output exists is skipped, so the
 driver resumes; a failed step stops that run's chain and is reported.
+
+With --swaps, the phase's B-2-1 runs are dumped on navtest again with their input swapped at test, each arm by
+b2_read.SWAPS (the fold swap reads b2_inputs' shifted pass), into <run>/dump-navtest-swap-<kind>.
 
 The phases' runs are b2_read.PHASES (phase 2's H3 is a seed-0 pilot); `--seeds/--arms` adds the noise-floor
 rule's extra seeds.
@@ -54,7 +57,12 @@ def chain(run: str, version: str, arm: str, seed: int, root: Path, logs: Path, a
     log = logs / f"{run}.log"
     out = root / run
     steps = []
-    if version == "1":
+    if a.swaps:
+        for kind in b2_read.SWAPS.get(arm, ()) if version == "1" else ():
+            where = out / f"dump-navtest-swap-{kind}"
+            args = [py, "-m", mod, "dump", "--run", str(out), "--split", "navtest", "--swap", kind]
+            steps.append((where / "labels.npz", args + ["--workers", str(a.workers), "--out", str(where)]))
+    elif version == "1":
         steps.append(
             (
                 out / "weights.pt",
@@ -138,7 +146,7 @@ def chain(run: str, version: str, arm: str, seed: int, root: Path, logs: Path, a
                 ],
             ),
         ]
-    for split in DUMPS:
+    for split in () if a.swaps else DUMPS:
         steps.append(
             (
                 out / f"dump-{split}" / ("dump.npz" if split == "nusc" else "labels.npz"),
@@ -178,6 +186,7 @@ def main() -> None:
     p.add_argument("--only", default="", help="comma-separated run names")
     p.add_argument("--seeds", default="", help="extra seeds for --arms under B-2-1 (the noise-floor rule)")
     p.add_argument("--arms", default="")
+    p.add_argument("--swaps", action="store_true", help="the test-time swaps of the phase's B-2-1 runs")
     a = p.parse_args()
     cfg = SiteConfig.load()
     out_root = Path(cfg.resolve("{runs}/drivejepa_perception"))

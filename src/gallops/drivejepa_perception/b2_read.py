@@ -4,6 +4,7 @@
     python -m gallops.drivejepa_perception.b2_read navtest --phase 1 --runs-root {out}/part-b/b2/runs \
         --out {out}/part-b/b2/navtest-phase1
     python -m gallops.drivejepa_perception.b2_read nusc --runs-root {out}/part-b/b2/runs --out FILE
+    python -m gallops.drivejepa_perception.b2_read swaps --runs-root {out}/part-b/b2/runs --out FILE
 
 PREDICTIONS.md, Part B · B-2 (committed before any run). A run is named `b2-<v>-<arm>-s<seed>` (v: 1 joint, 2
 two stages with LoRA, 3 two stages full; a two-stage run's name is its stage 3's) and lives in
@@ -20,6 +21,13 @@ The chain (K0 to K5) is judged by PREDICTIONS.md's rules, written in `verdicts`.
 **nuScenes** is read as the first pass read its refiners there (`ood.read_b2`): each run's pick against the
 human at 1, 2 and 3 s, its collisions with the labelled boxes within 3 s, and the best of 32 by ADE over 3 s,
 each minus the release's on the same keyframes, SE clustered by scene. Reported, never claimed.
+
+**The swaps** (B-2's Q7) read each run again on navtest with its input replaced at test (`train_b2 dump
+--swap`): none, another log's, another fold's side-car, labelled agents (D and HD). Vendored, against the
+run's own dump: how often the pick changes; how often the picked plan's 4 s point moves more than MOVED_M
+(added on 13 Nov, after the smoke run showed the release's scorer near-tied: its top two scores within 0.01
+on 88.5% of navtest, so an index can change while the plan barely does); and the pick's final, swapped minus
+own.
 """
 
 from __future__ import annotations
@@ -35,6 +43,15 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[3]
 PREDICTIONS_SECTION = "## Part B · B-2, the side-car's hidden layer into the refiner"
 NOISE_LIMIT = 0.3
+#: The test-time swaps each arm is read with (`train_b2 dump --swap`), and the move that counts as a new plan.
+SWAPS = {
+    "O": ("none", "log"),
+    "D": ("none", "log", "fold", "truth"),
+    "HD": ("none", "log", "fold", "truth"),
+    "H6": ("none", "log", "fold"),
+    "H3": ("none", "log", "fold"),
+}
+MOVED_M = 1.0
 #: Each phase's runs: (sub-version, arm, seeds). Phase 2's H3 is a seed-0 pilot (D29, decision (c)).
 PHASES = {
     "1": [("1", "C", (0, 1, 2)), ("1", "O", (0, 1, 2))],
@@ -382,6 +399,50 @@ def nusc_read(cfg, args) -> dict:
     return result
 
 
+# ----------------------------------------------------------------------------------------------- swaps
+
+
+def swaps(cfg, args) -> dict:
+    """Every run's test-time swaps against its own navtest dump (module docstring)."""
+    from gallops.drivejepa_perception.b_report import clustered_se
+
+    out_root = Path(cfg.resolve("{runs}/drivejepa_perception"))
+    labels_dir = out_root / "labels-navtest-v1"
+    labels = np.load(labels_dir / "labels.npz")
+    logs = np.array(json.loads((labels_dir / "manifest.json").read_text())["logs"])[labels["log_id"]]
+    result = {"moved_m": MOVED_M, "runs": {}}
+    for run in sorted(Path(args.runs_root).glob("b2-*")):
+        own_dir = run / "dump-navtest"
+        if not (own_dir / "labels.npz").exists():
+            continue
+        own = np.load(own_dir / "dump.npz")
+        n = np.arange(len(own["pick"]))
+        own_final = np.load(own_dir / "labels.npz")["candidates"][n, own["pick"], -1]
+        own_end = own["proposals"][n, own["pick"], -1, :2]
+        entry = {}
+        for kind in ("none", "log", "fold", "truth"):
+            d = run / f"dump-navtest-swap-{kind}"
+            if not (d / "labels.npz").exists():
+                continue
+            sw = np.load(d / "dump.npz")
+            final = np.load(d / "labels.npz")["candidates"][n, sw["pick"], -1]
+            moved = np.linalg.norm(sw["proposals"][n, sw["pick"], -1, :2] - own_end, axis=-1) > MOVED_M
+            diff = (final - own_final) * 100
+            entry[kind] = {
+                "switch": float((sw["pick"] != own["pick"]).mean()),
+                "moved": float(moved.mean()),
+                "final_minus_own": float(diff.mean()),
+                "se": clustered_se(diff, logs),
+            }
+        if entry:
+            result["runs"][run.name] = entry
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, indent=1))
+    print(json.dumps(result["runs"], indent=1))
+    return result
+
+
 def main(argv=None) -> None:
     from gallops.config import SiteConfig
 
@@ -402,7 +463,13 @@ def main(argv=None) -> None:
     p = sub.add_parser("nusc")
     p.add_argument("--runs-root", required=True)
     p.add_argument("--out", required=True)
+    p = sub.add_parser("swaps")
+    p.add_argument("--runs-root", required=True)
+    p.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    if args.cmd == "swaps":
+        swaps(SiteConfig.load(), args)
+        return
     if args.cmd == "rclean":
         rclean(SiteConfig.load(), args)
         return

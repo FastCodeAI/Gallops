@@ -75,6 +75,8 @@ SPLITS = {
 }
 #: nuScenes (the out-of-domain read): `ood`'s keyframe cache, and B-2's hidden pass over it.
 NUSC = ("nusc-v1", "b2-hidden-nusc-v1")
+#: The "another fold's side-car" swap: navtest decoded with every row's fold shifted by one.
+NAVTEST_SHIFTED = "b2-hidden-navtest-shift1-v1"
 _BATCH_FIXED: list = []
 
 
@@ -92,7 +94,7 @@ def sha256_of(path: Path) -> str:
 class Source:
     """Everything one split's passes wrote, by row: what the refiner, the arms and the losses read."""
 
-    def __init__(self, out_root: Path, split: str, arm: str):
+    def __init__(self, out_root: Path, split: str, arm: str, hidden: str = "", agents: str = ""):
         from gallops.drivejepa_perception import navsim_data
         from gallops.drivejepa_perception import targets as tg
 
@@ -139,17 +141,21 @@ class Source:
                 "pick": np.load(self.tokens_dir / "pick.npy").astype(np.int64),
             }
             projections = tg.front_projection(self.data["lidar2img"])
+        if hidden:  # a test-time swap: another fold's side-car on every row (b2_inputs --fold-shift)
+            self.hidden_dir = root / hidden
         self.data["spatial"] = torch.tensor([[16, 32]], dtype=torch.long)
         self.data["level"] = torch.tensor([0], dtype=torch.long)
         self.human = self.labels["ego_future"].astype(np.float32)
         self.hidden_manifest = json.loads((self.hidden_dir / "manifest.json").read_text())
         self.fold = np.load(self.hidden_dir / "fold.npy")
         self.agents = None
-        if arm in ("D", "HD"):
-            self.agents = dict(np.load(self.hidden_dir / "agents.npz"))
-        elif arm == "O":
+        self.truth = agents == "truth"
+        if arm == "O" or (self.truth and arm in ("D", "HD")):
+            # O's agents; or, a test-time swap on D or HD, the labelled agents in place of the decoded list.
             self.agents = tg.truth_agents(self.labels, projections, fill="constant_velocity")
             self.agents.pop("path_ok")
+        elif arm in ("D", "HD"):
+            self.agents = dict(np.load(self.hidden_dir / "agents.npz"))
         layer = {"HD": 6, "H6": 6, "H3": 3}.get(arm)
         self.layer = layer
         if layer is not None:
@@ -176,6 +182,9 @@ class Source:
             out["fold"] = torch.from_numpy(self.fold[src].astype(np.int64)).to(device)
             if (out["fold"] < 0).any():
                 raise SystemExit(f"{self.split}: a row without a fold's slots was read")
+            if self.truth:  # labelled agents have no slots: HD's slot content is blank (zeros) beside them
+                b, a = out["mask"].shape
+                out["hidden"] = torch.zeros(b, a, out["hidden"].shape[-1], device=device)
         if swap == "none":
             if "mask" in out:
                 out["mask"] = torch.zeros_like(out["mask"])
@@ -665,6 +674,16 @@ def dump(cfg, args) -> dict:
         swap = "none"
     elif args.swap == "log":
         swap = train_scorer.shuffled_rows(src.token_logs)
+    elif args.swap in ("fold", "truth"):
+        if split != "navtest":
+            raise SystemExit("the fold and truth swaps are read on navtest")
+        src = Source(
+            out_root,
+            split,
+            meta["args"]["arm"],
+            hidden=NAVTEST_SHIFTED if args.swap == "fold" else "",
+            agents="truth" if args.swap == "truth" else "",
+        )
     root = {
         "navtrain": Path(cfg.resolve("{data.navsim_metric_cache}")),
         "fresh": out_root / "metric-cache-fresh-v2",
@@ -748,7 +767,12 @@ def main(argv=None) -> None:
     p = sub.add_parser("dump")
     p.add_argument("--run", required=True)
     p.add_argument("--split", required=True, choices=("train", "select", "navtest", "fresh", "nusc"))
-    p.add_argument("--swap", default="", choices=("", "none", "log"))
+    p.add_argument(
+        "--swap",
+        default="",
+        choices=("", "none", "log", "fold", "truth"),
+        help="a test-time swap: no input, another log's, another fold's side-car, labelled agents (D, HD)",
+    )
     p.add_argument("--no-labels", action="store_true")
     p.add_argument("--workers", type=int, default=64)
     p.add_argument("--out", required=True)
