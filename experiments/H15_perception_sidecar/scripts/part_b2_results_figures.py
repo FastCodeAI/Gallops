@@ -347,8 +347,9 @@ def fig_health() -> None:
                 raise SystemExit(f"{d} does not hold the select rows in order")
             mine = np.load(d / "labels.npz")["candidates"][np.arange(len(select)), dump["pick"], -1]
             sel[run.name] = float(mine.mean() * 100) - r_select
-    rclean_path = B2 / "rclean.json"
-    rc = json.loads(rclean_path.read_text()) if rclean_path.exists() else None
+    # The final read over every run, else phase 1's (which decided the noise floor; it is kept as written).
+    rclean_path = next((p for p in (B2 / "rclean-all.json", B2 / "rclean.json") if p.exists()), None)
+    rc = json.loads(rclean_path.read_text()) if rclean_path else None
     if not sel and rc is None:
         return
     NUMBERS["health"] = {
@@ -444,8 +445,8 @@ def fig_readouts(r: dict) -> None:
 
 
 def fig_nusc() -> None:
-    path = B2 / "nusc.json"
-    if not path.exists():
+    path = next((p for p in (B2 / "nusc.json", B2 / "nusc-phase1.json") if p.exists()), None)
+    if path is None:
         return
     r = json.loads(path.read_text())
     NUMBERS["nusc"] = r
@@ -485,9 +486,9 @@ def main() -> None:
     views.use_style()
     r = reads()
     NUMBERS["phases_read"] = r["phases"]
-    rclean = B2 / "rclean.json"
-    if rclean.exists():
-        NUMBERS["rclean"] = json.loads(rclean.read_text())
+    for name in ("rclean", "rclean-all"):
+        if (B2 / f"{name}.json").exists():
+            NUMBERS[name.replace("-", "_")] = json.loads((B2 / f"{name}.json").read_text())
     swaps = B2 / "swaps.json"
     if swaps.exists():
         NUMBERS["swaps"] = json.loads(swaps.read_text())

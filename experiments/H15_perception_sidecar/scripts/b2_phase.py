@@ -17,7 +17,7 @@ With --swaps, the phase's B-2-1 runs are dumped on navtest again with their inpu
 b2_read.SWAPS (the fold swap reads b2_inputs' shifted pass), into <run>/dump-navtest-swap-<kind>.
 
 The phases' runs are b2_read.PHASES (phase 2's H3 is a seed-0 pilot); `--seeds/--arms` adds the noise-floor
-rule's extra seeds.
+rule's extra seeds under B-2-1, right after the phase's own B-2-1 runs, so the decision chain's runs go first.
 """
 
 from __future__ import annotations
@@ -194,11 +194,13 @@ def main() -> None:
     root.mkdir(parents=True, exist_ok=True)
     jobs = [(b2_read.name(v, arm, s), v, arm, s) for v, arm, seeds in b2_read.PHASES[a.phase] for s in seeds]
     if a.seeds:
-        jobs = [
+        extra = [
             (b2_read.name("1", arm, int(s)), "1", arm, int(s))
             for arm in a.arms.split(",")
             for s in a.seeds.split(",")
         ]
+        joint = [j for j in jobs if j[1] == "1"]
+        jobs = joint + [j for j in extra if j not in joint] + [j for j in jobs if j[1] != "1"]
     if a.only:
         keep = set(a.only.split(","))
         jobs = [j for j in jobs if j[0] in keep]
