@@ -73,7 +73,6 @@ SPLITS = {
     "fresh": ("tokens-fresh-v1", "labels-fresh-v1", "pdm-fresh-v1", "b2-hidden-fresh-v1"),
 }
 _BATCH_FIXED: list = []
-_WORKER: dict = {}
 
 
 def sha256_of(path: Path) -> str:
@@ -367,18 +366,12 @@ def forward(model, src: Source, rows: np.ndarray, device, hook: PassHook, swap=N
 # ----------------------------------------------------------------------------------- online labels
 
 
-def _worker_init(root: str, logs: np.ndarray, tokens: list) -> None:
-    _WORKER.update(root=root, logs=logs, tokens=tokens)
-
-
 def _online(job) -> tuple:
-    """The release's own scorer on one row's 32 plans, with the auxiliary targets (test=False)."""
+    """The release's own scorer on one row's 32 plans, with the auxiliary targets (test=False). A job carries
+    its metric cache's path: run as `-m`, this module is also `__main__`, so worker globals would split."""
     from navsim.agents.drive_jepa_perception_based.score_module import compute_navsim_score as cns
 
-    from gallops.drivejepa_perception import pdm_labels
-
-    row, poses = job
-    path = pdm_labels.metric_cache_path(Path(_WORKER["root"]), _WORKER["logs"][row], _WORKER["tokens"][row])
+    path, poses = job
     cache = cns.load_metric_cache(path)
     states = cns.before_score_proposals(cache, poses, cache.ego_state)
     final = cns.scorer.score_proposals(
@@ -400,8 +393,17 @@ def _online(job) -> tuple:
     )
 
 
-def online_targets(pool, rows: np.ndarray, proposals: np.ndarray, device) -> tuple:
-    out = pool.map(_online, [(int(r), proposals[i].astype(np.float64)) for i, r in enumerate(rows)])
+def online_targets(pool, src: Source, root: Path, rows: np.ndarray, proposals: np.ndarray, device) -> tuple:
+    from gallops.drivejepa_perception import pdm_labels
+
+    jobs = [
+        (
+            pdm_labels.metric_cache_path(root, src.token_logs[r], src.tokens[r]),
+            proposals[i].astype(np.float64),
+        )
+        for i, r in enumerate(rows)
+    ]
+    out = pool.map(_online, jobs)
     stack = [np.stack([o[j] for o in out]) for j in range(4)]
     return tuple(torch.from_numpy(x).to(device) for x in stack)
 
@@ -454,17 +456,17 @@ def train(cfg, args) -> None:
     src = Source(out_root, "navtrain", args.arm)
     rows = train_rows(src)
     pool = None
+    root = Path(cfg.resolve("{data.navsim_metric_cache}"))
     if args.recipe == "joint":
         # The workers fork before CUDA is touched, and each scores one row's 32 plans per job.
-        root = str(Path(cfg.resolve("{data.navsim_metric_cache}")))
-        pool = get_context("fork").Pool(args.workers, _worker_init, (root, src.token_logs, src.tokens))
+        pool = get_context("fork").Pool(args.workers)
     labels3 = None
     if stage == 3:
         dump = Path(args.stage1) / "dump-train"
         labels3 = np.load(dump / "labels.npz")["candidates"]
     from gallops.drivejepa_perception import preflight
 
-    report = preflight.run_b2(cfg, args, src, rows, pool)
+    report = preflight.run_b2(cfg, args, src, rows, pool, root)
     device = torch.device("cuda")
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
@@ -521,7 +523,7 @@ def train(cfg, args) -> None:
             if args.recipe == "joint":
                 t_wait = time.time()
                 scores_t, corners, valid, areas = online_targets(
-                    pool, chunk, props[-1].detach().float().cpu().numpy(), device
+                    pool, src, root, chunk, props[-1].detach().float().cpu().numpy(), device
                 )
                 parts["_wait_s"] = time.time() - t_wait
                 sub, final, ce, l1, area = agent.score_loss(

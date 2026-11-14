@@ -390,7 +390,7 @@ def run_refiner(cfg, args, data: dict, build_fn, forward_fn) -> dict:
 B2_HIDDEN_ATOL, B2_CENTRE_ATOL = 0.05, 0.05
 
 
-def run_b2(cfg, args, src, rows: np.ndarray, pool) -> dict:
+def run_b2(cfg, args, src, rows: np.ndarray, pool, root) -> dict:
     """B-2's preflight (B2-G3, PREDICTIONS.md, Part B · B-2), before a run's first step; every problem listed.
 
     - the code committed, and the suite passing under this interpreter;
@@ -510,7 +510,7 @@ def run_b2(cfg, args, src, rows: np.ndarray, pool) -> dict:
         pdm = np.load(src.pdm_dir / "pdm.npz")["candidates"]
         some = rows[:16]
         got = train_b2.online_targets(
-            pool, some, np.asarray(src.release["proposals"][some], np.float32), torch.device("cpu")
+            pool, src, root, some, np.asarray(src.release["proposals"][some], np.float32), torch.device("cpu")
         )[0].numpy()
         report["online_labels"] = {"rows": 16, "unequal": int((got != pdm[some]).sum())}
         if report["online_labels"]["unequal"]:
