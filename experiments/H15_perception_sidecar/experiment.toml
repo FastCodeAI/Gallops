@@ -1004,3 +1004,132 @@ notes = "D29; PREDICTIONS.md, Part B · B-2 (committed 032d0c0 before the alignm
   n = 11340
   scene_list = "recipes/drivejepa_perception/fresh.json"
   built_by = "gallops.drivejepa_perception.b2_inputs"
+
+[[runs]]
+id = "H15.r12"
+label = "Part B, B-2 phase 1: arms C (no input) and O (labelled agents) under B-2-1, the joint fine-tune of the release's refiner and scorer (rank-16 LoRA + the B-2 adapter), seeds 0-2, navtest read once; the phase-1 gate K0 stops B-2"
+started = 2026-11-13
+ended = 2026-11-14
+start_from = "released"
+trained = ["refiner (rank-16 LoRA)", "scorer MLP (rank-16 LoRA)", "the B-2 adapter (an own half; O: a read of its agents)"]
+frozen = ["ViT", "projector", "the release's auxiliary heads (their losses kept)", "the side-car (unused by C and O)"]
+params_trained_m = 0.58
+gpu_hours = 11.2
+train_git_sha = "3392ac1"
+notes = "D29; PREDICTIONS.md, Part B · B-2 (committed 032d0c0, before any run). The release's own objective resumed (B-2-1): mtd_loss + the final-score BCE against labels its own scorer computes online (compute_navsim_score, test=False) + its collision-agent and area auxiliaries; 3 epochs, batch 64, AdamW, cosine, the last epoch kept: 4,413 steps on navtrain's 94,195 train rows. The six runs trained together on one GPU, 1.9 h of wall time each (about 11 GPU-hours of work; 1.6 s a step, 0.6 s of it the online labeller on CPU). Trainable: C 445,072 parameters (adapter 198,144; refiner LoRA 177,200; scorer LoRA 69,728), O 582,932 (adapter 336,004). B2-G3, the preflight, held on every run: the untrained model equals its base path bit for bit on 64 select rows (that path within 0.43 mm of the token pass, picks equal on all 64); the online labeller equals pdm-v1 exactly on 16 train rows. Weights sha256: C s0 11cbf750a9aea33039d08cf327dcfb135a93fd8199f01e3b85e4003751aac05b, C s1 7da6752566da75e73e4230ecef52aeeaa13dbddf3b9412d15ed04364ddacb45e, C s2 b9767253a03beef139d1c020eefb3fda99f7a647822603f720527a607e6617b6, O s0 b3c5278309c68e5257ec3dd1b7521b297aa729c56ca96799c708b7419b651a2a, O s1 30d25c81a535fcc5457b14a8a3292d882f41e6552ce3d78cc8ffaa3cdda42275, O s2 b0d6f4dde0cbb3ee6d1635d79197a364e75deac81d6030d5116c03e6421af3c2 (not checkpoint directories; under {runs}/drivejepa_perception/part-b/b2/runs). Navtest, read once (official scorer through the replay agent, momentum off, every plan equal to its store, paired with R's 87.783, SE clustered over 136 logs). K0, the gate: O - C is at or below 0 on every seed (-0.075 +- 0.084, -0.062 +- 0.075, -0.069 +- 0.073), so by its pre-registered rule B-2 stops after phase 1 and phase 2 does not run; no seed is beyond 2 SE either way. O's planner does read its agents (test-time swaps: none of them changes 9.0-11.1% of picks and costs 0.13-0.32 points of the vendored final), yet it does no better than C, which had none. The fine-tune itself gains: C - R +0.38, +0.51, +0.36 (above the predicted -0.5 to +0.3 on every seed), from EP (+0.008 to +0.010) and EC (+0.012 to +0.020) while NC (-0.002 to -0.003) and TTC (-0.001 to -0.003) fall; it moves the 32 about 0.5 m (Hungarian-matched), changes 56-59% of picks, brings minADE from 0.163 to 0.130 m and the share of the 32 passing NC and TTC from 89.6% to 92.1%. The release's scorer is near-tied (top two within 0.01 on 88.5% of navtest), so most switches are between near-equal plans. It does not carry over evenly: on R-clean (B-1's value, city-weighted) C loses 3.23, 3.28 and 0.80 points (O 3.16, 3.44, 0.64) through new DDC and NC failures on a few dozen windows (checked: R-tilde picks as R on all 2,624 windows; the labeller reproduces pdm-fresh-v1), which fired the noise-floor rule (C's range 2.48 > 0.3; moot once K0 stopped B-2); on nuScenes the pick's L2 at 3 s rises 0.15-0.30 m while the best of 32 improves 0.017 m. Disclosed: to test the scoring path, a 60-step smoke run (joint, arm HD) was scored on navtest on 13 Nov, +0.39 +- 0.14 against R; it chose nothing and fixed nothing, every rule having been committed before."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  entry = "experiments/H15_perception_sidecar/scripts/b2_phase.py"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain train logs (splits.json), rows with a metric cache"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain select logs: the health read, which chose nothing"
+  role = "selection"
+  unit = "samples"
+  n = 4457
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "R-clean, known-command windows (D25): the health read and the noise floor"
+  role = "selection"
+  unit = "windows"
+  n = 2624
+  scene_list = "recipes/drivejepa_perception/fresh.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "nuscenes"
+  split = "train, 100 scenes (H15's own draw)"
+  role = "held-out"
+  unit = "keyframes"
+  n = 2917
+  scene_list = "recipes/drivejepa_perception/ood_scenes.json"
+  built_by = "gallops.drivejepa_perception.ood"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), O minus C under B-2-1: labelled agents as an input to the fine-tuned refiner, per seed (K0, the phase-1 gate)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "C, the same fine-tune with no input"
+  value = "-0.069"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds -0.075 +- 0.084, -0.062 +- 0.075, -0.069 +- 0.073 (mean shown). K0 predicted 0.0 to +0.4; refuted by its own pre-registered criterion (at or below 0 on every seed), which stops B-2 after phase 1. No seed is beyond 2 SE either way: an input worth more than about +0.1 is unlikely"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), C minus R: the joint fine-tune itself, out of sample (reported)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "R, the release's replayed picks"
+  baseline_value = "87.783"
+  value = "+0.419"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.384 +- 0.196, +0.513 +- 0.181, +0.359 +- 0.192 (EPDMS 88.166, 88.295, 88.142; mean shown); predicted -0.5 to +0.3, above it on every seed. EP +0.008 to +0.010, EC +0.012 to +0.020, DAC +0.001 to +0.003; NC -0.002 to -0.003, TTC -0.001 to -0.003. O - R +0.308, +0.451, +0.291"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "B-1's R-clean value (the human-filtered vendored final, city-weighted), C minus the release: the health read and the noise floor"
+  subset = "R-clean, known-command windows"
+  n = 2624
+  unit = "window"
+  baseline = "the release"
+  baseline_value = "75.66"
+  value = "-2.44"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds -3.23, -3.28, -0.80 (mean shown); O -3.16, -3.44, -0.64. New DDC failures on 59, 67 and 24 windows and NC on 32, 11 and 4, against a few dozen fixed; C's seed range 2.48 exceeds the pre-registered 0.3, so the rule would have run seeds 3 and 4 in phase 2. On select the same runs gain 0.11-0.14 (C) and 0.11-0.25 (O) of the vendored final"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "the pick's L2 to the human at 3 s, C minus the release (out of domain; reported)"
+  subset = "100 scenes"
+  n = 2917
+  unit = "keyframe"
+  baseline = "the release, same keyframes"
+  baseline_value = "3.735"
+  value = "+0.198"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.180 +- 0.062, +0.263 +- 0.064, +0.151 +- 0.057 m (SE clustered by scene; mean shown); O +0.270, +0.300, +0.143. The best of 32 by ADE improves 0.016-0.018 m on every run; collisions within 3 s move -0.005 (within 2 SE)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "O's test-time swap, no agents: the pick's vendored final, swapped minus its own (does O read its input?)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  value = "-0.217"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds -0.198 +- 0.083, -0.323 +- 0.087, -0.131 +- 0.076 (mean shown); the pick changes on 10.1%, 11.1%, 9.0% of scenes, by more than 1 m at 4 s on 6.0-7.4%. Another log's agents: -0.042, -0.219, -0.090. O leans on its agents but gains nothing over C, which had none"

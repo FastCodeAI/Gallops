@@ -1,7 +1,9 @@
 # H15 Part B · B-2: the side-car's hidden layer into the refiner, with the planner fine-tuned downstream
 
-**Status (13 Nov 2026): re-planned (D28), not run. This is documents only. Nothing is coded or trained before the
-owner shortlists this plan and gives the go-ahead.**
+**Status (14 Nov 2026): run, and stopped at its phase-1 gate.** Re-planned on 13 Nov (D28) and approved the same
+day with every recommendation (D29). B-2-0 (`H15.r11`) and phase 1 (`H15.r12`) ran. Labelled agents added nothing to
+the fine-tuned planner on navtest (K0), so by the pre-registered rule phase 2 did not run.
+[What has run](#results) has the numbers and figures.
 - [The overview](../README.md) holds the tracker, the naming and the log.
 - This plan stands on two documents:
   - [B-0, the foundations](B-0-foundations.md);
@@ -437,6 +439,8 @@ All estimates are wall time on one shared GPU (*estimate*).
     - every checkpoint pinned by its weights' sha256;
     - a line in the overview's log.
 
+<a id="criteria"></a>
+
 ### Success criteria (a draft, for PREDICTIONS.md once approved)
 
 On navtest, by the official scorer, paired per scene, SE clustered by log, every seed. Under B-2-1 unless named. The
@@ -530,19 +534,214 @@ None of this exists yet. Written only after the go-ahead, each piece with its ch
 
 Recipe stages are `part-b-2-*`.
 
+<a id="results"></a>
+
+## What has run (13–14 Nov)
+
+Records: `H15.r11` (B-2-0) and `H15.r12` (phase 1). The gates, predictions and rules are PREDICTIONS.md's (Part B ·
+B-2), committed before any run (032d0c0). The charts are drawn by
+`experiments/H15_perception_sidecar/scripts/part_b2_results_figures.py` from the runs' records, and every number in
+them is in [part-b2-results-numbers.json](../../../experiments/H15_perception_sidecar/figures/part-b2-results-numbers.json).
+
+**In one line.** Labelled agents, given to a refiner fine-tuned with the release's own objective, did no better than
+the same fine-tune without them: O − C was −0.06 to −0.08 points on every seed. The gate stopped B-2 there, so the
+side-car's hidden layer was never tried. The fine-tune itself gained about 0.4 points on navtest, but lost
+elsewhere (R-clean, nuScenes).
+
+### B-2-0, the inputs (`H15.r11`; *measured*)
+
+- **B2-G1 holds.**
+  - Each of the five fold side-cars, decoded by the pass's own code, gives exactly the select F1 it recorded.
+  - On all 94,195 train rows the decoded list equals B-0's cross-fit agents in every value.
+- **B2-G4: the five side-cars' hidden spaces do not align.**
+  - Matched slot for slot, R² is −0.09 to −0.19.
+  - A fitted linear map reaches only 0.47 to 0.55.
+  - By the rule, each fold gets its own input map.
+- **Added on 14 Nov:**
+  - the nuScenes keyframes, decoded by the fold side-cars (each scene dealt a fold by the same rule; the gate holds);
+  - a navtest pass read by the "wrong" fold, for the test-time swaps.
+
+### The code, and what its checks caught (*measured*)
+
+- **The trainer:** `train_b2.py`, the joint and the two-stage recipes, every arm. The preflight (B2-G3) runs before
+  each run's first step.
+- **Smoke-tested before phase 1:** every recipe and arm, including arms HD and H6, B-2-2's whole chain and B-2-3's
+  stage 1. Each passed its preflight, so phase 2 was ready to run.
+- **Two bugs were caught before they cost a run:**
+  - stage 3 would have read each train row's targets by row id from a dump stored by position, which is every target
+    another row's. The preflight now checks the targets on 16 spread rows against the vendored scorer run live.
+  - the read would have left C's extra seeds out had the noise floor fired. Now every seed range spans every seed
+    read.
+- **Disclosed:** to test the scoring path, the 60-step joint HD smoke run was scored on navtest on 13 Nov (+0.39 ±
+  0.14 against R). It chose nothing, and every rule had been committed before it.
+
+### Phase 1: C and O under B-2-1 (`H15.r12`)
+
+**Training (*measured*).**
+- The release's own objective, resumed:
+  - `mtd_loss`;
+  - the final-score BCE against labels its own scorer computes online;
+  - its collision-agent and area auxiliaries.
+- 3 epochs and 4,413 steps on the 94,195 train rows, the last epoch kept.
+- The six runs trained together on one GPU, 1.9 h each.
+- Every preflight held:
+  - bit-for-bit identity before the first step;
+  - the online labeller equal to `pdm-v1` on every checked row.
+- The planning loss fell from about 0.65 to 0.596, and the final-score BCE from 0.31 to 0.300.
+- O's read gives its agents 37% of its attention; the rest goes to its "no agent" slot.
+
+![B-2-1's training telemetry: the planning loss, the final-score BCE and O's attention to its null token, every run](../../../experiments/H15_perception_sidecar/figures/b2r-training.png)
+
+**How to read it.** Each line is a run. C (blue) and O (orange) are nearly identical seed by seed, because the same
+seed gives the same batches. The labelled agents barely change the losses.
+
+**Health, which chooses nothing (*measured*).**
+- **Select (4,457 rows):** every run gains a little on the pick's vendored final. C gains +0.11 to +0.14 against R's
+  92.01, and O +0.11 to +0.25.
+- **R-clean (B-1's value, city-weighted):** every run loses.
+  - C loses 3.23, 3.28 and 0.80 points against the release's 75.66; O loses 3.16, 3.44 and 0.64.
+  - Most changed windows improve (754 against 203 for C seed 0). The worse ones fail a gate the score multiplies by:
+    DDC on 59, 67 and 24 windows, NC on 32, 11 and 4.
+  - All 53 windows that fail DDC on both C seeds 0 and 1 are in Las Vegas. Boston's 133 windows lose the most each,
+    and carry 36.5% of the city weight.
+  - Checked before believing it:
+    - the untrained cached path picks as R on all 2,624 windows;
+    - the dump's labeller reproduces `pdm-fresh-v1` exactly.
+- **The noise floor fired:** C's seed range is 2.48 points against the limit of 0.3. Phase 2 would have run C, D and
+  HD on seeds 3 and 4 too. It became moot when K0 stopped B-2.
+
+![Health reads: select's vendored pick final and R-clean's value, each run minus the release](../../../experiments/H15_perception_sidecar/figures/b2r-health.png)
+
+**Navtest, read once (*measured*).** The official scorer through the replay agent, momentum off, every plan equal to
+its store. Paired with R's 87.783, SE clustered over 136 logs.
+
+| Run | EPDMS − R | NC | DAC | DDC | TTC | EP | EC | picks switched |
+|---|---|---|---|---|---|---|---|---|
+| C, seed 0 | **+0.38 ± 0.20** | −0.0032 | +0.0024 | −0.0005 | −0.0012 | +0.0093 | +0.0123 | 58.9% |
+| C, seed 1 | **+0.51 ± 0.18** | −0.0019 | +0.0026 | −0.0002 | −0.0007 | +0.0099 | +0.0137 | 57.7% |
+| C, seed 2 | **+0.36 ± 0.19** | −0.0028 | +0.0012 | −0.0007 | −0.0025 | +0.0081 | +0.0197 | 56.1% |
+| O, seed 0 | **+0.31 ± 0.20** | −0.0026 | +0.0017 | −0.0003 | −0.0012 | +0.0093 | +0.0088 | 57.7% |
+| O, seed 1 | **+0.45 ± 0.19** | −0.0021 | +0.0023 | −0.0004 | −0.0012 | +0.0102 | +0.0100 | 58.7% |
+| O, seed 2 | **+0.29 ± 0.19** | −0.0026 | +0.0007 | −0.0009 | −0.0020 | +0.0084 | +0.0159 | 58.4% |
+
+![Every B-2 run against the release on navtest, one seed ± 2 SE](../../../experiments/H15_perception_sidecar/figures/b2r-navtest.png)
+
+| # | Predicted | Measured | Verdict |
+|---|---|---|---|
+| K0, O − C | 0.0 to +0.4 | −0.075 ± 0.084, −0.062 ± 0.075, −0.069 ± 0.073 | **refuted** by its own rule (at or below 0, every seed): **B-2 stops** |
+| K1 to K5 | see [the criteria](#criteria) | not run | — |
+| C − R (reported) | −0.5 to +0.3 | +0.38, +0.51, +0.36 | above the range on every seed |
+| D − C, HD's EC, best of 32 and safe share, the B-2-2 and B-2-3 contrasts (reported) | — | not run | — |
+
+- No seed of K0 is beyond 2 SE either way. An effect above about +0.1 would have shown.
+- The rule reads the point estimates, as pre-registered.
+
+![B-2's pre-registered contrasts per seed, over their predicted ranges](../../../experiments/H15_perception_sidecar/figures/b2r-chain.png)
+
+**How to read it.** Each row is a pre-registered contrast. The blue bar is its predicted range, and the dots are seeds
+0, 1 and 2 from the top, each with ± 2 SE. K0 sits just left of zero on every seed. The rows below were never run,
+because K0 stopped B-2.
+
+![Where each run's difference from R comes from, sub-score by sub-score](../../../experiments/H15_perception_sidecar/figures/b2r-subscores.png)
+
+**How to read it.** One panel per sub-score, in percentage points against R. EP and EC carry the gain, DAC adds a
+little, and NC and TTC lose a little. C and O move the same terms by the same amounts.
+
+**Does O use its agents? (*measured*; the test-time swaps, Q7).** Yes.
+- Removing O's agents at test changes its pick on 9.0–11.1% of scenes, and by more than 1 m at 4 s on 6.0–7.4%.
+- It costs 0.13 to 0.32 points of the vendored final: −0.198 ± 0.083, −0.323 ± 0.087, −0.131 ± 0.076.
+- Another log's agents cost less: −0.04 to −0.22.
+
+So O leans on its agents, yet it is no better than C, which never had them.
+
+**How the proposals and the pick change (B-0-4; vendored; *measured*).**
+
+| | R | C, seeds 0–2 | O, seeds 0–2 |
+|---|---|---|---|
+| minADE to the human (3 s) | 0.163 m | 0.130 m | 0.130 m |
+| share of the 32 passing NC and TTC | 89.6% | 92.1–92.2% | 92.1–92.2% |
+| best of 32 (vendored final) | 0.9590 | 0.9599–0.9600 | 0.9599–0.9602 |
+| the pick's vendored final | 0.8849 | 0.8871–0.8890 | 0.8865–0.8885 |
+| lateral spread of the 32 at 4 s (std) | 1.09 m | 1.16–1.17 m | 1.16–1.17 m |
+| the pick's move between frames (an EC proxy) | 1.22 m | 1.26–1.29 m | 1.28–1.30 m |
+| the 32's matched move from R | — | 0.50–0.55 m | 0.54–0.56 m |
+
+- The release's scorer is nearly tied: its top two scores are within 0.01 on 88.5% of navtest. So any training
+  changes over half the picks, mostly between near-equal plans.
+- The 32 move about half a metre. R's lower-ranked proposals move the most, and none collapses: the lateral spread
+  widens by 7%.
+
+![The 32 on navtest by the vendored labels, against the release](../../../experiments/H15_perception_sidecar/figures/b2r-readouts.png)
+
+**nuScenes, out of domain (*measured*; reported).**
+- The best of the 32 improves by 0.016–0.018 m of ADE on every run.
+- The pick moves away from the human: at 3 s its L2 rises by 0.18, 0.26 and 0.15 m (C) and by 0.27, 0.30 and 0.14 m
+  (O), against the release's 3.735 m, SE about 0.06 clustered by scene.
+- Collisions within 3 s move by −0.005, within 2 SE.
+
+The fine-tuned scorer picks worse there even though its proposals got better.
+
+![nuScenes: each run against the release, per seed](../../../experiments/H15_perception_sidecar/figures/b2r-nusc.png)
+
+**Three scenes, each the extreme of a rule (*measured*; the rules are in the JSON).** All three are low-speed
+decisions, and the marks along each pick are its poses, 0.5 s apart.
+- **Where the fine-tune gains:** R creeps 3.5 m into the intersection on a red light (TLC 0, so EPDMS 0). Every C
+  seed holds at 0.3 m and scores 1.
+- **Where it loses:** R goes 9.4 m at an even pace. C starts slowly, then accelerates into the car merging from the
+  left (NC 0, every seed), while the human slows to 5.4 m.
+- **On R-clean:** at a crosswalk where the human and R stay put, C and O creep 2.7 m and fail DDC.
+
+![Three scenes: what the fine-tune changes](../../../experiments/H15_perception_sidecar/figures/b2r-scenes.jpg)
+
+### What it says (PREDICTIONS.md's decision rules; *argued*)
+
+- **K0 stops B-2.** On navtest, perfect front-camera agents within 50 m add nothing to a planner fine-tuned with the
+  release's own objective. The read uses them, and loses when they are removed, but no more than C learned without
+  them.
+  - O was the ceiling for any agent input through D's reader. So HD, H6 and H3, which carry the side-car's noisier
+    view of the same agents, were unlikely to beat C.
+  - The pre-registered reading: the room on NAVSIM belongs to the pick's horizon, not to agent inputs. That points
+    to B-6 (4 s forecasts) or B-12 (closed loop).
+  - This agrees with B-1, and with the release's own `agent_pred` training: it already learned per-proposal collision
+    and TTC agents over 4 s, from every logged agent.
+- **What K0 does not rule out:**
+  - another reader;
+  - inputs at pass 1, or to the scorer alone (B-3);
+  - agents beyond 1 s or out of view;
+  - closed loop, where agents react.
+
+  B-2 tested one learned use, by one recipe, open loop.
+- **The fine-tune itself is the surprise, and it is not a claim** (C − R was "reported, never claimed").
+  - Resuming the release's own objective for three epochs with LoRA gains about 0.4 points on navtest, through
+    progress and comfort. It costs a little in collisions.
+  - The same weights lose 0.8 to 3.3 points on R-clean, varying by seed, and pick farther from the human on nuScenes.
+    Its changes concentrate on low-speed decisions: whether to hold or creep.
+  - Whether it is worth anything needs the closed-loop gate, and a look at R-clean's direction failures. Navtest is
+    one held-out set, and the other two disagree with it.
+
+### What did not run
+
+Phase 2 did not run, as pre-registered:
+- D, HD, H6 and H3 under B-2-1;
+- B-2-2 and B-2-3 on C, D and HD;
+- the noise floor's seeds 3 and 4.
+
+Their code is in place and smoke-tested (`b2_phase.py --phase 2`), should the owner choose to run them despite the
+gate. The decision chain K1 to K5 was not read.
+
 ## Questions B-2 can answer
 
-| Question | Read from |
-|---|---|
-| Is there room for any agent input to a learned planner on NAVSIM? | K0 |
-| Does the side-car's hidden layer add to its decoded list? | K1 |
-| Does the side-car help the planner at all, in that form? | K2 |
-| Does it meet or beat the release? | K3 |
-| Can a learned reader replace the analytic clearance? | K4 |
-| Does an earlier layer carry more? | K5 |
-| Does the planner use its input, or ignore it? | the test-time swaps |
-| How do the proposals and the pick change? | B-0-4, every arm |
-| Which recipe moves the planner, and at what cost out of domain? | the recipes, descriptively; nuScenes |
+| Question | Read from | Answer (14 Nov) |
+|---|---|---|
+| Is there room for any agent input to a learned planner on NAVSIM? | K0 | **no, not through this reader:** O − C is −0.06 to −0.08 on every seed |
+| Does the side-car's hidden layer add to its decoded list? | K1 | not run (K0) |
+| Does the side-car help the planner at all, in that form? | K2 | not run (K0) |
+| Does it meet or beat the release? | K3 | not run (K0); the fine-tune alone (C) beats R by about 0.4 on navtest |
+| Can a learned reader replace the analytic clearance? | K4 | not run (K0) |
+| Does an earlier layer carry more? | K5 | not run (K0) |
+| Does the planner use its input, or ignore it? | the test-time swaps | O uses its agents (about 10% of picks change without them) |
+| How do the proposals and the pick change? | B-0-4, every arm | the 32 move about 0.5 m and grow safer; more than half the picks change |
+| Which recipe moves the planner, and at what cost out of domain? | the recipes, descriptively; nuScenes | B-2-1 only: the pick's L2 at 3 s rises 0.15–0.30 m on nuScenes |
 
 ## What B-2 does not answer
 
