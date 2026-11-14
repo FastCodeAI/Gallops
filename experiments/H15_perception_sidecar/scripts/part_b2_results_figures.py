@@ -13,6 +13,10 @@ R-clean, nuScenes, the swaps and each run's telemetry) and draws
   on R-clean with C's seed range (the noise floor);
 - b2r-readouts.png: the vendored readouts of each run's 32 on navtest, against R's;
 - b2r-nusc.png: nuScenes, each run against the release;
+- b2r-where.png: where each contrast's difference comes from, scene by scene: by the ego's speed, by the
+  number of agents the side-car decodes, and by whether R's pick fails NC or TTC (official, per scene);
+- b2r-failures.png: R's 275 navtest scenes whose pick fails NC or TTC: how many each run fixes, by the object
+  behind the failure (B-0-3's rule), and how many new failures it makes among R's passing scenes;
 - b2r-scenes.jpg: three scenes, each the extreme of a rule in SCENE_RULES: where the fine-tune gains on
   navtest, where it loses, and an R-clean window it newly drives against the traffic direction.
 Each draws what has been read so far (phase 1 alone, or both phases). Every number behind a chart is written
@@ -112,8 +116,8 @@ def reads() -> dict:
 
 
 def parse(run: str) -> tuple:
-    """b2-<v>-<arm>-s<seed> -> (v, arm, seed)."""
-    _, v, arm, seed = run.split("-")
+    """b2-<v>-<arm>-s<seed>, or its stage 1's b2-<v>-<arm>-s<seed>-stage1 -> (v, arm, seed)."""
+    _, v, arm, seed = run.replace("-stage1", "").split("-")
     return v, arm, int(seed[1:])
 
 
@@ -321,48 +325,68 @@ def end_labels(ax, ends: dict, gap: float = 0.06) -> None:
 
 
 def fig_training() -> None:
+    """Row 1, B-2-1: the planning loss, the final-score BCE and the read's null share. Row 2, the two-stage
+    recipes: stage 1's planning loss, stage 3's final-score BCE and its pass-4 read's null share."""
     runs = sorted(p for p in RUNS.glob("b2-*") if (p / "steps.jsonl").exists())
     if not runs:
         return
-    panels = (
-        ("planning", "planning loss (mtd_loss)"),
-        ("final", "final-score BCE"),
-        ("null_share", "attention on the null token"),
+    rows = (
+        (
+            "B-2-1, joint",
+            lambda p: parse(p.name)[0] == "1",
+            (
+                ("planning", "planning loss (mtd_loss)"),
+                ("final", "final-score BCE"),
+                ("null_share", "null share"),
+            ),
+        ),
+        (
+            "two stages: stage 1 (B-2-2 solid, B-2-3 dashed)",
+            lambda p: p.name.endswith("-stage1"),
+            (("planning", "stage 1: planning loss"),),
+        ),
+        (
+            "two stages: stage 3",
+            lambda p: parse(p.name)[0] in ("2", "3") and not p.name.endswith("-stage1"),
+            (("final", "stage 3: final-score BCE"), ("null_share", "stage 3: pass 4's null share")),
+        ),
     )
-    joint = [p for p in runs if parse(p.name)[0] == "1"]
-    fig, axes = plt.subplots(1, 3, figsize=(13, 4.2))
-    numbers = {}
-    for run in joint:
-        v, arm, seed = parse(run.name)
-        t = telemetry(run)
-        numbers[run.name] = {
-            k: float(np.nanmean(t[k][-10:])) for k, _ in panels if k in t and np.isfinite(t[k][-10:]).any()
-        }
-        for ax, (key, _) in zip(axes, panels):  # noqa: B905 -- Python 3.9
-            if key in t and np.isfinite(t[key]).any():
-                ax.plot(t["step"], smooth(t[key]), color=ARM_COLOURS[arm], lw=1.2, alpha=0.85)
-    for ax, (key, title) in zip(axes, panels):  # noqa: B905 -- Python 3.9
-        ax.set_title(title, loc="left")
-        ax.set_xlabel("step (batch 64; 3 epochs)")
-        ends = {}
-        for run in joint:
-            v, arm, seed = parse(run.name)
-            if key in numbers[run.name]:
-                ends.setdefault(arm, []).append(numbers[run.name][key])
-        if ends:
-            end_labels(ax, ends)
-    axes[0].legend(
-        handles=[
-            Line2D([], [], color=ARM_COLOURS[a], lw=2, label=a)
-            for a in ARMS
-            if any(parse(p.name)[1] == a for p in joint)
-        ],
+    two_stage = any(parse(p.name)[0] in ("2", "3") for p in runs)
+    fig, axes = plt.subplots(2 if two_stage else 1, 3, figsize=(14, 8.4 if two_stage else 4.2), squeeze=False)
+    cells = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
+    numbers, c = {}, 0
+    for _, pick, panels in rows if two_stage else rows[:1]:
+        chosen = [p for p in runs if pick(p)]
+        for key, label in panels:
+            ax = axes[cells[c]]
+            c += 1
+            ends = {}
+            for run in chosen:
+                v, arm, seed = parse(run.name)
+                t = telemetry(run)
+                if key not in t or not np.isfinite(t[key]).any():
+                    continue
+                ls = (0, (4, 2)) if v == "3" else "-"
+                ax.plot(t["step"], smooth(t[key]), color=ARM_COLOURS[arm], lw=1.2, alpha=0.85, ls=ls)
+                last = float(np.nanmean(t[key][-10:]))
+                numbers.setdefault(run.name, {})[key] = last
+                ends.setdefault(arm, []).append(last)
+            ax.set_title(label, loc="left")
+            ax.set_xlabel("step (batch 64; 3 epochs)")
+            if ends:
+                end_labels(ax, ends)
+    for ax in axes.ravel()[c:]:
+        ax.axis("off")
+    present = [a for a in ARMS if any(parse(p.name)[1] == a for p in runs)]
+    axes[0, 0].legend(
+        handles=[Line2D([], [], color=ARM_COLOURS[a], lw=2, label=a) for a in present],
         loc="upper right",
         title="arm (every seed)",
     )
     NUMBERS["training_last_500_steps"] = numbers
     fig.suptitle(
-        "B-2-1's training telemetry, every run: a running mean over 250 steps (each point of the log is 50)",
+        "Training telemetry, every run: a running mean over 250 steps (each point of the log is 50); "
+        "B-2-1 on top, the two-stage recipes below",
         x=0.01,
         ha="left",
         fontsize=10,
@@ -736,6 +760,437 @@ def fig_scenes(r: dict) -> None:
     px.save(fig, "b2r-scenes.jpg")
 
 
+# ------------------------------------------------------------------------------- reads, swaps, recipes
+
+
+def fig_attention() -> None:
+    """What each trained read attends to (scripts/b2_attention.py): the null share by pass, and attention per
+    token against uniform by the token's confidence and distance, and near each query's own pose."""
+    path = B2 / "attention.json"
+    if not path.exists():
+        return
+    att = json.loads(path.read_text())
+    NUMBERS["attention"] = att
+    runs = [(name, e) for name, e in sorted(att.items()) if e["recipe"] == "joint"]
+    if not runs:
+        return
+    fig, axes = plt.subplots(1, 4, figsize=(17, 4.4), gridspec_kw={"width_ratios": [2.4, 3, 3, 2.2]})
+    for name, e in runs:
+        arm, seed = e["arm"], parse(name)[2]
+        passes = sorted(e["passes"], key=int)
+        axes[0].plot(
+            [int(k) for k in passes],
+            [e["passes"][k]["null"] for k in passes],
+            "-o",
+            color=ARM_COLOURS[arm],
+            ms=4,
+            lw=1.2,
+            alpha=0.85,
+        )
+        p4 = e["passes"]["4"]
+        for ax, key in ((axes[1], "conf"), (axes[2], "dist")):
+            ratio = [m / u if u > 0 else np.nan for m, u in zip(p4[f"{key}_mass"], p4[f"{key}_uniform"])]  # noqa: B905
+            xs = np.arange(len(ratio)) + JITTER * (seed - 1) + 0.04 * (ARMS.index(arm) - 3)
+            ax.plot(xs, ratio, "o", color=ARM_COLOURS[arm], ms=4.5, mec=views.SURFACE, mew=0.8)
+        x = ARMS.index(arm) + JITTER * (seed - 1)
+        axes[3].plot(x, p4["near_share"] / max(p4["near_uniform"], 1e-9), "o", color=ARM_COLOURS[arm], ms=5)
+    some = runs[0][1]
+    axes[0].set_xticks([1, 2, 3, 4])
+    axes[0].set_xlabel("pass")
+    axes[0].set_title("attention on the null token", loc="left", fontsize=9)
+    for ax, key, title in (
+        (axes[1], "conf_bins", "pass 4: attention per token ÷ uniform, by confidence"),
+        (axes[2], "dist_bins", "pass 4: attention per token ÷ uniform, by distance (m)"),
+    ):
+        edges = some[key]
+        names = [f"{lo:g}–{hi:g}" if hi < 1e8 else f"> {lo:g}" for lo, hi in zip(edges[:-1], edges[1:])]  # noqa: B905
+        if key == "conf_bins":
+            names = [n.replace("1.0001", "1") for n in names]
+        ax.set_xticks(range(len(names)))
+        ax.set_xticklabels(names, fontsize=7.5)
+        ax.axhline(1.0, color=views.INK_2, lw=1, ls=(0, (3, 2)))
+        ax.set_title(title, loc="left", fontsize=9)
+        ax.set_yscale("log")
+        ax.grid(axis="x", visible=False)
+    axes[1].axvline(2.5, color=views.GREY, lw=1)
+    axes[1].text(
+        2.55, axes[1].get_ylim()[1], " the decoded list's cut", fontsize=7, color=views.INK_2, va="top"
+    )
+    present = [a for a in ARMS if any(e["arm"] == a for _, e in runs)]
+    axes[3].set_xticks([ARMS.index(a) for a in present])
+    axes[3].set_xticklabels(present)
+    axes[3].axhline(1.0, color=views.INK_2, lw=1, ls=(0, (3, 2)))
+    axes[3].set_title(
+        f"pass 4: attention within {some['near_m']:g} m of a query's pose ÷ uniform", loc="left", fontsize=9
+    )
+    axes[3].grid(axis="x", visible=False)
+    axes[0].legend(
+        handles=[Line2D([], [], color=ARM_COLOURS[a], marker="o", lw=1.2, label=a) for a in present],
+        loc="lower left",
+        title="arm (every seed)",
+    )
+    fig.suptitle(
+        f"What the trained reads attend to, on {some['sample_rows']:,} navtest scenes (B-2-1; the dashed "
+        "line is uniform attention): O, D and HD read the agents their list keeps, H6 and H3 all 128 slots",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    px.save(fig, "b2r-attention.png")
+
+
+def fig_swaps() -> None:
+    """The test-time swaps (b2_read swaps), every phase's: the share of picks moving more than 1 m, and the
+    pick's vendored final, swapped minus own."""
+    found = {}
+    for path in sorted(B2.glob("swaps*.json")):
+        found.update(json.loads(path.read_text())["runs"])
+    if not found:
+        return
+    kinds = ("none", "log", "fold", "truth")
+    names = {
+        "none": "no input",
+        "log": "another log's",
+        "fold": "another fold's side-car",
+        "truth": "labelled agents",
+    }
+    fig, axes = plt.subplots(1, 2, figsize=(15, 4.6))
+    present = [a for a in ARMS if any(parse(run)[1] == a for run in found)]
+    width = 0.8 / max(len(present), 1)
+    for j, arm in enumerate(present):
+        for run, e in sorted(found.items()):
+            if parse(run)[1] != arm:
+                continue
+            seed = parse(run)[2]
+            for i, kind in enumerate(kinds):
+                if kind not in e:
+                    continue
+                x = i - 0.4 + width * (j + 0.5) + 0.02 * (seed - 2)
+                axes[0].plot(
+                    x, e[kind]["moved"] * 100, "o", color=ARM_COLOURS[arm], ms=4.5, mec=views.SURFACE
+                )
+                d, se = e[kind]["final_minus_own"], e[kind]["se"]
+                axes[1].plot([x, x], [d - 2 * se, d + 2 * se], color=ARM_COLOURS[arm], lw=1.1, alpha=0.8)
+                axes[1].plot(x, d, "o", color=ARM_COLOURS[arm], ms=4.5, mec=views.SURFACE)
+    for ax, title, ylabel in (
+        (axes[0], "the pick moves more than 1 m at 4 s", "% of navtest scenes"),
+        (axes[1], "the pick's vendored final, swapped minus own", "points, ± 2 SE clustered by log"),
+    ):
+        ax.set_xticks(range(len(kinds)))
+        ax.set_xticklabels([names[k] for k in kinds], fontsize=8)
+        ax.set_title(title, loc="left", fontsize=9)
+        ax.set_ylabel(ylabel)
+        ax.grid(axis="x", visible=False)
+    axes[1].axhline(0, color=views.INK_2, lw=1)
+    axes[1].legend(
+        handles=[Line2D([], [], color=ARM_COLOURS[a], marker="o", lw=1.1, label=a) for a in present],
+        loc="lower left",
+        title="arm (B-2-1, every seed)",
+    )
+    NUMBERS["swaps_all"] = found
+    fig.suptitle(
+        "Does the planner use its input? Each B-2-1 run read again on navtest with its input replaced at "
+        "test (vendored)",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    px.save(fig, "b2r-swaps.png")
+
+
+def fig_recipes(r: dict) -> None:
+    """C, D and HD under the three recipes: navtest EPDMS minus R, R-clean, nuScenes L2 at 3 s, and the 32's
+    matched move from R (B-0-4); one mark a seed, the recipe by its shape."""
+    marks = {"1": "o", "2": "s", "3": "^"}
+    rc_path = next((p for p in (B2 / "rclean-all.json", B2 / "rclean.json") if p.exists()), None)
+    rc = json.loads(rc_path.read_text())["runs"] if rc_path else {}
+    nu_path = next((p for p in (B2 / "nusc.json", B2 / "nusc-phase1.json") if p.exists()), None)
+    nu = json.loads(nu_path.read_text())["runs"] if nu_path else {}
+    an_path = B2 / "analysis-navtest-all.json"
+    an = json.loads(an_path.read_text())["runs"] if an_path.exists() else {}
+    if not any(parse(run)[0] in ("2", "3") for run in r["vs_r"]):
+        return
+    panels = (
+        ("navtest EPDMS − R, points", {k: v["epdms_hf"]["a_minus_b"] for k, v in r["vs_r"].items()}),
+        ("R-clean, B-1's value − the release's", {k: v["minus_release"] for k, v in rc.items()}),
+        (
+            "nuScenes: the pick's L2 at 3 s − the release's, m",
+            {k: v["minus_release"]["l2_3s"]["mean"] for k, v in nu.items()},
+        ),
+        (
+            "navtest: the 32's matched move from R, m",
+            {k: v["from_R"]["matched_ade_m"] for k, v in an.items()},
+        ),
+    )
+    arms = ("C", "D", "HD")
+    fig, axes = plt.subplots(1, 4, figsize=(17, 4.4))
+    numbers = {}
+    for ax, (title, values) in zip(axes, panels):  # noqa: B905 -- Python 3.9
+        numbers[title] = {}
+        for i, arm in enumerate(arms):
+            for v in ("1", "2", "3"):
+                ys = [(parse(k)[2], x) for k, x in sorted(values.items()) if parse(k)[:2] == (v, arm)]
+                for seed, y in ys:
+                    xx = i + (int(v) - 2) * 0.22 + 0.04 * (seed - 2)
+                    ax.plot(xx, y, marks[v], color=ARM_COLOURS[arm], ms=5.5, mec=views.SURFACE, mew=0.8)
+                    numbers[title][b2_read.name(v, arm, seed)] = y
+        ax.axhline(0, color=views.INK_2, lw=1)
+        ax.set_xticks(range(len(arms)))
+        ax.set_xticklabels(arms)
+        ax.set_title(title, loc="left", fontsize=9)
+        ax.grid(axis="x", visible=False)
+    axes[0].legend(
+        handles=[
+            Line2D([], [], color=views.INK_2, marker=marks[v], ls="none", ms=6, label=VERSIONS[v])
+            for v in marks
+        ],
+        loc="best",
+        fontsize=7.5,
+    )
+    NUMBERS["recipes"] = numbers
+    fig.suptitle(
+        "The three recipes on C, D and HD: one mark a seed, the recipe by its shape (descriptive: the "
+        "recipes differ in steps, parameters and labels)",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    px.save(fig, "b2r-recipes.png")
+
+
+# ---------------------------------------------------------------------------------------- scene by scene
+
+#: Buckets for b2r-where: the ego's speed at t (m/s, from the cached ego status) and the agents the fold
+#: side-car's decoded list keeps on the scene.
+SPEED_BINS = (
+    (0.0, 0.5, "stopped (< 0.5)"),
+    (0.5, 5.0, "slow (0.5–5)"),
+    (5.0, 10.0, "5–10"),
+    (10.0, 1e9, "> 10"),
+)
+AGENT_BINS = ((0, 0, "none"), (1, 2, "1–2"), (3, 5, "3–5"), (6, 10**6, "6 or more"))
+#: The contrasts b2r-where reads, each a run pair per seed: (label, (version, arm) A, (version, arm) B or R).
+WHERE = (
+    ("C − R", ("1", "C"), None),
+    ("O − C", ("1", "O"), ("1", "C")),
+    ("D − C", ("1", "D"), ("1", "C")),
+    ("HD − D", ("1", "HD"), ("1", "D")),
+    ("H6 − HD", ("1", "H6"), ("1", "HD")),
+)
+KIND_ORDER = (
+    "in_view_50m",
+    "outside_view_or_range",
+    "not_in_labels",
+    "static",
+    "unnamed",
+    "no_safe_proposal",
+)
+KIND_NAMES = {
+    "in_view_50m": "in view,\n≤ 50 m",
+    "outside_view_or_range": "out of view\nor range",
+    "not_in_labels": "not in\nthe labels",
+    "static": "static",
+    "unnamed": "unnamed",
+    "no_safe_proposal": "no safe\nproposal",
+}
+
+
+def official_runs() -> dict:
+    """run name -> its official per-scene scores, from whichever phase read it."""
+    out = {}
+    for phase in ("1", "2"):
+        d = B2 / f"navtest-phase{phase}"
+        for score in sorted(d.glob("score-b2-*")) if d.exists() else ():
+            if (score / "manifest.json").exists():
+                out[score.name[len("score-") :]] = px.official(score)
+    return out
+
+
+def scene_table() -> dict:
+    """Per navtest scene: its log, R's official EPDMS and NC/TTC verdict, the ego's speed, the decoded agents
+    the fold side-car keeps, and for R's failures the object behind it (B-0-3's rule: failure_kind)."""
+    from gallops.drivejepa_perception import headroom, navsim_data
+    from gallops.drivejepa_perception import targets as tg
+
+    nav = px.Split("navtest")
+    official_r = px.official(OUT / "part-b/b0/navtest-R")
+    tokens = nav.tokens
+    fails = np.array([official_r[t]["NC"] < 1 or official_r[t]["TTC"] < 1 for t in tokens])
+    safe = ((nav.pdm[..., 0] == 1) & (nav.pdm[..., 5] == 1)).any(1)
+    kind = np.array([""] * len(tokens), dtype=object)
+    for r in np.flatnonzero(fails):
+        if not safe[r]:
+            kind[r] = "no_safe_proposal"
+            continue
+        track = int(nav.collision_agent[r, nav.pick[r]])
+        if track == headroom.NO_AGENT:
+            track = int(nav.ttc_agent[r, nav.pick[r]])
+        kind[r] = headroom.failure_kind(
+            navsim_data.agents_of(nav.labels, int(r)),
+            tg.front_projection(np.asarray(nav.lidar2img[r])),
+            track,
+        )[0]
+    return {
+        "tokens": tokens,
+        "logs": nav.logs,
+        "r_epdms": np.array([official_r[t]["epdms_hf"] for t in tokens], float),
+        "r_fails": fails,
+        "kind": kind,
+        "speed": np.linalg.norm(np.asarray(nav.ego_status[:, -1, 3:5], float), axis=-1),
+        "decoded": np.load(OUT / "b2-hidden-navtest-v1" / "agents.npz")["mask"].sum(1),
+    }
+
+
+def fig_where(table: dict, official: dict) -> None:
+    from gallops.drivejepa_perception.b_report import clustered_se
+
+    tokens, logs = table["tokens"], table["logs"]
+
+    def epdms(run):
+        return np.array([official[run][t]["epdms_hf"] for t in tokens], float)
+
+    families = (
+        (
+            "the ego's speed at t, m/s",
+            [(table["speed"] >= lo) & (table["speed"] < hi) for lo, hi, _ in SPEED_BINS],
+            [b[2] for b in SPEED_BINS],
+        ),
+        (
+            "agents in the decoded list (the fold side-car)",
+            [(table["decoded"] >= lo) & (table["decoded"] <= hi) for lo, hi, _ in AGENT_BINS],
+            [b[2] for b in AGENT_BINS],
+        ),
+        ("R's pick (official)", [table["r_fails"], ~table["r_fails"]], ["fails NC or TTC (275)", "passes"]),
+    )
+    series = []
+    for label, a, b in WHERE:
+        diffs = []
+        for seed in range(5):
+            ra = b2_read.name(*a, seed)
+            rb = None if b is None else b2_read.name(*b, seed)
+            if ra in official and (b is None or rb in official):
+                diffs.append(epdms(ra) - (table["r_epdms"] if b is None else epdms(rb)))
+        if diffs:
+            series.append((label, a[1], np.mean(diffs, axis=0) * 100, len(diffs)))
+    if not series:
+        return
+    NUMBERS["where"] = {}
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.8), gridspec_kw={"width_ratios": [4, 4, 2.2]})
+    width = 0.8 / len(series)
+    for ax, (title, masks, names) in zip(axes, families):  # noqa: B905 -- Python 3.9
+        for j, (label, arm, d, seeds) in enumerate(series):
+            for i, m in enumerate(masks):
+                ok = m & np.isfinite(d)
+                mean, se = float(d[ok].mean()), clustered_se(d[ok], logs[ok])
+                x = i - 0.4 + width * (j + 0.5)
+                ax.plot([x, x], [mean - 2 * se, mean + 2 * se], color=ARM_COLOURS[arm], lw=1.4)
+                ax.plot(x, mean, "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
+                NUMBERS["where"].setdefault(label, {}).setdefault(title, {})[names[i]] = {
+                    "mean": mean,
+                    "se": se,
+                    "scenes": int(ok.sum()),
+                    "seeds": seeds,
+                }
+        ax.axhline(0, color=views.INK_2, lw=1)
+        ax.set_xticks(range(len(masks)))
+        ax.set_xticklabels(
+            [f"{n}\n{int(m.sum()):,} scenes" for n, m in zip(names, masks)],  # noqa: B905 -- Python 3.9
+            fontsize=7.5,
+        )
+        ax.set_title(title, loc="left", fontsize=9)
+        ax.grid(axis="x", visible=False)
+    axes[0].set_ylabel("EPDMS (human filter) difference, points")
+    axes[-1].legend(
+        handles=[
+            Line2D([], [], color=ARM_COLOURS[arm], marker="o", lw=1.4, label=f"{label} ({seeds} seeds)")
+            for label, arm, _, seeds in series
+        ],
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1.0),
+        title="contrast (seeds averaged per scene)",
+    )
+    fig.suptitle(
+        "Where each contrast's difference comes from: the scene's mean difference within each group, ± 2 SE "
+        "clustered by log (navtest, official)",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    px.save(fig, "b2r-where.png")
+
+
+def fig_failures(table: dict, official: dict) -> None:
+    tokens = table["tokens"]
+    fails, kind = table["r_fails"], table["kind"]
+    passes = ~fails
+    rows = {}
+    for run, scores in sorted(official.items()):
+        v, arm, seed = parse(run)
+        bad = np.array([scores[t]["NC"] < 1 or scores[t]["TTC"] < 1 for t in tokens])
+        fixed = fails & ~bad
+        rows[run] = {
+            "fixed": int(fixed.sum()),
+            "fixed_by_kind": {k: int((fixed & (kind == k)).sum()) for k in KIND_ORDER},
+            "broken": int((passes & bad).sum()),
+            "failing": int(bad.sum()),
+        }
+    if not rows:
+        return
+    totals = {k: int((fails & (kind == k)).sum()) for k in KIND_ORDER}
+    NUMBERS["failures"] = {"R_failing": int(fails.sum()), "R_failing_by_kind": totals, "runs": rows}
+    groups = [(v, arm) for v in ("1", "2", "3") for arm in ARMS]
+    present = [(v, arm) for v, arm in groups if any(parse(run)[:2] == (v, arm) for run in rows)]
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.6), gridspec_kw={"width_ratios": [3, 3, 3]})
+    panels = (
+        (axes[0], "fixed", f"of R's {int(fails.sum())} failing scenes, how many each run passes"),
+        (axes[1], "broken", f"new failures among R's {int(passes.sum()):,} passing scenes"),
+    )
+    for ax, key, title in panels:
+        for i, (v, arm) in enumerate(present):
+            for run, x in sorted(rows.items()):
+                if parse(run)[:2] == (v, arm):
+                    xx = i + JITTER * (parse(run)[2] - 1)
+                    ax.plot(xx, x[key], "o", ms=5, color=ARM_COLOURS[arm], mec=views.SURFACE, mew=1)
+        ax.set_xticks(range(len(present)))
+        ax.set_xticklabels([f"{arm}\nB-2-{v}" for v, arm in present], fontsize=7)
+        ax.set_xlim(-0.6, len(present) - 0.4)
+        ax.set_title(title, loc="left", fontsize=8.5)
+        ax.set_ylabel("scenes")
+        ax.grid(axis="x", visible=False)
+    ax = axes[2]
+    shown = [k for k in KIND_ORDER if totals[k]]
+    for i, (v, arm) in enumerate(present):
+        runs = [x for run, x in rows.items() if parse(run)[:2] == (v, arm)]
+        for j, k in enumerate(shown):
+            share = np.mean([x["fixed_by_kind"][k] / totals[k] for x in runs]) * 100
+            x = j + (i - (len(present) - 1) / 2) * (0.8 / max(len(present), 1))
+            ax.bar(x, share, width=0.8 / max(len(present), 1) * 0.9, color=ARM_COLOURS[arm], lw=0)
+    ax.set_xticks(range(len(shown)))
+    ax.set_xticklabels([f"{KIND_NAMES[k]}\n({totals[k]})" for k in shown], fontsize=7)
+    ax.set_ylabel("% of those failures fixed (mean over seeds)")
+    ax.set_title("fixed, by the object behind R's failure (B-0-3)", loc="left", fontsize=8.5)
+    ax.grid(axis="x", visible=False)
+    ax.legend(
+        handles=[Patch(color=ARM_COLOURS[arm], label=f"{arm} · B-2-{v}") for v, arm in present],
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1.0),
+        fontsize=7.5,
+    )
+    fig.suptitle(
+        "Collisions and time-to-collision, scene by scene (official): fixed and new failures against R, one "
+        "dot a seed",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+    )
+    fig.tight_layout()
+    px.save(fig, "b2r-failures.png")
+
+
 def main() -> None:
     views.use_style()
     r = reads()
@@ -754,8 +1209,16 @@ def main() -> None:
     fig_training()
     fig_health()
     fig_nusc()
+    fig_attention()
+    fig_swaps()
+    if r["phases"]:
+        fig_recipes(r)
     if "1" in r["phases"]:
         fig_scenes(r)
+        official = official_runs()
+        table = scene_table()
+        fig_where(table, official)
+        fig_failures(table, official)
     NUMBERS["noise_limit"] = b2_read.NOISE_LIMIT
     (FIGURES / "part-b2-results-numbers.json").write_text(json.dumps(NUMBERS, indent=1, default=float) + "\n")
     print(f"wrote {FIGURES / 'part-b2-results-numbers.json'}")

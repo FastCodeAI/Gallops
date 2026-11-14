@@ -260,6 +260,10 @@ def navtest_read(cfg, args) -> dict:
     runs = [name(v, arm, s) for v, arm, seeds in PHASES[args.phase] for s in seeds]
     if args.phase == "2" and args.extra_seeds:
         runs += [name("1", arm, s) for arm in ("C", "D", "HD") for s in (3, 4)]
+    if args.score_only:
+        # Score some of the phase's runs ahead of the read, as their dumps land; nothing is paired or written
+        # beyond each run's plans and official scores, which the read then finds and does not score again.
+        runs = [r for r in runs if r in args.score_only.split(",")]
     missing = [r for r in runs if not (root / r / "dump-navtest" / "labels.npz").exists()]
     if missing:
         problems.append(f"runs without a labelled navtest dump: {missing}")
@@ -290,8 +294,13 @@ def navtest_read(cfg, args) -> dict:
         scored[run] = out / f"score-{run}"
         if not scored[run].exists():
             navtest.score_plans(cfg, plans, verified, scored[run], args.workers, run)
+        if args.score_only:
+            continue
         vs_r[run] = navtest.paired(scored[run], r_dir, labels_dir)
         read[run] = readouts(root / run / "dump-navtest", release_pick)
+    if args.score_only:
+        print(f"scored {len(scored)} runs ahead of the read: {sorted(scored)}")
+        return {}
     # The arms the chain pairs against, read in phase 1 (C) or this phase.
     for v, arm, seeds in [("1", "C", (0, 1, 2))]:
         for s in seeds:
@@ -518,6 +527,7 @@ def main(argv=None) -> None:
         "--previous", default="", help="phase 2: phase 1's read, whose C runs the chain pairs with"
     )
     p.add_argument("--extra-seeds", action="store_true", help="the noise-floor rule fired: seeds 3 and 4 too")
+    p.add_argument("--score-only", default="", help="comma-separated runs: score them ahead of the read only")
     p.add_argument("--workers", type=int, default=48)
     p.add_argument("--out", required=True)
     p = sub.add_parser("nusc")
