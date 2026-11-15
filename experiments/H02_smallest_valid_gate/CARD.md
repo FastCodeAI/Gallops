@@ -5,9 +5,9 @@
 
 **Naren** · NAVSIM, KITScenes, nuScenes, neuroNCAP, Bench2Drive, AlpaSim · ☑️ done · 20 Oct – 21 Oct 2026 · enabler
 
-[← all experiments](../../README.md#enablers) · [the account](README.md) · [experiment.toml](experiment.toml)
+[← all experiments](../README.md#enablers) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Priority:** 2 · **Evidence for:** D13, D15 ([decision log](../../README.md#decision-log))
+**Priority:** 2 · **Evidence for:** D13, D15, D20 ([decision log](../README.md#decision-log))
 
 ## Question
 

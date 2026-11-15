@@ -20,4 +20,5 @@ account: why, what was done, what it showed, and what was decided.
 
 ## Decision
 
-<What the team decided on this evidence, and the decision-log id (experiments/decisions.toml).>
+<The gate's verdict (SHIP, HOLD or FAIL), what the team decided on it, and the decision-log id
+(experiments/decisions.toml).>

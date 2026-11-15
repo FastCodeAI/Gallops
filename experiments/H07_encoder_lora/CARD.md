@@ -9,7 +9,7 @@
 
 > The record is on branch `train/drivejepa-kitscenes`, not merged yet; its links go to that branch.
 
-**Priority:** 7 · **Evidence for:** D11, D18 ([decision log](../../README.md#decision-log))
+**Priority:** 7 · **Evidence for:** D11, D18, D20 ([decision log](../README.md#decision-log))
 
 ## Question
 

@@ -314,6 +314,44 @@ nothing else is moving").
 
 ---
 
+## Why two repos
+
+Four reasons, in increasing order of importance:
+
+1. **Engineering.** Paddock's dependency list is six packages and its `make
+   check` runs in a clean environment with no GPU. Putting torch in there makes
+   its gate heavy and breaks the invariant that paddock never imports a model.
+2. **Data isolation.** The strategy is to attract OEMs who bring their own data.
+   That data arrives under terms that do not permit it to sit beside a repo we
+   publish results from. The separation has to exist before the first
+   conversation, not after.
+3. **Our own numbers stay trustworthy to us.** Paddock's claim is that an ADE
+   and an NCAP score are "statements about the same model, run the same way".
+   The moment our model gets a privilege the vendors' do not have — in-process
+   access, a special data path, a shortcut past the HTTP node — we lose the
+   ability to tell whether we are actually gaining on them.
+4. **Paddock's credibility is the commercial asset.** A leaderboard maintained
+   by the party that also trains the winning entry is marketing. A leaderboard
+   where our model is one adapter among six, scored by machinery that predates
+   it and scored four competitors first, is evidence. **Keeping the scorer
+   separate from the trainee is what makes the numbers persuasive to somebody
+   who does not work here.**
+
+## How the repo is laid out
+
+| Where | What |
+|---|---|
+| [experiments/](../experiments/) | one folder per experiment: `experiment.toml` (the facts), `CARD.md` (rendered from them), the account, the predictions, and the scripts as they ran |
+| [src/gallops/train/](../src/gallops/train/) | the trainers: the KITScenes re-ranker, the swerve finetune, the scorer on cached features, and the preflight and safety checks they must pass |
+| [src/gallops/expert/](../src/gallops/expert/) | the expert that draws evasion and braking targets offline, and the grader every plan is judged by |
+| [src/gallops/data/](../src/gallops/data/) | training-data builders: the re-ranker's dataset, real nuScenes scenes as episodes |
+| [src/gallops/drivejepa_b2d/](../src/gallops/drivejepa_b2d/), [recipes/](../recipes/) | the Bench2Drive training, as a recipe that prints or runs its commands |
+| [checkpoint.py](../src/gallops/checkpoint.py), [config.py](../src/gallops/config.py) | the checkpoint contract, and the only code that knows where anything lives on disk |
+| [experiments.py](../src/gallops/experiments.py) | the experiment registry: validates every record and renders the README |
+
+The names: a paddock is the enclosure where a horse is paraded and judged
+before a race. The gallops is the training ground where it is made fast.
+
 ## Open questions
 
 1. **Compute.** The binding constraint on everything past step 1.

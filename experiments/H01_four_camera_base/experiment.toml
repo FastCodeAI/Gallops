@@ -7,7 +7,7 @@
 schema = 1
 id = "H01"
 title = "The 4-camera stack as the base: WA-JEPA's frozen encoder under Drive-JEPA's planner"
-short = "4-camera base (WA-JEPA + DJ planner)"
+short = "4-camera stack (WA-JEPA + DJ planner)"
 track = "hypothesis"
 owner = "Navvrat"
 benchmarks = ["navsim", "bench2drive", "kitscenes", "nuscenes", "neuroncap", "alpasim"]

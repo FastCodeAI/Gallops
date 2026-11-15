@@ -4,8 +4,8 @@ Gallops exists to produce evidence that a model is better, and evidence that liv
 hand-written table drifts: a number is copied, the run behind it is retrained, and nobody can say
 which checkpoint the row was about. So each experiment carries its facts in one machine-readable
 file -- who ran it, what it started from, what it trained on, which checkpoint it wrote (by weights
-sha256), what it measured and how strongly -- and the README's tables, decision path and gate log
-are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
+sha256), what it measured and how strongly -- and the README's tables, the experiments index and
+each card are *rendered* from those files. `tests/test_experiments.py` fails when the README differs from
 what this module renders, so the README cannot say something the registry does not.
 
 Layout (docs/experiments.md has the rules and the reasons):
@@ -27,8 +27,11 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import html
 import posixpath
 import re
+import subprocess
+import textwrap
 
 try:
     import tomllib
@@ -47,6 +50,12 @@ SCHEMA = 1
 #: Each experiment's one-page card, rendered whole into its folder; the README's IDs link to it.
 CARD = "CARD.md"
 
+#: The README's one picture, rendered whole from the registry.
+PICTURE = "docs/assets/experiments.svg"
+
+#: The index page: the tables too long for the README's front page.
+INDEX = "experiments/README.md"
+
 #: Where a record on an unmerged branch is linked. A URL, not a machine path.
 GITHUB = "https://github.com/FastCodeAI/Gallops"
 
@@ -60,6 +69,8 @@ EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 GIT_SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 #: One file of a checkpoint, as `sha256sum` prints it: digest, two spaces, name.
 MEMBER_RE = re.compile(r"^[0-9a-f]{64}  \S+$")
+#: The picture's base box: how wide a line of a baseline's `short` can run, and how many fit.
+BASE_WIDTH, BASE_LINES = 22, 2
 
 TRACKS = ("gap-closing", "hypothesis", "enabler")
 STATUSES = ("planned", "running", "done", "parked", "dropped")
@@ -84,8 +95,21 @@ GATE_BENCHES = ("navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "
 STEP_UNITS = ("epoch", "pass", "optimizer_step")
 DATA_ROLES = ("train", "selection", "held-out", "eval")
 GATE_TIERS = ("quick", "closed", "all")
-GATE_VERDICTS = ("SHIP", "HOLD", "FAIL", "INCOMPLETE")
-PAIR_VERDICTS = ("GAIN", "NEUTRAL", "REGRESSION", "NO RECORDS", "TOO FEW UNITS", "NOT RUN")
+#: What paddock's `overall()` returns. An unfinished subset is a HOLD that says so, not a verdict of its own.
+GATE_VERDICTS = ("SHIP", "HOLD", "FAIL")
+#: Paddock's nine, then `NOT RUN`, which is ours: a benchmark the job's tier left out.
+PAIR_VERDICTS = (
+    "GAIN",
+    "NEUTRAL",
+    "REGRESSION",
+    "NO RECORDS",
+    "TOO FEW UNITS",
+    "NO UNIT",
+    "CONFIG DIFFERS",
+    "INCOMPLETE",
+    "SUBSET DIFFERS",
+    "NOT RUN",
+)
 
 #: Modules that serve every experiment: the contract, the site config, the CLI. Every other module
 #: under src/gallops must be claimed by an experiment's `[runs.code]`, so no trainer exists in the
@@ -557,10 +581,15 @@ def validate(reg: Registry) -> list[str]:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is not 64 lower-case hex digits")
                     elif wsha == EMPTY_SHA256:
                         errors.append(f"{rwhere} checkpoint: weights_sha256 is the SHA-256 of empty input")
-                    elif wsha in seen_sha:
-                        errors.append(f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}")
-                    else:
-                        seen_sha[wsha] = rid
+                    elif run.get("trained") != []:
+                        # `trained = []` pins weights the run did not write: paddock's gate accepts a code
+                        # change on the same weights. Two runs that trained cannot have written one file.
+                        if wsha in seen_sha:
+                            errors.append(
+                                f"{rwhere} checkpoint: {wsha[:12]} is also claimed by {seen_sha[wsha]}"
+                            )
+                        else:
+                            seen_sha[wsha] = rid
 
             for j, res in enumerate(run.get("results", [])):
                 xwhere = f"{rwhere} results[{j}]"
@@ -616,8 +645,40 @@ def validate(reg: Registry) -> list[str]:
                 errors.append(f"{run.get('id')}: start_from {start} is not a run")
 
     errors.extend(_validate_decisions(reg, ids | seen_runs, owners))
+    errors.extend(_undecided(reg))
     errors.extend(_unclaimed_modules(reg))
     return errors
+
+
+def _undecided(reg: Registry) -> list[str]:
+    """A finished hypothesis was judged by the gate, and the team said what follows from that verdict."""
+    errors = []
+    for e in reg.experiments:
+        if e.data.get("track") != "hypothesis" or e.data.get("status") != "done":
+            continue
+        gates = [gate for run in e.runs for gate in run.get("gate", [])]
+        if not gates:
+            errors.append(f"{e.id}: a done hypothesis has a gate verdict on one of its runs")
+        verdict = e.data.get("verdict")
+        if verdict == "none":
+            errors.append(f"{e.id}: a done hypothesis says how it came out (`verdict` is not none)")
+        if verdict == "positive" and not any(gate.get("verdict") == "SHIP" for gate in gates):
+            errors.append(f"{e.id}: a positive hypothesis has a gate SHIP")
+        # Any older decision will not do: D11 names H01 as the base, and cannot have said what follows
+        # from a gate run after it. The same day counts, since a team decides on the day's verdict.
+        last = max((g["date"] for g in gates if isinstance(g.get("date"), dt.date)), default=dt.date.min)
+        if not any(_cites(d, e.id) and d["date"] >= last for d in reg.decisions):
+            errors.append(
+                f"{e.id}: a done hypothesis is cited as evidence by a decision "
+                "dated on or after its last gate"
+            )
+    return errors
+
+
+def _cites(decision: dict[str, Any], experiment: str) -> bool:
+    # A non-string is `_validate_decisions`' to report, with a message; it must not raise here first.
+    refs = [ref for ref in decision.get("evidence", []) if isinstance(ref, str)]
+    return isinstance(decision.get("date"), dt.date) and experiment in {r.split(".", 1)[0] for r in refs}
 
 
 def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> list[str]:
@@ -641,6 +702,12 @@ def _validate_decisions(reg: Registry, known: set[str], owners: set[str]) -> lis
         for ref in [*d.get("evidence", []), *d.get("next", [])]:
             if ref not in known:
                 errors.append(f"{where}: {ref} is not an experiment or run")
+        if d.get("baseline") and len(_base_lines(str(d.get("short", "")))) > BASE_LINES:
+            # Refused, not cut: a box that drops words names a different model and nothing fails.
+            errors.append(
+                f"{where}: a baseline's `short` names it in the picture, which has room for "
+                f"{BASE_LINES} lines of {BASE_WIDTH} characters"
+            )
     return errors
 
 
@@ -721,9 +788,13 @@ PAIR_MARK = {
     "REGRESSION": "🔴",
     "NO RECORDS": "▫️",
     "TOO FEW UNITS": "▫️",
+    "NO UNIT": "▫️",
+    "CONFIG DIFFERS": "▫️",
+    "INCOMPLETE": "▫️",
+    "SUBSET DIFFERS": "▫️",
     "NOT RUN": "—",
 }
-GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**", "INCOMPLETE": "… INCOMPLETE"}
+GATE_MARK = {"SHIP": "🚀 **SHIP**", "HOLD": "⏸ **HOLD**", "FAIL": "⛔ **FAIL**"}
 
 
 def _cell(text: Any) -> str:
@@ -822,17 +893,19 @@ def strength(res: dict[str, Any]) -> str:
     return text + (f" · {', '.join(flags)}" if flags else "")
 
 
-def result_text(res: dict[str, Any], bold: bool = True) -> str:
+def result_head(res: dict[str, Any], bold: bool = True) -> str:
     value = _num(res["value"])
     value = f"**{value}**" if bold else value
     bench = BENCHMARKS.get(res["bench"], res["bench"])
     head = f"{bench} {res['metric']} "
     if "baseline_value" in res:
-        head += f"{_num(res['baseline_value'])} → {value}"
-    else:
-        head += value
+        return head + f"{_num(res['baseline_value'])} → {value}"
+    return head + value
+
+
+def result_text(res: dict[str, Any], bold: bool = True) -> str:
     n = f"n={_num(res['n'])}" + (f" {res['unit']}s" if res.get("unit") else "") if "n" in res else ""
-    return head + (f" ({n})" if n else "")
+    return result_head(res, bold) + (f" ({n})" if n else "")
 
 
 def tag(run: dict[str, Any] | None) -> str:
@@ -853,7 +926,7 @@ def render_badges(reg: Registry) -> str:
     badges = [
         ("gap_closing", f"{counts['gap-closing']}_experiments", "2E8B4E", "#gap-closing-experiments"),
         ("hypotheses", f"{counts['hypothesis']}_open_or_tested", "1F6FEB", "#hypothesis-experiments"),
-        ("gated_checkpoints", str(gated), "B4560A", "#regression-gate-log"),
+        ("gated_checkpoints", str(gated), "B4560A", f"{INDEX}#regression-gate-log"),
         ("gallops_version", version.replace("-", "--"), "555555", "#where-we-are"),
     ]
     return "\n".join(
@@ -863,22 +936,22 @@ def render_badges(reg: Registry) -> str:
     )
 
 
+def _count(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
 def render_status(reg: Registry) -> str:
     lines = []
     baselines = [d for d in reg.decisions if d.get("baseline")]
     if baselines:
-        d = baselines[-1]
-        lines.append(
-            f"- **Base model:** {d['baseline']} — since {d['id']}, {_date(d['date'])} {d['date'].year}."
-        )
+        lines.append(f"- **Base model:** {baselines[-1]['baseline']}.")
     versions = [d for d in reg.decisions if d.get("version")]
     if versions:
-        d = versions[-1]
-        lines.append(f"- **Latest shipped version:** `{d['version']}` ({d['id']}).")
+        lines.append(f"- **Shipped version:** `{versions[-1]['version']}` ({versions[-1]['id']}).")
     else:
         lines.append(
-            "- **Shipped version:** none yet. `gallops-v0.1` is the first checkpoint the gate says SHIP to "
-            "against the base ([how versions are earned](docs/experiments.md#versions))."
+            "- **Shipped version:** none yet. A version is earned by a gate SHIP "
+            "([how](docs/experiments.md#versions))."
         )
     gates = [(e, run, g) for e in reg.experiments for run in e.runs for g in run.get("gate", [])]
     if gates:
@@ -889,90 +962,120 @@ def render_status(reg: Registry) -> str:
             f"- **Last gate run:** {_date(g['date'])} · [{run['id']}]({card(reg, e.id)}) · "
             f"{GATE_MARK[g['verdict']]}{why}."
         )
-    for track, label in (("hypothesis", "Hypotheses in progress"), ("enabler", "Enablers in progress")):
-        running = [
-            e for e in reg.experiments if e.data.get("status") == "running" and e.data.get("track") == track
-        ]
-        if running:
-            items = ", ".join(
-                f"[{e.id}]({card(reg, e.id)}) {e.data['short']} ({owners(reg, e.data)})" for e in running
-            )
-            lines.append(f"- **{label}:** {items}.")
+    counts = {
+        t: sum(e.data.get("status") == "running" and e.data.get("track") == t for e in reg.experiments)
+        for t in ("hypothesis", "enabler")
+    }
+    now = (
+        f"- **In progress:** {_count(counts['hypothesis'], 'hypothesis', 'hypotheses')}, "
+        f"{_count(counts['enabler'], 'enabler', 'enablers')}."
+    )
     planned = sorted(
         (e for e in reg.experiments if e.data.get("status") == "planned"),
         key=lambda e: e.data.get("priority", 99),
     )
     if planned:
-        items = ", ".join(f"[{e.id}]({card(reg, e.id)}) {e.data['short']}" for e in planned[:4])
-        lines.append(f"- **Next, by priority:** {items}.")
+        items = ", ".join(f"[{e.id}]({card(reg, e.id)}) {e.data['short']}" for e in planned[:3])
+        now += f" Next by priority: {items}."
+    lines.append(now)
     return "\n".join(lines)
 
 
-def _node(e: Experiment) -> str:
-    title = e.data["short"].replace('"', "'")
-    who = e.data.get("owner", "")
-    return f'{e.id}["<b>{e.id}</b> · {title}<br/>{mark(e.data)} · {who}"]'
+def _base_lines(short: str) -> list[str]:
+    # The box is titled "Base", so a decision's own "Base: " would only repeat it.
+    return textwrap.wrap(short.removeprefix("Base: "), BASE_WIDTH)
 
 
-def render_flow(reg: Registry) -> str:
-    """The decision path: decisions chained in date order, each fed by its evidence and leading on."""
-    by_id = reg.by_id()
-    runs = reg.run_ids()
+def _box(x: int, w: int, fill: str, title: str, lines: list[str], dashed: bool = False) -> str:
+    """One stage of the picture. White text on a solid fill reads on GitHub's light and dark pages alike."""
+    ink = "#768390" if dashed else "#FFFFFF"
+    stroke = ' stroke="#768390" stroke-width="2" stroke-dasharray="6 5"' if dashed else ""
+    out = [f'  <rect x="{x}" y="24" width="{w}" height="108" rx="10" fill="{fill}"{stroke}/>']
+    cx = x + w // 2
+    out.append(
+        f'  <text x="{cx}" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="{ink}">'
+        f"{html.escape(title)}</text>"
+    )
+    for k, line in enumerate(lines):
+        out.append(
+            f'  <text x="{cx}" y="{82 + 20 * k}" text-anchor="middle" font-size="13" fill="{ink}">'
+            f"{html.escape(line)}</text>"
+        )
+    return "\n".join(out)
 
-    def exp_of(ref: str) -> str:
-        return runs[ref][0].id if ref in runs else ref
 
-    lines = ["```mermaid", "flowchart TD"]
-    gc = [e for e in reg.experiments if e.data.get("track") == "gap-closing"]
-    hx = [e for e in reg.experiments if e.data.get("track") != "gap-closing"]
-    lines.append('  subgraph P1["Phase 1 · gap closing, one benchmark each"]')
-    for who in dict.fromkeys(e.data.get("owner", "") for e in gc):
-        lines.append(f'    subgraph gc_{who}["{who}"]')
-        lines.extend(f"      {_node(e)}" for e in gc if e.data.get("owner") == who)
-        lines.append("    end")
-    lines.append("  end")
-    lines.append('  subgraph P2["Phase 2 · hypotheses, each decided by the regression gate"]')
-    lines.extend(f"    {_node(e)}" for e in hx)
-    lines.append("  end")
-    for d in reg.decisions:
-        text = d["short"].replace('"', "'")
-        lines.append(f'  {d["id"]}{{{{"<b>{d["id"]}</b> · {_date(d["date"])}<br/>{text}"}}}}')
-    chain = [d["id"] for d in reg.decisions]
-    if len(chain) > 1:
-        lines.append("  " + " ==> ".join(chain))
-    edges: list[str] = []
-    for d in reg.decisions:
-        for ref in dict.fromkeys(exp_of(r) for r in d.get("evidence", [])):
-            edges.append(f"  {ref} --> {d['id']}")
-        for ref in dict.fromkeys(exp_of(r) for r in d.get("next", [])):
-            edges.append(f"  {d['id']} -.-> {ref}")
-    linked = {x for edge in edges for x in edge.replace("-.->", " ").replace("-->", " ").split()}
-    for e in reg.experiments:
-        for parent in e.data.get("parents", []):
-            if parent in by_id and not (e.id in linked and parent in linked):
-                edges.append(f"  {parent} --> {e.id}")
-    lines.extend(dict.fromkeys(edges))
-    lines.append("  classDef positive stroke:#2E8B4E,stroke-width:2px")
-    lines.append("  classDef negative stroke:#C0392B,stroke-width:2px")
-    lines.append("  classDef open stroke:#1F6FEB,stroke-dasharray:4 3")
-    for cls, pick in (
-        ("positive", lambda e: e.data.get("verdict") == "positive"),
-        ("negative", lambda e: e.data.get("verdict") == "negative"),
-        ("open", lambda e: e.data.get("status") in ("planned", "running")),
-    ):
-        ids = [e.id for e in reg.experiments if pick(e)]
-        if ids:
-            lines.append(f"  class {','.join(ids)} {cls}")
-    lines.append("```")
-    return "\n".join(lines)
+def render_picture(reg: Registry) -> str:
+    """The README's picture: how the work flows, with the counts as they stand.
+
+    Five stages and one loop. It stays this small on purpose: one node per experiment drew 40 boxes
+    nobody could read, and the decision log already says what fed what.
+    """
+    tracks = {t: [e for e in reg.experiments if e.data.get("track") == t] for t in TRACKS}
+    gc = tracks["gap-closing"]
+    first = min((e.data["started"] for e in gc), default=None)
+    last = max((e.data.get("ended") or e.data["started"] for e in gc), default=None)
+    span = f"{_date(first)} – {_date(last)}" if first and last else ""
+    gated = sum(1 for e in reg.experiments for run in e.runs if run.get("gate"))
+    bases = [d for d in reg.decisions if d.get("baseline")]
+    base = bases[-1] if bases else None
+    versions = [d["version"] for d in reg.decisions if d.get("version")]
+    hypotheses = _count(len(tracks["hypothesis"]), "hypothesis", "hypotheses")
+    enablers = _count(len(tracks["enabler"]), "enabler", "enablers")
+    grey = "#768390"
+    parts = [
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 0 1004 206" role="img" '
+        'aria-label="Gap closing, then hypotheses of one change each, judged against the base by the '
+        'regression gate, until the gate ships a version" '
+        "font-family=\"-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif\">",
+        "  <title>How the work flows</title>",
+        f'  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
+        f'orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="{grey}"/></marker></defs>',
+        _box(0, 226, "#1E6B3A", "Phase 1: gap closing", [_count(len(gc), "experiment", "experiments"), span]),
+        _box(
+            266,
+            164,
+            "#B4560A",
+            "Base",
+            _base_lines(base["short"]) if base else [],
+        ),
+        _box(
+            470,
+            200,
+            "#1F5FBF",
+            "Phase 2: hypotheses",
+            [f"{hypotheses}, one change each", enablers],
+        ),
+        _box(710, 136, "#57606A", "Regression gate", [f"{gated} gated so far"]),
+        _box(
+            898,
+            102,
+            "#1E6B3A" if versions else "none",
+            versions[-1] if versions else "gallops-v0",
+            ["shipped"] if versions else ["none yet"],
+            dashed=not versions,
+        ),
+    ]
+    # None out of Phase 1: the base is released Drive-JEPA, which came before gap closing, not from it.
+    for x1, x2 in ((430, 466), (670, 706)):
+        parts.append(
+            f'  <line x1="{x1}" y1="78" x2="{x2}" y2="78" stroke="{grey}" stroke-width="2" '
+            'marker-end="url(#a)"/>'
+        )
+    parts += [
+        f'  <line x1="846" y1="78" x2="894" y2="78" stroke="{grey}" stroke-width="2" marker-end="url(#a)"/>',
+        f'  <text x="870" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="{grey}">'
+        "SHIP</text>",
+        f'  <path d="M778 132 V176 H570 V136" fill="none" stroke="{grey}" stroke-width="2" '
+        'marker-end="url(#a)"/>',
+        f'  <text x="674" y="196" text-anchor="middle" font-size="13" fill="{grey}">'
+        "FAIL or HOLD: recorded, back to the hypotheses</text>",
+        "</svg>",
+    ]
+    return "\n".join(parts) + "\n"
 
 
 def render_gap_closing(reg: Registry) -> str:
-    rows = [
-        "| ID | Experiment | Owner | Benchmark | Headline result | Strength | Outcome | Checkpoint "
-        "| Record |",
-        "|---|---|---|---|---|---|---|---|---|",
-    ]
+    rows = ["| ID | Experiment | Owner | Headline result | Strength | Outcome |", "|---|---|---|---|---|---|"]
     for e in reg.experiments:
         d = e.data
         if d.get("track") != "gap-closing":
@@ -981,27 +1084,22 @@ def render_gap_closing(reg: Registry) -> str:
         res = result_text(head[1]) if head else "—"
         strg = strength(head[1]) if head else "—"
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {benches(d)} | "
-            f"{_cell(res)} | {strg} | {mark(d)} | {tag(head[0] if head else None)} | {record(d)} |"
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {_cell(res)} | "
+            f"{strg} | {mark(d)} |"
         )
     return "\n".join(rows)
 
 
 def first_sentence(text: str) -> str:
-    """A table cell's worth: up to the first full stop that ends a sentence; the details keep the rest."""
+    """A table cell's worth: up to the first full stop that ends a sentence; the card keeps the rest."""
     m = re.search(r"[.!?](?=\s+[A-Z(])", text)
     return text[: m.end()] if m else text
 
 
-def _runs_cell(e: Experiment) -> str:
-    labels = [run["id"].split(".", 1)[1] for run in e.runs]
-    return ", ".join(f"`{x}`" for x in labels) if labels else "—"
-
-
 def render_hypotheses(reg: Registry) -> str:
     rows = [
-        "| ID | Hypothesis | Owner | Priority | Status | Runs | Headline result | Strength | Gate |",
-        "|---|---|---|:-:|---|---|---|---|---|",
+        "| ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |",
+        "|---|---|---|---|---|---|---|",
     ]
     for e in reg.experiments:
         d = e.data
@@ -1011,8 +1109,7 @@ def render_hypotheses(reg: Registry) -> str:
         gate = latest_gate(e)
         gate_text = f"{GATE_MARK[gate[1]['verdict']]} {_date(gate[1]['date'])}" if gate else "—"
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
-            f"{d.get('priority', '—')} | {mark(d)} | {_runs_cell(e)} | "
+            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | {mark(d)} | "
             f"{_cell(result_text(head[1])) if head else '—'} | {strength(head[1]) if head else '—'} | "
             f"{gate_text} |"
         )
@@ -1030,7 +1127,7 @@ def render_enablers(reg: Registry) -> str:
             continue
         gives = first_sentence(d.get("learned") or d["question"])
         rows.append(
-            f"| [**{e.id}**]({card(reg, e.id)}) | {_cell(d['short'])} | {owners(reg, d)} | "
+            f"| [**{e.id}**]({card(reg, e.id, 'experiments')}) | {_cell(d['short'])} | {owners(reg, d)} | "
             f"{d.get('priority', '—')} | {mark(d)} | {_cell(gives)} |"
         )
     return "\n".join(rows)
@@ -1060,7 +1157,8 @@ def render_gate(reg: Registry) -> str:
         pairs = {p["bench"]: p for p in g.get("pairs", [])}
         cells = " | ".join(_pair_cell(pairs.get(b)) for b in GATE_BENCHES)
         rows.append(
-            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}]({card(reg, e.id)}) | {tag(run)} | "
+            f"| {_date(g['date'])} {g['date'].year} | [{run['id']}]({card(reg, e.id, 'experiments')}) | "
+            f"{tag(run)} | "
             f"{g['tier']} | "
             f"{cells} | {GATE_MARK[g['verdict']]} |"
         )
@@ -1083,9 +1181,11 @@ def render_decisions(reg: Registry) -> str:
     rows = ["| # | Date | Decision | By | Evidence | Led to |", "|---|---|---|---|---|---|"]
     for d in reg.decisions:
         by = ", ".join(d.get("by", []))
+        evidence = _refs(reg, d.get("evidence", []), "experiments")
         rows.append(
-            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | {_cell(d['decision'])} | {by} | "
-            f"{_refs(reg, d.get('evidence', []))} | {_refs(reg, d.get('next', []))} |"
+            f"| **{d['id']}** | {_date(d['date'])} {d['date'].year} | **{_cell(d['short'])}.** "
+            f"{_cell(d['decision'])} | {by} | "
+            f"{evidence} | {_refs(reg, d.get('next', []), 'experiments')} |"
         )
     return "\n".join(rows)
 
@@ -1160,11 +1260,11 @@ def _code_text(d: dict[str, Any], run: dict[str, Any], base: str = "") -> str:
     return "<br>".join(bits) or "—"
 
 
-#: Where a card's "back" link lands in the README, by track.
+#: Where a card's "back" link lands, by track: the README's tables, or the index for enablers.
 _BACK = {
-    "gap-closing": "gap-closing-experiments",
-    "hypothesis": "hypothesis-experiments",
-    "enabler": "enablers",
+    "gap-closing": "README.md#gap-closing-experiments",
+    "hypothesis": "README.md#hypothesis-experiments",
+    "enabler": f"{INDEX}#enablers",
 }
 
 
@@ -1185,7 +1285,7 @@ def render_card(reg: Registry, e: Experiment) -> str:
         f"**{owners(reg, d)}** · {benches(d)} · {mark(d)} · {_span(d)} · {d['track']}",
         "",
     ]
-    nav = [f"[← all experiments]({rel('README.md', base)}#{_BACK[d['track']]})"]
+    nav = [f"[← all experiments]({rel(_BACK[d['track']], base)})"]
     if d.get("narrative"):
         where = f" (on {_ref_kind(d)} ⎇)" if d.get("branch") else ""
         nav.append(f"[the account]({link(d, base=base)})" + where)
@@ -1207,9 +1307,7 @@ def render_card(reg: Registry, e: Experiment) -> str:
     ]
     if led:
         meta.append(
-            "**Evidence for:** "
-            + ", ".join(led)
-            + f" ([decision log]({rel('README.md', base)}#decision-log))"
+            f"**Evidence for:** {', '.join(led)} ([decision log]({rel(INDEX + '#decision-log', base)}))"
         )
     if meta:
         out += [" · ".join(meta), ""]
@@ -1295,6 +1393,192 @@ def render_card(reg: Registry, e: Experiment) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
+# ---------------------------------------------------------------- results PRs
+
+#: The rendered part of a PR's body. GitHub keeps an HTML comment in the body and hides it on the page,
+#: so the block can name its run for CI without the reader seeing a marker.
+PR_BLOCK_RE = re.compile(r"<!-- gallops:pr (\S+) -->\n(.*?)\n<!-- /gallops:pr -->", re.S)
+_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+#: What the author still has to write. Specific, because a body may mention a plain TODO in the code.
+PR_TODO = "TODO(author):"
+#: The same shape as `predictions = "none: <why>"`: a record can change without a result being reported,
+#: and a reviewer reads the reason.
+_NOT_RESULTS_RE = re.compile(r"^Not a results PR: \S", re.M)
+#: The hand-written part of a results PR, in non-blank lines. The detail belongs in the experiment's
+#: README.md, where it outlives the PR. #17, #22, #23, #24 and #30 ran 42 to 87 when this was set.
+PR_PROSE_LINES = 30
+
+
+def pr_subject(reg: Registry, ref: str) -> tuple[Experiment, dict[str, Any], dict[str, Any] | None]:
+    """What a results PR for `ref` reports: an experiment's headline, or one run's own result.
+
+    A run without the headline reports the first result its record lists. A run can hold a gate verdict
+    and no result (H02.timing), so the result may be None.
+    """
+    experiment = reg.by_id().get(ref)
+    if experiment:
+        head = experiment.headline()
+        if head is None:
+            raise ValueError(f"{ref} has no headline result: name the run this PR reports")
+        return experiment, head[0], head[1]
+    if ref not in reg.run_ids():
+        raise ValueError(f"{ref} is neither an experiment nor a run in the registry")
+    e, run = reg.run_ids()[ref]
+    results = run.get("results", [])
+    res = next((r for r in results if r.get("headline")), results[0] if results else None)
+    if res is None and not run.get("gate"):
+        raise ValueError(f"{ref} has no result and no gate verdict: a PR for it is not a results PR")
+    return e, run, res
+
+
+def _run_gate(run: dict[str, Any]) -> dict[str, Any] | None:
+    gates = run.get("gate", [])
+    return max(gates, key=lambda g: g["date"]) if gates else None
+
+
+def pr_title(run: dict[str, Any], res: dict[str, Any] | None) -> str:
+    gate = _run_gate(run)
+    parts = [result_head(res, bold=False)] if res else []
+    parts.append(f"gate {gate['verdict']}" if gate else "gate not run")
+    return f"{run['id']}: {', '.join(parts)}"
+
+
+def pr_block(reg: Registry, e: Experiment, run: dict[str, Any], res: dict[str, Any] | None) -> str:
+    """The part of a results PR that is copied from the record, and that CI compares with it.
+
+    The card is named as a path, not a link: a link would have to name a branch, and this text is
+    rendered on the PR's branch and checked on GitHub's merge of it.
+    """
+    d = e.data
+    claim = ("Hypothesis", d["hypothesis"]) if d.get("hypothesis") else ("Question", d["question"])
+    result = "none in this run"
+    if res:
+        against = f", against {res['baseline']}" if res.get("baseline") else ""
+        result = f"{result_text(res)}{against} · {strength(res)}"
+    gate = _run_gate(run)
+    verdict = "not run"
+    if gate:
+        against = f", against {gate['baseline']}" if gate.get("baseline") else ""
+        when = f"{_date(gate['date'])} {gate['date'].year}"
+        verdict = f"{GATE_MARK[gate['verdict']]}, {when}, {gate['tier']} tier{against}"
+    cited = [x for x in reg.decisions if {e.id, run["id"]} & set(x.get("evidence", []))]
+    decision = f"{cited[-1]['id']}: {cited[-1]['short']}" if cited else "none yet"
+    return "\n".join(
+        [
+            f"- **{claim[0]}:** {' '.join(claim[1].split())}",
+            f"- **Result:** {result}",
+            f"- **Gate:** {verdict}",
+            f"- **Decision:** {decision}",
+            f"- **Record:** `{card_path(reg, e)}`",
+        ]
+    )
+
+
+def render_pr(reg: Registry, ref: str) -> str:
+    """A results PR, rendered from the record: the title, a blank line, then the body."""
+    e, run, res = pr_subject(reg, ref)
+    out = [
+        pr_title(run, res),
+        "",
+        f"<!-- gallops:pr {run['id']} -->",
+        pr_block(reg, e, run, res),
+        "<!-- /gallops:pr -->",
+        "",
+    ]
+    if not run.get("gate"):
+        out += ["## Why the gate has not run", "", f"{PR_TODO} one line.", ""]
+    out += [
+        "## What changed",
+        "",
+        f"{PR_TODO} the code, in a line or two, or `Records only.`",
+        "",
+        "## Not verified",
+        "",
+        f"{PR_TODO} what this PR argues but did not check, or `Nothing.`",
+        "",
+    ]
+    return "\n".join(out)
+
+
+def _reported(record: dict[str, Any]) -> dict[str, Any]:
+    """What a record reports, by run: its results and gate verdicts. A run with neither reports nothing."""
+    runs = record.get("runs", [])
+    return {
+        r.get("id", ""): (r.get("results", []), r.get("gate", []))
+        for r in runs
+        if r.get("results") or r.get("gate")
+    }
+
+
+def changed_results(reg: Registry, base: str) -> list[str]:
+    """The runs whose results or gate verdicts differ from those at commit `base`, removed ones included.
+
+    Compared by run id, not path, so a folder that moves reports nothing new, and as parsed TOML, so a
+    reworded comment is no change.
+    """
+
+    def git(*args: str) -> str:
+        cmd = ["git", "-C", str(reg.root), *args]
+        return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+
+    then: dict[str, Any] = {}
+    for path in git("ls-tree", "-r", "--name-only", base, "--", "experiments").splitlines():
+        # _template's dates are placeholders, so it is not TOML until `experiments new` fills it in.
+        if path.endswith("/experiment.toml") and not path.startswith("experiments/_"):
+            then.update(_reported(tomllib.loads(git("show", f"{base}:{path}"))))
+    now = {run: told for e in reg.experiments for run, told in _reported(e.data).items()}
+    return sorted(run for run in {*then, *now} if then.get(run) != now.get(run))
+
+
+def check_pr(reg: Registry, title: str, body: str, changed: list[str]) -> list[str]:
+    """What is wrong with a PR's title and body, given the runs whose results it changes.
+
+    A PR with a rendered block is held to the record whether or not it changed a result: it claims to
+    report one. A PR with none is only asked to say why, and only when it changed one.
+    """
+    body = body.replace("\r\n", "\n")  # GitHub's web editor saves CRLF
+    blocks = PR_BLOCK_RE.findall(body)
+    prose = _COMMENT_RE.sub("", PR_BLOCK_RE.sub("", body))
+    if not blocks:
+        if changed and not _NOT_RESULTS_RE.search(prose):
+            return [
+                f"this PR changes results or a gate verdict in {', '.join(changed)}: take the title and "
+                "body from `gallops experiments pr <ID>`, or say why not on a line of its own, "
+                "`Not a results PR: <why>` (docs/experiments.md#results-pr)"
+            ]
+        return []
+    if len(blocks) > 1:
+        return [f"{len(blocks)} rendered blocks: a results PR reports one experiment"]
+    ref, text = blocks[0]
+    try:
+        e, run, res = pr_subject(reg, ref)
+    except ValueError as exc:
+        return [str(exc)]
+    problems = []
+    if title.strip() != pr_title(run, res):
+        problems.append(f"the title must be `{pr_title(run, res)}`, not `{title}`")
+    if text != pr_block(reg, e, run, res):
+        # CI reads the merge, so a change on the base shows here and not on the branch.
+        problems.append(
+            f"the rendered block differs from the record: merge the base, then re-run "
+            f"`gallops experiments pr {ref}`"
+        )
+    others = sorted({x.split(".")[0] for x in changed} - {e.id})
+    if others:
+        problems.append(f"it also changes results in {', '.join(others)}: one PR per experiment")
+    if changed and run["id"] not in changed:
+        problems.append(f"it reports {run['id']} but changes {', '.join(changed)}: report a run it changed")
+    if PR_TODO in prose:
+        problems.append(f"`{PR_TODO}` is still in the body: replace each one")
+    lines = sum(1 for line in prose.splitlines() if line.strip())
+    if lines > PR_PROSE_LINES:
+        problems.append(
+            f"{lines} hand-written lines (limit {PR_PROSE_LINES}): move the detail to the experiment's "
+            "README.md"
+        )
+    return problems
+
+
 def render_index(reg: Registry) -> str:
     rows = ["| ID | Experiment | Track | Owner | When | Status | Folder |", "|---|---|---|---|---|---|---|"]
     for e in reg.experiments:
@@ -1319,17 +1603,19 @@ def render_code_map(reg: Registry) -> str:
 README_BLOCKS = {
     "badges": render_badges,
     "status": render_status,
-    "flow": render_flow,
     "gap-closing": render_gap_closing,
     "hypotheses": render_hypotheses,
+}
+INDEX_BLOCKS = {
+    "index": render_index,
     "enablers": render_enablers,
     "gate": render_gate,
     "decisions": render_decisions,
+    "code-map": render_code_map,
 }
-INDEX_BLOCKS = {"index": render_index, "code-map": render_code_map}
 
 #: Which file each set of blocks is rendered into, relative to the repo root.
-TARGETS = {"README.md": README_BLOCKS, "experiments/README.md": INDEX_BLOCKS}
+TARGETS = {"README.md": README_BLOCKS, INDEX: INDEX_BLOCKS}
 
 
 def render(reg: Registry, blocks: dict[str, Any]) -> dict[str, str]:
@@ -1354,11 +1640,13 @@ def apply(text: str, rendered: dict[str, str]) -> str:
 def rendered(reg: Registry) -> dict[str, str]:
     """Every file the registry renders, repo-root path -> the text it should hold.
 
-    The README and the index have marked blocks inside hand-written prose; each card is rendered whole.
+    The README and the index have marked blocks inside hand-written prose; the picture and each card
+    are rendered whole.
     """
     out = {}
     for target, blocks in TARGETS.items():
         out[target] = apply((reg.root / target).read_text(), render(reg, blocks))
+    out[PICTURE] = render_picture(reg)
     for e in reg.experiments:
         out[card_path(reg, e)] = render_card(reg, e)
     return out
@@ -1377,5 +1665,6 @@ def write(reg: Registry) -> list[str]:
     changed = stale(reg)
     for target, text in rendered(reg).items():
         if target in changed:
+            (reg.root / target).parent.mkdir(parents=True, exist_ok=True)
             (reg.root / target).write_text(text)
     return changed

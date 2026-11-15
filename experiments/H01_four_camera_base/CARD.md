@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#hypothesis-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Priority:** 1 · **Evidence for:** D11 ([decision log](../../README.md#decision-log))
+**Priority:** 1 · **Evidence for:** D11 ([decision log](../README.md#decision-log))
 
 ## Question
 
