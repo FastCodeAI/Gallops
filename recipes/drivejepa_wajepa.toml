@@ -1,11 +1,12 @@
-# Drive-JEPA's planner on frozen WA-JEPA tokens, trained on NAVSIM navtrain: Run 2 (navtest EPDMS 85.27 with the
-# human filter) and Run 3A (87.00; 87.30 with its locked pick), and the agent decoder Run 3A loads.
+# Drive-JEPA's planner on frozen WA-JEPA tokens, trained on NAVSIM navtrain: the 4-camera planner (called Run 2
+# while it ran; navtest EPDMS 85.27 with the human filter) and the sub-score agent-look model (called Run 3A; 87.00,
+# 87.30 with its locked pick), and the agent decoder it loads.
 #
 #   gallops recipe drivejepa_wajepa                    print every command for this machine
 #   gallops recipe drivejepa_wajepa run2-train --run   run one stage (only the named ones)
 #
-# Lineage, data, and what was verified: experiments/H01_four_camera_base/README.md (Run 2) and
-# experiments/H04_subscore_scorer_navsim/README.md (the agent decoder, Run 3A). A run trains inside the tree its code
+# Lineage, data, and what was verified: experiments/H01_four_camera_base/README.md (the 4-camera planner) and
+# experiments/H04_subscore_scorer_navsim/README.md (the agent decoder, the sub-score agent-look model). A run trains inside the tree its code
 # stage builds:
 # upstream Drive-JEPA at the commit overlay/<name>.json pins, with recipes/drivejepa_wajepa/overlay/<name>/ laid over
 # it. Every stage that writes refuses an output that already exists (the dumps instead skip finished samples).
@@ -19,7 +20,7 @@
 #   [datasets.navsim]           path = the OpenScene/NAVSIM root (navsim_logs/, sensor_blobs/); exp = NAVSIM_EXP_ROOT,
 #                               holding Drive-JEPA-cache/{train_metric_cache_v2_pruned, anchors_scores_index_v2} (built by
 #                               Drive-JEPA's own scripts, not here); drivejepa_cache = the directory those two really
-#                               live in, as the metric cache's metadata names it (Run 3A's teacher list goes beside
+#                               live in, as the metric cache's metadata names it (the sub-score agent-look model's teacher list goes beside
 #                               them); maps = the nuPlan maps; current1 = navtrain_current_1's sensor blobs;
 #                               metric_cache = the navtest metric cache
 #   [datasets.wajepa_tokens]    path = the token cache dump-tokens writes and every run reads (about 420 GB); the
@@ -52,7 +53,7 @@ module = "drivejepa_wajepa.code"
 args = ["--drivejepa", "{code.drivejepa}", "--overlay", "{overlay_run2}", "--out", "{tree_run2}"]
 
 # ---------------------------------------------------------------------------------------------
-# The token cache: frozen WA-JEPA over navtrain's four cameras, once. Run 3A trains from the same cache.
+# The token cache: frozen WA-JEPA over navtrain's four cameras, once. The sub-score agent-look model trains from the same cache.
 # ---------------------------------------------------------------------------------------------
 
 [[stage]]
@@ -86,7 +87,7 @@ args = [
 ]
 
 # ---------------------------------------------------------------------------------------------
-# Run 2: footprint look (f0, l0, r0) + global look, planner from scratch, Drive-JEPA's own losses and split
+# The 4-camera planner: footprint look (f0, l0, r0) + global look, planner from scratch, Drive-JEPA's own losses and split
 # (navtrain's train_logs / val_logs), 20 epochs, the last one kept.
 # ---------------------------------------------------------------------------------------------
 
@@ -96,7 +97,7 @@ python = "drivejepa"
 module = "drivejepa_wajepa.train"
 after = ["code-run2", "verify-tokens"]
 env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0" }
-# The overrides are Run 2's code/hydra/overrides.yaml (16 Oct 17:48), with the cache path a template.
+# The overrides are the 4-camera planner's code/hydra/overrides.yaml (16 Oct 17:48), with the cache path a template.
 args = [
   "--tree", "{tree_run2}",
   "--ckpt-dir", "{ckpt_run2}",
@@ -158,11 +159,11 @@ args = [
   # Drive-JEPA's own split: navtrain's train_logs trained it, its val_logs only logged val/score_epoch (the last
   # epoch is kept, not the best), so both are training data.
   "--trained-on", "navsim:navtrain",
-  "--note", "Run 2: Drive-JEPA planner on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look, epoch 19 of 20",
+  "--note", "The 4-camera planner: Drive-JEPA planner on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look, epoch 19 of 20",
 ]
 
 # ---------------------------------------------------------------------------------------------
-# The agent decoder (22-23 Oct): Run 2's tree plus its own two files. Slots on the token rays, trained on navtrain
+# The agent decoder (22-23 Oct): the 4-camera planner's tree plus its own two files. Slots on the token rays, trained on navtrain
 # minus the 51 held-out logs; the sweep's pick D is 300 slots x 3 layers, epoch 11 of 12 (the last).
 # ---------------------------------------------------------------------------------------------
 
@@ -208,7 +209,7 @@ env = { PYTHONPATH = "{tree_ad}/navsim_v2", NWORK = "8", WAJEPA_TOKEN_CACHE = "{
 args = ["eval", "{ckpt_ad}/epoch_11.pt", "{out}/agent_decoder/eval_epoch_11.json"]
 
 # ---------------------------------------------------------------------------------------------
-# Run 3A (24-25 Oct): the agent decoder loaded whole, an agent look after each refinement round (the global look
+# The sub-score agent-look model (24-25 Oct): the agent decoder loaded whole, an agent look after each refinement round (the global look
 # removed), 12 scorer heads and map auxiliary targets; train = navtrain minus the 51 held-out logs, which choose the
 # epoch (13 of 20) and then the pick weights.
 # ---------------------------------------------------------------------------------------------
@@ -256,7 +257,7 @@ python = "drivejepa"
 module = "drivejepa_wajepa.train"
 after = ["code-run3a", "run3a-checks", "agent-decoder", "teacher-rearok"]
 env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", RUN3A_AGENT_DECODER_CKPT = "{ckpt_ad}/epoch_11.pt", RUN3A_CENTRELINES = "{centrelines}" }
-# The overrides are Run 3A's code/hydra/overrides.yaml (24 Oct 17:34), with the cache path a template. --require: the
+# The overrides are the sub-score agent-look model's code/hydra/overrides.yaml (24 Oct 17:34), with the cache path a template. --require: the
 # model starts its decoder from random weights, silently, when RUN3A_AGENT_DECODER_CKPT names no file.
 args = [
   "--tree", "{tree_run3a}",
@@ -359,7 +360,7 @@ args = [
   # navtrain minus the 51 held-out logs trained it; the held-out logs chose the epoch and the pick weights.
   "--trained-on", "navsim:navtrain",
   "--selection-split", "navsim:navtrain-heldout-51",
-  # How every closed-loop number of Run 3A was driven: paddock's follow-the-route command sent as "straight".
+  # How every closed-loop number of the sub-score agent-look model was driven: paddock's follow-the-route command sent as "straight".
   "--policy-env", "WAJEPA_DJ_FOLLOW=straight",
-  "--note", "Run 3A: agent decoder D, agent look, 12 scorer heads; epoch 13 of 20; pick locked 25 Oct (in the config)",
+  "--note", "The sub-score agent-look model: agent decoder D, agent look, 12 scorer heads; epoch 13 of 20; pick locked 25 Oct (in the config)",
 ]

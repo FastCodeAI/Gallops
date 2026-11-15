@@ -74,14 +74,23 @@ import numpy as np
 
 #: `Source.drove` for dumps the weights a run starts from collected.
 START = "start"
+#: `Source.drove` for logged human driving (real nuScenes): the target is the human's path, there are
+#: no dumps and no candidates to grade, so the grading and fidelity checks have nothing to compare.
+HUMAN = "human"
+#: `Source.drove` for a DAgger round driven by the weights `--init` loads. The start-of-run fidelity
+#: check cannot cover it (the released weights never drove it), so `init_fidelity` checks it once
+#: those weights are loaded: same rebuild, same limits.
+INIT = "init"
 
 
 class Source(NamedTuple):
     """One labelled directory, the dumps it was labelled from, and who drove.
 
     `drove` is START when the weights training starts from drove the collection
-    (round 0, GT-shadow), else a name for the checkpoint that did (a DAgger
-    round's). Only START sources can be fidelity-checked.
+    (round 0, GT-shadow), INIT when the `--init` weights did (a DAgger round
+    continued from the checkpoint that drove it), else a name for the checkpoint
+    that did. START sources are fidelity-checked before `--init` loads, INIT
+    sources after.
     """
 
     labelled: str
@@ -295,20 +304,58 @@ def drivable_checks(ticks: list[dict]) -> tuple[dict, list[str]]:
     4,347 of round 0's 9,495 targets were not, by `undrivable` (the 934 stops that
     slid 2 m sideways among them), and nothing noticed. Checking all of them costs a
     fraction of a second; a 48-tick sample misses a 1% regression 62% of the time.
+
+    A logged human path is not a drawn target: a car did drive it, and relabelling cannot
+    change it, so it is counted apart. 542 of labelled_nusc's 18,015 fail `undrivable` (a
+    3.8 m radius at real-0020/run_0), which is the limit's reach, not the driver's error.
+    `human_checks` is what stops a drawn target claiming this.
     """
     from gallops.expert.draw import undrivable
 
     usable = [t for t in ticks if t.get("usable_for_imitation", True)]
-    bad = [t for t in usable if undrivable(np.asarray(t["expert"]))]
+    logged = [t for t in usable if t.get("expert_kind") == HUMAN]
+    usable = [t for t in usable if t.get("expert_kind") != HUMAN]
+
+    def why(tick: dict) -> str | None:
+        return undrivable(np.asarray(tick["expert"]), speed=tick.get("speed"))
+
+    bad = [t for t in usable if why(t)]
     report = {"undrivable": f"{len(bad)}/{len(usable)}"}
+    if logged:
+        report["logged"] = len(logged)
     if not bad:
         return report, []
     first = bad[0]
     return report, [
         f"{len(bad)} of {len(usable)} targets are undrivable "
-        f"({undrivable(np.asarray(first['expert']))}, {first['episode']} @ {first['timestamp']}): "
+        f"({why(first)}, {first['episode']} @ {first['timestamp']}): "
         "relabel with the current expert"
     ]
+
+
+def human_checks(ticks: list[dict], sources) -> list[str]:
+    """A `human` source holds logged driving and nothing else, and no other source holds any.
+
+    Saying `human` skips grading and fidelity, and `drivable_checks` exempts the tick, so the
+    claim has to be checked: a rendered round passed as `human` was otherwise never graded,
+    never fidelity-checked, and raised nothing.
+    """
+    problems = []
+    for i, source in enumerate(sources):
+        kinds = Counter(t.get("expert_kind", "?") for t in ticks if t.get("source", 0) == i)
+        if source.drove == HUMAN:
+            drawn = {k: n for k, n in sorted(kinds.items()) if k != HUMAN}
+            if drawn:
+                problems.append(
+                    f"sources: {source.labelled} says a human drove it, but it holds drawn targets "
+                    f"{drawn}; only logged driving skips the grading and fidelity checks"
+                )
+        elif kinds.get(HUMAN):
+            problems.append(
+                f"sources: {source.labelled} holds {kinds[HUMAN]} ticks marked {HUMAN!r} but says "
+                f"{source.drove!r} drove it; name it `{HUMAN}`, or relabel it"
+            )
+    return problems
 
 
 def fidelity_check(
@@ -431,6 +478,24 @@ def sight_check(model, dataset_cls, sample: list[dict], torch, device: str) -> t
     return report, []
 
 
+def init_fidelity(
+    train: list[dict], referee, sources, model, dataset_cls, torch, device: str, sample_size: int = 48
+) -> dict:
+    """The fidelity check again, once `--init` has loaded, on the sources those weights drove.
+
+    Raises PreflightFailed on a problem; returns {} when no source is INIT.
+    """
+    group = [t for t in train if sources[t.get("source", 0)].drove == INIT]
+    if not group:
+        return {}
+    sample = with_earliest(sample_ticks(group, episodes=max(3, sample_size // 4), per_episode=4), group)
+    report, problems = fidelity_check(model, dataset_cls, sample, referee, sources, torch, device)
+    print("  preflight, --init weights: " + json.dumps(report), flush=True)
+    if problems:
+        raise PreflightFailed(problems)
+    return report
+
+
 def keep_rebuildable(ticks: list[dict], rebuildable) -> tuple[list[dict], dict]:
     """The ticks `rebuildable` accepts, and what was dropped, by expert kind.
 
@@ -470,11 +535,21 @@ def earliest_per_episode(ticks: list[dict], episodes: set[str]) -> list[dict]:
     return [first[k] for k in sorted(first)]
 
 
+def with_earliest(sample: list[dict], ticks: list[dict]) -> list[dict]:
+    """`sample`, plus the earliest tick in `ticks` of each episode it touches."""
+    chosen = {(episode_key(t), int(t["timestamp"])) for t in sample}
+    return sample + [
+        t
+        for t in earliest_per_episode(ticks, {episode_key(t) for t in sample})
+        if (episode_key(t), int(t["timestamp"])) not in chosen
+    ]
+
+
 def describe(ticks: list[dict]) -> dict:
     """What is about to be trained on, for the log and the sidecar."""
     shapes = Counter(t["episode"].split("-", 1)[0] for t in ticks)
     kinds = Counter(t["expert_kind"] for t in ticks)
-    creep = sum(1 for t in ticks if t["speed"] < 3.0 and t["driven_hits"] is not None)
+    creep = sum(1 for t in ticks if t["speed"] < 3.0 and t.get("driven_hits") is not None)
     return {
         "ticks": len(ticks),
         "episodes": len({episode_key(t) for t in ticks}),
@@ -509,7 +584,12 @@ def run(
     problems = []
     report["code"], found = code_checks(repo)
     problems += found
-    groups = [[t for t in train if t.get("source", 0) == i] for i in range(len(sources))]
+    problems += human_checks(train, sources)
+    groups = [
+        [t for t in train if t.get("source", 0) == i]
+        for i in range(len(sources))
+        if sources[i].drove != HUMAN
+    ]
     groups = [g for g in groups if g]
     per = max(3, sample_size // 4 // max(1, len(groups)))
     sample = [t for g in groups for t in sample_ticks(g, episodes=per, per_episode=4)]
@@ -519,15 +599,7 @@ def run(
     problems += found
     own = [t for t in sample if sources[t.get("source", 0)].drove == START]
     if own:
-        chosen = {(episode_key(t), int(t["timestamp"])) for t in own}
-        own += [
-            t
-            for t in earliest_per_episode(
-                [t for t in train if sources[t.get("source", 0)].drove == START],
-                {episode_key(t) for t in own},
-            )
-            if (episode_key(t), int(t["timestamp"])) not in chosen
-        ]
+        own = with_earliest(own, [t for t in train if sources[t.get("source", 0)].drove == START])
         report["fidelity"], found = fidelity_check(model, dataset_cls, own, referee, sources, torch, device)
         problems += found
     else:

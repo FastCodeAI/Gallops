@@ -20,7 +20,7 @@ AFARI's WA-JEPA encoder, frozen. The encoder runs once, over navtrain's four
 cameras (b0, f0, l0, r0), and the planner trains from the cached tokens.
 
 **The paddock adapters are not in paddock yet.** These checkpoints are driven by
-paddock's `wajepa_dj` (Run 2) and `wajepa_dj_run3a` (Run 3A) adapters, which on
+paddock's `wajepa_dj` (the 4-camera planner) and `wajepa_dj_run3a` (the sub-score agent-look model) adapters, which on
 27 Oct 2026 existed only as uncommitted files in one local paddock worktree
 (`rerank-native`); paddock `main` cannot score a checkpoint this recipe writes
 until they land there.
@@ -28,11 +28,11 @@ until they land there.
 | Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
 |---|---:|---:|---:|---:|
 | Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 |
-| **Run 2** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
-| **Run 3A**, default pick | **87.00** | **83.89** | | |
-| **Run 3A**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 |
+| **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
+| **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | |
+| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 |
 
-Run 3A and its agent decoder: [H04's account](../H04_subscore_scorer_navsim/README.md).
+The sub-score agent-look model and its agent decoder: [H04's account](../H04_subscore_scorer_navsim/README.md).
 
 Recipe: [`recipes/drivejepa_wajepa.toml`](../../recipes/drivejepa_wajepa.toml).
 `gallops recipe drivejepa_wajepa` prints every command for this machine;
@@ -58,7 +58,11 @@ The overlay is not linted (`make lint` covers `src/` and `tests/`): it is
 upstream's code with our edits, and reformatting it would break the hashes that
 say it is what ran.
 
-## Run 2
+## The 4-camera planner
+
+Called Run 2 while it ran: the run ID is `H01.four-camera-planner`. Drive-JEPA's planner,
+trained from scratch on frozen WA-JEPA tokens from four cameras. Code and checkpoint paths keep
+the name it trained under (`run2`).
 
 Spec: the user's of 15–16 Oct 2026 ("frozen WA-JEPA features → Drive-JEPA
 planner"). The changes, all in `drive_jepa_perception_based/`:
@@ -75,7 +79,7 @@ planner"). The changes, all in `drive_jepa_perception_based/`:
 
 | Stage | What | Output |
 |---|---|---|
-| `code-run2` | upstream + the Run 2 overlay | `{runs}/drivejepa_wajepa/run2/code` |
+| `code-run2` | upstream + the 4-camera planner's overlay | `{runs}/drivejepa_wajepa/run2/code` |
 | `dump-tokens` | navtrain's 103,288 scenes: light features, targets, tokens (float16, 4 × 512 × 1024). 16 Oct: 0 errors, 5.43 h | `{data.wajepa_tokens}` |
 | `verify-tokens` | the cache against a live recompute | exits non-zero on a mismatch |
 | `run2-train` | 20 epochs, batch 64, Adam 1e-4, 16-mixed, seed 0; Drive-JEPA's losses and its split (85,109 train / 18,179 val scenes); 7.8 M trainable parameters, 6.1 GB of VRAM, 1.65 s a step | every epoch's checkpoint |
@@ -87,7 +91,7 @@ The planner starts from scratch: training loads no released weights
 (`checkpoint_path: ''`). The last epoch is kept, not the best: val/score_epoch
 was 0.880 at epoch 19, 0.882 at epoch 17.
 
-navtest sub-scores, Run 2 / released: NC .980 / .985, DAC .972 / .986, DDC .990 / .991,
+navtest sub-scores, the 4-camera planner / released: NC .980 / .985, DAC .972 / .986, DDC .990 / .991,
 TLC .998 / .998, EP .879 / .891, TTC .973 / .979, LK .967 / .976, HC .977 / .978,
 EC .401 / .478.
 
@@ -96,7 +100,7 @@ EC .401 / .478.
 Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Each block is copied from the
 gate's own table into [experiment.toml](experiment.toml). Against released Drive-JEPA:
 
-| Date | Benchmark | Metric | Released | Run 2 | t | Units | Verdict |
+| Date | Benchmark | Metric | Released | The 4-camera planner | t | Units | Verdict |
 |---|---|---|---:|---:|---:|---:|---|
 | 21 Oct | NAVSIM, 1,000 tokens | EPDMS | 0.875 | 0.863 | −1.29 | 136 | NEUTRAL |
 | 21 Oct | KITScenes | ADE | 3.222 | 1.969 | 6.44 | 140 | GAIN |
@@ -124,14 +128,14 @@ closes it yet.
 | The navtest metric cache | navsim's `run_metric_caching.py`, `[datasets.navsim] metric_cache` |
 | WA-JEPA | AFARI-Research/WA-JEPA at `bec2966` (`[code] wajepa`), encoder weights `{weights}/WA-JEPA/model_state_dict.pt` |
 | The token cache | `dump-tokens`; `agent-targets` adds the agent decoder's targets beside the tokens |
-| The held-out logs | `recipes/drivejepa_wajepa/heldout_logs.txt`: 51 navtrain logs, the agent decoder's held-out set and Run 3A's validation split |
-| Run 3A's teacher list | `teacher-rearok`, beside Drive-JEPA's own list in `[datasets.navsim] drivejepa_cache`, where the metric cache's metadata says the cache is |
+| The held-out logs | `recipes/drivejepa_wajepa/heldout_logs.txt`: 51 navtrain logs, the agent decoder's held-out set and the sub-score agent-look model's validation split |
+| The sub-score agent-look model's teacher list | `teacher-rearok`, beside Drive-JEPA's own list in `[datasets.navsim] drivejepa_cache`, where the metric cache's metadata says the cache is |
 
 ## Verified, and how
 
 | Claim | Strength |
 |---|---|
-| The Run 2 overlay is the code that trained: each file equals the 23 Oct snapshot of the training checkout (upstream + `run2_tracked_23oct.patch` + the untracked files), and no file changed between the launch (16 Oct 17:48) and that snapshot except `drive_jepa_model.py` (19 Oct: a `WAJEPA_GLOBAL_LOOK=0` switch, default on) and `drive_jepa_features.py` (22 Oct: an added class; the overlay holds the file as it was before) | verified, file by file (27 Oct) |
+| The 4-camera planner's overlay is the code that trained: each file equals the 23 Oct snapshot of the training checkout (upstream + `run2_tracked_23oct.patch` + the untracked files), and no file changed between the launch (16 Oct 17:48) and that snapshot except `drive_jepa_model.py` (19 Oct: a `WAJEPA_GLOBAL_LOOK=0` switch, default on) and `drive_jepa_features.py` (22 Oct: an added class; the overlay holds the file as it was before) | verified, file by file (27 Oct) |
 | With the 19 Oct switch at its default, the model is the one that trained | verified: 500 navtest scenes reproduce the 17 Oct epoch-19 CSV on every column (max difference 0) |
 | `navtest-score` gives the numbers above from the evaluations' CSVs (85.27 / 81.98, released 87.78 / 84.49) | verified (27 Oct) |
 | The recipe's training and evaluation overrides are the runs' own | verified against each run's `code/hydra/overrides.yaml` |
@@ -147,7 +151,7 @@ closes it yet.
   possibly selected on navtest".
 - **Bench2Drive is zero-shot** (a NAVSIM-trained planner in CARLA), at 2 Hz,
   one run per route, and runs are not repeatable: the two command-fix runs of
-  Run 2 differ by a mean of 9.1 DS per route.
+  the 4-camera planner differ by a mean of 9.1 DS per route.
 - Every closed-loop number above is one run per route or scenario.
 - The released Drive-JEPA's 87.78 comes from the same `run_pdm_score.py`, the
   same metric cache and no momentum-aware selection, run on a clean upstream

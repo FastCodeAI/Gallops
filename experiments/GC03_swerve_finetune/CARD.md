@@ -7,7 +7,7 @@
 
 [← all experiments](../../README.md#gap-closing-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [GC02](../GC02_selection_without_training/CARD.md) · **Evidence for:** D03, D04, D06, D09 ([decision log](../../README.md#decision-log))
+**Builds on:** [GC02](../GC02_selection_without_training/CARD.md) · **Evidence for:** D03, D04, D06, D09 ([decision log](../README.md#decision-log))
 
 ## Question
 

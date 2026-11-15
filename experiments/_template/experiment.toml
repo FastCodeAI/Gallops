@@ -66,11 +66,11 @@ parents = []  # experiments this builds on, by id
 #   headline = true        # exactly one per experiment
 #   source = "<the file or paddock run id the number is copied from>"
 #
-#   [[runs.gate]]  # paddock's regression gate: copy `python -m tools.gate check` verbatim
+#   [[runs.gate]]  # paddock's regression gate: copy the job's verdict.json verbatim
 #   date = {{DATE}}
 #   tier = "quick"  # quick | closed | all
-#   verdict = "HOLD"  # SHIP | HOLD | FAIL | INCOMPLETE
-#   manifest = "{runs}/gate/smoke/<label>/manifest.toml"
+#   verdict = "HOLD"  # SHIP | HOLD | FAIL
+#   manifest = "{paddock_site}/queue/jobs/<job>/smoke/manifest.toml"
 #     [[runs.gate.pairs]]
 #     bench = "navsim"
 #     metric = "EPDMS"

@@ -76,8 +76,10 @@ def _resample(points: np.ndarray, spacing: float) -> np.ndarray:
     return np.column_stack([np.interp(grid, arc, points[:, 0]), np.interp(grid, arc, points[:, 1])])
 
 
-def lane_path(nusc_map, x: float, y: float, yaw: float, guide: np.ndarray) -> np.ndarray | None:
-    """World (N, 2) centreline of the lane at (x, y) facing `yaw`, BEHIND_M back to AHEAD_M on.
+def lane_path(
+    nusc_map, x: float, y: float, yaw: float, guide: np.ndarray, ahead_m: float = AHEAD_M
+) -> np.ndarray | None:
+    """World (N, 2) centreline of the lane at (x, y) facing `yaw`, BEHIND_M back to `ahead_m` on.
 
     `guide` is the human's path in world coordinates, used only to pick the
     outgoing lane at a junction. None when no lane is aligned with the car.
@@ -104,7 +106,7 @@ def lane_path(nusc_map, x: float, y: float, yaw: float, guide: np.ndarray) -> np
     forward = [pts[i:, :2]]
     length = float(np.linalg.norm(np.diff(pts[i:, :2], axis=0), axis=1).sum())
     for _ in range(30):
-        if length >= AHEAD_M:
+        if length >= ahead_m:
             break
         outgoing = nusc_map.get_outgoing_lane_ids(token)
         if not outgoing:

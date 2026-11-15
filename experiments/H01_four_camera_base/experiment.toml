@@ -1,13 +1,13 @@
 # H01 -- the 4-camera stack as the team's base (Navvrat). Priority 1 on the 21 Oct list.
 # The list's item 1 is "gate the 4-camera base"; this record holds the 4-camera hypothesis itself, so
-# Run 2 is its first run and the gate its next.
+# The 4-camera planner is its first run and the gate its next.
 # Sources: this folder's README.md and recipes/drivejepa_wajepa* (numbers copied, never re-derived); page-only facts
 # from the team's gap-review page (22 Oct), flagged no-record; the gate's printed tables for its verdicts.
 
 schema = 1
 id = "H01"
 title = "The 4-camera stack as the base: WA-JEPA's frozen encoder under Drive-JEPA's planner"
-short = "4-camera base (WA-JEPA + DJ planner)"
+short = "4-camera stack (WA-JEPA + DJ planner)"
 track = "hypothesis"
 owner = "Navvrat"
 benchmarks = ["navsim", "bench2drive", "kitscenes", "nuscenes", "neuroncap", "alpasim"]
@@ -24,8 +24,8 @@ hypothesis = """Replacing Drive-JEPA's front-camera ViT-L with WA-JEPA's frozen 
 under Drive-JEPA's planner with path reads and a global read, gives a base at least as good as released \
 Drive-JEPA. Refuted if paddock's regression gate, base against released Drive-JEPA, reports a REGRESSION; \
 the list's first step is the quick tier (NAVSIM, KITScenes, nuScenes, neuroNCAP 0103)."""
-predictions = "none: Run 2 trained 16-17 Oct, before the 21 Oct hypothesis list; its spec (the user's of 15-16 Oct) is not committed and the branch has no PREDICTIONS.md"
-learned = """So far, Run 2 trails released Drive-JEPA on navtest (EPDMS 85.27 against 87.78, human filter), \
+predictions = "none: the 4-camera planner (called Run 2 while it ran) trained 16-17 Oct, before the 21 Oct hypothesis list; its spec (the user's of 15-16 Oct) is not committed and the branch has no PREDICTIONS.md"
+learned = """So far, the 4-camera planner trails released Drive-JEPA on navtest (EPDMS 85.27 against 87.78, human filter), \
 the benchmark that trained it, and on Bench2Drive's 50 routes zero-shot (DS 51.70 and 51.95 against 57.60, \
 one run per route). Its extra inputs are used on NAVSIM (page, no-record). The regression gate, run by hand \
 from local paddock worktrees because no paddock ref carries the adapter, says HOLD: KITScenes and nuScenes GAIN \
@@ -38,8 +38,8 @@ external = [
 ]
 
 [[runs]]
-id = "H01.run2"
-label = "Run 2: Drive-JEPA's planner from scratch on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look; epoch 19 of 20 kept"
+id = "H01.four-camera-planner"
+label = "The 4-camera planner (called Run 2 while it ran): Drive-JEPA's planner from scratch on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look; epoch 19 of 20 kept"
 started = 2026-10-16
 ended = 2026-10-17
 start_from = "scratch: no released weights loaded (checkpoint_path ''); WA-JEPA encoder frozen"
@@ -116,7 +116,7 @@ notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 6
   strength = "moderate"
   flags = ["adapted", "open-loop"]
   headline = true
-  note = "CSV score 81.98 against 84.49. Same run_pdm_score.py and metric cache, released run on a clean upstream tree. Sub-scores Run 2 / released: EC .401 / .478, DAC .972 / .986, EP .879 / .891. The 17 Oct evaluation is labelled 'encoder possibly selected on navtest'"
+  note = "CSV score 81.98 against 84.49. Same run_pdm_score.py and metric cache, released run on a clean upstream tree. Sub-scores the 4-camera planner / released: EC .401 / .478, DAC .972 / .986, EP .879 / .891. The 17 Oct evaluation is labelled 'encoder possibly selected on navtest'"
   source = "experiments/H01_four_camera_base/README.md (navtest-score from the evaluations' CSVs, verified 27 Oct)"
 
   [[runs.results]]
@@ -260,5 +260,5 @@ source = "team gap-review page (22 Oct): Navvrat's 19 Oct failure report"
 
 [[checks]]
 name = "Regression gate, quick tier on the base (the list's item 1)"
-result = "run: see H01.run2's gate blocks. Overall HOLD on 21, 27 and 28 Oct; no pair regressed. The team's page of 22 Oct says it had not run, and paddock's git log holds no wajepa_dj adapter through 5 Nov, because the gate ran from local worktrees with the adapter uncommitted."
+result = "run: see H01.four-camera-planner's gate blocks. Overall HOLD on 21, 27 and 28 Oct; no pair regressed. The team's page of 22 Oct says it had not run, and paddock's git log holds no wajepa_dj adapter through 5 Nov, because the gate ran from local worktrees with the adapter uncommitted."
 source = "paddock-ops gate outputs at the training site: gate-wajepa, gate-wajepa-more, gate-oct27; the gate's own printed tables"
