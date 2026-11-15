@@ -24,14 +24,19 @@ Drive-JEPA plans from camera tokens, and has no explicit account of the other ag
     counted (`H15.r6`–`r8`).
   - **B-1 is done (`H15.r9`, `H15.r10`):** a clearance veto loses 0.15 to 0.25 points on navtest, with labelled
     agents or the side-car's, removed or penalised; the ceiling gains 1.58.
-  - **B-2 stopped at its phase-1 gate (14 Nov, `H15.r12`).** It was re-planned (D28), approved (D29) and run up to
-    the gate.
-    - Labelled agents, given to a refiner fine-tuned with the release's own objective, did no better than the same
-      fine-tune without them: O − C was −0.06 to −0.08 on every seed (K0). By the pre-registered rule, phase 2 and
-      the side-car's hidden layer did not run.
-    - The fine-tune itself gained about 0.4 points on navtest. It lost 0.8 to 3.3 points on R-clean, and picked
-      farther from the human on nuScenes.
-    - [Its results](part-b/B-2-hidden-refiner.md#results) have nine figures for review.
+  - **B-2 ran in full (13–14 Nov, `H15.r11`–`r14`; D28–D30): the side-car's hidden layer adds nothing.**
+    - Phase 1's gate stopped B-2: labelled agents did no better than the same fine-tune without them (K0). The owner
+      had phase 2 run all the same (D30).
+    - The primary contrast is refuted: HD − D is below 0 on all five seeds (mean −0.09; K1).
+    - No agent input beats C, under any recipe: not labelled, decoded or hidden.
+    - The reads do use their inputs:
+      - the test-time swaps move 6–15% of picks;
+      - H6 puts a third of its attention on slots the decoded list drops.
+
+      They gain nothing from them.
+    - The fine-tune itself gains about 0.4 points on navtest. It is not robust: three seeds in five lose 3–5 points on
+      R-clean, and every run picks farther from the human on nuScenes.
+    - [Its results and deep analysis](part-b/B-2-hidden-refiner.md#results) have 14 figures for review.
   - **The other ideas were renumbered (D28):**
     - B-2 absorbs the 11 Nov B-3, B-4 and B-5;
     - the scorer alone is now B-3, not scheduled;
@@ -100,7 +105,7 @@ notes and dated log lines.
 |---|---|---|---|---|---|---|
 | B-0 | Can a planning gain be measured honestly here? | nothing: data, scoring, checks | five cross-fit side-cars | **done** (`H15.r6`–`r8`; D25, D26) | [B-0, the foundations](part-b/B-0-foundations.md) | — |
 | B-1 | Does a rule on the agents pick better than the release? | the pick, by a rule | nothing | **done: no** (`H15.r9`, `r10`); for the owner's review | [B-1, the veto](part-b/B-1-veto.md) | B-0 |
-| B-2 | Does the side-car's hidden layer, given to the refiner with the planner fine-tuned downstream, plan better than its decoded list? | the refiner and the scorer | the read (adapter) + LoRA or weights, by recipe | **stopped at its gate** (`H15.r11`, `r12`): K0 refuted, phase 2 not run; for the owner's review | [B-2, the hidden layer into the refiner](part-b/B-2-hidden-refiner.md) | B-0; B-1 |
+| B-2 | Does the side-car's hidden layer, given to the refiner with the planner fine-tuned downstream, plan better than its decoded list? | the refiner and the scorer | the read (adapter) + LoRA or weights, by recipe | **done: no** (`H15.r11`–`r14`): K0 and K1 refuted; for the owner's review | [B-2, the hidden layer into the refiner](part-b/B-2-hidden-refiner.md) | B-0; B-1 |
 | B-3 | Does a scorer that reads the agents pick better, the proposals fixed? | the scorer | an adapter + LoRA | not scheduled (was B-2) | [B-3, the scorer alone](part-b/B-3-scorer.md) | by what B-2 shows |
 | B-4 to B-14 | the other ideas | — | — | not scheduled | [the ideas](part-b/ideas.md) | by what B-2 shows |
 
@@ -366,6 +371,30 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
     seeds left out of the read.
   - **Disclosed:** a 60-step smoke run was scored on navtest to test the path (+0.39 ± 0.14). It chose nothing.
   - **Results:** [B-2, what has run](part-b/B-2-hidden-refiner.md#results), with nine figures.
+- **14 Nov · B-2 phase 2 (`H15.r13`, `r14`; D30): the hidden layer adds nothing.**
+  - **The owner:** "you must run the side-car's hidden layer integration and finetuning and measure results … continue
+    until done all the phases for b-2". So phase 2 ran as pre-registered, knowing K0 had said stop.
+  - **Ran:** 34 runs on one GPU.
+    - Under B-2-1: D and HD at seeds 0–4, H6 at 0–2, H3 a pilot, and C at seeds 3–4 (the noise floor had fired).
+    - The two-stage recipes B-2-2 and B-2-3 on C, D and HD, seeds 0–2.
+    - Every preflight held, on 58 trainings.
+  - **Caught before any two-stage run:** restoring a stage-3 run would have rebuilt B-2-3's refiner from the release.
+    Stage-3 dumps now refuse unless their proposals equal their stage 1's.
+  - **The chain, on navtest read once:**
+    - K1, HD − D, is −0.11, −0.07, −0.06, −0.18 and −0.04: refuted;
+    - K2, HD − C, is below 0 on every seed;
+    - K3: HD meets R on every seed and beats it on one;
+    - K4, H6 − HD: not supported;
+    - D − C is −0.01 on average.
+  - **The deep analysis:**
+    - the reads attend to their inputs, H6 a third of the time to slots the list drops, but HD's read leaves 80% on
+      its null token;
+    - another fold's side-car moves HD's pick on 6% of scenes and D's on 1%;
+    - no input fixes more of R's in-view collisions than C;
+    - no scene's difference repeats across seeds.
+  - **The recipes:** B-2-3 gains a third as much on navtest, loses nothing on R-clean, and picks farthest from the
+    human on nuScenes.
+  - **Results:** [B-2's deep analysis](part-b/B-2-hidden-refiner.md#deep), with 14 figures.
 
 <a id="open"></a>
 
@@ -376,7 +405,7 @@ Newest last. Each entry is what was discussed or asked, what was decided, and wh
 | Part A | step 6, the report logs, read once; retrain the no-camera control in fp32; weighting what matters (11.9); head changes (11.11); test the warp's three changes apart (plan A §9.3) |
 | B-0 | decided on 11 Nov (D24) |
 | B-1 | decided on 11 Nov (D24) |
-| B-2 | decided on 13 Nov (D29). After its gate (14 Nov): what next, by K0's rule B-6 (4 s forecasts) or B-12 (closed loop); whether to run phase 2 anyway (its code is ready); whether the fine-tune alone (C, +0.4 on navtest, −0.8 to −3.3 on R-clean) is worth a closed-loop look |
+| B-2 | decided on 13–14 Nov (D29, D30). After its results (14 Nov): what next, by K1's and K0's rules B-6 (4 s forecasts) or B-12 (closed loop), and B-3 without slots; whether the fine-tune alone (C, +0.4 on navtest; −3 to −5 on R-clean for three seeds in five; B-2-3 loses nothing there) is worth a closed-loop look, with its seed and recipe chosen on R-clean |
 | B-3 | none until it is scheduled |
 
 Each experiment's own document gives these decisions in full, with a recommendation.

@@ -215,13 +215,14 @@ def fig_chain(r: dict) -> None:
             ),
             Line2D([], [], color=views.INK, marker="o", ms=5, lw=1.2, label="measured, one seed, ± 2 SE"),
         ],
-        loc="lower right",
+        loc="upper right",
     )
     ax.set_xlabel(
         "navtest EPDMS (human filter), points: the named difference, paired per scene, SE clustered by log"
     )
     ax.set_title(
-        "B-2's pre-registered contrasts: seeds 0, 1, 2 top to bottom within a row (B-2-1 unless named)",
+        "B-2's pre-registered contrasts: one dot a seed, seeds 0 to 4 top to bottom within a row (B-2-1 "
+        "unless named)",
         loc="left",
     )
     fig.tight_layout()
@@ -1175,6 +1176,7 @@ def fig_failures(table: dict, official: dict) -> None:
         ax.grid(axis="x", visible=False)
     ax = axes[2]
     shown = [k for k in KIND_ORDER if totals[k]]
+    present = [(v, arm) for v, arm in present if v == "1"]  # B-2-1's arms: one colour, one arm
     for i, (v, arm) in enumerate(present):
         runs = [x for run, x in rows.items() if parse(run)[:2] == (v, arm)]
         for j, k in enumerate(shown):
@@ -1184,7 +1186,7 @@ def fig_failures(table: dict, official: dict) -> None:
     ax.set_xticks(range(len(shown)))
     ax.set_xticklabels([f"{KIND_NAMES[k]}\n({totals[k]})" for k in shown], fontsize=7)
     ax.set_ylabel("% of those failures fixed (mean over seeds)")
-    ax.set_title("fixed, by the object behind R's failure (B-0-3)", loc="left", fontsize=8.5)
+    ax.set_title("B-2-1: fixed, by the object behind R's failure (B-0-3)", loc="left", fontsize=8.5)
     ax.grid(axis="x", visible=False)
     ax.legend(
         handles=[Patch(color=ARM_COLOURS[arm], label=f"{arm} · B-2-{v}") for v, arm in present],
@@ -1275,6 +1277,15 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
         }
     if not chosen:
         return
+    repeats = {
+        f"{m:g}": {"hd_above": int((d > m).all(0).sum()), "hd_below": int((d < -m).all(0).sum())}
+        for m in (0.0, 0.05, 0.1)
+    }
+    NUMBERS["hidden_scene_repeats"] = {
+        "seeds": seeds,
+        "differ_per_seed_share": float((np.abs(d) > 1e-9).mean()),
+        "by_margin": repeats,
+    }
     nav = px.Split("navtest")
     slots = dict(np.load(OUT / "b2-hidden-navtest-v1" / "agents.npz"))
     fold = np.load(OUT / "b2-hidden-navtest-v1" / "fold.npy")
@@ -1288,7 +1299,8 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
     heads = {"gain": "Where HD beats D on every seed", "loss": "Where HD loses to D on every seed"}
     for i, (key, ex) in enumerate(chosen.items()):
         r = ex["row"]
-        conf = slots["conf"][r]
+        raw = {k: slots[k][r] for k in ("xyz", "lwh", "yaw", "cls", "conf")}  # this scene's 128 slots
+        conf = raw["conf"]
         decoded = np.flatnonzero(conf >= 0.5)
         sub = np.flatnonzero((conf >= SUB) & (conf < 0.5))
         att = attention_on_row(b2_read.name("1", "HD", 0), r)
@@ -1296,8 +1308,8 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
         ex["decoded"] = int(len(decoded))
         ex["slots_0.1_to_0.5"] = int(len(sub))
         ex["hd_s0_attention_on_decoded"] = {int(q): float(att[q]) for q in decoded}
-        boxes = [px.det_box(slots, q) for q in np.r_[decoded, sub]]
-        colours = [views.CLASS_COLOURS[int(slots["cls"][r, q])] for q in np.r_[decoded, sub]]
+        boxes = [px.det_box(raw, q) for q in np.r_[decoded, sub]]
+        colours = [views.CLASS_COLOURS[int(raw["cls"][q])] for q in np.r_[decoded, sub]]
         lws = [1.8] * len(decoded) + [0.8] * len(sub)
         styles = ["-"] * len(decoded) + [(0, (2, 2))] * len(sub)
         cam, ax = axes[0, i], axes[1, i]
@@ -1330,8 +1342,8 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
         px.grader_agents(ax, cache)
         top = att[decoded].max() if len(decoded) else 1.0
         for q in decoded:
-            u, v = px.xy_to_plot(views.footprint(px.det_box(slots, q)[None])[0])
-            ax.fill(u, v, fc=views.CLASS_COLOURS[int(slots["cls"][r, q])], alpha=0.35, lw=0, zorder=4)
+            u, v = px.xy_to_plot(views.footprint(px.det_box(raw, q)[None])[0])
+            ax.fill(u, v, fc=views.CLASS_COLOURS[int(raw["cls"][q])], alpha=0.35, lw=0, zorder=4)
             ax.plot(
                 np.r_[u, u[:1]],
                 np.r_[v, v[:1]],
@@ -1340,7 +1352,7 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
                 zorder=5,
             )
         for q in sub:
-            u, v = px.xy_to_plot(views.footprint(px.det_box(slots, q)[None])[0])
+            u, v = px.xy_to_plot(views.footprint(px.det_box(raw, q)[None])[0])
             ax.plot(np.r_[u, u[:1]], np.r_[v, v[:1]], color=views.GREY, lw=0.8, ls=(0, (2, 1.5)), zorder=4)
         props, pick_hd, failing = run_32("navtest", b2_read.name("1", "HD", 0), r)
         for k in range(32):
@@ -1420,7 +1432,8 @@ def fig_hidden_scenes(table: dict, official: dict) -> None:
     NUMBERS["hidden_scenes"] = chosen
     fig.suptitle(
         "The primary contrast, HD − D, scene by scene: each scene the extreme of a rule (the JSON's "
-        '"hidden_scenes"); the marks are a plan\'s poses, 0.5 s apart',
+        f'"hidden_scenes"). No scene repeats: on all {len(seeds)} seeds by 0.05 or more, '
+        f"{repeats['0.05']['hd_above']} scene favours HD and {repeats['0.05']['hd_below']} favour D",
         x=0.01,
         ha="left",
         fontsize=11,
@@ -1459,6 +1472,12 @@ def main() -> None:
         fig_failures(table, official)
         fig_hidden_scenes(table, official)
     NUMBERS["noise_limit"] = b2_read.NOISE_LIMIT
+    # Every run's weights by sha256 (a two-stage run is its stage 3 with its stage 1): the records cite this.
+    NUMBERS["weights_sha256"] = {
+        run.name: json.loads((run / "run.json").read_text()).get("weights_sha256")
+        for run in sorted(RUNS.glob("b2-*"))
+        if (run / "run.json").exists()
+    }
     (FIGURES / "part-b2-results-numbers.json").write_text(json.dumps(NUMBERS, indent=1, default=float) + "\n")
     print(f"wrote {FIGURES / 'part-b2-results-numbers.json'}")
 

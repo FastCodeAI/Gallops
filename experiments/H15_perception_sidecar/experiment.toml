@@ -1133,3 +1133,197 @@ notes = "D29; PREDICTIONS.md, Part B · B-2 (committed 032d0c0, before any run).
   strength = "moderate"
   flags = ["open-loop"]
   note = "seeds -0.198 +- 0.083, -0.323 +- 0.087, -0.131 +- 0.076 (mean shown); the pick changes on 10.1%, 11.1%, 9.0% of scenes, by more than 1 m at 4 s on 6.0-7.4%. Another log's agents: -0.042, -0.219, -0.090. O leans on its agents but gains nothing over C, which had none"
+
+[[runs]]
+id = "H15.r13"
+label = "Part B, B-2 phase 2 under B-2-1 (D30): D and HD at seeds 0-4, H6 at 0-2, H3 a seed-0 pilot, C at seeds 3-4 (the noise floor); navtest read once; the pre-registered chain K1-K5, the test-time swaps, what the reads attend to"
+started = 2026-11-14
+ended = 2026-11-14
+start_from = "released"
+trained = ["refiner (rank-16 LoRA)", "scorer MLP (rank-16 LoRA)", "the B-2 adapter (an own half and a read of the arm's tokens; per-fold input maps for the side-car's slots)"]
+frozen = ["ViT", "projector", "the release's auxiliary heads (their losses kept)", "the five cross-fit side-cars"]
+params_trained_m = 0.83
+gpu_hours = 56.1
+train_git_sha = "b432d14"
+notes = "D30 (the owner ran phase 2 knowing K0 had stopped B-2); PREDICTIONS.md, Part B · B-2, unchanged. The recipe of H15.r12 (B-2-1), 4,413 steps on the 94,195 train rows, the last epoch kept; trainable D 582,932, HD 830,100, H6 and H3 824,852 parameters. Sixteen runs on one GPU, twelve at a time (3.7 h each at 3.0 s a step; the last four 2.8 h), about 56 GPU-hours of work. D s3, D s4, HD s3 and HD s4 record 083ed49, which changed only b2_read and the scripts. Every preflight held: identity bit for bit, the online labeller equal to pdm-v1, the stored slots equal to the fold side-cars run live (max 0.008, fp16). Weights sha256 of every run: figures/part-b2-results-numbers.json (weights_sha256). Navtest read once, all of phase 2 with the noise floor's seeds (official scorer, replay agent, momentum off, paired per scene, SE clustered over 136 logs). The chain: K1, HD - D, is below 0 on all five seeds and beyond 2 SE on seed 3, so refuted: the side-car's hidden layer adds nothing to its decoded list; by the chain nothing after it is read as a claim. Reported: HD - C below 0 on every seed (refuted on its own, seed 1 beyond 2 SE); HD meets R on every seed (+0.19 to +0.49) and beats it on none; H6 - HD -0.03, +0.15, +0.17; H3 - H6 +0.06; D - C -0.10 to +0.11 (mean -0.01): no input, decoded or hidden, beats the same fine-tune without one. Mean over seeds (descriptive, beside H15's rule): HD - D -0.093 +- 0.048, HD - C -0.107 +- 0.051, D - C -0.014 +- 0.075 (2 SE over seeds). Scene by scene, HD's and D's scores differ on 49% of scenes per seed, but at a margin of 0.05 on all five seeds one scene favours HD and none favours D: the per-scene differences are seed noise, carried by the release scorer's near-ties. The swaps: without its input D loses 0.05-0.21 points (vendored) and O 0.13-0.32, H6 -0.06 to +0.08; another fold's side-car moves D's pick on 1% of scenes, HD's on 6% and H6's on 14%: the slots are side-car-specific, the decoded agents are not. What the reads attend to (2,048 navtest scenes, pass 4): HD's read leaves 80% on its null token (D 68%, O 63%) and attends away from its own plan's poses (0.73 times uniform); H6 and H3 read their slots (null 29% and 15%), five times uniform within 10 m, and put 34% and 42% of their attention on slots between confidence 0.1 and 0.5, the evidence decoding drops, more than on the slots the list keeps (17%, 15%). Every arm fixes 61-77 of R's 275 failing scenes and breaks 83-105 others; no input fixes more of R's in-view failures than C (25-34 of 156, C 31-36). On R-clean the loss follows the seed, not the arm: seeds 0, 1 and 3 lose 3.2-4.7 points in every arm, seeds 2 and 4 under 1 (H6 s2 +0.20). On nuScenes every run picks 0.12-0.34 m farther from the human at 3 s while its best of 32 improves 0.016-0.019 m."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  entry = "experiments/H15_perception_sidecar/scripts/b2_phase.py"
+  as_run = ["experiments/H15_perception_sidecar/scripts"]
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain train logs (splits.json), rows with a metric cache, each row's slots by the cross-fit side-car that did not train on its log"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "R-clean, known-command windows (D25): health only"
+  role = "selection"
+  unit = "windows"
+  n = 2624
+  scene_list = "recipes/drivejepa_perception/fresh.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"
+
+  [[runs.data]]
+  dataset = "nuscenes"
+  split = "train, 100 scenes (H15's own draw), each scene's slots by a fold side-car (b2_inputs.NUSC_RULE)"
+  role = "held-out"
+  unit = "keyframes"
+  n = 2917
+  scene_list = "recipes/drivejepa_perception/ood_scenes.json"
+  built_by = "gallops.drivejepa_perception.b2_inputs"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), HD minus D under B-2-1: the side-car's layer-6 slot added to each decoded agent (K1, the primary contrast)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "D, the decoded list through the same reader"
+  value = "-0.093"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "seeds -0.110 +- 0.074, -0.073 +- 0.076, -0.062 +- 0.069, -0.178 +- 0.087, -0.043 +- 0.084 (mean shown; five seeds, the noise floor having fired). K1 predicted -0.1 to +0.2; refuted (below 0 beyond 2 SE on seed 3; below 0 on every seed). Mean over seeds -0.093 +- 0.048 (2 SE over seeds, descriptive)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), HD minus C under B-2-1: the side-car, as HD hands it over, against the same fine-tune without it (K2)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "C, the same fine-tune with no input"
+  value = "-0.107"
+  better = "higher"
+  strength = "strong"
+  flags = ["open-loop"]
+  note = "seeds -0.145 +- 0.074, -0.172 +- 0.080, -0.032 +- 0.085, -0.070 +- 0.080, -0.118 +- 0.082 (mean shown). K2 predicted -0.1 to +0.3; reported only (K1 failed), and refuted on its own (seed 1 below 0 beyond 2 SE). D - C -0.035, -0.100, +0.031, +0.108, -0.075 (mean -0.014)"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), HD minus R under B-2-1 (K3: meets, low end >= -0.4; beats, above 0 beyond 2 SE)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "R, the release's replayed picks"
+  baseline_value = "87.783"
+  value = "+0.318"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.239 +- 0.193, +0.340 +- 0.186, +0.328 +- 0.187, +0.193 +- 0.199, +0.491 +- 0.193 (mean shown). Meets on every seed, beats on one (seed 4): reported only (K1 failed). C - R at five seeds +0.384, +0.513, +0.359, +0.263, +0.609 (mean +0.426): the fine-tune, not the side-car, carries it"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), H6 minus HD and H3 minus H6 under B-2-1 (K4; K5, a seed-0 pilot)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "HD"
+  value = "+0.095"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "H6 - HD -0.034 +- 0.089, +0.145 +- 0.088, +0.175 +- 0.084 (mean shown; HD's seed range 0.298, so not supported; reported only). H3 - H6 +0.057 +- 0.091. H6 - R +0.204, +0.486, +0.503; H3 - R +0.261"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "the test-time swaps, another fold's side-car: share of navtest picks that change (does the reader depend on which side-car made its input?)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  value = "0.062"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "HD 5.5-7.1% of picks (mean shown), D 0.8-1.1%, H6 13.8-14.6%, H3 15.5%; the vendored final moves -0.03 to +0.05 for HD. Another log's slots change HD's pick on 10.4-12.3% (pre-registered: used if 5% or more), moving it more than 1 m on 7.1-8.3%. Without its input D loses 0.05-0.21 points (vendored), HD 0.00-0.12, H6 -0.08 to +0.06"
+
+  [[runs.results]]
+  bench = "nuscenes"
+  metric = "the pick's L2 to the human at 3 s, HD minus the release (out of domain; reported)"
+  subset = "100 scenes"
+  n = 2917
+  unit = "keyframe"
+  baseline = "the release, same keyframes"
+  baseline_value = "3.735"
+  value = "+0.239"
+  better = "lower"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.247, +0.338, +0.191, +0.282, +0.135 m (SE about 0.06, clustered by scene; mean shown); predicted -0.3 to +0.3, within. C +0.14 to +0.26, D +0.16 to +0.29, H6 +0.12 to +0.25: every arm alike. The best of 32 improves 0.016-0.019 m on every run"
+
+[[runs]]
+id = "H15.r14"
+label = "Part B, B-2 phase 2b (D30): the two-stage recipes on C, D and HD, seeds 0-2 -- B-2-2 (LoRA) and B-2-3 (the refiner's and the scorer's own weights): stage 1 the planning loss, stage 2 the train rows dumped and labelled, stage 3 a pass-4 copy of the read and the scorer on the final-score BCE; navtest read with phase 2"
+started = 2026-11-14
+ended = 2026-11-14
+start_from = "released"
+trained = ["stage 1: the B-2 adapter and the refiner (rank-16 LoRA, or its own weights)", "stage 3: a pass-4 copy of the read and the scorer MLP (rank-16 LoRA, or its own weights)"]
+frozen = ["ViT", "projector", "the release's auxiliary heads", "stage 3: passes 1-3 and their proposals", "the five cross-fit side-cars"]
+params_trained_m = 2.97
+gpu_hours = 55.5
+train_git_sha = "083ed49"
+notes = "D30; PREDICTIONS.md, Part B · B-2: B-2-2 and B-2-3 are read descriptively against B-2-1 (the recipes differ in steps, parameters and labels). Stage 1 trains on the planning loss alone (mtd_loss), 4,413 steps, 1.5-2.2 h; stage 2 dumps every train row's 32 and labels them with the vendored scorer; stage 3 trains a pass-4 copy of the read with the scorer on the final-score BCE, 4,413 steps, 0.5-1.8 h, its loss reaching only pass 4's read and the scorer (stage 3 never moves the proposals: its preflight requires stage 1's proposals recomputed within 1e-3 m of the dump, and its targets equal to the vendored scorer run live on 16 spread rows, both held on every run; every stage-3 dump also refuses unless its proposals equal its stage 1's). Trainable, HD: B-2-2 760,372 then 652,900; B-2-3 2,972,999 then 1,906,186. Found and fixed before any two-stage run (b432d14): a stage-3 run saves only what it trains, so restoring it had rebuilt B-2-3's refiner from the release. Weights sha256 of every run and its stage 1: figures/part-b2-results-numbers.json. Navtest: C - R B-2-2 +0.386, +0.560, +0.419, B-2-3 +0.230, +0.133, +0.105 (B-2-1 +0.26 to +0.61); HD - D B-2-2 -0.094, -0.094, -0.062, B-2-3 +0.051, -0.045, -0.169; HD - C B-2-2 -0.106, -0.162, -0.148, B-2-3 +0.049, +0.018, +0.024. B-2-3 moves the 32 most (0.57 m matched from R against 0.54) and its picks are the least steady between frames, and it breaks the most of R's passing scenes (108-124 against 83-105). R-clean: B-2-2 -1.0 to -3.3, B-2-3 -0.3 to +0.3 (no loss, the only recipe without one). nuScenes, the pick's L2 at 3 s: B-2-2 +0.25 to +0.37 m, B-2-3 +0.38 to +0.51 m."
+
+  [runs.code]
+  modules = ["gallops.drivejepa_perception"]
+  entry = "experiments/H15_perception_sidecar/scripts/b2_phase.py"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtrain train logs (splits.json), rows with a metric cache; stage 3 on stage 1's dumped and labelled 32"
+  role = "train"
+  unit = "samples"
+  n = 94195
+  scene_list = "recipes/drivejepa_perception/splits.json"
+  built_by = "gallops.drivejepa_perception.train_b2"
+
+  [[runs.data]]
+  dataset = "navsim"
+  split = "navtest"
+  role = "held-out"
+  unit = "scenes"
+  n = 12146
+  scene_list = "recipes/drivejepa_perception/navtest.json"
+  built_by = "gallops.drivejepa_perception.navsim_data"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), HD under B-2-2 minus HD under B-2-1 (two stages with LoRA against joint; descriptive)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "HD under B-2-1, same seed"
+  value = "+0.014"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.041 +- 0.120, +0.058 +- 0.101, -0.057 +- 0.105 (mean shown); predicted -0.3 to +0.2, within. Under B-2-2 HD - D is -0.094, -0.094, -0.062 and HD - C -0.106, -0.162, -0.148"
+
+  [[runs.results]]
+  bench = "navsim"
+  metric = "EPDMS (human filter), HD under B-2-3 minus HD under B-2-1 (two stages, full fine-tune, against joint; descriptive)"
+  subset = "navtest"
+  n = 12146
+  unit = "scene"
+  baseline = "HD under B-2-1, same seed"
+  value = "-0.116"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop"]
+  note = "seeds +0.040 +- 0.115, -0.190 +- 0.120, -0.199 +- 0.115 (mean shown); predicted -0.4 to +0.2, within. B-2-3 gains least on navtest (C - R +0.11 to +0.23) and is the only recipe that loses nothing on R-clean (-0.3 to +0.3), but picks farthest from the human on nuScenes (+0.38 to +0.51 m at 3 s)"
