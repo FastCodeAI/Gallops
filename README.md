@@ -25,9 +25,9 @@ with its data, code, checkpoint sha256, results and gate verdicts.
 ## Where we are
 
 <!-- experiments:status -->
-- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first.
+- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
-- **Last gate run:** 28 Oct · [H01.run2](experiments/H01_four_camera_base/CARD.md) · ⏸ **HOLD**.
+- **Last gate run:** 28 Oct · [H01.four-camera-planner](experiments/H01_four_camera_base/CARD.md) · ⏸ **HOLD**.
 - **In progress:** 6 hypotheses, 3 enablers. Next by priority: [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
 <!-- /experiments:status -->
 

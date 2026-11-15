@@ -126,9 +126,9 @@ decision = """The three tracks merge into one base: Navvrat's 4-camera stack —
 Drive-JEPA's planner with path reads and a global read. All three tracks found the scorer is the weak part. Still \
 open: close its NAVSIM gap before the gate, rebase its adapter onto the camera fix, repeat the LoRA on its encoder."""
 by = ["team"]
-evidence = ["H01.run2", "H07.exp1", "GC08"]
+evidence = ["H01.four-camera-planner", "H07.exp1", "GC08"]
 next = ["H01", "H04", "H07"]
-baseline = "the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA"
+baseline = "the 4-camera stack (`H01.four-camera-planner`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA"
 source = "Renesas Progress and Plan: design decision 1 and \"Status · 19 Oct\""
 
 [[decision]]
@@ -226,5 +226,5 @@ Records from before this decision say `the base` for that stack."""
 by = ["Naren"]
 evidence = ["H02.timing", "H07.exp3"]
 next = ["H01"]
-baseline = "released Drive-JEPA; the 4-camera stack (`H01.run2`) has not been through the gate, and needs an adapter, a pinned checkpoint and a paddock change first"
+baseline = "released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed"
 source = "Naren, 6 Nov 2026"

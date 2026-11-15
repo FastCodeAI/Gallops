@@ -42,7 +42,7 @@ id = "H04.agent-decoder"
 label = "the agent decoder Run 3A loads: a sweep of slots x layers; D = 300 slots x 3 layers, epoch 11 of 12 kept"
 started = 2026-10-22
 ended = 2026-10-23
-start_from = "scratch, on H01.run2's frozen WA-JEPA token cache"
+start_from = "scratch, on H01.four-camera-planner's frozen WA-JEPA token cache"
 trained = ["agent decoder (DETR3D-style slots on the token rays)"]
 frozen = ["WA-JEPA encoder (tokens cached)"]
 params_trained_m = 4.25
@@ -185,7 +185,7 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   metric = "navtest EPDMS, human filter, locked pick"
   n = 12146
   unit = "scene"
-  baseline = "H01.run2"
+  baseline = "H01.four-camera-planner"
   baseline_value = "85.27"
   value = "87.30"
   better = "higher"
@@ -213,13 +213,13 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   metric = "navtest drivable area (DAC), locked pick"
   n = 12146
   unit = "scene"
-  baseline = "H01.run2"
+  baseline = "H01.four-camera-planner"
   baseline_value = ".972"
   value = ".984"
   better = "higher"
   strength = "moderate"
   flags = ["adapted", "open-loop"]
-  note = "the hypothesis' target sub-score; released .986. Run 3A / Run 2: NC .986 / .980, EP .900 / .879, TTC .981 / .973, LK .977 / .967, EC .406 / .401; no per-sub-score test reported"
+  note = "the hypothesis' target sub-score; released .986. Run 3A / the 4-camera planner: NC .986 / .980, EP .900 / .879, TTC .981 / .973, LK .977 / .967, EC .406 / .401; no per-sub-score test reported"
   source = "docs/drivejepa_wajepa.md"
 
   [[runs.results]]
@@ -233,7 +233,7 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   value = "63.29"
   better = "higher"
   strength = "moderate"
-  note = "zero-shot; RC 79.02, 30 routes completed; Run 2 in the same setup 51.70 / 51.95 (two runs); runs are not repeatable (Run 2's two differ by a mean of 9.1 DS per route)"
+  note = "zero-shot; RC 79.02, 30 routes completed; the 4-camera planner in the same setup 51.70 / 51.95 (two runs); runs are not repeatable (the 4-camera planner's two differ by a mean of 9.1 DS per route)"
   source = "docs/drivejepa_wajepa.md"
 
   [[runs.results]]

@@ -1,4 +1,4 @@
-# Drive-JEPA's planner on frozen WA-JEPA tokens, trained on NAVSIM navtrain: Run 2 (navtest EPDMS 85.27 with the
+# Drive-JEPA's planner on frozen WA-JEPA tokens, trained on NAVSIM navtrain: the 4-camera planner, called Run 2 while it ran (navtest EPDMS 85.27 with the
 # human filter, 81.98 without).
 #
 #   gallops recipe drivejepa_wajepa                    print every command for this machine
@@ -20,7 +20,7 @@
 #                               sensor blobs; metric_cache = the navtest metric cache
 #   [datasets.wajepa_tokens]    path = the token cache dump-tokens writes and the training reads (about 420 GB)
 
-description = "Drive-JEPA's planner on frozen WA-JEPA tokens (NAVSIM navtrain): Run 2"
+description = "Drive-JEPA's planner on frozen WA-JEPA tokens (NAVSIM navtrain): the 4-camera planner"
 
 [vars]
 out = "{runs}/drivejepa_wajepa"
@@ -74,7 +74,7 @@ args = [
 ]
 
 # ---------------------------------------------------------------------------------------------
-# Run 2: footprint look (f0, l0, r0) + global look, planner from scratch, Drive-JEPA's own losses and split
+# The 4-camera planner: footprint look (f0, l0, r0) + global look, planner from scratch, Drive-JEPA's own losses and split
 # (navtrain's train_logs / val_logs), 20 epochs, the last one kept.
 # ---------------------------------------------------------------------------------------------
 
@@ -84,7 +84,7 @@ python = "drivejepa"
 module = "drivejepa_wajepa.train"
 after = ["code-run2", "verify-tokens"]
 env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0" }
-# The overrides are Run 2's code/hydra/overrides.yaml (16 Oct 17:48), with the cache path a template.
+# The overrides are the 4-camera planner's code/hydra/overrides.yaml (16 Oct 17:48), with the cache path a template.
 args = [
   "--tree", "{tree_run2}",
   "--ckpt-dir", "{ckpt_run2}",
@@ -146,5 +146,5 @@ args = [
   # Drive-JEPA's own split: navtrain's train_logs trained it, its val_logs only logged val/score_epoch (the last
   # epoch is kept, not the best), so both are training data.
   "--trained-on", "navsim:navtrain",
-  "--note", "Run 2: Drive-JEPA planner on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look, epoch 19 of 20",
+  "--note", "The 4-camera planner: Drive-JEPA planner on frozen WA-JEPA tokens (b0 f0 l0 r0), footprint + global look, epoch 19 of 20",
 ]
