@@ -65,7 +65,7 @@ One structural change each, on the agreed base, decided by paddock's regression 
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
 | [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
-| [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | ⏸ parked (negative) | offline mean grade of the picked path: memory carried vs reset every moment 0.7355 → **0.7313** (n=1,131 moments) | ●●○○ moderate · open-loop | — |
+| [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | 🗑 dropped | AlpaSim scene_score 0.7574 → **0.7464** (n=50 scenes) | ●●○○ moderate · adapted | — |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.
