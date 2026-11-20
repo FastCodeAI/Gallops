@@ -1,0 +1,29 @@
+# H19 -- the car's own motion over the last 4 s, read by the generator and the scorer. Owner Siddesh.
+# Sources: every number is copied from a report or table in this folder's step folders (named in each `source`),
+# or from a run file listed in POINTERS.md.
+# The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
+
+schema = 1
+id = "H19"
+title = "The car's own motion over the last 4 s, read by the generator and the scorer, makes the driving better"
+short = "Car motion history"
+track = "hypothesis"
+owner = "Siddesh"
+benchmarks = ["alpasim", "offline"]
+started = 2026-11-17
+status = "running"
+verdict = "none"
+question = """Drive-JEPA plans each moment from two camera frames 0.5 s apart and the car's current state. \
+H05 and H17 found that the camera's past adds little, and in both the stronger signal was the car's own \
+motion over the last few seconds. Does giving the generator and the scorer that motion, trained with them, \
+make the model drive better in closed loop?"""
+hypothesis = """Eight past states of the car (the last 4 s, one every 0.5 s, built from poses only), encoded \
+and added through two links that start at zero, one into where the generator starts its 32 candidate paths \
+and one into the scorer's rating head, and trained with the generator and the scorer from Drive-JEPA 0.1.8b \
+(pass 0.6) on Physical AI AV, raise the mean closed-loop score on 30 AlpaSim scenes. The rule written before \
+training: it passes only if the model shown the history scores at least 0.8194 on average (the starting \
+model's 0.7527 plus 0.0667, two scenes of 30) and above the same training with the history always hidden. \
+Anything else refutes it."""
+predictions = "none: the rule was written on 17 Nov 05:01 and hashed (sha256 f8f4b975…a450, amendment 1 at 07:10) before the first training step on 18 Nov 03:09, in a folder outside git, so no commit date shows it"
+narrative = "experiments/H19_motion_history/README.md"
+parents = ["H17"]
