@@ -27,10 +27,12 @@ until they land there.
 
 | Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
 |---|---:|---:|---:|---:|
-| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 |
+| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 † |
 | **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
 | **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | |
-| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 |
+| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 † |
+
+† HUGSIM's 22 Oct campaign, which paddock's HUGSIM page marks superseded: six waypoints of each plan sent, the release with momentum off, and this model's run not stored in paddock. Paddock's current figure for the release (momentum on, the whole 4 s plan) is 37.1.
 
 The sub-score agent-look model and its agent decoder: [H04's account](../H04_subscore_scorer_navsim/README.md).
 
@@ -145,7 +147,7 @@ closes it yet.
 | With the 19 Oct switch at its default, the model is the one that trained | verified: 500 navtest scenes reproduce the 17 Oct epoch-19 CSV on every column (max difference 0) |
 | `navtest-score` gives the numbers above from the evaluations' CSVs (85.27 / 81.98, released 87.78 / 84.49) | verified (27 Oct) |
 | The recipe's training and evaluation overrides are the runs' own | verified against each run's `code/hydra/overrides.yaml` |
-| `drive_jepa_config.py` as it was at launch | **not kept**: the manifest's `as_run_sha256` is null. Its only change is the pick defaults, which training never reads and checkpoint selection read at gates 1, route 2, no blend |
+| `drive_jepa_config.py` as it was at launch | **not kept**: the manifest's `as_run_sha256` is null. It differs from the run's in the pick defaults (locked on 25 Oct, after training) and the `agent_decoder_ckpt` default. The gradient never reads the pick, but checkpoint selection (val/score_epoch) did, at gates 1, route 2, no blend; `run3a-train` passes those defaults explicitly |
 | `run3a-checks` runs from this repo in the tree `code-run3a` builds | verified (27 Oct): checks 1–3 pass with the 24 Oct numbers (transform error 1.8e-15 m, 768 / 768 waypoints, attention on nothing 1.0000) |
 | `dump-tokens` and `verify-tokens` behave as the scripts that ran | **argued**: ported with only the arguments changed (and the dump's exit code); neither was rerun from this repo |
 | `run2-train`, `agent-decoder` and `run3a-train` reproduce the recorded checkpoints | **argued**: not rerun. NAVSIM training is seeded but not bitwise deterministic on this GPU |
