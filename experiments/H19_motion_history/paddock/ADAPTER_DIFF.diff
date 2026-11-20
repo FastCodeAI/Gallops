@@ -1,0 +1,451 @@
+Only in drivejepa_a4: a4.py
+diff -ru -x __pycache__ -x launch drivejepa018bp06/bridge.py drivejepa_a4/bridge.py
+--- drivejepa018bp06/bridge.py	2026-10-31 03:53:25.260403862 +0530
++++ drivejepa_a4/bridge.py	2026-11-20 01:28:20.842507500 +0530
+@@ -314,7 +314,7 @@
+     elif canned:
+         # 0.1.4b test seam: the momentum bookkeeping on caller-supplied model
+         # outputs, with no checkpoint (momentum.CannedMomentumDriveJEPA).
+-        from drivejepa018bp06.momentum import CannedMomentumDriveJEPA
++        from drivejepa_a4.momentum import CannedMomentumDriveJEPA
+ 
+         model = CannedMomentumDriveJEPA(device=device)
+     else:
+@@ -323,8 +323,8 @@
+         # the previous-plan keys upstream's evaluation loop feeds (momentum.py).
+         # A request without the "momentum" key takes RealDriveJEPA.forward
+         # unchanged, which is how DRIVEJEPA_MOMENTUM=off is 0.1.4.
+-        from drivejepa018bp06 import constants as K018
+-        from drivejepa018bp06.momentum import MomentumDriveJEPA
++        from drivejepa_a4 import constants as K018
++        from drivejepa_a4.momentum import MomentumDriveJEPA
+ 
+         # 0.1.8: the weights come from constants.checkpoint_pin (refuses the
+         # placeholder unless the offline-check override is set). real_model._check_weights
+@@ -342,7 +342,7 @@
+         # for every forward, momentum or not. The line below goes to the worker
+         # log, which is where the run's provenance gate reads it.
+         _verify_checkpoint(str(HERE / "batch_fix.py"), os.path.getsize(HERE / "batch_fix.py"), K018.BATCH_FIX_SHA256)
+-        from drivejepa018bp06 import batch_fix
++        from drivejepa_a4 import batch_fix
+ 
+         found = batch_fix.install(model._agent._pad_model)
+         model._agent.eval()
+@@ -355,6 +355,14 @@
+             f"{len(found['sca'])} cross-attention modules; state {dict((k, v) for k, v in batch_fix.STATE.items() if k != 'rec')}",
+             file=sys.stderr, flush=True,
+         )
++        # Approach 4: the ONE addition on this side of the pipe. The approach-4 checkpoint named by
++        # constants.a4_pin() is overlaid on the loaded p06 agent (a4.py); the line below goes to the
++        # worker log, where the run's provenance gate reads it.
++        from drivejepa_a4 import a4
++
++        info = a4.install(model)
++        print(f"drivejepa-a4 checkpoint: verified {info['checkpoint']} sha256 {info['sha256']} | arm {info['arm']} "
++              f"eval_hides {info['eval_hides']} step {info['step']} | {info}", file=sys.stderr, flush=True)
+     _send(out, READY)
+ 
+     while True:
+diff -ru -x __pycache__ -x launch drivejepa018bp06/constants.py drivejepa_a4/constants.py
+--- drivejepa018bp06/constants.py	2026-10-31 03:53:25.260828044 +0530
++++ drivejepa_a4/constants.py	2026-11-20 01:29:11.974732739 +0530
+@@ -31,7 +31,9 @@
+ #: Everything 0.1.4 does not change is a symlink back to adapters/drivejepa/,
+ #: so there is still exactly ONE copy of bridge.py, real_model.py, fake_model.py
+ #: and src/ in existence -- the 0.1.3 invariant, extended across versions.
+-ADAPTER_VERSION = "0.1.8b-p06"
++# Approach 4 (motion history): adapters/drivejepa_a4/ is a COPY of adapters/drivejepa018bp06/ (the original is not edited).
++# The planner adds one feature key (ego_history), the worker overlays an approach-4 checkpoint (a4.py). Everything else is 0.1.8b-p06.
++ADAPTER_VERSION = "0.1.8b-p06-a4"
+ 
+ # --- 0.1.6: the retrained checkpoint (analysis_3.0/Retrain-data/s4_train) -----
+ #: 0.1.6 = 0.1.4b + the S4 weights + the two input changes those weights were
+@@ -295,7 +297,7 @@
+ 
+ #: The second provenance line the launcher prints.
+ MOMENTUM_PROVENANCE = (
+-    "drivejepa-0.1.8b-p06 | 0.1.7 logic, checkpoint from constants.checkpoint_pin, batch fix on (fix1+fix2+fix3), bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score"
++    "drivejepa-0.1.8b-p06-a4 | 0.1.8b-p06 adapter logic and encoder, approach-4 generator + scorer + motion blocks from constants.a4_pin, base checkpoint from constants.checkpoint_pin, batch fix on (fix1+fix2+fix3), bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score"
+     " | paper §3.5 momentum-aware selection (upstream calibrate_score)"
+ )
+ 
+@@ -303,3 +305,30 @@
+ MOMENTUM_OK = "OK"                  # previous plan fed, score recalibrated
+ MOMENTUM_NO_PREV = "NO_PREV"        # first replan of the session: plain S
+ MOMENTUM_DROPPED_AGE = "DROPPED_AGE"  # previous plan older than 0.55 s: plain S
++
++
++# --- approach 4 (motion history; Gallops-sid/memory/4_motion_history/PREREG_APPROACH4.md) -----------------------------------------
++#: The car-state history the model reads: build_history() of MH/src/ego_history.py, called in planner.build_features beside
++#: ego_status (BUILD1_HISTORY_DATA.md 4c: t_us = the newest pose's timestamp, T_ref = that pose). Shape (1, 8, 6) float32.
++HISTORY_FEATURE_KEY = "ego_history"
++A4_MH_SRC = "{working_folder}/src"
++A4_PAI_SRC = "{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim/s1_build/src"   # pai_model, pai_common
++#: PREREG_APPROACH4.md section 1: the builder file, pinned.
++A4_EGO_HISTORY_SHA256 = "01a96fdb77a033e9c36715018b619a98b1978cc368df0ae712dd7627c2a472fe"
++#: Which approach-4 checkpoint the worker overlays: a JSON file {"checkpoint": path, "sha256": hex, "arm": "A"|"B"} named by this env
++#: (set by launch/run_a4_scene.sh per lane). No default: the adapter refuses to start without it.
++A4_CONFIG_ENV = "DRIVEJEPA_A4_CONFIG"
++
++
++def a4_pin() -> dict:
++    """the approach-4 overlay: {checkpoint, sha256, arm, config}. Raises on a missing or malformed config."""
++    import json
++    import os
++
++    path = os.environ.get(A4_CONFIG_ENV, "").strip()
++    if not path:
++        raise RuntimeError(f"{A4_CONFIG_ENV} is not set: drivejepa_a4 needs an approach-4 checkpoint config")
++    cfg = json.load(open(path))
++    if set(cfg) - {"note"} != {"checkpoint", "sha256", "arm"} or cfg["arm"] not in ("A", "B") or len(cfg["sha256"]) != 64:
++        raise RuntimeError(f"{path} must hold exactly checkpoint, sha256 and arm (A or B): {cfg}")
++    return {**cfg, "config": path}
+diff -ru -x __pycache__ -x launch drivejepa018bp06/planner.py drivejepa_a4/planner.py
+--- drivejepa018bp06/planner.py	2026-10-31 03:53:25.261777588 +0530
++++ drivejepa_a4/planner.py	2026-11-20 01:27:55.268564794 +0530
+@@ -203,6 +203,38 @@
+ # ===========================================================================
+ 
+ 
++_BUILD_HISTORY = None
++
++
++def _ego_history(observations) -> np.ndarray:
++    """Approach 4 (BUILD1_HISTORY_DATA.md 4c): MH/src/ego_history.build_history over every pose of the session, with
++    t_us = the newest pose's timestamp and T_ref = that pose (the frame _build_ego_status uses), so history and the
++    current row share one frame, as in training. (1, 8, 6) float32. The builder file is loaded by path once, after its
++    sha256 is checked against the pre-registered one (no sys.path change in the driver)."""
++    global _BUILD_HISTORY
++    if _BUILD_HISTORY is None:
++        import hashlib
++        import importlib.util
++
++        path = os.path.join(K.A4_MH_SRC, "ego_history.py")
++        sha = hashlib.sha256(open(path, "rb").read()).hexdigest()
++        if sha != K.A4_EGO_HISTORY_SHA256:
++            raise RuntimeError(f"{path} sha256 {sha} is not the pre-registered {K.A4_EGO_HISTORY_SHA256}")
++        spec = importlib.util.spec_from_file_location("a4_ego_history", path)
++        mod = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(mod)
++        _BUILD_HISTORY = mod.build_history
++        logger.info("approach 4: ego_history builder %s sha256 %s", path, sha)
++    poses = observations.poses
++    hist = _BUILD_HISTORY(
++        [int(p.timestamp_us) for p in poses],
++        [_pose_to_matrix(p.pose) for p in poses],
++        t_us=int(poses[-1].timestamp_us),
++        T_ref=_pose_to_matrix(poses[-1].pose),
++    )
++    return np.asarray(hist, dtype=np.float32)[None]
++
++
+ def _pose_to_matrix(pose) -> np.ndarray:
+     """4x4 homogeneous matrix from a ``common.Pose`` protobuf.
+ 
+@@ -727,6 +759,8 @@
+             "ego_status": self._model_ego_status(
+                 self._build_ego_status(observations)
+             )[None],
++            # Approach 4: the car-state history, beside ego_status and not inside it (the current row keeps its path).
++            K.HISTORY_FEATURE_KEY: _ego_history(observations),
+         }
+ 
+     @staticmethod
+@@ -968,7 +1002,7 @@
+         if missing:
+             raise RuntimeError(
+                 f"momentum is on but the model returned no {missing}. The worker "
+-                "behind model_fn is not 0.1.8's (drivejepa018bp06/momentum.py); "
++                "behind model_fn is not 0.1.8's (drivejepa_a4/momentum.py); "
+                 "refusing to drive on plain S while claiming §3.5."
+             )
+         meta = output["momentum_meta"]
+--- drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh	2026-10-31 03:53:25.263949107 +0530
++++ adapters/drivejepa_a4/launch/run_a4_scene.sh	2026-11-20 01:30:01.265390689 +0530
+@@ -1,4 +1,11 @@
+ #!/usr/bin/env bash
++# APPROACH 4 (adapters/drivejepa_a4/launch): copy of drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh. Changes, and only these:
++#   * 4th argument is the lane tag step0A | armA | armB; it picks the overlay config $OUTROOT/model/<tag>/a4_config.json (checkpoint,
++#     sha256, arm), exported as DRIVEJEPA_A4_CONFIG. The comfort re-score is always on.
++#   * names, package and launcher paths; every output under {approach4_store}/cl/
++#   * provenance gates: build freeze of drivejepa_a4 + model_a4.py/ego_history.py, the wiring proof passed (except for the proof's own
++#     lane step0A), the launcher and the worker must log the approach-4 checkpoint sha256 and arm
++# The wizard command, scene selection, config-diff gate, teardown, gates and replay are unchanged. --
+ # SPDX-License-Identifier: Apache-2.0
+ #
+ # DRIVE-JEPA 0.1.8 (drafts/drivejepa-0.1.8b-p06, package adapters/drivejepa018bp06): copy of s5_trial/runs_017/run_017_scene.sh; changes: names 017 -> 018,
+@@ -35,7 +42,9 @@
+ #     exit code tells the sweep (0 green, 9 red gates, 20 wizard failed, else preflight)
+ set -uo pipefail
+ 
+-LANE="${1:?dj}"; SHORT="${2:?short8}"; SCENE="${3:?clipgt id}"; MODE="${4:?on|off}"; shift 4
++LANE="${1:?dj}"; SHORT="${2:?short8}"; SCENE="${3:?clipgt id}"; TAG="${4:?step0A|armA|armB}"; shift 4
++MODE=on   # comfort re-score always on, as in every p06 baseline run
++case "$TAG" in step0A|armA|armB) : ;; *) echo "tag must be step0A, armA or armB"; exit 2 ;; esac
+ GPU_FLOOR_MIB=""; WAIT_CAP_S=10800; PREFLIGHT_ONLY=0; TEST_CSV=""; S5A_CSV=""
+ while [ $# -gt 0 ]; do
+   case "$1" in
+@@ -54,10 +63,11 @@
+ HERE="$BASE/drafts/ext20"
+ VENV="$BASE/alpasim/.venv/bin/python"
+ BULK={alpasim_bulk}
+-OUTROOT={retrain_store}/018b/closed_loop   # 0.1.8: every output on the NAS
+-S5A=$OUTROOT/runs   # <S5A>/drivejepa_018bp06_<scene>/
+-TRIAL="$BASE/drafts/drivejepa-0.1.8b-p06"   # 0.1.8 build dir: launcher, this script, extra gates, tables/ (build freeze, written after the build gate)
+-PKG="$BASE/adapters/drivejepa018bp06"
++OUTROOT={approach4_store}/cl   # approach 4 (NAS read-only): every output on data8t
++S5A=$OUTROOT/runs   # <S5A>/a4_<tag>_<scene>/
++PKG="$BASE/adapters/drivejepa_a4"
++TRIAL="$PKG/launch"   # launcher, this script, extra gates, tables/ (build freeze)
++A4CFG="$OUTROOT/model/$TAG/a4_config.json"; export DRIVEJEPA_A4_CONFIG="$A4CFG"   # which approach-4 checkpoint the worker overlays
+ # 0.1.8: the checkpoint the closed-loop run must load. PLACEHOLDER until the 0.1.8 weights exist; must equal constants.CHECKPOINT_SHA256.
+ EXPECT_CKPT_SHA=3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66
+ mkdir -p "$OUTROOT/tmp/mpl"
+@@ -78,10 +88,10 @@
+   dj)
+     DRAFT="$TRIAL"                           # 0.1.8: the launcher/draft ...
+     SEARCH_DRAFT="$BASE/drafts/drivejepa-0.1.4"               # ... under the UNCHANGED 0.1.4 wizard config (driver=drivejepa014, port 9147)
+-    LOGDIR="$S5A/drivejepa_018bp06_${SHORT}"
++    LOGDIR="$S5A/a4_${TAG}_${SHORT}"
+     DRIVER_PORT=9147; DRIVER_CFG=drivejepa014
+     [ -n "$GPU_FLOOR_MIB" ] || GPU_FLOOR_MIB=14394   # heaviest measured pilot10 floor, sweep_ten.sh:56
+-    NAME="drivejepa_018bp06_${SHORT}"; VIDEO_TAG="drivejepa_018bp06"; LINK_PREFIX="run_" ;;
++    NAME="a4_${TAG}_${SHORT}"; VIDEO_TAG="a4_${TAG}"; LINK_PREFIX="run_${TAG}_" ;;
+   cv)
+     DRAFT="$BASE/drafts/cv_023_20hz_pilot10"
+     DRIVER_SRC="$BASE/drafts/cv_0.2.2"
+@@ -97,7 +107,7 @@
+ PROJECT="$(basename "$LOGDIR")"   # compose project = basename(log_dir), as the templates; unique + greppable
+ 
+ # --- GATE 0: output path is the bucket, never runs/ top level; never merge -----
+-case "$LOGDIR" in "$S5A"/drivejepa_018bp06_*) : ;;
++case "$LOGDIR" in "$S5A"/a4_step0A_*|"$S5A"/a4_armA_*|"$S5A"/a4_armB_*) : ;;
+   *) log "FATAL: $LOGDIR is not a bucket path"; exit "$EX_CONFIG" ;; esac
+ [ -e "$LOGDIR/rollouts" ] && { log "FATAL: $LOGDIR already holds rollouts -- refusing to merge"; exit "$EX_CONFIG"; }
+ if [ "$PREFLIGHT_ONLY" = 1 ]; then LOGDIR="$LOGDIR.preflight_only_$(date +%Y%m%dT%H%M%S)"; fi
+@@ -159,20 +169,24 @@
+ 
+ # --- provenance gate, before anything is spent -----------------------------------
+ if [ "$LANE" = dj ]; then
+-  PLANNER_REAL=$(readlink -f "$DRAFT/drivejepa/planner.py")
+-  case "$PLANNER_REAL" in "$PKG"/planner.py) : ;;
+-    *) log "FATAL prov: draft planner resolves to $PLANNER_REAL, not adapters/drivejepa018bp06/"; exit "$EX_PROV" ;; esac
++  PLANNER_REAL=$(readlink -f "$PKG/planner.py")
+   # 0.1.8: closed-loop runs load the pinned checkpoint only; the override env is for the offline build check.
+   [ -z "${DRIVEJEPA_CHECKPOINT_OVERRIDE:-}" ] || { log "FATAL prov: DRIVEJEPA_CHECKPOINT_OVERRIDE is set -- closed-loop runs use the constants.py pin only"; exit "$EX_PROV"; }
+   case "$EXPECT_CKPT_SHA" in *PLACEHOLDER*) log "FATAL prov: EXPECT_CKPT_SHA in run_018bp06_scene.sh is still the placeholder (0.1.8 weights not pinned)"; exit "$EX_PROV" ;; esac
+-  AV=$("$VENV" -B -c "import sys; sys.path.insert(0,'$BASE/adapters'); from drivejepa018bp06 import constants as K; print(K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION, K.BATCH_FIX, K.MOMENTUM_DEFAULT, K.CHECKPOINT_SHA256)")
+-  [ "$AV" = "0.1.8b-p06 37 True True True on $EXPECT_CKPT_SHA" ] || { log "FATAL prov: ADAPTER_VERSION=$AV"; exit "$EX_PROV"; }
++  AV=$("$VENV" -B -c "import sys; sys.path.insert(0,'$BASE/adapters'); from drivejepa_a4 import constants as K; print(K.ADAPTER_VERSION, K.BONNET_MASK_ROWS, K.ZERO_ACCELERATION, K.ZERO_MOMENTUM_ACCELERATION, K.BATCH_FIX, K.MOMENTUM_DEFAULT, K.CHECKPOINT_SHA256)")
++  [ "$AV" = "0.1.8b-p06-a4 37 True True True on $EXPECT_CKPT_SHA" ] || { log "FATAL prov: ADAPTER_VERSION=$AV"; exit "$EX_PROV"; }
++  # approach 4: this lane's overlay config, its checkpoint file and sha256, and the arm
++  [ -f "$A4CFG" ] || { log "FATAL prov: $A4CFG missing"; exit "$EX_PROV"; }
++  A4P=$("$VENV" -B -c "import sys,json; sys.path.insert(0,'$BASE/adapters'); from drivejepa_a4 import constants as K; p=K.a4_pin(); print(p['arm'], p['sha256'], p['checkpoint'])") || { log "FATAL prov: a4_pin did not resolve"; exit "$EX_PROV"; }
++  read -r A4ARM A4SHA A4CKPT <<<"$A4P"
++  case "$TAG" in step0A|armA) [ "$A4ARM" = A ] ;; armB) [ "$A4ARM" = B ] ;; esac || { log "FATAL prov: tag $TAG but config arm $A4ARM"; exit "$EX_PROV"; }
++  [ "$(sha256sum "$A4CKPT" | cut -d' ' -f1)" = "$A4SHA" ] || { log "FATAL prov: approach-4 checkpoint sha256 differs from the config"; exit "$EX_PROV"; }
+   MSHA=$(sha256sum "$PKG/momentum.py" | cut -d' ' -f1); PSHA=$(sha256sum "$PLANNER_REAL" | cut -d' ' -f1)
+-  ( cd "$BASE/adapters" && sha256sum -c --quiet "$TRIAL/tables/build_018bp06.sha256" ) || { log "FATAL prov: adapters/drivejepa018bp06 or the launcher differs from the build frozen after the gate (tables/build_018bp06.sha256)"; exit "$EX_PROV"; }
+-  [ "$(sha256sum "$TRIAL/adapter_0.1.8_to_0.1.8bp06.diff" | cut -d' ' -f1)" = "$(cat "$TRIAL/tables/adapter_diff.sha256" | cut -d' ' -f1)" ] || { log "FATAL prov: adapter_0.1.8_to_0.1.8bp06.diff changed since the freeze"; exit "$EX_PROV"; }
+-  grep -q '"gate_1_under_2cm": true' "$TRIAL/tables/gate_018bp06.json" || { log "FATAL prov: build gate (plans under 2 cm) not passed"; exit "$EX_PROV"; }
+-  log "prov: adapter diff sha256 $(cut -d' ' -f1 "$TRIAL/tables/adapter_diff.sha256"), checkpoint sha256 ${AV##* }, batch_fix.py sha256 $(sha256sum "$PKG/batch_fix.py" | cut -d' ' -f1)"
+-  log "prov OK: planner $PLANNER_REAL, build $AV, momentum.py sha ${MSHA:0:12}, planner.py sha ${PSHA:0:12}, mode $MODE, launcher sha $(sha256sum "$DRAFT/serve_drivejepa_0_1_8b_p06.py" | cut -c1-12)"
++  ( cd "$BASE/adapters" && sha256sum -c --quiet "$TRIAL/tables/build_a4.sha256" ) || { log "FATAL prov: adapters/drivejepa_a4 differs from the build frozen before the wiring proof (tables/build_a4.sha256)"; exit "$EX_PROV"; }
++  ( cd {working_folder}/src && sha256sum -c --quiet "$TRIAL/tables/model_a4.sha256" ) || { log "FATAL prov: model_a4.py / ego_history.py differ from the frozen build"; exit "$EX_PROV"; }
++  [ "$TAG" = step0A ] || grep -q '"pass": true' "$TRIAL/tables/wiring_proof.json" 2>/dev/null || { log "FATAL prov: the wiring proof has not passed"; exit "$EX_PROV"; }
++  log "prov: base checkpoint sha256 ${AV##* }, approach-4 checkpoint $A4CKPT sha256 $A4SHA arm $A4ARM (tag $TAG), batch_fix.py sha256 $(sha256sum "$PKG/batch_fix.py" | cut -d' ' -f1), a4.py sha256 $(sha256sum "$PKG/a4.py" | cut -d' ' -f1)"
++  log "prov OK: planner $PLANNER_REAL, build $AV, momentum.py sha ${MSHA:0:12}, planner.py sha ${PSHA:0:12}, mode $MODE, launcher sha $(sha256sum "$DRAFT/serve_drivejepa_a4.py" | cut -c1-12)"
+ else
+   GOT_SHA=$(sha256sum "$DRIVER_SRC/constant_velocity_driver.py" | cut -d' ' -f1)
+   [ "$GOT_SHA" = "$EXPECT_SHA" ] || { log "FATAL gate1: driver sha $GOT_SHA != $EXPECT_SHA"; exit "$EX_PROV"; }
+@@ -256,7 +270,7 @@
+ # --- driver up, per lane VERBATIM ----------------------------------------------
+ BIND_T0=$(date +%s)
+ if [ "$LANE" = dj ]; then
+-  DRIVEJEPA_BATCH_FIX=on DRIVEJEPA_WORKER_LOG="$LOGDIR/driver_worker.log" DRIVEJEPA_MOMENTUM="$MODE" "$VENV" "$DRAFT/serve_drivejepa_0_1_8b_p06.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
++  DRIVEJEPA_BATCH_FIX=on DRIVEJEPA_WORKER_LOG="$LOGDIR/driver_worker.log" DRIVEJEPA_MOMENTUM="$MODE" "$VENV" "$DRAFT/serve_drivejepa_a4.py" --host 0.0.0.0 --port "$DRIVER_PORT" --device cpu \
+       --control-timestep-us 50000 > "$LOGDIR/driver.log" 2>&1 &
+   DRIVER_PID=$!
+   driver_up() { ss -ltn 2>/dev/null | grep -q ":${DRIVER_PORT}\b" && return 0; grep -q "driver listening on" "$LOGDIR/driver.log" 2>/dev/null; }
+@@ -265,18 +279,21 @@
+   [ "$bound" = 1 ] || { log "FATAL: driver never bound ${DRIVER_PORT}"; exit "$EX_DRIVER"; }
+   log "BIND_TIME_S=$(( $(date +%s) - BIND_T0 ))"
+   grep -m1 "provenance:" "$LOGDIR/driver.log" || { log "FATAL: no provenance line"; exit "$EX_PROV"; }
+-  grep -q "adapter_version=0.1.8b-p06 " "$LOGDIR/driver.log" || { log "FATAL: wrong adapter_version"; exit "$EX_PROV"; }
+-  grep -q "Alpasim/adapters/drivejepa018bp06/planner.py" "$LOGDIR/driver.log" || { log "FATAL: planner not from the live 0.1.8 package"; exit "$EX_PROV"; }
+-  grep -q "drivejepa-0.1.8b-p06 | 0.1.7 logic, checkpoint from constants.checkpoint_pin, batch fix on (fix1+fix2+fix3), bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score | paper §3.5 momentum-aware selection (upstream calibrate_score)" "$LOGDIR/driver.log" || { log "FATAL: 0.1.8 provenance line missing"; exit "$EX_PROV"; }
++  grep -q "adapter_version=0.1.8b-p06-a4 " "$LOGDIR/driver.log" || { log "FATAL: wrong adapter_version"; exit "$EX_PROV"; }
++  grep -q "Alpasim/adapters/drivejepa_a4/planner.py" "$LOGDIR/driver.log" || { log "FATAL: planner not from the approach-4 package"; exit "$EX_PROV"; }
++  grep -q "approach4: arm=$A4ARM checkpoint=$A4CKPT sha256=$A4SHA " "$LOGDIR/driver.log" || { log "FATAL: launcher did not report the approach-4 checkpoint"; exit "$EX_PROV"; }
++  grep -q "drivejepa-0.1.8b-p06-a4 | 0.1.8b-p06 adapter logic and encoder, approach-4 generator + scorer + motion blocks from constants.a4_pin, base checkpoint from constants.checkpoint_pin, batch fix on (fix1+fix2+fix3), bonnet mask 37 rows, acceleration zeroed in the model input and in the §3.5 re-score | paper §3.5 momentum-aware selection (upstream calibrate_score)" "$LOGDIR/driver.log" || { log "FATAL: 0.1.8 provenance line missing"; exit "$EX_PROV"; }
+   grep -q "pinned_default=on " "$LOGDIR/driver.log" || { log "FATAL: comfort re-score pinned default not reported on"; exit "$EX_PROV"; }
+   grep -q "checkpoint=.* sha256=$EXPECT_CKPT_SHA .* source=PINNED" "$LOGDIR/driver.log" || { log "FATAL: launcher did not report the pinned checkpoint"; exit "$EX_PROV"; }
+   grep -q "drivejepa-0.1.8b-p06 checkpoint: verified .* sha256 $EXPECT_CKPT_SHA .* source pinned" "$LOGDIR/driver_worker.log" || { log "FATAL: the worker did not log the verified pinned checkpoint"; exit "$EX_PROV"; }
+   grep -m1 "drivejepa-0.1.8b-p06 checkpoint:" "$LOGDIR/driver_worker.log"
+   grep -q "drivejepa-0.1.8b-p06 batch_fix: installed on .* state {'fix1': True, 'fix2': True, 'fix3': True}" "$LOGDIR/driver_worker.log" || { log "FATAL: the worker did not report the batch fix installed and on"; exit "$EX_PROV"; }
+   grep -m1 "drivejepa-0.1.8b-p06 batch_fix:" "$LOGDIR/driver_worker.log"
++  grep -q "drivejepa-a4 checkpoint: verified $A4CKPT sha256 $A4SHA | arm $A4ARM " "$LOGDIR/driver_worker.log" || { log "FATAL: the worker did not log the verified approach-4 checkpoint"; exit "$EX_PROV"; }
++  grep -m1 "drivejepa-a4 checkpoint:" "$LOGDIR/driver_worker.log"
+   if [ "$MODE" = off ]; then grep -q "switch=OFF" "$LOGDIR/driver.log" || { log "FATAL: kill switch not reported OFF"; exit "$EX_PROV"; }
+   else grep -q "switch=on" "$LOGDIR/driver.log" || { log "FATAL: switch not reported on"; exit "$EX_PROV"; }; fi
+-  grep -m1 "drivejepa-0.1.8b-p06 | 0.1.7 logic" "$LOGDIR/driver.log"
++  grep -m1 "drivejepa-0.1.8b-p06-a4 | " "$LOGDIR/driver.log"
+   grep -q "replan_period_us=500000" "$LOGDIR/driver.log" || { log "FATAL: divider period is not 500 ms"; exit "$EX_PROV"; }
+ else
+   "$VENV" "$DRIVER_SRC/constant_velocity_driver.py" --host 0.0.0.0 --port "$DRIVER_PORT" > "$LOGDIR/cv_driver.log" 2>&1 &
+@@ -331,7 +348,7 @@
+     # S5a fix after the runs: the checker lives in the 0.1.4 draft (S5a's 4 runs recorded FAIL = file-not-found; re-run by hand, s5a/tables/smoke_gates_rerun.txt)
+     "$VENV" -B "$BASE/drafts/drivejepa-0.1.4/smoke_01d503d4/check_smoke_gates.py" "$LOGDIR" > "$LOGDIR/smoke_gates.txt" 2>&1; g=$?
+     gate "smoke_gates_2_4_5" "$g" "$(grep -E "^(FAIL|ALL|GATES)" "$LOGDIR/smoke_gates.txt" | paste -sd';' -)"
+-    "$VENV" -B "$TRIAL/dj_extra_gates_018bp06.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
++    "$VENV" -B "$TRIAL/dj_extra_gates_a4.py" "$LOGDIR" --json "$LOGDIR/dj_extra_gates.json" > "$LOGDIR/dj_extra_gates.txt" 2>&1; g=$?
+     gate "dj_extra_gates" "$g" "$(grep -E "^(FAIL|EXTRA)" "$LOGDIR/dj_extra_gates.txt" | paste -sd';' -)"
+   fi
+ else
+--- drafts/drivejepa-0.1.8b-p06/serve_drivejepa_0_1_8b_p06.py	2026-10-31 03:53:25.263145894 +0530
++++ adapters/drivejepa_a4/launch/serve_drivejepa_a4.py	2026-11-20 01:29:00.178210708 +0530
+@@ -1,6 +1,9 @@
+ #!/usr/bin/env python
+ # SPDX-License-Identifier: Apache-2.0
+-"""Serve the Drive-JEPA adapter at 0.1.8 (0.1.7 logic; 0.1.4 + paper §3.5 momentum-aware selection).
++"""APPROACH 4 (adapters/drivejepa_a4/launch): copy of drafts/drivejepa-0.1.8b-p06/serve_drivejepa_0_1_8b_p06.py; changes: the package is
++imported by its own name (adapters/drivejepa_a4), the expected version, the approach-4 config must resolve, a third provenance line.
++
++Serve the Drive-JEPA adapter at 0.1.8 (0.1.7 logic; 0.1.4 + paper §3.5 momentum-aware selection).
+ 
+     alpasim/.venv/bin/python drafts/drivejepa-0.1.8b-p06/serve_drivejepa_0_1_8b_p06.py \
+         --host 0.0.0.0 --port 9149 --device cpu --control-timestep-us 50000
+@@ -73,24 +76,22 @@
+ _HERE = Path(__file__).resolve().parent
+ # 0.1.8 lives in Alpasim/drafts/drivejepa-0.1.8b-p06/ (this file) and Alpasim/adapters/drivejepa018bp06/ (the package),
+ # next to the shared scaffold in Alpasim/adapters/.
+-_ADAPTERS = _HERE.parents[1] / "adapters"
+-_LIVE_PACKAGE = _ADAPTERS / "drivejepa018bp06"
++_ADAPTERS = _HERE.parents[1]          # approach 4: this file is adapters/drivejepa_a4/launch/
++_LIVE_PACKAGE = _ADAPTERS / "drivejepa_a4"
+ assert (_ADAPTERS / "scaffold.py").is_file(), _ADAPTERS
+ 
+-# Draft FIRST so `drivejepa` resolves here; adapters after it for the shared
+-# scaffold.
+-sys.path.insert(0, str(_HERE))
++# Approach 4: adapters/ holds both the package (drivejepa_a4, imported by its own name) and the shared scaffold.
+ if str(_ADAPTERS) not in sys.path:
+-    sys.path.append(str(_ADAPTERS))
++    sys.path.insert(0, str(_ADAPTERS))
+ 
+ #: What this launcher is for. The *expectation*; the reported value always
+ #: comes out of the imported module, never from this literal.
+-EXPECTED_VERSION = "0.1.8b-p06"
++EXPECTED_VERSION = "0.1.8b-p06-a4"
+ 
+ #: AlpaSim logical_id of the front camera. Same as serve_planner's default.
+ FRONT_CAMERA_ID = "camera_front_wide_120fov"
+ 
+-logger = logging.getLogger("serve_drivejepa_0_1_8b_p06")
++logger = logging.getLogger("serve_drivejepa_a4")
+ 
+ 
+ def _resolve_planner():
+@@ -105,7 +106,7 @@
+     # anything else. A wrong `drivejepa` on the path may not even have a
+     # divider module, and "ModuleNotFoundError: drivejepa.divider" is a much
+     # worse thing to read at 3am than the refusal below.
+-    import drivejepa.planner as planner
++    import drivejepa_a4.planner as planner
+ 
+     # realpath, not __file__: the draft's planner.py is a symlink, and the
+     # question worth answering in a log is which *source file* ran.
+@@ -121,8 +122,8 @@
+             "process served a different one. Make it a symlink."
+         )
+ 
+-    import drivejepa.constants as constants
+-    import drivejepa.divider as divider
++    import drivejepa_a4.constants as constants
++    import drivejepa_a4.divider as divider
+ 
+     divider_path = Path(os.path.realpath(divider.__file__))
+     if divider_path.parent != _LIVE_PACKAGE.resolve():
+@@ -137,7 +138,7 @@
+     # 0.1.6: the two files that carry the momentum path. bridge.py decides which
+     # model class the worker builds; momentum.py is that class. Either one
+     # shadowed would change every replan's pick, or silently drop §3.5.
+-    import drivejepa.bridge as bridge
++    import drivejepa_a4.bridge as bridge
+ 
+     for label, path in (
+         ("bridge", Path(os.path.realpath(bridge.__file__))),
+@@ -159,6 +160,7 @@
+     # checkpoint_pin() refuses it unless DRIVEJEPA_CHECKPOINT_OVERRIDE is set (offline build check only).
+     try:
+         constants.checkpoint_pin()
++        constants.a4_pin()            # approach 4: the overlay checkpoint config must resolve before anything is spent
+     except RuntimeError as exc:
+         raise SystemExit(f"refusing to serve: {exc}") from exc
+     version = getattr(constants, "ADAPTER_VERSION", None)
+@@ -222,12 +224,17 @@
+         f"momentum_module={Path(os.path.realpath(_LIVE_PACKAGE / 'momentum.py'))}"
+     )
+     logger.info(line2)
+-    return message + "\n" + line2
++    # Approach 4: the third provenance line, the overlay checkpoint (verified again, and logged, by the worker).
++    a4 = constants.a4_pin()
++    line3 = (f"approach4: arm={a4['arm']} checkpoint={a4['checkpoint']} sha256={a4['sha256']} config={a4['config']} "
++             f"ego_history_sha256={constants.A4_EGO_HISTORY_SHA256} history_key={constants.HISTORY_FEATURE_KEY}")
++    logger.info(line3)
++    return message + "\n" + line2 + "\n" + line3
+ 
+ 
+ def build_parser() -> argparse.ArgumentParser:
+     """The CLI. Local rather than serve_planner's, so 0.1.3 is untouched."""
+-    import drivejepa.constants as K
++    import drivejepa_a4.constants as K
+ 
+     parser = argparse.ArgumentParser(
+         description=__doc__,
+@@ -294,10 +301,10 @@
+     """Planner + divider + scaffold. Separated from main() so tests can call it."""
+     from scaffold import DriverScaffold
+ 
+-    import drivejepa.constants as K
+-    from drivejepa.bridge import BridgedDriveJEPA, BridgeError
+-    from drivejepa.divider import ReplanDivider
+-    from drivejepa.planner import DriveJEPAPlanner
++    import drivejepa_a4.constants as K
++    from drivejepa_a4.bridge import BridgedDriveJEPA, BridgeError
++    from drivejepa_a4.divider import ReplanDivider
++    from drivejepa_a4.planner import DriveJEPAPlanner
+ 
+     # Refused, not ignored: silently dropping a flag someone passed would hand
+     # them a run whose frame pairing is not the one they asked for. 0.1.3 took
+@@ -340,7 +347,7 @@
+ 
+     # 0.1.6: resolve the switch here, once, and hand the planner the result,
+     # so the provenance line, the planner and the log below cannot disagree.
+-    from drivejepa.planner import momentum_mode
++    from drivejepa_a4.planner import momentum_mode
+ 
+     mode = momentum_mode("auto")
+     if mode == "off":
+--- drafts/drivejepa-0.1.8b-p06/dj_extra_gates_018bp06.py	2026-10-31 03:53:25.263341685 +0530
++++ adapters/drivejepa_a4/launch/dj_extra_gates_a4.py	2026-11-20 01:29:00.178290098 +0530
+@@ -44,7 +44,7 @@
+ MAX_AGE_US = 300_000
+ NRE_PIN = "26.1.112-59673f88"
+ NRE_BAD = "26.4.96-91b06fb8"
+-VERSION_ID = "drivejepa-v2-driver-0.1.8b-p06"   # copy of s5_trial/runs_017/dj_extra_gates_017.py (itself a copy of dj_extra_gates_016.py); only this line changed
++VERSION_ID = "drivejepa-v2-driver-0.1.8b-p06-a4"   # approach 4: only this line changed against dj_extra_gates_018bp06.py   # copy of s5_trial/runs_017/dj_extra_gates_017.py (itself a copy of dj_extra_gates_016.py); only this line changed
+ 
+ 
+ def handover_us(run_dir: str) -> int:
+--- drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh	2026-10-31 03:53:25.263949107 +0530
++++ adapters/drivejepa_a4/launch/run_018bp06_imagecheck_a4.sh	2026-11-20 01:30:01.264706988 +0530
+@@ -54,7 +54,7 @@
+ HERE="$BASE/drafts/ext20"
+ VENV="$BASE/alpasim/.venv/bin/python"
+ BULK={alpasim_bulk}
+-OUTROOT={retrain_store}/018b/closed_loop   # 0.1.8: every output on the NAS
++OUTROOT={approach4_store}/cl/imagecheck   # approach 4 image check (NAS read-only): ONLY this line differs from drafts/drivejepa-0.1.8b-p06/run_018bp06_scene.sh
+ S5A=$OUTROOT/runs   # <S5A>/drivejepa_018bp06_<scene>/
+ TRIAL="$BASE/drafts/drivejepa-0.1.8b-p06"   # 0.1.8 build dir: launcher, this script, extra gates, tables/ (build freeze, written after the build gate)
+ PKG="$BASE/adapters/drivejepa018bp06"

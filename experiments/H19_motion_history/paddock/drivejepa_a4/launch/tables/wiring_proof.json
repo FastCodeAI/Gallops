@@ -1,0 +1,25 @@
+{
+ "new": "{approach4_store}/cl/runs/a4_step0A_e3ed554f",
+ "recorded_p06": {
+  "ref": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_e3ed554f",
+  "score_ref": 1.0,
+  "score_new": 1.0,
+  "rows": [
+   9004,
+   9004
+  ],
+  "per_tick_bit_identical": true
+ },
+ "p06_rerun_this_image": {
+  "ref": "{h17_bulk}/runs/new40/imagecheck/018bp06/runs/drivejepa_018bp06_e3ed554f",
+  "score_ref": 1.0,
+  "score_new": 1.0,
+  "rows": [
+   9004,
+   9004
+  ],
+  "per_tick_bit_identical": true
+ },
+ "worker_logged_step0_snapshot": true,
+ "pass": true
+}
