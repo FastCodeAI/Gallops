@@ -99,27 +99,35 @@ EC .401 / .478.
 
 ## The regression gate
 
-Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Each block is copied from the
-gate's own table into [experiment.toml](experiment.toml). Against released Drive-JEPA:
+Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Against released Drive-JEPA:
 
-| Date | Benchmark | Metric | Released | The 4-camera planner | t | Units | Verdict |
-|---|---|---|---:|---:|---:|---:|---|
-| 21 Oct | NAVSIM, 1,000 tokens | EPDMS | 0.875 | 0.863 | −1.29 | 136 | NEUTRAL |
-| 21 Oct | KITScenes | ADE | 3.222 | 1.969 | 6.44 | 140 | GAIN |
-| 21 Oct | nuScenes | L2 | 2.497 | 1.956 | 3.03 | 30 | GAIN |
-| 21 Oct | Bench2Drive, 7 routes, 2 Hz | DS | 58.801 | 62.757 | 0.36 | 7 | NEUTRAL |
-| 27 Oct | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.280 | −0.96 | 15 | NEUTRAL |
-| 27 Oct | AlpaSim, 10 scenes | scene score | 0.416 | 0.450 | 0.24 | 10 | NEUTRAL |
-| 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.001 | 3.10 | 117 | GAIN |
-| 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.057 | 3.41 | 143 | GAIN |
+| Benchmark | Metric | Released | The 4-camera planner | t | Units | Verdict |
+|---|---|---:|---:|---:|---:|---|
+| KITScenes | ADE (3 s), m | 2.5375 | 2.0010 | 3.10 | 117 | GAIN |
+| nuScenes | L2, 1-2-3 s, m | 2.4314 | 2.0570 | 3.41 | 143 | GAIN |
+| NAVSIM, 1,018 scenes | EPDMS | 0.8572 | 0.8440 | −1.28 | 126 | NEUTRAL |
+| neuroNCAP, quick check (3 pairs) | NCAP | 3.1794 | 4.0237 | 0.98 | 3 | NEUTRAL |
+| Bench2Drive, crash check (route 3717) | DS | 37.67 | 29.20 | | 1 | TOO FEW UNITS |
+| AlpaSim, crash check (1 clip) | scene score | 0.0000 | 0.0000 | | 1 | TOO FEW UNITS |
+| neuroNCAP, closed loop (15 pairs) | NCAP | 3.6792 | 3.2800 | −0.96 | 15 | NEUTRAL |
+| Bench2Drive, closed loop (7 routes) | DS | 59.04 | 80.24 | 1.08 | 7 | NEUTRAL |
+| AlpaSim, closed loop (10 scenes) | scene score | 0.4162 | 0.4503 | 0.24 | 10 | NEUTRAL |
 
-On AlpaSim the gate first printed CONFIG DIFFERS on `bridge_args`, `driver_config` and `driver_profile`. This model
-drove AlpaSim through AutoE2E's driver profile, set by an uncommitted edit to paddock's AlpaSim harness (no paddock ref
-carries it), and that profile changes more than the camera count: six pinhole cameras (front f 990.8 px, 1920 × 1018,
-no distortion, global shutter) against Drive-JEPA's one front camera (f 1545 px, 1920 × 1080, distortion left in,
-rolling shutter), and a wrapper that replans every 0.5 s on the newest frame against Drive-JEPA's own 11-frame planner.
-The row above is the same two stored runs re-paired on 20 Nov with those three keys allowed (`tools.gate compare
---allow-config`); nothing was re-run, and what each difference does to the score is not measured. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
+Every pair is on the gate's current subsets (paddock #105, 23 Oct; the quick checks #113, 26 Oct), against the queue's
+stored released Drive-JEPA runs, and is copied from the gate's output into [experiment.toml](experiment.toml), one block,
+in the order every gated record uses. KITScenes and nuScenes ran on 28 Oct, neuroNCAP and AlpaSim on 27 Oct, NAVSIM and
+Bench2Drive on 20 Nov. Bench2Drive drives with the command fix (FOLLOW_REFERENCE fed as STRAIGHT), which this model's
+closed-loop runs use. On AlpaSim the gate first printed CONFIG DIFFERS on `bridge_args`, `driver_config` and
+`driver_profile`: this model drove AlpaSim through AutoE2E's driver profile (six pinhole cameras, front f 990.8 px,
+1920 × 1018, no distortion, global shutter, against Drive-JEPA's one front camera at f 1545 px, 1920 × 1080, distortion
+left in, rolling shutter; and a wrapper replanning every 0.5 s on the newest frame against Drive-JEPA's own 11-frame
+planner), set by an uncommitted edit to paddock's AlpaSim harness. Its two rows are the same runs re-paired with those
+three keys allowed; what each difference does to the score is not measured. Overall **HOLD**: nothing regressed, and no
+closed-loop benchmark gained.
+
+The 21 Oct gate, on the subsets paddock held before 23 Oct (NAVSIM 1,000 tokens, KITScenes 140 scenes, nuScenes 30 scenes,
+Bench2Drive 7 of the 50 routes picked by the baselines' spread, at 2 Hz, without the command fix), is superseded by these
+pairs: NAVSIM 0.875 → 0.863 (t −1.29), KITScenes 3.222 → 1.969 (t 6.44, GAIN), nuScenes 2.497 → 1.956 (t 3.03, GAIN), Bench2Drive 58.801 → 62.757 (t 0.36), HOLD.
 
 ## Decision
 
