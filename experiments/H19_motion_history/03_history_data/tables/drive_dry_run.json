@@ -1,0 +1,816 @@
+[
+ {
+  "asl": "{experiment_store_h17}/runs/cl18/018bp06/runs/drivejepa_018bp06_01d503d4/rollouts/clipgt-01d503d4-449b-46fc-8d78-9085e70d3554/b15aa566-df9c-11f1-9d16-b5da731c4277/rollout.asl",
+  "poses": 398,
+  "unique_timestamps": 398,
+  "duplicate_timestamps": 0,
+  "egomotion_messages": 395,
+  "poses_per_message": {
+   "1": 394,
+   "4": 1
+  },
+  "spacing_s": {
+   "median": 0.05,
+   "min": 0.014047,
+   "p99": 0.05,
+   "max": 0.100022
+  },
+  "span_s": 19.905132,
+  "driver_requests": 395,
+  "ask_spacing_median_s": 0.05,
+  "reported_speed_exactly_zero": {
+   "first_3p05_s": 56,
+   "poses_in_first_3p05_s": 60,
+   "after_3p05_s": 4,
+   "last_zero_at_s": 3.205132,
+   "first_pose_speed": 2.1160945809543197
+  },
+  "checks": [
+   {
+    "t_after_first_pose_s": 0.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.2,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.5,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.75,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 1.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 2.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 3.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 3.9,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 4.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 4.5,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 6.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 10.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 9.953,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 19.855,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   }
+  ],
+  "all_checks_ok": true,
+  "example": {
+   "t_after_first_pose_s": 9.953,
+   "rows_oldest_first": [
+    [
+     -18.4488,
+     0.1388,
+     -0.0102,
+     3.9602,
+     -0.001,
+     1.0
+    ],
+    [
+     -16.398,
+     0.1177,
+     -0.0104,
+     4.1019,
+     -0.0004,
+     1.0
+    ],
+    [
+     -14.2932,
+     0.0956,
+     -0.0108,
+     4.2097,
+     -0.0008,
+     1.0
+    ],
+    [
+     -12.1361,
+     0.0727,
+     -0.0104,
+     4.3145,
+     0.0007,
+     1.0
+    ],
+    [
+     -9.8378,
+     0.0501,
+     -0.0093,
+     4.5968,
+     0.0021,
+     1.0
+    ],
+    [
+     -7.4207,
+     0.0295,
+     -0.0079,
+     4.8345,
+     0.0029,
+     1.0
+    ],
+    [
+     -4.9441,
+     0.0124,
+     -0.0057,
+     4.9533,
+     0.0042,
+     1.0
+    ],
+    [
+     -2.3727,
+     0.0018,
+     -0.0021,
+     5.1428,
+     0.0072,
+     1.0
+    ]
+   ]
+  }
+ },
+ {
+  "asl": "{experiment_store_h17}/runs/cl18/018bp06/runs/drivejepa_018bp06_89f2eeb8/rollouts/clipgt-89f2eeb8-f4e4-42a1-8e07-d60003d223dc/b11fe596-dfbc-11f1-b10a-1df1ec79903c/rollout.asl",
+  "poses": 400,
+  "unique_timestamps": 400,
+  "duplicate_timestamps": 0,
+  "egomotion_messages": 397,
+  "poses_per_message": {
+   "1": 396,
+   "4": 1
+  },
+  "spacing_s": {
+   "median": 0.05,
+   "min": 0.011192,
+   "p99": 0.05,
+   "max": 0.100015
+  },
+  "span_s": 19.947398,
+  "driver_requests": 397,
+  "ask_spacing_median_s": 0.05,
+  "reported_speed_exactly_zero": {
+   "first_3p05_s": 58,
+   "poses_in_first_3p05_s": 62,
+   "after_3p05_s": 2,
+   "last_zero_at_s": 3.147398,
+   "first_pose_speed": 11.080545009465832
+  },
+  "checks": [
+   {
+    "t_after_first_pose_s": 0.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.2,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.5,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 0.75,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 1.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 2.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 3.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 3.9,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 4.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 4.5,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 6.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 10.0,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 9.974,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   },
+   {
+    "t_after_first_pose_s": 19.897,
+    "shape": [
+     8,
+     6
+    ],
+    "dtype": "float32",
+    "finite": true,
+    "valid": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "valid_as_expected": true,
+    "invalid_rows_all_zero": true,
+    "identical_with_future_nan": true
+   }
+  ],
+  "all_checks_ok": true,
+  "example": {
+   "t_after_first_pose_s": 9.974,
+   "rows_oldest_first": [
+    [
+     -56.9367,
+     -0.0483,
+     0.0026,
+     14.4548,
+     -0.0027,
+     1.0
+    ],
+    [
+     -49.7504,
+     -0.0301,
+     0.002,
+     14.3726,
+     -0.0012,
+     1.0
+    ],
+    [
+     -42.6022,
+     -0.016,
+     0.0014,
+     14.2965,
+     -0.0012,
+     1.0
+    ],
+    [
+     -35.4963,
+     -0.0099,
+     0.0007,
+     14.2117,
+     -0.0014,
+     1.0
+    ],
+    [
+     -28.3952,
+     -0.0069,
+     0.0002,
+     14.2022,
+     -0.001,
+     1.0
+    ],
+    [
+     -21.2776,
+     -0.0075,
+     -0.0002,
+     14.2352,
+     -0.0008,
+     1.0
+    ],
+    [
+     -14.0925,
+     -0.0062,
+     0.0005,
+     14.3702,
+     0.0014,
+     1.0
+    ],
+    [
+     -6.8493,
+     -0.0038,
+     0.0006,
+     14.4864,
+     0.0003,
+     1.0
+    ]
+   ]
+  }
+ }
+]

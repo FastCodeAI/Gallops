@@ -1,0 +1,64 @@
+{
+ "build_s": 9.6,
+ "vs_planner_dataset": {
+  "moments": 100,
+  "equal": {
+   "ego_status": 100,
+   "trajectory": 100,
+   "lidar2img": 100,
+   "img_shape": 100,
+   "has_label2": 100,
+   "metric_cache_path": 100,
+   "token": 100
+  },
+  "dtypes_shapes": {
+   "ego_status": [
+    "torch.float32",
+    [
+     1,
+     11
+    ],
+    "torch.float32",
+    [
+     1,
+     11
+    ]
+   ],
+   "lidar2img": [
+    "torch.float32",
+    [
+     2,
+     4,
+     4
+    ],
+    "torch.float32",
+    [
+     2,
+     4,
+     4
+    ]
+   ],
+   "img_shape": [
+    "torch.float32",
+    [
+     2,
+     3
+    ],
+    "torch.float32",
+    [
+     2,
+     3
+    ]
+   ],
+   "trajectory": [
+    "torch.float64",
+    [
+     8,
+     3
+    ],
+    "torch.float64"
+   ]
+  },
+  "label2_in_sample": 17
+ }
+}

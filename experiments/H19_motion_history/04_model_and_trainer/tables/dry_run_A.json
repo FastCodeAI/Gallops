@@ -1,0 +1,126 @@
+{
+ "arm": "A",
+ "memory_gate": {
+  "load5": 19.3,
+  "avail_ram_gb": 71.4
+ },
+ "info": {
+  "load": {
+   "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+   "tensors": 495,
+   "loaded_equal": "495/495",
+   "batch_fix": {
+    "tsa": 1,
+    "sca": 1
+   }
+  },
+  "load_from_p06": {
+   "p06": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+   "p06_tensors_present_and_equal": "495/495",
+   "new_parameters": {
+    "motion.0.weight": 12288,
+    "motion.0.bias": 256,
+    "motion.2.weight": 65536,
+    "motion.2.bias": 256,
+    "no_history": 256,
+    "link1.weight": 65536,
+    "link1.bias": 256,
+    "link2.weight": 262144
+   },
+   "new_parameter_count": 406528,
+   "trainable_count": 7492643,
+   "frozen_count": 304156416
+  }
+ },
+ "steps": [
+  {
+   "loss": 3.082306958752712,
+   "generator": 0.7170541113199416,
+   "grade": 0.37669068574905396,
+   "human": 1.5966109546121734,
+   "collision": 0.35202398896217346,
+   "drivable": 0.03992721810936928,
+   "map_rows": 14,
+   "zeroed_targets": 24,
+   "grade_wait_s": 44.37435579299927,
+   "pull_rows": 3,
+   "pull_map_rows": 0,
+   "hidden_rows": 17,
+   "finite": true,
+   "encoder_grads": 0,
+   "encoder_requires_grad": 0,
+   "grad_norm_new": 9.324230194091797,
+   "step_s": 49.405757188797,
+   "loader_wait_s": 1.9703872203826904
+  },
+  {
+   "loss": 2.7271734432421235,
+   "generator": 0.5566069213577944,
+   "grade": 0.3873276710510254,
+   "human": 1.5351114173619218,
+   "collision": 0.23356738686561584,
+   "drivable": 0.01456004660576582,
+   "map_rows": 10,
+   "zeroed_targets": 32,
+   "grade_wait_s": 2.834094285964966,
+   "pull_rows": 1,
+   "pull_map_rows": 0,
+   "hidden_rows": 19,
+   "finite": true,
+   "encoder_grads": 0,
+   "encoder_requires_grad": 0,
+   "grad_norm_new": 15.240527153015137,
+   "step_s": 3.799109697341919,
+   "loader_wait_s": 2.7418136596679688e-05
+  },
+  {
+   "loss": 2.5977441093237057,
+   "generator": 0.5476893507690864,
+   "grade": 0.3087877333164215,
+   "human": 1.6502077339685675,
+   "collision": 0.08464407920837402,
+   "drivable": 0.00641521206125617,
+   "map_rows": 8,
+   "zeroed_targets": 14,
+   "grade_wait_s": 3.7702748775482178,
+   "pull_rows": 4,
+   "pull_map_rows": 1,
+   "hidden_rows": 17,
+   "finite": true,
+   "encoder_grads": 0,
+   "encoder_requires_grad": 0,
+   "grad_norm_new": 12.115580558776855,
+   "step_s": 4.307307720184326,
+   "loader_wait_s": 3.0279159545898438e-05
+  }
+ ],
+ "all_finite": true,
+ "encoder_grads": 0,
+ "encoder_requires_grad": 0,
+ "new_params_changed": {
+  "motion.0.weight": true,
+  "motion.0.bias": true,
+  "motion.2.weight": true,
+  "motion.2.bias": true,
+  "no_history": true,
+  "link1.weight": true,
+  "link1.bias": true,
+  "link2.weight": true
+ },
+ "peak_gpu_gb": 3.5790367126464844,
+ "peak_gpu_reserved_gb": 3.70703125,
+ "s_per_step_steps_2_3": 4.053208708763123,
+ "s_per_step_first": 49.405757188797,
+ "grade_wait_s_steps_2_3": 3.302184581756592,
+ "steps_per_pass": 4650,
+ "max_steps_3_passes": 13950,
+ "018b_attempt2_steps_run": 5580,
+ "018b_attempt2_checks": 7,
+ "018b_check_time_s_p06": {
+  "forward": 408.9,
+  "grading": 23.8,
+  "shares": 25.4
+ }
+}

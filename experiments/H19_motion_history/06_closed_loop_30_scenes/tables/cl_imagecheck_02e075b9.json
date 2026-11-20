@@ -1,0 +1,24 @@
+{
+ "rule": "score equal to 3 dp AND per-tick metrics bit-identical, on every scene listed",
+ "scenes": [
+  "02e075b9"
+ ],
+ "image": "sha256:ab16bc78a4686dcd63c2b77a77fe585df3846528a61b552db6b71f9553983a44 2026-11-20T00:30:50.652230704+05:30",
+ "renderer": "sha256:97f43e7130c5636ce3e80ea3184d97f56a87fdd989b05cce42230881dbdea284 2026-05-26T18:44:15.602968472Z",
+ "drives": {
+  "02e075b9": {
+   "recorded": "{experiment_store_h17}/runs/cl18/018bp06/runs/drivejepa_018bp06_02e075b9",
+   "new": "{approach4_store}/cl/imagecheck/runs/drivejepa_018bp06_02e075b9",
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "metric_rows": [
+    8981,
+    8981
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  }
+ },
+ "pass": true
+}
