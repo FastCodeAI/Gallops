@@ -29,7 +29,8 @@ below the sub-score agent-look model (87.30; paired -0.95, 95 % over logs [-1.79
 time-to-collision are its best of the four (NC .988, TTC .983), extended comfort far higher (EC .655 against .406), \
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
-neuroNCAP NEUTRAL. AlpaSim, HUGSIM and Bench2Drive are not in yet."""
+neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. HUGSIM and Bench2Drive are not in yet."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
@@ -190,7 +191,7 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   baseline = "released Drive-JEPA, the paddock queue's runs of 23 and 26 Oct"
   paddock_commit = "3daf4b9"  # plus wajepa_dj, wajepa_dj_run3a and run3b_v2 copied in, worktree gate-oct27
   manifest = "{runs}/gate-oct27/gate/smoke/run3b_v2-released/manifest.toml"
-  note = "Run by hand, from the worktree and site config H04's gate of 25-28 Oct ran under (--tier all --keep-going); the queue only runs adapters on a pushed branch. neuroNCAP quick 3 pairs 3.179 -> 4.023, t 0.98, NEUTRAL. PDM-style terms beyond t crit (never part of a verdict): NAVSIM DAC 0.977 -> 0.949 (t -3.33), EP 0.867 -> 0.798 (t -8.05); nuScenes comfort 0.412 -> 0.253 (t -6.13); KITScenes EP 0.820 -> 0.750 (t -3.21), comfort 0.435 -> 0.097 (t -8.67); neuroNCAP comfort 0.918 -> 0.973 (t 2.83). Against H04's gate runs (tools.gate compare, nothing re-run): nuScenes 2.151 -> 2.117, t 0.31, NEUTRAL; KITScenes 2.159 -> 2.914, t -4.51, REGRESSION (140 units); neuroNCAP 3.691 -> 3.926, t 1.24, NEUTRAL; its quick 3 pairs 4.107 -> 4.023, NEUTRAL; NAVSIM not paired (the gate's NAVSIM subset changed on 27 Oct: 83 shared tokens). Bench2Drive and AlpaSim are not in this run: the adapter in this worktree does not declare them."
+  note = "Run by hand, from the worktree and site config H04's gate of 25-28 Oct ran under (--tier all --keep-going); the queue only runs adapters on a pushed branch. neuroNCAP quick 3 pairs 3.179 -> 4.023, t 0.98, NEUTRAL. PDM-style terms beyond t crit (never part of a verdict): NAVSIM DAC 0.977 -> 0.949 (t -3.33), EP 0.867 -> 0.798 (t -8.05); nuScenes comfort 0.412 -> 0.253 (t -6.13); KITScenes EP 0.820 -> 0.750 (t -3.21), comfort 0.435 -> 0.097 (t -8.67); neuroNCAP comfort 0.918 -> 0.973 (t 2.83). Against H04's gate runs (tools.gate compare, nothing re-run): nuScenes 2.151 -> 2.117, t 0.31, NEUTRAL; KITScenes 2.159 -> 2.914, t -4.51, REGRESSION (140 units); neuroNCAP 3.691 -> 3.926, t 1.24, NEUTRAL; its quick 3 pairs 4.107 -> 4.023, NEUTRAL; NAVSIM not paired (the gate's NAVSIM subset changed on 27 Oct: 83 shared tokens). Bench2Drive and AlpaSim are not in this run: the adapter in this worktree does not declare them; AlpaSim is the next gate block."
 
     [[runs.gate.pairs]]
     bench = "navsim"
@@ -230,4 +231,23 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
     t = 1.44
     mde = 0.518
     units = 15
+    verdict = "NEUTRAL"
+
+  [[runs.gate]]
+  date = 2026-11-20
+  tier = "all"
+  verdict = "HOLD"
+  baseline = "released Drive-JEPA, the paddock queue's AlpaSim run of 27 Oct"
+  paddock_commit = "9819e36"  # plus wajepa_dj, wajepa_dj_run3a and run3b_v2 copied in, worktree gate-oct27-alp
+  manifest = "{runs}/gate-oct27/gate/smoke/run3b_v2-alpasim/manifest.toml"
+  note = "AlpaSim only (--bench alpasim), run by hand with H04's four-camera driver profile; quick 1 scene passed (exit 0). The gate printed CONFIG DIFFERS (bridge_args, driver_config, driver_profile: the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04, so its overall is HOLD; the pair below is the same two runs re-paired with those three keys allowed (tools.gate compare --allow-config). Its terms: collision_at_fault 0.2 -> 0.0, offroad 0.3 -> 0.4, both NEUTRAL; progress 0.473 -> 0.174, t -2.75, REGRESSION. Against H04's AlpaSim run (same driver, --allow-config driver_profile): 0.439 -> 0.132, t -2.29, REGRESSION; against H01's: 0.450 -> 0.132, t -1.89, NEUTRAL. Run 20261120T060100-20d216."
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene_score"
+    baseline = 0.416
+    candidate = 0.132
+    t = -1.69
+    mde = 0.529
+    units = 10
     verdict = "NEUTRAL"

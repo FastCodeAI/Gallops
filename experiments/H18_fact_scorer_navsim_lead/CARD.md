@@ -23,7 +23,7 @@ Stated by this record from the spec's 'What' line, not by the spec, which sets n
 
 ## What we learned
 
-So far, on navtest (12,146 scenes) the fact-scorer model scores EPDMS 86.35 with NAVSIM's human filter: below the sub-score agent-look model (87.30; paired -0.95, 95 % over logs [-1.79, -0.19]) and released Drive-JEPA (87.78; -1.43 [-2.18, -0.66]), above the 4-camera planner (85.27; +1.08 [+0.18, +2.09]). Collisions and time-to-collision are its best of the four (NC .988, TTC .983), extended comfort far higher (EC .655 against .406), ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and neuroNCAP NEUTRAL. AlpaSim, HUGSIM and Bench2Drive are not in yet.
+So far, on navtest (12,146 scenes) the fact-scorer model scores EPDMS 86.35 with NAVSIM's human filter: below the sub-score agent-look model (87.30; paired -0.95, 95 % over logs [-1.79, -0.19]) and released Drive-JEPA (87.78; -1.43 [-2.18, -0.66]), above the 4-camera planner (85.27; +1.08 [+0.18, +2.09]). Collisions and time-to-collision are its best of the four (NC .988, TTC .983), extended comfort far higher (EC .655 against .406), ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. HUGSIM and Bench2Drive are not in yet.
 
 ## Runs
 
@@ -56,7 +56,15 @@ So far, on navtest (12,146 scenes) the fact-scorer model scores EPDMS 86.35 with
 | nuScenes | l2_avg | 2.431 | 2.117 | 2.37 | 0.374 | 143 | 🟢 GAIN |
 | neuroNCAP | ncap_score | 3.679 | 3.926 | 1.44 | 0.518 | 15 | ⚪ NEUTRAL |
 
-Run by hand, from the worktree and site config H04's gate of 25-28 Oct ran under (--tier all --keep-going); the queue only runs adapters on a pushed branch. neuroNCAP quick 3 pairs 3.179 -> 4.023, t 0.98, NEUTRAL. PDM-style terms beyond t crit (never part of a verdict): NAVSIM DAC 0.977 -> 0.949 (t -3.33), EP 0.867 -> 0.798 (t -8.05); nuScenes comfort 0.412 -> 0.253 (t -6.13); KITScenes EP 0.820 -> 0.750 (t -3.21), comfort 0.435 -> 0.097 (t -8.67); neuroNCAP comfort 0.918 -> 0.973 (t 2.83). Against H04's gate runs (tools.gate compare, nothing re-run): nuScenes 2.151 -> 2.117, t 0.31, NEUTRAL; KITScenes 2.159 -> 2.914, t -4.51, REGRESSION (140 units); neuroNCAP 3.691 -> 3.926, t 1.24, NEUTRAL; its quick 3 pairs 4.107 -> 4.023, NEUTRAL; NAVSIM not paired (the gate's NAVSIM subset changed on 27 Oct: 83 shared tokens). Bench2Drive and AlpaSim are not in this run: the adapter in this worktree does not declare them.
+Run by hand, from the worktree and site config H04's gate of 25-28 Oct ran under (--tier all --keep-going); the queue only runs adapters on a pushed branch. neuroNCAP quick 3 pairs 3.179 -> 4.023, t 0.98, NEUTRAL. PDM-style terms beyond t crit (never part of a verdict): NAVSIM DAC 0.977 -> 0.949 (t -3.33), EP 0.867 -> 0.798 (t -8.05); nuScenes comfort 0.412 -> 0.253 (t -6.13); KITScenes EP 0.820 -> 0.750 (t -3.21), comfort 0.435 -> 0.097 (t -8.67); neuroNCAP comfort 0.918 -> 0.973 (t 2.83). Against H04's gate runs (tools.gate compare, nothing re-run): nuScenes 2.151 -> 2.117, t 0.31, NEUTRAL; KITScenes 2.159 -> 2.914, t -4.51, REGRESSION (140 units); neuroNCAP 3.691 -> 3.926, t 1.24, NEUTRAL; its quick 3 pairs 4.107 -> 4.023, NEUTRAL; NAVSIM not paired (the gate's NAVSIM subset changed on 27 Oct: 83 shared tokens). Bench2Drive and AlpaSim are not in this run: the adapter in this worktree does not declare them; AlpaSim is the next gate block.
+
+**H18.fact-scorer** — 20 Nov 2026, all tier, against released Drive-JEPA, the paddock queue's AlpaSim run of 27 Oct: ⏸ **HOLD**
+
+| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
+|---|---|---|---|---|---|---|---|
+| AlpaSim | scene_score | 0.416 | 0.132 | -1.69 | 0.529 | 10 | ⚪ NEUTRAL |
+
+AlpaSim only (--bench alpasim), run by hand with H04's four-camera driver profile; quick 1 scene passed (exit 0). The gate printed CONFIG DIFFERS (bridge_args, driver_config, driver_profile: the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04, so its overall is HOLD; the pair below is the same two runs re-paired with those three keys allowed (tools.gate compare --allow-config). Its terms: collision_at_fault 0.2 -> 0.0, offroad 0.3 -> 0.4, both NEUTRAL; progress 0.473 -> 0.174, t -2.75, REGRESSION. Against H04's AlpaSim run (same driver, --allow-config driver_profile): 0.439 -> 0.132, t -2.29, REGRESSION; against H01's: 0.450 -> 0.132, t -1.89, NEUTRAL. Run 20261120T060100-20d216.
 
 ## Evidence outside this repo
 

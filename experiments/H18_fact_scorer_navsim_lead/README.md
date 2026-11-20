@@ -1,7 +1,7 @@
 # H18 — Fact scorer: H04's architecture trained from scratch on NAVSIM + LEAD
 
 **Owner:** Navvrat · **Started:** 18 Nov 2026 (spec), trained 19–20 Nov · **Status:** running — gated by hand, FAIL
-against released Drive-JEPA on NAVSIM; AlpaSim, HUGSIM and Bench2Drive not in yet; no paddock ref carries its adapter
+against released Drive-JEPA on NAVSIM; HUGSIM and Bench2Drive not in yet; no paddock ref carries its adapter
 (hypothesis)
 
 The facts are in [experiment.toml](experiment.toml), and what is off the repository is in [POINTERS.md](POINTERS.md).
@@ -82,11 +82,15 @@ Drive-JEPA (the paddock queue's runs):
 | KITScenes | ADE | 2.538 | 2.860 | −1.46 | 117 | NEUTRAL | 2.159 → 2.914, t −4.51, REGRESSION |
 | nuScenes, 1,000 samples | L2 | 2.431 | 2.117 | 2.37 | 143 | GAIN | 2.151 → 2.117, t 0.31, NEUTRAL |
 | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.926 | 1.44 | 15 | NEUTRAL | 3.691 → 3.926, t 1.24, NEUTRAL |
+| AlpaSim, 10 scenes | scene score | 0.416 | 0.132 | −1.69 | 10 | NEUTRAL | 0.439 → 0.132, t −2.29, REGRESSION |
 
 Overall **FAIL**, from the NAVSIM pair; on NAVSIM, ego progress (t −8.05) and drivable area (t −3.33) are the terms
-beyond t crit. Not in yet: AlpaSim (10 scenes, running with H04's four-camera driver profile), HUGSIM (420
-scenarios, running), Bench2Drive (the spec asks for LEAD's camera rig, not built), the light-swap test (named by the
-spec, not defined).
+beyond t crit. AlpaSim ran as a block of its own, with H04's four-camera driver profile: the gate first printed CONFIG
+DIFFERS on the driver, as it did for H01 and H04, and the row above is the same runs re-paired with `bridge_args`,
+`driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75) and
+its at-fault collisions 0 of 10 against 2; against the 4-camera planner 0.450 → 0.132, t −1.89, NEUTRAL. Not in yet:
+HUGSIM (420 scenarios, running), Bench2Drive (the spec asks for LEAD's camera rig, not built), the light-swap test
+(named by the spec, not defined).
 
 What is measured and what is not: every number above is a single run of one checkpoint; nothing separates the effect of
 the fact scorer from training on LEAD, from the fresh LoRA or from starting the planner from scratch, since all four
