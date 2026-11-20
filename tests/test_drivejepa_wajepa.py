@@ -15,8 +15,9 @@ from pathlib import Path
 import pytest
 
 from gallops import recipe as recipes
+from gallops.checkpoint import Checkpoint, SidecarError
 from gallops.config import REPO_ROOT, SiteConfig
-from gallops.drivejepa_wajepa import code, navtest_score, train
+from gallops.drivejepa_wajepa import code, navtest_score, train, write_checkpoint
 
 SRC = REPO_ROOT / "src" / "gallops"
 OVERLAYS = REPO_ROOT / "recipes" / "drivejepa_wajepa" / "overlay"
@@ -260,3 +261,59 @@ def test_train_sets_what_both_runs_had(tmp_path: Path) -> None:
     cmd = train.command(tmp_path, "run3a_training", ["agent=x"])
     assert cmd[1].endswith("navsim/planning/script/run_training.py")
     assert cmd[2:] == ["--config-name", "run3a_training", "agent=x"]
+
+
+def _record(**over: object) -> Checkpoint:
+    kw: dict = dict(
+        global_step=26580,
+        epoch=19,
+        n_params=7_768_355,
+        dtypes={"float32"},
+        model="wajepa_dj",
+        train_run="run2",
+        trained_on_pairs=["navsim:navtrain"],
+        selection_split=None,
+        src_name="epoch_19.ckpt",
+        src_sha256="a" * 64,
+        manifest_name="run2.json",
+        manifest_sha256="b" * 64,
+        upstream={"sha": "548bb82"},
+        policy_env={},
+        note="",
+        publisher_sha="c" * 40,
+    )
+    kw.update(over)
+    return write_checkpoint.record_for(**kw)
+
+
+def test_checkpoint_stage_builds_a_valid_sidecar() -> None:
+    """#22 review 🔴 1: the stage set precision "16-mixed", which the sidecar refuses, so it never ran."""
+    with pytest.raises(SidecarError, match="precision"):
+        Checkpoint(
+            model="wajepa_dj",
+            step=1,
+            train_git_sha="c" * 40,
+            train_run="run2",
+            precision=write_checkpoint.TRAINING_PRECISION,
+        )
+    rec = _record()
+    assert rec.precision == "fp32"
+    assert rec.notes["training_precision"] == "16-mixed"
+    assert _record(dtypes={"float32", "float16"}).precision == "mixed"
+
+
+def test_checkpoint_stage_steps_by_global_step_and_counts_params_once() -> None:
+    """#22 review 🟠 2: the step directory is the optimizer step (the epoch goes in notes), and params_m is
+    the distinct tensors, so it agrees with the record's 7.8 M."""
+    rec = _record()
+    assert rec.step == 26580 and rec.notes["epoch"] == 19
+    assert rec.params_m == 7.77
+
+
+def test_summarize_counts_tied_tensors_once() -> None:
+    torch = pytest.importorskip("torch")
+    shared = torch.zeros(3, 4)
+    state = {"round0.w": shared, "round1.w": shared, "b": torch.zeros(5), "step": 3}
+    n, dtypes = write_checkpoint.summarize(state)
+    assert n == 17
+    assert dtypes == {"float32"}
