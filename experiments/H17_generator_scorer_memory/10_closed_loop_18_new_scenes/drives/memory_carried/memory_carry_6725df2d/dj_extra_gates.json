@@ -1,0 +1,54 @@
+{
+ "ok": true,
+ "gates": {
+  "G-VER": {
+   "ok": true,
+   "detail": "expects drivejepa-v2-driver-0.1.8b-p06-memory5 in wizard_console.log"
+  },
+  "G-NRE": {
+   "ok": true,
+   "detail": "26.01 x1, 26.04 x0, multi-version warnings 0"
+  },
+  "steps": {
+   "ok": true,
+   "detail": "n_sim_steps 400 -> 396"
+  },
+  "G-SENT": {
+   "ok": true,
+   "detail": "6 fires on replans [1, 2, 3, 4, 5, 6]; 0 after handover; 0 unattributed",
+   "fires": [
+    [
+     1,
+     3055741114324
+    ],
+    [
+     2,
+     3055741614324
+    ],
+    [
+     3,
+     3055742114324
+    ],
+    [
+     4,
+     3055742614324
+    ],
+    [
+     5,
+     3055743114324
+    ],
+    [
+     6,
+     3055743614324
+    ]
+   ],
+   "handover_us": 3055743614324
+  },
+  "G-AGE": {
+   "ok": true,
+   "detail": "handover-plan age 0 us (limit 300000); 39 replans logged",
+   "age_us": 0
+  }
+ },
+ "run_dir": "{experiment_store}/runs/cl18/runs/memory_carry_6725df2d"
+}

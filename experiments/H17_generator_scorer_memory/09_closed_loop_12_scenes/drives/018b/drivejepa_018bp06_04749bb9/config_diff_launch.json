@@ -1,0 +1,20 @@
+{
+ "lane": "dj",
+ "template": "{alpasim_bulk}/runs/drivejepa/drivejepa_014_01d503d4/wizard-config-loadable.yaml",
+ "resolved": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_04749bb9/wizard-config-loadable.yaml",
+ "verdict": "PASS",
+ "waived": [
+  [
+   "scenes.scene_ids[0]",
+   "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+   "clipgt-04749bb9-9b37-495b-bed0-77f0e33ac7da"
+  ],
+  [
+   "scenes.sceneset_path",
+   "scenesets/58747c33fd25a4c1b3ab10ed92536a1a",
+   "scenesets/d6550e2824e1cf80b18b28149ed7b96c"
+  ]
+ ],
+ "refused": [],
+ "n_keys": 334
+}
