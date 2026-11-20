@@ -1,0 +1,38 @@
+{
+ "cores": {
+  "all": 32,
+  "two": 2
+ },
+ "secs_per_call": {
+  "all": [
+   1.524033110588789,
+   1.8348438292741776
+  ],
+  "two": [
+   2.1357283107936382,
+   2.162419483065605
+  ]
+ },
+ "p06_proposals": {
+  "bit_identical": true,
+  "max_abs_diff": 0.0,
+  "plan_xy_max_abs_diff_m": 0.0
+ },
+ "p06_pdm_score": {
+  "bit_identical": true,
+  "max_abs_diff": 0.0,
+  "picks_equal": 64,
+  "n": 64
+ },
+ "carry_proposals": {
+  "bit_identical": true,
+  "max_abs_diff": 0.0,
+  "plan_xy_max_abs_diff_m": 0.0
+ },
+ "carry_pdm_score": {
+  "bit_identical": true,
+  "max_abs_diff": 0.0,
+  "picks_equal": 32,
+  "n": 32
+ }
+}

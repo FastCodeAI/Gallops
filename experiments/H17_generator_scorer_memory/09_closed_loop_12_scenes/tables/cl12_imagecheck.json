@@ -1,0 +1,59 @@
+{
+ "rule": "0.1.8b pass 0.6 re-run: scores equal to 3 decimals and per-tick metrics bit-identical -> image accepted, existing 0.1.8b runs reused",
+ "image": "sha256:9c5909dafcd5574dca1c783e6abc29dfbdfcc9fc2860725dd80030475b8f8881 2026-11-12T22:56:34.877510724+05:30",
+ "scenes": {
+  "e3ed554f": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "8023dce5": {
+   "orig": 0.0,
+   "rerun": 0.0,
+   "equal_3dp": true,
+   "orig_status": "fail",
+   "rerun_status": "fail",
+   "metric_rows": [
+    9027,
+    9027
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "d2715023": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "04749bb9": {
+   "orig": 0.0,
+   "rerun": 0.0,
+   "equal_3dp": true,
+   "orig_status": "fail",
+   "rerun_status": "fail",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  }
+ },
+ "accepted": true
+}

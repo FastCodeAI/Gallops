@@ -1,0 +1,10 @@
+{
+ "scene_id": "clipgt-44409f00-9b06-4103-86d7-d48e41a539e0",
+ "uuid": "6ffea280-aabf-4695-903b-37dabe37ca73",
+ "hf_path": "sample_set/26.01_release/44409f00-9b06-4103-86d7-d48e41a539e0/44409f00-9b06-4103-86d7-d48e41a539e0.usdz",
+ "hf_revision": "26.01",
+ "bytes": 1871395562,
+ "sha256": "8f92e1c94a3b4ccb9ea07f22758ec6c8172e5b667da47acd98e5e1727289bec1",
+ "sha256_matches_repository": true,
+ "download_s": 81
+}

@@ -1,0 +1,31 @@
+scene,block,score_carry,exit_carry,atfault_carry,offroad_carry,calls,chain_resets,n_differ_final,n_differ_scorer,gate_mean,score_018bp06,exit_018bp06,atfault_018bp06,offroad_018bp06,score_017,exit_017,atfault_017,offroad_017
+01d503d4,18,1.0,pass,False,False,39.0,0.0,5.0,5.0,0.20682406769349024,1.0,pass,False,False,1.0,pass,False,False
+023b7fcc,18,1.0,pass,False,False,39.0,0.0,7.0,9.0,0.21016884728884086,1.0,pass,False,False,1.0,pass,False,False
+0245ff75,18,1.0,at-fault collision (front) at +15.75 s,True,False,39.0,0.0,5.0,7.0,0.2043436716000239,1.0,pass,False,False,1.0,pass,False,False
+026d6a39,18,1.0,off-road at +11.20 s,False,True,39.0,0.0,3.0,5.0,0.21571650642615098,1.0,at-fault collision (side) at +14.55 s,True,False,1.0,at-fault collision (front) at +10.75 s,True,False
+02e075b9,18,1.0,pass,False,False,39.0,0.0,6.0,6.0,0.19283725970830673,1.0,pass,False,False,1.0,pass,False,False
+02eadd92,18,1.0,pass,False,False,39.0,0.0,1.0,1.0,0.19954952253745153,1.0,pass,False,False,1.0,pass,False,False
+032b6f21,18,1.0,at-fault collision (front) at +15.50 s,True,False,39.0,0.0,3.0,4.0,0.1953660616507897,1.0,pass,False,False,1.0,pass,False,False
+04394343,18,1.0,off-road at +11.65 s,False,True,39.0,0.0,7.0,5.0,0.20932298210950998,1.0,pass,False,False,1.0,pass,False,False
+16b83346,18,1.0,off-road at +11.65 s,False,True,39.0,0.0,7.0,6.0,0.19919875531624526,1.0,off-road at +14.15 s,False,True,1.0,pass,False,False
+1acf2f5d,18,1.0,pass,False,False,39.0,0.0,4.0,5.0,0.2131369010760234,0.8349994739634087,pass,False,False,1.0,pass,False,False
+2e1ce314,18,1.0,pass,False,False,39.0,0.0,5.0,1.0,0.20369888994938287,1.0,pass,False,False,1.0,pass,False,False
+6725df2d,18,1.0,pass,False,False,39.0,0.0,1.0,1.0,0.18732465039461088,1.0,pass,False,False,1.0,pass,False,False
+71d7d03b,18,1.0,pass,False,False,39.0,0.0,5.0,1.0,0.2016846912029462,1.0,pass,False,False,1.0,pass,False,False
+791d68ce,18,0.0,off-road at +-3.21 s,False,True,39.0,0.0,14.0,13.0,0.2248626450697581,0.0,off-road at +-3.21 s,False,True,0.0,off-road at +-3.21 s,False,True
+89f2eeb8,18,1.0,pass,False,False,39.0,0.0,4.0,5.0,0.20753105519673762,1.0,pass,False,False,1.0,pass,False,False
+98dd56b2,18,1.0,pass,False,False,39.0,0.0,1.0,7.0,0.21962095109316018,0.7910238638455896,hit from behind at +12.60 s,False,False,1.0,pass,False,False
+acd22430,18,0.0,off-road at +4.70 s,False,True,39.0,0.0,5.0,2.0,0.18677270450653174,0.0,off-road at +7.00 s,False,True,0.0,at-fault collision (front) at +15.40 s,True,False
+b44a4a44,18,0.9567805616209321,pass,False,False,39.0,0.0,6.0,10.0,0.2269688130189211,0.8516240147056068,pass,False,False,0.0,at-fault collision (side) at +6.60 s,True,False
+e3ed554f,12,1.0,pass,False,False,,,,,,1.0,pass,False,False,1.0,pass,False,False
+8023dce5,12,0.0,at-fault collision (front) at +6.30 s,True,False,,,,,,0.0,at-fault collision (front) at +6.90 s,True,False,1.0,pass,False,False
+5f064b02,12,1.0,pass,False,False,,,,,,1.0,pass,False,False,1.0,pass,False,False
+e121e37d,12,1.0,pass,False,False,,,,,,1.0,pass,False,False,1.0,pass,False,False
+048b974e,12,0.9480636585278862,pass,False,False,,,,,,1.0,pass,False,False,1.0,pass,False,False
+cdd9448c,12,1.0,pass,False,False,,,,,,1.0,pass,False,False,1.0,pass,False,False
+d2715023,12,1.0,pass,False,False,,,,,,1.0,pass,False,False,0.0410289182389298,pass,False,False
+bd07fb91,12,0.0,at-fault collision (front) at +5.85 s,True,False,,,,,,0.0,at-fault collision (front) at +6.95 s,True,False,0.0,at-fault collision (front) at +7.10 s,True,False
+bae463d3,12,1.0,pass,False,False,,,,,,0.3798913518187078,pass,False,False,0.3113627844457141,pass,False,False
+d1a25a99,12,0.0,off-road at +5.80 s,False,True,,,,,,0.0,off-road at +6.95 s,False,True,0.0,off-road at +6.25 s,False,True
+b1b170d0,12,1.0,pass,False,False,,,,,,0.7233949078404465,pass,False,False,0.7816549104219068,pass,False,False
+04749bb9,12,0.7071092600962864,off-road at +6.90 s,False,True,,,,,,0.0,at-fault collision (front) at +12.40 s,True,False,0.9562673482491751,hit from behind at +10.60 s,False,False

@@ -10,7 +10,6 @@ M="{working_folder}"
 G="{working_notes}/LORA Refiner/Generator-Joint-PAI-alpasim"
 AS={paddock_sid}/Alpasim; SID={paddock_sid}
 CL12={experiment_store}/runs/cl12; RUNNER="$AS/adapters/drivejepamemory/launch/run_memory_scene.sh"
-T17="$AS/analysis_3.0/Retrain-data/s5_trial/runs_017"
 EXT20="$SID/scene_sets/sim_scenes_ext20_26p01.csv"; P10="$AS/drafts/drivejepa-0.1.4/smoke_01d503d4/sim_scenes_pilot10_26p01.csv"
 S12F="$G/s10_018b_closed_loop/tables/scenes_12.txt"
 exec >> "$M/logs/cl12_queue.log" 2>&1
@@ -26,15 +25,19 @@ for P in A B C; do grep -q '"pass": true' "$AS/adapters/drivejepamemory/launch/t
 grep -q "^Written 2026" "$M/reports/CL12_MEMORY_PREREG.md" || { log "FATAL: no pre-registration"; exit 3; }
 log "pre-registration sha256 $(sha256sum "$M/reports/CL12_MEMORY_PREREG.md" | cut -d' ' -f1)"
 
-# ---- 1. image check (Sid's rule of 2026-10-27, as s11_018c/logs/imagecheck_017.sh) ----
-grep -q "READY" "$T17/logs/check_only.log" && grep -q '"gate_1_under_2cm": true' "$T17/tables/gate_017.json" || { log "FATAL: 0.1.7 build checks"; exit 3; }
-[ "$(sha256sum {dataset_store}/s10_retrain/ckpt/drive_jepa_s10_gen.ckpt | cut -d' ' -f1)" = 29d5f9517c2ea8789f35c51f0934493e0727bde2d40b573ecc3eb33f5922d916 ] || { log "FATAL: 0.1.7 checkpoint sha256"; exit 3; }
+# ---- 1. image check: 0.1.8b-p06 re-run on 4 of the 12 scenes (pre-registration, amendment 1: the 0.1.7 runner cannot start since its
+# folder moved to the NAS on 2026-11-09). Its own adapter, launcher, build freeze and checkpoint; a copy of its run script with the output
+# root changed (s12_run_018bp06_imagecheck.sh). The first of these runs rebuilds the missing simulator image.
+T18="$AS/drafts/drivejepa-0.1.8b-p06"
+grep -q '"gate_1_under_2cm": true' "$T18/tables/gate_018bp06.json" && grep -q '"pass": true' "$T18/tables/gate_018bp06.json" || { log "FATAL: 0.1.8b-p06 build gate"; exit 3; }
+[ "$(sha256sum {retrain_store}/018b/release/drive_jepa_018b_p06.ckpt | cut -d' ' -f1)" = 3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66 ] || { log "FATAL: 0.1.8b-p06 checkpoint sha256"; exit 3; }
+[ "$(diff "$T18/run_018bp06_scene.sh" "$M/src/s12_run_018bp06_imagecheck.sh" | grep -c '^[<>]')" = 2 ] || { log "FATAL: image-check runner differs from 0.1.8b's by more than the output root"; exit 3; }
 log "image before: $(docker image inspect alpasim-base:0.134.0 --format '{{.Id}} {{.Created}}' 2>&1 | head -1)"
-for short in 04749bb9 acd22430 d2715023 b44a4a44; do
-  read -r _ scene lane < <(grep "^$short " "$G/s4_closed_loop/tables/scenes_30.txt"); csv="$EXT20"; [ "$lane" = P10 ] && csv="$P10"
-  if [ -e "$CL12/imagecheck_017/runs/drivejepa_017_$short/rollouts" ]; then log "IMAGECHECK $short already has rollouts -- skipped"; continue; fi
+for short in e3ed554f 8023dce5 d2715023 04749bb9; do
+  read -r _ scene lane < <(grep "^$short " "$S12F"); csv="$EXT20"; [ "$lane" = P10 ] && csv="$P10"
+  if [ -e "$CL12/imagecheck_018bp06/runs/drivejepa_018bp06_$short/rollouts" ]; then log "IMAGECHECK $short already has rollouts -- skipped"; continue; fi
   gate; log "=== IMAGECHECK $short ($lane) ==="
-  IMAGECHECK_ROOT="$CL12/imagecheck_017" DRIVEJEPA_MOMENTUM=on "$G/s4_closed_loop/src/run_017_imagecheck.sh" dj "$short" "$scene" on --scenes-csv "$csv" --gpu-floor-mib 8000 < /dev/null
+  DRIVEJEPA_MOMENTUM=on EXT20_SCENES_SHA="$(sha256sum "$csv" | cut -d' ' -f1)" "$M/src/s12_run_018bp06_imagecheck.sh" dj "$short" "$scene" on --scenes-csv "$csv" --gpu-floor-mib 8000 < /dev/null
   rc=$?; log "=== IMAGECHECK $short rc=$rc ==="
   [ "$rc" = 0 ] || [ "$rc" = 9 ] || { log "STOP: image check $short rc=$rc -- queue halted"; exit 4; }
 done

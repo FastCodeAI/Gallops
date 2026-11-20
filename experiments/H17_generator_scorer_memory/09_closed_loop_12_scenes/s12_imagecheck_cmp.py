@@ -1,15 +1,16 @@
 #!/usr/bin/env python
-"""Closed-loop check of the memory: simulator-image check. Copy of LORA Refiner/Generator-Joint-PAI-alpasim/s11_018c/src/imagecheck_cmp.py
-with the re-run folder, the output file and the image line changed. Rule (Sid, 2026-10-27, fixed before looking): 0.1.7 re-run on 04749bb9,
-acd22430, d2715023, b44a4a44 on the rebuilt simulator image must equal its original runs: scores to 3 decimals AND per-tick metrics
-bit-identical (run identifiers excluded, timestamps cast to float64). Writes out/cl12_imagecheck.json.
+"""Closed-loop check of the memory: simulator-image check (pre-registration, amendment 1). Derived from LORA Refiner/Generator-Joint-PAI-alpasim/
+s11_018c/src/imagecheck_cmp.py; changed: the model (0.1.8b pass 0.6 instead of 0.1.7, whose runner cannot start since 2026-11-09), the four
+scenes (e3ed554f, 8023dce5, d2715023, 04749bb9: all among the 12), the folders, the output file. Rule unchanged, fixed before looking: the
+re-runs on the rebuilt simulator image must equal the original runs, scores to 3 decimals AND per-tick metrics bit-identical (run
+identifiers excluded, timestamps cast to float64). Writes out/cl12_imagecheck.json.
 """
 import glob, json, pathlib, subprocess
 import numpy as np, polars as pl
 
 HERE = pathlib.Path(__file__).resolve().parent
-ORIG = "{dataset_store}/s5_trial_017/runs/drivejepa_017_{}"
-NEW = "{experiment_store}/runs/cl12/imagecheck_017/runs/drivejepa_017_{}"
+ORIG = "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_{}"
+NEW = "{experiment_store}/runs/cl12/imagecheck_018bp06/runs/drivejepa_018bp06_{}"
 
 
 RUN_IDS = ("rollout_id", "run_uuid", "run_name")   # identify the run itself, so they differ between any two runs; not metrics.
@@ -24,7 +25,7 @@ def load(run):
 
 
 out, ok = {}, True
-for s in ("04749bb9", "acd22430", "d2715023", "b44a4a44"):
+for s in ("e3ed554f", "8023dce5", "d2715023", "04749bb9"):
     o, n = ORIG.format(s), NEW.format(s)
     so = json.load(open(f"{o}/aggregate/results-summary.json"))["rollouts"][0]
     if not pathlib.Path(f"{n}/aggregate/results-summary.json").is_file():
@@ -37,9 +38,9 @@ for s in ("04749bb9", "acd22430", "d2715023", "b44a4a44"):
     r = dict(orig=so["score"], rerun=sn["score"], equal_3dp=round(so["score"], 3) == round(sn["score"], 3), orig_status=so.get("status"),
              rerun_status=sn.get("status"), metric_rows=(mo.height, mn.height), columns_equal=same_cols, per_tick_bit_identical=bit)
     out[s] = r; ok &= bool(r["equal_3dp"] and bit)
-res = {"rule": "scores equal to 3 decimals and per-tick metrics bit-identical -> image accepted", "image": subprocess.run(["docker", "image", "inspect", "alpasim-base:0.134.0", "--format", "{{.Id}} {{.Created}}"], capture_output=True, text=True).stdout.strip(),
+res = {"rule": "0.1.8b pass 0.6 re-run: scores equal to 3 decimals and per-tick metrics bit-identical -> image accepted, existing 0.1.8b runs reused", "image": subprocess.run(["docker", "image", "inspect", "alpasim-base:0.134.0", "--format", "{{.Id}} {{.Created}}"], capture_output=True, text=True).stdout.strip(),
        "scenes": out, "accepted": ok}
 json.dump(res, open(HERE.parent / "out/cl12_imagecheck.json", "w"), indent=1, default=str)
 for s, r in out.items():
     print(s, r)
-print("IMAGE CHECK", "PASS -> image accepted" if ok else "FAIL -> rerun 0.1.8b on the 12 scenes; flag the 0.1.7 figure 'different simulator build'")
+print("IMAGE CHECK", "PASS -> image accepted" if ok else "FAIL -> rerun 0.1.8b on the other 8 scenes; flag the 0.1.7 figure 'different simulator build'")

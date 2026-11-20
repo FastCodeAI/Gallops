@@ -1,0 +1,488 @@
+[
+ {
+  "uuid": ".s10_fresh_st",
+  "scene_id": "?",
+  "ver": "?",
+  "in30": false,
+  "size_gb": 0.0,
+  "in_ext20": false,
+  "sources": 0
+ },
+ {
+  "uuid": "02fe412b-25c0-400d-b224-5779893a926c",
+  "scene_id": "clipgt-bae463d3-655b-4b54-ac8e-1c982219d829",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.81,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "047690b5-f19e-469e-9c1c-5bf91562567c",
+  "scene_id": "clipgt-a32549eb-9106-4357-b6a7-b4fa4b025c78",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.26,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "123b165d-5f00-4c41-a507-7ee8adb8cfce",
+  "scene_id": "clipgt-026d6a39-bd8f-4175-bc61-fe50ed0403a3",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.27,
+  "in_ext20": false,
+  "sources": 36
+ },
+ {
+  "uuid": "188c97d5-276d-494f-b548-8b5a37fc3e5a",
+  "scene_id": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+  "ver": "26.4.96-91b06fb8",
+  "in30": true,
+  "size_gb": 1.64,
+  "in_ext20": false,
+  "sources": 2
+ },
+ {
+  "uuid": "1a3e45d2-075f-48cf-aa64-73b4ebb785f6",
+  "scene_id": "clipgt-f005ac5f-e919-4255-b9f9-acf6720015f1",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.79,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "23dd34ea-a8d1-410c-aef7-d13f554cc4c9",
+  "scene_id": "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+  "ver": "26.4.96-91b06fb8",
+  "in30": true,
+  "size_gb": 1.72,
+  "in_ext20": false,
+  "sources": 2
+ },
+ {
+  "uuid": "31d2606f-7034-4c95-af72-dff5f530b13d",
+  "scene_id": "clipgt-c438a779-964c-4bb7-bfde-61d9abe5b39d",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.02,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "334b3de2-1f44-42df-9916-857bedb46e0b",
+  "scene_id": "clipgt-cdd9448c-8808-46b1-85c1-883bcc5862ff",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.42,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "40d8ce01-a31d-4b0f-8f0b-e08447e39c55",
+  "scene_id": "clipgt-02e075b9-fd24-426b-971b-7cfcb2074cc9",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.71,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "4c897848-337d-4fb1-932b-cb5b1d7f3352",
+  "scene_id": "clipgt-4a495c2d-2bec-4591-a304-09ab964538ef",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.74,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "4f6bf6bb-9696-43b9-a1bf-04e12ccad5cc",
+  "scene_id": "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.0,
+  "in_ext20": false,
+  "sources": 36
+ },
+ {
+  "uuid": "536a2c0c-b182-4eb9-8a80-b4229557460c",
+  "scene_id": "clipgt-8578f2c7-70a0-4877-980a-7ba65bcded30",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.84,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "59f4e8b2-cfea-4214-a6b4-4b87f4f2e809",
+  "scene_id": "clipgt-6ae687bb-da85-487a-a76d-5e1e06e783fd",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.07,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "5adbec63-f197-4f0c-8c7e-0fa18081b046",
+  "scene_id": "clipgt-29815599-a5e2-4677-8144-f3d831bbd142",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.95,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "5ee6650f-4de5-4912-a507-4539c6ffe6bf",
+  "scene_id": "clipgt-2e1ce314-9498-4a16-ab3a-837e6da25bf7",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.01,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "60da6291-c2c4-4b7f-a832-148d7353266c",
+  "scene_id": "clipgt-e3ed554f-cdea-40e7-955a-7153341e755a",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.88,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "65e3c96a-51db-4415-9d24-c78975be0ec7",
+  "scene_id": "clipgt-98dd56b2-3e60-49ec-9366-70b610dd93cc",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.21,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "6b97be34-1c8d-45d1-9ee3-7cc63dcc8e5b",
+  "scene_id": "clipgt-8fd8f4f0-64d4-47ea-a8b5-0f18d51735f6",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.95,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "6bcdcd01-e1e9-4a52-a869-7d4113b0ddc5",
+  "scene_id": "clipgt-acd22430-0c18-43bc-a036-af9804eaace3",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.1,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "71400638-487b-4abf-b8cb-71b5899d9468",
+  "scene_id": "clipgt-0245ff75-aa3f-46b7-ba87-16a7afb841af",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.98,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "768e6503-cfdf-4d27-a9b7-ef947ac5bf0e",
+  "scene_id": "clipgt-49e0ea24-2925-4fae-b590-3f725c1063d5",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.87,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "78024399-dea3-45d4-b9d5-b484248e81b3",
+  "scene_id": "clipgt-89f2eeb8-f4e4-42a1-8e07-d60003d223dc",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.11,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "7c9e3e88-5dc4-42d3-8c7f-0ede41e36307",
+  "scene_id": "clipgt-e121e37d-b03f-4f25-aa09-5ba5b74b8afb",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.01,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "7e35e21e-c84e-4218-b8d5-a6798d36f2ed",
+  "scene_id": "clipgt-f890fe10-a8f6-47fa-8884-cd6ee54a940a",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.66,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "7f0db37f-05d2-4704-b97d-99e74f965037",
+  "scene_id": "clipgt-04749bb9-9b37-495b-bed0-77f0e33ac7da",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.95,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "87fcfe7f-ce98-4f89-a9a9-f197af26eadd",
+  "scene_id": "clipgt-dd0f84df-9be3-4e13-91ad-28b83a8669a3",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.77,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "90871540-bfa4-4336-abd6-ce5f211fcc0b",
+  "scene_id": "clipgt-16b83346-578c-437d-b51b-14784ffdf6c1",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.76,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "93f72d53-50b3-4b50-99cc-2d665b9a3ea4",
+  "scene_id": "clipgt-032b6f21-6799-4ad8-8712-0405f087ac4a",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.99,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "941ccafd-5fc1-441c-b402-aa2bc1789bcc",
+  "scene_id": "clipgt-9e6753c2-77cc-432f-a79c-384a45be0131",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.18,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "963a00ef-e6d8-4723-9635-8c8abd330783",
+  "scene_id": "clipgt-bd07fb91-e573-44ce-afd9-a637339888e8",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.03,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "a95d5bed-cf48-40f0-868e-8531481fd388",
+  "scene_id": "clipgt-320c11f3-42e6-4179-b4d1-23fd4be62feb",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.04,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "ab4c2b66-13b2-4051-8e1b-05c149a4549c",
+  "scene_id": "clipgt-b1b170d0-d6c0-4809-9db0-c3e19ccaa9f8",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.35,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "af27b742-ff4e-48c2-bfd5-bcf22166082f",
+  "scene_id": "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.73,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "b9e56dfb-5657-4912-8e15-e2459c603fbf",
+  "scene_id": "clipgt-d2715023-a903-4e67-9b80-e6c76dbbbd99",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.76,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "bdb8e870-33b8-4e86-bcfa-7fb89f5d2995",
+  "scene_id": "clipgt-1acf2f5d-f674-408f-ba18-6aacb4f4c739",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.78,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "bfb772b9-7173-4c3c-9cf9-95025d9da662",
+  "scene_id": "clipgt-34226720-8869-4f9b-ac91-76bdc4f80afc",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.11,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "c1348206-3250-4d7c-b321-4782b9446802",
+  "scene_id": "clipgt-5f064b02-2066-4dc4-a04b-b4386ff80c84",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.22,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "c258686e-6e28-4777-95fb-4a197db1e9b0",
+  "scene_id": "clipgt-5c1b7555-64fa-4ae4-98bf-4cf24e6de0a4",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.57,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "c5da1ea8-d136-420a-a277-a13ed09226e6",
+  "scene_id": "clipgt-6725df2d-072b-41aa-9d5a-a6040e5e44a9",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.97,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "c6cadca5-de1a-4838-a26f-9ebc8e396012",
+  "scene_id": "clipgt-71d7d03b-95bd-4329-a8fb-c8e9891cb478",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.11,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "c71baae5-074d-490f-a391-2c1b98dcf016",
+  "scene_id": "clipgt-7747986c-9aae-450d-b10c-b7c42b882c68",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.91,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "cce7f030-87bb-421c-b2cf-7ff9fe33df05",
+  "scene_id": "clipgt-f3a87e7a-e663-446d-bc27-1cab0c7789d9",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.91,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "d21cd822-ee2f-47d7-9441-989cee1ec4e4",
+  "scene_id": "clipgt-8023dce5-c512-43b2-a946-45fa7c19ef9d",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.92,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "d60b9120-dcf1-4419-b5d4-8a8fead4dff9",
+  "scene_id": "clipgt-9d8fca3b-10c0-408f-9c3a-486ae4ea6b98",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.15,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "d6bc3a18-c2e0-4401-9807-ca669223957a",
+  "scene_id": "clipgt-e883822a-bb66-410e-8246-49c47e5a73aa",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 2.05,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "d957b5d3-1f76-412f-8332-8eb763ec88cd",
+  "scene_id": "clipgt-02eadd92-02f1-46d8-86fe-a9e338fed0b6",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.8,
+  "in_ext20": false,
+  "sources": 36
+ },
+ {
+  "uuid": "db4af7f5-b83f-47c0-b015-30a838ed5a6f",
+  "scene_id": "clipgt-d1a25a99-0f02-4730-a076-96f067e92874",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.78,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "e276bf8d-8338-4934-b4a2-dcb145bf75fe",
+  "scene_id": "clipgt-04394343-92f3-409c-9695-e7cd5397fa02",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 2.11,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "e7b5d0ae-9a48-455b-b08e-6c75a99da0a3",
+  "scene_id": "clipgt-023b7fcc-671c-40e3-9bd2-c66b0b073fbc",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.87,
+  "in_ext20": false,
+  "sources": 23
+ },
+ {
+  "uuid": "ed432e51-723e-4cf9-9a4b-109544c2c7fa",
+  "scene_id": "clipgt-791d68ce-fe38-460a-b11d-c19a68f4c8b1",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.27,
+  "in_ext20": true,
+  "sources": 6
+ },
+ {
+  "uuid": "f2c55ac5-116d-4d3b-92e2-f77bca21c3ba",
+  "scene_id": "clipgt-048b974e-1546-488a-b8f9-d32bff77f5aa",
+  "ver": "26.4.96-91b06fb8",
+  "in30": true,
+  "size_gb": 1.64,
+  "in_ext20": false,
+  "sources": 2
+ },
+ {
+  "uuid": "fe978366-4511-44a3-9959-9c43f07e2ce7",
+  "scene_id": "clipgt-68e53160-f9d1-4070-9434-bf50c55652d3",
+  "ver": "26.1.112-59673f88",
+  "in30": false,
+  "size_gb": 1.77,
+  "in_ext20": false,
+  "sources": 3
+ },
+ {
+  "uuid": "ff71489a-2829-4dab-819d-12ff4cae035b",
+  "scene_id": "clipgt-b44a4a44-0d00-4795-8a66-7acb0fdf46a2",
+  "ver": "26.1.112-59673f88",
+  "in30": true,
+  "size_gb": 1.7,
+  "in_ext20": true,
+  "sources": 6
+ }
+]
