@@ -6,7 +6,9 @@
 together. A memory would let the picker see further back. That is only worth building if the
 last 2-4 s predict what the human driver does next better than the last 1 s does. So: predict
 the human's speed at +1, +2 and +3 s, and whether they start braking within 2 s, from the last
-k moments, k in {1, 2, 4, 8}, and compare every k with k = 2 (1 s, the released model's view).
+k moments, k in {1, 2, 4, 8}, and compare every k with k = 2 (1 s), as the rule written before the
+probe says. The released model's own view is k = 1: one moment, which is the frame now and the
+frame 0.5 s ago.
 
 **Per-moment features** (`pool`, `pca`). The cached encoder map is 16 x 32 tokens of 256
 (the 512 x 256 front image in 16-pixel patches, row-major). Pooled to its global mean (256) and a
@@ -38,6 +40,7 @@ Runs in Drive-JEPA's interpreter (numpy, scipy, scikit-learn, torch on CPU).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import pickle
@@ -328,10 +331,52 @@ def predict_mlp(model: dict, x: np.ndarray) -> np.ndarray:
 # --- the stages ---------------------------------------------------------------------------------
 
 
+def _key_path(path: Path) -> Path:
+    return path.with_name(path.name + ".key.json")
+
+
+def _reuse(path: Path, key: dict) -> bool:
+    """Whether a saved stage may be reused: it exists and was made from inputs with this `key`.
+
+    A stage made from other inputs is refused, not rebuilt silently and not reused: a rebuilt cache
+    under an old `pooled.npy` would give the old result with nothing to say so.
+    """
+    if not path.exists():
+        return False
+    stored = json.loads(_key_path(path).read_text()) if _key_path(path).exists() else None
+    if stored != key:
+        raise SystemExit(
+            f"{path} was made from other inputs than this run's (saved key {stored}, this run {key}); "
+            "move it away to rebuild it"
+        )
+    return True
+
+
+def _save_key(path: Path, key: dict) -> None:
+    _key_path(path).write_text(json.dumps(key, indent=1) + "\n")
+
+
+def pool_key(cache_dir: Path, n: int) -> dict:
+    """What the pooled maps depend on. The 66 GB encoder array is named by its size and mtime, not
+    hashed; the cache's manifest names the checkpoint, the moments table and the code."""
+    encoder = (Path(cache_dir) / "encoder.npy").stat()
+    manifest = Path(cache_dir) / "manifest.json"
+    return {
+        "rows": int(n),
+        "encoder_bytes": encoder.st_size,
+        "encoder_mtime_ns": encoder.st_mtime_ns,
+        "cache_manifest_sha256": (
+            hashlib.sha256(manifest.read_bytes()).hexdigest() if manifest.exists() else None
+        ),
+        "pool": [POOL_H, POOL_W, DIM],
+    }
+
+
 def stage_pool(cache_dir: Path, out: Path, n: int, chunk: int = 1000) -> Path:
     """Pooled maps of every moment (N, 8448) float32, from the cache's encoder array."""
     path = out / "pooled.npy"
-    if path.exists():
+    key = pool_key(cache_dir, n)
+    if _reuse(path, key):
         return path
     encoder = np.load(cache_dir / "encoder.npy", mmap_mode="r")
     partial = out / "pooled.partial.npy"
@@ -343,7 +388,25 @@ def stage_pool(cache_dir: Path, out: Path, n: int, chunk: int = 1000) -> Path:
     pooled.flush()
     del pooled
     os.replace(partial, path)
+    _save_key(path, key)
     return path
+
+
+def stage_pca(pooled: np.ndarray, train_moments: np.ndarray, out: Path, pooled_key: dict) -> dict:
+    """The PCA fitted on train moments, reused only when made from the same pooled maps and moments."""
+    path = out / "pca.npz"
+    key = {
+        "pooled": pooled_key,
+        "train_moments_sha256": hashlib.sha256(np.asarray(train_moments, np.int64).tobytes()).hexdigest(),
+        "dim": PCA_DIM,
+    }
+    if _reuse(path, key):
+        with np.load(path) as z:
+            return {k: z[k] for k in z.files}
+    fit = pca_fit(np.asarray(pooled[train_moments]), PCA_DIM)
+    np.savez(path, **fit)
+    _save_key(path, key)
+    return fit
 
 
 def stage_targets(cfg, table: dict, rows: np.ndarray, out: Path) -> dict:
@@ -394,14 +457,8 @@ def evaluate(cfg, out: Path, reps: int) -> dict:
     pooled = np.load(stage_pool(cache_root / "release", out, n), mmap_mode="r")
     timing["pool_s"] = round(time.time() - t1, 1)
     t1 = time.time()
-    pca_path = out / "pca.npz"
     train_moments = np.flatnonzero((split == "train") & table["inputs_ok"])
-    if pca_path.exists():
-        with np.load(pca_path) as z:
-            fit = {k: z[k] for k in z.files}
-    else:
-        fit = pca_fit(np.asarray(pooled[train_moments]), PCA_DIM)
-        np.savez(pca_path, **fit)
+    fit = stage_pca(pooled, train_moments, out, pool_key(cache_root / "release", n))
     ego = np.asarray(np.load(cache_root / "release" / "ego.npy", mmap_mode="r"))
     per_moment = np.concatenate([pca_apply(pooled, fit), ego.astype(np.float32)], 1)
     timing["pca_s"] = round(time.time() - t1, 1)

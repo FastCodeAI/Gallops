@@ -8,6 +8,9 @@ Everything below that cites a number is citing a measurement recorded in
 paddock, not an opinion. Where something is argued rather than measured, it says
 so — that distinction is the standard both repos are held to.
 
+> **Correction (H01, 16 Oct): NAVSIM `navtrain` is no longer absent.** The data table below says it is; it is now
+> held at the training site, and the 4-camera planner and the sub-score agent-look model trained on it (`experiments/H01_four_camera_base/README.md`).
+
 > **Correction (2026-10-12): every Drive-JEPA neuroNCAP number on this page is
 > camera-blind** (§1's table and §6's 3.57). Paddock placed its cameras relative to
 > nuScenes' LIDAR_TOP, which is yawed −90°, and the model reads the image at points
@@ -19,6 +22,15 @@ so — that distinction is the standard both repos are held to.
 > (runs 0–2 of scene 0103 in `20260905T220225-f11ac0`), because it now drives at a
 > normal pace and the crossing car hits it. A full sweep replaces 3.57. Its
 > KITScenes and NAVSIM rows are unaffected (identity lidar2ego there).
+
+> **Correction (2026-11-12): NAVSIM's `navtrain` is on disk at the training site**, against the
+> "absent" in the data table below and in docs/data.md. H05 read its logs, its camera images and
+> the vendor's train metric cache: 1,192 graded logs, 126,694 moments with both front frames,
+> 91,977 of them graded (`experiments/H05_ssm_memory/`). The images are incomplete there: one copy
+> lacks the current frames of 298 logs and a second fills in 134 of them
+> (`src/gallops/memory/ticks.py`). Whether `trainval_sensor` is whole and whether
+> `synthetic_scenes/` is present were not checked. A site names it as `[datasets.navtrain]`; see
+> `gallops.toml.example`.
 
 ---
 

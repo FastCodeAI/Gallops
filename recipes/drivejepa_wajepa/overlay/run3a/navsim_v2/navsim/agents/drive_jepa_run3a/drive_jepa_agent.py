@@ -1,0 +1,424 @@
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from typing import Any, Dict, List, Union
+
+import os
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from navsim.agents.abstract_agent import AbstractAgent
+from navsim.agents.drive_jepa_run3a.drive_jepa_config import DriveJEPAConfig
+from navsim.agents.drive_jepa_run3a.drive_jepa_features import (
+    DriveJEPA4VFeatureBuilder, DriveJEPAAgentTargetBuilder, DriveJEPAFeatureBuilder, DriveJEPATargetBuilder,
+    WAJEPATokenBuilder)
+from navsim.agents.drive_jepa_run3a.agent_decoder import AgentLoss
+from navsim.agents.drive_jepa_run3a.score_module.scorer import HEADS
+from navsim.agents.drive_jepa_run3a.drive_jepa_model import DriveJEPAModel
+from navsim.agents.transfuser.transfuser_loss import _agent_loss
+from navsim.common.dataclasses import SensorConfig
+from navsim.common.dataloader import MetricCacheLoader
+from navsim.common.utils import mean_time_every_5_calls
+
+from .score_module.compute_navsim_score import get_scores, get_sub_score
+
+
+class DriveJEPAAgent(AbstractAgent):
+    def __init__(
+        self,
+        config: DriveJEPAConfig,
+        lr: float,
+        checkpoint_path: str = None,
+    ):
+        super().__init__(config.trajectory_sampling)
+        self._config = config
+        self._lr = lr
+        self._checkpoint_path = checkpoint_path
+
+        cache_data = False
+
+        if not cache_data:
+            self._pad_model = DriveJEPAModel(config)
+
+        if not cache_data and self._checkpoint_path == "":  # only for training
+            self.bce_logit_loss = nn.BCEWithLogitsLoss()
+            self.agent_loss = AgentLoss()  # run 3A detection loss (agent decoder D's own loss), weight 1
+
+            self.persistent_pool = ProcessPoolExecutor(max_workers=int(os.environ.get("DRIVEJEPA_SCORE_WORKERS", "16")))  # upstream: 16
+
+            metric_cache = MetricCacheLoader(Path(os.getenv("NAVSIM_EXP_ROOT") + "/Drive-JEPA-cache/train_metric_cache_v2_pruned"))
+            self.train_metric_cache_paths = metric_cache.metric_cache_paths
+            self.test_metric_cache_paths = metric_cache.metric_cache_paths
+        
+        poses = np.load("./data/8192.npy")
+        self.anchors = poses[:, 4::5]
+
+    def name(self) -> str:
+        """Inherited, see superclass."""
+        return 'drive_jepa_run3a_agent' 
+
+    def initialize(self) -> None:
+        """Inherited, see superclass."""
+
+        if self._checkpoint_path != "":
+            if torch.cuda.is_available():
+                state_dict: Dict[str, Any] = torch.load(self._checkpoint_path)["state_dict"]
+            else:
+                state_dict: Dict[str, Any] = torch.load(self._checkpoint_path, map_location=torch.device("cpu"))[
+                    "state_dict"
+                ]
+            self.load_state_dict({k.replace("agent._pad_model", "_pad_model"): v for k, v in state_dict.items()})
+
+    def get_sensor_config(self):
+        """Inherited, see superclass."""
+        if self._config.use_wajepa_tokens:  # 4 cameras x [t - 0.5 s, t] for the live WA-JEPA tokens
+            return SensorConfig(cam_f0=[2, 3], cam_l0=[2, 3], cam_l1=[], cam_l2=[], cam_r0=[2, 3], cam_r1=[], cam_r2=[],
+                                cam_b0=[2, 3], lidar_pc=[])
+        return SensorConfig(
+            cam_f0=[3] if self._config.use_resnet else [2, 3],
+            cam_l0=[3],
+            cam_l1=[],
+            cam_l2=[],
+            cam_r0=[3],
+            cam_r1=[],
+            cam_r2=[],
+            cam_b0=[3],
+            lidar_pc=[],
+        )
+
+    def get_target_builders(self):
+        # run 3A: + agent decoder targets (agent_targets.gz in every cache dir) for the detection loss
+        return [DriveJEPATargetBuilder(config=self._config), DriveJEPAAgentTargetBuilder(config=self._config)]
+
+    def get_feature_builders(self):
+        if self._config.use_wajepa_tokens:
+            return [DriveJEPA4VFeatureBuilder(config=self._config), WAJEPATokenBuilder(config=self._config)]
+        return [DriveJEPAFeatureBuilder(config=self._config)]
+
+    def forward(self, features: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+        return self._pad_model(features)
+
+    def worker_map(self, data_points):
+        # Split data_points into chunks of size 2
+        chunks = [data_points[i : i + 2] for i in range(0, len(data_points), 2)]
+
+        # Submit all tasks at once and collect results more efficiently
+        futures = [self.persistent_pool.submit(get_scores, chunk) for chunk in chunks]
+
+        # Use list comprehension with extend for faster flattening
+        all_res = [item for future in futures for item in future.result()]
+
+        return all_res
+
+    def compute_score(self, targets, proposals, test=True):
+        if self.training:
+            metric_cache_paths = self.train_metric_cache_paths
+        else:
+            metric_cache_paths = self.test_metric_cache_paths
+
+        target_trajectory = targets["trajectory"]
+        proposals = proposals.detach()
+
+        data_points = [
+            {"token": metric_cache_paths[token], "poses": poses, "test": test}
+            for token, poses in zip(targets["token"], proposals.float().cpu().numpy())
+        ]
+
+        all_res = self.worker_map(data_points)
+
+        # run 3A: res = (targets (P, 13), key agent corners, labels, ego areas, teacher indices, map aux (P, 8, 6));
+        # targets = the 12 head labels + today's final label unmasked (the EPDMS-style score of a pick)
+        target_scores = torch.FloatTensor(np.stack([res[0] for res in all_res])).to(proposals.device)
+        final_scores = target_scores[:, :, -1]
+        best_scores = torch.amax(final_scores, dim=-1)
+        scores_index = [res[4] for res in all_res]
+        map_aux = torch.FloatTensor(np.stack([res[5] for res in all_res])).to(proposals.device)
+
+        if test:
+            l2_2s = torch.linalg.norm(proposals[:, 0] - target_trajectory, dim=-1)[:, :4]
+            return final_scores[:, 0].mean(), best_scores.mean(), final_scores, l2_2s.mean(), target_scores[:, 0]
+        else:
+            key_agent_corners = torch.FloatTensor(np.stack([res[1] for res in all_res])).to(proposals.device)
+            key_agent_labels = torch.BoolTensor(np.stack([res[2] for res in all_res])).to(proposals.device)
+            all_ego_areas = torch.BoolTensor(np.stack([res[3] for res in all_res])).to(proposals.device)
+            return (final_scores, best_scores, target_scores, key_agent_corners, key_agent_labels, all_ego_areas,
+                    scores_index, map_aux)
+
+    def score_loss(self, pred_logit, agents_state, pred_area_logits, target_scores, gt_states, gt_valid, gt_ego_areas):
+        if agents_state is not None:
+            pred_states = agents_state[..., :-1].reshape(gt_states.shape)
+            pred_logits = agents_state[..., -1:].reshape(gt_valid.shape)
+
+            pred_l1_loss = F.l1_loss(pred_states, gt_states, reduction="none")[gt_valid]
+
+            if len(pred_l1_loss):
+                pred_l1_loss = pred_l1_loss.mean()
+            else:
+                pred_l1_loss = pred_states.mean() * 0
+
+            pred_ce_loss = F.binary_cross_entropy_with_logits(pred_logits, gt_valid.to(torch.float32), reduction="mean")
+
+        else:
+            pred_ce_loss = 0
+            pred_l1_loss = 0
+
+        if pred_area_logits is not None:
+            pred_area_logits = pred_area_logits.reshape(gt_ego_areas.shape)
+
+            pred_area_loss = F.binary_cross_entropy_with_logits(
+                pred_area_logits, gt_ego_areas.to(torch.float32), reduction="mean"
+            )
+        else:
+            pred_area_loss = 0
+
+        return pred_ce_loss, pred_l1_loss, pred_area_loss
+
+    @staticmethod
+    def head_losses(pred_logit, target_scores):
+        """run 3A scorer heads: BCE (soft targets) for the binary / half-valued heads, route and final; smooth L1 for
+        progress (on sigmoid) and edge distance (raw, metres). One scalar per head."""
+        z, t = pred_logit.float(), target_scores[..., : len(HEADS)].float()
+        out = {}
+        for i, name in enumerate(HEADS):
+            if name == "progress":
+                out[name] = F.smooth_l1_loss(torch.sigmoid(z[..., i]), t[..., i])
+            elif name == "edge":
+                out[name] = F.smooth_l1_loss(z[..., i], t[..., i])
+            else:
+                out[name] = F.binary_cross_entropy_with_logits(z[..., i], t[..., i])
+        return out
+
+    def diversity_loss(self, proposals):
+        dist = torch.linalg.norm(proposals[:, :, None] - proposals[:, None], dim=-1, ord=1).mean(-1)
+
+        dist = dist + (dist == 0)
+
+        # dist[dist==0]=10000
+
+        inter_loss = -dist.amin(1).amin(1).mean()
+
+        return inter_loss
+        
+    def trajectory_loss_topk(self, proposals, proposal_list, target_trajectory, config, final_scores): 
+        with torch.no_grad():
+            # Select top-k proposals per batch element based on final_scores
+            k = min(4, proposals.size(1))
+            topk_scores, topk_indices = torch.topk(final_scores, k=k, dim=1)
+            topk_proposals = proposals.gather(
+                dim=1,
+                index=topk_indices.unsqueeze(-1).unsqueeze(-1).expand(-1, -1, proposals.size(2), proposals.size(3)),
+            )
+
+        trajectory_loss = 0
+
+        min_loss_list = []
+        inter_loss_list = []
+        for proposals_i in proposal_list:
+            # original loss using ground-truth trajectory (kept but unused)
+            min_loss = (
+                torch.linalg.norm(proposals_i - target_trajectory[:, None], dim=-1, ord=1)
+                .mean(-1)
+                .amin(1)
+                .mean()
+            )
+
+            # Compute loss for each of the top-k proposals used as target_trajectory,
+            # weighted directly by their scores in [0, 1] (no normalization).
+            diff = proposals_i[:, None] - topk_proposals[:, :, None]  # (B, k, P, T, D)
+            per_k_min = (
+                torch.linalg.norm(diff, dim=-1, ord=1)  # (B, k, P, T)
+                .mean(-1)                               # (B, k, P)
+                .amin(-1)                               # (B, k)
+            )
+            weighted_per_k = per_k_min * topk_scores    # (B, k)
+            min_loss += weighted_per_k.sum(dim=1).mean()  # scalar
+            min_loss = 0.5 * min_loss
+
+            inter_loss = self.diversity_loss(proposals_i)
+            trajectory_loss = config.prev_weight * trajectory_loss + min_loss + inter_loss * config.inter_weight
+
+            min_loss_list.append(min_loss)
+            inter_loss_list.append(inter_loss)
+
+        return trajectory_loss, min_loss, inter_loss, min_loss_list, inter_loss_list
+
+    def trajectory_loss_anchors(self, proposal_list, target_trajectory, config, scores_index): 
+        trajectory_loss = 0
+
+        min_loss_list = []
+        inter_loss_list = []
+        for proposals_i, idx_arr in zip(proposal_list, scores_index):
+            min_loss = (
+                torch.linalg.norm(proposals_i - target_trajectory[:, None], dim=-1, ord=1)
+                .mean(-1)
+                .amin(1)
+                .mean()
+            )
+
+            pseudo_min_loss = 0 
+            # Use scores_index to build pseudo targets from anchors
+            for i, idx_arr in enumerate(scores_index):
+                if idx_arr.shape[0] == 0:
+                    continue
+
+                if idx_arr.shape[0] > config.num_pseudo_targets:
+                    sampled_idx = np.random.choice(idx_arr, size=config.num_pseudo_targets, replace=False)
+                else:
+                    sampled_idx = idx_arr
+
+                # self.anchors: numpy; convert to torch on same device/dtype as proposals_i
+                anchors_np = self.anchors[sampled_idx]
+                pseudo_targets = torch.from_numpy(anchors_np).to(
+                    device=proposals_i.device, dtype=proposals_i.dtype
+                )
+
+                # proposals_i: (B, P, T, D)
+                # pseudo_targets: (K, T, D)
+                diff = proposals_i[i, None] - pseudo_targets[:, None]  # (B, K, P, T, D)
+                pseudo_min_loss += (
+                    torch.linalg.norm(diff, dim=-1, ord=1)   # (B, K, P, T)
+                    .mean(-1)                                # (B, K, P)
+                    .amin(-1)                                # (B, K)
+                    .mean()                                  # scalar
+                )
+            
+            min_loss += 0.5 * pseudo_min_loss / len(scores_index) 
+
+            inter_loss = self.diversity_loss(proposals_i)
+            trajectory_loss = config.prev_weight * trajectory_loss + min_loss + inter_loss * config.inter_weight
+
+            min_loss_list.append(min_loss)
+            inter_loss_list.append(inter_loss)
+
+        return trajectory_loss, min_loss, inter_loss, min_loss_list, inter_loss_list
+    
+    def pad_loss(self, targets: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor], config: DriveJEPAConfig):
+        proposals = pred["proposals"]
+        proposal_list = pred["proposal_list"]
+        target_trajectory = targets["trajectory"]
+
+        final_scores, best_scores, target_scores, gt_states, gt_valid, gt_ego_areas, scores_index, gt_map_aux = \
+            self.compute_score(targets, proposals.detach(), test=False)
+        
+        proposals = proposals.detach()
+        
+        trajectory_loss, min_loss, inter_loss, min_loss_list, inter_loss_list = self.trajectory_loss_anchors(proposal_list, target_trajectory, config, scores_index)
+
+        min_loss0 = min_loss_list[0]
+        inter_loss0 = inter_loss_list[0]
+        # min_loss1 = min_loss_list[1]
+        # inter_loss1 = inter_loss_list[1]
+
+        pred_ce_loss, pred_l1_loss, pred_area_loss = self.score_loss(
+            pred["pred_logit"],
+            pred["pred_agents_states"],
+            pred["pred_area_logit"],
+            target_scores,
+            gt_states,
+            gt_valid,
+            gt_ego_areas,
+        )
+        heads = self.head_losses(pred["pred_logit"], target_scores)
+        head_loss = sum(heads.values())
+        if pred["pred_map_aux"] is not None:
+            map_aux_loss = F.smooth_l1_loss(pred["pred_map_aux"].float(), gt_map_aux)
+        else:
+            map_aux_loss = 0
+        detection_loss, det_parts = self.agent_loss(pred["agent_outs"], targets)
+
+        if pred["agent_states"] is not None:
+            agent_class_loss, agent_box_loss = _agent_loss(targets, pred, config)
+        else:
+            agent_class_loss = 0
+            agent_box_loss = 0
+
+        if pred["bev_semantic_map"] is not None:
+            bev_semantic_loss = F.cross_entropy(pred["bev_semantic_map"], targets["bev_semantic_map"].long())
+        else:
+            bev_semantic_loss = 0
+
+        loss = (
+            config.trajectory_weight * trajectory_loss
+            + config.head_weight * head_loss
+            + config.map_aux_weight * map_aux_loss
+            + config.detection_weight * detection_loss
+            + config.pred_ce_weight * pred_ce_loss
+            + config.pred_l1_weight * pred_l1_loss
+            + config.pred_area_weight * pred_area_loss
+            + config.agent_class_weight * agent_class_loss
+            + config.agent_box_weight * agent_box_loss
+            + config.bev_semantic_weight * bev_semantic_loss
+        )
+
+        # score = today's final label (EPDMS-style, training scorer) of the top path under the pick at the config's
+        # weights (default: all gates 1, route 2, no blend) - the checkpoint selection metric on the held-out logs
+        pdm_score = pred["pdm_score"].detach()
+        top_proposals = torch.argmax(pdm_score, dim=1)
+        rows = torch.arange(len(final_scores), device=final_scores.device)
+        score = final_scores[rows, top_proposals].mean()
+        score_rear = target_scores[rows, top_proposals, len(HEADS) - 1].mean()
+        best_score = best_scores.mean()
+
+        loss_dict = {
+            "loss": loss,
+            "trajectory_loss": trajectory_loss,
+            "head_loss": head_loss,
+            "map_aux_loss": map_aux_loss,
+            "detection_loss": detection_loss,
+            "score_rear": score_rear,
+            "rear_ok_rate": target_scores[..., HEADS.index("rear_ok")].mean(),
+            "pred_ce_loss": pred_ce_loss,
+            "pred_l1_loss": pred_l1_loss,
+            "pred_area_loss": pred_area_loss,
+            "inter_loss0": inter_loss0,
+            "inter_loss": inter_loss,
+            "min_loss0": min_loss0,
+            "min_loss": min_loss,
+            "score": score,
+            "best_score": best_score,
+        }
+        loss_dict.update({f"head/{k}": v for k, v in heads.items()})
+        loss_dict.update({f"det/{k}": v for k, v in det_parts.items() if not k.startswith("_")})
+
+        return loss_dict
+
+    def compute_loss(
+        self,
+        features: Dict[str, torch.Tensor],
+        targets: Dict[str, torch.Tensor],
+        pred: Dict[str, torch.Tensor],
+    ) -> Dict:
+        loss_dict = self.pad_loss(targets, pred, self._config)
+        # per round: ||W_o m|| / ||x||, attention on "nothing", kept agents per waypoint
+        for r, (ratio, null, kept) in enumerate(self._pad_model._trajectory_head[0].agent_look.last_stats):
+            loss_dict[f"agent_look/ratio_r{r}"] = ratio
+            loss_dict[f"agent_look/nothing_r{r}"] = null
+            loss_dict[f"agent_look/kept_r{r}"] = kept
+        return loss_dict
+
+    def get_optimizers(self):
+        if self._config.use_wajepa_tokens:  # wa-jepa/CLAUDE.md 3.4: one Adam group, lr 1e-4, projector included
+            return torch.optim.Adam([p for p in self._pad_model.parameters() if p.requires_grad], lr=self._lr)
+        return torch.optim.Adam(
+            [
+                {"params": self._pad_model._backbone.parameters(), "lr": self._config.backbone_lr_mult * self._lr},
+                {"params": [p for n, p in self._pad_model.named_parameters() if "backbone" not in n], "lr": self._lr},
+            ],
+            lr=self._lr,
+        )
+
+    def get_training_callbacks(self):
+        if self._config.use_wajepa_tokens:
+            # every epoch kept plus last.ckpt (eval uses the last epoch; nothing is overwritten). run_training.py's own
+            # best-only checkpoint (val/score_epoch) still runs alongside.
+            from pytorch_lightning.callbacks import ModelCheckpoint
+
+            return [ModelCheckpoint(dirpath=os.environ.get("DRIVEJEPA_CKPT_DIR"), filename="epoch_{epoch:02d}", save_top_k=-1,
+                                    every_n_epochs=1, save_last=True, auto_insert_metric_name=False)]
+        return []
+
+    def __del__(self):
+        """Cleanup persistent pool on deletion."""
+        if hasattr(self, "persistent_pool"):
+            self.persistent_pool.shutdown(wait=True)
