@@ -1,0 +1,49 @@
+name: run3b_v2
+description: Run 3B v2 - WA-JEPA ViT-L + LoRA r32 (2 frames), run 3A's agent decoder + planner from scratch, per-waypoint fact scorer; pick = T4 fact score with the expert's-metres head
+repo: Drive-JEPA
+
+# Ops adapter (20 Nov 2026), not for a PR as it stands: code tree, venv and checkpoint are this site's absolute paths.
+# Feed = wajepa_dj_run3a's (four cameras rescaled to 1920x1080, run 3A's light features); model = run3b/v2/model/model2.py.
+runtime:
+  kind: uv
+  python: "3.9"
+  venv: "{runs}/mmcv-sm120/.venv"
+  pythonpath: ["{data.drivejepa_tree}/navsim_v2", "{runs}/run3b/v2/model"]
+  cwd: "{data.drivejepa_tree}/navsim_v2"
+  env:
+    NAVSIM_DEVKIT_ROOT: "{data.drivejepa_tree}/navsim_v2"
+    NAVSIM_EXP_ROOT: "{data.paddock_dump}/navsim/exp"
+    NUPLAN_MAP_VERSION: "nuplan-maps-v1.0"
+    # run3b_v2b_19nov, last step (23,859 = end of the 48 h schedule). Held-out NAVSIM pick (head metres) 0.866, n 1,008.
+    RUN3B_CHECKPOINT: "{data.paddock_data}/run3b/runs_v2/run3b_v2b_19nov/trainable_step023859_final.pt"
+    RUN3B_CODE: "{runs}/run3b/v2"
+    RUN3B_R3B: "{runs}/run3b/r3b"
+    # Comfort term on, as for NAVSIM training samples. Bench2Drive (CARLA, LEAD's domain) would take "lead".
+    RUN3B_SCORE_DOMAIN: "navsim"
+    DRIVEJEPA_IMAGE_GEOMETRY: "native"
+    WAJEPA_CODE: "{data.wajepa_code}"
+    WAJEPA_WEIGHTS: "{data.paddock_dump}/weights/WA-JEPA/model_state_dict.pt"
+    CUDA_HOME: "{data.conda}/envs/unidrivevla"
+    OMP_NUM_THREADS: "2"
+
+capabilities:
+  cameras: [CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK]
+  vram_gb: 6
+  startup_timeout_s: 900
+  waypoint_dt: 0.5
+  min_input_hz: 2.0
+  native_input_hz: 2.0
+  planning_hz: 2.0
+  history_s: 1.5
+
+  architecture: "WA-JEPA V-JEPA 2.1 ViT-L/16 + LoRA r32 Q/V (4 views x 2 frames) + run 3A agent decoder (300 slots x 3) + proposal planner (32 x 8, 4 rounds, footprint + agent look) + per-waypoint path reader (7 yes/no + 4 number facts) + expert's-metres head"
+  input_size: [512, 256]
+  history_frames: 4
+  output_kind: waypoints
+  horizon_s: 4.0
+  trained_on:
+    - dataset: navsim
+      split: navtrain minus 51 held-out logs
+    - dataset: lead
+      split: lead_inputs_v2 training side minus 416 held-out routes
+benchmarks: [navsim, nuscenes, kitscenes, neuroncap, bench2drive]

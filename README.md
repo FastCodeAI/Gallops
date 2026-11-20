@@ -10,8 +10,8 @@
   <a href=".github/workflows/check.yml"><img src="https://img.shields.io/badge/gate-make_check_in_CI-555555.svg" alt="Gate: make check in CI"></a>
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
-  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-7_open_or_tested-1F6FEB.svg" alt="hypotheses: 7 open or tested"></a>
-  <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-4-B4560A.svg" alt="gated checkpoints: 4"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-8_open_or_tested-1F6FEB.svg" alt="hypotheses: 8 open or tested"></a>
+  <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-5-B4560A.svg" alt="gated checkpoints: 5"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
 </p>
@@ -28,7 +28,7 @@ with its data, code, checkpoint sha256, results and gate verdicts.
 - **Base model:** released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
 - **Last gate run:** 20 Nov · [H01.four-camera-planner](experiments/H01_four_camera_base/CARD.md) · ⏸ **HOLD**.
-- **In progress:** 6 hypotheses, 3 enablers. Next by priority: [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
+- **In progress:** 7 hypotheses, 3 enablers. Next by priority: [H05](experiments/H05_ssm_memory/CARD.md) State-space memory.
 <!-- /experiments:status -->
 
 <a id="training-so-far"></a>
@@ -64,6 +64,7 @@ One structural change each, judged against the base by paddock's regression gate
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | ⏳ running | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
+| [**H18**](experiments/H18_fact_scorer_navsim_lead/CARD.md) | Fact scorer, NAVSIM + LEAD | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **86.35** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 20 Nov |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.

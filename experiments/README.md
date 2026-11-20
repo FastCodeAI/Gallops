@@ -45,6 +45,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H10](H10_pdm_terms/CARD.md) | One set of PDM-style terms on every benchmark, combined by NAVSIM's formula (paddock #102) | enabler | Naren | 21 Oct – 22 Oct 2026 | ☑️ done | [H10_pdm_terms/](H10_pdm_terms/) |
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
+| [H18](H18_fact_scorer_navsim_lead/CARD.md) | The sub-score agent-look model's architecture, trained from scratch on NAVSIM + LEAD with a per-waypoint fact scorer | hypothesis | Navvrat | 18 Nov 2026 | ⏳ running | [H18_fact_scorer_navsim_lead/](H18_fact_scorer_navsim_lead/) |
 <!-- /experiments:index -->
 
 ## Enablers
@@ -77,6 +78,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
 | 20 Nov 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | all | ⚪ 0.8572 → 0.8440 | 🟢 2.5375 → 2.0010 | 🟢 2.4314 → 2.0570 | ⚪ 3.6792 → 3.2800 | ⚪ 59.0360 → 80.2351 | ⚪ 0.4162 → 0.4503 | ⏸ **HOLD** |
 | 20 Nov 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | all | ⚪ 0.8572 → 0.8534 | 🟢 2.5375 → 2.1215 | 🟢 2.4314 → 2.1509 | ⚪ 3.6792 → 3.6915 | ⚪ 59.0360 → 40.8048 | ⚪ 0.4162 → 0.4391 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | ⚪ 59.0360 → 87.9614 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
 <!-- /experiments:gate -->
 
 ## Decision log
