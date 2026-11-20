@@ -8,7 +8,7 @@ been moved into the `{weights}` layout; the "where it sits" column says where it
 
 | Item | Template location | Where it sits at the training site | Bytes | sha256 |
 |---|---|---|---:|---|
-| The 4-camera planner, epoch 19 of 20 (`H01.four-camera-planner`), trainer format, no sidecar yet | `{weights}/wajepa_dj/run2/step_000000019/epoch_19.ckpt` | `{data.navsim.exp}/wajepa_dj_v2/epoch_ckpts_20261016_1748/epoch_19.ckpt` | 93,329,139 | `f8ce667cdcd7233173759dde4b1c1ed0f9c1921608192ec92878db1fc73cf5ad` |
+| The 4-camera planner, epoch 19 of 20 = optimizer step 26,580 (`H01.four-camera-planner`), trainer format, no sidecar yet: `run2-checkpoint` publishes it with `--src` pointed at the file on the right | `{weights}/wajepa_dj/run2/step_000026580/epoch_19.ckpt` | `{data.navsim.exp}/wajepa_dj_v2/epoch_ckpts_20261016_1748/epoch_19.ckpt` | 93,329,139 | `f8ce667cdcd7233173759dde4b1c1ed0f9c1921608192ec92878db1fc73cf5ad` |
 
 ## Built data
 

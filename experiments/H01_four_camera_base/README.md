@@ -111,10 +111,13 @@ gate's own table into [experiment.toml](experiment.toml). Against released Drive
 | 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.001 | 3.10 | 117 | GAIN |
 | 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.057 | 3.41 | 143 | GAIN |
 
-On AlpaSim the gate first printed CONFIG DIFFERS: this model reads four cameras, so its AlpaSim driver renders four
-views where released Drive-JEPA's renders the front one (`bridge_args`, `driver_config`, `driver_profile`). The row
-above is the same two stored runs re-paired on 20 Nov with those three keys allowed (`tools.gate compare
---allow-config`); nothing was re-run. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
+On AlpaSim the gate first printed CONFIG DIFFERS on `bridge_args`, `driver_config` and `driver_profile`. This model
+drove AlpaSim through AutoE2E's driver profile, set by an uncommitted edit to paddock's AlpaSim harness (no paddock ref
+carries it), and that profile changes more than the camera count: six pinhole cameras (front f 990.8 px, 1920 × 1018,
+no distortion, global shutter) against Drive-JEPA's one front camera (f 1545 px, 1920 × 1080, distortion left in,
+rolling shutter), and a wrapper that replans every 0.5 s on the newest frame against Drive-JEPA's own 11-frame planner.
+The row above is the same two stored runs re-paired on 20 Nov with those three keys allowed (`tools.gate compare
+--allow-config`); nothing was re-run, and what each difference does to the score is not measured. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
 
 ## Decision
 

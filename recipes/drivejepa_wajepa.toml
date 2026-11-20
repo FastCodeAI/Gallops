@@ -9,7 +9,9 @@
 # experiments/H04_subscore_scorer_navsim/README.md (the agent decoder, the sub-score agent-look model). A run trains inside the tree its code
 # stage builds:
 # upstream Drive-JEPA at the commit overlay/<name>.json pins, with recipes/drivejepa_wajepa/overlay/<name>/ laid over
-# it. Every stage that writes refuses an output that already exists (the dumps instead skip finished samples).
+# it. Every stage that writes a checkpoint, a token or agent cache or a weights directory refuses one that already
+# exists (the dumps instead skip finished samples); navtest-score rewrites its --json, and eval-navtest writes a new
+# timestamped directory.
 #
 # Site config this needs (gallops.toml):
 #   [python] train              Python >= 3.11 with torch (code, checkpoint, navtest-score)

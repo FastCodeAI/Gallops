@@ -47,7 +47,7 @@ trained = ["planner (refiner and scorer)", "token projector Linear(1024, 256) + 
 frozen = ["WA-JEPA encoder (V-JEPA 2.1 ViT-L/16, tokens cached)"]
 train_git_sha = "548bb82"
 params_trained_m = 7.8
-notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 64, Adam 1e-4, 16-mixed, seed 0, 1.65 s a step. Token dump 16 Oct: navtrain's 103,288 scenes, 0 errors, 5.43 h. The last epoch is kept, not the best (val/score_epoch 0.880 at epoch 19, 0.882 at 17). WA-JEPA code: AFARI-Research/WA-JEPA at bec2966. Whether run2-checkpoint has published it into {weights}/wajepa_dj/run2/, and the weights' sha256, are not recorded on the branch. Trained in a Drive-JEPA checkout at upstream 548bb82 with the overlay: gallops had no trainer then, so train_git_sha is that upstream commit. The checkpoint sits at the training site in {data.navsim.exp}/wajepa_dj_v2/epoch_ckpts_20261016_1748/; run2-checkpoint has not published it, so it has no sidecar yet."
+notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 64, Adam 1e-4, 16-mixed, seed 0, 1.65 s a step. Token dump 16 Oct: navtrain's 103,288 scenes, 0 errors, 5.43 h. The last epoch is kept, not the best (val/score_epoch 0.880 at epoch 19, 0.882 at 17). WA-JEPA code: AFARI-Research/WA-JEPA at bec2966. Trained in a Drive-JEPA checkout at upstream 548bb82 with the overlay: gallops had no trainer then, so train_git_sha is that upstream commit. The checkpoint sits at the training site in {data.navsim.exp}/wajepa_dj_v2/epoch_ckpts_20261016_1748/; run2-checkpoint has not published it, so it has no sidecar yet."
 
   [runs.code]
   recipe = "recipes/drivejepa_wajepa.toml#run2-train"
@@ -95,11 +95,11 @@ notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 6
   [runs.checkpoint]
   model = "wajepa_dj"
   train_run = "run2"
-  step = 19
-  step_unit = "epoch"
+  step = 26580
+  step_unit = "optimizer_step"
   file = "epoch_19.ckpt"
   weights_sha256 = "f8ce667cdcd7233173759dde4b1c1ed0f9c1921608192ec92878db1fc73cf5ad"
-  location = "{weights}/wajepa_dj/run2/step_000000019/"
+  location = "{weights}/wajepa_dj/run2/step_000026580/"
   sidecar = false
   members = ["f8ce667cdcd7233173759dde4b1c1ed0f9c1921608192ec92878db1fc73cf5ad  epoch_19.ckpt"]
 
@@ -198,7 +198,7 @@ notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 6
   baseline = "released Drive-JEPA, the paddock queue's runs of 26 Oct"
   paddock_commit = "3daf4b9"  # plus wajepa_dj copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj-ncap/manifest.toml"
-  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): the gate printed CONFIG DIFFERS, because this model's AlpaSim driver is not the baseline's (bridge_args, driver_config, driver_profile: the four-camera render it reads against Drive-JEPA's front-camera driver). Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.554, all NEUTRAL."
+  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile. This model drove AlpaSim through AutoE2E's driver profile (paddock_bridge_autoe2e, mapped to wajepa_dj by an uncommitted edit to paddock's adapters/benchmarks/alpasim/harness.py in the gate-oct27-alp worktree; no paddock ref carries it), which changes more than the camera count: six pinhole cameras rendered at f 990.8 px, 1920 x 1018, no distortion, global shutter, each scene's recorded pose, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion left in, rolling shutter, a fixed rig; and a replan wrapper asking every 0.5 s on the newest frame (ReplanRhythmPlanner, 600 s inference timeout) against Drive-JEPA's own planner (drivejepa-0.1.4b, 11-frame history). The effect of each difference on the score is not measured. Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.554, all NEUTRAL."
 
     [[runs.gate.pairs]]
     bench = "neuroncap"
