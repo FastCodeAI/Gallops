@@ -9,7 +9,7 @@ title = "The sub-score agent-look model's architecture, trained from scratch on 
 short = "Fact scorer, NAVSIM + LEAD"
 track = "hypothesis"
 owner = "Navvrat"
-benchmarks = ["navsim", "kitscenes", "nuscenes", "neuroncap", "alpasim", "hugsim", "offline"]
+benchmarks = ["navsim", "kitscenes", "nuscenes", "neuroncap", "bench2drive", "alpasim", "offline"]
 started = 2026-11-18
 status = "running"
 verdict = "none"
@@ -29,12 +29,12 @@ below the sub-score agent-look model (87.30; paired -0.95, 95 % over logs [-1.79
 time-to-collision are its best of the four (NC .988, TTC .983), extended comfort far higher (EC .655 against .406), \
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
-neuroNCAP NEUTRAL. On HUGSIM (419 paired) its HD-Score is 40.5 against H04's 40.4 (paired +0.1 [-2.5, +2.7]), PDMS 64.3 against 60.2. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
-H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. Bench2Drive is not in yet."""
+neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. Bench2Drive's pairs are running."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
-  "Paddock's run3b_v2 adapter: uncommitted files in three local paddock worktrees (gate-oct27 for the gate, gate-oct27-alp for AlpaSim, rerank-native for HUGSIM), as H04's; copies in paddock/ of this folder, sha256 in AS_RUN_SHA256.txt.",
+  "Paddock's run3b_v2 adapter: uncommitted files in two local paddock worktrees (gate-oct27 for the gate, gate-oct27-alp for its AlpaSim subsets), as H04's; copies in paddock/ of this folder, sha256 in AS_RUN_SHA256.txt.",
   "The checkpoint, the train log, the per-pass held-out reports, the navtest CSV and the gate's verdict files are off-repo at the training site; POINTERS.md lists them with bytes and sha256.",
   "The fact labels (carla_full_v1 + carla_full_v1_vru, the NAVSIM pool), LEAD's inputs (lead_inputs_v2, its ego-status sidecar and auxiliary targets) and the pool pack (pack_v2) are built data from earlier work at the training site, not built by this record's code; POINTERS.md names them.",
 ]
@@ -101,13 +101,6 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   unit = "scenes"
   note = "never read in training or for any choice"
 
-  [[runs.data]]
-  dataset = "hugsim"
-  split = "420 scenarios (HUGSIM's 436 minus its 16 release bugs), 419 paired with H04"
-  role = "eval"
-  n = 420
-  unit = "scenarios"
-  note = "command only, 2 Hz, the four cameras rendered, WAJEPA_DJ_FOLLOW=straight: the setup of H04's HUGSIM run (26 Oct)"
 
   [runs.checkpoint]
   model = "run3b_v2"
@@ -192,84 +185,91 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   note = "best of the 32: 0.959 against H04's 0.961. H04's numbers on the same samples are from its stored pick-tune dump, not re-run. Agents, NAVSIM 10-20 m recall 0.579 against H04's 0.621 on the same samples; LEAD as Bench2Drive recall / precision 0.552 / 0.795 (H04 on LEAD's 4,990 trial frames, quoted: 0.303 / 0.406)"
   source = "eval_step023859_final.json (POINTERS.md)"
 
-  [[runs.results]]
-  bench = "hugsim"
-  metric = "HD-Score"
-  n = 419
-  unit = "scenario"
-  baseline = "H04.subscore-agent-look, the same 419 scenarios"
-  baseline_value = "40.4"
-  value = "40.5"
-  better = "higher"
-  strength = "moderate"
-  flags = ["adapted"]
-  note = "paired +0.1, 95 % [-2.5, +2.7] by bootstrap over scenarios; 179 better / 69 same / 171 worse. PDMS 64.3 against 60.2 (+4.1 [+1.9, +6.2]), RC 49.5 against 51.3 (-1.8 [-4.6, +1.0]). Released Drive-JEPA 33.8 (+6.7 [+3.6, +9.9]). By dataset, this model / H04: KITTI-360 27.9 / 23.1, nuScenes 47.9 / 52.3, PandaSet 39.3 / 38.6, Waymo 49.1 / 50.9 (no rear camera on KITTI-360 and Waymo). Ended: completed 36.5 % / 35.6 %, hit a car 43.7 / 43.2, hit scenery 6.0 / 8.4, more than 10 m off route 6.2 / 6.4, 400-step cap 7.6 / 6.4"
-  source = "{data.p3_renesas}/hugsim-eval/report_run3b.json (scripts/hugsim-eval/report_run3b.py; POINTERS.md)"
-
   [[runs.gate]]
   date = 2026-11-20
   tier = "all"
   verdict = "FAIL"
-  baseline = "released Drive-JEPA, the paddock queue's runs of 23 and 26 Oct"
-  paddock_commit = "3daf4b9"  # plus wajepa_dj, wajepa_dj_run3a and run3b_v2 copied in, worktree gate-oct27
+  baseline = "released Drive-JEPA (the queue's stored runs)"
+  paddock_commit = "3daf4b9"  # plus the ops adapters copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{runs}/gate-oct27/gate/smoke/run3b_v2-released/manifest.toml"
-  note = "Run by hand, from the worktree and site config H04's gate of 25-28 Oct ran under (--tier all --keep-going); the queue only runs adapters on a pushed branch. neuroNCAP quick 3 pairs 3.179 -> 4.023, t 0.98, NEUTRAL. PDM-style terms beyond t crit (never part of a verdict): NAVSIM DAC 0.977 -> 0.949 (t -3.33), EP 0.867 -> 0.798 (t -8.05); nuScenes comfort 0.412 -> 0.253 (t -6.13); KITScenes EP 0.820 -> 0.750 (t -3.21), comfort 0.435 -> 0.097 (t -8.67); neuroNCAP comfort 0.918 -> 0.973 (t 2.83). Against H04's gate runs (tools.gate compare, nothing re-run): nuScenes 2.151 -> 2.117, t 0.31, NEUTRAL; KITScenes 2.159 -> 2.914, t -4.51, REGRESSION (140 units); neuroNCAP 3.691 -> 3.926, t 1.24, NEUTRAL; its quick 3 pairs 4.107 -> 4.023, NEUTRAL; NAVSIM not paired (the gate's NAVSIM subset changed on 27 Oct: 83 shared tokens). Bench2Drive and AlpaSim are not in this run: the adapter in this worktree does not declare them; AlpaSim is the next gate block."
-
-    [[runs.gate.pairs]]
-    bench = "navsim"
-    metric = "epdms"
-    baseline = 0.857
-    candidate = 0.807
-    t = -6.05
-    mde = 0.024
-    units = 126
-    verdict = "REGRESSION"
+  note = "Run by hand (the queue only runs adapters on a pushed branch), keep-going, from the worktrees and site config H04's gate ran under; manifests run3b_v2-released (KITScenes, nuScenes, NAVSIM, neuroNCAP), run3b_v2-alpasim and run3b_v2-b2d under the same gate directory. AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04; its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config). Bench2Drive: scored without the comfort fact (RUN3B_SCORE_DOMAIN=lead, as LEAD samples were in training; the spec masks comfort on all of CARLA); running since 20 Nov 13:33. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark."
 
     [[runs.gate.pairs]]
     bench = "kitscenes"
-    metric = "ade"
-    baseline = 2.538
-    candidate = 2.860
-    t = -1.46
-    mde = 0.625
+    metric = "ADE (3 s), m"
+    baseline = "2.5375"
+    candidate = "2.8596"
+    t = "-1.46"
+    mde = "0.625"
     units = 117
     verdict = "NEUTRAL"
 
     [[runs.gate.pairs]]
     bench = "nuscenes"
-    metric = "l2_avg"
-    baseline = 2.431
-    candidate = 2.117
-    t = 2.37
-    mde = 0.374
+    metric = "L2 averaged over 1, 2 and 3 s, m"
+    baseline = "2.4314"
+    candidate = "2.1173"
+    t = "2.37"
+    mde = "0.374"
     units = 143
     verdict = "GAIN"
 
     [[runs.gate.pairs]]
+    bench = "navsim"
+    metric = "EPDMS"
+    baseline = "0.8572"
+    candidate = "0.8067"
+    t = "-6.05"
+    mde = "0.024"
+    units = 126
+    verdict = "REGRESSION"
+
+    [[runs.gate.pairs]]
     bench = "neuroncap"
-    metric = "ncap_score"
-    baseline = 3.679
-    candidate = 3.926
-    t = 1.44
-    mde = 0.518
-    units = 15
+    metric = "NCAP score, quick check (3 pairs)"
+    baseline = "3.1794"
+    candidate = "4.0229"
+    t = "0.98"
+    mde = "4.611"
+    units = 3
     verdict = "NEUTRAL"
 
-  [[runs.gate]]
-  date = 2026-11-20
-  tier = "all"
-  verdict = "HOLD"
-  baseline = "released Drive-JEPA, the paddock queue's AlpaSim run of 27 Oct"
-  paddock_commit = "9819e36"  # plus wajepa_dj, wajepa_dj_run3a and run3b_v2 copied in, worktree gate-oct27-alp
-  manifest = "{runs}/gate-oct27/gate/smoke/run3b_v2-alpasim/manifest.toml"
-  note = "AlpaSim only (--bench alpasim), run by hand with H04's four-camera driver profile; quick 1 scene passed (exit 0). The gate printed CONFIG DIFFERS (bridge_args, driver_config, driver_profile: the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04, so its overall is HOLD; the pair below is the same two runs re-paired with those three keys allowed (tools.gate compare --allow-config). Its terms: collision_at_fault 0.2 -> 0.0, offroad 0.3 -> 0.4, both NEUTRAL; progress 0.473 -> 0.174, t -2.75, REGRESSION. Against H04's AlpaSim run (same driver, --allow-config driver_profile): 0.439 -> 0.132, t -2.29, REGRESSION; against H01's: 0.450 -> 0.132, t -1.89, NEUTRAL. Run 20261120T060100-20d216."
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving score, crash check (route 3717)"
+    units = 1
+    verdict = "NOT RUN"
 
     [[runs.gate.pairs]]
     bench = "alpasim"
-    metric = "scene_score"
-    baseline = 0.416
-    candidate = 0.132
-    t = -1.69
-    mde = 0.529
+    metric = "scene score, crash check (clip 04749bb9)"
+    baseline = "0.0000"
+    candidate = "0.0000"
+    units = 1
+    verdict = "TOO FEW UNITS"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "NCAP score, closed loop (15 pairs)"
+    baseline = "3.6792"
+    candidate = "3.9265"
+    t = "1.44"
+    mde = "0.518"
+    units = 15
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving score, closed loop (7 routes)"
+    units = 7
+    verdict = "NOT RUN"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene score, closed loop (10 scenes)"
+    baseline = "0.4162"
+    candidate = "0.1317"
+    t = "-1.69"
+    mde = "0.529"
     units = 10
     verdict = "NEUTRAL"

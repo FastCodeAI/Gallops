@@ -46,4 +46,4 @@ capabilities:
       split: navtrain minus 51 held-out logs
     - dataset: lead
       split: lead_inputs_v2 training side minus 416 held-out routes
-benchmarks: [navsim, nuscenes, kitscenes, neuroncap]
+benchmarks: [navsim, nuscenes, kitscenes, neuroncap, bench2drive]

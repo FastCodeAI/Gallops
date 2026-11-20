@@ -1,7 +1,7 @@
 # H18 — Fact scorer: H04's architecture trained from scratch on NAVSIM + LEAD
 
 **Owner:** Navvrat · **Started:** 18 Nov 2026 (spec), trained 19–20 Nov · **Status:** running — gated by hand, FAIL
-against released Drive-JEPA on NAVSIM; Bench2Drive not in yet; no paddock ref carries its adapter
+against released Drive-JEPA on NAVSIM; Bench2Drive's gate pairs running; no paddock ref carries its adapter
 (hypothesis)
 
 The facts are in [experiment.toml](experiment.toml), and what is off the repository is in [POINTERS.md](POINTERS.md).
@@ -37,7 +37,7 @@ The fact-scorer model (`H18.fact-scorer`, called Run 3B v2 while it ran):
   pass, and pass 6 had the highest held-out pick (0.876 against the last step's 0.866, n 1,008 each).
 
 The code as it ran is in [scripts/](scripts/) (training, live labels, evaluation, launchers) and [paddock/](paddock/)
-(the paddock adapter, in each of the three local worktrees it ran from). Machine roots are placeholders;
+(the paddock adapter, in each of the two local worktrees the gate ran from). Machine roots are placeholders;
 [AS_RUN_SHA256.txt](AS_RUN_SHA256.txt) holds each file's sha256 as it ran. The H04 code it imports from the Drive-JEPA
 tree is [H04's overlay](../../recipes/drivejepa_wajepa/overlay/run3a.json), hashed in place in AS_RUN_SHA256.txt; of
 those files only `drive_jepa_config.py` differs from the overlay, by the pick weights H04 locked on 25 Oct and a
@@ -73,37 +73,28 @@ lowest.
 (H04's stored pick-tune dump); best of the 32 proposals 0.959 against 0.961. Agent recall at 10–20 m 0.579 against
 H04's 0.621 on the same samples.
 
-**HUGSIM**, 420 scenarios (419 paired), the setup of H04's HUGSIM run (command only, 2 Hz, four cameras rendered):
-
-| ×100 | The fact-scorer model | H04 | Released Drive-JEPA |
-|---|---:|---:|---:|
-| HD-Score | **40.5** | 40.4 | 33.8 |
-| PDMS | 64.3 | 60.2 | 71.7 |
-| Route completion | 49.5 | 51.3 | 39.8 |
-| Completed the route / hit a car / hit scenery (% of scenarios) | 36.5 / 43.7 / 6.0 | 35.6 / 43.2 / 8.4 | 22.7 / 38.9 / 6.9 |
-
-Paired with H04: HD-Score +0.1 [−2.5, +2.7], PDMS +4.1 [+1.9, +6.2], route completion −1.8 [−4.6, +1.0] (95 %,
-bootstrap over scenarios). By dataset, the fact-scorer model / H04: KITTI-360 27.9 / 23.1, nuScenes 47.9 / 52.3,
-PandaSet 39.3 / 38.6, Waymo 49.1 / 50.9 (KITTI-360 and Waymo have no rear camera; HUGSIM renders it black).
-
-**The regression gate**, run by hand on 20 Nov from the worktree and site config H04's gate ran under, against released
-Drive-JEPA (the paddock queue's runs):
+**The regression gate**, run by hand on 20 Nov from the worktrees and site config H04's gate ran under, against
+released Drive-JEPA (the queue's stored runs), the subsets every gated record here has, in the same order:
 
 | Benchmark | Metric | Released | The fact-scorer model | t | Units | Verdict | Against H04's gate runs |
 |---|---|---:|---:|---:|---:|---|---|
-| NAVSIM, 1,018 scenes | EPDMS | 0.857 | 0.807 | −6.05 | 126 | REGRESSION | not paired: 83 shared tokens |
-| KITScenes | ADE | 2.538 | 2.860 | −1.46 | 117 | NEUTRAL | 2.159 → 2.914, t −4.51, REGRESSION |
-| nuScenes, 1,000 samples | L2 | 2.431 | 2.117 | 2.37 | 143 | GAIN | 2.151 → 2.117, t 0.31, NEUTRAL |
-| neuroNCAP, 15 pairs | NCAP | 3.679 | 3.926 | 1.44 | 15 | NEUTRAL | 3.691 → 3.926, t 1.24, NEUTRAL |
-| AlpaSim, 10 scenes | scene score | 0.416 | 0.132 | −1.69 | 10 | NEUTRAL | 0.439 → 0.132, t −2.29, REGRESSION |
+| KITScenes | ADE (3 s), m | 2.5375 | 2.8596 | −1.46 | 117 | NEUTRAL | 2.159 → 2.914, t −4.51, REGRESSION |
+| nuScenes | L2, 1-2-3 s, m | 2.4314 | 2.1173 | 2.37 | 143 | GAIN | 2.151 → 2.117, t 0.31, NEUTRAL |
+| NAVSIM | EPDMS | 0.8572 | 0.8067 | −6.05 | 126 | REGRESSION | not paired: 83 shared tokens |
+| neuroNCAP, quick (3 pairs) | NCAP | 3.1794 | 4.0229 | 0.98 | 3 | NEUTRAL | 4.107 → 4.023, NEUTRAL |
+| Bench2Drive, crash check (route 3717) | DS | | | | 1 | running | |
+| AlpaSim, crash check (1 clip) | scene score | 0.0000 | 0.0000 | | 1 | TOO FEW UNITS | |
+| neuroNCAP, closed loop (15 pairs) | NCAP | 3.6792 | 3.9265 | 1.44 | 15 | NEUTRAL | 3.691 → 3.926, t 1.24, NEUTRAL |
+| Bench2Drive, closed loop (7 routes) | DS | | | | 7 | running | H04: 60.39 |
+| AlpaSim, closed loop (10 scenes) | scene score | 0.4162 | 0.1317 | −1.69 | 10 | NEUTRAL | 0.439 → 0.132, t −2.29, REGRESSION |
 
 Overall **FAIL**, from the NAVSIM pair; on NAVSIM, ego progress (t −8.05) and drivable area (t −3.33) are the terms
-beyond t crit. AlpaSim ran as a block of its own, with H04's four-camera driver profile: the gate first printed CONFIG
-DIFFERS on the driver, as it did for H01 and H04, and the row above is the same runs re-paired with `bridge_args`,
-`driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75) and
-its at-fault collisions 0 of 10 against 2; against the 4-camera planner 0.450 → 0.132, t −1.89, NEUTRAL. Not in yet:
-Bench2Drive (the spec asks for LEAD's camera rig, not built), the light-swap test
-(named by the spec, not defined).
+beyond t crit. On AlpaSim the gate first printed CONFIG DIFFERS on the driver (this model's four-camera render against
+Drive-JEPA's front camera), as it did for H01 and H04; its pairs are the same runs re-paired with `bridge_args`,
+`driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75).
+Bench2Drive runs the gate's quick route and 7 routes against the queue's released run, scored without the comfort
+fact (the spec masks comfort on all of CARLA); its two rows fill in when it ends. Not run: Bench2Drive on LEAD's
+camera rig (the spec's evaluation; not built) and the light-swap test (named by the spec, not defined).
 
 What is measured and what is not: every number above is a single run of one checkpoint; nothing separates the effect of
 the fact scorer from training on LEAD, from the fresh LoRA or from starting the planner from scratch, since all four
