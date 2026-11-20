@@ -1,0 +1,55 @@
+{
+ "clip": "0238dfe4-6545-46be-933d-8eb2ba29358c",
+ "mode": "carry",
+ "session1": [
+  {
+   "read_is_start": true,
+   "read_norm": 63.986083984375
+  },
+  {
+   "read_is_start": false,
+   "read_norm": 62.09235382080078
+  },
+  {
+   "read_is_start": false,
+   "read_norm": 62.188331604003906
+  },
+  {
+   "read_is_start": false,
+   "read_norm": 62.06470489501953
+  },
+  {
+   "read_is_start": false,
+   "read_norm": 61.96307373046875
+  },
+  {
+   "read_is_start": false,
+   "read_norm": 61.89579391479492
+  }
+ ],
+ "session1_close_summary": {
+  "calls": 6,
+  "chain_resets": 0,
+  "memory_norm_mean": 62.36505699157715,
+  "gate_mean": 0.31561632951100665,
+  "picks_differ_scorer": 0,
+  "picks_differ_final": 0
+ },
+ "session2_first_call_reads_start_state": true,
+ "session2_equals_session1_bitwise_calls": 6,
+ "session1_later_calls_read_carried_memory": true,
+ "unseen_session_first_call_reads_start_state": true,
+ "gap_1s": {
+  "dt_us": 1000000,
+  "chain_reset": true,
+  "read_is_start": true,
+  "chain_resets": 1
+ },
+ "after_gap_next_call": {
+  "dt_us": 500000,
+  "chain_reset": false,
+  "read_is_start": false
+ },
+ "restart_same_session_reads_start_state": true,
+ "pass": true
+}
