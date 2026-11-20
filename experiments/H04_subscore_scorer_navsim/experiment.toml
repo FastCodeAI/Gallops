@@ -193,11 +193,11 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   [runs.checkpoint]
   model = "wajepa_dj_run3a"
   train_run = "run3a"
-  step = 13
-  step_unit = "epoch"
+  step = 21616
+  step_unit = "optimizer_step"
   file = "epoch_13.ckpt"
   weights_sha256 = "92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24"
-  location = "{weights}/wajepa_dj_run3a/run3a/step_000000013/"
+  location = "{weights}/wajepa_dj_run3a/run3a/step_000021616/"
   sidecar = false
   members = ["92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24  epoch_13.ckpt"]
 
@@ -284,7 +284,8 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   value = "40.4"
   better = "higher"
   strength = "moderate"
-  note = "paired +6.6 [+3.6, +9.7]; KITTI-360 and Waymo have no rear camera, so the sub-score agent-look model drove those with a black rear image"
+  flags = ["no-record"]
+  note = "paired +6.6 [+3.6, +9.7]. Both numbers are from the 22 Oct HUGSIM campaign, which paddock's docs/benchmarks/hugsim.md marks superseded: six waypoints (3 s) of each plan sent, the released model with momentum off and uncropped, its record kept valid: false; this model's run is not stored in paddock (no paddock adapter on main). Paddock's current released Drive-JEPA figure, with momentum on and the whole 4 s plan sent, is 37.1. KITTI-360 and Waymo have no rear camera, so the sub-score agent-look model drove those with a black rear image"
   source = "experiments/H04_subscore_scorer_navsim/README.md"
 
   [[runs.gate]]
@@ -340,7 +341,7 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   baseline = "released Drive-JEPA, the paddock queue's runs of 26 Oct"
   paddock_commit = "3daf4b9"  # plus wajepa_dj_run3a copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj_run3a-ncap/manifest.toml"
-  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.four-camera-planner: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): the gate printed CONFIG DIFFERS, because this model's AlpaSim driver is not the baseline's (bridge_args, driver_config, driver_profile: the four-camera render it reads against Drive-JEPA's front-camera driver). Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.478, all NEUTRAL. Against H01.four-camera-planner (same driver, --allow-config driver_profile): 0.450 -> 0.439, t -0.08, NEUTRAL."
+  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.four-camera-planner: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile. This model drove AlpaSim through AutoE2E's driver profile (paddock_bridge_autoe2e, mapped to wajepa_dj_run3a by an uncommitted edit to paddock's adapters/benchmarks/alpasim/harness.py in the gate-oct27-alp worktree; no paddock ref carries it), which changes more than the camera count: six pinhole cameras rendered at f 990.8 px, 1920 x 1018, no distortion, global shutter, each scene's recorded pose, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion left in, rolling shutter, a fixed rig; and a replan wrapper asking every 0.5 s on the newest frame (ReplanRhythmPlanner, 600 s inference timeout) against Drive-JEPA's own planner (drivejepa-0.1.4b, 11-frame history). The compare also notes different paddock code (661901c against 9819e36) and a baseline run marked invalid. The effect of each difference on the score is not measured. Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.478, all NEUTRAL. Against H01.four-camera-planner (same driver, --allow-config driver_profile): 0.450 -> 0.439, t -0.08, NEUTRAL."
 
     [[runs.gate.pairs]]
     bench = "neuroncap"

@@ -15,8 +15,9 @@ from pathlib import Path
 import pytest
 
 from gallops import recipe as recipes
+from gallops.checkpoint import Checkpoint, SidecarError
 from gallops.config import REPO_ROOT, SiteConfig
-from gallops.drivejepa_wajepa import code, navtest_score, train
+from gallops.drivejepa_wajepa import code, navtest_score, train, write_checkpoint
 
 SRC = REPO_ROOT / "src" / "gallops"
 OVERLAYS = REPO_ROOT / "recipes" / "drivejepa_wajepa" / "overlay"
@@ -120,8 +121,10 @@ def test_the_training_overrides_are_the_runs_own(site: SiteConfig) -> None:
 
 
 def test_run3a_trains_with_its_recorded_overrides_and_refuses_without_its_inputs(site: SiteConfig) -> None:
-    """Run 3A's code/hydra/overrides.yaml (24 Oct 17:34). Its model starts the agent decoder from random
-    weights, silently, when RUN3A_AGENT_DECODER_CKPT names no file, so the stage must require it."""
+    """Run 3A's code/hydra/overrides.yaml (24 Oct 17:34), plus the pick defaults it ran with: val/score_epoch,
+    which chose the epoch, reads the config's pick, and the overlay's config now holds the pick locked after
+    training (#23 review 🟠 2). Its model starts the agent decoder from random weights, silently, when
+    RUN3A_AGENT_DECODER_CKPT names no file, so the stage must require it."""
     (cmd,) = recipes.commands(recipes.load("drivejepa_wajepa"), site, ["run3a-train"])
     argv = list(cmd.argv)
     overrides = argv[argv.index("--") + 1 :]
@@ -137,6 +140,8 @@ def test_run3a_trains_with_its_recorded_overrides_and_refuses_without_its_inputs
         f"cache_path={site.datasets['wajepa_tokens'].path}",
         "use_cache_without_dataset=True",
         "force_cache_computation=False",
+        "+agent.config.pick_gate_weights=[1.0,1.0,1.0,1.0,1.0]",
+        "+agent.config.pick_alpha=0.0",
     ]
     assert argv[argv.index("--config-name") + 1] == "run3a_training"
     required = [argv[i + 1] for i, a in enumerate(argv) if a == "--require"]
@@ -358,3 +363,72 @@ def test_train_sets_what_both_runs_had(tmp_path: Path) -> None:
     cmd = train.command(tmp_path, "run3a_training", ["agent=x"])
     assert cmd[1].endswith("navsim/planning/script/run_training.py")
     assert cmd[2:] == ["--config-name", "run3a_training", "agent=x"]
+
+
+def _record(**over: object) -> Checkpoint:
+    kw: dict = dict(
+        global_step=26580,
+        epoch=19,
+        n_params=7_768_355,
+        dtypes={"float32"},
+        model="wajepa_dj",
+        train_run="run2",
+        trained_on_pairs=["navsim:navtrain"],
+        selection_split=None,
+        src_name="epoch_19.ckpt",
+        src_sha256="a" * 64,
+        manifest_name="run2.json",
+        manifest_sha256="b" * 64,
+        upstream={"sha": "548bb82"},
+        policy_env={},
+        note="",
+        publisher_sha="c" * 40,
+    )
+    kw.update(over)
+    return write_checkpoint.record_for(**kw)
+
+
+def test_checkpoint_stage_builds_a_valid_sidecar() -> None:
+    """#22 review 🔴 1: the stage set precision "16-mixed", which the sidecar refuses, so it never ran."""
+    with pytest.raises(SidecarError, match="precision"):
+        Checkpoint(
+            model="wajepa_dj",
+            step=1,
+            train_git_sha="c" * 40,
+            train_run="run2",
+            precision=write_checkpoint.TRAINING_PRECISION,
+        )
+    rec = _record()
+    assert rec.precision == "fp32"
+    assert rec.notes["training_precision"] == "16-mixed"
+    assert _record(dtypes={"float32", "float16"}).precision == "mixed"
+
+
+def test_checkpoint_stage_steps_by_global_step_and_counts_params_once() -> None:
+    """#22 review 🟠 2: the step directory is the optimizer step (the epoch goes in notes), and params_m is
+    the distinct tensors, so it agrees with the record's 7.8 M."""
+    rec = _record()
+    assert rec.step == 26580 and rec.notes["epoch"] == 19
+    assert rec.params_m == 7.77
+
+
+def test_summarize_counts_tied_tensors_once() -> None:
+    torch = pytest.importorskip("torch")
+    shared = torch.zeros(3, 4)
+    state = {"round0.w": shared, "round1.w": shared, "b": torch.zeros(5), "step": 3}
+    n, dtypes = write_checkpoint.summarize(state)
+    assert n == 17
+    assert dtypes == {"float32"}
+
+
+def test_agent_decoder_and_centreline_stages_make_their_output_dirs() -> None:
+    """#23 review 🔴 1: both stages wrote into a directory no stage created, so ran only where it was
+    made by hand. Both modules need torch or nuplan, so this guards the structure: train() makes its out dir
+    first (refusing an existing one), and the centreline script makes its out dir before the map loop."""
+    tad = ast.parse((SRC / "drivejepa_wajepa" / "train_agent_decoder.py").read_text())
+    fn = next(n for n in tad.body if isinstance(n, ast.FunctionDef) and n.name == "train")
+    assert ast.unparse(fn.body[0]) == "os.makedirs(out_dir)"
+    lc = ast.parse((SRC / "drivejepa_wajepa" / "lane_centrelines.py").read_text())
+    made = [i for i, n in enumerate(lc.body) if ast.unparse(n) == "os.makedirs(OUT, exist_ok=True)"]
+    loop = next(i for i, n in enumerate(lc.body) if isinstance(n, ast.For))
+    assert made and made[0] < loop

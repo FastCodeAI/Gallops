@@ -22,8 +22,9 @@ WAJEPA_TOKEN_CACHE, NAVTRAIN_AGENTS, HELDOUT_LOGS. QUERIES / LAYERS (default 64 
 the
 decoder for train; checkpoints record them and eval reads them back. Run 3A's decoder is D: 300 / 3, epoch 11.
 
-Ported from paddock-ops agent-decoder/train_agent_decoder.py; changed: this docstring and the import of its
-data module (common.py there).
+Ported from paddock-ops agent-decoder/train_agent_decoder.py; changed: this docstring, the import of its
+data module (common.py there), and train() creates its <out dir> (refusing one that exists), which the
+script left to the hand-made directory at the training site.
 
     python -m gallops.drivejepa_wajepa.train_agent_decoder {overfit <out>|train <out> <ckpt dir>|eval <ckpt>
         <json>}
@@ -144,6 +145,7 @@ def overfit(out_dir):
 
 
 def train(out_dir, ckpt_dir):
+    os.makedirs(out_dir)  # refused if it exists, as every stage that writes refuses an existing output
     Path(ckpt_dir).mkdir(parents=True, exist_ok=True)
     agents = pickle.load(open(AGENTS, "rb"))
     train_keys, held_keys = split(agents)

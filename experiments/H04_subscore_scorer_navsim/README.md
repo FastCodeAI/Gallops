@@ -20,10 +20,12 @@ trained on the sub-scores. How the code is kept, the stages of the 4-camera plan
 
 | Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
 |---|---:|---:|---:|---:|
-| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 |
+| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 † |
 | **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
 | **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | |
-| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 |
+| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 † |
+
+† HUGSIM's 22 Oct campaign, which paddock's HUGSIM page marks superseded: six waypoints of each plan sent, the release with momentum off, and this model's run not stored in paddock. Paddock's current figure for the release (momentum on, the whole 4 s plan) is 37.1.
 
 Recipe: [`recipes/drivejepa_wajepa.toml`](../../recipes/drivejepa_wajepa.toml).
 
@@ -102,8 +104,10 @@ HC .977 / .977, EC .406 / .401. Paired per scene: +2.03 [+1.65, +2.44] over the 
 Bench2Drive (26 Oct, 50 routes, 2 Hz, the command fix, one run per route): DS
 63.29, RC 79.02, 30 routes completed; the 4-camera planner in the same setup 51.70 / 51.95 (two
 runs). HUGSIM (419 scenarios, command only): HD-Score 40.4 against 33.8 for the
-release, paired +6.6 [+3.6, +9.7]; KITTI-360 and Waymo have no rear camera, so
-The sub-score agent-look model drove those with a black rear image.
+release, paired +6.6 [+3.6, +9.7], both from the 22 Oct campaign that paddock's HUGSIM page marks superseded
+(six waypoints of each plan sent; the release with momentum off; this model's run not stored in paddock).
+Paddock's current figure for the release, momentum on and the whole 4 s plan sent, is 37.1. KITTI-360 and
+Waymo have no rear camera, so the sub-score agent-look model drove those with a black rear image.
 
 ## The regression gate
 

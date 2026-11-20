@@ -9,7 +9,9 @@
 # experiments/H04_subscore_scorer_navsim/README.md (the agent decoder, the sub-score agent-look model). A run trains inside the tree its code
 # stage builds:
 # upstream Drive-JEPA at the commit overlay/<name>.json pins, with recipes/drivejepa_wajepa/overlay/<name>/ laid over
-# it. Every stage that writes refuses an output that already exists (the dumps instead skip finished samples).
+# it. Every stage that writes a checkpoint, a token or agent cache or a weights directory refuses one that already
+# exists (the dumps instead skip finished samples); navtest-score rewrites its --json, and eval-navtest writes a new
+# timestamped directory.
 #
 # Site config this needs (gallops.toml):
 #   [python] train              Python >= 3.11 with torch (code, checkpoint, navtest-score)
@@ -257,7 +259,8 @@ python = "drivejepa"
 module = "drivejepa_wajepa.train"
 after = ["code-run3a", "run3a-checks", "agent-decoder", "teacher-rearok"]
 env = { NAVSIM_EXP_ROOT = "{data.navsim.exp}", OPENSCENE_DATA_ROOT = "{data.navsim}", NUPLAN_MAPS_ROOT = "{data.navsim.maps}", NUPLAN_MAP_VERSION = "nuplan-maps-v1.0", RUN3A_AGENT_DECODER_CKPT = "{ckpt_ad}/epoch_11.pt", RUN3A_CENTRELINES = "{centrelines}" }
-# The overrides are the sub-score agent-look model's code/hydra/overrides.yaml (24 Oct 17:34), with the cache path a template. --require: the
+# The overrides are the sub-score agent-look model's code/hydra/overrides.yaml (24 Oct 17:34), with the cache path a template,
+# plus the pick defaults it ran with (below). --require: the
 # model starts its decoder from random weights, silently, when RUN3A_AGENT_DECODER_CKPT names no file.
 args = [
   "--tree", "{tree_run3a}",
@@ -278,6 +281,11 @@ args = [
   "cache_path={tokens}",
   "use_cache_without_dataset=True",
   "force_cache_computation=False",
+  # val/score_epoch, which chose epoch 13, is the top path under the config's pick. The run had the defaults
+  # (gates 1, alpha 0); the overlay's config now holds the pick locked on 25 Oct, after training, so the
+  # defaults are given here, as run3a-navtest-default does. The gradient never reads the pick.
+  "+agent.config.pick_gate_weights=[1.0,1.0,1.0,1.0,1.0]",
+  "+agent.config.pick_alpha=0.0",
 ]
 
 [[stage]]

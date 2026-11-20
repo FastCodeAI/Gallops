@@ -9,7 +9,7 @@ into the template layout; the "where it sits" column says where each one is.
 | Item | Template location | Where it sits at the training site | Bytes | sha256 |
 |---|---|---|---:|---|
 | Agent decoder D, 300 slots × 3 layers, epoch 11 of 12 (`H04.agent-decoder`) | `{runs}/drivejepa_wajepa/agent_decoder/ckpts_D_q300_l3/epoch_11.pt` | `{data.navsim.exp}/agent_decoder/ckpts_23oct_D_q300_l3/epoch_11.pt` | 17,042,431 | `e887dcda20a74a043e3a7552fe27d7f34596b7a25e5c97a545b3b2421a9bae2a` |
-| The sub-score agent-look model, epoch 13 of 20 (`H04.subscore-agent-look`), trainer format, no sidecar yet | `{weights}/wajepa_dj_run3a/run3a/step_000000013/epoch_13.ckpt` | `{data.navsim.exp}/run3a/epoch_ckpts_20261024_1734/epoch_13.ckpt` | 158,899,987 | `92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24` |
+| The sub-score agent-look model, epoch 13 of 20 = optimizer step 21,616 (`H04.subscore-agent-look`), trainer format, no sidecar yet: `run3a-checkpoint` publishes it with `--src` pointed at the file on the right | `{weights}/wajepa_dj_run3a/run3a/step_000021616/epoch_13.ckpt` | `{data.navsim.exp}/run3a/epoch_ckpts_20261024_1734/epoch_13.ckpt` | 158,899,987 | `92185265cee95383dd62fbba760d3a5c3e4d8e8d09de40cbb8f7523190b2cf24` |
 
 ## Built data
 

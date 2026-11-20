@@ -61,7 +61,7 @@ Hypotheses and enablers share one numbering because the team prioritised them to
   `1B`). Renaming them after the fact is how two documents come to disagree; the run ID
   (below) makes them unambiguous instead. The exception is a name that means nothing out of context
   (`Run 2`, `Run 3A`): its run ID and prose name say what the run did instead
-  (`H01.four-camera-planner`, "The 4-camera planner"), the record says once what it was called
+  (`H01.four-camera-planner`, "the 4-camera planner"), the record says once what it was called
   while it ran, and code and checkpoint paths keep the old name, so the record still points at
   the exact files that trained.
 - **Short labels collide.** `S1` (a retrain step) and `s1` (a swerve run), four meanings of `v4`,

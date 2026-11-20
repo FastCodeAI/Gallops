@@ -2,8 +2,8 @@
 centreline (baseline path, resampled at <= 1 m, float64 [x, y, heading]) and the lane graph (successors /
 predecessors through lane connectors). Writes <out>/<map_name>.pkl = {"lines": {id: (n, 3)}, "succ": {id:
 [id]}, "pred": {id: [id]}}; ids as the drivable-area map's tokens (str of the fid). Never overwrites. Run
-3A's labels read them from RUN3A_CENTRELINES. Ported from paddock-ops run3a/labels/lane_centrelines.py; only
-this docstring changed.
+3A's labels read them from RUN3A_CENTRELINES. Ported from paddock-ops run3a/labels/lane_centrelines.py;
+changed: this docstring, the import order, and <out_dir> is created (the script left it to a hand-made one).
 
     NUPLAN_MAPS_ROOT=<maps> python -m gallops.drivejepa_wajepa.lane_centrelines <out_dir>"""
 
@@ -18,6 +18,7 @@ from nuplan.common.maps.nuplan_map.map_factory import get_maps_api
 
 OUT = sys.argv[1]
 root = os.environ["NUPLAN_MAPS_ROOT"]
+os.makedirs(OUT, exist_ok=True)  # finished maps are skipped, so an existing directory is fine
 for name in ("us-nv-las-vegas-strip", "us-ma-boston", "us-pa-pittsburgh-hazelwood", "sg-one-north"):
     path = f"{OUT}/{name}.pkl"
     if os.path.exists(path):
