@@ -59,7 +59,11 @@ Hypotheses and enablers share one numbering because the team prioritised them to
   (`H05_ssm_memory`). The test checks the folder against the `id` inside it.
 - **Names inside a record keep the names the work was done under** (`v4`, `run3a`, `exp2b`,
   `1B`). Renaming them after the fact is how two documents come to disagree; the run ID
-  (below) makes them unambiguous instead.
+  (below) makes them unambiguous instead. The exception is a name that means nothing out of context
+  (`Run 2`, `Run 3A`): its run ID and prose name say what the run did instead
+  (`H01.four-camera-planner`, "the 4-camera planner"), the record says once what it was called
+  while it ran, and code and checkpoint paths keep the old name, so the record still points at
+  the exact files that trained.
 - **Short labels collide.** `S1` (a retrain step) and `s1` (a swerve run), four meanings of `v4`,
   two of `0.1.5`: write the run ID (`GC03.s1`) wherever a label could be read two ways.
 
@@ -348,7 +352,7 @@ description are rendered from the record, like the README, so the ID and the num
 typed:
 
 ```bash
-gallops experiments pr H04.run3a > /tmp/pr.md   # H04 alone takes the run that holds the headline
+gallops experiments pr H04.subscore-agent-look > /tmp/pr.md   # H04 alone takes the run that holds the headline
 $EDITOR /tmp/pr.md                              # replace each TODO(author):
 gh pr create --title "$(head -1 /tmp/pr.md)" --body-file <(tail -n +3 /tmp/pr.md)
 ```

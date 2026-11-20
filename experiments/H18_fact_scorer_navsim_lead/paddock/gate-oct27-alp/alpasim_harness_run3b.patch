@@ -1,0 +1,11 @@
+--- a/src/paddock/adapters/benchmarks/alpasim/harness.py
++++ b/src/paddock/adapters/benchmarks/alpasim/harness.py
+@@ -260,6 +260,8 @@
+ )
+ DRIVER_PROFILES["wajepa_dj"] = _WAJEPA_DJ_PROFILE
+ DRIVER_PROFILES["wajepa_dj_run3a"] = _WAJEPA_DJ_PROFILE
++#: Run 3B v2 (ops adapter, 20 Nov): the same feed as run 3A (four views b0 f0 l0 r0 at its 2 Hz), so the same profile.
++DRIVER_PROFILES["run3b_v2"] = _WAJEPA_DJ_PROFILE
+ #: Phase 2 Drive-JEPA (ops adapter, 06 Nov): front camera only, so it takes the drivejepa profile unchanged.
+ DRIVER_PROFILES["drivejepa_p2"] = DRIVER_PROFILES["drivejepa"]
+ 

@@ -46,6 +46,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
 | [H15](H15_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | 📝 planned | [H15_prediction_memory/](H15_prediction_memory/) |
+| [H18](H18_fact_scorer_navsim_lead/CARD.md) | The sub-score agent-look model's architecture, trained from scratch on NAVSIM + LEAD with a per-waypoint fact scorer | hypothesis | Navvrat | 18 Nov 2026 | ⏳ running | [H18_fact_scorer_navsim_lead/](H18_fact_scorer_navsim_lead/) |
 <!-- /experiments:index -->
 
 ## Enablers
@@ -76,6 +77,9 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
+| 20 Nov 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | all | ⚪ 0.8572 → 0.8440 | 🟢 2.5375 → 2.0010 | 🟢 2.4314 → 2.0570 | ⚪ 3.6792 → 3.2800 | ⚪ 59.0360 → 80.2351 | ⚪ 0.4162 → 0.4503 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | all | ⚪ 0.8572 → 0.8534 | 🟢 2.5375 → 2.1215 | 🟢 2.4314 → 2.1509 | ⚪ 3.6792 → 3.6915 | ⚪ 59.0360 → 40.8048 | ⚪ 0.4162 → 0.4391 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | ⚪ 59.0360 → 87.9614 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
 <!-- /experiments:gate -->
 
 ## Decision log
@@ -96,7 +100,7 @@ What the team decided, in date order, on what evidence. It is kept in
 | **D08** | 13 Oct 2026 | **Park the scorer; imitate expert v6.** Park the sub-score scorer: on the seeing model it overrode the pick from 0.5 s in every scenario and flipped side. Teach the manoeuvre through the model's own generator instead, with expert v6 — brake for stationary and side hazards, brake then swerve onto free road for oncoming ones — as the one consistent driver to imitate. | Naren | [GC07.sighted-v1](GC07_subscore_scorer/CARD.md) | [GC08](GC08_expert_v6_imitation/CARD.md) |
 | **D09** | 14 Oct 2026 | **One tick per forward pass.** The vendor model mixes ticks within a batch, so every forward pass is now one tick. The batch-8 swerve runs and the batch-4 cache v1 would train differently today; a rerun is a new run. | Naren | [GC03](GC03_swerve_finetune/CARD.md), [GC06.v1](GC06_scorer_cache/CARD.md) | — |
 | **D10** | 16 Oct 2026 | **Brake-then-swerve imitation: no transfer.** Concluded negative: the swerve is learned on the five training scenes but lost on unseen streets (round 2 on 0103: 2.31 against 3.01 released), and each new reconstructed scene costs about 7.5 GPU-hours. | Naren | [GC08.v6-r1a-loso0075](GC08_expert_v6_imitation/CARD.md), [GC08.v6-r1b-all](GC08_expert_v6_imitation/CARD.md), [GC08.v6-r2-short](GC08_expert_v6_imitation/CARD.md) | — |
-| **D11** | 19 Oct 2026 | **Base: Navvrat's 4-camera stack.** The three tracks merge into one base: Navvrat's 4-camera stack — WA-JEPA's encoder over four views, Drive-JEPA's planner with path reads and a global read. All three tracks found the scorer is the weak part. Still open: close its NAVSIM gap before the gate, rebase its adapter onto the camera fix, repeat the LoRA on its encoder. | team | [H01.run2](H01_four_camera_base/CARD.md), [H07.exp1](H07_encoder_lora/CARD.md), [GC08](GC08_expert_v6_imitation/CARD.md) | [H01](H01_four_camera_base/CARD.md), [H04](H04_subscore_scorer_navsim/CARD.md), [H07](H07_encoder_lora/CARD.md) |
+| **D11** | 19 Oct 2026 | **Base: Navvrat's 4-camera stack.** The three tracks merge into one base: Navvrat's 4-camera stack — WA-JEPA's encoder over four views, Drive-JEPA's planner with path reads and a global read. All three tracks found the scorer is the weak part. Still open: close its NAVSIM gap before the gate, rebase its adapter onto the camera fix, repeat the LoRA on its encoder. | team | [H01.four-camera-planner](H01_four_camera_base/CARD.md), [H07.exp1](H07_encoder_lora/CARD.md), [GC08](GC08_expert_v6_imitation/CARD.md) | [H01](H01_four_camera_base/CARD.md), [H04](H04_subscore_scorer_navsim/CARD.md), [H07](H07_encoder_lora/CARD.md) |
 | **D12** | 21 Oct 2026 | **One prioritised list, H01–H11.** The hypothesis phase runs as one list in priority order, proposed 21 Oct: enablers first, then the hypotheses that most directly get the base through the gate. Dropped: the scene-count curve (the imitation overfits, and a scene costs about 7.5 GPU-hours) and more cameras for side crashes (the front camera already sees the crossing car). | team | [GC08](GC08_expert_v6_imitation/CARD.md) | [H01](H01_four_camera_base/CARD.md), [H02](H02_smallest_valid_gate/CARD.md), [H03](H03_shared_store_and_tags/CARD.md), [H04](H04_subscore_scorer_navsim/CARD.md), [H05](H05_ssm_memory/CARD.md), [H06](H06_global_read/CARD.md), [H07](H07_encoder_lora/CARD.md), [H08](H08_sideways_velocity_fov/CARD.md), [H09](H09_shared_runner/CARD.md), [H10](H10_pdm_terms/CARD.md), [H11](H11_hugsim/CARD.md) |
 | **D13** | 21 Oct 2026 | **The gate: own scores decide, MDE printed.** Each benchmark's own score keeps deciding the gate; the PDM-style terms are shown beside it and may decide later, one benchmark at a time. The subset sizes stay (20 pairs × 1 seed was not adopted), and every verdict prints its minimum detectable effect. | Naren | [H02.mde](H02_smallest_valid_gate/CARD.md), [H02.timing](H02_smallest_valid_gate/CARD.md) | [H10](H10_pdm_terms/CARD.md) |
 | **D14** | 21 Oct 2026 | **neuroNCAP stays; trial HUGSIM beside it.** neuroNCAP stays the crash benchmark; HUGSIM is trialled beside it on a slice, checked by reproducing WA-JEPA's published 0.4462, before deciding whether to adopt it. | team | — | [H11](H11_hugsim/CARD.md) |
@@ -173,6 +177,21 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
+| `gallops.drivejepa_wajepa.agent_decoder_data` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.agent_targets` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.code` | H01.four-camera-planner, H04.agent-decoder, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.dump_tokens` | H01.four-camera-planner | experiment |
+| `gallops.drivejepa_wajepa.eval_navtest` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.extract_agents` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.lane_centrelines` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.navtest_score` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.pick_tune` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.run3a_checks` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.teacher_rearok` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.train` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.train_agent_decoder` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.verify_tokens` | H01.four-camera-planner | experiment |
+| `gallops.drivejepa_wajepa.write_checkpoint` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |

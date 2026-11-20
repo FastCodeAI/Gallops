@@ -1,0 +1,142 @@
+{
+  "run": "run3a",
+  "description": "Run 3A: agent decoder D loaded whole, agent look after each refinement round (global look removed), 12 scorer heads and map auxiliary targets, trained 24 Oct 2026 17:34 to 25 Oct 10:21 (experiment run3a, epoch 13 kept)",
+  "upstream": {
+    "repo": "https://github.com/linhanwang/Drive-JEPA",
+    "sha": "548bb8215e3aae18e162a0f12f1ba83b4d3eb57e"
+  },
+  "files": {
+    "navsim_v2/navsim/agents/drive_jepa_run3a/agent_decoder.py": {
+      "sha256": "0772190e8c4006bd2cc53203f7c935e51b8c5fc1d1874f49a504ee50eeeb00bb",
+      "as_run_sha256": "0772190e8c4006bd2cc53203f7c935e51b8c5fc1d1874f49a504ee50eeeb00bb"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/agent_look.py": {
+      "sha256": "a8c88bd6e3df01147872eb0a632af34ec4b9022eca759bf38b6f44b82804e15b",
+      "as_run_sha256": "a8c88bd6e3df01147872eb0a632af34ec4b9022eca759bf38b6f44b82804e15b"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/bev_feature_build.py": {
+      "sha256": "68eb5ddd006c5bebff7e60c69f1e949c3365a499d6022788d9bdea7f773400d7",
+      "as_run_sha256": "68eb5ddd006c5bebff7e60c69f1e949c3365a499d6022788d9bdea7f773400d7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/bev_refiner.py": {
+      "sha256": "79190f2481206f14c909f7431c123c25e49a6ac26f3344c7428ebcfab6540a5d",
+      "as_run_sha256": "79190f2481206f14c909f7431c123c25e49a6ac26f3344c7428ebcfab6540a5d"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/custom_base_transformer_layer.py": {
+      "sha256": "c2e0c1d7ecac01efa795fa843da6f9cbb8871d385f5dabbf9eb74e33079e49b7",
+      "as_run_sha256": "c2e0c1d7ecac01efa795fa843da6f9cbb8871d385f5dabbf9eb74e33079e49b7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/decoder.py": {
+      "sha256": "5420e8968736e1df5148b2f4e6eddde8a9c12dc3ed04fb9361afe0ac06400c43",
+      "as_run_sha256": "5420e8968736e1df5148b2f4e6eddde8a9c12dc3ed04fb9361afe0ac06400c43"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/encoder.py": {
+      "sha256": "dd544519b90f1a82ddce378f52af330e788f9636de771457e0a1f15984e891b1",
+      "as_run_sha256": "dd544519b90f1a82ddce378f52af330e788f9636de771457e0a1f15984e891b1"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/grid_mask.py": {
+      "sha256": "d29eb57fbbccf75ef8eac527ca2566a28671e9e55b33e17d216bae50ab1688c7",
+      "as_run_sha256": "d29eb57fbbccf75ef8eac527ca2566a28671e9e55b33e17d216bae50ab1688c7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/image_encoder.py": {
+      "sha256": "70253ff4cdc386357503d9071fb5c5af28b1c392f1d4f385b1a04b626024f549",
+      "as_run_sha256": "70253ff4cdc386357503d9071fb5c5af28b1c392f1d4f385b1a04b626024f549"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/multi_scale_deformable_attn_function.py": {
+      "sha256": "03ad15be08b83fa2cb33defff6c22653b7eb1bab6fe33210cf677fabcc11781b",
+      "as_run_sha256": "03ad15be08b83fa2cb33defff6c22653b7eb1bab6fe33210cf677fabcc11781b"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/resnet_image_encoder.py": {
+      "sha256": "9241d364e679c7ea768d4dfe66656e58165f5cd781e415cefb1875b77c5746e4",
+      "as_run_sha256": "9241d364e679c7ea768d4dfe66656e58165f5cd781e415cefb1875b77c5746e4"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/simple_image_encoder.py": {
+      "sha256": "6fa90fdf6bc1b6ad7ae12cddb76d66f1fbc5f9cf730cfc95763dfddd7eb82a83",
+      "as_run_sha256": "6fa90fdf6bc1b6ad7ae12cddb76d66f1fbc5f9cf730cfc95763dfddd7eb82a83"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/spatial_cross_attention.py": {
+      "sha256": "622aea6d22267c0485cbd23232d59a33529081750a7f40b7540d18c9de4eaaad",
+      "as_run_sha256": "622aea6d22267c0485cbd23232d59a33529081750a7f40b7540d18c9de4eaaad"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/temporal_self_attention.py": {
+      "sha256": "238948db798bb53accd6874f911a451042b57a5e07d34358a1d13bef069ad828",
+      "as_run_sha256": "238948db798bb53accd6874f911a451042b57a5e07d34358a1d13bef069ad828"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/transform3d.py": {
+      "sha256": "4f739d8d0d490efce9ea1e142bbe4f6c461ed3fca0aff256be6b1a8c123b6a0f",
+      "as_run_sha256": "4f739d8d0d490efce9ea1e142bbe4f6c461ed3fca0aff256be6b1a8c123b6a0f"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/transformer_decoder.py": {
+      "sha256": "2ba11bb5936fdcbe9d133929b2e62cb0cac6c0d9abb55cf6e5d9ab30c78e2591",
+      "as_run_sha256": "2ba11bb5936fdcbe9d133929b2e62cb0cac6c0d9abb55cf6e5d9ab30c78e2591"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/wajepa.py": {
+      "sha256": "9a581cbc5f79ebd8ed847406d1e0c8adbddd22e2b600881340180f01420cde5a",
+      "as_run_sha256": "e996d04cc3bbf950a42c32b731689169ee18c21b0235713ff08e8d646f5c59d3",
+      "note": "WAJEPA_CODE / WAJEPA_WEIGHTS lose their machine-path defaults (environment only); nothing else differs from the file as run"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_agent.py": {
+      "sha256": "6d636486a4896bc38cd76a40f8f507f40336d3e4856123fe53e869610af2c0bd",
+      "as_run_sha256": "6d636486a4896bc38cd76a40f8f507f40336d3e4856123fe53e869610af2c0bd"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_config.py": {
+      "sha256": "25272b20cab826cb4d4c0a52c85194633c65cc690dea78780423a05c0297aa13",
+      "as_run_sha256": null,
+      "note": "changed after training: the pick weights were locked on 25 Oct (gates 0.5, 0.5, 1, 0.5, 0.5, route 2, alpha 0.5; training and checkpoint selection used gates 1, route 2, alpha 0), and agent_decoder_ckpt lost its machine-path default (RUN3A_AGENT_DECODER_CKPT, which the training stage requires). The file as it was at launch was not kept, so as_run_sha256 is null"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_features.py": {
+      "sha256": "a1cf3c3ba2001287956e049d12f134f29666c98c6130bd7594df9044bd4b30df",
+      "as_run_sha256": "a1cf3c3ba2001287956e049d12f134f29666c98c6130bd7594df9044bd4b30df"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_model.py": {
+      "sha256": "3c83bb37c6d6c1821657f6b69797698311baa54be9d938fe311c3e836166ddf3",
+      "as_run_sha256": "3c83bb37c6d6c1821657f6b69797698311baa54be9d938fe311c3e836166ddf3"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/global_look.py": {
+      "sha256": "644d9fd67ac17f42bc967028a0d94dcefd23c4279a60d42a81d6b352de9d86e7",
+      "as_run_sha256": "644d9fd67ac17f42bc967028a0d94dcefd23c4279a60d42a81d6b352de9d86e7"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/score_module/compute_navsim_score.py": {
+      "sha256": "7cf121337f3f4fea0c26ff5d681f5eba84f4db185da9271749e92590d24a8f9b",
+      "as_run_sha256": "7cf121337f3f4fea0c26ff5d681f5eba84f4db185da9271749e92590d24a8f9b"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/score_module/map_head.py": {
+      "sha256": "bf4eba2b3c58c4feef16376e6d07611b278f56e9a01460359b0a83c6c9c79eda",
+      "as_run_sha256": "bf4eba2b3c58c4feef16376e6d07611b278f56e9a01460359b0a83c6c9c79eda"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/score_module/run3a_labels.py": {
+      "sha256": "a8e118cec458cb33cac579c767dc6f5d75dccb623856c49416e8f403b853ed14",
+      "as_run_sha256": "20c7389ecbecdc73f9c99b15de209843d0110cb100808576051a1538dca35fc9",
+      "note": "RUN3A_CENTRELINES loses its machine-path default (environment only; the training stage requires it); nothing else differs from the file as run"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/score_module/scorer.py": {
+      "sha256": "81b740ef24e0606d7a3df5c0d07616c2f2c513e92ef30dd687057e1c7b9f3ebc",
+      "as_run_sha256": "81b740ef24e0606d7a3df5c0d07616c2f2c513e92ef30dd687057e1c7b9f3ebc"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/score_module/train_pdm_scorer.py": {
+      "sha256": "f78280921784dd09d2937dcaf7242e66bd50a21ca1ca18524a3675e6f47330d8",
+      "as_run_sha256": "f78280921784dd09d2937dcaf7242e66bd50a21ca1ca18524a3675e6f47330d8"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_run3a/traj_refiner.py": {
+      "sha256": "c49448b49ad9678599f261ea74be40b0c79798dad61dcc417552d2f5cefb38d2",
+      "as_run_sha256": "c49448b49ad9678599f261ea74be40b0c79798dad61dcc417552d2f5cefb38d2"
+    },
+    "navsim_v2/navsim/planning/script/config/common/agent/drive_jepa_run3a_agent.yaml": {
+      "sha256": "240e73c4efc5cec276bfe727c5d5f0469fd2b0f00fcf98e5e1c284a4e8eb133d",
+      "as_run_sha256": "240e73c4efc5cec276bfe727c5d5f0469fd2b0f00fcf98e5e1c284a4e8eb133d"
+    },
+    "navsim_v2/navsim/planning/script/config/training/run3a_log_split.yaml": {
+      "sha256": "fdf69774d4451cd0ecd4be825c7ec47295207c32f44685f16d2e866de8302cbd",
+      "as_run_sha256": "fdf69774d4451cd0ecd4be825c7ec47295207c32f44685f16d2e866de8302cbd"
+    },
+    "navsim_v2/navsim/planning/script/config/training/run3a_training.yaml": {
+      "sha256": "2a0e9e64f39329764ed01440bbb2ca218714ba81e18519b7ba891b664c8423a0",
+      "as_run_sha256": "2a0e9e64f39329764ed01440bbb2ca218714ba81e18519b7ba891b664c8423a0"
+    },
+    "navsim_v2/navsim/planning/training/agent_lightning_module.py": {
+      "sha256": "1cd9e474ab40f078a662a8bc8300cb7c11ff983cb186d2b7af7be33c0939c2ce",
+      "as_run_sha256": "1cd9e474ab40f078a662a8bc8300cb7c11ff983cb186d2b7af7be33c0939c2ce",
+      "note": "upstream's file plus a 'run3a' validation branch (epoch means; val/score_epoch for run_training's checkpoint monitor); other agents unchanged"
+    }
+  }
+}
