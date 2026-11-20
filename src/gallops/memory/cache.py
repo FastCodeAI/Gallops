@@ -23,6 +23,16 @@ of the same model would compute, which `checks fidelity` measures on NAVSIM's na
 log; a restart skips them. The arrays are created whole at the start (np.lib.format.open_memmap),
 so a killed run leaves a valid file with some rows unbuilt.
 
+**Refused, before anything loads** (`start_problems`), when the inputs cannot be vouched for:
+
+- no passing `checks fidelity` verdict for this checkpoint and this `src/gallops/memory` tree. The
+  verdict is what says the cache computes what paddock computes; one made by other code, or for
+  other weights, says nothing about this build. Its sha256 goes into the manifest.
+- `src/gallops/memory` differs from the commit, so no commit names the code that built the rows.
+- on a resume, a manifest that differs from this run: the checkpoint, the moments table (by the
+  sha256 of `moments.npz`), the row count or the code. A restart into a folder built from other
+  weights or another table would otherwise mix rows from both under a manifest that names one.
+
 **Decoding in parallel** (`--workers N`, default 1). The five image reads of a moment go to a pool
 of N threads, and with N > 1 the next moment's inputs are built while the GPU runs this one. The
 forward pass stays batch 1 and in row order; the arrays do not depend on N (`checks workers`).
@@ -39,6 +49,7 @@ import io
 import json
 import os
 import pickle
+import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -197,10 +208,71 @@ def open_arrays(out: Path, n: int, mode: str) -> dict:
     return arrays
 
 
-def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=None, workers: int = 1) -> dict:
-    """Every moment (or `rows`, row indices of the ticks table) through the release; resumable per log."""
-    import torch
+def code_tree() -> str:
+    """The git tree id of `src/gallops/memory` at HEAD, `-dirty` when the files differ from it.
 
+    The tree, not the commit: a commit elsewhere in the repository must not stop a resume, and an
+    edit here must.
+    """
+    from gallops.config import REPO_ROOT
+
+    def git(*args: str) -> str:
+        out = subprocess.run(["git", "-C", str(REPO_ROOT), *args], capture_output=True, text=True)
+        return out.stdout.strip()
+
+    tree = git("rev-parse", "HEAD:src/gallops/memory") or "unknown"
+    return tree + ("-dirty" if git("status", "--porcelain", "--", "src/gallops/memory") else "")
+
+
+#: What a resume must share with the run that wrote the manifest.
+RESUME_KEYS = ("checkpoint_sha256", "ticks_sha256", "rows", "code_tree")
+
+
+def start_problems(key: dict, fidelity: dict | None, manifest: dict | None) -> list[str]:
+    """Why a build with `key` may not start; empty when it may.
+
+    `fidelity` is the `checks fidelity` verdict (None when there is none), `manifest` the output
+    folder's existing manifest (None for a fresh folder).
+    """
+    problems = []
+    if key["code_tree"].endswith("-dirty"):
+        problems.append("src/gallops/memory differs from HEAD: commit it, so a commit names the code")
+    if fidelity is None:
+        problems.append("no fidelity verdict: run `python -m gallops.memory.checks fidelity` first")
+    else:
+        for name in ("fidelity", "self_consistency"):
+            if fidelity.get(name) != "PASS":
+                problems.append(f"the fidelity verdict's {name} is {fidelity.get(name)!r}, not PASS")
+        for name in ("checkpoint_sha256", "code_tree"):
+            if fidelity.get(name) != key[name]:
+                problems.append(
+                    f"the fidelity verdict was made with {name} {fidelity.get(name)!r}, this build has "
+                    f"{key[name]!r}: run the check again"
+                )
+    if manifest is not None:
+        for name in RESUME_KEYS:
+            if manifest.get(name) != key[name]:
+                problems.append(
+                    f"resuming into a folder built with {name} {manifest.get(name)!r}, this run has "
+                    f"{key[name]!r}: choose a new --out"
+                )
+    return problems
+
+
+def build(
+    cfg,
+    ticks_dir: Path,
+    out: Path,
+    device: str,
+    fidelity: Path,
+    limit: int = 0,
+    rows=None,
+    workers: int = 1,
+) -> dict:
+    """Every moment (or `rows`, row indices of the ticks table) through the release; resumable per log.
+
+    `fidelity` is the `checks fidelity` verdict this build must match (`start_problems`).
+    """
     from gallops.drivejepa_b2d.provenance import git_sha
     from gallops.drivejepa_b2d.sidecar import sha256
     from gallops.memory import ticks
@@ -208,21 +280,36 @@ def build(cfg, ticks_dir: Path, out: Path, device: str, limit: int = 0, rows=Non
     table = ticks.load(ticks_dir)
     n = len(table["log"])
     data = cfg.datasets["navtrain"]
-    logs_dir, roots = data.extra["logs"], [data.extra["blobs"], data.extra["extra_blobs"]]
+    logs_dir, roots = data.extra["logs"], ticks.image_roots(data)
     out = Path(out)
     manifest_path = out / "manifest.json"
     progress_path = out / "progress.json"
     checkpoint = enter(cfg)
-    if not manifest_path.exists():
+    key = {
+        "checkpoint_sha256": sha256(Path(checkpoint)),
+        "ticks_sha256": sha256(Path(ticks_dir) / "moments.npz"),
+        "rows": n,
+        "code_tree": code_tree(),
+    }
+    fidelity = Path(fidelity)
+    verdict = json.loads(fidelity.read_text()) if fidelity.exists() else None
+    existing = json.loads(manifest_path.read_text()) if manifest_path.exists() else None
+    problems = start_problems(key, verdict, existing)
+    if problems:
+        raise SystemExit(f"refusing to build {out}:\n  - " + "\n  - ".join(problems))
+
+    import torch
+
+    if existing is None:
         out.mkdir(parents=True, exist_ok=True)
         manifest = {
             "git_sha": git_sha(),
             "created_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "ticks": str(ticks_dir),
             "ticks_git_sha": table["manifest"].get("git_sha"),
-            "rows": n,
             "checkpoint": checkpoint,
-            "checkpoint_sha256": sha256(Path(checkpoint)),
+            **key,
+            "fidelity_sha256": sha256(fidelity),
             "pass": "the vendor's forward, eval mode, batch 1, paddock's NAVSIM inputs (inputs.agent_input)",
             "torch": torch.__version__,
             "dtype": "float32",
@@ -314,7 +401,8 @@ def main() -> None:
         from gallops.memory.checks import wait_for_gpu
 
         print(f"GPU free at start: {wait_for_gpu()} MiB", flush=True)
-    print(json.dumps(build(cfg, ticks_dir, out, args.device, args.limit, workers=args.workers)))
+    fidelity = cache / "checks" / "fidelity.json"
+    print(json.dumps(build(cfg, ticks_dir, out, args.device, fidelity, args.limit, workers=args.workers)))
 
 
 if __name__ == "__main__":

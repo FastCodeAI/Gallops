@@ -1,0 +1,20 @@
+{
+  "run": "agent_decoder",
+  "description": "The agent decoder's training code (22-23 Oct 2026), laid over Run 2's overlay: the decoder D that Run 3A loads (300 slots, 3 layers, epoch 11)",
+  "upstream": {
+    "repo": "https://github.com/linhanwang/Drive-JEPA",
+    "sha": "548bb8215e3aae18e162a0f12f1ba83b4d3eb57e"
+  },
+  "files": {
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/agent_decoder.py": {
+      "sha256": "2db984e683862503d98c3e04e4410da8ada5ddd2ec703f84db1f914f011812c7",
+      "as_run_sha256": "2db984e683862503d98c3e04e4410da8ada5ddd2ec703f84db1f914f011812c7",
+      "note": "new file: the agent decoder (DETR3D-style slots on the token rays)"
+    },
+    "navsim_v2/navsim/agents/drive_jepa_perception_based/drive_jepa_features.py": {
+      "sha256": "7669ca6e7b06035af56e8a390bbb0ee436a4c66f0120588d901d2c0ce16d46d2",
+      "as_run_sha256": "7669ca6e7b06035af56e8a390bbb0ee436a4c66f0120588d901d2c0ce16d46d2",
+      "note": "Run 2's file plus DriveJEPAAgentTargetBuilder (22 Oct), an addition only"
+    }
+  }
+}

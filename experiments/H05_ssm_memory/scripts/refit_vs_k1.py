@@ -1,6 +1,6 @@
 """Correction (Nov 4) refit: paired CIs against k = 1 (the model's own view) at k = 2, 4, 8.
 
-One-off, as run (Sid D13). Reuses Step 2's pooled.npy, pca.npz and targets.npz untouched and
+One-off, as run (Siddesh's choice 13 of 4-5 Nov, numbered in his working notes, not decision D13). Reuses Step 2's pooled.npy, pca.npz and targets.npz untouched and
 the same code path as `gallops.memory.probe_control.run`: same rows, ridge / logistic fits with
 log-grouped CV, Step 2's bootstrap draws (probe.log_weights, SEED, 2,000). Only V1 (= Step 2's
 "images") and V4 (= "ego_only") are fitted, at k = 1, 2, 4, 8.

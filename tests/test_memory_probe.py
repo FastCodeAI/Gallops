@@ -130,3 +130,39 @@ def test_log_folds_keep_each_log_whole():
 def test_log_weights_draw_as_many_logs_as_there_are():
     w = probe.log_weights(7, 20, 0)
     assert w.shape == (20, 7) and (w.sum(1) == 7).all()
+
+
+def test_a_saved_pooled_map_made_from_another_cache_is_refused(tmp_path):
+    cache_dir, out = tmp_path / "release", tmp_path / "probe"
+    cache_dir.mkdir()
+    out.mkdir()
+    np.save(cache_dir / "encoder.npy", np.ones((4, 512, 256), np.float32))
+    first = np.load(probe.stage_pool(cache_dir, out, 4)).copy()
+    assert probe.stage_pool(cache_dir, out, 4) == out / "pooled.npy"  # same inputs: reused
+    np.save(cache_dir / "encoder.npy", np.full((4, 512, 256), 7.0, np.float32))  # a rebuilt cache
+    with pytest.raises(SystemExit, match="other inputs"):
+        probe.stage_pool(cache_dir, out, 4)
+    assert np.array_equal(np.load(out / "pooled.npy"), first)
+
+
+def test_a_saved_pca_fitted_on_other_moments_is_refused(tmp_path):
+    rng = np.random.default_rng(0)
+    pooled = rng.normal(size=(300, 20)).astype(np.float32)
+    key = {"rows": 300}
+    a = probe.stage_pca(pooled, np.arange(200), tmp_path, key)
+    b = probe.stage_pca(pooled, np.arange(200), tmp_path, key)  # same inputs: reused
+    assert all(np.array_equal(a[k], b[k]) for k in a)
+    with pytest.raises(SystemExit, match="other inputs"):
+        probe.stage_pca(pooled, np.arange(250), tmp_path, key)
+    with pytest.raises(SystemExit, match="other inputs"):
+        probe.stage_pca(pooled, np.arange(200), tmp_path, {"rows": 301})
+
+
+def test_a_stage_saved_before_it_had_a_key_is_refused(tmp_path):
+    cache_dir, out = tmp_path / "release", tmp_path / "probe"
+    cache_dir.mkdir()
+    out.mkdir()
+    np.save(cache_dir / "encoder.npy", np.ones((2, 512, 256), np.float32))
+    np.save(out / "pooled.npy", np.zeros((2, 8448), np.float32))
+    with pytest.raises(SystemExit, match="other inputs"):
+        probe.stage_pool(cache_dir, out, 2)

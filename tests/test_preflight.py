@@ -267,6 +267,33 @@ def test_a_tick_whose_past_was_a_priming_frame_is_not_rebuilt():
     assert chosen[-1] == frames[10] and chosen[-2] == frames[5]
 
 
+def test_a_round_the_init_weights_drove_is_checked_against_them(tmp_path, monkeypatch):
+    """INIT sources skip the start-of-run fidelity check and get their own once --init loads."""
+    ticks, d0, d1 = _two_rounds(tmp_path)
+    sources = [
+        preflight.Source("r0", str(d0), preflight.START),
+        preflight.Source("r1", str(d1), preflight.INIT),
+    ]
+    seen = []
+
+    def fidelity(model, dataset_cls, sample, referee, dumps, torch, device):
+        seen.append({t["source"] for t in sample})
+        return {"compared": len(sample)}, []
+
+    monkeypatch.setattr(preflight, "fidelity_check", fidelity)
+    report = preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")
+    assert seen == [{1}] and report["compared"] > 0
+    assert (
+        preflight.init_fidelity(
+            [t for t in ticks if t["source"] == 0], None, sources, None, None, None, "cpu"
+        )
+        == {}
+    )
+    monkeypatch.setattr(preflight, "fidelity_check", lambda *a: ({}, ["fidelity: off"]))
+    with pytest.raises(preflight.PreflightFailed):
+        preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")
+
+
 class _Plan:
     """What `model(features)["trajectory"]` returns, minus torch."""
 
@@ -479,3 +506,90 @@ def test_every_target_is_checked_drivable_not_a_sample():
     report, problems = preflight.drivable_checks(ticks)
     assert report["undrivable"] == "1/200" and problems and "@ 137" in problems[0]
     assert preflight.drivable_checks(ticks[:137])[1] == []
+
+
+def test_a_logged_human_path_is_not_held_to_the_limits_of_a_drawn_target():
+    """#17 review, 🔴 1: a human's path is not drawn, and relabelling cannot change it.
+
+    542 of labelled_nusc's 18,015 logged paths fail `undrivable`, so no run with a human
+    source could start. A drawn target with the same path is still refused.
+    """
+    tight = [[0.0, 0.5 * (k + 1), 0.0] for k in range(8)]
+    logged = {"episode": "real-0020/run_0", "timestamp": 1, "expert": tight, "expert_kind": "human"}
+    report, problems = preflight.drivable_checks([logged])
+    assert problems == [] and report == {"undrivable": "0/0", "logged": 1}
+    drawn = {**logged, "expert_kind": "brake"}
+    assert preflight.drivable_checks([logged, drawn])[0] == {"undrivable": "1/1", "logged": 1}
+
+
+def test_a_source_called_human_holds_only_logged_driving():
+    """#17 review, 🟠 6: `drove = human` skips grading and fidelity, so it has to be earned.
+
+    A rendered round passed as human was never graded or fidelity-checked, and nothing said so.
+    """
+    sources = [preflight.Source("r0", "d0", preflight.START), preflight.Source("real", "", preflight.HUMAN)]
+    good = [{"source": 0, "expert_kind": "brake"}, {"source": 1, "expert_kind": "human"}]
+    assert preflight.human_checks(good, sources) == []
+
+    rendered_as_human = good + [{"source": 1, "expert_kind": "brake"}]
+    problems = preflight.human_checks(rendered_as_human, sources)
+    assert len(problems) == 1 and "real" in problems[0] and "brake" in problems[0]
+
+    # and the exemption cannot be claimed from the other side: a tick calling itself human in
+    # a rendered source would skip `drivable_checks`
+    claimed = good + [{"source": 0, "expert_kind": "human"}]
+    problems = preflight.human_checks(claimed, sources)
+    assert len(problems) == 1 and "r0" in problems[0]
+
+
+def test_a_rendered_round_passed_as_human_stops_the_run(tmp_path, monkeypatch):
+    ticks, dumps = build_episode(tmp_path)
+    for tick in ticks:
+        tick["source"] = 0
+    rendered = [dict(t, source=1) for t in ticks]
+    monkeypatch.setattr(preflight, "code_checks", lambda repo: ({"sha": "x"}, []))
+    monkeypatch.setattr(preflight, "grading_checks", lambda *a: ({}, []))
+    monkeypatch.setattr(preflight, "fidelity_check", lambda *a: ({}, []))
+    monkeypatch.setattr(preflight, "sight_check", lambda *a: ({}, []))
+    sources = [
+        preflight.Source("r0", str(dumps), preflight.START),
+        preflight.Source("r2", "", preflight.HUMAN),
+    ]
+    with pytest.raises(preflight.PreflightFailed, match="r2"):
+        preflight.run(tmp_path, ticks + rendered, None, sources, object(), None, None, "cpu")
+
+
+def test_a_stop_no_car_could_make_is_refused():
+    """#17 review, 🟠 2: 207 usable ticks above 1 m/s were all-zero, and the check could not see them."""
+    dead_stop = [[0.0, 0.0, 0.0]] * 8
+    tick = {"episode": "side-0070/run_8", "timestamp": 1, "expert": dead_stop, "speed": 11.24}
+    report, problems = preflight.drivable_checks([tick])
+    assert report["undrivable"] == "1/1" and "brakes at" in problems[0]
+    assert preflight.drivable_checks([{**tick, "speed": 0.0}])[1] == []
+
+
+def test_the_init_check_holds_each_episodes_earliest_tick_too(tmp_path, monkeypatch):
+    """#17 review, 🟡 12: the account says "same limits", and the start-of-run check adds these."""
+    ticks = [
+        {
+            "episode": f"e{e}",
+            "timestamp": t,
+            "frame": f"/c/e{e}/run_0/CAM_FRONT/{t}.jpg",
+            "source": 0,
+            "expert_kind": "continue",
+            "speed": 5.0,
+            "driven_hits": None,
+        }
+        for e in range(3)
+        for t in range(5, 40)
+    ]
+    seen = {}
+
+    def fidelity(model, dataset_cls, own, *args):
+        seen["stamps"] = sorted(t["timestamp"] for t in own if t["episode"] == "e0")
+        return {}, []
+
+    monkeypatch.setattr(preflight, "fidelity_check", fidelity)
+    sources = [preflight.Source("r2", "d2", preflight.INIT)]
+    preflight.init_fidelity(ticks, None, sources, None, None, None, "cpu")
+    assert seen["stamps"][0] == 5, seen

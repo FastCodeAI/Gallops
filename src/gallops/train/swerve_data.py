@@ -56,6 +56,8 @@ from pathlib import Path
 
 import numpy as np
 
+from gallops.train.frame_cache import FrameCache, crop_resize
+
 CAMERA_SLOTS = ("cam_b0", "cam_f0", "cam_l0", "cam_r0")
 NUSCENES_CAMERAS = {
     "cam_f0": "CAM_FRONT",
@@ -386,14 +388,23 @@ class TickDataset:
         and resize are the vendor's own, from `_get_camera_feature`, so
         `verify_fast_path` compares the result against it tensor for tensor.
         """
-        import cv2
-        from PIL import Image
-
         key = str(path)
         if key not in self._frames:
-            image = np.asarray(Image.open(path).convert("RGB"))
-            self._frames[key] = cv2.resize(image[28:-28], (512, 256))
+            cache = self._frame_cache()
+            cached = None if cache is None else cache.get(path)
+            if cached is not None:
+                return cached  # the cache's own LRU holds it: nothing to keep here too
+            self._frames[key] = crop_resize(path)
         return self._frames[key]
+
+    def _frame_cache(self):
+        """`gallops.train.frame_cache`'s arrays when GALLOPS_FRAME_CACHE names them, else None."""
+        import os
+
+        if not hasattr(self, "_cache"):
+            root = os.environ.get("GALLOPS_FRAME_CACHE")
+            self._cache = FrameCache(Path(root)) if root else None
+        return self._cache
 
     def _builder(self):
         from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig

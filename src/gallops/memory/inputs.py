@@ -8,8 +8,9 @@ it from the log pickle:
 
 * **Ego status.** The pose is re-derived through 4x4 matrices relative to the current frame (the
   node's `relative_pose`); velocity and acceleration keep only their forward component, with the
-  lateral one set to 0 (policy.py:301-304); the driving command goes through paddock's `Command`
-  and back, so a one-hot vector survives and anything else becomes the argmax's command.
+  lateral one set to 0 (`_agent_input`'s `ego_velocity` and `ego_acceleration`); the driving
+  command goes through paddock's `Command` and back (`_command_of`, `COMMAND_ONE_HOT`), so a one-hot
+  vector survives and anything else becomes the argmax's command.
 * **Cameras.** Each image is read with PIL and converted to RGB (paddock's `load_frame`), then put
   through the node's "openscene" geometry (`_to_openscene`: crop about the principal point and
   resize to 1920x1080, intrinsics replaced by OpenScene's), with `sensor2lidar` as the camera's
@@ -47,11 +48,6 @@ TARGET_WIDTH, TARGET_HEIGHT = 1920, 1080
 TARGET_FOCAL = 1545.0
 TARGET_CU, TARGET_CV = 960.0, 560.0
 
-#: NAVSIM one-hot [left, straight, right, unknown] position -> paddock Command value, and back.
-#: paddock's Command: RIGHT 0, LEFT 1, STRAIGHT 2, FOLLOW_REFERENCE 3.
-_COMMAND_FROM_ONE_HOT = (1, 2, 0, 3)
-_ONE_HOT_FROM_COMMAND = {0: [0, 0, 1, 0], 1: [1, 0, 0, 0], 2: [0, 1, 0, 0], 3: [0, 0, 0, 1]}
-
 _ALL_SLOTS = ("cam_f0", "cam_l0", "cam_l1", "cam_l2", "cam_r0", "cam_r1", "cam_r2", "cam_b0")
 #: navsim slot name of each log camera the model reads.
 _SLOT = {"CAM_B0": "cam_b0", "CAM_F0": "cam_f0", "CAM_L0": "cam_l0", "CAM_R0": "cam_r0"}
@@ -79,9 +75,14 @@ def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
 
 def command_round_trip(one_hot) -> list[int]:
     """The driving command as the node hands it to the model, after paddock's `Command`."""
+    # Paddock maps each one-hot position to a `Command` and back to the same position, so the round
+    # trip is "one-hot of the argmax" and needs none of `Command`'s values: not restating them keeps
+    # this from disagreeing with paddock if they are renumbered.
     command = np.asarray(one_hot).ravel()
     hot = int(np.argmax(command)) if command.size else 3
-    return _ONE_HOT_FROM_COMMAND[_COMMAND_FROM_ONE_HOT[hot] if hot < 4 else 3]
+    out = [0, 0, 0, 0]
+    out[hot if hot < 4 else 3] = 1
+    return out
 
 
 def crop_box(k: np.ndarray) -> tuple[int, int, int, int]:
