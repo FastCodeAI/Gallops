@@ -6,7 +6,8 @@
 #
 # Lineage, data, and what was verified: experiments/H01_four_camera_base/README.md. A run trains inside the tree its code stage builds:
 # upstream Drive-JEPA at the commit overlay/<run>.json pins, with recipes/drivejepa_wajepa/overlay/<run>/ laid over it.
-# Every stage that writes refuses an output that already exists (the token dump instead skips finished scenes).
+# Every stage that writes a checkpoint, a token cache or a weights directory refuses one that already exists (the token
+# dump instead skips finished scenes); navtest-score rewrites its --json, and eval-navtest writes a new timestamped directory.
 #
 # Site config this needs (gallops.toml):
 #   [python] train              Python >= 3.11 with torch (code, checkpoint, navtest-score)
