@@ -1,0 +1,4 @@
+_target_: run3b_agent.Run3BV2Agent
+_convert_: 'all'
+checkpoint_path: ''
+score_domain: navsim
