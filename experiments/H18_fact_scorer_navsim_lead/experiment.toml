@@ -30,7 +30,7 @@ time-to-collision are its best of the four (NC .988, TTC .983), extended comfort
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
 neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
-H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. On Bench2Drive's 7 gate routes it scores 92.88 against released 59.04 (GAIN, t 2.99)."""
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. On Bench2Drive's 7 gate routes, with the command fix, it scores 87.96 against released 59.04 (NEUTRAL, t 2.05) and H04's 40.80 (GAIN, t 3.72)."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
@@ -192,7 +192,7 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   baseline = "released Drive-JEPA (the queue's stored runs)"
   paddock_commit = "3daf4b9"  # plus the ops adapters copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-released/manifest.toml"
-  note = "Run by hand (the queue only runs adapters on a pushed branch), keep-going, from the worktrees and site config H04's gate ran under; manifests run3b_v2-released (KITScenes, nuScenes, NAVSIM, neuroNCAP), run3b_v2-alpasim and run3b_v2-b2d under the same gate directory. AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04; its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config). Bench2Drive (runs 20261120T080323-60e8d7 and 20261120T081237-5e8510, 13:33-14:02): scored without the comfort fact (RUN3B_SCORE_DOMAIN=lead, as LEAD samples were in training; the spec masks comfort on all of CARLA), so its runs are marked invalid for that site env override as well as for being a subset; driving score 100 on 6 of the 7 routes, 50.13 on 3717, no collisions. H04's Bench2Drive gate of 25 Oct ran a different 7 routes, so it is not paired. Bench2Drive is in-domain for this model (trained on LEAD, CARLA); none of its 7,905 LEAD training routes is among the 380 overlapping the 220, nor among the 14 overlapping the 7 gate routes. The gate runs name the checkpoint by path; every run.json but NAVSIM's also records its sha256 (12ab840e...), and the file was last written 20 Nov 09:38, before every evaluation. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark."
+  note = "Run by hand (the queue only runs adapters on a pushed branch), keep-going, from the worktrees and site config H04's gate ran under; manifests run3b_v2-released (KITScenes, nuScenes, NAVSIM, neuroNCAP), run3b_v2-alpasim and run3b_v2_b2d-cmdfix under the same gate directory. AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04; its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config). Bench2Drive (model run3b_v2_b2d, runs 20261120T095122-0df2c7 and 20261120T100602-928e8d, 15:20-16:38): with the command fix (FOLLOW_REFERENCE fed as STRAIGHT, as LEAD's training inputs encode lane-follow) and scored without the comfort fact (the spec masks comfort on all of CARLA), both set in that model's model.yaml; driving score 100 on 5 of the 7 routes, 70.0 on 28111 and 45.73 on 3717. A first run without the command fix (13:33-14:02, 92.88, quick 47.21) fed lane-follow as 'unknown', which this model never saw in training, and is superseded. Against H04's runs on the same subsets (tools.gate compare): Bench2Drive 40.80 -> 87.96 (t 3.72, GAIN), NAVSIM 0.853 -> 0.807 (t -4.97, REGRESSION). Bench2Drive is in-domain for this model (trained on LEAD, CARLA); none of its 7,905 LEAD training routes is among the 380 overlapping the 220, nor among the 14 overlapping the 7 gate routes. The gate runs name the checkpoint by path; every run.json but NAVSIM's also records its sha256 (12ab840e...), and the file was last written 20 Nov 09:38, before every evaluation. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark."
 
     [[runs.gate.pairs]]
     bench = "kitscenes"
@@ -238,7 +238,7 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
     bench = "bench2drive"
     metric = "driving score, crash check (route 3717)"
     baseline = "37.6700"
-    candidate = "47.2100"
+    candidate = "10.8295"
     units = 1
     verdict = "TOO FEW UNITS"
 
@@ -264,11 +264,11 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
     bench = "bench2drive"
     metric = "driving score, closed loop (7 routes)"
     baseline = "59.0360"
-    candidate = "92.8757"
-    t = "2.99"
-    mde = "37.956"
+    candidate = "87.9614"
+    t = "2.05"
+    mde = "47.279"
     units = 7
-    verdict = "GAIN"
+    verdict = "NEUTRAL"
 
     [[runs.gate.pairs]]
     bench = "alpasim"

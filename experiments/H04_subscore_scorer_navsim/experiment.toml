@@ -29,8 +29,9 @@ learned = """So far, the sub-score agent-look model narrowed the base's navtest 
 +2.44]) but stays behind released Drive-JEPA (87.78; paired -0.49 [-0.84, -0.11]); drivable area rose \
 .972 -> .984 (released .986). It also added an agent decoder and an agent look in place of the global look, \
 so the gain is not the sub-score heads' alone; no scorer-only arm is recorded. The regression gate, run by hand \
-from local paddock worktrees, says HOLD: KITScenes and nuScenes GAIN against released Drive-JEPA, NAVSIM, \
-Bench2Drive (7 routes, 2 Hz) and neuroNCAP NEUTRAL, nothing regressed; against the 4-camera planner every pair is NEUTRAL."""
+from local paddock worktrees, says HOLD on the gate's current subsets: KITScenes and nuScenes GAIN against released Drive-JEPA; NAVSIM, \
+Bench2Drive (7 routes, command fix: 40.80 against 59.04), neuroNCAP and AlpaSim NEUTRAL; nothing regressed. Against the 4-camera \
+planner every pair is NEUTRAL except Bench2Drive, a REGRESSION (80.24 -> 40.80, t -2.57)."""
 parents = ["H01"]
 narrative = "experiments/H04_subscore_scorer_navsim/README.md"
 external = [
@@ -289,108 +290,99 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   source = "experiments/H04_subscore_scorer_navsim/README.md"
 
   [[runs.gate]]
-  date = 2026-10-25
-  tier = "quick"
+  date = 2026-11-20
+  tier = "all"
   verdict = "HOLD"
-  baseline = "released Drive-JEPA, the gate runs of 21 Oct, as H01.four-camera-planner; Bench2Drive: its native-50 2 Hz runs merged to the gate's 7 routes"
-  paddock_commit = "b507811"  # plus the uncommitted adapters and PADDOCK_INFER_HZ patch in local worktree gate-run3a
-  manifest = "{runs}/gate-run3a/gate/smoke/wajepa_dj_run3a-released/manifest.toml"
-  note = "Run by hand, locked pick. Bench2Drive by a hand-written manifest at 2 Hz. Subsets are marked invalid by the gate (a subset of the benchmark). Against H01.four-camera-planner (vs_run2 manifest), every pair NEUTRAL: KITScenes 1.969 -> 2.159, t -1.62; nuScenes 1.956 -> 1.914, t 0.28; NAVSIM 0.863 -> 0.879, t 1.89; Bench2Drive 62.757 -> 60.391, t -0.23."
-
-    [[runs.gate.pairs]]
-    bench = "navsim"
-    metric = "epdms"
-    baseline = 0.875
-    candidate = 0.879
-    t = 0.55
-    mde = 0.022
-    units = 136
-    verdict = "NEUTRAL"
+  baseline = "released Drive-JEPA (the queue's stored runs)"
+  paddock_commit = "3daf4b9"  # plus the ops adapters copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
+  manifest = "{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/wajepa_dj_run3a-current/manifest.toml"
+  note = "Run by hand from local paddock worktrees (the queue only runs adapters on a pushed branch), every pair on the gate's current subsets (paddock #105, 23 Oct; the quick checks #113, 26 Oct) against the queue's stored released Drive-JEPA runs, keep-going. Where each pair comes from: KITScenes and nuScenes 28 Oct (manifest wajepa_dj_run3a-openloop); neuroNCAP, quick and closed, 27 Oct (wajepa_dj_run3a-ncap and -ncapq2 for the quick pairs' rerun); AlpaSim, quick and closed, 27 Oct (wajepa_dj_run3a-alpasim2, worktree gate-oct27-alp at 9819e36); NAVSIM 20 Nov (wajepa_dj_run3a-current); Bench2Drive, quick and closed, 20 Nov (wajepa_dj_run3a_b2d-cmdfix, the model with the command fix, FOLLOW_REFERENCE fed as STRAIGHT, WAJEPA_DJ_FOLLOW=straight in its model.yaml). AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (this model drove AutoE2E's driver profile: six pinhole cameras, front f 990.8 px, 1920 x 1018, no distortion, global shutter, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion, rolling shutter; and a 0.5 s newest-frame replan wrapper against drivejepa-0.1.4b's 11-frame planner; an uncommitted edit to paddock's AlpaSim harness, no paddock ref carries it); its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config), and the effect of each difference is not measured. Superseded by these pairs, as the gate redrew its subsets on 23 Oct: the 25 Oct gate on paddock b507811's subsets (NAVSIM 1,000 tokens, KITScenes 140 scenes, nuScenes 30 scenes, Bench2Drive 7 of the 50 routes picked by the baselines' spread, at 2 Hz, without the command fix): NAVSIM 0.875 -> 0.879 (t 0.55), KITScenes 3.222 -> 2.159 (t 5.54, GAIN), nuScenes 2.497 -> 1.914 (t 2.98, GAIN), Bench2Drive 58.801 -> 60.391 (t 0.13), all HOLD. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark. Against H01.four-camera-planner's runs on the same subsets (tools.gate compare): NAVSIM 0.844 -> 0.853 (t 1.22, NEUTRAL), KITScenes 1.969 -> 2.159 (all 223 keyframes, t -1.62, NEUTRAL), nuScenes 2.057 -> 2.151 (t -1.06, NEUTRAL), neuroNCAP 3.280 -> 3.691 (t 0.99, NEUTRAL), AlpaSim 0.450 -> 0.439 (t -0.08, NEUTRAL), Bench2Drive 80.24 -> 40.80 (t -2.57, REGRESSION)."
 
     [[runs.gate.pairs]]
     bench = "kitscenes"
-    metric = "ade"
-    baseline = 3.222
-    candidate = 2.159
-    t = 5.54
-    units = 140
-    verdict = "GAIN"
-
-    [[runs.gate.pairs]]
-    bench = "nuscenes"
-    metric = "l2_avg"
-    baseline = 2.497
-    candidate = 1.914
-    t = 2.98
-    units = 30
-    verdict = "GAIN"
-
-    [[runs.gate.pairs]]
-    bench = "bench2drive"
-    metric = "driving_score"
-    baseline = 58.801
-    candidate = 60.391
-    t = 0.13
-    units = 7
-    verdict = "NEUTRAL"
-
-  [[runs.gate]]
-  date = 2026-10-27
-  tier = "closed"
-  verdict = "HOLD"
-  baseline = "released Drive-JEPA, the paddock queue's runs of 26 Oct"
-  paddock_commit = "3daf4b9"  # plus wajepa_dj_run3a copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
-  manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj_run3a-ncap/manifest.toml"
-  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.four-camera-planner: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile. This model drove AlpaSim through AutoE2E's driver profile (paddock_bridge_autoe2e, mapped to wajepa_dj_run3a by an uncommitted edit to paddock's adapters/benchmarks/alpasim/harness.py in the gate-oct27-alp worktree; no paddock ref carries it), which changes more than the camera count: six pinhole cameras rendered at f 990.8 px, 1920 x 1018, no distortion, global shutter, each scene's recorded pose, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion left in, rolling shutter, a fixed rig; and a replan wrapper asking every 0.5 s on the newest frame (ReplanRhythmPlanner, 600 s inference timeout) against Drive-JEPA's own planner (drivejepa-0.1.4b, 11-frame history). The compare also notes different paddock code (661901c against 9819e36) and a baseline run marked invalid. The effect of each difference on the score is not measured. Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.478, all NEUTRAL. Against H01.four-camera-planner (same driver, --allow-config driver_profile): 0.450 -> 0.439, t -0.08, NEUTRAL."
-
-    [[runs.gate.pairs]]
-    bench = "neuroncap"
-    metric = "ncap_score"
-    baseline = 3.679
-    candidate = 3.691
-    t = 0.05
-    mde = 0.801
-    units = 15
-    verdict = "NEUTRAL"
-
-    [[runs.gate.pairs]]
-    bench = "alpasim"
-    metric = "scene_score"
-    baseline = 0.416
-    candidate = 0.439
-    t = 0.11
-    mde = 0.647
-    units = 10
-    verdict = "NEUTRAL"
-
-  [[runs.gate]]
-  date = 2026-10-28
-  tier = "quick"
-  verdict = "HOLD"
-  baseline = "released Drive-JEPA, the paddock queue's runs of 23 Oct"
-  paddock_commit = "3daf4b9"  # plus wajepa_dj_run3a copied in, worktree gate-oct27
-  manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj_run3a-openloop/manifest.toml"
-  note = "KITScenes and nuScenes rerun for the PDM sub-scores on the queue's newer subsets (nuScenes 1,000 samples). Against H01.four-camera-planner, NEUTRAL: KITScenes 1.969 -> 2.159, t -1.62; nuScenes 2.057 -> 2.151, t -1.06."
-
-    [[runs.gate.pairs]]
-    bench = "kitscenes"
-    metric = "ade"
-    baseline = 2.537
-    candidate = 2.121
-    t = 2.10
-    mde = 0.559
+    metric = "ADE (3 s), m"
+    baseline = "2.5375"
+    candidate = "2.1215"
+    t = "2.10"
+    mde = "0.559"
     units = 117
     verdict = "GAIN"
 
     [[runs.gate.pairs]]
     bench = "nuscenes"
-    metric = "l2_avg"
-    baseline = 2.431
-    candidate = 2.151
-    t = 2.19
-    mde = 0.361
+    metric = "L2 averaged over 1, 2 and 3 s, m"
+    baseline = "2.4314"
+    candidate = "2.1509"
+    t = "2.19"
+    mde = "0.361"
     units = 143
     verdict = "GAIN"
+
+    [[runs.gate.pairs]]
+    bench = "navsim"
+    metric = "EPDMS"
+    baseline = "0.8572"
+    candidate = "0.8534"
+    t = "-0.43"
+    mde = "0.026"
+    units = 126
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "NCAP score, quick check (3 pairs)"
+    baseline = "3.1794"
+    candidate = "4.1071"
+    t = "1.13"
+    mde = "4.398"
+    units = 3
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving score, crash check (route 3717)"
+    baseline = "37.6700"
+    candidate = "48.0000"
+    units = 1
+    verdict = "TOO FEW UNITS"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene score, crash check (clip 04749bb9)"
+    baseline = "0.0000"
+    candidate = "0.0000"
+    units = 1
+    verdict = "TOO FEW UNITS"
+
+    [[runs.gate.pairs]]
+    bench = "neuroncap"
+    metric = "NCAP score, closed loop (15 pairs)"
+    baseline = "3.6792"
+    candidate = "3.6915"
+    t = "0.05"
+    mde = "0.801"
+    units = 15
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "bench2drive"
+    metric = "driving score, closed loop (7 routes)"
+    baseline = "59.0360"
+    candidate = "40.8048"
+    t = "-1.14"
+    mde = "53.853"
+    units = 7
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene score, closed loop (10 scenes)"
+    baseline = "0.4162"
+    candidate = "0.4391"
+    t = "0.11"
+    mde = "0.647"
+    units = 10
+    verdict = "NEUTRAL"
 
 [[checks]]
 name = "Is the sub-score agent-look model's overlay the code that trained?"

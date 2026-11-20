@@ -48,12 +48,17 @@ not hashed: none was evaluated beyond the trainer's held-out reports.
 | AlpaSim pair against H04's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj_run3a.json` | 4,379 | `167f2644793a2cf6494a4a1720b9b9c839942ab85de6166d032be6325030d3c2` |
 | AlpaSim pair against H01's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj.json` | 4,353 | `851e92face26461d1f3a5684702ba2870ea03cef7a693fc1de515666a6318b88` |
 | AlpaSim crash check against released, driver keys allowed | `{runs}/gate-run3b/compare_alpasim_quick_run3b_vs_released_profile_allowed.json` | 5,952 | `cb003864b870f3a16c6f1add8fd33b3503d6446bf9c2391e51767379c9cd6f19` |
-| Gate verdict, Bench2Drive, 20 Nov | `{runs}/gate-run3b/verdict_run3b_v2_b2d.json` | 10,468 | `05a09c16dda079064c63133479be16e645a81216e67745ddf33d0192d7bbe117` |
-| Gate manifest, Bench2Drive | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-b2d/manifest.toml` | 604 | `2df9003f2ece27202bf3143bd6646dc1353a12fdb15ec50335d46e22c3646472` |
+| Gate verdict, Bench2Drive without the command fix, 20 Nov (superseded) | `{runs}/gate-run3b/verdict_run3b_v2_b2d.json` | 10,468 | `05a09c16dda079064c63133479be16e645a81216e67745ddf33d0192d7bbe117` |
+| Gate manifest, Bench2Drive without the command fix (superseded) | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-b2d/manifest.toml` | 604 | `2df9003f2ece27202bf3143bd6646dc1353a12fdb15ec50335d46e22c3646472` |
 | Gate manifest, AlpaSim | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-alpasim/manifest.toml` | 575 | `4485195204785b17640be6647d67814172c8dcea9dab76ce91157af56e790b78` |
 
+| Gate verdict, Bench2Drive with the command fix, 20 Nov | `{runs}/gate-run3b/verdict_run3b_v2_b2d-cmdfix.json` | 10,164 | `1ade14ce843674db0181f79154b0602f2ce960690582497a145f84e03ca32f5f` |
+| Gate manifest, Bench2Drive with the command fix | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2_b2d-cmdfix/manifest.toml` | 619 | `eb2e9d15ccdd70b393ba57d9a4a28b5edc0562f9aaddfb7aa08524d6a42c77e9` |
+| Bench2Drive against H04's run, same routes | `{runs}/gate-run3b/compare_b2d_cmdfix_run3b_vs_run3a.json` | 3,586 | `ad8248be8c1f5a58262040d038a462cc244fd5de4e250d4d790ce572e213ac71` |
+| NAVSIM against H04's current-subset run | `{runs}/gate-run3b/compare_navsim_current_run3b_vs_run3a.json` | 7,678 | `2b838504dbf94e7cc45f7a58da2a009b3a08b3ef24c8c4789a7cd86a4b0f05fa` |
+
 Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120T050004-387aa8`, kitscenes
-`20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`), bench2drive `20261120T081237-5e8510` (quick `20261120T080323-60e8d7`).
+`20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`), bench2drive with the command fix `20261120T100602-928e8d` (quick `20261120T095122-0df2c7`; without it, superseded: `20261120T081237-5e8510`, quick `20261120T080323-60e8d7`).
 
 ## Built data it trained on (from earlier work, not built here)
 

@@ -75,14 +75,10 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | Date | Run | Checkpoint | Tier | NAVSIM | KITScenes | nuScenes | neuroNCAP | Bench2Drive | AlpaSim | Verdict |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
-| 21 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | quick | ⚪ 0.875 → 0.863 | 🟢 3.222 → 1.969 | 🟢 2.497 → 1.956 | — | ⚪ 58.801 → 62.757 | — | ⏸ **HOLD** |
-| 25 Oct 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | quick | ⚪ 0.875 → 0.879 | 🟢 3.222 → 2.159 | 🟢 2.497 → 1.914 | — | ⚪ 58.801 → 60.391 | — | ⏸ **HOLD** |
-| 27 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | closed | — | — | — | ⚪ 3.679 → 3.28 | — | ⚪ 0.416 → 0.45 | ⏸ **HOLD** |
-| 27 Oct 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | closed | — | — | — | ⚪ 3.679 → 3.691 | — | ⚪ 0.416 → 0.439 | ⏸ **HOLD** |
-| 28 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | quick | — | 🟢 2.537 → 2.001 | 🟢 2.431 → 2.057 | — | — | — | ⏸ **HOLD** |
-| 28 Oct 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | quick | — | 🟢 2.537 → 2.121 | 🟢 2.431 → 2.151 | — | — | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
-| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | 🟢 59.0360 → 92.8757 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
+| 20 Nov 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | all | ⚪ 0.8572 → 0.8440 | 🟢 2.5375 → 2.0010 | 🟢 2.4314 → 2.0570 | ⚪ 3.6792 → 3.2800 | ⚪ 59.0360 → 80.2351 | ⚪ 0.4162 → 0.4503 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | all | ⚪ 0.8572 → 0.8534 | 🟢 2.5375 → 2.1215 | 🟢 2.4314 → 2.1509 | ⚪ 3.6792 → 3.6915 | ⚪ 59.0360 → 40.8048 | ⚪ 0.4162 → 0.4391 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | ⚪ 59.0360 → 87.9614 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
 <!-- /experiments:gate -->
 
 ## Decision log

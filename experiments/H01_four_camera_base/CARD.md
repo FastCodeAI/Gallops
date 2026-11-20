@@ -23,7 +23,7 @@ Replacing Drive-JEPA's front-camera ViT-L with WA-JEPA's frozen encoder over fou
 
 ## What we learned
 
-So far, the 4-camera planner trails released Drive-JEPA on navtest (EPDMS 85.27 against 87.78, human filter), the benchmark that trained it, and on Bench2Drive's 50 routes zero-shot (DS 51.70 and 51.95 against 57.60, one run per route). Its extra inputs are used on NAVSIM (page, no-record). The regression gate, run by hand from local paddock worktrees because no paddock ref carries the adapter, says HOLD: KITScenes and nuScenes GAIN against released Drive-JEPA, NAVSIM, Bench2Drive (7 routes, 2 Hz) and neuroNCAP NEUTRAL, nothing regressed.
+So far, the 4-camera planner trails released Drive-JEPA on navtest (EPDMS 85.27 against 87.78, human filter), the benchmark that trained it, and on Bench2Drive's 50 routes zero-shot (DS 51.70 and 51.95 against 57.60, one run per route). Its extra inputs are used on NAVSIM (page, no-record). The regression gate, run by hand from local paddock worktrees because no paddock ref carries the adapter, says HOLD on the gate's current subsets: KITScenes and nuScenes GAIN against released Drive-JEPA; NAVSIM, Bench2Drive (7 routes, command fix: 80.24 against 59.04), neuroNCAP and AlpaSim NEUTRAL; nothing regressed.
 
 ## Runs
 
@@ -45,34 +45,21 @@ So far, the 4-camera planner trails released Drive-JEPA on navtest (EPDMS 85.27 
 
 ## Regression gate
 
-**H01.four-camera-planner** — 21 Oct 2026, quick tier, against released Drive-JEPA, the gate runs of 21 Oct (drivejepa-released-timing-20261021); Bench2Drive: its native-50 2 Hz runs merged to the gate's 7 routes: ⏸ **HOLD**
+**H01.four-camera-planner** — 20 Nov 2026, all tier, against released Drive-JEPA (the queue's stored runs): ⏸ **HOLD**
 
 | Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
 |---|---|---|---|---|---|---|---|
-| NAVSIM | epdms | 0.875 | 0.863 | -1.29 | 0.027 | 136 | ⚪ NEUTRAL |
-| KITScenes | ade | 3.222 | 1.969 | 6.44 |  | 140 | 🟢 GAIN |
-| nuScenes | l2_avg | 2.497 | 1.956 | 3.03 |  | 30 | 🟢 GAIN |
-| Bench2Drive | driving_score | 58.801 | 62.757 | 0.36 |  | 7 | ⚪ NEUTRAL |
+| KITScenes | ADE (3 s), m | 2.5375 | 2.0010 | 3.10 | 0.489 | 117 | 🟢 GAIN |
+| nuScenes | L2 averaged over 1, 2 and 3 s, m | 2.4314 | 2.0570 | 3.41 | 0.309 | 143 | 🟢 GAIN |
+| NAVSIM | EPDMS | 0.8572 | 0.8440 | -1.28 | 0.029 | 126 | ⚪ NEUTRAL |
+| neuroNCAP | NCAP score, quick check (3 pairs) | 3.1794 | 4.0237 | 0.98 | 4.609 | 3 | ⚪ NEUTRAL |
+| Bench2Drive | driving score, crash check (route 3717) | 37.6700 | 29.2020 |  |  | 1 | ▫️ TOO FEW UNITS |
+| AlpaSim | scene score, crash check (clip 04749bb9) | 0.0000 | 0.0000 |  |  | 1 | ▫️ TOO FEW UNITS |
+| neuroNCAP | NCAP score, closed loop (15 pairs) | 3.6792 | 3.2800 | -0.96 | 1.254 | 15 | ⚪ NEUTRAL |
+| Bench2Drive | driving score, closed loop (7 routes) | 59.0360 | 80.2351 | 1.08 | 65.786 | 7 | ⚪ NEUTRAL |
+| AlpaSim | scene score, closed loop (10 scenes) | 0.4162 | 0.4503 | 0.24 | 0.441 | 10 | ⚪ NEUTRAL |
 
-Run by hand. Three runs of tools.gate: NAVSIM (worktree gate-wajepa), KITScenes and nuScenes (gate-wajepa-more), and Bench2Drive at the model's 2 Hz by a hand-written manifest (PADDOCK_INFER_HZ, not on paddock main); each printed overall HOLD. Subsets are marked invalid by the gate (a subset of the benchmark); neuroNCAP was blocked that day and ran on 27 Oct.
-
-**H01.four-camera-planner** — 27 Oct 2026, closed tier, against released Drive-JEPA, the paddock queue's runs of 26 Oct: ⏸ **HOLD**
-
-| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
-|---|---|---|---|---|---|---|---|
-| neuroNCAP | ncap_score | 3.679 | 3.28 | -0.96 | 1.254 | 15 | ⚪ NEUTRAL |
-| AlpaSim | scene_score | 0.416 | 0.45 | 0.24 | 0.441 | 10 | ⚪ NEUTRAL |
-
-Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile. This model drove AlpaSim through AutoE2E's driver profile (paddock_bridge_autoe2e, mapped to wajepa_dj by an uncommitted edit to paddock's adapters/benchmarks/alpasim/harness.py in the gate-oct27-alp worktree; no paddock ref carries it), which changes more than the camera count: six pinhole cameras rendered at f 990.8 px, 1920 x 1018, no distortion, global shutter, each scene's recorded pose, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion left in, rolling shutter, a fixed rig; and a replan wrapper asking every 0.5 s on the newest frame (ReplanRhythmPlanner, 600 s inference timeout) against Drive-JEPA's own planner (drivejepa-0.1.4b, 11-frame history). The effect of each difference on the score is not measured. Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.554, all NEUTRAL.
-
-**H01.four-camera-planner** — 28 Oct 2026, quick tier, against released Drive-JEPA, the paddock queue's runs of 23 Oct: ⏸ **HOLD**
-
-| Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
-|---|---|---|---|---|---|---|---|
-| KITScenes | ade | 2.537 | 2.001 | 3.1 | 0.489 | 117 | 🟢 GAIN |
-| nuScenes | l2_avg | 2.431 | 2.057 | 3.41 | 0.309 | 143 | 🟢 GAIN |
-
-KITScenes and nuScenes rerun for the PDM sub-scores on the queue's newer subsets (nuScenes 1,000 samples).
+Run by hand from local paddock worktrees (the queue only runs adapters on a pushed branch), every pair on the gate's current subsets (paddock #105, 23 Oct; the quick checks #113, 26 Oct) against the queue's stored released Drive-JEPA runs, keep-going. Where each pair comes from: KITScenes and nuScenes 28 Oct (manifest wajepa_dj-openloop); neuroNCAP, quick and closed, 27 Oct (wajepa_dj-ncap); AlpaSim, quick and closed, 27 Oct (wajepa_dj-alpasim2, worktree gate-oct27-alp at 9819e36); NAVSIM 20 Nov (wajepa_dj-current); Bench2Drive, quick and closed, 20 Nov (wajepa_dj_b2d-cmdfix, the model with the command fix, FOLLOW_REFERENCE fed as STRAIGHT, WAJEPA_DJ_FOLLOW=straight in its model.yaml). AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (this model drove AutoE2E's driver profile: six pinhole cameras, front f 990.8 px, 1920 x 1018, no distortion, global shutter, against Drive-JEPA's front camera at f 1545 px, 1920 x 1080, distortion, rolling shutter; and a 0.5 s newest-frame replan wrapper against drivejepa-0.1.4b's 11-frame planner; an uncommitted edit to paddock's AlpaSim harness, no paddock ref carries it); its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config), and the effect of each difference is not measured. Superseded by these pairs, as the gate redrew its subsets on 23 Oct: the 21 Oct gate on paddock b507811's subsets (NAVSIM 1,000 tokens, KITScenes 140 scenes, nuScenes 30 scenes, Bench2Drive 7 of the 50 routes picked by the baselines' spread, at 2 Hz, without the command fix): NAVSIM 0.875 -> 0.863 (t -1.29), KITScenes 3.222 -> 1.969 (t 6.44, GAIN), nuScenes 2.497 -> 1.956 (t 3.03, GAIN), Bench2Drive 58.801 -> 62.757 (t 0.36), all HOLD. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark.
 
 ## Checks that decided something
 
