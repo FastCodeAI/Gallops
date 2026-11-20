@@ -1,0 +1,10 @@
+run_time: '2026-11-20 09:44:06'
+run_name: LR-f382acab-a524-4a82-945c-150b18d63c78
+run_uuid: f382acab-a524-4a82-945c-150b18d63c78
+slurm_job_id: 0
+run_user: siddesh
+run_dir: {approach4_store}/cl/runs/a4_armA_e121e37d
+run_args: unknownArgs
+submitter: unspecified
+description: unspecified
+test_suite_id: null

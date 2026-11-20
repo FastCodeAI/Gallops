@@ -1,0 +1,10 @@
+run_time: '2026-11-20 14:52:02'
+run_name: LR-696a1b44-e8c9-4d4c-8a08-e86327802044
+run_uuid: 696a1b44-e8c9-4d4c-8a08-e86327802044
+slurm_job_id: 0
+run_user: siddesh
+run_dir: {approach4_store}/cl/runs/a4_armB_bd07fb91
+run_args: unknownArgs
+submitter: unspecified
+description: unspecified
+test_suite_id: null

@@ -1,0 +1,9 @@
+{
+ "lane": "dj",
+ "template": "{alpasim_bulk}/runs/drivejepa/drivejepa_014_01d503d4/wizard-config-loadable.yaml",
+ "resolved": "{approach4_store}/cl/runs/a4_armA_01d503d4/wizard-config-loadable.yaml",
+ "verdict": "PASS",
+ "waived": [],
+ "refused": [],
+ "n_keys": 334
+}

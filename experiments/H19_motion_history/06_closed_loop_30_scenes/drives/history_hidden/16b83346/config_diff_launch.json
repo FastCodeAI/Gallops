@@ -1,0 +1,25 @@
+{
+ "lane": "dj",
+ "template": "{alpasim_bulk}/runs/drivejepa/drivejepa_014_01d503d4/wizard-config-loadable.yaml",
+ "resolved": "{approach4_store}/cl/runs/a4_armB_16b83346/wizard-config-loadable.yaml",
+ "verdict": "PASS",
+ "waived": [
+  [
+   "scenes.scene_ids[0]",
+   "clipgt-01d503d4-449b-46fc-8d78-9085e70d3554",
+   "clipgt-16b83346-578c-437d-b51b-14784ffdf6c1"
+  ],
+  [
+   "scenes.scenes_csv[0]",
+   "{paddock_sid}/Alpasim/drafts/drivejepa-0.1.4/smoke_01d503d4/sim_scenes_pilot10_26p01.csv",
+   "{paddock_sid}/scene_sets/sim_scenes_ext20_26p01.csv"
+  ],
+  [
+   "scenes.sceneset_path",
+   "scenesets/58747c33fd25a4c1b3ab10ed92536a1a",
+   "scenesets/072a5f797c324408911caa9075797098"
+  ]
+ ],
+ "refused": [],
+ "n_keys": 334
+}
