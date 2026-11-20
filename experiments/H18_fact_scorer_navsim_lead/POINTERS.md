@@ -43,17 +43,14 @@ not hashed: none was evaluated beyond the trainer's held-out reports.
 | Paired with H04's gate run, neuroNCAP 15 pairs | `{runs}/gate-run3b/compare_neuroncap_run3b_vs_run3a.json` | 7,667 | `6669295f9d74a853908097469964c7e06709a941e16de9f7e301b1920c8464da` |
 | Paired with H04's gate run, neuroNCAP quick | `{runs}/gate-run3b/compare_neuroncapq_run3b_vs_run3a.json` | 7,530 | `3b7729a9519d7e2b687e8e702157db1cbf8e329a523df9372a5def5a3784f3a0` |
 | Paired with H04's gate run, NAVSIM (83 shared tokens; not used) | `{runs}/gate-run3b/compare_navsim_run3b_vs_run3a.json` | 7,634 | `524c182d368eeb0bcc942e11e74d4f1692a19bed5fbf987e7f98b40fd6c49be1` |
-
 | Gate verdict, AlpaSim, 20 Nov (CONFIG DIFFERS as printed) | `{runs}/gate-run3b/verdict_run3b_v2_alpasim.json` | 12,739 | `12f0a73e34037ed979c376ef32ac46a266a24e8a617c51fdf066577d52426fd3` |
 | AlpaSim pair against released, driver keys allowed | `{runs}/gate-run3b/compare_alpasim_run3b_vs_released_profile_allowed.json` | 5,788 | `45d2f173153def3eade0b07f7bf6047002b79e097c11cfb7cb8202b961fe4915` |
 | AlpaSim pair against H04's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj_run3a.json` | 4,379 | `167f2644793a2cf6494a4a1720b9b9c839942ab85de6166d032be6325030d3c2` |
 | AlpaSim pair against H01's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj.json` | 4,353 | `851e92face26461d1f3a5684702ba2870ea03cef7a693fc1de515666a6318b88` |
-
-
 | AlpaSim crash check against released, driver keys allowed | `{runs}/gate-run3b/compare_alpasim_quick_run3b_vs_released_profile_allowed.json` | 5,952 | `cb003864b870f3a16c6f1add8fd33b3503d6446bf9c2391e51767379c9cd6f19` |
-
 | Gate verdict, Bench2Drive, 20 Nov | `{runs}/gate-run3b/verdict_run3b_v2_b2d.json` | 10,468 | `05a09c16dda079064c63133479be16e645a81216e67745ddf33d0192d7bbe117` |
 | Gate manifest, Bench2Drive | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-b2d/manifest.toml` | 604 | `2df9003f2ece27202bf3143bd6646dc1353a12fdb15ec50335d46e22c3646472` |
+| Gate manifest, AlpaSim | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-alpasim/manifest.toml` | 575 | `4485195204785b17640be6647d67814172c8dcea9dab76ce91157af56e790b78` |
 
 Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120T050004-387aa8`, kitscenes
 `20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`), bench2drive `20261120T081237-5e8510` (quick `20261120T080323-60e8d7`).
@@ -66,3 +63,4 @@ Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120
 | H04's per-sample features (ego status, lidar2img, agent targets) | `{data.wajepa_tokens}` (H01's POINTERS) | read as is |
 | LEAD inputs, boxes, ego-status sidecar, auxiliary targets | `{data.paddock_data}/lead_inputs_v2/` | `lead_inputs_v2`, `lead_aux` |
 | Fact labels and pool pack, LEAD hit labels with `static.prop.dirtdebris*` as debris | `{data.paddock_data}/run3b/pack_v2/` (NAVSIM files link to `pack/`) | from `carla_full_v1` + `carla_full_v1_vru` and the NAVSIM pool |
+| LEAD routes that overlap the Bench2Drive 220 (excluded from training by `scripts/run3b/r3b/data.py`) | `{runs}/run3a/facts/lead/carla/lead360_overlap.json` | 1,996,965 bytes, sha256 `3af110e2e6eae5b0f8f327fea2ae646aa01ff3cabefe3c5a59e77658bada0992`; 0 of the 7,905 training routes are in it |

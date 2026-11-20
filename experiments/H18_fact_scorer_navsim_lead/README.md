@@ -39,9 +39,14 @@ The fact-scorer model (`H18.fact-scorer`, called Run 3B v2 while it ran):
 The code as it ran is in [scripts/](scripts/) (training, live labels, evaluation, launchers) and [paddock/](paddock/)
 (the paddock adapter, in each of the two local worktrees the gate ran from). Machine roots are placeholders;
 [AS_RUN_SHA256.txt](AS_RUN_SHA256.txt) holds each file's sha256 as it ran. The H04 code it imports from the Drive-JEPA
-tree is [H04's overlay](../../recipes/drivejepa_wajepa/overlay/run3a.json), hashed in place in AS_RUN_SHA256.txt; of
-those files only `drive_jepa_config.py` differs from the overlay, by the pick weights H04 locked on 25 Oct and a
-machine-path default, neither of which this model reads.
+tree is [H04's overlay](../../recipes/drivejepa_wajepa/overlay/run3a.json) (with
+[agent_decoder.json](../../recipes/drivejepa_wajepa/overlay/agent_decoder.json)'s `agent_decoder.py` and
+[run2.json](../../recipes/drivejepa_wajepa/overlay/run2.json)'s `wajepa.py`), hashed in place in AS_RUN_SHA256.txt;
+of those files only `drive_jepa_config.py` differs from the overlay, by its `agent_decoder_ckpt` machine-path default,
+which this model does not read (it sets the field empty). The rest of the code it imported from earlier work is hashed
+in place there too, none of it changed after the run started: Phase 1's LoRA, dataset and loss modules, the
+fact-label rules that labelled every path live (`run3a/facts`, the CARLA labeller and its modules), and
+`navtest_table`, which makes every navtest number; `navtest_table.py` and Phase 1's `lora.py` are also copied in.
 
 ### How it is fed in evaluation
 
@@ -50,7 +55,8 @@ WA-JEPA's crop and resize, H04's lidar2img and 11-value ego status. One file, `s
 loads the checkpoint (it refuses a missing or extra tensor) and makes the pick, behind both the paddock adapter and the
 NAVSIM agent. On the first 64 of the 1,008 NAVSIM held-out samples it gives the trainer's eval path the same proposals
 (largest difference 0.0) and the same pick on 63 of 64; the other is a near-tie (top two 0.0007 apart, against bf16
-score noise up to 0.0057).
+score noise up to 0.0057). That check feeds the trainer's own batches to the pick, so it covers the checkpoint load
+and the pick, not the paddock feed; the feed is H04's adapter path, checked by reading.
 
 ## What it showed
 
@@ -64,7 +70,9 @@ momentum-aware selection), 0 failed scenes:
 | **The fact-scorer model** | **86.35** | **82.68** | .988 | .966 | .823 | .983 | .977 | .655 |
 | The 4-camera planner (H01) | 85.27 | 81.98 | .980 | .972 | .879 | .973 | .967 | .401 |
 
-Paired per scene, the fact-scorer model minus each run, 95 % intervals by bootstrap over the 136 logs: H04 −0.95
+Paired per scene, the fact-scorer model minus each run, 95 % intervals by bootstrap over the 136 logs
+(`scripts/run3b/v2/navtest/paired.py`, run with the comparisons in the order H04 locked, H04 default, released, H01:
+its draws share one generator, so another order moves the interval ends in the last digit): H04 −0.95
 [−1.79, −0.19]; released −1.43 [−2.18, −0.66]; H01 +1.08 [+0.18, +2.09]. Its collision and time-to-collision terms are
 the best of the four and its extended comfort the highest by far; ego progress (.823) and drivable area (.966) are the
 lowest.
@@ -92,7 +100,10 @@ Overall **FAIL**, from the NAVSIM pair; on NAVSIM, ego progress (t −8.05) and 
 beyond t crit. On AlpaSim the gate first printed CONFIG DIFFERS on the driver (this model's four-camera render against
 Drive-JEPA's front camera), as it did for H01 and H04; its pairs are the same runs re-paired with `bridge_args`,
 `driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75).
-On Bench2Drive it drove the gate's 7 routes with driving score 100 on six and 50.13 on route 3717, no collisions,
+On Bench2Drive it drove the gate's 7 routes with driving score 100 on six and 50.13 on route 3717, no collisions.
+That is in-domain for this model, which trained on CARLA (LEAD), against a released model that never saw CARLA. None of
+the 7,905 LEAD training routes is among the 380 that overlap the Bench2Drive 220, and none of the 14 that overlap the
+7 gate routes was trained on (`lead360_overlap.json`, POINTERS.md). It was
 scored without the comfort fact (the spec masks comfort on all of CARLA). Not run: Bench2Drive on LEAD's
 camera rig (the spec's evaluation; not built) and the light-swap test (named by the spec, not defined).
 
