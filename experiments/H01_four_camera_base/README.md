@@ -107,11 +107,14 @@ gate's own table into [experiment.toml](experiment.toml). Against released Drive
 | 21 Oct | nuScenes | L2 | 2.497 | 1.956 | 3.03 | 30 | GAIN |
 | 21 Oct | Bench2Drive, 7 routes, 2 Hz | DS | 58.801 | 62.757 | 0.36 | 7 | NEUTRAL |
 | 27 Oct | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.280 | −0.96 | 15 | NEUTRAL |
+| 27 Oct | AlpaSim, 10 scenes | scene score | 0.416 | 0.450 | 0.24 | 10 | NEUTRAL |
 | 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.001 | 3.10 | 117 | GAIN |
 | 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.057 | 3.41 | 143 | GAIN |
 
-AlpaSim, 10 scenes: scene score 0.416 → 0.450, t 0.24; the gate says CONFIG DIFFERS, because our driver profile is not
-the baseline's. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
+On AlpaSim the gate first printed CONFIG DIFFERS: this model reads four cameras, so its AlpaSim driver renders four
+views where released Drive-JEPA's renders the front one (`bridge_args`, `driver_config`, `driver_profile`). The row
+above is the same two stored runs re-paired on 20 Nov with those three keys allowed (`tools.gate compare
+--allow-config`); nothing was re-run. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
 
 ## Decision
 

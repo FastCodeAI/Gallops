@@ -198,7 +198,7 @@ notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 6
   baseline = "released Drive-JEPA, the paddock queue's runs of 26 Oct"
   paddock_commit = "3daf4b9"  # plus wajepa_dj copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{runs}/gate-oct27/gate/smoke/wajepa_dj-ncap/manifest.toml"
-  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): scene_score 0.416 -> 0.450, t 0.24, MDE 0.441, gate verdict CONFIG DIFFERS (our driver profile differs from the baseline's), so it is not a pair here."
+  note = "Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): the gate printed CONFIG DIFFERS, because this model's AlpaSim driver is not the baseline's (bridge_args, driver_config, driver_profile: the four-camera render it reads against Drive-JEPA's front-camera driver). Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.554, all NEUTRAL."
 
     [[runs.gate.pairs]]
     bench = "neuroncap"
@@ -208,6 +208,16 @@ notes = "Trained 16 Oct 17:48 to 17 Oct 05:33 (experiment wajepa_dj_v2): batch 6
     t = -0.96
     mde = 1.254
     units = 15
+    verdict = "NEUTRAL"
+
+    [[runs.gate.pairs]]
+    bench = "alpasim"
+    metric = "scene_score"
+    baseline = 0.416
+    candidate = 0.450
+    t = 0.24
+    mde = 0.441
+    units = 10
     verdict = "NEUTRAL"
 
   [[runs.gate]]

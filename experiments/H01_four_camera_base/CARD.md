@@ -61,8 +61,9 @@ Run by hand. Three runs of tools.gate: NAVSIM (worktree gate-wajepa), KITScenes 
 | Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
 |---|---|---|---|---|---|---|---|
 | neuroNCAP | ncap_score | 3.679 | 3.28 | -0.96 | 1.254 | 15 | ⚪ NEUTRAL |
+| AlpaSim | scene_score | 0.416 | 0.45 | 0.24 | 0.441 | 10 | ⚪ NEUTRAL |
 
-Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): scene_score 0.416 -> 0.450, t 0.24, MDE 0.441, gate verdict CONFIG DIFFERS (our driver profile differs from the baseline's), so it is not a pair here.
+Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs 3.179 -> 4.024, t 0.98, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj-alpasim2): the gate printed CONFIG DIFFERS, because this model's AlpaSim driver is not the baseline's (bridge_args, driver_config, driver_profile: the four-camera render it reads against Drive-JEPA's front-camera driver). Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.554, all NEUTRAL.
 
 **H01.four-camera-planner** — 28 Oct 2026, quick tier, against released Drive-JEPA, the paddock queue's runs of 23 Oct: ⏸ **HOLD**
 

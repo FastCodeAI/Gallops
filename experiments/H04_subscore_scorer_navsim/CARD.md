@@ -67,8 +67,9 @@ Run by hand, locked pick. Bench2Drive by a hand-written manifest at 2 Hz. Subset
 | Benchmark | Metric | Baseline | Candidate | t | MDE | Units | Verdict |
 |---|---|---|---|---|---|---|---|
 | neuroNCAP | ncap_score | 3.679 | 3.691 | 0.05 | 0.801 | 15 | ⚪ NEUTRAL |
+| AlpaSim | scene_score | 0.416 | 0.439 | 0.11 | 0.647 | 10 | ⚪ NEUTRAL |
 
-Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.four-camera-planner: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): scene_score 0.416 -> 0.439, t 0.11, MDE 0.647, gate verdict CONFIG DIFFERS (our driver profile differs from the baseline's), so it is not a pair here; against H01.four-camera-planner 0.450 -> 0.439, t -0.08, NEUTRAL.
+Run by hand: the queue only runs adapters on a pushed branch. neuroNCAP 15 pairs, one run each; its quick 3 pairs (rerun, manifest wajepa_dj_run3a-ncapq2) 3.179 -> 4.107, t 1.13, NEUTRAL. Against H01.four-camera-planner: 3.280 -> 3.691, t 0.99, NEUTRAL. AlpaSim, 10 scenes (manifest wajepa_dj_run3a-alpasim2): the gate printed CONFIG DIFFERS, because this model's AlpaSim driver is not the baseline's (bridge_args, driver_config, driver_profile: the four-camera render it reads against Drive-JEPA's front-camera driver). Re-paired 20 Nov from the same two stored runs, nothing re-run, with those three keys allowed (tools.gate compare --allow-config driver_profile --allow-config bridge_args --allow-config driver_config, worktree gate-oct27-alp): the alpasim pair below. Its terms: collision_at_fault 0.2 -> 0.2, offroad 0.3 -> 0.2, progress 0.473 -> 0.478, all NEUTRAL. Against H01.four-camera-planner (same driver, --allow-config driver_profile): 0.450 -> 0.439, t -0.08, NEUTRAL.
 
 **H04.subscore-agent-look** — 28 Oct 2026, quick tier, against released Drive-JEPA, the paddock queue's runs of 23 Oct: ⏸ **HOLD**
 
