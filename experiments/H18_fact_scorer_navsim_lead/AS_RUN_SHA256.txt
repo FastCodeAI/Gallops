@@ -39,6 +39,7 @@ df8dafe4188f607b7c56aa216252199f958b7885b07f877a9d093dbe6be226bd  worktrees/gate
 b890ba008241ba6c57937de57c98859a9dee602d0a4c447291567b35fbf0110e  worktrees/gate-oct27-alp/src/paddock/adapters/models/run3b_v2/model.yaml  paddock/gate-oct27-alp/run3b_v2/model.yaml
 5fff41837e08233d8ef591ba0608db9ec596555defcc92c2d06506b3a7dd8479  run3b/CLAUDE.md  specs/run3b_v2_spec.md
 9c94489f1301bb92070f11433535bcd7aede2f1f6267a885869fb886c0729631  worktrees/gate-oct27-alp/src/paddock/adapters/benchmarks/alpasim/harness.py  paddock/gate-oct27-alp/alpasim_harness_run3b.patch (the whole file as run; the patch is run3b's change to it)
+7ff64432e8be3d979a7856b3c3becb36d378ddf699a2da64c239a73093aee9b8  hugsim-eval/report_run3b.py  scripts/hugsim-eval/report_run3b.py
 # Drive-JEPA tree files run 3B imports, hashed in place at the training site ({data.drivejepa_tree}); not copied:
 # they are recipes/drivejepa_wajepa/overlay/run3a (+ run2 for wajepa.py), see README 'Code'.
 2db984e683862503d98c3e04e4410da8ada5ddd2ec703f84db1f914f011812c7  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_perception_based/agent_decoder.py  -

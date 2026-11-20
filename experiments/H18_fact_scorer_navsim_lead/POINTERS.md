@@ -49,6 +49,9 @@ not hashed: none was evaluated beyond the trainer's held-out reports.
 | AlpaSim pair against H04's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj_run3a.json` | 4,379 | `167f2644793a2cf6494a4a1720b9b9c839942ab85de6166d032be6325030d3c2` |
 | AlpaSim pair against H01's run | `{runs}/gate-run3b/compare_alpasim_run3b_vs_wajepa_dj.json` | 4,353 | `851e92face26461d1f3a5684702ba2870ea03cef7a693fc1de515666a6318b88` |
 
+| HUGSIM per-scenario results, 420 scenarios | `{data.p3_renesas}/hugsim-eval/run3b_v2/results.jsonl` | 224,874 | `30e9b6432a7e935debc0d8736b482af02fa746ad9b1fbc34868986270b3a78ee` |
+| HUGSIM report with H04 and the other models | `{data.p3_renesas}/hugsim-eval/report_run3b.json` | 5,255 | `f3295aa1aa790268a69479b09cd661ff9b312e27d396efa71808d14dd4a4eaac` |
+
 Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120T050004-387aa8`, kitscenes
 `20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`).
 

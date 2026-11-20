@@ -29,8 +29,8 @@ below the sub-score agent-look model (87.30; paired -0.95, 95 % over logs [-1.79
 time-to-collision are its best of the four (NC .988, TTC .983), extended comfort far higher (EC .655 against .406), \
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
-neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
-H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. HUGSIM and Bench2Drive are not in yet."""
+neuroNCAP NEUTRAL. On HUGSIM (419 paired) its HD-Score is 40.5 against H04's 40.4 (paired +0.1 [-2.5, +2.7]), PDMS 64.3 against 60.2. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. Bench2Drive is not in yet."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
@@ -100,6 +100,14 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   n = 12146
   unit = "scenes"
   note = "never read in training or for any choice"
+
+  [[runs.data]]
+  dataset = "hugsim"
+  split = "420 scenarios (HUGSIM's 436 minus its 16 release bugs), 419 paired with H04"
+  role = "eval"
+  n = 420
+  unit = "scenarios"
+  note = "command only, 2 Hz, the four cameras rendered, WAJEPA_DJ_FOLLOW=straight: the setup of H04's HUGSIM run (26 Oct)"
 
   [runs.checkpoint]
   model = "run3b_v2"
@@ -183,6 +191,20 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   flags = ["adapted"]
   note = "best of the 32: 0.959 against H04's 0.961. H04's numbers on the same samples are from its stored pick-tune dump, not re-run. Agents, NAVSIM 10-20 m recall 0.579 against H04's 0.621 on the same samples; LEAD as Bench2Drive recall / precision 0.552 / 0.795 (H04 on LEAD's 4,990 trial frames, quoted: 0.303 / 0.406)"
   source = "eval_step023859_final.json (POINTERS.md)"
+
+  [[runs.results]]
+  bench = "hugsim"
+  metric = "HD-Score"
+  n = 419
+  unit = "scenario"
+  baseline = "H04.subscore-agent-look, the same 419 scenarios"
+  baseline_value = "40.4"
+  value = "40.5"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  note = "paired +0.1, 95 % [-2.5, +2.7] by bootstrap over scenarios; 179 better / 69 same / 171 worse. PDMS 64.3 against 60.2 (+4.1 [+1.9, +6.2]), RC 49.5 against 51.3 (-1.8 [-4.6, +1.0]). Released Drive-JEPA 33.8 (+6.7 [+3.6, +9.9]). By dataset, this model / H04: KITTI-360 27.9 / 23.1, nuScenes 47.9 / 52.3, PandaSet 39.3 / 38.6, Waymo 49.1 / 50.9 (no rear camera on KITTI-360 and Waymo). Ended: completed 36.5 % / 35.6 %, hit a car 43.7 / 43.2, hit scenery 6.0 / 8.4, more than 10 m off route 6.2 / 6.4, 400-step cap 7.6 / 6.4"
+  source = "{data.p3_renesas}/hugsim-eval/report_run3b.json (scripts/hugsim-eval/report_run3b.py; POINTERS.md)"
 
   [[runs.gate]]
   date = 2026-11-20

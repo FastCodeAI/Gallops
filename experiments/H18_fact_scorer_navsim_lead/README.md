@@ -1,7 +1,7 @@
 # H18 — Fact scorer: H04's architecture trained from scratch on NAVSIM + LEAD
 
 **Owner:** Navvrat · **Started:** 18 Nov 2026 (spec), trained 19–20 Nov · **Status:** running — gated by hand, FAIL
-against released Drive-JEPA on NAVSIM; HUGSIM and Bench2Drive not in yet; no paddock ref carries its adapter
+against released Drive-JEPA on NAVSIM; Bench2Drive not in yet; no paddock ref carries its adapter
 (hypothesis)
 
 The facts are in [experiment.toml](experiment.toml), and what is off the repository is in [POINTERS.md](POINTERS.md).
@@ -73,6 +73,19 @@ lowest.
 (H04's stored pick-tune dump); best of the 32 proposals 0.959 against 0.961. Agent recall at 10–20 m 0.579 against
 H04's 0.621 on the same samples.
 
+**HUGSIM**, 420 scenarios (419 paired), the setup of H04's HUGSIM run (command only, 2 Hz, four cameras rendered):
+
+| ×100 | The fact-scorer model | H04 | Released Drive-JEPA |
+|---|---:|---:|---:|
+| HD-Score | **40.5** | 40.4 | 33.8 |
+| PDMS | 64.3 | 60.2 | 71.7 |
+| Route completion | 49.5 | 51.3 | 39.8 |
+| Completed the route / hit a car / hit scenery (% of scenarios) | 36.5 / 43.7 / 6.0 | 35.6 / 43.2 / 8.4 | 22.7 / 38.9 / 6.9 |
+
+Paired with H04: HD-Score +0.1 [−2.5, +2.7], PDMS +4.1 [+1.9, +6.2], route completion −1.8 [−4.6, +1.0] (95 %,
+bootstrap over scenarios). By dataset, the fact-scorer model / H04: KITTI-360 27.9 / 23.1, nuScenes 47.9 / 52.3,
+PandaSet 39.3 / 38.6, Waymo 49.1 / 50.9 (KITTI-360 and Waymo have no rear camera; HUGSIM renders it black).
+
 **The regression gate**, run by hand on 20 Nov from the worktree and site config H04's gate ran under, against released
 Drive-JEPA (the paddock queue's runs):
 
@@ -89,7 +102,7 @@ beyond t crit. AlpaSim ran as a block of its own, with H04's four-camera driver 
 DIFFERS on the driver, as it did for H01 and H04, and the row above is the same runs re-paired with `bridge_args`,
 `driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75) and
 its at-fault collisions 0 of 10 against 2; against the 4-camera planner 0.450 → 0.132, t −1.89, NEUTRAL. Not in yet:
-HUGSIM (420 scenarios, running), Bench2Drive (the spec asks for LEAD's camera rig, not built), the light-swap test
+Bench2Drive (the spec asks for LEAD's camera rig, not built), the light-swap test
 (named by the spec, not defined).
 
 What is measured and what is not: every number above is a single run of one checkpoint; nothing separates the effect of
