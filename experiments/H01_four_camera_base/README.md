@@ -19,15 +19,22 @@ scorer that picks one) trained on NAVSIM navtrain with its ViT replaced by
 AFARI's WA-JEPA encoder, frozen. The encoder runs once, over navtrain's four
 cameras (b0, f0, l0, r0), and the planner trains from the cached tokens.
 
-**The paddock adapter is not in paddock yet.** These checkpoints are driven by
-paddock's `wajepa_dj` adapter, which on 27 Oct 2026 existed only as uncommitted
-files in one local paddock worktree (`rerank-native`); paddock `main` cannot
-score a checkpoint this recipe writes until it lands there.
+**The paddock adapters are not in paddock yet.** These checkpoints are driven by
+paddock's `wajepa_dj` (the 4-camera planner) and `wajepa_dj_run3a` (the sub-score agent-look model) adapters, which on
+27 Oct 2026 existed only as uncommitted files in one local paddock worktree
+(`rerank-native`); paddock `main` cannot score a checkpoint this recipe writes
+until they land there.
 
-| Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS |
-|---|---:|---:|---:|
-| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 (2 Hz) |
-| **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs, 23–24 Oct) |
+| Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
+|---|---:|---:|---:|---:|
+| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 † |
+| **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
+| **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | |
+| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 † |
+
+† HUGSIM's 22 Oct campaign, which paddock's HUGSIM page marks superseded: six waypoints of each plan sent, the release with momentum off, and this model's run not stored in paddock. Paddock's current figure for the release (momentum on, the whole 4 s plan) is 37.1.
+
+The sub-score agent-look model and its agent decoder: [H04's account](../H04_subscore_scorer_navsim/README.md).
 
 Recipe: [`recipes/drivejepa_wajepa.toml`](../../recipes/drivejepa_wajepa.toml).
 `gallops recipe drivejepa_wajepa` prints every command for this machine;
@@ -92,27 +99,35 @@ EC .401 / .478.
 
 ## The regression gate
 
-Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Each block is copied from the
-gate's own table into [experiment.toml](experiment.toml). Against released Drive-JEPA:
+Run by hand from local paddock worktrees, because no paddock ref carries the adapter. Against released Drive-JEPA:
 
-| Date | Benchmark | Metric | Released | The 4-camera planner | t | Units | Verdict |
-|---|---|---|---:|---:|---:|---:|---|
-| 21 Oct | NAVSIM, 1,000 tokens | EPDMS | 0.875 | 0.863 | −1.29 | 136 | NEUTRAL |
-| 21 Oct | KITScenes | ADE | 3.222 | 1.969 | 6.44 | 140 | GAIN |
-| 21 Oct | nuScenes | L2 | 2.497 | 1.956 | 3.03 | 30 | GAIN |
-| 21 Oct | Bench2Drive, 7 routes, 2 Hz | DS | 58.801 | 62.757 | 0.36 | 7 | NEUTRAL |
-| 27 Oct | neuroNCAP, 15 pairs | NCAP | 3.679 | 3.280 | −0.96 | 15 | NEUTRAL |
-| 27 Oct | AlpaSim, 10 scenes | scene score | 0.416 | 0.450 | 0.24 | 10 | NEUTRAL |
-| 28 Oct | KITScenes, queue subset | ADE | 2.537 | 2.001 | 3.10 | 117 | GAIN |
-| 28 Oct | nuScenes, queue subset | L2 | 2.431 | 2.057 | 3.41 | 143 | GAIN |
+| Benchmark | Metric | Released | The 4-camera planner | t | Units | Verdict |
+|---|---|---:|---:|---:|---:|---|
+| KITScenes | ADE (3 s), m | 2.5375 | 2.0010 | 3.10 | 117 | GAIN |
+| nuScenes | L2, 1-2-3 s, m | 2.4314 | 2.0570 | 3.41 | 143 | GAIN |
+| NAVSIM, 1,018 scenes | EPDMS | 0.8572 | 0.8440 | −1.28 | 126 | NEUTRAL |
+| neuroNCAP, quick check (3 pairs) | NCAP | 3.1794 | 4.0237 | 0.98 | 3 | NEUTRAL |
+| Bench2Drive, crash check (route 3717) | DS | 37.67 | 29.20 | | 1 | TOO FEW UNITS |
+| AlpaSim, crash check (1 clip) | scene score | 0.0000 | 0.0000 | | 1 | TOO FEW UNITS |
+| neuroNCAP, closed loop (15 pairs) | NCAP | 3.6792 | 3.2800 | −0.96 | 15 | NEUTRAL |
+| Bench2Drive, closed loop (7 routes) | DS | 59.04 | 80.24 | 1.08 | 7 | NEUTRAL |
+| AlpaSim, closed loop (10 scenes) | scene score | 0.4162 | 0.4503 | 0.24 | 10 | NEUTRAL |
 
-On AlpaSim the gate first printed CONFIG DIFFERS on `bridge_args`, `driver_config` and `driver_profile`. This model
-drove AlpaSim through AutoE2E's driver profile, set by an uncommitted edit to paddock's AlpaSim harness (no paddock ref
-carries it), and that profile changes more than the camera count: six pinhole cameras (front f 990.8 px, 1920 × 1018,
-no distortion, global shutter) against Drive-JEPA's one front camera (f 1545 px, 1920 × 1080, distortion left in,
-rolling shutter), and a wrapper that replans every 0.5 s on the newest frame against Drive-JEPA's own 11-frame planner.
-The row above is the same two stored runs re-paired on 20 Nov with those three keys allowed (`tools.gate compare
---allow-config`); nothing was re-run, and what each difference does to the score is not measured. Overall **HOLD** each time: nothing regressed, and no closed-loop benchmark gained.
+Every pair is on the gate's current subsets (paddock #105, 23 Oct; the quick checks #113, 26 Oct), against the queue's
+stored released Drive-JEPA runs, and is copied from the gate's output into [experiment.toml](experiment.toml), one block,
+in the order every gated record uses. KITScenes and nuScenes ran on 28 Oct, neuroNCAP and AlpaSim on 27 Oct, NAVSIM and
+Bench2Drive on 20 Nov. Bench2Drive drives with the command fix (FOLLOW_REFERENCE fed as STRAIGHT), which this model's
+closed-loop runs use. On AlpaSim the gate first printed CONFIG DIFFERS on `bridge_args`, `driver_config` and
+`driver_profile`: this model drove AlpaSim through AutoE2E's driver profile (six pinhole cameras, front f 990.8 px,
+1920 × 1018, no distortion, global shutter, against Drive-JEPA's one front camera at f 1545 px, 1920 × 1080, distortion
+left in, rolling shutter; and a wrapper replanning every 0.5 s on the newest frame against Drive-JEPA's own 11-frame
+planner), set by an uncommitted edit to paddock's AlpaSim harness. Its two rows are the same runs re-paired with those
+three keys allowed; what each difference does to the score is not measured. Overall **HOLD**: nothing regressed, and no
+closed-loop benchmark gained.
+
+The 21 Oct gate, on the subsets paddock held before 23 Oct (NAVSIM 1,000 tokens, KITScenes 140 scenes, nuScenes 30 scenes,
+Bench2Drive 7 of the 50 routes picked by the baselines' spread, at 2 Hz, without the command fix), is superseded by these
+pairs: NAVSIM 0.875 → 0.863 (t −1.29), KITScenes 3.222 → 1.969 (t 6.44, GAIN), nuScenes 2.497 → 1.956 (t 3.03, GAIN), Bench2Drive 58.801 → 62.757 (t 0.36), HOLD.
 
 ## Decision
 
@@ -128,7 +143,9 @@ closes it yet.
 | The training metric cache and the 8,192-anchor teacher scores | Drive-JEPA's own preprocessing, at `{data.navsim.exp}/Drive-JEPA-cache/{train_metric_cache_v2_pruned, anchors_scores_index_v2}`; not built here |
 | The navtest metric cache | navsim's `run_metric_caching.py`, `[datasets.navsim] metric_cache` |
 | WA-JEPA | AFARI-Research/WA-JEPA at `bec2966` (`[code] wajepa`), encoder weights `{weights}/WA-JEPA/model_state_dict.pt` |
-| The token cache | `dump-tokens` |
+| The token cache | `dump-tokens`; `agent-targets` adds the agent decoder's targets beside the tokens |
+| The held-out logs | `recipes/drivejepa_wajepa/heldout_logs.txt`: 51 navtrain logs, the agent decoder's held-out set and the sub-score agent-look model's validation split |
+| The sub-score agent-look model's teacher list | `teacher-rearok`, beside Drive-JEPA's own list in `[datasets.navsim] drivejepa_cache`, where the metric cache's metadata says the cache is |
 
 ## Verified, and how
 
@@ -138,8 +155,10 @@ closes it yet.
 | With the 19 Oct switch at its default, the model is the one that trained | verified: 500 navtest scenes reproduce the 17 Oct epoch-19 CSV on every column (max difference 0) |
 | `navtest-score` gives the numbers above from the evaluations' CSVs (85.27 / 81.98, released 87.78 / 84.49) | verified (27 Oct) |
 | The recipe's training and evaluation overrides are the runs' own | verified against each run's `code/hydra/overrides.yaml` |
+| `drive_jepa_config.py` as it was at launch | **not kept**: the manifest's `as_run_sha256` is null. It differs from the run's in the pick defaults (locked on 25 Oct, after training) and the `agent_decoder_ckpt` default. The gradient never reads the pick, but checkpoint selection (val/score_epoch) did, at gates 1, route 2, no blend; `run3a-train` passes those defaults explicitly |
+| `run3a-checks` runs from this repo in the tree `code-run3a` builds | verified (27 Oct): checks 1–3 pass with the 24 Oct numbers (transform error 1.8e-15 m, 768 / 768 waypoints, attention on nothing 1.0000) |
 | `dump-tokens` and `verify-tokens` behave as the scripts that ran | **argued**: ported with only the arguments changed (and the dump's exit code); neither was rerun from this repo |
-| `run2-train` reproduces the recorded checkpoints | **argued**: not rerun. NAVSIM training is seeded but not bitwise deterministic on this GPU |
+| `run2-train`, `agent-decoder` and `run3a-train` reproduce the recorded checkpoints | **argued**: not rerun. NAVSIM training is seeded but not bitwise deterministic on this GPU |
 
 ## Before quoting a number from these checkpoints
 
@@ -149,6 +168,7 @@ closes it yet.
 - **Bench2Drive is zero-shot** (a NAVSIM-trained planner in CARLA), at 2 Hz,
   one run per route, and runs are not repeatable: the two command-fix runs of
   the 4-camera planner differ by a mean of 9.1 DS per route.
+- Every closed-loop number above is one run per route or scenario.
 - The released Drive-JEPA's 87.78 comes from the same `run_pdm_score.py`, the
   same metric cache and no momentum-aware selection, run on a clean upstream
   tree; the paper's numbers use momentum-aware selection.

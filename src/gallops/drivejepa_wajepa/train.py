@@ -51,12 +51,22 @@ def main(argv: list[str] | None = None) -> int:
         "--config-name", default=None, help="run_training's --config-name (Run 3A: run3a_training)"
     )
     ap.add_argument("--score-workers", type=int, default=12)
+    ap.add_argument(
+        "--require",
+        type=Path,
+        action="append",
+        default=[],
+        help="an input that must exist before training starts; repeatable",
+    )
     ap.add_argument("overrides", nargs="*", help="Hydra overrides, after --")
     a = ap.parse_args(argv)
     if not (a.tree / "OVERLAY.json").is_file():
         raise SystemExit(f"{a.tree} has no OVERLAY.json: build it with the code stage first")
     if a.ckpt_dir.exists():
         raise SystemExit(f"refusing: {a.ckpt_dir} exists; checkpoints are never overwritten")
+    missing = [str(p) for p in a.require if not p.exists()]
+    if missing:
+        raise SystemExit(f"refusing: required inputs missing: {missing}")
     cmd = command(a.tree, a.config_name, a.overrides)
     print(" ".join(cmd), flush=True)
     return subprocess.run(

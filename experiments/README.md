@@ -74,10 +74,9 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | Date | Run | Checkpoint | Tier | NAVSIM | KITScenes | nuScenes | neuroNCAP | Bench2Drive | AlpaSim | Verdict |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
-| 21 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | quick | ⚪ 0.875 → 0.863 | 🟢 3.222 → 1.969 | 🟢 2.497 → 1.956 | — | ⚪ 58.801 → 62.757 | — | ⏸ **HOLD** |
-| 27 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | closed | — | — | — | ⚪ 3.679 → 3.28 | — | ⚪ 0.416 → 0.45 | ⏸ **HOLD** |
-| 28 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | quick | — | 🟢 2.537 → 2.001 | 🟢 2.431 → 2.057 | — | — | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
+| 20 Nov 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | all | ⚪ 0.8572 → 0.8440 | 🟢 2.5375 → 2.0010 | 🟢 2.4314 → 2.0570 | ⚪ 3.6792 → 3.2800 | ⚪ 59.0360 → 80.2351 | ⚪ 0.4162 → 0.4503 | ⏸ **HOLD** |
+| 20 Nov 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | all | ⚪ 0.8572 → 0.8534 | 🟢 2.5375 → 2.1215 | 🟢 2.4314 → 2.1509 | ⚪ 3.6792 → 3.6915 | ⚪ 59.0360 → 40.8048 | ⚪ 0.4162 → 0.4391 | ⏸ **HOLD** |
 <!-- /experiments:gate -->
 
 ## Decision log
@@ -174,13 +173,21 @@ command line serve every experiment and are listed as shared.
 | `gallops.drivejepa_b2d.train_ipad_head` | GC04.split-v4 | experiment |
 | `gallops.drivejepa_b2d.train_split_head` | GC04.split-v4, GC04.final | experiment |
 | `gallops.drivejepa_b2d.write_checkpoint` | GC04.split-v4, GC04.final | experiment |
-| `gallops.drivejepa_wajepa.code` | H01.four-camera-planner | experiment |
+| `gallops.drivejepa_wajepa.agent_decoder_data` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.agent_targets` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.code` | H01.four-camera-planner, H04.agent-decoder, H04.subscore-agent-look | experiment |
 | `gallops.drivejepa_wajepa.dump_tokens` | H01.four-camera-planner | experiment |
-| `gallops.drivejepa_wajepa.eval_navtest` | H01.four-camera-planner | experiment |
-| `gallops.drivejepa_wajepa.navtest_score` | H01.four-camera-planner | experiment |
-| `gallops.drivejepa_wajepa.train` | H01.four-camera-planner | experiment |
+| `gallops.drivejepa_wajepa.eval_navtest` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.extract_agents` | H04.agent-decoder | experiment |
+| `gallops.drivejepa_wajepa.lane_centrelines` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.navtest_score` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.pick_tune` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.run3a_checks` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.teacher_rearok` | H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.train` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
+| `gallops.drivejepa_wajepa.train_agent_decoder` | H04.agent-decoder | experiment |
 | `gallops.drivejepa_wajepa.verify_tokens` | H01.four-camera-planner | experiment |
-| `gallops.drivejepa_wajepa.write_checkpoint` | H01.four-camera-planner | experiment |
+| `gallops.drivejepa_wajepa.write_checkpoint` | H01.four-camera-planner, H04.subscore-agent-look | experiment |
 | `gallops.experiments` | — | shared |
 | `gallops.expert.check_scenarios` | GC03.stageA | experiment |
 | `gallops.expert.draw` | GC03.stageA, GC03.v1, GC03.v2, GC03.v3, GC03.v4, GC03.v4fix, GC03.l4fix, GC03.l5, GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |

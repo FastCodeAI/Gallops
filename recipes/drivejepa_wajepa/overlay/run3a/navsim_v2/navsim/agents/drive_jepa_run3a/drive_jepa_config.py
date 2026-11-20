@@ -1,0 +1,195 @@
+import os
+from dataclasses import dataclass
+from typing import Tuple
+
+import numpy as np
+from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
+from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
+from nuplan.common.maps.abstract_map import SemanticMapLayer
+
+
+@dataclass
+class DriveJEPAConfig:
+    b2d: bool = False
+
+    ref_num: int=4
+
+    traj_bev: bool=True
+    traj_proposal_query: bool=True
+
+    double_score: bool=False
+
+    agent_pred: bool=True
+    area_pred: bool=True
+
+    bev_map: bool=False
+    bev_agent: bool=False
+
+    proposal_num: int = 32
+    point_cloud_range = [-32, -32, -2.0, 32, 32, 6.0]
+    num_points_in_pillar: int=4
+
+    half_length: float= 2.588 +0.25 #small buffer for safety
+    half_width: float =1.1485 +0.1
+    rear_axle_to_center: float = 1.461
+    lidar_height: float = 0
+
+    num_poses: int=8
+    command_num: int=4
+
+    # Transformer
+    tf_d_model: int = 256
+    tf_d_ffn: int = 1024
+    tf_num_layers: int = 3
+    tf_num_head: int = 8
+    tf_dropout: float = 0
+    num_bev_layers: int=1
+    # "vit_large": V-JEPA ViT-L on front camera (2 frames); "resnet34": timm ResNet34 on 4 surround cameras (1 frame)
+    image_architecture: str = "vit_large"
+    # number of pseudo targets sampled from simulator-scored anchors per sample
+    num_pseudo_targets: int = 4
+    # learning rate multiplier of the image backbone
+    backbone_lr_mult: float = 0.1
+    # frozen WA-JEPA tokens (wa-jepa/CLAUDE.md): features["wajepa_tokens"] (B, 4, 512, 1024), cameras b0 f0 l0 r0;
+    # the ViT is skipped; footprint look on f0 l0 r0 (num_cams 3); global look in the shared Traj_refiner
+    use_wajepa_tokens: bool = True
+    footprint_cams: Tuple[int, ...] = (1, 2, 3)
+
+    # run 3A (paddock-ops/run3a/CLAUDE.md): agent decoder D loaded whole, agent look, 12 scorer heads, map auxiliary
+    # D's epoch_11.pt (ckpts_23oct_D_q300_l3); a site path, so from the environment (gallops' recipe sets it)
+    agent_decoder_ckpt: str = os.environ.get("RUN3A_AGENT_DECODER_CKPT", "")
+    agent_decoder_queries: int = 300
+    agent_decoder_layers: int = 3
+    agent_look_k: int = 16  # pre-3A check (agent-decoder/pre3a_checks.log): k = 16
+    agent_look_cut: float = 0.5  # pre-3A check: P(none) < 0.5
+    detection_weight: float = 1.0
+    head_weight: float = 1.0  # each of the 12 scorer heads
+    map_aux_weight: float = 1.0  # the map auxiliary group
+    # teacher list: v2 indices minus rear_ok failures (paddock-ops/run3a/teacher)
+    # (set in score_module/compute_navsim_score.py: RUN3A_TEACHER_DIR, RUN3A_PROGRESS_LABEL; recorded here)
+    teacher_dir: str = "anchors_scores_index_v2_rearok_lane"
+    # progress head target (user, 24 Oct): "all32pdm" = masked raw progress / max over the 32 proposals and PDM-Closed
+    progress_label: str = "all32pdm"
+    # pick: log score = sum_g w_g log sigma(z_g) + log(sum_o u_o s_o) [+ alpha blend of the final-score head]
+    # locked 25 Oct (spec: tuned once on the held-out logs, then locked; paddock-ops/run3a/eval/pick_ep13/grid.json):
+    # gates (0.5, 0.5, 1, 0.5, 0.5), route 2, alpha 0.5. Checkpoint selection used the defaults: gates all 1, route 2, alpha 0
+    pick_gate_weights: Tuple[float, ...] = (0.5, 0.5, 1.0, 0.5, 0.5)  # collision, drivable, direction, traffic light, rear
+    pick_goal_weights: Tuple[float, ...] = (5.0, 5.0, 2.0, 2.0, 2.0)  # progress, TTC, lane keeping, comfort, route
+    pick_alpha: float = 0.5
+
+    # loss weights
+    trajectory_weight: float = 1
+    inter_weight: float =  0
+    sub_score_weight: int = 0
+    final_score_weight: int = 1
+    pred_ce_weight: int = 1
+    pred_l1_weight: int = 0.1
+    pred_area_weight: int = 2
+    prev_weight: int = 0.1
+    agent_class_weight: float = 1.0
+    agent_box_weight: float = 0.1
+    bev_semantic_weight: float = 1.0
+
+    #others
+    trajectory_sampling: TrajectorySampling = TrajectorySampling(time_horizon=4, interval_length=0.5)
+
+    lidar_architecture: str = "resnet34"
+
+    latent: bool = False
+    latent_rad_thresh: float = 4 * np.pi / 9
+
+    max_height_lidar: float = 100.0
+    pixels_per_meter: float = 4.0
+    hist_max_per_pixel: int = 5
+
+    lidar_min_x: float = -32
+    lidar_max_x: float = 32
+    lidar_min_y: float = -32
+    lidar_max_y: float = 32
+
+    lidar_split_height: float = 0.2
+    use_ground_plane: bool = False
+
+    # new
+    lidar_seq_len: int = 1
+
+    camera_width: int = 1024
+    camera_height: int = 256
+    lidar_resolution_width = 256
+    lidar_resolution_height = 256
+
+    img_vert_anchors: int = 256 // 32
+    img_horz_anchors: int = 1024 // 32
+    lidar_vert_anchors: int = 256 // 32
+    lidar_horz_anchors: int = 256 // 32
+
+    block_exp = 4
+    n_layer = 2  # Number of transformer layers used in the vision backbone
+    n_head = 4
+    n_scale = 4
+    embd_pdrop = 0.1
+    resid_pdrop = 0.1
+    attn_pdrop = 0.1
+    # Mean of the normal distribution initialization for linear layers in the GPT
+    gpt_linear_layer_init_mean = 0.0
+    # Std of the normal distribution initialization for linear layers in the GPT
+    gpt_linear_layer_init_std = 0.02
+    # Initial weight of the layer norms in the gpt.
+    gpt_layer_norm_init_weight = 1.0
+
+    perspective_downsample_factor = 1
+    transformer_decoder_join = True
+    detect_boxes = True
+    use_bev_semantic = True
+    use_semantic = False
+    use_depth = False
+    add_features = True
+
+    # detection
+    num_bounding_boxes: int = 30
+
+    # BEV mapping
+    bev_semantic_classes = {
+        1: ("polygon", [SemanticMapLayer.LANE, SemanticMapLayer.INTERSECTION]),  # road
+        2: ("polygon", [SemanticMapLayer.WALKWAYS]),  # walkways
+        3: ("linestring", [SemanticMapLayer.LANE, SemanticMapLayer.LANE_CONNECTOR]),  # centerline
+        4: (
+            "box",
+            [
+                TrackedObjectType.CZONE_SIGN,
+                TrackedObjectType.BARRIER,
+                TrackedObjectType.TRAFFIC_CONE,
+                TrackedObjectType.GENERIC_OBJECT,
+            ],
+        ),  # static_objects
+        5: ("box", [TrackedObjectType.VEHICLE]),  # vehicles
+        6: ("box", [TrackedObjectType.PEDESTRIAN]),  # pedestrians
+    }
+
+    bev_pixel_width: int = lidar_resolution_width
+    bev_pixel_height: int = lidar_resolution_height // 2
+    bev_pixel_size: float = 0.25
+
+    num_bev_classes = 7
+    bev_features_channels: int = 64
+    bev_down_sample_factor: int = 4
+    bev_upsample_factor: int = 2
+
+    @property
+    def use_resnet(self) -> bool:
+        return self.image_architecture.startswith("resnet")
+
+    @property
+    def num_cams(self) -> int:
+        if self.use_wajepa_tokens:
+            return len(self.footprint_cams)
+        return 4 if self.use_resnet else 1
+
+    @property
+    def bev_semantic_frame(self) -> Tuple[int, int]:
+        return (self.bev_pixel_height, self.bev_pixel_width)
+
+    @property
+    def bev_radius(self) -> float:
+        values = [self.lidar_min_x, self.lidar_max_x, self.lidar_min_y, self.lidar_max_y]
+        return max([abs(value) for value in values])

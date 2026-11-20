@@ -352,7 +352,7 @@ description are rendered from the record, like the README, so the ID and the num
 typed:
 
 ```bash
-gallops experiments pr H04.run3a > /tmp/pr.md   # H04 alone takes the run that holds the headline
+gallops experiments pr H04.subscore-agent-look > /tmp/pr.md   # H04 alone takes the run that holds the headline
 $EDITOR /tmp/pr.md                              # replace each TODO(author):
 gh pr create --title "$(head -1 /tmp/pr.md)" --body-file <(tail -n +3 /tmp/pr.md)
 ```

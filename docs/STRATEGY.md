@@ -9,7 +9,7 @@ paddock, not an opinion. Where something is argued rather than measured, it says
 so — that distinction is the standard both repos are held to.
 
 > **Correction (H01, 16 Oct): NAVSIM `navtrain` is no longer absent.** The data table below says it is; it is now
-> held at the training site, and the 4-camera planner and Run 3A trained on it (`experiments/H01_four_camera_base/README.md`).
+> held at the training site, and the 4-camera planner and the sub-score agent-look model trained on it (`experiments/H01_four_camera_base/README.md`).
 
 > **Correction (2026-10-12): every Drive-JEPA neuroNCAP number on this page is
 > camera-blind** (§1's table and §6's 3.57). Paddock placed its cameras relative to
