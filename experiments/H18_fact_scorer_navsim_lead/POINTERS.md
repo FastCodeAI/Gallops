@@ -52,8 +52,11 @@ not hashed: none was evaluated beyond the trainer's held-out reports.
 
 | AlpaSim crash check against released, driver keys allowed | `{runs}/gate-run3b/compare_alpasim_quick_run3b_vs_released_profile_allowed.json` | 5,952 | `cb003864b870f3a16c6f1add8fd33b3503d6446bf9c2391e51767379c9cd6f19` |
 
+| Gate verdict, Bench2Drive, 20 Nov | `{runs}/gate-run3b/verdict_run3b_v2_b2d.json` | 10,468 | `05a09c16dda079064c63133479be16e645a81216e67745ddf33d0192d7bbe117` |
+| Gate manifest, Bench2Drive | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2-b2d/manifest.toml` | 604 | `2df9003f2ece27202bf3143bd6646dc1353a12fdb15ec50335d46e22c3646472` |
+
 Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120T050004-387aa8`, kitscenes
-`20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`).
+`20261120T050356-48399a`, neuroncap `20261120T050645-7d6522`, neuroncap quick `20261120T045955-0d22fb`, alpasim `20261120T060100-20d216` (quick `20261120T055820-b7d92a`), bench2drive `20261120T081237-5e8510` (quick `20261120T080323-60e8d7`).
 
 ## Built data it trained on (from earlier work, not built here)
 

@@ -82,7 +82,7 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 | 28 Oct 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | quick | — | 🟢 2.537 → 2.001 | 🟢 2.431 → 2.057 | — | — | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | quick | — | 🟢 2.537 → 2.121 | 🟢 2.431 → 2.151 | — | — | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
-| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | — | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
+| 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | 🟢 59.0360 → 92.8757 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
 <!-- /experiments:gate -->
 
 ## Decision log

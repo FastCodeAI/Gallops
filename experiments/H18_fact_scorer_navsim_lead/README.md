@@ -1,7 +1,7 @@
 # H18 — Fact scorer: H04's architecture trained from scratch on NAVSIM + LEAD
 
 **Owner:** Navvrat · **Started:** 18 Nov 2026 (spec), trained 19–20 Nov · **Status:** running — gated by hand, FAIL
-against released Drive-JEPA on NAVSIM; Bench2Drive's gate pairs running; no paddock ref carries its adapter
+against released Drive-JEPA on NAVSIM, GAIN on Bench2Drive and nuScenes; no paddock ref carries its adapter
 (hypothesis)
 
 The facts are in [experiment.toml](experiment.toml), and what is off the repository is in [POINTERS.md](POINTERS.md).
@@ -82,18 +82,18 @@ released Drive-JEPA (the queue's stored runs), the subsets every gated record he
 | nuScenes | L2, 1-2-3 s, m | 2.4314 | 2.1173 | 2.37 | 143 | GAIN | 2.151 → 2.117, t 0.31, NEUTRAL |
 | NAVSIM | EPDMS | 0.8572 | 0.8067 | −6.05 | 126 | REGRESSION | not paired: 83 shared tokens |
 | neuroNCAP, quick (3 pairs) | NCAP | 3.1794 | 4.0229 | 0.98 | 3 | NEUTRAL | 4.107 → 4.023, NEUTRAL |
-| Bench2Drive, crash check (route 3717) | DS | | | | 1 | running | |
+| Bench2Drive, crash check (route 3717) | DS | 37.67 | 47.21 | | 1 | TOO FEW UNITS | |
 | AlpaSim, crash check (1 clip) | scene score | 0.0000 | 0.0000 | | 1 | TOO FEW UNITS | |
 | neuroNCAP, closed loop (15 pairs) | NCAP | 3.6792 | 3.9265 | 1.44 | 15 | NEUTRAL | 3.691 → 3.926, t 1.24, NEUTRAL |
-| Bench2Drive, closed loop (7 routes) | DS | | | | 7 | running | H04: 60.39 |
+| Bench2Drive, closed loop (7 routes) | DS | 59.04 | 92.88 | 2.99 | 7 | GAIN | not paired: H04's 25 Oct gate ran a different 7 routes |
 | AlpaSim, closed loop (10 scenes) | scene score | 0.4162 | 0.1317 | −1.69 | 10 | NEUTRAL | 0.439 → 0.132, t −2.29, REGRESSION |
 
 Overall **FAIL**, from the NAVSIM pair; on NAVSIM, ego progress (t −8.05) and drivable area (t −3.33) are the terms
 beyond t crit. On AlpaSim the gate first printed CONFIG DIFFERS on the driver (this model's four-camera render against
 Drive-JEPA's front camera), as it did for H01 and H04; its pairs are the same runs re-paired with `bridge_args`,
 `driver_config` and `driver_profile` allowed. On AlpaSim its progress is 0.174 against released 0.473 (t −2.75).
-Bench2Drive runs the gate's quick route and 7 routes against the queue's released run, scored without the comfort
-fact (the spec masks comfort on all of CARLA); its two rows fill in when it ends. Not run: Bench2Drive on LEAD's
+On Bench2Drive it drove the gate's 7 routes with driving score 100 on six and 50.13 on route 3717, no collisions,
+scored without the comfort fact (the spec masks comfort on all of CARLA). Not run: Bench2Drive on LEAD's
 camera rig (the spec's evaluation; not built) and the light-swap test (named by the spec, not defined).
 
 What is measured and what is not: every number above is a single run of one checkpoint; nothing separates the effect of

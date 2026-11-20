@@ -30,7 +30,7 @@ time-to-collision are its best of the four (NC .988, TTC .983), extended comfort
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
 neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
-H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. Bench2Drive's pairs are running."""
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. On Bench2Drive's 7 gate routes it scores 92.88 against released 59.04 (GAIN, t 2.99)."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
@@ -192,7 +192,7 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   baseline = "released Drive-JEPA (the queue's stored runs)"
   paddock_commit = "3daf4b9"  # plus the ops adapters copied in, worktree gate-oct27; AlpaSim from 9819e36, worktree gate-oct27-alp
   manifest = "{runs}/gate-oct27/gate/smoke/run3b_v2-released/manifest.toml"
-  note = "Run by hand (the queue only runs adapters on a pushed branch), keep-going, from the worktrees and site config H04's gate ran under; manifests run3b_v2-released (KITScenes, nuScenes, NAVSIM, neuroNCAP), run3b_v2-alpasim and run3b_v2-b2d under the same gate directory. AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04; its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config). Bench2Drive: scored without the comfort fact (RUN3B_SCORE_DOMAIN=lead, as LEAD samples were in training; the spec masks comfort on all of CARLA); running since 20 Nov 13:33. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark."
+  note = "Run by hand (the queue only runs adapters on a pushed branch), keep-going, from the worktrees and site config H04's gate ran under; manifests run3b_v2-released (KITScenes, nuScenes, NAVSIM, neuroNCAP), run3b_v2-alpasim and run3b_v2-b2d under the same gate directory. AlpaSim: the gate printed CONFIG DIFFERS on bridge_args, driver_config and driver_profile (the four-camera render this model reads against Drive-JEPA's front-camera driver), as for H01 and H04; its two pairs are the same runs re-paired with those three keys allowed (tools.gate compare --allow-config). Bench2Drive (runs 20261120T080323-60e8d7 and 20261120T081237-5e8510, 13:33-14:02): scored without the comfort fact (RUN3B_SCORE_DOMAIN=lead, as LEAD samples were in training; the spec masks comfort on all of CARLA), so its runs are marked invalid for that site env override as well as for being a subset; driving score 100 on 6 of the 7 routes, 50.13 on 3717, no collisions. H04's Bench2Drive gate of 25 Oct ran a different 7 routes, so it is not paired. Quick-tier crash checks are listed before the closed-loop pairs of the same benchmark."
 
     [[runs.gate.pairs]]
     bench = "kitscenes"
@@ -237,8 +237,10 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
     [[runs.gate.pairs]]
     bench = "bench2drive"
     metric = "driving score, crash check (route 3717)"
+    baseline = "37.6700"
+    candidate = "47.2100"
     units = 1
-    verdict = "NOT RUN"
+    verdict = "TOO FEW UNITS"
 
     [[runs.gate.pairs]]
     bench = "alpasim"
@@ -261,8 +263,12 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
     [[runs.gate.pairs]]
     bench = "bench2drive"
     metric = "driving score, closed loop (7 routes)"
+    baseline = "59.0360"
+    candidate = "92.8757"
+    t = "2.99"
+    mde = "37.956"
     units = 7
-    verdict = "NOT RUN"
+    verdict = "GAIN"
 
     [[runs.gate.pairs]]
     bench = "alpasim"
