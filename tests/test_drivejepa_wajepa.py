@@ -121,8 +121,10 @@ def test_the_training_overrides_are_the_runs_own(site: SiteConfig) -> None:
 
 
 def test_run3a_trains_with_its_recorded_overrides_and_refuses_without_its_inputs(site: SiteConfig) -> None:
-    """Run 3A's code/hydra/overrides.yaml (24 Oct 17:34). Its model starts the agent decoder from random
-    weights, silently, when RUN3A_AGENT_DECODER_CKPT names no file, so the stage must require it."""
+    """Run 3A's code/hydra/overrides.yaml (24 Oct 17:34), plus the pick defaults it ran with: val/score_epoch,
+    which chose the epoch, reads the config's pick, and the overlay's config now holds the pick locked after
+    training (#23 review 🟠 2). Its model starts the agent decoder from random weights, silently, when
+    RUN3A_AGENT_DECODER_CKPT names no file, so the stage must require it."""
     (cmd,) = recipes.commands(recipes.load("drivejepa_wajepa"), site, ["run3a-train"])
     argv = list(cmd.argv)
     overrides = argv[argv.index("--") + 1 :]
@@ -138,6 +140,8 @@ def test_run3a_trains_with_its_recorded_overrides_and_refuses_without_its_inputs
         f"cache_path={site.datasets['wajepa_tokens'].path}",
         "use_cache_without_dataset=True",
         "force_cache_computation=False",
+        "+agent.config.pick_gate_weights=[1.0,1.0,1.0,1.0,1.0]",
+        "+agent.config.pick_alpha=0.0",
     ]
     assert argv[argv.index("--config-name") + 1] == "run3a_training"
     required = [argv[i + 1] for i, a in enumerate(argv) if a == "--require"]
@@ -415,3 +419,16 @@ def test_summarize_counts_tied_tensors_once() -> None:
     n, dtypes = write_checkpoint.summarize(state)
     assert n == 17
     assert dtypes == {"float32"}
+
+
+def test_agent_decoder_and_centreline_stages_make_their_output_dirs() -> None:
+    """#23 review 🔴 1: both stages wrote into a directory no stage created, so ran only where it was
+    made by hand. Both modules need torch or nuplan, so this guards the structure: train() makes its out dir
+    first (refusing an existing one), and the centreline script makes its out dir before the map loop."""
+    tad = ast.parse((SRC / "drivejepa_wajepa" / "train_agent_decoder.py").read_text())
+    fn = next(n for n in tad.body if isinstance(n, ast.FunctionDef) and n.name == "train")
+    assert ast.unparse(fn.body[0]) == "os.makedirs(out_dir)"
+    lc = ast.parse((SRC / "drivejepa_wajepa" / "lane_centrelines.py").read_text())
+    made = [i for i, n in enumerate(lc.body) if ast.unparse(n) == "os.makedirs(OUT, exist_ok=True)"]
+    loop = next(i for i, n in enumerate(lc.body) if isinstance(n, ast.For))
+    assert made and made[0] < loop
