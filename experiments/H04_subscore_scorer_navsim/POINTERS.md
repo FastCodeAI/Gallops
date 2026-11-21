@@ -22,3 +22,10 @@ into the template layout; the "where it sits" column says where each one is.
 | Lane centrelines, Pittsburgh | same | `.../us-pa-pittsburgh-hazelwood.pkl` | 891,689 | `d95e2a0102d7e2c98e1eeff7286e2812fa791e3214842389c4fe9d3fe79e70b1` |
 | Teacher list, 103,288 samples, 1,192 log folders | `gallops.drivejepa_wajepa.teacher_rearok` | beside the metric cache, `anchors_scores_index_v2_rearok_lane` | 857,681,920 | not hashed: one small file per sample |
 | Agent targets, `agent_targets.gz` in every sample's cache folder | `gallops.drivejepa_wajepa.agent_targets` | `{data.wajepa_tokens}` | inside the token cache (H01's POINTERS) | not hashed |
+
+## Evaluation
+
+| Item | Where it sits at the training site | Note |
+|---|---|---|
+| Bench2Drive 220 route results, 21 Nov | `{data.p3_renesas}/b2d220_run3a_cmdfix/bench2drive/wajepa_dj_run3a_b2d/` | one `results.json` per route; the table and pairs are H18's `b2d220_paired.json` (H18's POINTERS.md, with sha256) |
+| Bench2Drive native-50 route results, 26 Oct | `{data.p3_renesas}/paddock-runs/run3a_cmdfix/repa/bench2drive/wajepa_dj_run3a/` | one `results.json` per route |
