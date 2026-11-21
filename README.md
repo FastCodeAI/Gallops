@@ -10,7 +10,7 @@
   <a href=".github/workflows/check.yml"><img src="https://img.shields.io/badge/gate-make_check_in_CI-555555.svg" alt="Gate: make check in CI"></a>
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
-  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-10_open_or_tested-1F6FEB.svg" alt="hypotheses: 10 open or tested"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-11_open_or_tested-1F6FEB.svg" alt="hypotheses: 11 open or tested"></a>
   <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-7-B4560A.svg" alt="gated checkpoints: 7"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
@@ -67,6 +67,7 @@ One structural change each, judged against the base by paddock's regression gate
 | [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | 🗑 dropped | AlpaSim scene_score 0.7574 → **0.7464** (n=50 scenes) | ●●○○ moderate · adapted | — |
 | [**H18**](experiments/H18_fact_scorer_navsim_lead/CARD.md) | Fact scorer, NAVSIM + LEAD | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **86.35** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 20 Nov |
 | [**H19**](experiments/H19_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
+| [**H20**](experiments/H20_motion_history/CARD.md) | Car motion history | Siddesh | ⏸ parked (negative) | AlpaSim mean windowed score, 30 scenes, history shown (line written beforehand 0.8194, not met) 0.7527 → **0.7771** (n=30 scenes) | ●●○○ moderate | — |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.

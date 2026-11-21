@@ -48,6 +48,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H17](H17_generator_scorer_memory/CARD.md) | A memory read by both the generator and the scorer, trained with them, picks better paths | hypothesis | Siddesh | 7 Nov – 20 Nov 2026 | 🗑 dropped | [H17_generator_scorer_memory/](H17_generator_scorer_memory/) |
 | [H18](H18_fact_scorer_navsim_lead/CARD.md) | The sub-score agent-look model's architecture, trained from scratch on NAVSIM + LEAD with a per-waypoint fact scorer | hypothesis | Navvrat | 18 Nov 2026 | ⏳ running | [H18_fact_scorer_navsim_lead/](H18_fact_scorer_navsim_lead/) |
 | [H19](H19_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | ⏳ running | [H19_prediction_memory/](H19_prediction_memory/) |
+| [H20](H20_motion_history/CARD.md) | The car's own motion over the last 4 s, read by the generator and the scorer, makes the driving better | hypothesis | Siddesh | 17 Nov – 20 Nov 2026 | ⏸ parked (negative) | [H20_motion_history/](H20_motion_history/) |
 <!-- /experiments:index -->
 
 ## Enablers

@@ -1,0 +1,35 @@
+{
+ "lane": "dj",
+ "wizard_rc": 0,
+ "gates": {
+  "wizard_rc": {
+   "ok": true,
+   "detail": "wizard exit 0"
+  },
+  "artifact_pin": {
+   "ok": true,
+   "detail": "26.01 x1, 26.04 x0"
+  },
+  "push_cadence": {
+   "ok": true,
+   "detail": "push-cadence check ran"
+  },
+  "context_guards_silent": {
+   "ok": true,
+   "detail": "no ContextSpacingError/PushCadenceError"
+  },
+  "smoke_gates_2_4_5": {
+   "ok": true,
+   "detail": "ALL GATES PASSED"
+  },
+  "dj_extra_gates": {
+   "ok": true,
+   "detail": "EXTRA GATES PASSED"
+  },
+  "replay": {
+   "ok": true,
+   "detail": "{approach4_store}/cl/lane/annotated_videos/e121e37d_a4_armA.mp4 -> {approach4_store}/cl/runs/a4_armA_e121e37d/replay/a4_armA_e121e37d_annotated.mp4"
+  }
+ },
+ "ok": true
+}

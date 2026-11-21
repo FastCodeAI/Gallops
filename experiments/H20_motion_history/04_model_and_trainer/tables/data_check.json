@@ -1,0 +1,73 @@
+{
+ "build_s": 7.2,
+ "vs_planner_dataset": {
+  "moments": 100,
+  "equal": {
+   "ego_status": 100,
+   "trajectory": 0,
+   "lidar2img": 100,
+   "img_shape": 100,
+   "has_label2": 100,
+   "metric_cache_path": 100,
+   "token": 100
+  },
+  "dtypes_shapes": {
+   "ego_status": [
+    "torch.float32",
+    [
+     1,
+     11
+    ],
+    "torch.float32",
+    [
+     1,
+     11
+    ]
+   ],
+   "lidar2img": [
+    "torch.float32",
+    [
+     2,
+     4,
+     4
+    ],
+    "torch.float32",
+    [
+     2,
+     4,
+     4
+    ]
+   ],
+   "img_shape": [
+    "torch.float32",
+    [
+     2,
+     3
+    ],
+    "torch.float32",
+    [
+     2,
+     3
+    ]
+   ],
+   "trajectory": [
+    "torch.float64",
+    [
+     8,
+     3
+    ],
+    "torch.float32"
+   ]
+  },
+  "label2_in_sample": 17
+ },
+ "full_pass": {
+  "batches": 4650,
+  "draws": 148796,
+  "moments_served": 126981,
+  "manifest": 126981,
+  "wall_s": 4857.8,
+  "s_per_batch": 1.0446798917298676,
+  "wait_s_per_batch_mean": 1.04457825978597
+ }
+}

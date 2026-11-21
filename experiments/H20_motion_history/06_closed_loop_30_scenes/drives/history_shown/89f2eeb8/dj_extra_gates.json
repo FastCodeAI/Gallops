@@ -1,0 +1,54 @@
+{
+ "ok": true,
+ "gates": {
+  "G-VER": {
+   "ok": true,
+   "detail": "expects drivejepa-v2-driver-0.1.8b-p06-a4 in wizard_console.log"
+  },
+  "G-NRE": {
+   "ok": true,
+   "detail": "26.01 x1, 26.04 x0, multi-version warnings 0"
+  },
+  "steps": {
+   "ok": true,
+   "detail": "n_sim_steps 400 -> 397"
+  },
+  "G-SENT": {
+   "ok": true,
+   "detail": "6 fires on replans [1, 2, 3, 4, 5, 6]; 0 after handover; 0 unattributed",
+   "fires": [
+    [
+     1,
+     226975711210
+    ],
+    [
+     2,
+     226976211210
+    ],
+    [
+     3,
+     226976711210
+    ],
+    [
+     4,
+     226977211210
+    ],
+    [
+     5,
+     226977711210
+    ],
+    [
+     6,
+     226978211210
+    ]
+   ],
+   "handover_us": 226978211210
+  },
+  "G-AGE": {
+   "ok": true,
+   "detail": "handover-plan age 0 us (limit 300000); 39 replans logged",
+   "age_us": 0
+  }
+ },
+ "run_dir": "{approach4_store}/cl/runs/a4_armA_89f2eeb8"
+}
