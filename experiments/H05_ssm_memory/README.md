@@ -80,14 +80,14 @@ Parked, verdict inconclusive, **by choice and not by the rule.** The rule writte
 returned GO (`probe.json`: "overall": "GO", "only ridge meets the rule"): one of its eight comparisons,
 ridge on speed at +2 s with four moments against two, improved with an interval clear of zero. Control
 (c), designed after that result was seen, put the gain on the car's own past rather than the camera's.
-On that, Siddesh, who ran step 0, chose not to build the camera layer and to try H15 instead. Naren
+On that, Siddesh, who ran step 0, chose not to build the camera layer and to try H19 (registered as H15) instead. Naren
 owns H05; the parking is provisional until he agrees, and no row in `experiments/decisions.toml`
 records it yet.
 
 The probe reads ordinary driving through a lossy 128-number summary and cannot see a crossing car, so
 it neither supports nor rules out a trained scene memory. The follow-on
 design carries the planner's own outputs forward instead of the camera; that is a different claim, so
-it is recorded as H15. Any later "more or longer camera history" work stays here as a new run.
+it is recorded as H19. Any later "more or longer camera history" work stays here as a new run.
 
 Before step 0 (3 Nov), two things the plan relies on had changed in paddock: the gate's NAVSIM subset
 is now 1,018 tokens drawn within groups (#105, merged 23 Oct), and momentum-aware selection is on by

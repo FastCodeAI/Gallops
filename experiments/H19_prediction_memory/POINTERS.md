@@ -1,4 +1,4 @@
-# Pointers: what H15 produced that is not in the repository
+# Pointers: what H19 produced that is not in the repository
 
 Nothing below is committed: arrays and checkpoints by rule (`.gitignore`, `docs/checkpoints.md`), and the
 rest because it is derived from NAVSIM navtrain. Each row gives a size in bytes and a sha256, so a copy can
@@ -14,7 +14,7 @@ training, and the trainer of 5 Nov wrote no digest into its sidecars (it does no
 input file here was last written before the first of the six checkpoints (the latest, `scores.npy`, at
 06:44 on 5 Nov; the first checkpoint at 06:49), by the store's modification times.
 
-## Checkpoints (H15.r3-a-s0 to H15.r3-b-s2)
+## Checkpoints (H19.r3-a-s0 to H19.r3-b-s2)
 
 `{weights}/drivejepa_memory/`, in the layout `docs/checkpoints.md` gives. Each `memory.pt` digest is the
 `weights_sha256` the record pins; `a` is the memory carried, `b` the same layer wiped every moment.
@@ -34,7 +34,7 @@ input file here was last written before the first of the six checkpoints (the la
 | `h15-r3-b-L0-s2/step_000001638/checkpoint.json` | 1810 | `8683b58ddee9e7427fc203059c19887539abd96db2366b19e11db7b4f0359205` |
 | `h15-r3-b-L0-s2/step_000001638/memory.pt` | 1336629 | `deb69754a231eb352fc5924686d8ab220a980633a117996d15749bc3b0152004` |
 
-## True grades of the 32 paths (H15.r1)
+## True grades of the 32 paths (H19.r1)
 
 `{data.navtrain.cache}/grades/`: one row per graded moment, 91,977 moments.
 
@@ -50,7 +50,7 @@ input file here was last written before the first of the six checkpoints (the la
 | `scores.npy` | the strict sub-scores and the final grade of each path | 105957632 | `0b5e3ab1fd24b2fb27ae7be17f983c4741b4314d74480d105751dd6e916ae938` |
 | `states.npy` | each path's simulated states, as offsets from `origin.npy` | 5309648384 | `8f26a214e2705f1abce1fe71c3afab23612eac6256d24d0a3f6192d4167f61af` |
 
-## Matching each path to the previous moment's closest path (H15.r2)
+## Matching each path to the previous moment's closest path (H19.r2)
 
 `{data.navtrain.cache}/align/`.
 
@@ -62,7 +62,7 @@ input file here was last written before the first of the six checkpoints (the la
 | `poses.npy` |  | 16216960 | `819bbe06521f909daf63118d499b6ce55a5f2a042dd31f66e312316378293ef3` |
 | `prev.npy` |  | 1013680 | `1a93f83a82ae67760e6c9c060d46f819250652c9bf9975006e777ce8282d5654` |
 
-## Selection, preflight and evaluation outputs (H15.r3)
+## Selection, preflight and evaluation outputs (H19.r3)
 
 `{data.navtrain.cache}/h15/`. `evaluate.json` is the file the record's offline results cite.
 
