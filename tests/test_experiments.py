@@ -833,7 +833,7 @@ def test_changing_a_result_or_a_gate_is_what_makes_a_results_pr(tmp_path) -> Non
 
 
 def test_registering_an_experiment_is_not_a_results_pr_until_it_reports_something(tmp_path) -> None:
-    """H15 was registered, with a run and its predictions, before anything was graded."""
+    """H19 (then H15) was registered, with a run and its predictions, before anything was graded."""
     root = _with_base(tmp_path, None)
     folder = root / "experiments" / "H01_thing"
     folder.mkdir()

@@ -1,6 +1,8 @@
-# H15 — Prediction memory
+# H19 — Prediction memory
 
 **Owner:** Naren · **Contributor:** Siddesh · **Started:** 5 Nov 2026 · **Status:** planned (hypothesis)
+
+Registered as H15 on 5 Nov; renumbered to H19 on 20 Nov to resolve a clash with H15_perception_sidecar (Naren's ruling).
 
 The facts (runs, data, checkpoints, results, gate verdicts) live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. The predictions,
@@ -22,7 +24,7 @@ That is a different claim, so it is a new record ([H05](../H05_ssm_memory/README
 
 | Step | What | Decides |
 |---|---|---|
-| 1 | File H05's results, register H15, commit PREDICTIONS.md | — |
+| 1 | File H05's results, register it (as H15), commit PREDICTIONS.md | — |
 | 2 | Grade the 32 released proposals at every graded moment, once (CPU, 4 cores): report logs first, then selection logs, then the rest. Timed on 200 moments first | — |
 | 3 | Align proposals across moments; train (a) carried, (b) wiped, against (c) released, 3 seeds each, momentum off | — |
 | 4 | **Go / no-go** on the 214 val logs: P1, (a) − (b) in true grade of the pick, CI excluding 0; flips and comfort secondary | whether to gate |

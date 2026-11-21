@@ -3,7 +3,7 @@
 # with steps 0-4). Step 0 (feature cache, probe, control) ran 3-5 Nov 2026 (Siddesh); its numbers are
 # copied from MEMORY_STEP1_LAUNCH.md, MEMORY_STEP2_PROBE.md and MEMORY_STEP2C_CONTROL.md (paddock-sid/memory)
 # and from {data}/memory_cache/probe/{probe.json, c/control_c.json, k1/refit_k1.json}. Parked 5 Nov: the
-# new design (carry the planner's outputs, not the camera) is H15.
+# new design (carry the planner's outputs, not the camera) is H19.
 
 schema = 1
 id = "H05"

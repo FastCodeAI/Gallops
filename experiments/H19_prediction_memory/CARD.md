@@ -1,7 +1,7 @@
 <!-- Rendered from experiment.toml by `gallops experiments render --write`.
      Edit that file, not this one: make check fails when the two differ. -->
 
-# H15 · Carrying the planner's output embeddings across moments makes the picker steadier and earlier
+# H19 · Carrying the planner's output embeddings across moments makes the picker steadier and earlier
 
 **Naren, Siddesh** · NAVSIM, neuroNCAP, Bench2Drive, AlpaSim, KITScenes, nuScenes · 📝 planned · 5 Nov 2026 · hypothesis
 

@@ -1,4 +1,4 @@
-# H15 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
+# H19 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
 # Owner Naren.
 # Sources: Naren's plan of 5 Nov 2026 (paddock checkout, memory-layer-plan.md, "Rewritten 5 Nov 2026",
 # appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Siddesh's choices
@@ -9,7 +9,7 @@
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
 schema = 1
-id = "H15"
+id = "H19"
 title = "Carrying the planner's output embeddings across moments makes the picker steadier and earlier"
 short = "Prediction memory"
 track = "hypothesis"
@@ -39,8 +39,8 @@ unless the 3-seed mean of (a) - (b) in true PDM grade of the pick is above 0 wit
 (flips and comfort are secondary, reported with CIs); after the gate unless (a) beats (b), nothing \
 regresses against released and braking starts no later. The effect size is stated in PREDICTIONS.md \
 once the val logs are graded, before training."""
-predictions = "experiments/H15_prediction_memory/PREDICTIONS.md"
-narrative = "experiments/H15_prediction_memory/README.md"
+predictions = "experiments/H19_prediction_memory/PREDICTIONS.md"
+narrative = "experiments/H19_prediction_memory/README.md"
 parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 
 # Pinned before anything runs (Siddesh, 5 Nov; Naren's agreement assumed on choices 10-12):
@@ -57,5 +57,5 @@ parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 #
 # Code still to come (plan appendix, "Gallops PR 2"): gallops.memory.align, .grade, .model, .train,
 # .evaluate; each is claimed by the run that first uses it. The adapter record goes under
-# experiments/H15_prediction_memory/paddock/ and is copied into a throwaway paddock checkout for the
+# experiments/H19_prediction_memory/paddock/ and is copied into a throwaway paddock checkout for the
 # gate; paddock gets no PR (paddock rule of 4 Nov: released checkpoints only).

@@ -28,7 +28,7 @@ with its data, code, checkpoint sha256, results and gate verdicts.
 - **Base model:** released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
 - **Last gate run:** 20 Nov · [H01.four-camera-planner](experiments/H01_four_camera_base/CARD.md) · ⏸ **HOLD**.
-- **In progress:** 7 hypotheses, 3 enablers. Next by priority: [H15](experiments/H15_prediction_memory/CARD.md) Prediction memory.
+- **In progress:** 7 hypotheses, 3 enablers. Next by priority: [H19](experiments/H19_prediction_memory/CARD.md) Prediction memory.
 <!-- /experiments:status -->
 
 <a id="training-so-far"></a>
@@ -64,8 +64,8 @@ One structural change each, judged against the base by paddock's regression gate
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | ⏳ running | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | 📝 planned | — | — | — |
 | [**H18**](experiments/H18_fact_scorer_navsim_lead/CARD.md) | Fact scorer, NAVSIM + LEAD | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **86.35** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 20 Nov |
+| [**H19**](experiments/H19_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | 📝 planned | — | — | — |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.
