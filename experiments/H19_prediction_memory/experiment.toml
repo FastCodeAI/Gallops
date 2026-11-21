@@ -4,7 +4,7 @@
 # appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Siddesh's choices
 # of 5 Nov, which are pinned below. Numbers about the saved data are from H05.r1's cache. Those choices were
 # numbered in his working notes; the numbers are written "choice 10" here, because D10, D11, ... name other
-# decisions in experiments/decisions.toml. PREDICTIONS.md and GATE_EXPECTATIONS.md were committed before the
+# decisions in experiments/decisions.toml. PREDICTIONS.md and GATE_EXPECTATIONS.md (added in #31) were committed before the
 # runs and keep the old labels ("Sid D23", "Sid D29", "Sid D30"): they mean these choices, not the decision log.
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
