@@ -55,6 +55,11 @@ not hashed: none was evaluated beyond the trainer's held-out reports.
 | Gate verdict, Bench2Drive with the command fix, 20 Nov | `{runs}/gate-run3b/verdict_run3b_v2_b2d-cmdfix.json` | 10,164 | `1ade14ce843674db0181f79154b0602f2ce960690582497a145f84e03ca32f5f` |
 | Gate manifest, Bench2Drive with the command fix | `{data.p3_renesas}/paddock-runs/gate-oct27/gate/smoke/run3b_v2_b2d-cmdfix/manifest.toml` | 619 | `eb2e9d15ccdd70b393ba57d9a4a28b5edc0562f9aaddfb7aa08524d6a42c77e9` |
 | Bench2Drive against H04's run, same routes | `{runs}/gate-run3b/compare_b2d_cmdfix_run3b_vs_run3a.json` | 3,586 | `ad8248be8c1f5a58262040d038a462cc244fd5de4e250d4d790ce572e213ac71` |
+| Bench2Drive 220: per route, summary and pairs (this model, H04, released) | `{runs}/b2d220-compare/b2d220_paired.json` | 148,904 | `0c8b950d25f5a664b4cf448855c6ac4bf6682a8183341f195c66550e3fd6a7f9` |
+| Released Drive-JEPA's Bench2Drive 220 record, as committed in paddock (results/bench2drive/drivejepa/pooled220-86aa45e768a29a64-1507a1/run.json) | `{runs}/b2d220-compare/dj_pooled220_run.json` | 6,795 | `8a59b439b5920cd369cc2fd95604d8a2aa38cd20e7ce8bee148c2cd431795dcf` |
+| Released Drive-JEPA's native-50 record (its route list names the native-50) | `{runs}/b2d220-compare/dj50_run.json` | 4,440 | `739b5de8e45b058e47860d484f4e3f21965e1251d31c64e05e032cff15402e12` |
+| Bench2Drive 220 route results, this model | `{data.p3_renesas}/b2d220_run3b_cmdfix/bench2drive/run3b_v2_b2d/` | | one `results.json` per route |
+| Bench2Drive 220 route results, H04 | `{data.p3_renesas}/b2d220_run3a_cmdfix/bench2drive/wajepa_dj_run3a_b2d/` | | one `results.json` per route |
 | NAVSIM against H04's current-subset run | `{runs}/gate-run3b/compare_navsim_current_run3b_vs_run3a.json` | 7,678 | `2b838504dbf94e7cc45f7a58da2a009b3a08b3ef24c8c4789a7cd86a4b0f05fa` |
 
 Gate runs (paddock run ids): navsim `20261120T045940-856e6e`, nuscenes `20261120T050004-387aa8`, kitscenes

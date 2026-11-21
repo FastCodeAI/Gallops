@@ -109,6 +109,22 @@ the Bench2Drive 220, and none of the 14 that overlap the 7 gate routes was train
 POINTERS.md). Not run: Bench2Drive on LEAD's
 camera rig (the spec's evaluation; not built) and the light-swap test (named by the spec, not defined).
 
+**Bench2Drive 220**, every route of `bench2drive220`, one result per route, the command fix, 2 Hz. This model (20 Nov)
+and H04 (21 Nov) ran in one setup: worktree gate-oct27 (paddock 3daf4b9 + the ops adapters), Bench2Drive copy b2d-fix
+(pin 7ec25d1 + patches 0001–0003), H04's camera feed. Released Drive-JEPA is its paddock record
+`pooled220-86aa45e768a29a64-1507a1` (its own runs, 6–7 Nov, momentum on), not this setup. Table and pairs by
+`scripts/b2d220-compare/paired_b2d220.py` (`b2d220_paired.json`, POINTERS.md):
+
+| Run | DS | RC | Completed | Deviated | Tick cap | Blocked |
+|---|---:|---:|---:|---:|---:|---:|
+| **The fact-scorer model** | **58.81** | 72.74 | 99 | 76 | 31 | 14 |
+| The sub-score agent-look model (H04) | 52.15 | 67.06 | 87 | 59 | 51 | 23 |
+| Released Drive-JEPA | 40.74 | 52.67 | 51 | 29 | 82 | 58 |
+
+Paired per route, this model minus H04: +6.66, t 3.57 (higher on 96, lower on 59, tied on 65); on the native-50
+routes +6.31, t 1.75. Minus released Drive-JEPA: +18.06, t 7.74 (142 / 51 / 27). Summed infractions, this model / H04:
+vehicle collisions 78 / 54, route deviations 85 / 69, layout collisions 16 / 25, red lights 16 / 21, blocked 14 / 23.
+
 What is measured and what is not: every number above is a single run of one checkpoint; nothing separates the effect of
 the fact scorer from training on LEAD, from the fresh LoRA or from starting the planner from scratch, since all four
 changed at once.
