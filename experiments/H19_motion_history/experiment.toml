@@ -11,14 +11,15 @@ track = "hypothesis"
 owner = "Siddesh"
 benchmarks = ["alpasim", "offline"]
 started = 2026-11-17
-status = "running"
-verdict = "none"
+ended = 2026-11-20
+status = "parked"
+verdict = "negative"
 question = """Drive-JEPA plans each moment from two camera frames 0.5 s apart and the car's current state. \
 H05 and H17 found that the camera's past adds little, and in both the stronger signal was the car's own \
 motion over the last few seconds. Does giving the generator and the scorer that motion, trained with them, \
 make the model drive better in closed loop?"""
 hypothesis = """Eight past states of the car (the last 4 s, one every 0.5 s, built from poses only), encoded \
-and added through two links that start at zero, one into where the generator starts its 32 candidate paths \
+and added through two links that start at zero, one into the generator's plan starting points \
 and one into the scorer's rating head, and trained with the generator and the scorer from Drive-JEPA 0.1.8b \
 (pass 0.6) on Physical AI AV, raise the mean closed-loop score on 30 AlpaSim scenes. The rule written before \
 training: it passes only if the model shown the history scores at least 0.8194 on average (the starting \
@@ -27,3 +28,279 @@ Anything else refutes it."""
 predictions = "none: the rule was written on 17 Nov 05:01 and hashed (sha256 f8f4b975…a450, amendment 1 at 07:10) before the first training step on 18 Nov 03:09, in a folder outside git, so no commit date shows it"
 narrative = "experiments/H19_motion_history/README.md"
 parents = ["H17"]
+learned = """Giving the generator and the scorer the car's own motion over the last 4 s did not improve \
+closed-loop driving. With the history shown, the mean over 30 AlpaSim scenes was 0.7771, against 0.7527 for \
+the starting model and 0.8431 for the same training with the history always hidden. The rule written \
+beforehand needed 0.8194 and a win over the hidden copy, and it failed both. Offline, both copies passed \
+the pull-away check (0.755 and 0.764 against a floor of 0.66), yet in driving the copy shown the history \
+stalled on a scene the starting model completes (d2715023: 1.2 m travelled against 44.4 m for the human \
+driver, score 0.03), so a steady offline pull-away rate did not predict pull-away in the car. Training was \
+not repeatable step for step until PyTorch's grid_sample backward, which uses atomic adds, was replaced by \
+a deterministic one; the starting model's own training used the same non-repeatable path (argued from the \
+code, not re-measured). The hidden copy's gain is an observation, not a tested result: it has no rule of its \
+own. Limits: one seed, one checkpoint per copy, 30 scenes."""
+
+[[checks]]
+name = "What does the simulator's car state hold during a drive?"
+result = "The simulator reports zero speed and acceleration for the first 3 s of every drive (its warm-up) while the car's poses move, so a history read from the reported speed would show a car standing still. The history is therefore built from poses only."
+date = 2026-11-17
+decided = "build every history row from poses, the same way in training and in the car"
+source = "experiments/H19_motion_history/01_what_the_car_state_holds/REPORT.md"
+
+[[checks]]
+name = "The starting model's closed-loop baseline, and whether its drives repeat"
+result = "The starting model's windowed mean is 0.7527 on the 30 scenes (0.5919 on the 12 diagnosis scenes, 0.8599 on the other 18); its repeats on a rebuilt simulator image were bit-identical per tick. Its pull-away go rate on the 106 fixed moments is 0.840."
+date = 2026-11-17
+decided = "the pass line of the rule written beforehand: 0.7527 + 0.0667 = 0.8194"
+source = "experiments/H19_motion_history/02_baselines_and_the_rule_written_beforehand/REPORT_baselines.md"
+
+[[checks]]
+name = "The history data: complete, and built the same way as in the car"
+result = "4,015 files, one per training clip, 126,981 moments; 25.0 % of moments have fewer than 8 valid rows (3,971 have none). The four builder tests pass: no future leak, the relative pose matches both planners, interpolation matches the converter, shape and valid flag."
+date = 2026-11-17
+decided = "train on all moments, with the valid flag as the only signal of missing rows"
+source = "experiments/H19_motion_history/03_history_data/REPORT.md"
+
+[[checks]]
+name = "At step 0 the new model is exactly the starting model"
+result = "On the 1,131 graded picking moments, both copies' picks and plans equal the starting model's on every moment and the rating logits differ by at most 0.0; the cached encoder tokens are bit-identical to the live encoder's."
+date = 2026-11-18
+decided = "train"
+source = "experiments/H19_motion_history/04_model_and_trainer/tables/step0_check.json"
+
+[[checks]]
+name = "Does training repeat bit for bit after a stop and resume?"
+result = "Not at first: the same step on the same state gave different gradients on 33 of 79 tensors, because PyTorch's CUDA backward of grid_sample uses atomic adds. With that backward replaced by a deterministic one (det_grid_sample.py), 6 steps straight and 3 + resume + 3 are identical in losses, all 79 weight tensors, the optimiser states and the random states. Re-run on CPU on 21 Nov from the kept files: still identical, and the kept pre-fix pair still differs."
+date = 2026-11-18
+decided = "train with the deterministic backward; resume after a crash is the same run"
+source = "experiments/H19_motion_history/05_training_two_arms/REPORT.md"
+
+[[checks]]
+name = "Does the rebuilt simulator image reproduce the starting model's earlier drives?"
+result = "Yes on all 8 scenes named beforehand: per-tick metric rows bit-identical to the recorded drives. For the 4 drives reused from H17's image check, that they ran on this image is inferred from timing, not logged."
+date = 2026-11-20
+decided = "drive both copies on this image (alpasim-base 0.134.0, id ab16bc78...; renderer nre-ga 26.04, 97f43e71...)"
+source = "experiments/H19_motion_history/06_closed_loop_30_scenes/tables/cl_imagecheck.json"
+
+[[checks]]
+name = "Does the new simulator driver reproduce the starting model at step 0?"
+result = "Yes: the step-0 checkpoint driven through the new driver on e3ed554f is per-tick bit-identical to the starting model's recorded drive and to its re-run on this image."
+date = 2026-11-20
+decided = "drive the two chosen checkpoints"
+source = "experiments/H19_motion_history/06_closed_loop_30_scenes/tables/wiring_proof.json"
+
+[[runs]]
+id = "H19.r1"
+label = "history shown: hidden at random half the time in training, always shown in the car"
+started = 2026-11-18
+ended = 2026-11-20
+start_from = "3d566eb211b5"
+trained = ["motion encoder (new)", "the learned 'no history' vector (new)", "the two links (new)", "generator", "scorer"]
+frozen = ["encoder (its output is read from a cached copy of H17's token cache)"]
+params_trained_m = 7.49
+notes = """Called "arm A" while it ran. 5,580 steps (1.2 passes) from the starting model, checks every 930 \
+steps; the chosen check is 0.2 (step 930) by the starting model's own rule: the highest pick grade on the \
+picking set among checks with no hard-brake pick above 10 m/s more than step 0 and a pull-away go rate of \
+at least 0.66. 406,528 new parameters. The deterministic grid_sample backward was installed for training \
+only. Trained 2026-11-18 03:02 to 08:29, no resume; driven once on each of the 30 scenes on 2026-11-20. \
+The code was in a folder outside git when it ran, so there is no train_git_sha; AS_RUN.sha256 holds each \
+file's hash as it ran. The trainer's run file (run.json, 1.07 MB) is in POINTERS.md, not here."""
+
+  [runs.code]
+  as_run = [
+    "experiments/H19_motion_history/03_history_data/",
+    "experiments/H19_motion_history/04_model_and_trainer/",
+    "experiments/H19_motion_history/05_training_two_arms/",
+    "experiments/H19_motion_history/06_closed_loop_30_scenes/",
+    "experiments/H19_motion_history/paddock/drivejepa_a4/",
+  ]
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "training slice of the earlier retrain"
+  role = "train"
+  n = 126981
+  unit = "moments"
+  note = "4,015 clips; the history side file has one file per clip"
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "picking set, graded moments"
+  role = "selection"
+  n = 1131
+  unit = "moments"
+  note = "84 clips; the pull-away rate is read on 106 of its moments where the human pulled away"
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "the 30 scenes of the starting model's baseline drives: 12 diagnosis scenes and 18 more"
+  role = "eval"
+  n = 30
+  unit = "scenes"
+  scene_list = "experiments/H19_motion_history/06_closed_loop_30_scenes/tables/scenes_30.txt"
+  note = "one drive per scene, no re-runs; native driver"
+
+  [runs.checkpoint]
+  model = "drivejepa_physicalai_motion_history"
+  train_run = "h19-r1-history-shown"
+  step = 930
+  step_unit = "optimizer_step"
+  weights_sha256 = "d1a40752613e0dad4e678bc44cba904dc314fc7b57ebfd5dcd79c592450b4f4e"
+  file = "p00.2.pt"
+  location = "{weights}/drivejepa_physicalai_motion_history/h19-r1-history-shown/step_000000930/"
+  sidecar = false
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "mean windowed score, 30 scenes, history shown (line written beforehand 0.8194, not met)"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.7527"
+  value = "0.7771"
+  n = 30
+  unit = "scene"
+  better = "higher"
+  strength = "moderate"
+  headline = true
+  source = "experiments/H19_motion_history/06_closed_loop_30_scenes/REPORT.md: Results: arms A and B on all 30"
+  note = """The rule written beforehand: pass only if this mean is at least 0.8194 and above the history-hidden \
+copy's (H19.r2, 0.8431). 0.7771 < 0.8194 and 0.7771 < 0.8431: both conditions fail, so the result is FAIL. \
+On the 12 diagnosis scenes 0.6093 (starting model 0.5919); on the other 18, 0.8889 (0.8599). Against the \
+starting model: 1 scene up from 0 to 1 (04749bb9), 1 down from 1 to 0 (e3ed554f, an at-fault collision), 8 \
+partial changes, 20 the same; one partial is a stall (d2715023, 1.2 m of 44.4 m, 0.03). Moderate, not \
+strong: the drives are deterministic and the image and driver were shown to reproduce the starting model \
+bit for bit, but there is one seed and one checkpoint, and one scene is 0.033 of the mean. Per-drive score \
+files: 06_closed_loop_30_scenes/drives/."""
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "mean grade of the picked path at the chosen check, picking set"
+  baseline = "the starting model (step 0)"
+  baseline_value = "0.7685"
+  value = "0.7727"
+  n = 1131
+  unit = "moment"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  source = "experiments/H19_motion_history/05_training_two_arms/REPORT.md: Arm A (hide_prob 0.5)"
+  note = "Exact values 0.768489 and 0.772741 (run.json, POINTERS.md). The picking set chose this check and is the set reported on."
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "pull-away go rate at the chosen check (floor for driving 0.66: passed)"
+  baseline = "the starting model (step 0)"
+  baseline_value = "0.840"
+  value = "0.755"
+  n = 106
+  unit = "moment"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  source = "experiments/H19_motion_history/05_training_two_arms/REPORT.md: Arm A (hide_prob 0.5)"
+  note = "80/106 against 89/106. The 106 moments are where the human pulled away from standstill, within the picking set that chose the check. The floor is the kill switch written beforehand: below it the copy would not have been driven."
+
+[[runs]]
+id = "H19.r2"
+label = "history hidden (the control): the same training with the history always hidden"
+started = 2026-11-18
+ended = 2026-11-20
+start_from = "3d566eb211b5"
+trained = ["motion encoder (new; always replaced by the 'no history' vector)", "the learned 'no history' vector (new)", "the two links (new)", "generator", "scorer"]
+frozen = ["encoder (its output is read from a cached copy of H17's token cache)"]
+params_trained_m = 7.49
+notes = """Called "arm B" while it ran. The same code, data, schedule, seed and selection rule as H19.r1; only \
+the hiding probability differs (1 instead of 0.5), so it measures what the retraining itself does. The \
+chosen check is 0.6 (step 2,790). It was stopped twice and resumed from its saves: a machine reboot at step \
+2,850 (resumed from step 2,790) and a GPU out-of-memory error at check 0.8 caused by other users' jobs \
+(resumed from step 3,500, on the owner's go). The chosen checkpoint file (p00.6.pt) was saved before either stop. Trained \
+2026-11-18 08:32 to 2026-11-19 05:07; driven once on each of the 30 scenes on 2026-11-20."""
+
+  [runs.code]
+  as_run = [
+    "experiments/H19_motion_history/03_history_data/",
+    "experiments/H19_motion_history/04_model_and_trainer/",
+    "experiments/H19_motion_history/05_training_two_arms/",
+    "experiments/H19_motion_history/06_closed_loop_30_scenes/",
+    "experiments/H19_motion_history/paddock/drivejepa_a4/",
+  ]
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "training slice of the earlier retrain"
+  role = "train"
+  n = 126981
+  unit = "moments"
+  note = "4,015 clips"
+
+  [[runs.data]]
+  dataset = "physicalai_av"
+  split = "picking set, graded moments"
+  role = "selection"
+  n = 1131
+  unit = "moments"
+  note = "84 clips"
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "the 30 scenes of the starting model's baseline drives: 12 diagnosis scenes and 18 more"
+  role = "eval"
+  n = 30
+  unit = "scenes"
+  scene_list = "experiments/H19_motion_history/06_closed_loop_30_scenes/tables/scenes_30.txt"
+  note = "one drive per scene, no re-runs; native driver"
+
+  [runs.checkpoint]
+  model = "drivejepa_physicalai_motion_history"
+  train_run = "h19-r2-history-hidden"
+  step = 2790
+  step_unit = "optimizer_step"
+  weights_sha256 = "35c83bf67e89b4579cb3d8f77fc45862da2f0b2070caecc1f5193caed940dd9a"
+  file = "p00.6.pt"
+  location = "{weights}/drivejepa_physicalai_motion_history/h19-r2-history-hidden/step_000002790/"
+  sidecar = false
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "mean windowed score, 30 scenes, history always hidden (the control; no pass rule of its own)"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.7527"
+  value = "0.8431"
+  n = 30
+  unit = "scene"
+  better = "higher"
+  strength = "moderate"
+  source = "experiments/H19_motion_history/06_closed_loop_30_scenes/REPORT.md: Results: arms A and B on all 30"
+  note = """An observation outside the rule written beforehand: this copy is the control, and the rule gives it \
+no pass line, so the gain is not a result this experiment set out to test. Against the starting model: 2 \
+scenes up from 0 to 1 (8023dce5, where the starting model had an at-fault collision, and acd22430, where it \
+left the road), none down from 1 to 0, 8 partial changes, 20 the same. On the 12 diagnosis scenes 0.7260, on \
+the other 18, 0.9212. A different check (0.6) from H19.r1's (0.2). It suggests that retraining on cached \
+tokens without GridMask (amendment 1 of the rule file) helped in closed loop; no rule tested that."""
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "mean grade of the picked path at the chosen check, picking set"
+  baseline = "the starting model (step 0)"
+  baseline_value = "0.7685"
+  value = "0.7632"
+  n = 1131
+  unit = "moment"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  source = "experiments/H19_motion_history/05_training_two_arms/REPORT.md: Arm B (hide_prob 1.0)"
+  note = "Exact values 0.768489 and 0.763163 (run.json, POINTERS.md). Below step 0; the rule chose it because every check with a higher grade (0.4, 1.0, 1.2) failed the pull-away floor. The picking set chose this check and is the set reported on."
+
+  [[runs.results]]
+  bench = "offline"
+  metric = "pull-away go rate at the chosen check (floor for driving 0.66: passed)"
+  baseline = "the starting model (step 0)"
+  baseline_value = "0.840"
+  value = "0.764"
+  n = 106
+  unit = "moment"
+  better = "higher"
+  strength = "moderate"
+  flags = ["open-loop", "selected-on-report"]
+  source = "experiments/H19_motion_history/05_training_two_arms/REPORT.md: Arm B (hide_prob 1.0)"
+  note = "81/106 against 89/106, on the same 106 moments as H19.r1's."
