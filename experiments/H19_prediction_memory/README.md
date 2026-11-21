@@ -2,7 +2,8 @@
 
 **Owner:** Naren · **Contributor:** Siddesh · **Started:** 5 Nov 2026 · **Status:** planned (hypothesis)
 
-Registered as H15 on 5 Nov; renumbered to H19 on 20 Nov to resolve a clash with H15_perception_sidecar (Naren's ruling).
+Registered as H15 on 5 Nov; renumbered to H19 on 20 Nov to resolve a clash with H15_perception_sidecar (Naren's ruling of 20 Nov, relayed
+by Siddesh; the rule it follows is in [docs/experiments.md](../../docs/experiments.md#ids)).
 
 The facts (runs, data, checkpoints, results, gate verdicts) live in
 [experiment.toml](experiment.toml) and are rendered into the repository README. The predictions,

@@ -159,7 +159,7 @@ separately is not enough: in defect 6 every part was right on its own.
 `experiment.toml`, and the README's tables and each folder's `CARD.md` are
 rendered from those files** — never typed. `GCnn` is phase 1 (gap closing, closed); `Hnn` is phase 2
 (hypotheses and enablers, H01–H11 being the team's list of 21 Oct). IDs are
-never reused or renumbered. The rules, and the reasons, are in
+never reused, and renumbered only to settle a clash before `main`. The rules, and the reasons, are in
 [docs/experiments.md](docs/experiments.md); `src/gallops/experiments.py`
 enforces them and `tests/test_experiments.py` fails when the README differs from
 what the registry renders.
