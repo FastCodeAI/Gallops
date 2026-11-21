@@ -52,6 +52,9 @@ benchmark reporting should wait for a more stable release.
 
 ### NAVSIM — the most valuable corpus we do not have
 
+> **Update, H01 (16 Oct):** `navtrain` is now held at the training site, under `[datasets.navsim]`; the 4-camera planner and the sub-score agent-look model
+> trained on it. The rest of this section is as written before that.
+
 `navtrain` / `trainval_sensor` is a separate, much larger download and is
 absent, as is `synthetic_scenes/` (needed for the two-stage scoring the public
 leaderboard reports). Since NAVSIM at n = 12,146 is the highest-resolution

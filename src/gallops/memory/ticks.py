@@ -10,9 +10,10 @@ frame's back, left and right cameras for its image geometry (`bev_feature_build.
 `LoadMultiViewImageFromFiles` skips a missing camera, which would shift the front camera out of the
 slot the model keeps), so a moment records whether all four are on disk: `inputs_ok`.
 
-**Images** come from two roots, ours first: Naren's copy, which lacks the current frames of 298
-logs, and Navvrat's unpack of navtrain_current_1, which has 134 of them (the memory-picker Step 0
-audit, B8). A frame is looked up by file name in each root's directory listing.
+**Images** come from one root, `blobs`, or two when a site's copy is incomplete: `blobs` first,
+then `extra_blobs` (`image_roots`). At the site that built the first cache the main copy lacks the
+current frames of 298 logs, and a second unpack of navtrain_current_1 has 134 of them. A frame is
+looked up by file name in each root's directory listing.
 
 **A chain** is a run of consecutive frames that all have a front image, each at most 0.55 s after
 the last. A moment's `chain_pos` is how many frames precede it in its chain, so the memory has
@@ -216,12 +217,20 @@ def _listing(root: Path, log: str) -> dict:
     return out
 
 
+def image_roots(data) -> list[Path]:
+    """The navtrain image roots, searched in order: `blobs`, then `extra_blobs` where a site has one."""
+    roots = [data.extra["blobs"]]
+    if data.extra.get("extra_blobs"):
+        roots.append(data.extra["extra_blobs"])
+    return roots
+
+
 def build(cfg, out: Path, limit: int = 0) -> Path:
     """One pass over every graded log: moments.npz, logs.json (per-log dynamics), manifest.json."""
     from gallops.drivejepa_b2d.provenance import git_sha
 
     data = cfg.datasets["navtrain"]
-    logs_dir, roots = data.extra["logs"], [data.extra["blobs"], data.extra["extra_blobs"]]
+    logs_dir, roots = data.extra["logs"], image_roots(data)
     metadata = sorted((data.extra["metric_cache"] / "metadata").glob("*.csv"))
     if len(metadata) != 1:
         raise SystemExit(

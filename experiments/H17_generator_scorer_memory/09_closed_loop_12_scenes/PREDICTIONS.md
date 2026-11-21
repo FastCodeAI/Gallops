@@ -68,3 +68,13 @@ Machine gates inside the run script: GPU free memory ≥ 8,000 MiB (as 0.1.8b's 
 ## Not done
 
 No training. No held-out slice opened (proof B uses a picking clip). No pushes.
+
+## Amendment 1, 2026-11-12 22:28:51 IST (before any scene has run; no simulator image exists yet)
+
+The image check as written above cannot be run. The 0.1.7 runner refused to start at 22:27 on its own provenance check, before launching anything (`logs/cl12_queue.log`): its build folder was moved to the NAS on 2026-11-09 (`analysis_3.0` is now a link), so its path check fails, and its launcher then cannot find the shared adapter folder (`--check-only` tried at 22:30: assertion on `{paddock_sid_moved}/Alpasim/adapters`). Fixing either means editing or adding files in earlier lane folders, which this task may not do.
+
+Replacement, fixed now, before any run:
+- **Image check:** 0.1.8b pass 0.6 itself (its own adapter, launcher, build freeze and checkpoint; a copy of its run script whose only change is the output root, under `{experiment_store}/runs/cl12/imagecheck_018bp06/`) is re-run on four of the 12 scenes: e3ed554f and 8023dce5 (the first two of the list) and d2715023 and 04749bb9 (the two scenes of the earlier image checks that are among the 12). Same equality rule: each re-run must equal the original 0.1.8b run, score to 3 decimals and per-tick metrics bit-identical.
+- Pass: the existing 0.1.8b runs are the reference (0.5919). Fail: 0.1.8b is re-run on the other eight scenes too and the new 12 are the reference.
+- **0.1.7 (0.6742) is not re-checked on this image.** If the 0.1.8b check passes, the simulator reproduces 0.1.8b bit for bit, and 0.1.7 was reproduced bit for bit across the two earlier rebuilds; the figure is then shown as a reference with that stated. If the check fails, it is flagged "different simulator build".
+- Nothing else changes: arms, scenes, measures and the rule are as above.

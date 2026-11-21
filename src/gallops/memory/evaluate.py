@@ -1,4 +1,4 @@
-"""H15's go/no-go numbers on the val logs, for arms (a) carried, (b) wiped and (c) released.
+"""H19's go/no-go numbers on the val logs, for arms (a) carried, (b) wiped and (c) released.
 
 All offline, momentum off (Sid D10). Every arm picks the argmax of its own score at every val moment;
 (c) is the released final logit. For (a) and (b), each of the 3 seeds picks on its own and a moment's

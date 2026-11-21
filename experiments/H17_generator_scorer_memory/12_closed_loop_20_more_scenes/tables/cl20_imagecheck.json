@@ -1,0 +1,86 @@
+{
+ "rule": "all 6: score equal to 3 dp AND per-tick metrics bit-identical -> PASS; else STOP, drive nothing",
+ "image": "sha256:ab16bc78a4686dcd63c2b77a77fe585df3846528a61b552db6b71f9553983a44 2026-11-20T00:30:50.652230704+05:30 [alpasim-base@sha256:ab16bc78a4686dcd63c2b77a77fe585df3846528a61b552db6b71f9553983a44]",
+ "renderer": "sha256:97f43e7130c5636ce3e80ea3184d97f56a87fdd989b05cce42230881dbdea284 2026-05-26T18:44:15.602968472Z [nvcr.io/nvidia/nre/nre-ga@sha256:97f43e7130c5636ce3e80ea3184d97f56a87fdd989b05cce42230881dbdea284]",
+ "drives": {
+  "0.1.8b e3ed554f": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "0.1.8b 8023dce5": {
+   "orig": 0.0,
+   "rerun": 0.0,
+   "equal_3dp": true,
+   "orig_status": "fail",
+   "rerun_status": "fail",
+   "metric_rows": [
+    9027,
+    9027
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "0.1.8b d2715023": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "0.1.8b 04749bb9": {
+   "orig": 0.0,
+   "rerun": 0.0,
+   "equal_3dp": true,
+   "orig_status": "fail",
+   "rerun_status": "fail",
+   "metric_rows": [
+    9004,
+    9004
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "carry bae463d3": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9027,
+    9027
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  },
+  "carry 0245ff75": {
+   "orig": 1.0,
+   "rerun": 1.0,
+   "equal_3dp": true,
+   "orig_status": "pass",
+   "rerun_status": "pass",
+   "metric_rows": [
+    9027,
+    9027
+   ],
+   "columns_equal": true,
+   "per_tick_bit_identical": true
+  }
+ },
+ "pass": true
+}

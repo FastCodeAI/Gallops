@@ -1,0 +1,57 @@
+{
+ "moments": 64,
+ "inputs": "{retrain_store}/release/gate_018/train_side.npz",
+ "pass1_single_calls": {
+  "bit_identical": {
+   "proposals": 64,
+   "pred_logit": 64,
+   "pdm_score": 64,
+   "trajectory": 64
+  },
+  "max_abs_diff": {
+   "proposals": 0.0,
+   "pred_logit": 0.0,
+   "pdm_score": 0.0,
+   "trajectory": 0.0
+  },
+  "secs": 111.4,
+  "memory_was_live": {
+   "calls_reading_carried_memory": 63,
+   "read_norm_min_max": [
+    60.89973449707031,
+    63.986083984375
+   ],
+   "gate_mean_min_max": [
+    0.1573297381401062,
+    0.3960270881652832
+   ],
+   "chain_resets": 0
+  }
+ },
+ "pass2_session_with_comfort_rescore": {
+  "bit_identical": {
+   "proposals": 64,
+   "pred_logit": 64,
+   "pdm_score": 64,
+   "trajectory": 64,
+   "momentum_S": 64,
+   "momentum_states": 63
+  },
+  "max_abs_diff": {
+   "proposals": 0.0,
+   "pred_logit": 0.0,
+   "pdm_score": 0.0,
+   "trajectory": 0.0,
+   "momentum_S": 0.0,
+   "momentum_states": 1.734723475976807e-18
+  },
+  "picks_equal_before_and_after_rescore": 64,
+  "rescore_codes": {
+   "NO_PREV": 1,
+   "OK": 63
+  },
+  "rescore_changed_the_pick": 14,
+  "secs": 142.1
+ },
+ "pass": false
+}

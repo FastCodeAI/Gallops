@@ -1,12 +1,12 @@
-"""Train H15's memory picker on the saved outputs and the strict grades; preflight first, always.
+"""Train H19's memory picker on the saved outputs and the strict grades; preflight first, always.
 
 **Target.** BCE of the nudged final logit (`model.MemoryPicker`) against the strict PDM final grade of
 each of the 32 paths (`grade.py`'s `scores[..., -1]`), at graded moments of the training logs: the 978
-vendor train logs minus H15's 100 selection logs.
+vendor train logs minus H19's 100 selection logs.
 
 **Windows.** Each graded training moment is one example: its window is the moment and up to
 min(warm-up, L) earlier moments of its chain, with warm-up drawn uniformly from 1..16 per example per
-epoch (H15, "Fixed before training"). In reset mode the window's earlier moments are ignored by
+epoch (H19, "Fixed before training"). In reset mode the window's earlier moments are ignored by
 construction. The order of examples and the warm-up draws come only from the seed and the epoch, so
 arms (a) carry and (b) reset, and every L, see identical data in identical order; the initial weights
 come only from the seed too (same parameter shapes in both modes).
@@ -58,7 +58,7 @@ WEIGHT_DECAY = 1e-4
 EPOCHS = 8
 REPO = REPO_ROOT
 #: The selection logs, relative to the repository.
-SELECTION_LOGS = "experiments/H15_prediction_memory/selection_logs.txt"
+SELECTION_LOGS = "experiments/H19_prediction_memory/selection_logs.txt"
 #: Every file `Data` reads, relative to {data.navtrain.cache}: what the weights were trained on.
 INPUTS = (
     "ticks/moments.npz",
@@ -396,7 +396,7 @@ def sidecar_notes(
     import hashlib
 
     return {
-        "experiment": "H15",
+        "experiment": "H19",
         "mode": mode,
         # (b) wipes its memory at every moment: whatever --length was, its weights carry none.
         "length": length if mode == "carry" else 0,
@@ -460,12 +460,12 @@ def save_checkpoint(
                 trained_on=(
                     ck.TrainedOn(
                         "navsim",
-                        "navtrain: vendor train logs minus the 100 H15 selection logs, "
+                        "navtrain: vendor train logs minus the 100 H19 selection logs, "
                         f"the {len(train_logs_used)} of {train_logs} with a graded moment",
                         fraction=round(len(train_logs_used) / train_logs, 4),
                     ),
                 ),
-                selection_split="navtrain: the 100 H15 selection logs",
+                selection_split="navtrain: the 100 H19 selection logs",
                 params_m=round(params, 4),
                 precision="fp32",
                 weights_sha256=ck.sha256_file(weights),

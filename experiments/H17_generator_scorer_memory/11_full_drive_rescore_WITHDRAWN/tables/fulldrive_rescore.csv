@@ -1,0 +1,103 @@
+arm,scene,set,old,full,reproduces,full_failure,old_window_end_s,first_4m_s,last_tick_s,events
+carry,e3ed554f,hard,1.0,1.0,True,,16.8,,16.8,none
+reset,e3ed554f,hard,1.0,1.0,True,,16.8,,16.8,none
+018b,e3ed554f,hard,1.0,1.0,True,,16.8,,16.8,none
+carry,8023dce5,hard,0.0,0.0,True,collision_at_fault,6.3,9.05,16.85,front collision +6.30; side collision +10.25*; off-road +13.75*
+reset,8023dce5,hard,0.0,0.0,True,collision_at_fault,6.35,9.3,16.85,front collision +6.35; side collision +13.50*; off-road +14.20*; hit from behind +14.65*
+018b,8023dce5,hard,0.0,0.0,True,collision_at_fault,6.9,8.45,16.85,front collision +6.90; hit from behind +12.60*; front collision +12.85*; side collision +15.60*; hit from behind +16.00*
+carry,5f064b02,hard,1.0,1.0,True,,16.85,,16.85,none
+reset,5f064b02,hard,0.17240870429404537,0.0,True,collision_at_fault,9.2,,16.85,hit from behind +9.20; front collision +11.45*
+018b,5f064b02,hard,1.0,1.0,True,,16.85,,16.85,none
+carry,e121e37d,hard,1.0,1.0,True,,14.65,14.65,16.8,none
+reset,e121e37d,hard,1.0,1.0,True,,14.9,14.9,16.8,none
+018b,e121e37d,hard,1.0,1.0,True,,15.2,15.2,16.8,none
+carry,048b974e,hard,0.9480636585278862,0.9480636585278862,True,,16.8,,16.8,none
+reset,048b974e,hard,1.0,1.0,True,,16.8,,16.8,none
+018b,048b974e,hard,1.0,1.0,True,,16.35,16.35,16.8,none
+carry,cdd9448c,hard,1.0,1.0,True,,14.6,14.6,16.85,none
+reset,cdd9448c,hard,1.0,1.0,True,,14.85,14.85,16.85,none
+018b,cdd9448c,hard,1.0,1.0,True,,16.85,,16.85,none
+carry,d2715023,hard,1.0,1.0,True,,11.6,11.6,16.8,none
+reset,d2715023,hard,1.0,1.0,True,,12.4,12.4,16.8,none
+018b,d2715023,hard,1.0,1.0,True,,15.7,15.7,16.8,none
+carry,bd07fb91,hard,0.0,0.0,True,collision_at_fault,5.85,6.55,16.8,front collision +5.85; hit from behind +6.10*; off-road +7.35*; front collision +7.45*; side collision +7.55*; hit from behind +7.65*; off-road +13.15*; off-road +13.70*
+reset,bd07fb91,hard,0.0,0.0,True,collision_at_fault,5.9,6.95,16.8,front collision +5.90; hit from behind +6.15*; off-road +10.30*; off-road +10.60*; off-road +10.85*; off-road +13.40*; off-road +13.75*; off-road +15.80*; off-road +16.15*
+018b,bd07fb91,hard,0.0,0.0,True,collision_at_fault,6.95,10.1,16.8,front collision +6.95; hit from behind +7.40*
+carry,bae463d3,hard,1.0,1.0,True,,16.85,,16.85,none
+reset,bae463d3,hard,0.0397282002336497,0.0397282002336497,True,,16.85,,16.85,none
+018b,bae463d3,hard,0.3798913518187078,0.3798913518187078,True,,16.85,,16.85,none
+carry,d1a25a99,hard,0.0,0.0,True,collision_at_fault,5.8,,16.75,off-road +5.80; hit from behind +10.15*; front collision +10.75*
+reset,d1a25a99,hard,0.0,0.0,True,collision_at_fault,5.8,,16.75,off-road +5.80; hit from behind +10.60*; front collision +11.30*; front collision +16.60*
+018b,d1a25a99,hard,0.0,0.0,True,collision_at_fault,6.95,,16.75,off-road +6.95; hit from behind +9.70*; front collision +10.30*
+carry,b1b170d0,hard,1.0,1.0,True,,12.95,12.95,16.8,none
+reset,b1b170d0,hard,1.0,1.0,True,,13.1,13.1,16.8,none
+018b,b1b170d0,hard,0.7233949078404465,1.0,True,,8.1,8.1,16.8,none
+carry,04749bb9,hard,0.7071092600962864,0.0,True,offroad,6.4,6.4,16.8,off-road +6.90*; off-road +13.20*
+reset,04749bb9,hard,0.0,0.0,True,collision_at_fault,6.3,12.25,16.8,front collision +6.30; side collision +6.70*; hit from behind +6.75*; front collision +9.30*; hit from behind +9.80*
+018b,04749bb9,hard,0.0,0.0,True,collision_at_fault,12.4,14.9,16.8,front collision +12.40; side collision +13.20*; hit from behind +13.25*
+carry,01d503d4,easy,1.0,1.0,True,,12.95,12.95,16.75,none
+018b,01d503d4,easy,1.0,1.0,True,,14.5,14.5,16.75,none
+carry,023b7fcc,easy,1.0,1.0,True,,16.2,16.2,16.8,none
+018b,023b7fcc,easy,1.0,1.0,True,,16.0,16.0,16.8,none
+carry,0245ff75,easy,1.0,0.0,True,collision_at_fault,13.75,13.75,16.85,front collision +15.75*; hit from behind +16.45*
+018b,0245ff75,easy,1.0,1.0,True,,15.55,15.55,16.85,none
+carry,026d6a39,easy,1.0,0.0,True,offroad,7.25,7.25,16.8,off-road +11.20*; hit from behind +12.05*; off-road +13.35*
+018b,026d6a39,easy,1.0,0.0,True,collision_at_fault,7.85,7.85,16.8,side collision +14.55*; front collision +14.95*; off-road +15.10*; side collision +15.70*
+carry,02e075b9,easy,1.0,1.0,True,,14.85,14.85,16.75,none
+018b,02e075b9,easy,1.0,1.0,True,,15.0,15.0,16.75,none
+carry,02eadd92,easy,1.0,1.0,True,,16.8,,16.8,none
+018b,02eadd92,easy,1.0,1.0,True,,16.8,,16.8,none
+carry,032b6f21,easy,1.0,0.0,True,collision_at_fault,12.5,12.5,16.75,front collision +15.50*; hit from behind +16.05*
+018b,032b6f21,easy,1.0,1.0,True,,15.5,15.5,16.75,none
+carry,04394343,easy,1.0,0.0,True,offroad,11.15,11.15,16.8,off-road +11.65*; off-road +12.15*; off-road +12.45*
+018b,04394343,easy,1.0,1.0,True,,16.8,,16.8,none
+carry,16b83346,easy,1.0,0.0,True,offroad,5.7,5.7,16.85,off-road +11.65*
+018b,16b83346,easy,1.0,0.0,True,offroad,6.15,6.15,16.85,off-road +14.15*
+carry,1acf2f5d,easy,1.0,1.0,True,,12.35,12.35,16.8,none
+018b,1acf2f5d,easy,0.8349994739634087,0.8349994739634087,True,,16.8,,16.8,none
+carry,2e1ce314,easy,1.0,1.0,True,,13.4,13.4,16.8,none
+018b,2e1ce314,easy,1.0,1.0,True,,15.8,15.8,16.8,none
+carry,6725df2d,easy,1.0,1.0,True,,11.15,11.15,16.8,none
+018b,6725df2d,easy,1.0,1.0,True,,11.95,11.95,16.8,none
+carry,71d7d03b,easy,1.0,1.0,True,,12.95,12.95,16.8,none
+018b,71d7d03b,easy,1.0,1.0,True,,16.2,16.2,16.8,none
+carry,791d68ce,easy,0.0,0.0,True,offroad,0.0,6.8,16.75,off-road -3.21
+018b,791d68ce,easy,0.0,0.0,True,offroad,0.0,8.15,16.75,off-road -3.21; off-road +13.30*
+carry,89f2eeb8,easy,1.0,1.0,True,,13.9,13.9,16.85,none
+018b,89f2eeb8,easy,1.0,1.0,True,,16.85,,16.85,none
+carry,98dd56b2,easy,1.0,1.0,True,,16.3,16.3,16.8,none
+018b,98dd56b2,easy,0.7910238638455896,1.0,True,,12.6,,16.8,hit from behind +12.60
+carry,acd22430,easy,0.0,0.0,True,collision_at_fault,4.7,12.6,16.8,off-road +4.70; front collision +4.90*; side collision +5.45*; hit from behind +5.55*; off-road +9.60*; front collision +10.15*; side collision +10.55*; hit from behind +10.60*
+018b,acd22430,easy,0.0,0.0,True,collision_at_fault,7.0,14.15,16.8,off-road +7.00; front collision +8.80*; side collision +9.50*; hit from behind +9.65*
+carry,b44a4a44,easy,0.9567805616209321,0.9567805616209321,True,,16.8,,16.8,none
+018b,b44a4a44,easy,0.8516240147056068,0.8516240147056068,True,,16.8,,16.8,none
+017,e3ed554f,hard,1.0,1.0,True,,16.8,,16.8,none
+017,8023dce5,hard,1.0,1.0,True,,16.85,,16.85,none
+017,5f064b02,hard,1.0,1.0,True,,16.85,,16.85,none
+017,e121e37d,hard,1.0,1.0,True,,16.8,,16.8,none
+017,048b974e,hard,1.0,1.0,True,,13.6,13.6,16.8,none
+017,cdd9448c,hard,1.0,1.0,True,,16.85,,16.85,none
+017,d2715023,hard,0.0410289182389298,0.0410289182389298,True,,16.8,,16.8,none
+017,bd07fb91,hard,0.0,0.0,True,collision_at_fault,7.1,12.85,16.8,front collision +7.10; hit from behind +7.75*
+017,bae463d3,hard,0.3113627844457141,0.31439851927372986,True,,15.55,15.55,16.85,none
+017,d1a25a99,hard,0.0,0.0,True,collision_at_fault,6.25,,16.75,off-road +6.25; hit from behind +10.50*; front collision +11.15*
+017,b1b170d0,hard,0.7816549104219068,1.0,True,,9.05,9.05,16.8,none
+017,04749bb9,hard,0.9562673482491751,0.0,True,collision_at_fault,10.5,10.5,16.8,hit from behind +10.60*; off-road +11.80*; off-road +14.55*; hit from behind +15.65*; side collision +16.20*; off-road +16.80*
+017,01d503d4,easy,1.0,1.0,True,,13.9,13.9,16.75,none
+017,023b7fcc,easy,1.0,1.0,True,,16.35,16.35,16.8,none
+017,0245ff75,easy,1.0,1.0,True,,15.65,15.65,16.85,none
+017,026d6a39,easy,1.0,0.0,True,collision_at_fault,7.8,7.8,16.8,front collision +10.75*; side collision +11.15*; side collision +14.55*; off-road +14.80*; hit from behind +14.85*; front collision +15.05*; side collision +15.20*
+017,02e075b9,easy,1.0,1.0,True,,14.8,14.8,16.75,none
+017,02eadd92,easy,1.0,1.0,True,,8.8,8.8,16.8,none
+017,032b6f21,easy,1.0,1.0,True,,14.55,14.55,16.75,none
+017,04394343,easy,1.0,1.0,True,,16.55,16.55,16.8,none
+017,16b83346,easy,1.0,1.0,True,,9.55,9.55,16.85,none
+017,1acf2f5d,easy,1.0,1.0,True,,16.8,,16.8,none
+017,2e1ce314,easy,1.0,1.0,True,,16.0,16.0,16.8,none
+017,6725df2d,easy,1.0,1.0,True,,11.6,11.6,16.8,none
+017,71d7d03b,easy,1.0,1.0,True,,15.45,15.45,16.8,none
+017,791d68ce,easy,0.0,0.0,True,offroad,0.0,,16.75,off-road -3.21
+017,89f2eeb8,easy,1.0,1.0,True,,16.8,16.8,16.85,none
+017,98dd56b2,easy,1.0,1.0,True,,16.8,,16.8,none
+017,acd22430,easy,0.0,0.0,True,collision_at_fault,15.4,15.8,16.8,front collision +15.40; side collision +16.75*
+017,b44a4a44,easy,0.0,0.0,True,collision_at_fault,6.6,,16.8,side collision +6.60; front collision +8.20*

@@ -9,12 +9,12 @@ title = "A memory read by both the generator and the scorer, trained with them, 
 short = "Generator and scorer memory"
 track = "hypothesis"
 owner = "Siddesh"
-benchmarks = ["offline"]
+benchmarks = ["offline", "alpasim"]
 started = 2026-11-07
-ended = 2026-11-12
-status = "parked"
+ended = 2026-11-20
+status = "dropped"
 verdict = "negative"
-question = """H05 found that the camera's past, read through a small probe, adds little; H15 carried only the \
+question = """H05 found that the camera's past, read through a small probe, adds little; H19 carried only the \
 planner's own outputs and could not be told from the same layer wiped. Both left the released model frozen. \
 Does a memory help when the two parts that decide the drive, the generator that proposes 32 paths and the \
 scorer that picks one, are trained to use it?"""
@@ -24,8 +24,16 @@ the scorer pick better paths than the same model with the memory wiped at every 
 mean grade of the picked path on the picking set, and at least +0.01 on moments within 5 s after a cut-in, a \
 crossing or a hard brake. Refuted if the carried memory does not beat the wiped one."""
 predictions = "none: the rule for each run was written before it started (file times and run logs agree) but in a folder outside git, so no commit date shows it"
-learned = """Camera memory has a low ceiling on this data, as far as a linear reader of pooled camera views \
-can see. With a healthy memory (slots distinct, gates open, earlier views recalled), carrying it gave a pick \
+learned = """In closed loop the memory model gave no gain over the starting model across 50 scenes: 0.7464 \
+against 0.7574 on AlpaSim's scene score, one drive per scene. Its lead was on the 12 scenes that had been looked \
+at first (+0.129 there; that choosing them made the lead is argued); on the 18 others it was +0.027, and on 20 \
+scenes never looked at before it was -0.129, against by the rule written beforehand, with two at-fault crashes \
+inside the score window that the starting model does not have. On those 20 its score window closed earlier on 16: \
+on 8 by reaching 4 m from the human path clearly sooner, on 6 by a crash or leaving the road, on 2 by 0.1 s or \
+less. The only closed-loop test of the memory itself, the same weights with the memory reset every call, ran on \
+the 12 scenes and favoured the carried memory (0.7213 against 0.5177); the 18 and the 20 had no reset drive. \
+Offline the picture was the same: camera memory has \
+a low ceiling on this data, as far as a linear reader of pooled camera views can see. With a healthy memory (slots distinct, gates open, earlier views recalled), carrying it gave a pick \
 grade of 0.7313 against 0.7355 with the same weights and the memory reset every moment, on 1,131 graded \
 moments (-0.0042, 95 % interval -0.0103 to +0.0012): no gain. The first training run's gap in favour of the \
 carried memory (0.7752 against 0.7639, interval -0.008 to +0.032) came with a collapsed memory whose 16 slots \
@@ -36,16 +44,16 @@ the car's own motion history. Given the true past camera view directly, a linear
 speed on all moments and up to 3.9 % (2.1 to 5.5) on moments after an event, and nothing on braking or \
 steering; by its rule written beforehand that is unclear, and no non-linear reader was shown to do better. The \
 car's own motion history is the stronger signal, and is a separate, later experiment. Limits: one seed, one data \
-set, open loop only; the 12-scene closed-loop check of carried against reset had not finished when this was \
-recorded."""
-parents = ["H05", "H15"]
+set; one drive per scene; the closed-loop comparison is two models, so the memory is not separated from the 930 \
+extra training steps that came with it."""
+parents = ["H05", "H19"]
 narrative = "experiments/H17_generator_scorer_memory/README.md"
 
 [[checks]]
 name = "Was the memory in the first training run working?"
 result = "No. At the carried arm's chosen check the 16 slots were 99.96 % alike (mean pairwise cosine 0.9996) and the gates were almost shut (mean 0.006 per slot)."
 date = 2026-11-10
-decided = "fix the memory before reading anything from the gap between the arms (H17.r3, H17.r4)"
+decided = "fix the memory before reading anything from the gap between the arms (H17.collapse-fix, H17.recall-lesson)"
 source = "experiments/H17_generator_scorer_memory/04_carried_vs_wiped_training_run/REPORT.md"
 
 [[checks]]
@@ -63,13 +71,41 @@ decided = "park the camera memory; the car's own motion history is a separate ex
 source = "experiments/H17_generator_scorer_memory/08_does_the_past_view_help_at_all/REPORT.md"
 
 [[checks]]
+name = "Does the simulator, rebuilt, drive the same as before?"
+result = "Yes, twice. After a rebuild on 12 Nov, 4 of the starting model's drives of 31 Oct gave the same scores and bit-identical per-tick metrics. After a second rebuild on 20 Nov, 6 earlier drives (4 of the starting model, 2 of the memory model) did the same."
+date = 2026-11-20
+decided = "pool drives made on the three simulator builds"
+source = "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/tables/cl20_imagecheck.json"
+
+[[checks]]
 name = "12 scenes in closed loop, memory carried against memory reset"
-result = "Not finished when this was recorded: the rule was written down and the adapter proofs had started, but no scene had been driven."
-date = 2026-11-12
-source = "experiments/H17_generator_scorer_memory/09_closed_loop_12_scenes/PREDICTIONS.md"
+result = "Carried 0.7213, reset 0.5177, the starting model 0.5919, one drive per scene. By its rule written beforehand the memory helps in closed loop. These are the scenes the earlier diagnosis studied, so they were looked at before the memory ran."
+date = 2026-11-13
+decided = "drive the other 18 scenes of the 30 against the starting model"
+source = "experiments/H17_generator_scorer_memory/09_closed_loop_12_scenes/tables/cl12_table.json"
+
+[[checks]]
+name = "18 more scenes: memory carried against the starting model"
+result = "Carried 0.8865, the starting model 0.8599: +0.027, 3 wins, 0 losses. By its rule written beforehand, it hurts: two at-fault crashes the starting model does not have, both after the score window had closed (the rule counted a crash at any time)."
+date = 2026-11-14
+decided = "drive 20 scenes neither model had been tested on"
+source = "experiments/H17_generator_scorer_memory/10_closed_loop_18_new_scenes/tables/cl18_table.json"
+
+[[checks]]
+name = "Rescore every drive to its last tick"
+result = "Withdrawn. The re-score read crashes beyond 4 m from the recorded path, where the renderer is not valid, so its numbers are not used. The report and scripts are kept as they ran."
+date = 2026-11-17
+decided = "keep the standard score, which stops at 4 m"
+source = "experiments/H17_generator_scorer_memory/11_full_drive_rescore_WITHDRAWN/README.md"
+
+[[checks]]
+name = "One of the 20 new scenes could not be driven"
+result = "Scene 9e6753c2 stopped the simulator 12 s in, three times, on a fault in its map (the route folds back on itself). It was replaced by 44409f00, the first of the same pool in a shuffle with seed 0, by a rule written before the draw. The starting model was never driven on 9e6753c2."
+date = 2026-11-20
+source = "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/PREDICTIONS.md"
 
 [[runs]]
-id = "H17.r1"
+id = "H17.token-cache"
 label = "token cache: the frozen encoder's output at every moment of four slices"
 started = 2026-11-08
 ended = 2026-11-08
@@ -117,7 +153,7 @@ folder outside git when it ran, so there is no train_git_sha; AS_RUN.sha256 hold
   note = "300 clips; cached and never opened"
 
 [[runs]]
-id = "H17.r2"
+id = "H17.carried-vs-wiped"
 label = "first training run: memory carried against memory wiped, two passes, one seed"
 started = 2026-11-09
 ended = 2026-11-10
@@ -183,7 +219,7 @@ scores 0.7685 on the same moments. On the 34 moments after an event the carried 
 0.9674, so the rule written beforehand said stop. One seed."""
 
 [[runs]]
-id = "H17.r3"
+id = "H17.collapse-fix"
 label = "the memory-collapse fix: a learned start state and a gate per slot, 930 steps"
 started = 2026-11-11
 ended = 2026-11-11
@@ -215,7 +251,7 @@ and the run recorded no hash of its code."""
 
   [[runs.data]]
   dataset = "physicalai_av"
-  split = "picking set, graded moments: the same 84 clips that chose H17.r2's checkpoints"
+  split = "picking set, graded moments: the same 84 clips that chose H17.carried-vs-wiped's checkpoints"
   role = "eval"
   n = 1131
   unit = "moments"
@@ -245,7 +281,7 @@ and the run recorded no hash of its code."""
   note = "Exact values 0.74957 and 0.75203: carried minus reset -0.0025, 95 % interval -0.0090 to +0.0039 (46 clips, 2,000 draws; computed after review by the first run's own bootstrap, 06_recall_lesson/tables/interval_after_review.json). Step 930 was fixed before the run. One seed."
 
 [[runs]]
-id = "H17.r4"
+id = "H17.recall-lesson"
 label = "the recall lesson: the memory is also taught to recall the view 2 s and 4 s ago, 930 steps"
 started = 2026-11-11
 ended = 2026-11-11
@@ -272,11 +308,11 @@ from 03_, 04_ and 05_ (these step folders hold the versions this run used)."""
   role = "train"
   n = 1611
   unit = "clips"
-  note = "1,611 of the slice's 4,015 clips, the same as H17.r3's (07_does_the_memory_hold_driving_information/PREDICTIONS.md)"
+  note = "1,611 of the slice's 4,015 clips, the same as H17.collapse-fix's (07_does_the_memory_hold_driving_information/PREDICTIONS.md)"
 
   [[runs.data]]
   dataset = "physicalai_av"
-  split = "picking set, graded moments: the same 84 clips that chose H17.r2's checkpoints"
+  split = "picking set, graded moments: the same 84 clips that chose H17.carried-vs-wiped's checkpoints"
   role = "eval"
   n = 1131
   unit = "moments"
@@ -302,10 +338,140 @@ from 03_, 04_ and 05_ (these step folders hold the versions this run used)."""
   better = "higher"
   strength = "moderate"
   flags = ["open-loop"]
-  headline = true
   source = "experiments/H17_generator_scorer_memory/06_recall_lesson/tables/build5_short.json: step930.carried.check.pick_grade_mean_map, step930.reset.check.pick_grade_mean_map"
-  note = """Picking set, healthy memory. Exact values 0.731322 carried and 0.735510 reset: carried minus reset is -0.004189, \
+note = """Picking set, healthy memory. Exact values 0.731322 carried and 0.735510 reset: carried minus reset \
+is -0.004189, \
 95 % interval -0.0103 to +0.0012 (46 clips, 2,000 draws), computed after review by the first run's own bootstrap \
 (06_recall_lesson/tables/interval_after_review.json, which reproduces the first run's recorded interval exactly \
 before it computes this one): no gain, and not shown to be a loss. Not selected on this set: step 930 was fixed \
-before the run, and both numbers are the same checkpoint. One seed. The starting model scores 0.7685 on the same moments, so both are below where training began."""
+before the run, and both numbers are the same checkpoint. One seed. The starting model scores 0.7685 on the \
+same moments, so both are below where training began."""
+
+[[runs]]
+id = "H17.closed-loop"
+label = "the memory model driven in AlpaSim against the starting model, 50 scenes, one drive each"
+started = 2026-11-12
+ended = 2026-11-20
+start_from = "84359783ef50"
+notes = """The recall-lesson checkpoint (H17.recall-lesson, step 930, memory carried) through its own adapter \
+(paddock/drivejepamemory/, as it ran) against the starting model, Drive-JEPA 0.1.8b pass 0.6, through its own. \
+Nothing trained. Three batches, each with its rule written before it was driven: the 12 scenes the earlier \
+diagnosis had studied (12 Nov), the other 18 of the 30-scene set (14 Nov), and 20 scenes neither model had \
+been tested on, drawn by the earlier retrain's rule (20 Nov). The drives span three simulator builds: the \
+starting model's 12 first-batch drives (31 Oct, build id not recorded), the build of 12 Nov (every other drive of the \
+first two batches) and the rebuild of 20 Nov (the 20 new scenes); 4 and 6 earlier drives were reproduced \
+bit for bit on the two later builds (the checks above). Each \
+drive's score, per-tick metrics and provenance are in the step folders' drives/; videos, replays and logs are \
+in POINTERS.md. The starting model's drives on the first batch were made by its own lane on 31 Oct; the memory \
+drives of that batch were not pinned to 2 cores, and every later drive was."""
+
+  [runs.code]
+  as_run = [
+    "experiments/H17_generator_scorer_memory/paddock/drivejepamemory/",
+    "experiments/H17_generator_scorer_memory/09_closed_loop_12_scenes/",
+    "experiments/H17_generator_scorer_memory/10_closed_loop_18_new_scenes/",
+    "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/",
+  ]
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "the 12 diagnosis scenes of the 30-scene set (public_2601, 26.01 build)"
+  role = "eval"
+  n = 12
+  unit = "scenes"
+  scene_list = "experiments/H17_generator_scorer_memory/09_closed_loop_12_scenes/tables/scenes_12.txt"
+  manifest_sha256 = "00da33c86640f394ad47839fb62cab63681be271b59421c6ffae6aa49a342a2b"
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "the other 18 scenes of the 30-scene set (public_2601, 26.01 build)"
+  role = "eval"
+  n = 18
+  unit = "scenes"
+  scene_list = "experiments/H17_generator_scorer_memory/10_closed_loop_18_new_scenes/tables/cl18_scenes_18.txt"
+  manifest_sha256 = "8a76391386cce356cbb185b156450d51f6ac26d243bc70073c0682d0b448e16c"
+
+  [[runs.data]]
+  dataset = "alpasim"
+  split = "20 public_2601 scenes never used before (26.01 build), one replaced"
+  role = "eval"
+  n = 20
+  unit = "scenes"
+  scene_list = "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/tables/cl20_scenes_20_v2.txt"
+  manifest_sha256 = "655a3149b4bc3fd39669f346e6e49c0c3c841a6bd737e45a0b8364cc0fc98d49"
+  note = "excluded from every training set of this lane; 9e6753c2 replaced by 44409f00 (map fault)"
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "50 scenes, one drive each"
+  n = 50
+  unit = "scene"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.7574"
+  value = "0.7464"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  headline = true
+  source = "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/tables/cl20_table.json: result.all_50.mean"
+note = """Exact values 0.746356 and 0.757370: memory minus starting model -0.0110; 7 scenes won, 5 lost, 38 \
+within 0.1. Standard score: the window ends at the first crash or off-road, or 4 m from the human path. One \
+drive per scene. Three simulator builds, earlier drives reproduced bit for bit on the two later ones. The 12 diagnosis scenes \
+were looked at before the memory ran; on the 38 others the gap is -0.055. Without the two scenes most in the \
+memory's favour, all 50 give -0.047. This compares two models: the memory is not separated from the 930 extra \
+training steps that came with it."""
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "20 scenes never used before, one drive each (the test written beforehand)"
+  n = 20
+  unit = "scene"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.7644"
+  value = "0.6353"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  source = "experiments/H17_generator_scorer_memory/12_closed_loop_20_more_scenes/tables/cl20_table.json: result.primary_20"
+note = """Against the memory, by the rule written beforehand, on all three of its conditions: the gap is \
+-0.129 (at or below -0.05), 1 scene won against 5 lost (a gap over 0.1), and 2 at-fault crashes inside the \
+score window that the starting model does not have (68e53160, 8fd8f4f0). 10 of the 20 score 1.000 for both. \
+Without the two scenes most in the memory's favour the gap is -0.199. The memory car's score window closed \
+earlier on 16 of the 20."""
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "the other 18 scenes of the 30-scene set, one drive each"
+  n = 18
+  unit = "scene"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.8599"
+  value = "0.8865"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  source = "experiments/H17_generator_scorer_memory/10_closed_loop_18_new_scenes/tables/cl18_table.json: mean_18"
+note = """+0.027; 3 scenes won, none lost. Its rule written beforehand said it hurts: two at-fault crashes the \
+starting model does not have (0245ff75, 032b6f21), both after the score window had closed; that rule counted a \
+crash at any time."""
+
+  [[runs.results]]
+  bench = "alpasim"
+  metric = "scene_score"
+  subset = "the 12 diagnosis scenes, one drive each"
+  n = 12
+  unit = "scene"
+  baseline = "the starting model, Drive-JEPA 0.1.8b pass 0.6"
+  baseline_value = "0.5919"
+  value = "0.7213"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted"]
+  source = "experiments/H17_generator_scorer_memory/09_closed_loop_12_scenes/tables/cl12_table.json: means"
+note = """These scenes were studied by the earlier diagnosis before the memory ran, so they are not a fresh \
+test. The same weights with the memory reset every moment score 0.5177. The starting model's drives here were \
+made by its own lane on 31 Oct; 4 of them were re-driven on 12 Nov and matched bit for bit."""
+

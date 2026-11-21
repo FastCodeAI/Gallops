@@ -1,6 +1,6 @@
 # H17 — Memory in the generator and the scorer
 
-**Owner:** Siddesh · **Started:** 7 Nov 2026 · **Status:** parked, negative (hypothesis)
+**Owner:** Siddesh · **Started:** 7 Nov 2026 · **Status:** dropped, negative (hypothesis)
 
 The facts — runs, data, checkpoints, results — live in [experiment.toml](experiment.toml) and are rendered
 into the repository README and [CARD.md](CARD.md). This page is the account: why, what was done, what it
@@ -14,7 +14,7 @@ Drive-JEPA decides every moment from scratch: it sees two frames 0.5 s apart and
 experiments asked whether a memory helps while the released model stays frozen:
 
 - [H05](../H05_ssm_memory/README.md): the camera's past, read through a small probe, added little.
-- [H15](../H15_prediction_memory/README.md): a memory of the planner's own earlier outputs, per path, could
+- [H19](../H19_prediction_memory/README.md) (registered as H15): a memory of the planner's own earlier outputs, per path, could
   not be told from the same layer wiped.
 
 Neither let the model learn to use a memory. This experiment does: the generator, which proposes 32
@@ -47,13 +47,51 @@ AV dataset. Its own record is not in this repository yet, so it is pinned here b
 8. **What the past view holds** (`08_does_the_past_view_help_at_all`). The same readers are given the
    true past camera view directly: the most a memory of these views could offer to a linear reader of
    pooled views. A reader that uses the views differently could find more.
-9. **Closed loop** (`09_closed_loop_12_scenes`). The same weights driven on 12 simulator scenes with the
-   memory carried and with it reset at every call. Not finished when this was recorded: the folder holds
-   the rule written beforehand and the scripts, and no result.
+9. **Closed loop, 12 scenes** (`09_closed_loop_12_scenes`). The recall lesson's weights driven in AlpaSim
+   through their own adapter (`paddock/drivejepamemory/`), with the memory carried and with it reset at
+   every call, beside the starting model. These are the 12 scenes an earlier diagnosis of the starting
+   model had studied, so they had been looked at before.
+10. **Closed loop, 18 more scenes** (`10_closed_loop_18_new_scenes`). The other 18 scenes of the 30-scene
+    set: memory carried against the starting model.
+11. **Full-drive re-score, withdrawn** (`11_full_drive_rescore_WITHDRAWN`). Every drive re-scored to its
+    last tick. Withdrawn: beyond 4 m from the recorded path the renderer is not valid. Kept as it ran.
+12. **Closed loop, 20 scenes never used before** (`12_closed_loop_20_more_scenes`). The test written
+    beforehand: 20 scenes neither model had been driven on, drawn by the earlier retrain's rule and kept
+    out of its training. The simulator image had been deleted from the machine and was rebuilt first, and
+    6 earlier drives were reproduced bit for bit before any new one. One scene (9e6753c2) stopped the
+    simulator on a fault in its map and was replaced by a draw written down beforehand (44409f00).
 
 ## What it showed
 
-All numbers are open loop, on the picking set's 1,131 graded moments, with one seed. The *pick grade* is
+### In closed loop
+
+AlpaSim's standard scene score (0 to 1): the score window ends at the first crash or off-road, or when the
+car is 4 m from the human path. A drive scores 1 once it covers 80 % of the human path's progress inside
+the window. One drive per scene. "Starting model" is Drive-JEPA 0.1.8b pass 0.6.
+
+| Scenes | Starting model | Memory carried | Gap |
+|---|---:|---:|---:|
+| **all 50** (headline) | 0.7574 | 0.7464 | −0.011 |
+| 20 never used before (the test written beforehand) | 0.7644 | 0.6353 | −0.129 |
+| 18 more of the 30-scene set | 0.8599 | 0.8865 | +0.027 |
+| 12 diagnosis scenes, looked at before | 0.5919 | 0.7213 | +0.129 |
+
+- **Over 50 scenes the memory gives no gain.** 7 scenes won, 5 lost, 38 within 0.1.
+- **Its lead was on the scenes looked at first.** On the 12 diagnosis scenes it was ahead by 0.129; on
+  the 38 others it is behind by 0.055. That choosing those scenes made the lead is argued, not shown.
+- **On the 20 new scenes the rule written beforehand says: against the memory,** on all three of its
+  conditions: the gap is −0.129, it loses 5 scenes and wins 1, and it has two at-fault crashes inside the
+  score window that the starting model does not (68e53160, 8fd8f4f0).
+- **Its score window closed earlier on 16 of the 20 new scenes:** on 8 by reaching 4 m from the human
+  path clearly sooner, on 6 by a crash or leaving the road, on 2 by 0.1 s or less. An earlier close also
+  hides some of its later crashes and off-roads from the score.
+- **On the 12 scenes, carried beat reset** (0.7213 against 0.5177), and its rule said the memory helps.
+  Those were the scenes looked at first, and the only ones with a reset drive: on the 18 and the 20 the
+  memory model was compared with the starting model only, so they could not test this.
+
+### Offline
+
+All numbers here are open loop, on the picking set's 1,131 graded moments, with one seed. The *pick grade* is
 the mean grade of the path the scorer picks, from the grader the earlier retrain used. The starting model
 scores 0.7685.
 
@@ -62,7 +100,7 @@ scores 0.7685.
   view 2 s and 4 s back better than a memory reset each moment (6.0 % and 10.5 % lower error). On the same
   weights the pick grade is 0.7313 with the memory carried and 0.7355 with it reset every moment:
   carried is 0.0042 lower, 95 % interval −0.0103 to +0.0012. So: no gain, and not shown to be a loss.
-  This is the headline. Both are below the starting model. (The interval was computed after review,
+  Both are below the starting model. (The interval was computed after review,
   by the first run's own bootstrap code: `06_recall_lesson/interval_after_review.py`.)
 - **The first run's gap came with a collapsed memory.** Carried scored 0.7752 and wiped 0.7639. But the
   carried memory's 16 slots were 99.96 % alike and its gates were almost shut, so the gap is not the
@@ -85,6 +123,10 @@ scores 0.7685.
 What is measured and what is argued:
 
 - Measured: every number above, each copied from the json file named in `experiment.toml`.
+- Argued: that the closed-loop lead on the 12 scenes came from their having been looked at first. It is
+  what the 18 and 20 show, not something a test separates.
+- Not separated: memory against the 930 extra training steps that came with it. The closed-loop
+  comparison is two models.
 - Argued: that the first run's gap is not the memory working. The collapse is measured; the zeroed-memory
   test above points the other way, so this stays argued.
 - Argued: that the low ceiling is why training did not find a use for the memory. The tests show the
@@ -94,14 +136,18 @@ What is measured and what is argued:
 
 ## Decision
 
-Parked, verdict negative. The gate has not run: no checkpoint here is a candidate to ship, and every one
-scores below its starting model offline. No decision row is added, because nothing changes what the team
-does next beyond this record. The car's own motion history was the stronger signal in both reader tests;
-that is a different claim and will be its own experiment.
+Dropped, verdict negative: approach 3 is closed. The regression gate has not run: no checkpoint here is a
+candidate to ship. The next experiment is the car's own motion history (approach 4), which was the stronger
+signal in both reader tests. Naren ruled on 20 Nov: decision D21 in
+`experiments/decisions.toml`, "close approach 3; next is approach 4, motion history", by Siddesh and Naren.
 
 ## Limits
 
 - One seed, one data set, 930 steps for the two runs after the first.
+- Closed loop: one drive per scene; three simulator builds (31 Oct, 12 Nov, 20 Nov), with 4 and then 6
+  earlier drives reproduced bit for bit on the two later ones;
+  the 12 diagnosis scenes were looked at first; the 12-scene memory drives were not pinned to 2 cores
+  and every later drive was. The starting model's drives on those 12 were made by its own lane.
 - The picking set chose the first run's checkpoints and is the set reported on; that result carries the
   `selected-on-report` flag. The headline does not: its step was fixed beforehand.
 - The two held-out slices were never opened, so nothing here is a held-out number.
@@ -145,6 +191,10 @@ it is a record of the originals, so `sha256sum -c` does not pass against the com
 | `{working_notes}`, `{gallops}`, `{gallops_main}`, `{checkouts}`, `{paddock}` | the personal notes folder, two gallops checkouts, their parent folder, a paddock checkout |
 | `{data.navtrain.cache}` | H05's saved outputs of the released model |
 | `{home}`, `{nas}`, `{nas_store}`, `{bulk_disk}`, `{paddock_site}`, `{paddock_site_nas}`, `/tmp/{session}` | a home directory, a mount, a personal folder on it, a disk, paddock's site folders, one session's temporary directory |
+| `{local_store}`, `{local_disk}` | the local disk the 20-scene step wrote to while the network store was read-only, and that disk's mount |
+| `{nas_backup}` | a read-only backup copy of the network store |
+| `{container_scene_cache}` | where the simulator's containers mount the scene cache |
+| `{page_host}` | the private address the comparison page was served on |
 
 Of these, only `{data.navtrain.cache}` and the `{weights}` in the checkpoints' template locations are
 variables `gallops.config` expands. The rest are labels on purpose: they name where things sit at the
@@ -170,20 +220,37 @@ in its step folder's `tables/`, or in POINTERS.md if it was left out. Logs are i
 | `06_recall_lesson/DESIGN.md`, `PREDICTIONS.md`, `REPORT.md` | `reports/BUILD5_DESIGN_NOTE.md`, `BUILD5_PREREG.md`, `BUILD5_RECALL_LESSON.md` |
 | `07_does_the_memory_hold_driving_information/PREDICTIONS.md`, `REPORT.md` | `reports/LINK2_PREREG.md`, `LINK2_TEST.md` |
 | `08_does_the_past_view_help_at_all/PREDICTIONS.md`, `REPORT.md` | `reports/CEILING_PREREG.md`, `CEILING_TEST.md` |
-| `09_closed_loop_12_scenes/PREDICTIONS.md` | `reports/CL12_MEMORY_PREREG.md` |
+| `09_closed_loop_12_scenes/PREDICTIONS.md`, `REPORT.md` | `reports/CL12_MEMORY_PREREG.md`, `CL12_MEMORY.md` |
+| `10_closed_loop_18_new_scenes/PREDICTIONS.md`, `REPORT.md` | `reports/CL18_MEMORY_PREREG.md`, `CL18_MEMORY.md` |
+| `11_full_drive_rescore_WITHDRAWN/PREDICTIONS.md`, `REPORT.md` | `reports/FULLDRIVE_RESCORE_PREREG.md`, `FULLDRIVE_RESCORE.md` |
+| `12_closed_loop_20_more_scenes/PREDICTIONS.md`, `REPORT.md` | `reports/CL20_PREREG.md`, `CL20_MEMORY.md` |
+| `12_closed_loop_20_more_scenes/OUTPUT_PATHS.md`, `SIMULATOR_IMAGE_STOP.md` | `reports/NEW40_STEP0_PATHS.md`, `NEW40_STEP0B_IMAGE.md` |
+| `<step>/drives/<run folder>/` | the drive folders on the stores: score, per-tick metrics, gates and provenance only |
+| `paddock/drivejepamemory/` | the simulator adapter, `{paddock_sid}/Alpasim/adapters/drivejepamemory/` |
+
+Run IDs: the first version of this record called the runs `H17.r1` to `H17.r4`. They are now named by what
+they did (`H17.token-cache`, `H17.carried-vs-wiped`, `H17.collapse-fix`, `H17.recall-lesson`); the checkpoints'
+template locations keep the old names (`h17-r2-carried` and so on). Nothing sits at those template locations
+at this site; [POINTERS.md](POINTERS.md) gives where each checkpoint is.
 
 Words the reports use, and what they mean here:
 
 | In the reports | Means |
 |---|---|
-| approach 3 | this experiment; approaches 1 and 2 are H05 and H15 |
+| approach 3 | this experiment; approaches 1 and 2 are H05 and H19 |
+| H15 (in `01_survey/`, written before the renumbering) | H19, the prediction memory, renumbered on 20 Nov by Naren's ruling |
 | recon; build 1 to build 5 | the survey; then the slices, the full cache, the model and trainer, the memory-collapse fix, the recall lesson |
 | pilot | the first training run |
 | carry, wiped, reset | memory kept from moment to moment; the same layer trained with its memory zeroed every moment; a trained memory put back to its start state every moment at test time |
 | T1 to T5 | the five checks of the model and trainer: identity at step 0, gradient routing, wiped mode, a 50-step smoke run, timing |
 | link 2 | the test of whether the memory holds anything driving needs (link 1 is whether the model reads the memory) |
 | ceiling test | the test with the true past view |
-| CL12 | the 12-scene closed-loop check |
+| CL12, CL18, CL20 | the closed-loop steps on 12, 18 and 20 scenes |
+| new40 | the 40 drives of the 20-scene step |
+| image check | re-driving earlier scenes on a rebuilt simulator image to show it drives the same |
+| full-drive re-score | the withdrawn step 11 |
+| EXT20, P10 | the two scene lists the 30-scene set was assembled from |
+| 018bp06 | the starting model's own adapter and run folders |
 | 0.1.8b, pass 0.6, p06 | the starting model and the point in its training it was taken from |
 | 0.1.7 | the retrained checkpoint of [GC05](../GC05_physicalai_retrain/README.md), whose grader is used here |
 | arm (c) | the starting model driven as a third arm beside carried and wiped |
@@ -256,3 +323,16 @@ Words the reports use, and what they mean here:
 | `s12_proofs_chain.sh` | `09_closed_loop_12_scenes` | runs the three adapter proofs in order |
 | `s12_queue.sh` | `09_closed_loop_12_scenes` | the queue that drives the 12 scenes, carried then reset |
 | `s12_table.py` | `09_closed_loop_12_scenes` | builds the per-scene table and the verdict by the rule written beforehand |
+| `s12_run_018bp06_imagecheck.sh` | `09_closed_loop_12_scenes` | the starting model's runner with only its output folder changed, for the image check |
+| `s13_compare_page.py`, `.html` | `10_closed_loop_18_new_scenes` | builds the side-by-side replay and metrics page |
+| `s13_page_check.py`, `s13_page_check_cl18.py` | `10_closed_loop_18_new_scenes` | checks that page in a headless browser |
+| `s18_queue.sh`, `s18_relaunch.sh` | `10_closed_loop_18_new_scenes` | the queue that drives the 18 scenes, and its restart |
+| `s18_run_memory_scene.sh`, `s18_run_018bp06_scene.sh` | `10_closed_loop_18_new_scenes` | each model's runner with only its output folder (and the memory's model folder) changed |
+| `s18_table.py` | `10_closed_loop_18_new_scenes` | the per-scene table and the verdict by the rule written beforehand |
+| `s18_thread_check.py` | `10_closed_loop_18_new_scenes` | shows that pinning to 2 cores gives the same plans as using all cores |
+| `s19_fulldrive_rescore.py`, `s19_fulldrive_tables.py`, `s19_watch_and_run.sh` | `11_full_drive_rescore_WITHDRAWN` | the withdrawn re-score and its tables |
+| `s20_run_memory_scene.sh`, `s20_run_018bp06_scene.sh` | `12_closed_loop_20_more_scenes` | the runners with the output folder moved to the local disk |
+| `s20_run_*_imagecheck.sh`, `s20_imagecheck_queue.sh`, `s20_imagecheck_cmp.py` | `12_closed_loop_20_more_scenes` | the image check after the rebuild: 6 earlier drives, compared bit for bit |
+| `s20_queue.sh` | `12_closed_loop_20_more_scenes` | the queue that drives the 20 scenes |
+| `s20_table.py` | `12_closed_loop_20_more_scenes` | the per-scene table, the verdict and the 50-scene totals |
+| `s20_compare_page.py`, `.html` | `12_closed_loop_20_more_scenes` | the comparison page with all 50 scenes |

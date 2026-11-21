@@ -1,0 +1,10 @@
+run_time: '2026-11-20 02:28:16'
+run_name: LR-3906c42f-a76a-4045-b48b-7e2d4e885db6
+run_uuid: 3906c42f-a76a-4045-b48b-7e2d4e885db6
+slurm_job_id: 0
+run_user: siddesh
+run_dir: {local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_29815599
+run_args: unknownArgs
+submitter: unspecified
+description: unspecified
+test_suite_id: null

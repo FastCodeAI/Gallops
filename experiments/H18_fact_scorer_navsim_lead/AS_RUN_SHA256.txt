@@ -1,0 +1,127 @@
+# sha256 of each file as it ran, before machine roots became placeholders; then its path at the training
+# site under {runs} (paddock-ops), and where it is in this folder.
+c7ab739e40c2982b5cfc18822dc48ff88cabdf3a4e31f2efceb2902248538c40  run3b/v2/probe_then_launch.sh  scripts/run3b/v2/probe_then_launch.sh
+f484ec0fa0f1c42a7d075e79522c74a7c88528c7e4aa8d724f794871ada69045  run3b/capped_pss.sh  scripts/run3b/capped_pss.sh
+5923f7704327c310dbfdb1673d67ab285ddf667dc978cb1027e39b9523ddf882  run3b/v2/train3.py  scripts/run3b/v2/train3.py
+60654110715b619540d4e1328810109ce2fe330439cf7ff5461312924e15c399  run3b/v2/model/model2.py  scripts/run3b/v2/model/model2.py
+5a684f65798a78e603d101b5d99db3d979cc44f717bbf75833ffd6a6bb14c3bf  run3b/v2/data/run3b_data2.py  scripts/run3b/v2/data/run3b_data2.py
+4b8c376063408a1777bd9e57792ebe88dc1e35c8e16ff7bdbd28a09e62229506  run3b/v2/data/augment2.py  scripts/run3b/v2/data/augment2.py
+216e49138e869c1b732c2a111bf6675f92097cf65060e7e8a3b35d1e4f347d3d  run3b/v2/eval/eval_v2.py  scripts/run3b/v2/eval/eval_v2.py
+44aaf804eeb0212552696f481ff5d368e277932c2211d23ecc4bcc7b296e4abc  run3b/r3b/data.py  scripts/run3b/r3b/data.py
+5371d369552f64e16afa7ce2f3016ed25f9c86aa2351781df4d4e94128fb7b5c  run3b/r3b/losses.py  scripts/run3b/r3b/losses.py
+efad493b88bd9820fddf1295c670be8c6a18074fe942259734f32ed6b9d6b15e  run3b/r3b/score.py  scripts/run3b/r3b/score.py
+13084693010f78a65b2b451e85e4281c12fb68a39083f788eeedc2e449e9a035  run3b/r3b/train2.py  scripts/run3b/r3b/train2.py
+16085737d42fdfd2c2ba60f09b4da60482f4e1cafaf8d3de7f522a748e5f840e  run3b/r3b/labeller.py  scripts/run3b/r3b/labeller.py
+f958c564894f2c42b1a24c7c3a787423d483ae2a7d7b57738b0d872f566f0d6b  run3b/r3b/label_carla.py  scripts/run3b/r3b/label_carla.py
+64bfbaa41b829654242c5839c2f2fd3fb224d4011d0d3a05315a790fe66cc651  run3b/r3b/evaluate.py  scripts/run3b/r3b/evaluate.py
+7bd6d2f52a9c131fea7732342de41f3a4ea879c0dbe3d1eefbf14e193ded18c1  run3b/gpulab/CONTRACT.md  scripts/run3b/gpulab/CONTRACT.md
+7990824fc3c3cb3e1680a693db644dc5b54bdfb2b1a1abc54d9edd211f110edb  run3b/gpulab/service.py  scripts/run3b/gpulab/service.py
+f4f222cffcef2772bead1532d0adf139d5ffd27c24b3a31361ef39d768a3c2ed  run3b/gpulab/agentfacts/__init__.py  scripts/run3b/gpulab/agentfacts/__init__.py
+278ee3f68207d953b8c7f4c432a14c7a72c6e662bdafd4ccf7ad1a1285bf5288  run3b/gpulab/agentfacts/agentfacts.py  scripts/run3b/gpulab/agentfacts/agentfacts.py
+37549dfdbad68369753517a7d1a9c96dfa75d7e1452cd39bba80171c09cef534  run3b/gpulab/mapfacts/mapfacts.py  scripts/run3b/gpulab/mapfacts/mapfacts.py
+b822435763d6971e0f119a2ad7e054f799b44a2102ce679d8ab2988ee5a219c9  run3b/gpulab/rollout/rollout.py  scripts/run3b/gpulab/rollout/rollout.py
+f1bab1d34834d51059fe70ee3e4323434c35f913f386069f34cb2b1c064af3dd  run3b/v2/report/report_v2.py  scripts/run3b/v2/report/report_v2.py
+f54586aedc2179b6330ebc86f5feecb095dbe03d50c8d9bcd5ad9fc25a9402b5  run3b/v2/model/run3b_infer.py  scripts/run3b/v2/model/run3b_infer.py
+ab14c522527c7336d1d0a62e9a3824bdd5a4b7cfd0903388eef80c5f2a943a4e  run3b/v2/navtest/run3b_agent.py  scripts/run3b/v2/navtest/run3b_agent.py
+64d815330664f40dccfc4049bbf7853e0bb9b6678303c16ef4a167fdb3e950fe  run3b/v2/navtest/hydra/agent/run3b_v2_agent.yaml  scripts/run3b/v2/navtest/hydra/agent/run3b_v2_agent.yaml
+29dae3cfe0d8859a2b06ce55a0e96f38877950633ee07dea152a9aceecb2553d  run3b/v2/navtest/run_navtest.sh  scripts/run3b/v2/navtest/run_navtest.sh
+941d38f9fc43c0c8e4b9126c98cac464b1708dfd2aef0f11259503bd912d0c51  run3b/v2/navtest/paired.py  scripts/run3b/v2/navtest/paired.py
+9d3f658c3aa1b242b6da2bcf7a16089e918aef0b92e3fef89dd930230d5fc04c  run3b/v2/paddock/check_adapter.py  scripts/run3b/v2/paddock/check_adapter.py
+9633155cf0e54ba2917a776bdca06f669a0c89da4c207e3c533592fc9c99d7fd  gate-run3b/run_gate.sh  scripts/gate-run3b/run_gate.sh
+6b7fcfb6bd6ade7f71f72278675096f2ba80d297e31b8b0004f606c6b56fa97d  gate-run3b/alp_run3b.sh  scripts/gate-run3b/alp_run3b.sh
+d9527ec7a37762716c1d2716e3d6bacbe9f3bb0b838d3f8a60b51ce701f92106  gate-run3b/chain_after_navtest.sh  scripts/gate-run3b/chain_after_navtest.sh
+5c364cd9af7dca381cf2f2194eb48244c440523abd9299986b0bbf65d6aae7d3  worktrees/gate-oct27/src/paddock/adapters/models/run3b_v2/policy.py  paddock/gate-oct27/run3b_v2/policy.py
+f9b3ea4ac7faf6bd473c8d3eda1766d17b76bb7537768d198dc7032d47691188  worktrees/gate-oct27/src/paddock/adapters/models/run3b_v2/model.yaml  paddock/gate-oct27/run3b_v2/model.yaml (bench2drive declared 20 Nov 13:3x, before the Bench2Drive gate)
+b890ba008241ba6c57937de57c98859a9dee602d0a4c447291567b35fbf0110e  worktrees/gate-oct27-alp/src/paddock/adapters/models/run3b_v2/model.yaml  paddock/gate-oct27-alp/run3b_v2/model.yaml
+5fff41837e08233d8ef591ba0608db9ec596555defcc92c2d06506b3a7dd8479  run3b/CLAUDE.md  specs/run3b_v2_spec.md
+9c94489f1301bb92070f11433535bcd7aede2f1f6267a885869fb886c0729631  worktrees/gate-oct27-alp/src/paddock/adapters/benchmarks/alpasim/harness.py  paddock/gate-oct27-alp/alpasim_harness_run3b.patch (the whole file as run; the patch is run3b's change to it)
+fa5b236ba74e682dbb6fdd768166ac2cb9cf461533d5ec4076b88b62de7ff0f3  gate-run3b/b2d_run3b.sh  scripts/gate-run3b/b2d_run3b.sh
+a3a55731e7ca5f3ffc121c7d8611ff6a2eab255431925008d42bb478f55f721d  run3a/build/navtest_table.py  scripts/run3a/build/navtest_table.py
+e495f6a7cfba86bed884ca459dca9aa3945348b635f4be455591c5d5ab1ad5ff  run3a-adapted/phase1/model/lora.py  scripts/run3a-adapted/phase1/model/lora.py
+# Off-tree code the trainer and the evaluation imported, from earlier work at the training site: Phase 1's modules
+# ({runs}/run3a-adapted, a local repo at 24aacaa), the fact-label rules (run3a/facts, the CARLA labeller and its
+# carla_v3 / carla_v2 / carla modules, the GPU geometry), run3a/contrast/d_noaux.py and navtest_table. Hashed in place;
+# none changed after the run started (19 Nov 03:15), so these are the bytes that ran. Not copied, except the two above.
+a96e05c690f839750aef327fc238f16d10772d90919412590439f66ed02139bb  run3a-adapted/phase1/constants.py  -
+c2126a7dc596b74218a1cabbbcd602fe3b1a863a773392f8ee0dae2725940ae4  run3a-adapted/phase1/data/dataset.py  -
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  run3a-adapted/phase1/data/__init__.py  -
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  run3a-adapted/phase1/__init__.py  -
+ba010e6feda98eb1e32dca64e30d479abce55038026c3f58d32c60f8ed906583  run3a-adapted/phase1/loss/criterion.py  -
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  run3a-adapted/phase1/loss/__init__.py  -
+192e513bd652bed6f4fa7f4c798013601ec16781d36ebc6b0b474f0ed5f94a98  run3a-adapted/phase1/loss/matching.py  -
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  run3a-adapted/phase1/model/__init__.py  -
+0666058d1d55fd259e2fc4e418be1340e053cd0e4877d082f2c9464af61856ab  run3a/contrast/d_noaux.py  -
+d27cbe2dfdc104bd5c7c6ee408646eef4a55dd01c831d31b69dbf45566c37077  run3a/facts/facts.py  -
+4e186b36dc9e6fc204b5fac80e2f090cc1d44e9886712d7db676756d10e702d1  run3a/facts/gpu/gpu_geom.py  -
+4bf54a65cc3e38067ef43bab7cdc8140b2a0f264ba69642b04b32ec4979969fc  run3a/facts/lead/carla/analyse_carla.py  -
+7cd55ce6255824ef035aca835ef86de52da13e68dfdfadff2a777398ec26cb56  run3a/facts/lead/carla/build_report_carla.py  -
+480aca23c71701dc15cc8bff83ed7c444a4e3e7244d109d50a7eca4de0a224a5  run3a/facts/lead/carla/carla_facts.py  -
+981bf4301ab2f74de0a81f4eacfab70ad24c6591415afff8a01edb4569a29d01  run3a/facts/lead/carla/carla_pics.py  -
+6ae60a3dc7b0aa1723f4fe6bf622eb92f444a48a4612dd013061d15022561ac7  run3a/facts/lead/carla/centrelines_simplified.py  -
+1734f5f59ee7fa2e4832b7c63785228eda5797193da3360d812a605b421492a1  run3a/facts/lead/carla_full_v1/full.py  -
+0799cc0adec0fd509514bf8adddf18af8aa5944ebe18874d66df34470cea3bd5  run3a/facts/lead/carla/lead360_overlap.py  -
+71827be087137b95fa6234db1f84d16a9ccb891a6a15ef11d92684ec0d99a394  run3a/facts/lead/carla/peek_route.py  -
+1eb2928f1891adc3d216b753b166bb72892ff97719479673e274b5b84494a05b  run3a/facts/lead/carla/run_carla.py  -
+78f0c2ad1a9bb439d989e541081f320eb1fc54fbf9224c389eff3b31b095b982  run3a/facts/lead/carla/town_cache.py  -
+8cfda175a20e4da57191980e43a54dc237fd9c4edf08959914e3e2513fae2057  run3a/facts/lead/carla_v2/analyse_v2.py  -
+15acb0464fe50fd76ba7437936b0d2da660d11d6369ff9a7a2584a627e7c1661  run3a/facts/lead/carla_v2/anchors_lead.py  -
+bddba5f9eb29c2f9eee033693fa4f41a0084e94f0c38ce3e095b06177fd2dc69  run3a/facts/lead/carla_v2/build_report_v2.py  -
+5b8ec12223fa61acea1b106fe1373b4e4c3cc2c67760660a4873122d30880155  run3a/facts/lead/carla_v2/comfort_report.py  -
+fc7b25e70dce691dcbd2ed8c31172ebb798da54ef7e4295acb03ebd371673eef  run3a/facts/lead/carla_v2/diag.py  -
+c5e917f4a063c613e3baedeacc4428cf7abb573cfc2d4546779b908aa9e59bc1  run3a/facts/lead/carla_v2/fixes.py  -
+92ff34fac54c8f56fcafda3d90bf98052c425290252c49e132d6403e7e4605a6  run3a/facts/lead/carla_v2/junctions.py  -
+8ad33e9c94a172fecfbe8bfa722c8ca1e58c9adb37f70fefd2526873173a3385  run3a/facts/lead/carla_v2/negprog.py  -
+37cf846784b65e3bef2740fd3ca583bf50ca3ab7fd35bb64bd54c3fdf0bec136  run3a/facts/lead/carla_v2/offroad_report.py  -
+1adebc84007e099d768c1a98247d7e8592d3d964df9ece8c24c07329fb9ee593  run3a/facts/lead/carla_v2/offroad_v2.py  -
+153152fa7353848fe1762e49e382ea792afb8b03e4be0fc915b6efd48a0f05c9  run3a/facts/lead/carla_v2/plan.py  -
+4fda488b11e6b742a72ad6a7675eb2f5f6d9ee80d013759de294fb87c097e08c  run3a/facts/lead/carla_v2/run_carla_v2.py  -
+67e8a8c16ed3116317c391b5a21bd5cf50bfa0df48700050e23c46610dbfdcec  run3a/facts/lead/carla_v2/sweep2.py  -
+75a33303c0d1b4d5be461b007132d3cf8b949a05dc73f8132b259287dac71936  run3a/facts/lead/carla_v2/sweep3.py  -
+7e6abe153671a96c9c911849a3989ce5763b34c698ad0919e657d405275bb603  run3a/facts/lead/carla_v2/sweep4.py  -
+0daafe64daa68a27b2cb9059a19861858a3de2d682faa82110adb954c6c5049a  run3a/facts/lead/carla_v2/sweep.py  -
+02bc3a4f0e6063edb4aa5b3b42a5c49caa3f30fbda475dd25eac600802834895  run3a/facts/lead/carla_v2/sweep_report.py  -
+364d524353eecc4d79bfdb672768b3eb30bf656a3f0f33d8bb83b10ac9ca1e00  run3a/facts/lead/carla_v2/task1_report.py  -
+6338ac9038e751fbe7a8609a5e2eb1f01cc784bf8cacc0e7d4fef187db3d7157  run3a/facts/lead/carla_v2/task2_report.py  -
+3b58f8424a5ca0604cfb3cc225c46d801bcc65fad628ebbbbfb53c602e62a63a  run3a/facts/lead/carla_v2/views_v2.py  -
+eb12de666ea5f86fa10ee6f0830b72409940676554962357ebf132d23044b8ea  run3a/facts/lead/carla_v3/analyse_cause_all.py  -
+ad3b1b89717d59ae7b701b55e0bd3dee61ad1eae5eb263338309feb431bcf0f8  run3a/facts/lead/carla_v3/analyse_cause_combo.py  -
+5bfb4a12ac69ce9e3917fbfbcb6a655637a7cbb8842cf3d8eb44932d745781a6  run3a/facts/lead/carla_v3/analyse_cause_v3.py  -
+8d883466b2b96acb57f1d72872eef35e6c88d487644366ef105676938c5548ef  run3a/facts/lead/carla_v3/analyse_pool_v3.py  -
+0ad136a95aef2bf853faeb1a168ebf6728df6bfd7ac71ab0597629e688512427  run3a/facts/lead/carla_v3/analyse_v3.py  -
+4b108164ec9fb2af873b4c88662ffa9b102c9d75a9cd5382792b837d40cba5c2  run3a/facts/lead/carla_v3/b2d_lead_rig.py  -
+93b204ffb6b8426b0e5c2fb71b5cd8133456536e7cf1363abd49553cf4c91c5c  run3a/facts/lead/carla_v3/build_v3.py  -
+2ad93d2798e4b6f0816a71f75e3ef6fe44d26a4308a2171f7e4f1ab6c7676231  run3a/facts/lead/carla_v3/cause_all.py  -
+9de562956904296eea9f6ab4e724d483ab56f616e9b240db52b9b7522a78c6d8  run3a/facts/lead/carla_v3/cause_combo.py  -
+39c07a23298f9e5dda0f3ad6064d4e5603cf7d4854eed0085eb0fceeaa7a70f7  run3a/facts/lead/carla_v3/cause_v3.py  -
+3346b5c39d2291f01663cf00c5689778abf72f4ef1c4ba6cf36d92c0a2fdd55d  run3a/facts/lead/carla_v3/pics_v3.py  -
+992ab19903aff65b54c9cd01da70e7b7850b381f080c42c504caab89e3b10338  run3a/facts/lead/carla_v3/v3_expert.py  -
+a7c81fa1850340060bab143d87ff2ebf155391a73c9ad899a09b3910bdd369b1  run3a/facts/lead/carla_v3/v3_pool.py  -
+0eed257646b5d7aa165f6c001f1dbe2e5fc048409e74a14a70925aa97c00c4c3  run3a/facts/lead/carla_v3/ways.py  -
+493e6d28a93889d0dd39802916484ab1685a243687761d890ed88205266c0bdb  run3a/facts/lead/carla/views_example.py  -
+# Drive-JEPA tree files run 3B imports, hashed in place at the training site ({data.drivejepa_tree}); not copied:
+# they are recipes/drivejepa_wajepa/overlay/run3a.json, with overlay/agent_decoder.json for
+# drive_jepa_perception_based/agent_decoder.py and overlay/run2.json for wajepa.py; see the README.
+2db984e683862503d98c3e04e4410da8ada5ddd2ec703f84db1f914f011812c7  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_perception_based/agent_decoder.py  -
+e996d04cc3bbf950a42c32b731689169ee18c21b0235713ff08e8d646f5c59d3  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_perception_based/bevformer/wajepa.py  -
+0772190e8c4006bd2cc53203f7c935e51b8c5fc1d1874f49a504ee50eeeb00bb  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/agent_decoder.py  -
+a8c88bd6e3df01147872eb0a632af34ec4b9022eca759bf38b6f44b82804e15b  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/agent_look.py  -
+68eb5ddd006c5bebff7e60c69f1e949c3365a499d6022788d9bdea7f773400d7  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/bev_feature_build.py  -
+79190f2481206f14c909f7431c123c25e49a6ac26f3344c7428ebcfab6540a5d  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/bev_refiner.py  -
+c2e0c1d7ecac01efa795fa843da6f9cbb8871d385f5dabbf9eb74e33079e49b7  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/custom_base_transformer_layer.py  -
+5420e8968736e1df5148b2f4e6eddde8a9c12dc3ed04fb9361afe0ac06400c43  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/decoder.py  -
+dd544519b90f1a82ddce378f52af330e788f9636de771457e0a1f15984e891b1  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/encoder.py  -
+d29eb57fbbccf75ef8eac527ca2566a28671e9e55b33e17d216bae50ab1688c7  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/grid_mask.py  -
+70253ff4cdc386357503d9071fb5c5af28b1c392f1d4f385b1a04b626024f549  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/image_encoder.py  -
+03ad15be08b83fa2cb33defff6c22653b7eb1bab6fe33210cf677fabcc11781b  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/multi_scale_deformable_attn_function.py  -
+9241d364e679c7ea768d4dfe66656e58165f5cd781e415cefb1875b77c5746e4  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/resnet_image_encoder.py  -
+6fa90fdf6bc1b6ad7ae12cddb76d66f1fbc5f9cf730cfc95763dfddd7eb82a83  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/simple_image_encoder.py  -
+622aea6d22267c0485cbd23232d59a33529081750a7f40b7540d18c9de4eaaad  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/spatial_cross_attention.py  -
+238948db798bb53accd6874f911a451042b57a5e07d34358a1d13bef069ad828  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/temporal_self_attention.py  -
+4f739d8d0d490efce9ea1e142bbe4f6c461ed3fca0aff256be6b1a8c123b6a0f  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/transform3d.py  -
+2ba11bb5936fdcbe9d133929b2e62cb0cac6c0d9abb55cf6e5d9ab30c78e2591  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/transformer_decoder.py  -
+e996d04cc3bbf950a42c32b731689169ee18c21b0235713ff08e8d646f5c59d3  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/bevformer/wajepa.py  -
+f46c429b1ed6965847bf706e071f8b32b020a9d1ffe711179d9a59cef6c082a3  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_config.py  -
+a1cf3c3ba2001287956e049d12f134f29666c98c6130bd7594df9044bd4b30df  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/drive_jepa_features.py  -
+bf4eba2b3c58c4feef16376e6d07611b278f56e9a01460359b0a83c6c9c79eda  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/score_module/map_head.py  -
+81b740ef24e0606d7a3df5c0d07616c2f2c513e92ef30dd687057e1c7b9f3ebc  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/score_module/scorer.py  -
+c49448b49ad9678599f261ea74be40b0c79798dad61dcc417552d2f5cefb38d2  {data.drivejepa_tree}/navsim_v2/navsim/agents/drive_jepa_run3a/traj_refiner.py  -

@@ -10,8 +10,8 @@
   <a href=".github/workflows/check.yml"><img src="https://img.shields.io/badge/gate-make_check_in_CI-555555.svg" alt="Gate: make check in CI"></a>
 <!-- experiments:badges -->
   <a href="#gap-closing-experiments"><img src="https://img.shields.io/badge/gap_closing-8_experiments-2E8B4E.svg" alt="gap closing: 8 experiments"></a>
-  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-10_open_or_tested-1F6FEB.svg" alt="hypotheses: 10 open or tested"></a>
-  <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-4-B4560A.svg" alt="gated checkpoints: 4"></a>
+  <a href="#hypothesis-experiments"><img src="https://img.shields.io/badge/hypotheses-11_open_or_tested-1F6FEB.svg" alt="hypotheses: 11 open or tested"></a>
+  <a href="experiments/README.md#regression-gate-log"><img src="https://img.shields.io/badge/gated_checkpoints-7-B4560A.svg" alt="gated checkpoints: 7"></a>
   <a href="#where-we-are"><img src="https://img.shields.io/badge/gallops_version-none_yet-555555.svg" alt="gallops version: none yet"></a>
 <!-- /experiments:badges -->
 </p>
@@ -20,15 +20,15 @@ We are building a JEPA-based driving model, and this repo is its evidence: every
 experiment, who ran it, and what it showed. Click an ID for that experiment's card,
 with its data, code, checkpoint sha256, results and gate verdicts.
 
-![Gap closing leads to an agreed base. Hypotheses of one change each are then judged by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
+![Gap closing comes first. Hypotheses of one change each are then judged against the base by the regression gate, until the gate ships a version.](docs/assets/experiments.svg)
 
 ## Where we are
 
 <!-- experiments:status -->
-- **Base model:** the 4-camera stack (`H01.run2`), agreed as the base on 19 Oct and not yet through the gate; gate comparisons are still against released Drive-JEPA.
+- **Base model:** released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed.
 - **Shipped version:** none yet. A version is earned by a gate SHIP ([how](docs/experiments.md#versions)).
-- **Last gate run:** 6 Nov · [H15.r3-a-s0](experiments/H15_prediction_memory/CARD.md) · ⏸ **HOLD**.
-- **In progress:** 7 hypotheses, 3 enablers.
+- **Last gate run:** 20 Nov · [H01.four-camera-planner](experiments/H01_four_camera_base/CARD.md) · ⏸ **HOLD**.
+- **In progress:** 8 hypotheses, 3 enablers.
 <!-- /experiments:status -->
 
 <a id="training-so-far"></a>
@@ -52,21 +52,22 @@ Each of us took some benchmarks and tried to close released Drive-JEPA's gap on 
 
 ## Hypothesis experiments
 
-One structural change each, on the agreed base, decided by paddock's regression gate.
+One structural change each, judged against the base by paddock's regression gate.
 
 <!-- experiments:hypotheses -->
 | ID | Hypothesis | Owner | Status | Headline result | Strength | Gate |
 |---|---|---|---|---|---|---|
-| [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera base (WA-JEPA + DJ planner) | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | ⏳ running | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren, Siddesh | ⏸ parked (inconclusive) | offline human speed at +2 s, RMSE, events slice: camera history k = 4 vs k = 2 with the car state now only (control V3) 0.5001 → **0.4992** (n=3,302 moments) | ●●○○ moderate · open-loop | — |
+| [**H01**](experiments/H01_four_camera_base/CARD.md) | 4-camera stack (WA-JEPA + DJ planner) | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **85.27** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⏸ **HOLD** 20 Nov |
+| [**H04**](experiments/H04_subscore_scorer_navsim/CARD.md) | Sub-score scorer, NAVSIM gap | Navvrat, Siddesh | ⏳ running | NAVSIM navtest EPDMS, human filter, locked pick 87.78 → **87.30** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⏸ **HOLD** 20 Nov |
+| [**H05**](experiments/H05_ssm_memory/CARD.md) | State-space memory | Naren, Siddesh | ⏸ parked (inconclusive) | offline human speed at +2 s, RMSE, events slice: camera history k = 4 vs k = 2 with the car state now only 0.5001 → **0.4992** (n=3,302 moments) | ●●○○ moderate · open-loop | — |
 | [**H06**](experiments/H06_global_read/CARD.md) | Global read and side braking | Navvrat | ⏳ running | NAVSIM score, global read off 0.870 → **0.852** (n=500 scenes) | ●●○○ moderate · no-record, open-loop | — |
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | ⏳ running | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
-| [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | ⏸ parked (negative) | offline mean grade of the picked path: memory carried vs reset every moment 0.7355 → **0.7313** (n=1,131 moments) | ●●○○ moderate · open-loop | — |
-| [**H19**](experiments/H19_motion_history/CARD.md) | Car motion history | Siddesh | ⏸ parked (negative) | AlpaSim mean windowed score, 30 scenes, history shown (line written beforehand 0.8194, not met) 0.7527 → **0.7771** (n=30 scenes) | ●●○○ moderate | — |
+| [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | 🗑 dropped | AlpaSim scene_score 0.7574 → **0.7464** (n=50 scenes) | ●●○○ moderate · adapted | — |
+| [**H18**](experiments/H18_fact_scorer_navsim_lead/CARD.md) | Fact scorer, NAVSIM + LEAD | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **86.35** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 20 Nov |
+| [**H19**](experiments/H19_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
+| [**H20**](experiments/H20_motion_history/CARD.md) | Car motion history | Siddesh | ⏸ parked (negative) | AlpaSim mean windowed score, 30 scenes, history shown (line written beforehand 0.8194, not met) 0.7527 → **0.7771** (n=30 scenes) | ●●○○ moderate | — |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.

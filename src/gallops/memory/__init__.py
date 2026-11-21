@@ -5,6 +5,9 @@ to the next, trained on navtrain. Its plan is the memory-picker plan; this packa
             graded; plus the driving statistics the missing-image check compares
     inputs  the model's inputs for one moment, built the way paddock's node builds them on NAVSIM
     cache   torch -- the released model run once over every moment, its outputs on disk
+    checks  torch -- the sample checks on that path before the full run (fidelity, sight, ...)
+    probe   the go / no-go probe: does a longer past predict the human better (numpy, torch MLP)
+    probe_control   the probe's control: the camera's past against the car's own past
 
 Everything here runs inside Drive-JEPA's own interpreter (Python 3.9) as well as gallops' 3.11, so
 it stays valid Python 3.9, and nothing is imported at package level.

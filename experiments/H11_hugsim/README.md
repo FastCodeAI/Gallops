@@ -45,7 +45,7 @@ on both attempts; AutoE2E finished it. Drive-JEPA ended 22.7% of episodes comple
 vehicle, 6.9% hitting scenery, 11.5% off route and 20.0% at the step cap. Neither run is today's adapter:
 Drive-JEPA was served by the adapter as of `ac7788f`, uncropped and picking on the plain score (main now
 crops, #106, and uses momentum selection, #95); AutoE2E by `b507811`. One run per scenario: no spread is
-known. The same campaign also drove the Final (Bench2Drive-trained Drive-JEPA) and Run 3A (WA-JEPA
+known. The same campaign also drove the Final (Bench2Drive-trained Drive-JEPA) and the sub-score agent-look model (WA-JEPA
 tokens with Drive-JEPA's planner), which are not paddock adapters on `main` and are not stored
 (`docs/benchmarks/hugsim.md`).
 

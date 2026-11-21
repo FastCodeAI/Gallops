@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory vs 0.1.8b</title>
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--mut:#9da7b3;--acc:#58a6ff;--ho:#ff9f0a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:rgba(13,17,23,.96);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+header h1{font-size:17px;margin:0}
+header .sub{color:var(--mut);font-size:12px}
+label.tog{display:flex;gap:6px;align-items:center;cursor:pointer;background:var(--panel);border:1px solid var(--line);padding:4px 10px;border-radius:6px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--mut)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+main{padding:12px 16px 60px;max-width:2000px;margin:0 auto}
+section.scene{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 18px}
+section.scene h2{font-size:16px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;background:#1f6feb33;color:var(--acc)}
+.tag.flip{background:#ff3b3033;color:#ff7b72}
+.cols{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.cols.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:900px){.cols,.cols.three{grid-template-columns:minmax(0,1fr)}}
+.col h3{font-size:14px;margin:0 0 4px}
+.col .meta{font-size:12px;color:var(--mut);margin-bottom:6px;min-height:2.9em}
+.col .meta b{color:var(--fg)}
+.col video{width:100%;display:block;background:#000;border-radius:4px}
+.col.missing .ph{display:flex;align-items:center;justify-content:center;aspect-ratio:900/1382;background:#0d1117;border:1px dashed var(--line);border-radius:4px;color:var(--mut)}
+.tl{position:relative;height:22px;margin:8px 4px 2px;background:#21262d;border-radius:3px;cursor:pointer}
+.tl .span{position:absolute;top:6px;height:10px;border-radius:2px;opacity:.55}
+.tl .mk{position:absolute;top:0;width:3px;height:22px;margin-left:-1px;border-radius:1px}
+.tl .ph{position:absolute;top:-3px;width:2px;height:28px;background:#fff;margin-left:-1px;pointer-events:none}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0}
+.chip{font:12px system-ui;border:1px solid;background:transparent;border-radius:12px;padding:2px 8px;cursor:pointer}
+.chip:hover{background:#ffffff14}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+.ctl button,.ctl select{background:#21262d;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font:13px system-ui;cursor:pointer}
+.ctl button.play{min-width:70px;font-weight:600}
+.ctl input[type=range]{flex:1;min-width:160px}
+.ctl .tm{font:12px ui-monospace,monospace;color:var(--mut);min-width:230px}
+.reset-col{display:none}
+body.show-reset .reset-col{display:block}
+.note{color:var(--mut);font-size:12px;max-width:1100px}
+nav.tabs{display:flex;gap:4px}
+nav.tabs button{background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:5px 14px;font:600 13px system-ui;cursor:pointer}
+nav.tabs button.on{background:#1f6feb33;color:var(--fg);border-color:var(--acc)}
+.view{display:none}.view.on{display:block}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{background:transparent;color:var(--mut);border:0;padding:5px 12px;font:13px system-ui;cursor:pointer}
+.seg button.on{background:#21262d;color:var(--fg);font-weight:600}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:4px 0 14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 16px}
+.card h2{font-size:15px;margin:0 0 4px}.card .sub{color:var(--mut);font-size:12px;margin:0 0 10px}
+.verdict{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.verdict .big{font:700 22px system-ui;padding:6px 14px;border-radius:8px;background:#ff3b3022;color:#ff7b72;border:1px solid #ff3b3066}
+.verdict .big.ok{background:#2ea04322;color:#56d364;border-color:#2ea04366}.verdict .big.nd{background:#21262d;color:var(--fg);border-color:var(--line)}
+.verdict p{margin:0 0 6px;max-width:900px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.tile{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.tile .k{color:var(--mut);font-size:12px}.tile .v{font:600 20px system-ui;margin:2px 0}.tile .s{color:var(--mut);font-size:12px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+table.m{border-collapse:collapse;width:100%;font-size:13px}
+table.m th,table.m td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.m th:first-child,table.m td:first-child{text-align:left;white-space:normal}
+table.m th{color:var(--mut);font-weight:600;font-size:12px}
+table.m td.note{color:var(--mut);font-size:12px;text-align:left;white-space:normal;min-width:220px}
+table.m tr.hl td{background:#ffffff08}
+.tw{overflow-x:auto}
+.ins{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.ins div{background:#0d1117;border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:6px;padding:10px 12px}
+.ins h3{font-size:14px;margin:0 0 6px}.ins p{margin:0;color:#c9d1d9;font-size:13px}
+svg text{font-family:system-ui,sans-serif}
+.card svg{display:block;max-width:1000px}
+.tip{position:fixed;pointer-events:none;background:#1c2128;border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--fg);display:none;z-index:9;max-width:340px;box-shadow:0 4px 14px #0008}
+a.sc{color:var(--acc);cursor:pointer;text-decoration:none}a.sc:hover{text-decoration:underline}
+.pos{color:#58a6ff}.neg{color:#f0883e}
+@media (max-width:640px){header{padding:8px 16px}main{padding:12px 16px 60px}.ins{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Memory carried vs 0.1.8b — closed loop, 30 scenes</h1>
+  <div class="sub">Metrics: scores and exits per scene, with what they mean. Replays: videos synchronised by simulated time (burnt into each frame as “t X s”); times on markers are seconds after handover.</div></div>
+  <nav class="tabs"><button data-v="metrics">Metrics</button><button data-v="replays">Replays</button></nav>
+</header>
+<main>
+<div class="view" id="v_metrics"></div>
+<div class="view" id="v_replays">
+<div class="bar"><div class="seg" id="rblk"><button data-b="all">All 30</button><button data-b="18">18 new (CL18)</button><button data-b="12">12 diagnosis (CL12)</button></div>
+  <label class="tog"><input type="checkbox" id="showReset"> Show “Memory reset” column (12 diagnosis scenes only)</label>
+  <div class="legend" id="legend"></div></div>
+<p class="note">Score and exit from the lane's scoring code (s5_diagnosis stepb.py <code>score</code> / <code>exit_of</code>); every event below each video is an episode of front collision, side collision, off-road or hit from behind in the run's metrics.parquet. Handover from the run's own rollout log. Click a marker or chip to jump there (playback pauses). Keys on a focused scene: space play/pause, ←/→ step ±0.5 s.</p>
+<div id="scenes"></div>
+</div>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = /*DATA*/[];
+const MET = /*MET*/{};
+const MROW = Object.fromEntries((MET.rows||[]).map(r=>[r.scene,r]));
+const ARMS = [["carry","Memory carried"],["018b","0.1.8b"],["reset","Memory reset"]];
+const KINDS = [["handover","handover","#ff9f0a"],["collision_front","front collision","#ff3b30"],["collision_lateral","side collision","#d946ef"],["offroad","off-road","#ffd60a"],["collision_rear","hit from behind","#38bdf8"]];
+const TMAX = 20.0, FIRST = ["bae463d3","5f064b02","04749bb9"];
+document.getElementById("legend").innerHTML = KINDS.map(k=>`<span><i style="background:${k[2]}"></i>${k[1]}</span>`).join("");
+const groups = [];
+const fmt = (x,d=2)=>Number(x).toFixed(d);
+
+function build(sc){
+  const sec = document.createElement("section"); sec.className="scene"; sec.id = "s_"+sc.scene; sec.tabIndex = 0;
+  let tag = FIRST.includes(sc.scene) ? '<span class="tag flip">flipped carry vs reset</span>' : (sc.scene==="048b974e" ? '<span class="tag">only scene where reset is ahead</span>' : '');
+  const mr = MROW[sc.scene];
+  if (mr){ if (mr.carry.atfault && !mr.b018.atfault) tag += ' <span class="tag flip">crash only with memory</span>';
+    if (mr.b018.atfault && !mr.carry.atfault) tag += ' <span class="tag">crash only with 0.1.8b</span>';
+    if (mr.diff > 0.1) tag += ` <span class="tag">memory ahead ${fmt(mr.diff,3)}</span>`; if (mr.diff < -0.1) tag += ` <span class="tag">0.1.8b ahead ${fmt(-mr.diff,3)}</span>`; }
+  sec.dataset.block = sc.source==="CL12" ? "12" : "18";
+  const anyArm = Object.values(sc.arms)[0];
+  sec.innerHTML = `<h2>${sc.scene} ${tag} <span class="tag">${sc.source}</span> <span class="sub" style="color:var(--mut);font-size:12px;font-weight:400">handover at sim t ${fmt(anyArm.handover)} s</span></h2><div class="cols"></div>
+  <div class="ctl"><button class="play">▶ Play</button><button class="bk">−0.5 s</button><button class="fw">+0.5 s</button>
+  <select class="spd"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+  <input type="range" class="seek" min="0" max="${TMAX}" step="0.05" value="0"><span class="tm"></span></div>`;
+  const cols = sec.querySelector(".cols");
+  const g = {sc, sec, vids:[], tls:[], t:0, playing:false};
+  for (const [arm, title] of ARMS){
+    const a = sc.arms[arm];
+    if (arm==="reset" && !a) continue;
+    const col = document.createElement("div"); col.className = "col" + (arm==="reset" ? " reset-col" : "");
+    if (!a){ col.classList.add("missing"); col.innerHTML = `<h3>${title}</h3><div class="meta">no ${title} run on this scene</div><div class="ph">no run</div>`; cols.appendChild(col); continue; }
+    const prog = a.progress==null ? "" : ` · progress (uncapped) ${fmt(a.progress,3)}`;
+    col.innerHTML = `<h3>${title} — <span style="font-weight:700">${fmt(a.score,3)}</span> · ${a.short}</h3>
+      <div class="meta">exit: <b>${a.exit}</b>${prog}<br><span title="${a.run}">${a.source}</span></div>
+      <video muted playsinline preload="auto" src="${a.media}"></video><div class="tl"></div><div class="chips"></div>`;
+    cols.appendChild(col);
+    const v = col.querySelector("video"); v.dataset.arm = arm; g.vids.push(v);
+    const tl = col.querySelector(".tl"), chips = col.querySelector(".chips");
+    let h = "";
+    for (const e of a.events) h += `<div class="span" style="left:${100*e.t/TMAX}%;width:${Math.max(0.4,100*(e.t_end-e.t)/TMAX)}%;background:${e.color}"></div>`;
+    const marks = [{t:a.handover, color:"#ff9f0a", text:`handover (t ${fmt(a.handover)})`}].concat(a.events.map(e=>({t:e.t, color:e.color, text:`${e.label} +${fmt(e.rel)} s (t ${fmt(e.t)})`})));
+    for (const m of marks) h += `<div class="mk" style="left:${100*m.t/TMAX}%;background:${m.color}" title="${m.text}" data-t="${m.t}"></div>`;
+    tl.innerHTML = h + '<div class="ph"></div>';
+    chips.innerHTML = marks.map(m=>`<button class="chip" style="color:${m.color};border-color:${m.color}" data-t="${m.t}">${m.text}</button>`).join("");
+    tl.addEventListener("click", ev=>{ const mk = ev.target.closest(".mk"); const r = tl.getBoundingClientRect();
+      seek(g, mk ? +mk.dataset.t : TMAX*(ev.clientX-r.left)/r.width, true); });
+    chips.addEventListener("click", ev=>{ const c = ev.target.closest(".chip"); if (c) seek(g, +c.dataset.t, true); });
+    g.tls.push(tl);
+  }
+  sec.querySelector(".play").onclick = ()=> g.playing ? pause(g) : play(g);
+  sec.querySelector(".bk").onclick = ()=> seek(g, g.t-0.5, true);
+  sec.querySelector(".fw").onclick = ()=> seek(g, g.t+0.5, true);
+  sec.querySelector(".spd").onchange = ev=>{ for (const v of g.vids) v.playbackRate = +ev.target.value; };
+  sec.querySelector(".seek").oninput = ev=> seek(g, +ev.target.value, true);
+  sec.addEventListener("keydown", ev=>{ if (ev.target.tagName==="SELECT"||ev.target.tagName==="INPUT") return;
+    if (ev.key===" "){ev.preventDefault(); g.playing?pause(g):play(g);} if (ev.key==="ArrowLeft") seek(g,g.t-0.5,true); if (ev.key==="ArrowRight") seek(g,g.t+0.5,true); });
+  groups.push(g); g.cols = cols; layout(g); show(g);
+  return sec;
+}
+function visible(g){ return g.vids.filter(v=> v.offsetParent !== null); }
+function layout(g){ const n = g.cols.querySelectorAll(".col").length - (document.body.classList.contains("show-reset") ? 0 : g.cols.querySelectorAll(".reset-col").length); g.cols.classList.toggle("three", n>=3); }
+// frame k carries sim t = k*0.05 s and has pts k*0.05; seek just past the frame start so the decoder lands on it
+function vt(v, t){ const d = isFinite(v.duration) ? v.duration : TMAX; return Math.min(Math.max(t,0), Math.max(d-0.001,0)); }
+function seek(g, t, stop){ if (stop) pause(g); g.t = Math.min(Math.max(Math.round(t/0.05)*0.05, 0), TMAX); for (const v of g.vids) v.currentTime = vt(v, g.t + 0.001); show(g); }
+function play(g){ for (const o of groups) if (o!==g && o.playing) pause(o);
+  const vs = visible(g); if (!vs.length) return; const r = +g.sec.querySelector(".spd").value;
+  if (g.t >= Math.max(...vs.map(v=>v.duration||TMAX)) - 0.06) seek(g, 0, false);
+  for (const v of g.vids){ v.playbackRate = r; v.currentTime = vt(v, g.t + 0.001); }
+  Promise.all(vs.map(v=>v.play().catch(()=>{}))).then(()=>{ g.playing = true; g.sec.querySelector(".play").textContent = "❚❚ Pause"; tick(g); }); }
+function pause(g){ g.playing = false; for (const v of g.vids) v.pause(); g.sec.querySelector(".play").textContent = "▶ Play"; show(g); }
+function tick(g){ if (!g.playing) return;
+  const vs = visible(g); const live = vs.filter(v=>!v.ended);
+  if (!live.length){ pause(g); return; }
+  const m = live[0]; g.t = m.currentTime;
+  for (const v of vs){ if (v===m) continue; const want = vt(v, g.t); if (!v.ended && Math.abs(v.currentTime - want) > 0.06) v.currentTime = want; }
+  show(g); requestAnimationFrame(()=>tick(g)); }
+function show(g){ const t = g.t; const ho = Object.values(g.sc.arms)[0].handover;
+  g.sec.querySelector(".tm").textContent = `sim t ${fmt(t)} s · handover ${t>=ho?"+":"−"}${fmt(Math.abs(t-ho))} s`;
+  g.sec.querySelector(".seek").value = t; for (const tl of g.tls) tl.querySelector(".ph").style.left = (100*t/TMAX)+"%"; }
+const root = document.getElementById("scenes");
+for (const sc of DATA) root.appendChild(build(sc));
+const cb = document.getElementById("showReset");
+try { cb.checked = localStorage.getItem("cmp_show_reset")==="1"; } catch(e){}
+function applyReset(){ document.body.classList.toggle("show-reset", cb.checked); for (const g of groups){ layout(g); for (const v of g.vids) v.currentTime = vt(v, g.t+0.001); }
+  try { localStorage.setItem("cmp_show_reset", cb.checked ? "1":"0"); } catch(e){} }
+cb.onchange = applyReset; applyReset();
+// ---------------- tabs, replay filter, metrics tab ----------------
+const C_CARRY = "#3987e5", C_018 = "#d95926";          // categorical slots 1 + 2 (dark), validated against the panel surface
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tip = document.getElementById("tip");
+document.addEventListener("mousemove", ev=>{ const t = ev.target.closest("[data-tip]");
+  if (!t){ tip.style.display="none"; return; }
+  tip.innerHTML = t.dataset.tip; tip.style.display="block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(ev.clientX+14, innerWidth-w-8)+"px"; tip.style.top = (ev.clientY+h+20 > innerHeight ? ev.clientY-h-10 : ev.clientY+14)+"px"; });
+
+function setView(v){ for (const b of document.querySelectorAll("nav.tabs button")) b.classList.toggle("on", b.dataset.v===v);
+  for (const el of document.querySelectorAll(".view")) el.classList.toggle("on", el.id==="v_"+v);
+  if (v!=="replays") for (const g of groups) if (g.playing) pause(g); }
+for (const b of document.querySelectorAll("nav.tabs button")) b.onclick = ()=>{ setView(b.dataset.v); history.replaceState(null,"","#"+b.dataset.v); };
+
+let RBLK = "all";
+function setRBlk(b){ RBLK = b; for (const x of document.querySelectorAll("#rblk button")) x.classList.toggle("on", x.dataset.b===b);
+  for (const g of groups){ const show = b==="all" || g.sec.dataset.block===b; if (!show && g.playing) pause(g); g.sec.style.display = show ? "" : "none"; }
+  try { localStorage.setItem("cmp_rblk", b); } catch(e){} }
+for (const x of document.querySelectorAll("#rblk button")) x.onclick = ()=> setRBlk(x.dataset.b);
+function gotoScene(s){ setView("replays"); const g = groups.find(g=>g.sc.scene===s);
+  if (g && g.sec.style.display==="none") setRBlk("all");
+  history.replaceState(null,"","#s_"+s); document.getElementById("s_"+s).scrollIntoView({behavior:"smooth", block:"start"}); }
+document.addEventListener("click", ev=>{ const a = ev.target.closest("a.sc"); if (a){ ev.preventDefault(); gotoScene(a.dataset.s); } });
+
+let MBLK = "18";
+const sc3 = x => x==null ? "–" : fmt(x,3);
+const sgn = (x,d=3) => (x>=0?"+":"−")+fmt(Math.abs(x),d);
+const lst = a => a.length ? a.join(", ") : "none";
+const slink = s => `<a class="sc" data-s="${s}" href="#s_${s}">${s}</a>`;
+
+function renderMetrics(){
+  const B = MET.blocks[MBLK], R = MET.rows.filter(r=> MBLK==="30" || r.block===MBLK);
+  const name = {"18":"18 new scenes (CL18)", "12":"12 diagnosis scenes (CL12)", "30":"all 30 scenes"}[MBLK];
+  const vcls = MET.verdict==="HURTS" ? "" : (MET.verdict==="HELPS" ? "ok" : "nd");
+  let h = `<div class="card"><div class="verdict"><div class="big ${vcls}">${MET.verdict}</div><div>
+    <p><b>Pre-registered answer on the 18 new scenes.</b> Rule: ${esc(MET.rule)}.</p>
+    <p>Mean gap ${sgn(MET.blocks["18"].d)}: no effect on the mean. The verdict is HURTS only because memory adds at-fault crashes on
+    ${MET.added.map(slink).join(" and ")}. Both crashes come after the score window closed, and both runs score 1.000. See the insights below.</p>
+    <p class="note" style="margin:0">Source: score and exit from the lane's scoring code (stepb.py), recomputed from every run and checked against
+    out/cl18_table.csv / .json; the verdict is recomputed and asserted equal to the one in the report (reports/CL18_MEMORY.md).</p></div></div></div>`;
+
+  h += `<div class="bar"><div class="seg" id="mblk">${["18","12","30"].map(b=>`<button data-b="${b}" class="${b===MBLK?"on":""}">${{"18":"18 new","12":"12 diagnosis","30":"All 30"}[b]}</button>`).join("")}</div>
+    <span class="note">The rule applies to the 18 new scenes only. The 12 and the 30 are for context. 0.1.7 (grey columns) ran on an earlier simulator image: reference only.</span></div>`;
+
+  // ---- tiles
+  const tile = (k,v,s,c)=>`<div class="tile"><div class="k">${c?`<span class="sw" style="background:${c}"></span>`:""}${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  h += `<div class="card"><h2>Headline numbers — ${name}</h2><div class="tiles">
+    ${tile("Memory carried · mean score", fmt(B.carry.mean,4), `${B.carry.perfect} of ${B.n} score 1.000 · ${B.carry.zero} score 0`, C_CARRY)}
+    ${tile("0.1.8b · mean score", fmt(B["018b"].mean,4), `${B["018b"].perfect} of ${B.n} score 1.000 · ${B["018b"].zero} score 0`, C_018)}
+    ${tile("Gap (memory − 0.1.8b)", sgn(B.d), `without ${B.top2.join(", ")}: ${sgn(B.d_wo_top2)}`)}
+    ${tile("Wins / losses / ties", `${B.wins.length} / ${B.losses.length} / ${B.ties}`, `a win or loss is a gap above 0.1 · ${B.identical} scenes score exactly the same`)}
+    ${tile("At-fault crash exits", `${B.carry.atfault.length} vs ${B["018b"].atfault.length}`, `memory: ${lst(B.carry.atfault)}<br>0.1.8b: ${lst(B["018b"].atfault)}`)}
+    ${tile("Off-road exits", `${B.carry.offroad.length} vs ${B["018b"].offroad.length}`, `memory: ${lst(B.carry.offroad)}<br>0.1.8b: ${lst(B["018b"].offroad)}`)}
+  </div></div>`;
+
+  // ---- insights
+  h += `<div class="card"><h2>What the numbers say</h2><div class="sub">Generated from the same data as the tables; every number is recomputed on each build.</div>
+    <div class="ins">${MET.insights.map(i=>`<div><h3>${esc(i.h)}</h3><p>${esc(i.p).replace(/\b([0-9a-f]{8})\b/g, (m)=> MROW[m] ? slink(m) : m)}</p></div>`).join("")}</div></div>`;
+
+  // ---- chart A: per-scene gap
+  h += `<div class="card"><h2>Per-scene score gap, memory − 0.1.8b</h2><div class="sub">One bar per scene, sorted. Right (blue) means memory scored higher; left (orange) means 0.1.8b scored higher. A grey dot is an exact tie. Hover for scores and exits; click a scene name to open its replay.</div>${chartGap(R)}</div>`;
+
+  // ---- chart B: exits vs score window
+  h += `<div class="card"><h2>When runs end badly, and whether the score sees it</h2><div class="sub">Scenes where either driver crashes or leaves the road after handover. Each driver gets a lane: the shaded band is the window the score reads, and the mark is the first crash (●) or off-road (◆) exit. A mark beyond the band is never scored. Hover for details.</div>${chartExits(R)}</div>`;
+
+  // ---- key metrics table
+  const A = B.carry, Bb = B["018b"], S = B["017"];
+  const row = (k, a, b, c, note) => `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td style="color:var(--mut)">${c}</td><td class="note">${note}</td></tr>`;
+  h += `<div class="card"><h2>Key metrics — ${name}</h2><div class="sub">Rule and exit columns come from the lane's scoring code; the rest come from each run's simulator summary (aggregate/results-summary.json), averaged over the scenes.</div><div class="tw"><table class="m">
+    <tr><th>metric</th><th><span class="sw" style="background:${C_CARRY}"></span>memory carried</th><th><span class="sw" style="background:${C_018}"></span>0.1.8b</th><th>0.1.7 *</th><th>what it means</th></tr>
+    ${row("<b>Mean score</b>", `<b>${fmt(A.mean,4)}</b>`, `<b>${fmt(Bb.mean,4)}</b>`, fmt(S.mean,4), "Progress along the human route inside the score window, 0–1. This is what the rule compares.")}
+    ${row("Scenes scoring 1.000", A.perfect, Bb.perfect, "–", "The score saturates: most scenes are a perfect 1.000 for both, so only a few scenes can move the mean.")}
+    ${row("At-fault crash exits", A.atfault.length, Bb.atfault.length, S.atfault.length, "First exit is a front or side collision, at any time after handover. This is the crash clause of the rule.")}
+    ${row("Off-road exits", A.offroad.length, Bb.offroad.length, S.offroad.length, "First exit is leaving the drivable area. 791d68ce is off-road before handover in every arm.")}
+    ${row("Exits after the score window closed", A.exits_after_window.length, Bb.exits_after_window.length, "–", "Crash or off-road exits the score never reads. Memory: "+lst(A.exits_after_window)+". 0.1.8b: "+lst(Bb.exits_after_window)+".")}
+    ${row("Median end of score window", fmt(A.window_end_median,1)+" s", fmt(Bb.window_end_median,1)+" s", "–", "Seconds after handover when scoring stops: the first collision, or the car drifting 4 m from the human path. The run lasts about 16.8 s.")}
+    ${row("Mean distance driven", fmt(A.dist,1)+" m", fmt(Bb.dist,1)+" m", "–", "Whole run, simulator summary.")}
+    ${row("Mean progress (capped at 1)", fmt(A.progress,3), fmt(Bb.progress,3), "–", "Simulator's own progress along the route, whole run.")}
+    ${row("Mean distance from human path", fmt(A.dist_gt,2)+" m", fmt(Bb.dist_gt,2)+" m", "–", "Larger means the car drives its own line more and leaves the human trajectory.")}
+    ${row("Median closest approach to an obstacle", fmt(A.min_obst,2)+" m", fmt(Bb.min_obst,2)+" m", "–", "Smallest gap to any other road user during the run (median over scenes). Smaller is tighter.")}
+    ${row("Runs flagged wrong lane", A.wrong_lane, Bb.wrong_lane, "–", "Simulator's wrong-lane flag at any point of the run.")}
+    ${row("Mean plan deviation", fmt(A.plan_dev,3), fmt(Bb.plan_dev,3), "–", "How far the driven path strays from the plan the driver asked for (simulator metric).")}
+    ${B.shadow_pct!=null ? row("Calls where memory changed the pick", fmt(B.shadow_pct,1)+" %", "–", "–", "Carry runs only: the shadow branch runs the reset memory on the same input; this is the share of calls whose final pick differs.") : ""}
+  </table></div><p class="note">* 0.1.7: its existing runs on an earlier simulator image; score and exit only.</p></div>`;
+
+  // ---- per-scene table
+  const ex = (e)=> e==="pass" ? `<span style="color:var(--mut)">pass</span>` : esc(e).replace("+-","−").replace(/^at-fault collision \((\w+)\)/, "<b>at-fault $1</b>");
+  h += `<div class="card"><h2>Every scene — ${name}</h2><div class="sub">Click a scene to open its synced replay. Exit = the first crash or off-road event, in seconds after handover.</div><div class="tw"><table class="m">
+    <tr><th>scene</th><th>memory</th><th>0.1.8b</th><th>gap</th><th>0.1.7 *</th><th style="text-align:left">memory exit</th><th style="text-align:left">0.1.8b exit</th><th>score window ends (mem / 0.1.8b)</th><th>distance m (mem / 0.1.8b)</th><th>closest obstacle m</th><th>pick changed</th></tr>
+    ${[...R].sort((a,b)=> b.diff-a.diff || a.scene.localeCompare(b.scene)).map(r=>{
+      const hl = Math.abs(r.diff)>0.1 || r.carry.atfault!==r.b018.atfault || r.carry.offroad!==r.b018.offroad;
+      const d = Math.abs(r.diff)<1e-9 ? `<span style="color:var(--mut)">0</span>` : `<span class="${r.diff>0?"pos":"neg"}">${sgn(r.diff)}</span>`;
+      const shp = r.shadow ? fmt(100*r.shadow.differ_final/r.shadow.calls,1)+" %" : "–";
+      return `<tr class="${hl?"hl":""}"><td>${slink(r.scene)} <span style="color:var(--mut);font-size:11px">${r.block==="12"?"diag":"new"}</span></td><td>${sc3(r.carry.score)}</td><td>${sc3(r.b018.score)}</td><td>${d}</td><td style="color:var(--mut)">${sc3(r.s017)}</td>
+        <td style="text-align:left">${ex(r.carry.exit)}</td><td style="text-align:left">${ex(r.b018.exit)}</td>
+        <td>+${fmt(Math.max(r.carry.window_end_rel,0),1)} / +${fmt(Math.max(r.b018.window_end_rel,0),1)}</td><td>${fmt(r.carry.summary.dist_traveled_m,0)} / ${fmt(r.b018.summary.dist_traveled_m,0)}</td>
+        <td>${fmt(r.carry.summary.min_distance_to_obstacle_m,2)} / ${fmt(r.b018.summary.min_distance_to_obstacle_m,2)}</td><td>${shp}</td></tr>`; }).join("")}
+  </table></div><p class="note">Highlighted rows differ between the drivers: a gap above 0.1, or a different crash or off-road outcome.</p></div>`;
+
+  document.getElementById("v_metrics").innerHTML = h;
+  for (const x of document.querySelectorAll("#mblk button")) x.onclick = ()=>{ MBLK = x.dataset.b; try{localStorage.setItem("cmp_mblk",MBLK);}catch(e){} renderMetrics(); };
+}
+
+function armTip(r){ return `<b>${r.scene}</b><br><span class="sw" style="background:${C_CARRY}"></span>memory ${sc3(r.carry.score)} · ${esc(r.carry.short)}<br><span class="sw" style="background:${C_018}"></span>0.1.8b ${sc3(r.b018.score)} · ${esc(r.b018.short)}<br>gap ${sgn(r.diff)}`; }
+
+function chartGap(R){
+  const rs = [...R].sort((a,b)=> b.diff-a.diff || a.scene.localeCompare(b.scene));
+  const W = 900, L = 120, RM = 70, rh = 22, top = 26, H = top + rs.length*rh + 26;
+  const mx = Math.max(0.3, ...rs.map(r=>Math.abs(r.diff))); const lim = Math.ceil(mx*10)/10;
+  const x = v => L + (W-L-RM) * (v + lim) / (2*lim), x0 = x(0);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Per-scene score gap">`;
+  for (let v=-lim; v<=lim+1e-9; v+=lim/2){ const xv = x(v);
+    s += `<line x1="${xv}" y1="${top-6}" x2="${xv}" y2="${H-22}" stroke="#2c2c2a" stroke-width="1"/><text x="${xv}" y="${H-6}" fill="#9da7b3" font-size="11" text-anchor="middle">${v===0?"0":sgn(v,2)}</text>`; }
+  s += `<text x="${x0+6}" y="14" fill="#9da7b3" font-size="11">memory ahead →</text><text x="${x0-6}" y="14" fill="#9da7b3" font-size="11" text-anchor="end">← 0.1.8b ahead</text>`;
+  rs.forEach((r,i)=>{ const y = top + i*rh, cy = y + rh/2;
+    s += `<g data-tip="${esc(armTip(r))}" style="cursor:pointer" onclick="gotoScene('${r.scene}')"><rect x="0" y="${y}" width="${W}" height="${rh}" fill="transparent"/>`;
+    s += `<text x="${L-10}" y="${cy+4}" fill="#e6edf3" font-size="12" text-anchor="end">${r.scene}</text>`;
+    if (Math.abs(r.diff) < 1e-9) s += `<circle cx="${x0}" cy="${cy}" r="3" fill="#6e7681"/>`;
+    else { const xa = Math.min(x0, x(r.diff)), w = Math.abs(x(r.diff)-x0), c = r.diff>0 ? C_CARRY : C_018;
+      s += `<rect x="${xa}" y="${cy-6}" width="${Math.max(w,2)}" height="12" rx="3" fill="${c}"/>`;
+      s += `<text x="${r.diff>0 ? xa+w+6 : xa-6}" y="${cy+4}" fill="#c9d1d9" font-size="11" text-anchor="${r.diff>0?"start":"end"}">${sgn(r.diff)}</text>`; }
+    s += `</g>`; });
+  s += `<line x1="${x0}" y1="${top-6}" x2="${x0}" y2="${H-22}" stroke="#6e7681" stroke-width="1"/></svg>`;
+  return `<div class="legend" style="margin:0 0 6px"><span><i style="background:${C_CARRY}"></i>memory carried scored higher</span><span><i style="background:${C_018}"></i>0.1.8b scored higher</span><span><i style="background:#6e7681;border-radius:50%"></i>exact tie</span></div>` + s;
+}
+
+function chartExits(R){
+  const first = a => a.events.find(e=>e.rel>0);
+  const rs = R.filter(r=> first(r.carry) || first(r.b018)).sort((a,b)=> a.scene.localeCompare(b.scene));
+  if (!rs.length) return `<p class="note">No crash or off-road exit after handover in this set.</p>`;
+  const W = 900, L = 120, RM = 20, lane = 16, gap = 14, top = 10, TM = 17;
+  const H = top + rs.length*(2*lane+gap) + 28, x = t => L + (W-L-RM) * Math.min(Math.max(t,0),TM) / TM;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Exit timing against score window">`;
+  for (let t=0; t<=TM; t+=2) s += `<line x1="${x(t)}" y1="${top}" x2="${x(t)}" y2="${H-24}" stroke="#2c2c2a"/><text x="${x(t)}" y="${H-8}" fill="#9da7b3" font-size="11" text-anchor="middle">+${t} s</text>`;
+  rs.forEach((r,i)=>{ const y0 = top + i*(2*lane+gap);
+    s += `<text x="${L-10}" y="${y0+lane+4}" fill="#e6edf3" font-size="12" text-anchor="end" style="cursor:pointer" onclick="gotoScene('${r.scene}')">${r.scene}</text>`;
+    [["memory", r.carry, C_CARRY], ["0.1.8b", r.b018, C_018]].forEach(([nm, a, c], j)=>{ const y = y0 + j*lane, cy = y + lane/2;
+      const we = Math.max(a.window_end_rel, 0), e = first(a);
+      const tp = `<b>${r.scene} · ${nm}</b><br>score ${sc3(a.score)} · score window ends +${fmt(we,2)} s` + (e ? `<br>first exit: ${esc(e.label)} +${fmt(e.rel,2)} s${e.after_window?` — <b>${fmt(e.rel-we,2)} s after the window closed, not scored</b>`:" — inside the window"}` : "<br>no exit after handover");
+      s += `<g data-tip="${esc(tp)}"><rect x="${L}" y="${y+1}" width="${W-L-RM}" height="${lane-2}" fill="transparent"/>`;
+      s += `<rect x="${L}" y="${cy-4}" width="${Math.max(x(we)-L,0)}" height="8" rx="2" fill="${c}" opacity="0.35"/>`;
+      if (e){ const ex = x(e.rel), crash = e.kind.startsWith("collision");
+        s += crash ? `<circle cx="${ex}" cy="${cy}" r="5.5" fill="${c}" stroke="#161b22" stroke-width="2"/>`
+                   : `<path d="M${ex} ${cy-6.5}L${ex+6.5} ${cy}L${ex} ${cy+6.5}L${ex-6.5} ${cy}Z" fill="${c}" stroke="#161b22" stroke-width="2"/>`;
+        if (e.kind==="collision_front" || e.kind==="collision_lateral") s += `<text x="${ex+9}" y="${cy+4}" fill="#c9d1d9" font-size="10">${e.kind==="collision_front"?"front":"side"} +${fmt(e.rel,2)}</text>`; }
+      s += `</g>`; }); });
+  s += `</svg>`;
+  return `<div class="legend" style="margin:0 0 6px"><span><i style="background:${C_CARRY}"></i>memory carried</span><span><i style="background:${C_018}"></i>0.1.8b</span><span>band = score window</span><span>● crash (front/side/rear)</span><span>◆ off-road</span></div>` + s;
+}
+
+try { const b = localStorage.getItem("cmp_mblk"); if (["18","12","30"].includes(b)) MBLK = b; } catch(e){}
+try { const b = localStorage.getItem("cmp_rblk"); setRBlk(["all","18","12"].includes(b) ? b : "all"); } catch(e){ setRBlk("all"); }
+renderMetrics();
+{ const hs = location.hash.slice(1);
+  if (hs.startsWith("s_")) gotoScene(hs.slice(2)); else setView(hs==="replays" ? "replays" : "metrics"); }
+
+window.__cmp = {groups, seek, play, pause, setView, setRBlk};
+</script>
+</body>
+</html>

@@ -161,3 +161,13 @@ def test_ours_only_positions_restart_at_second_root_frames():
         "root_prev": np.asarray([0, 0, 0, 1, 0]),
     }
     assert ticks.ours_only_positions(table).tolist() == [1, 2, -1, -1, 1]
+
+
+def test_a_site_with_one_complete_image_copy_needs_no_second_root():
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    one = SimpleNamespace(extra={"logs": Path("logs"), "blobs": Path("blobs")})
+    two = SimpleNamespace(extra={"logs": Path("logs"), "blobs": Path("blobs"), "extra_blobs": Path("more")})
+    assert ticks.image_roots(one) == [Path("blobs")]
+    assert ticks.image_roots(two) == [Path("blobs"), Path("more")]

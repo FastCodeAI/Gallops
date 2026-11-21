@@ -5,14 +5,29 @@ rest because it is derived from NAVSIM navtrain. Each row gives a size in bytes 
 be recognised wherever it ends up. Hashes were computed on 12 Nov 2026 from the files on the training
 site's store.
 
-**Locations are templates, not paths.** `{data}/memory_cache` is the `cache` entry of the `navtrain`
-dataset in `gallops.toml`, the folder the record's `source` fields name.
+**Locations are templates, not paths.** `{data.navtrain.cache}` is the `cache` key of
+`[datasets.navtrain]` in `gallops.toml`, which `gallops.config` resolves. The record's `source` fields
+write the same folder as `{data}/memory_cache`.
+
+## The moments table (H05.r1)
+
+`{data.navtrain.cache}/ticks/`, written by `python -m gallops.memory.ticks build`. Every array below
+has one row per moment, in the row order of `moments.npz`: without this table nobody can tell which
+row is which moment. `manifest.json` here names the image roots and the metric cache by their real
+locations at the training site.
+
+| File | What it holds | Bytes | sha256 |
+|---|---|---:|---|
+| `moments.npz` | one row per moment: log, token, frame, chain and position in it, split, graded, inputs present | 33703332 | `562d6efe71f79148948c83fb1b9fbe7ed8ea79932f22e2d89c03477656ae2bf0` |
+| `logs.json` | per log: frames, moments and the driving statistics the missing-image check compares | 355003 | `b8bee173b80ef95f6406430d5f8c8e03dae277ed39395c1c790c1cf90253b43c` |
+| `manifest.json` | how the table was built: commit, 1,192 logs, 126,694 moments, the roots read | 520 | `a155f275f5a2a2a02a4136c06b01f3cf838267b99551a520b5f6bdf253e37a9b` |
+| `report.json` | `ticks report`: counts, chains and the missing-image check | 3366 | `d74a818b82883888077b7ee9ecf4edae4c4b04e3ec8ba2f2e68af1c0da8d4c0c` |
 
 ## The saved outputs of the released model (H05.r1)
 
-`{data}/memory_cache/release/`: one row per moment, 126,694 moments, float32. `manifest.json` names the
+`{data.navtrain.cache}/release/`: one row per moment, 126,694 moments, float32. `manifest.json` names the
 released checkpoint by its sha256 (`740335c8…2d30d05`) and the commit that built the cache.
-[H15](../H15_prediction_memory/README.md) reads these files.
+[H19](../H19_prediction_memory/README.md) reads these files.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
@@ -27,35 +42,35 @@ released checkpoint by its sha256 (`740335c8…2d30d05`) and the commit that bui
 
 ## The cache's sample checks (H05.r1)
 
-`{data}/memory_cache/checks/`. The two determinism dumps are the same bytes, which is the check.
+`{data.navtrain.cache}/checks/`. The two determinism dumps are the same bytes, which is the check.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
-| `contact.json` |  | 2590 | `e1a5bb8a278ee1fe7e3ff9144fa53cf358536bfef8969566024e9eb3d62f3439` |
-| `determinism.json` |  | 260 | `b56109f9fe719fc9b602cc4e32060c2dea95254765db7a750affe2efa5960db7` |
-| `determinism_1.npz` |  | 11221574 | `24aa6cf7b2427a3a4e34d59d16c782f4f4cb42b205c280b83075158e14195d05` |
-| `determinism_2.npz` |  | 11221574 | `24aa6cf7b2427a3a4e34d59d16c782f4f4cb42b205c280b83075158e14195d05` |
-| `fidelity.json` |  | 45016 | `ea93bb45f00a7091eb0f7b824b9ee006b5b0dab4b1a12c03707fc34f6fe42505` |
-| `rate.json` |  | 425 | `e3280da5b3bbe9c84a436e76e49403411c78b8077b6c17df29aa0504bb1a86d7` |
-| `sight.json` |  | 2140 | `9f03dbff19d6158910e1af97ff85b857634432565aa1150149025598eb80762f` |
-| `timing.json` |  | 340 | `34decbcb3d06722865c21d2c632d3bf505aaf67a5802b49ed1aa44edd9df28ce` |
-| `workers.json` |  | 611 | `a1a3c775daa2f4fc53fc357a4171d7fd3c517519cb668a65601e3f6a2a2c38c5` |
+| `contact.json` | which training moments the contact sheet shows | 2590 | `e1a5bb8a278ee1fe7e3ff9144fa53cf358536bfef8969566024e9eb3d62f3439` |
+| `determinism.json` | the verdict: two fresh processes, every array identical | 260 | `b56109f9fe719fc9b602cc4e32060c2dea95254765db7a750affe2efa5960db7` |
+| `determinism_1.npz` | the first process's arrays for 20 navtest tokens | 11221574 | `24aa6cf7b2427a3a4e34d59d16c782f4f4cb42b205c280b83075158e14195d05` |
+| `determinism_2.npz` | the second process's arrays, the same bytes | 11221574 | `24aa6cf7b2427a3a4e34d59d16c782f4f4cb42b205c280b83075158e14195d05` |
+| `fidelity.json` | the cached pick against paddock's plan on 200 navtest tokens, and self-consistency | 45016 | `ea93bb45f00a7091eb0f7b824b9ee006b5b0dab4b1a12c03707fc34f6fe42505` |
+| `rate.json` | the build's own loop, timed on whole runs of training moments | 425 | `e3280da5b3bbe9c84a436e76e49403411c78b8077b6c17df29aa0504bb1a86d7` |
+| `sight.json` | blank images change the encoder map: the verdict per token | 2140 | `9f03dbff19d6158910e1af97ff85b857634432565aa1150149025598eb80762f` |
+| `timing.json` | training moments end to end: pickle, inputs and forward | 340 | `34decbcb3d06722865c21d2c632d3bf505aaf67a5802b49ed1aa44edd9df28ce` |
+| `workers.json` | 1 against 4 decode workers: every array identical | 611 | `a1a3c775daa2f4fc53fc357a4171d7fd3c517519cb668a65601e3f6a2a2c38c5` |
 
 ## The probe and its control (H05.r2)
 
-`{data}/memory_cache/probe/`. `probe.json`, `c/control_c.json` and `k1/refit_k1.json` are the files the
+`{data.navtrain.cache}/probe/`. `probe.json`, `c/control_c.json` and `k1/refit_k1.json` are the files the
 record's results cite.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|
 | `c/control_c.json` | the control: camera past against the car's own past | 37113 | `bcdc5cd5f0b6fb6438c1e6c9f644e23435ae32b231d997a5be8818a809288492` |
-| `c/control_c_run.log` |  | 1359 | `acb90a1396530dd32261b41426981573c68d18ef4f43f75c2cb8632bd101b7dd` |
+| `c/control_c_run.log` | the control's printed output | 1359 | `acb90a1396530dd32261b41426981573c68d18ef4f43f75c2cb8632bd101b7dd` |
 | `k1/refit_k1.json` | the refit against the model's own view | 10619 | `4f2efc9d090ca02b086b76bb6a51f93e4575f4f1c732499fa22ff905c30b73f6` |
 | `pca.npz` | the 128-number summary fitted on training moments | 4360968 | `42fc844902dc51293128f64a97452178c160cf8fee7f07db5b361848a36e670a` |
 | `pooled.npy` | the pooled encoder map per moment | 4281243776 | `72519772fd34f0cdb35d34421644272a9ebca883be4570ed516eacdb250786da` |
 | `probe.json` | the probe's results for 1, 2, 4 and 8 moments | 48227 | `560d169ef780328a86e86366422c81307b4b9aea481a245ec49e6846553ac348` |
-| `probe_error_vs_k.png` |  | 132831 | `be88f4be1486d9210b42c842061904bca88186fd34b972cb7ec82e735c20c869` |
-| `probe_error_vs_k_braking.png` |  | 110202 | `529214aa383337047e2a53ec1f6a18a7e689c9f111d3c7718ea5603b9ce53082` |
-| `probe_run.log` |  | 2981 | `daa416325cdecc84d32169a3df945ac945f826e8e658e3172ed6a2ca275ed7a5` |
-| `refit_k1_run.log` |  | 918 | `c62e2ceb4c89a75af78f64fdc5b3d409f14b87cd54f1a4073ce7e68e03cd563d` |
+| `probe_error_vs_k.png` | the speed error against k, the figure the account describes | 132831 | `be88f4be1486d9210b42c842061904bca88186fd34b972cb7ec82e735c20c869` |
+| `probe_error_vs_k_braking.png` | the same for braking | 110202 | `529214aa383337047e2a53ec1f6a18a7e689c9f111d3c7718ea5603b9ce53082` |
+| `probe_run.log` | the probe's printed output | 2981 | `daa416325cdecc84d32169a3df945ac945f826e8e658e3172ed6a2ca275ed7a5` |
+| `refit_k1_run.log` | the refit's printed output | 918 | `c62e2ceb4c89a75af78f64fdc5b3d409f14b87cd54f1a4073ce7e68e03cd563d` |
 | `targets.npz` | the human's speed and braking over the next 3 s | 2204012 | `2a8d571130a04f768abb0831a679fed6480a272b0c377be3043fc2e2f6c76bb6` |

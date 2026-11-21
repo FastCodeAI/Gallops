@@ -1,0 +1,39 @@
+{
+ "lane": "dj",
+ "wizard_rc": 0,
+ "gates": {
+  "wizard_rc": {
+   "ok": true,
+   "detail": "wizard exit 0"
+  },
+  "artifact_pin": {
+   "ok": true,
+   "detail": "26.01 x1, 26.04 x0"
+  },
+  "push_cadence": {
+   "ok": true,
+   "detail": "push-cadence check ran"
+  },
+  "memory_calls_logged": {
+   "ok": true,
+   "detail": "39 calls logged, all in mode carry"
+  },
+  "context_guards_silent": {
+   "ok": true,
+   "detail": "no ContextSpacingError/PushCadenceError"
+  },
+  "smoke_gates_2_4_5": {
+   "ok": true,
+   "detail": "ALL GATES PASSED"
+  },
+  "dj_extra_gates": {
+   "ok": true,
+   "detail": "EXTRA GATES PASSED"
+  },
+  "replay": {
+   "ok": true,
+   "detail": "{experiment_store}/runs/cl12/lane/annotated_videos/bae463d3_memory_carry.mp4 -> {experiment_store}/runs/cl12/runs/memory_carry_bae463d3/replay/memory_carry_bae463d3_annotated.mp4"
+  }
+ },
+ "ok": true
+}

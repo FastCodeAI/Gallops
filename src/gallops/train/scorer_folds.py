@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -267,14 +268,151 @@ def train(kind: str, state: dict, x, y, train_idx, args, torch):
     return mlp
 
 
-def main() -> None:
+def probe_geo_metrics(s: np.ndarray, d: dict, idx: np.ndarray) -> dict:
+    """Held-out outcomes of the sub-score scorer's picks, from its seed-mean sigmoids `s`.
+
+    rescued: on ticks where the released pick hits with the hazard in view, the new pick is safe
+    (no hit within 5 s, on the road). kept: on ticks where the released pick was safe, it stays
+    safe. frontal_gt2: frontal rescue ticks more than 2 s before the released pick's contact.
+    """
+    from gallops.train import subscorer
+
+    rows = np.arange(len(idx))
+    safe = np.isnan(d["hit5_at"][idx]) & np.isnan(d["off_road_at"][idx])
+    rel = d["pdm"][idx].argmax(1)
+    t_hit = d["hit5_at"][idx][rows, rel]
+    rescue = ~np.isnan(t_hit) & d["in_frame"][idx]
+    calm = safe[rows, rel]
+    frontal2 = rescue & (d["shape"][idx] == "frontal") & (t_hit > 2)
+
+    def share(mask, value):
+        return round(float(value[mask].mean()), 4) if mask.any() else None
+
+    out = {
+        "rescue_ticks": int(rescue.sum()),
+        "calm_ticks": int(calm.sum()),
+        "rescue_possible": share(rescue, safe.any(1)),
+    }
+    for rule in ("formula", "absolute", "relative"):
+        pick = subscorer.formula(s).argmax(1) if rule == "formula" else subscorer.choose(s, rel, rule)
+        ok = safe[rows, pick]
+        out[rule] = {
+            "rescued": share(rescue, ok),
+            "kept": share(calm, ok),
+            "net": int(ok[rescue].sum() - (~ok[calm]).sum()),
+            "frontal_gt2_rescued": share(frontal2, ok),
+            "override": share(np.ones(len(idx), bool), pick != rel),
+        }
+    out["frontal_gt2_possible"] = share(frontal2, safe.any(1))
+    return out
+
+
+def run_probe_geo(args) -> None:
+    """Leave-one-scene-out for the sub-score scorer over probes and geometry (`subscorer`)."""
     import torch
 
+    from gallops.train import subscorer
+
+    started = time.time()
+    parts = [subscorer.reduce(c) for c in [args.cache, *args.extra_cache]]
+    d = {k: np.concatenate([p[k] for p in parts]) for k in parts[0]}
+    source = subscorer.source_of(d)
+    print(
+        f"  loaded {len(source)} ticks in {time.time() - started:.0f} s: {dict(Counter(source.tolist()))}",
+        flush=True,
+    )
+    sight, problems = subscorer.sight_from_cache(d)
+    print(f"  sight: {json.dumps(sight)} {problems}", flush=True)
+    arrays = (
+        torch.from_numpy(d["own"]),
+        torch.from_numpy(d["probe"]),
+        torch.from_numpy(subscorer.geometry(d["plans"], d["speed"])),
+        torch.from_numpy(subscorer.targets(d)),
+        torch.from_numpy(subscorer.channel_weights(source, args.real)),
+    )
+    y = subscorer.targets(d)
+    state = released_state(args.checkpoint, torch)
+    holdout = np.where(source == "nusc_holdout")[0]
+    rendered = ~np.isin(source, subscorer.REAL_SOURCES)
+    results = {"sight": sight, "real": args.real, "seeds": args.seeds, "folds": {}}
+    saved = {}
+    hold_sum = None
+    for scene in SCENES:
+        test = np.where(rendered & (d["scene"] == scene))[0]
+        if not len(test):
+            continue
+        train_idx = np.where((d["scene"] != scene) & d["usable"] & (source != "nusc_holdout"))[0]
+        mean_s, t0 = None, time.time()
+        for seed in args.seeds:
+            torch.manual_seed(seed)
+            model = subscorer.build(torch, state).to(args.device)
+            subscorer.fit(
+                model,
+                arrays,
+                train_idx,
+                epochs=args.epochs,
+                batch=args.batch,
+                lr=args.lr,
+                seed=seed,
+                device=args.device,
+                torch=torch,
+            )
+            s = 1 / (1 + np.exp(-subscorer.predict(model, arrays, test, device=args.device, torch=torch)))
+            mean_s = s if mean_s is None else mean_s + s
+            if len(holdout):
+                h = 1 / (
+                    1 + np.exp(-subscorer.predict(model, arrays, holdout, device=args.device, torch=torch))
+                )
+                hold_sum = h if hold_sum is None else hold_sum + h
+        mean_s /= len(args.seeds)
+        fold = {
+            "train_ticks": int(len(train_idx)),
+            "test_ticks": int(len(test)),
+            "seconds": round(time.time() - t0),
+        }
+        fold.update(probe_geo_metrics(mean_s, d, test))
+        fold["auc"] = {
+            c: auc(mean_s[..., k].ravel(), y[test][..., k].ravel())
+            for k, c in enumerate(subscorer.CHANNELS[:4])
+        }
+        fold["by_shape"] = {
+            shape: probe_geo_metrics(mean_s[d["shape"][test] == shape], d, test[d["shape"][test] == shape])
+            for shape in ("frontal", "stationary", "side")
+            if (d["shape"][test] == shape).any()
+        }
+        results["folds"][scene] = fold
+        saved[f"sigmoid_{scene}"] = mean_s.astype(np.float32)
+        saved[f"test_idx_{scene}"] = test
+        print(json.dumps({scene: {k: v for k, v in fold.items() if k != "by_shape"}}), flush=True)
+    if hold_sum is not None:
+        h = hold_sum / (len(args.seeds) * len(results["folds"]))
+        rows = np.arange(len(holdout))
+        rel = d["pdm"][holdout].argmax(1)
+        safe = np.isnan(d["off_road_at"][holdout]) & (d["max_deviation"][holdout] <= subscorer.LANE_LINE_M)
+        results["real_holdout"] = {
+            rule: {
+                "override": round(float((subscorer.choose(h, rel, rule) != rel).mean()), 4),
+                "kept_on_road_in_lane": round(
+                    float(safe[rows, subscorer.choose(h, rel, rule)][safe[rows, rel]].mean()), 4
+                ),
+            }
+            for rule in ("absolute", "relative")
+        }
+        saved["sigmoid_nusc_holdout"] = h.astype(np.float32)
+        saved["test_idx_nusc_holdout"] = holdout
+        print(json.dumps({"real_holdout": results["real_holdout"]}), flush=True)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(results, indent=1))
+    np.savez(args.out.with_suffix(".sigmoids.npz"), **saved)
+    print(f"  wrote {args.out}", flush=True)
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--labelled", nargs=2, action="append", required=True, metavar=("NAME", "DIR"))
+    parser.add_argument("--labelled", nargs=2, action="append", default=[], metavar=("NAME", "DIR"))
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--epochs", type=int, default=20)
@@ -284,7 +422,26 @@ def main() -> None:
     parser.add_argument(
         "--smoke-split", action="store_true", help="hold out the last episode instead of a scene"
     )
+    parser.add_argument(
+        "--variant",
+        choices=("mlp", "probe-geo"),
+        default="mlp",
+        help="mlp: the vendor MLP on own tokens (control vs subscores); probe-geo: the sub-score "
+        "scorer with probe attention and plan geometry (`subscorer`), the one scorer_train writes",
+    )
+    parser.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2, 3, 4], help="probe-geo only")
+    parser.add_argument(
+        "--extra-cache", type=Path, action="append", default=[], help="probe-geo only, e.g. real nuScenes"
+    )
+    parser.add_argument("--real", choices=("all", "mask", "weight"), default="mask", help="probe-geo only")
     args = parser.parse_args()
+    if args.variant == "probe-geo":
+        run_probe_geo(args)
+        return
+    if not args.labelled:
+        parser.error("--labelled is required for --variant mlp")
+
+    import torch
 
     started = time.time()
     # Reading 450 cache files from the NAS takes ~7 min; keep the reduced arrays beside them.

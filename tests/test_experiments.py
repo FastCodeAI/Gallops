@@ -394,6 +394,22 @@ def test_the_picture_counts_what_the_registry_holds(tmp_path) -> None:
     assert exps.stale(exps.Registry.load(reg.root)) == ["docs/assets/experiments.svg"]
 
 
+def test_the_picture_names_the_base_without_repeating_the_word(tmp_path) -> None:
+    """The base box stands between the phases, so a date there would put 6 Nov before a phase of 16 Oct."""
+    decisions = DECISIONS.replace(
+        'short = "try the thing"\n', 'short = "Base: the released model"\nbaseline = "the released model"\n'
+    )
+    svg = exps.render_picture(exps.Registry.load(_repo(tmp_path, decisions=decisions)))
+    assert ">Base</text>" in svg and ">the released model</text>" in svg and "Base: the" not in svg
+
+
+def test_the_picture_does_not_draw_the_base_as_what_phase_1_produced(tmp_path) -> None:
+    """The base is the released model, which predates gap closing: an arrow into its box says otherwise."""
+    svg = exps.render_picture(exps.Registry.load(_repo(tmp_path)))
+    assert 'x1="226"' not in svg, "no arrow leaves the Phase 1 box"
+    assert 'x1="430"' in svg and 'x1="670"' in svg, "the base still feeds Phase 2, and Phase 2 the gate"
+
+
 def test_a_baseline_the_picture_cannot_hold_is_refused(tmp_path) -> None:
     """The box took two lines and dropped the rest, so it named a different model and nothing failed."""
     long = "Base: the 4-camera stack with state-space memory and the sub-score scorer"
@@ -817,7 +833,7 @@ def test_changing_a_result_or_a_gate_is_what_makes_a_results_pr(tmp_path) -> Non
 
 
 def test_registering_an_experiment_is_not_a_results_pr_until_it_reports_something(tmp_path) -> None:
-    """H15 was registered, with a run and its predictions, before anything was graded."""
+    """H19 (then H15) was registered, with a run and its predictions, before anything was graded."""
     root = _with_base(tmp_path, None)
     folder = root / "experiments" / "H01_thing"
     folder.mkdir()

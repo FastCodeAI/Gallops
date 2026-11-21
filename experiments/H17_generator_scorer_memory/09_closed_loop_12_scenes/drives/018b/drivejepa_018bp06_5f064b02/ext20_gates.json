@@ -1,0 +1,35 @@
+{
+ "lane": "dj",
+ "wizard_rc": 0,
+ "gates": {
+  "wizard_rc": {
+   "ok": true,
+   "detail": "wizard exit 0"
+  },
+  "artifact_pin": {
+   "ok": true,
+   "detail": "26.01 x1, 26.04 x0"
+  },
+  "push_cadence": {
+   "ok": true,
+   "detail": "push-cadence check ran"
+  },
+  "context_guards_silent": {
+   "ok": true,
+   "detail": "no ContextSpacingError/PushCadenceError"
+  },
+  "smoke_gates_2_4_5": {
+   "ok": true,
+   "detail": "ALL GATES PASSED"
+  },
+  "dj_extra_gates": {
+   "ok": true,
+   "detail": "EXTRA GATES PASSED"
+  },
+  "replay": {
+   "ok": true,
+   "detail": "{retrain_store}/018b/closed_loop/lane/annotated_videos/5f064b02_drivejepa_018bp06.mp4 -> {retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_5f064b02/replay/drivejepa_018bp06_5f064b02_annotated.mp4"
+  }
+ },
+ "ok": true
+}

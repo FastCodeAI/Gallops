@@ -25,7 +25,7 @@ repository yet. It is identified here by its sha256 only.
 Trainer format: the generator, the scorer and the memory blocks, without the frozen encoder. No
 `checkpoint.json` sidecar was written, because none of these was a candidate for paddock.
 
-### H17.r2, first training run, memory carried
+### H17.carried-vs-wiped, first training run, memory carried
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r2-carried/`. Where it sits:
 `{experiment_store}/runs/pilot_seed0/carry/`. The file names give the pass (`p01.2` is pass
@@ -47,7 +47,7 @@ resume state.
 | `ckpt/p02.0.pt` | 35039779 | `f3f02ccaefa7cc28f339951e67d97b3a79d37474a628480166a99460ea336f44` |
 | `resume.pt` | 105148041 | `f412a26e23b7ce22cce51a00942198f1cf7a62232e280a0c715b9f2d4e669649` |
 
-### H17.r2, first training run, memory wiped at every moment
+### H17.carried-vs-wiped, first training run, memory wiped at every moment
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r2-wiped/`. Where it sits:
 `{experiment_store}/runs/pilot_seed0/wiped/`. The chosen check is `ckpt/p01.2.pt`.
@@ -67,7 +67,7 @@ Template location `{weights}/drivejepa_physicalai_memory/h17-r2-wiped/`. Where i
 | `ckpt/p02.0.pt` | 35039587 | `c2f6269516855b8eeedb1c9327654cd2d09f832e057049c31fc133f760244bed` |
 | `resume.pt` | 98111036 | `d0b6937daf9bf0e962d97c47ed1e04795770806699effafe1f5b28670a1c19a0` |
 
-### H17.r3, the memory-collapse fix, 930 steps
+### H17.collapse-fix, the memory-collapse fix, 930 steps
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r3-collapse-fix/`. Where it sits:
 `{experiment_store}/runs/build4_short/`. The record pins `ckpt/step0930.pt`.
@@ -79,7 +79,7 @@ Template location `{weights}/drivejepa_physicalai_memory/h17-r3-collapse-fix/`. 
 | `ckpt/step0930.pt` | 35061136 | `645157874f555f922160cde67040e1f8f067954d0adf95ce2839dd6d3755d9fa` |
 | `resume.pt` | 105198333 | `e8976704078ebe941222770a1186ebdbe01d9f1eaf0ea39b40c1a111ac36ecde` |
 
-### H17.r4, the recall lesson, 930 steps
+### H17.recall-lesson, the recall lesson, 930 steps
 
 Template location `{weights}/drivejepa_physicalai_memory/h17-r4-recall-lesson/`. Where it sits:
 `{experiment_store}/runs/build5_short/`. The record pins `ckpt/step0930.pt`, the checkpoint
@@ -166,8 +166,7 @@ folder's `out/` at the training site; the folder named is the step it belongs to
 ## Logs
 
 81 log files, 977538 bytes together, in the working folder's `logs/` at the
-training site. The reports cite them as `logs/<name>`. The logs of the 12-scene closed-loop check are
-not listed: that check was still writing them when this was recorded.
+training site. The reports cite them as `logs/<name>`. The closed-loop steps' logs are listed further down.
 
 | File | Bytes | sha256 |
 |---|---:|---|
@@ -262,4 +261,283 @@ Whole directories, so no single hash.
 | The memory saved at each moment, for the test of what the memory holds | `{experiment_store}/runs/link2/` | replays and reader outputs |
 | Pooled past views and reader outputs, for the test of what the past view holds | `{experiment_store}/runs/ceiling/` | arrays and reader outputs |
 | Step-0 reference dump of the model checks | `{experiment_store}/runs/build3_tests/` | one dump per check |
-| 12-scene closed-loop check | `{experiment_store}/runs/cl12/` | not finished when this was recorded; nothing from it is hashed or cited |
+| Closed-loop drives | `{experiment_store}/runs/cl12/`, `{experiment_store}/runs/cl18/`, `{local_store}/runs/new40/` | every drive folder is hashed one by one below |
+
+## Closed-loop drives
+
+One folder per drive, as the simulator wrote it: the rollout file, the camera video, the annotated replay and
+its trace, the logs and the configs. The record keeps only each drive's score, per-tick metrics, gates and
+provenance, under its step folder's `drives/`. A folder's sha256 is the sha256 of the lines
+`<sha256 of file>  <path inside the folder>`, one per file, sorted by path: `find . -type f | LC_ALL=C sort | sed 's|^./||' |
+xargs sha256sum | sha256sum` run inside it. Hashed on 21 Nov 2026. Folders whose name ends in
+`.simfail_*`, `.harnessfail_*` or `.killed_*` are the three drives that did not finish (step 12's report).
+125 folders, 21375679269 bytes together.
+
+### Step 09, memory carried
+
+Where they sit: `{experiment_store}/runs/cl12/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `memory_carry_04749bb9` | 67 | 106423846 | `b22cb6d2130fb8449fed3bba179f06d332a077d8687a90b497439f518c98dad4` |
+| `memory_carry_048b974e` | 63 | 157227170 | `31c15a135ad7134a9aeb51b3c49fbac3dca81c9e5f0e1fa6b96f2336702a29f4` |
+| `memory_carry_5f064b02` | 63 | 217706101 | `6fa2e26bba2dcd4ebe6bbc65641f82d3ab8cee6e34daeac30061f47a83174f3b` |
+| `memory_carry_8023dce5` | 65 | 160024131 | `f810b3cfea0deb68b894ae34860005f1e8c2b02da9599a1a35ee1d9b5412f79d` |
+| `memory_carry_b1b170d0` | 67 | 142499234 | `fca5252809b1795719f3c175944538384ee653110d09ca0a3216c97c373dfc15` |
+| `memory_carry_bae463d3` | 64 | 176451191 | `0dde40eb79e68913651e3ec969dbc2485c541cafae2db24b31fabe589c42d552` |
+| `memory_carry_bd07fb91` | 66 | 144399229 | `3b0411e688279c60caca77f0d9c41ab9e93b9f3230dde19921a9d0e475cdb0fc` |
+| `memory_carry_cdd9448c` | 66 | 175860804 | `cf46922ee1ea32828875c75683717c254ecbb9dc570e025b7977bae5994c0303` |
+| `memory_carry_d1a25a99` | 66 | 224982198 | `ae9198a4adcd7babea3203101fc2967ddb08eb39655622778ccfe12778a5880f` |
+| `memory_carry_d2715023` | 67 | 251275371 | `9b9bb1aa250a57762d5df2c99df796da868934e4f3f593a9f34127b40e7ed1b3` |
+| `memory_carry_e121e37d` | 66 | 171817997 | `39f655eaaa94a13aee3c13e9b155ebc3b5ea89f09b395195f84f71fc06839a7a` |
+| `memory_carry_e3ed554f` | 63 | 235310261 | `26ab8499b69ff1a63bfbf805bf843926563bd375ea7f8c5cf417b0250932cac9` |
+
+### Step 09, memory reset every call
+
+Where they sit: `{experiment_store}/runs/cl12/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `memory_reset_04749bb9` | 66 | 99650024 | `3b48775a752c250b864c8dd6eacb7f62b9858c75d96fe87493b74d37175b7ff5` |
+| `memory_reset_048b974e` | 63 | 161407586 | `fc3ce9aadb65205916d7255b9a94264b360a3849eb6427d7ab261cef657826b6` |
+| `memory_reset_5f064b02` | 65 | 215273160 | `5b92cdf32b205e1d0a3f42863e015088dbb2928d208d276f663ec0e4a4333317` |
+| `memory_reset_8023dce5` | 66 | 158852973 | `d00c9f4931c73664ac821b679c430563112ec1d238073fe18cc193fc06981d3e` |
+| `memory_reset_b1b170d0` | 67 | 138549259 | `5cdb958b2c4b9d04cdff7c48e8ea8e4edbe76a30b36465f3a3da7bd639488c9e` |
+| `memory_reset_bae463d3` | 63 | 165526336 | `9b3f4418d7b5fa3731cc0d6f35b2c82ac8f6cb1fb22d3888bbef56cfea2e2e3b` |
+| `memory_reset_bd07fb91` | 65 | 138753980 | `0cdfe126473091850c03851040a82edb635cfdf8bbd85a6be7b891e9b12cf7d3` |
+| `memory_reset_cdd9448c` | 66 | 175887544 | `872aade3c92e777a9c7cd6ccb73a587f4501bae111fcdaa30d6388ceed56ad5c` |
+| `memory_reset_d1a25a99` | 66 | 228556809 | `7dde8393967b8cbda8bfdf44130045a5f1025f56df2bebf99aa0ceee6da6e093` |
+| `memory_reset_d2715023` | 66 | 247249396 | `8dd7f175a6f7a5115c365178808799a64c2092ea69740ed952b4c8669c6f6ffd` |
+| `memory_reset_e121e37d` | 66 | 171471759 | `551624a4c4bf7a9aa8b2bfdcd9df639949cabdf7d31c3ee203d09cfc46751b8b` |
+| `memory_reset_e3ed554f` | 63 | 235061958 | `7ee2e7b7cdd4d528b04763d2d72e0dfb40cc9aca10db89fcc71794183990ff27` |
+
+### Step 09, the starting model (driven by its own lane, 31 Oct)
+
+Where they sit: `{retrain_store}/018b/closed_loop/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `drivejepa_018bp06_04749bb9` | 66 | 97327802 | `2d5c2192adef892ec56ef7c7aa220c5a9d2c698c026c5bb21485c216c2583516` |
+| `drivejepa_018bp06_048b974e` | 66 | 163518769 | `7e08e15184baf1ca18cfbf4129d3762b0cfbb01a4c61660dec251ba7a8b03c75` |
+| `drivejepa_018bp06_5f064b02` | 63 | 214402258 | `5b3c2f0a86c461c0a97da3e7170055563920cfc9ac4483e52a7e2e46ec98504c` |
+| `drivejepa_018bp06_8023dce5` | 66 | 149037060 | `b5c7f262c711e056c4ecc2af8d4cea97fdaf93668b8f83cdb7f45d6cd1af43ae` |
+| `drivejepa_018bp06_b1b170d0` | 66 | 133429147 | `00887db852884b67230c9e485d58491e512ef8bbd4a4d3e2453bde72f9c4c2f8` |
+| `drivejepa_018bp06_bae463d3` | 63 | 162465196 | `224ec28052ce44ed0b3503c9fc183dc0c60e0b41163ece4e61e6532bb1c2957e` |
+| `drivejepa_018bp06_bd07fb91` | 65 | 144977685 | `e1a51807a15c222e87629c4c11e09cacc99dfee461ee8aad6ca393d44547cd39` |
+| `drivejepa_018bp06_cdd9448c` | 63 | 172535211 | `c01b2b828d572abb2cde97d1a8dd8c91f6c93207e2523d23075cade1d84df3eb` |
+| `drivejepa_018bp06_d1a25a99` | 65 | 221916233 | `a0c2f11c8b16814872ca23fa8186d8509a2e5d93287e9372c537d7ae689145b4` |
+| `drivejepa_018bp06_d2715023` | 66 | 240259812 | `7e694c96bbdb03803741ad51bc74a9695555ce63dce44bc85319bba73cd8927d` |
+| `drivejepa_018bp06_e121e37d` | 66 | 170299625 | `558e7f2960ffba047ca48b377fb0c4c970fe18c98ccfc6ed9b4349a29d3f2bb9` |
+| `drivejepa_018bp06_e3ed554f` | 63 | 235827753 | `70685ade4935b79c2b0d2227436b5bd783197e50fa62ebe90d8054162f65f4da` |
+
+### Step 09, image check: the starting model re-driven on 12 Nov
+
+Where they sit: `{experiment_store}/runs/cl12/imagecheck_018bp06/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `drivejepa_018bp06_04749bb9` | 67 | 97774909 | `ea8e51de44fd025a639c12a0a5c0a079ae438d6ccc2a8e245afd5f8a32b8bcbe` |
+| `drivejepa_018bp06_8023dce5` | 66 | 149146952 | `ebc7ef8a0738bfe1eebe928b6d46889844e65e348a7bd4c7e1393930dd3f2089` |
+| `drivejepa_018bp06_d2715023` | 66 | 240501064 | `e5e51acf181911d8dbc2b14005a55fb394e0b59e26bccbb4950812c8a77f5740` |
+| `drivejepa_018bp06_e3ed554f` | 63 | 238125434 | `b70150f656ad519b55a49f7af0d7e1895fb09191900d2e37ec9964ab560d07df` |
+
+### Step 10, memory carried
+
+Where they sit: `{experiment_store}/runs/cl18/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `memory_carry_01d503d4` | 66 | 112391642 | `6ebec1e52772518a6bcd894ce9ed9eb3a4315b403d9d728fc345aa291d1425bb` |
+| `memory_carry_023b7fcc` | 66 | 135247386 | `1cca2048ad1199251c51f4618b773a4c9ca33b21daaf882870b7ee941d874c90` |
+| `memory_carry_0245ff75` | 68 | 201633573 | `4a40846a2e56a3e715302604f44645ac735ec6242ebe6e2c798028c9ac345ca9` |
+| `memory_carry_026d6a39` | 67 | 177459906 | `9172ec6902fdf1f3bc9acbbe89cd640cb1eb8546ccd01bfe0f50a3fe19657d8a` |
+| `memory_carry_02e075b9` | 66 | 153593333 | `3887997669710c357b3e8add56520bed1b97fefd1d517bd3ad4f5ef4cab480d1` |
+| `memory_carry_02eadd92` | 63 | 237426379 | `fe03f2ffbb953479e5c9062c7c31e9cc557a90433d4c4b601133425b82564743` |
+| `memory_carry_032b6f21` | 68 | 172062021 | `b58641bfe2493bc34a1ec626e40040c9c9d92e3d51ba58e1a09acc730dca7d15` |
+| `memory_carry_04394343` | 66 | 207303695 | `4f2377af646fd3fa9acaa7e96dc1c2c482240984750d79dd10ab7238bb5e4513` |
+| `memory_carry_16b83346` | 66 | 204337359 | `8051a3fd60016f8dedee02fa1db4ccb98aaadbe79fb9609506d4f775b1eda52e` |
+| `memory_carry_1acf2f5d` | 66 | 183084849 | `c33af4cc03e0f87351633763372895221f8901689f28bd60f0afd304cea6bec6` |
+| `memory_carry_2e1ce314` | 66 | 157030316 | `c40e85617aa0fa4578786cc277a73224184e083c6c0a77cf56d411d79d27fc94` |
+| `memory_carry_6725df2d` | 66 | 130781687 | `762818511f56dc74c1e8e09101932b278c1a485ca68ce75415e700e4aef72cb2` |
+| `memory_carry_71d7d03b` | 66 | 214247995 | `5344a6c6dc8353de0659c3c0ee60b4f785c25ed664cf812060b3a9fd4f0b4cac` |
+| `memory_carry_791d68ce` | 63 | 159639549 | `f0794639d281d0363a281056647ea715e68aa2ea15b06914fb6a3b239c83d01f` |
+| `memory_carry_89f2eeb8` | 66 | 192289726 | `7dcddacffb87f4c064d8e812bab37091c33f316597ebbac674f1b5f2ce000870` |
+| `memory_carry_98dd56b2` | 67 | 184072244 | `4856ee5cef45fdb19ecba2ab0d82523e16136beeedecf668006c43647ec6b3a2` |
+| `memory_carry_acd22430` | 66 | 121692231 | `7813e3b3d2b2bc41675b94cf66387a892903fec67278acb6086e6767e67a369d` |
+| `memory_carry_b44a4a44` | 63 | 189402630 | `df515f526ffa17d2e7cf64770ce6a58a51610c997c567bbee738d84deb889c57` |
+
+### Step 10, the starting model
+
+Where they sit: `{experiment_store}/runs/cl18/018bp06/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `drivejepa_018bp06_01d503d4` | 67 | 108432156 | `ad40363c0aea8060908ff27424c80daab7f557c78eb854591f1298f8a0cdf286` |
+| `drivejepa_018bp06_023b7fcc` | 66 | 134565398 | `d36fd273504f79464f8f02f85a06b683d80813736e495bf36acc150d8497124a` |
+| `drivejepa_018bp06_0245ff75` | 66 | 196557683 | `e58a46d46cba94405fa92b0e01932cb3be00dc325ed05789d5d95a7fc2c282d0` |
+| `drivejepa_018bp06_026d6a39` | 68 | 180669310 | `aa3e4806ad1df5daf5aa0a2101b58ea672fe224e6489373304774fe949ce3f95` |
+| `drivejepa_018bp06_02e075b9` | 66 | 153380823 | `92b3cb9923c05d3b42eb547901686aba3d60a9c1b5f02dd633919a431436bcb4` |
+| `drivejepa_018bp06_02eadd92` | 63 | 237287213 | `49d24454da2223297fcae7113322671e3f712ff0ac0eaa97fb5916d5d06a1507` |
+| `drivejepa_018bp06_032b6f21` | 66 | 170674851 | `e2ab6ac48620b1d56622142c448962d9362e309ef145739cfc81049cdf527cc1` |
+| `drivejepa_018bp06_04394343` | 64 | 214867375 | `8e4e14017f7c6f345e60c4817941ee698418750b94c1dddcbca2c45d98868505` |
+| `drivejepa_018bp06_16b83346` | 66 | 194152333 | `d7ca79d64a01e22cb00be67d922e38e9cdb69ccf1a2e1acabcfed842c2ca90eb` |
+| `drivejepa_018bp06_1acf2f5d` | 63 | 183087334 | `b959b394f6fe433f0bec6862e0e90e748d14db182d9bc249b4a515300124ff77` |
+| `drivejepa_018bp06_2e1ce314` | 66 | 156810114 | `299f9193b0be54883cf578741cc8e92296f33cbb5e76c11ea7562c096f6296a6` |
+| `drivejepa_018bp06_6725df2d` | 66 | 131169575 | `b465e844e719cac5daf9e3144e9b1b727322d42f4d32766e2f6510a5fb97cfd8` |
+| `drivejepa_018bp06_71d7d03b` | 66 | 213019611 | `30f9b6e5cd37fb21e591d3394470754b3e76db536efd1e8f2608d1fc9c06e85f` |
+| `drivejepa_018bp06_791d68ce` | 63 | 152636791 | `c334d92f4e2611b126ea86a9d530f61af5c120acd78c3dbc38846c39293198bb` |
+| `drivejepa_018bp06_89f2eeb8` | 63 | 192193465 | `6555546f275ad17ed2a7d47be080a6f7565d1bc35033291549fb888afde5a495` |
+| `drivejepa_018bp06_98dd56b2` | 64 | 182305371 | `e59280ddf3bbcee92de329a3079ded919458678e52256f2c6141060e819bc0dd` |
+| `drivejepa_018bp06_acd22430` | 66 | 120451536 | `152a77c183d2c2b092c8ac10f20cb632caa27d8ca351e336e9d153c50457aa24` |
+| `drivejepa_018bp06_b44a4a44` | 63 | 188035921 | `4729818c895ed27e55262fe008946dd13ba2cbc208844181d38aa4ea9be59de9` |
+
+### Step 12, memory carried
+
+Where they sit: `{local_store}/runs/new40/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `memory_carry_29815599` | 63 | 198001509 | `aba6cbdd1fdef8772c1e3e828e601160bf44780aaef133ec90cd22ebdc975471` |
+| `memory_carry_320c11f3` | 68 | 152797592 | `57faa0b9484a78791d62fa077ac9deef8276c2e714457cb611978fac07be174e` |
+| `memory_carry_34226720` | 65 | 137231089 | `336b77a34835b2c88210599699e102f4b4fdbb14be423d2fdcbb9532305e0878` |
+| `memory_carry_44409f00` | 66 | 146208268 | `f6fa4e91b44b7e2d8d3c80e8b828ffd14be50a05109569dbc4a63a487e3fd88e` |
+| `memory_carry_44409f00.harnessfail_symlink_not_mounted` | 35 | 197635 | `7d3f50e0295526eef9e8096bffb087c9f15cd0e50861499624178696561363b6` |
+| `memory_carry_49e0ea24` | 66 | 141559386 | `8ea70bd3f33ef5c29773575db81e133ab2d540f94ffd81463ac9db7a05777040` |
+| `memory_carry_4a495c2d` | 66 | 170300179 | `5fcb793deb0c9172ceceacccd9ac9de95d0bcce11913c80b0061ac9e562ec1dd` |
+| `memory_carry_5c1b7555` | 66 | 88592670 | `9b1b4abb90e394274b3f950340c679a285218f0119f3561bc30d8b7385175765` |
+| `memory_carry_68e53160` | 65 | 155581927 | `a12a02a591b62427c0bfe29a1ba1103b198869607d8d50fe8c04ae06d5df1b71` |
+| `memory_carry_6ae687bb` | 66 | 150330771 | `6a5784d6a541a0fba970aca6e9d6ccc283d6be3f3e5ed558578a222bed5e12e7` |
+| `memory_carry_7747986c` | 63 | 123497973 | `c96c29a2fcd47bbde71012b711361f355341dd0e6d163fbd4f56291ae9f14741` |
+| `memory_carry_8578f2c7` | 69 | 188482650 | `32afed2ef61c23bf08e23568214cb8a9c62ffca21b009b006e0b4e8169421387` |
+| `memory_carry_8fd8f4f0` | 66 | 217383156 | `2955c5e50a3f4cfc0d9d9703a2e40440889649f0f097c85a5dec6b698f5f1fd2` |
+| `memory_carry_9d8fca3b` | 67 | 149381452 | `4dfd16b5b282611e06909308353d29832c3f785935edc35692ef0cf7f7a3d9d9` |
+| `memory_carry_9e6753c2.simfail_route_foldback` | 44 | 265405060 | `72e29c87faef56d5807701610100b7ceb5cfc339c8ef0bff1f145deb14899d02` |
+| `memory_carry_a32549eb` | 66 | 108408977 | `78c2426ecfaad6444449022bdfc5fce74a9c3cbab03e7284a752c91ee5d3a05f` |
+| `memory_carry_c438a779` | 65 | 179877714 | `a4d03b2d72abd7b4f2fb724c1cc36f53e963c9036446d9f8aa6d6e2f71ff65b9` |
+| `memory_carry_dd0f84df` | 66 | 265188159 | `ce68f083fb42ee84643636966a74a454c87b7519aafc0b162750405320247bea` |
+| `memory_carry_e883822a` | 66 | 173158643 | `d6f493eecf863cd7c1867631d62da6ca17cccc96e343481884b53a6ffa005368` |
+| `memory_carry_f005ac5f` | 65 | 195902299 | `c6a589837bdf90fb0156982043b21fed6a95e37052cb1bf8cadf69cd42d36c90` |
+| `memory_carry_f3a87e7a` | 66 | 163123396 | `59ee65572ebc5232f28bc2201d42b02e09e36c3812b87363302459b2e92065f6` |
+| `memory_carry_f890fe10` | 66 | 249831497 | `6ad0a5d91ca73b2f2f974ed4efb1eea72dd6bd2c48505b9e494b85f9a62650e2` |
+
+### Step 12, the starting model
+
+Where they sit: `{local_store}/runs/new40/018bp06/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `drivejepa_018bp06_29815599` | 66 | 204349152 | `b2f3ff621411d6d4dd66ae55f5cbe8c7acce5cfd10d653a6defe54d255b86340` |
+| `drivejepa_018bp06_320c11f3` | 66 | 149436397 | `f0f0030cefc7ed70efd5a65f78eb494526eb0fc41b3ce7a81b943fd037e61af6` |
+| `drivejepa_018bp06_34226720` | 66 | 135796622 | `d363f7a7ad98f532911de6c82fbf436089cfc7776d2657a490c53fa03cf24ef3` |
+| `drivejepa_018bp06_44409f00` | 66 | 145849432 | `c88ba74e5d26fa02a0f098333f24fb6b1c9a72a84587bc387fc06fde4f352865` |
+| `drivejepa_018bp06_49e0ea24` | 66 | 141499706 | `6547a336e65143871d4c780d97c3b1c849855044002c671d149f0eae8c441187` |
+| `drivejepa_018bp06_4a495c2d` | 66 | 170404617 | `72a3d7b9c28f0d90ad7a7bcba9f3ace92766af2fda8be281c3d07e69f56c0f29` |
+| `drivejepa_018bp06_5c1b7555` | 66 | 88522135 | `87ea4b38d13e17940e02d35c67e517745e9d9ebfe6fc7776e1a290a71314b9b8` |
+| `drivejepa_018bp06_68e53160` | 64 | 147642602 | `4113117d7b79abc131d93fb492b63687efa76e7d3ea4a12da7ac15dea4fc6ce6` |
+| `drivejepa_018bp06_6ae687bb` | 63 | 146945698 | `2fd0d165de6889b2ecebb16db4757a993367468c5dee13eb2fe83e958b311764` |
+| `drivejepa_018bp06_7747986c` | 63 | 127213674 | `cb367d7c5b7dc9a7aea3b3af1fae4da123e94fd83e99b9364c594375d7494734` |
+| `drivejepa_018bp06_8578f2c7` | 66 | 186010464 | `d3a13da49564a498be957e00b6ce1ec819a58350f59190a71319736f3d180150` |
+| `drivejepa_018bp06_8fd8f4f0` | 66 | 220256721 | `8b8690aecdfffac1fbbabbc8d78e1c0430811dad0234533da57fb262cffea2de` |
+| `drivejepa_018bp06_9d8fca3b` | 66 | 148977233 | `a603ff619a328c7a5d89016f2112a158d31ef0ac2ecdae24f675501d65dd2643` |
+| `drivejepa_018bp06_a32549eb` | 68 | 110068683 | `aed032690e330e4e68d6a8928a2c2d0c65676c43fd7848792cce2eae6ecca5a0` |
+| `drivejepa_018bp06_c438a779` | 65 | 166996926 | `2c3a7b6674decd842279dee77e8442befa6f126f2b3e113b7ff5843a727f7c4c` |
+| `drivejepa_018bp06_dd0f84df` | 66 | 267078892 | `55820c5a3b6c3db5414b76343a37c987cc8986f34e7895f42ab4ea58df940212` |
+| `drivejepa_018bp06_e883822a` | 63 | 173450466 | `9cc71ad2cf9b0b639473163ca07657454f2cc56a0f979ae833724e651c522ed2` |
+| `drivejepa_018bp06_f005ac5f` | 65 | 189024128 | `7540941dfdeb2c100290245159c69fe0c47f016f3889e99eb64d72abcadbc6ec` |
+| `drivejepa_018bp06_f3a87e7a` | 66 | 162465690 | `cd681f3ca303d886fb0081315c06aef81a31777d3b46d243b5bada5498acf016` |
+| `drivejepa_018bp06_f890fe10` | 63 | 193121151 | `ccb159dc9524969101d8887ac999c6f4bc288e06c25dea9c608ec7c5b14ff5be` |
+
+### Step 12, image check after the rebuild of 20 Nov
+
+Where they sit: `{local_store}/runs/new40/imagecheck/018bp06/runs/`, `{local_store}/runs/new40/imagecheck/runs/`
+
+| Folder | Files | Bytes | sha256 |
+|---|---:|---:|---|
+| `018bp06/runs/drivejepa_018bp06_04749bb9` | 67 | 98680659 | `7291ca26e6a4955df162a3bf3bb2f0cd4d8cba97b1d0509c1343093c3f01e925` |
+| `018bp06/runs/drivejepa_018bp06_8023dce5` | 66 | 150033813 | `eaaf84bbcd91ec500edbd99d643400f31af00555443abe646702b2701e073698` |
+| `018bp06/runs/drivejepa_018bp06_d2715023` | 66 | 241106252 | `041c45c0a79f8a0aa2bd17fbb4b7d1416639241810ae5873f1b66cf8d53f8a4c` |
+| `018bp06/runs/drivejepa_018bp06_e3ed554f` | 63 | 237057011 | `d06caa685dc1393988d7727e9f92805de39823d8cc05d2793443d416068c10d0` |
+| `018bp06/runs/drivejepa_018bp06_e3ed554f.killed_watchdog_20261120T0042` | 32 | 1194172 | `89fd2c83bc4985becf3e8c7507716ae35778a0ca94d7a91511c42ee7b41798ee` |
+| `runs/memory_carry_0245ff75` | 68 | 201600064 | `899a8e6e377f0dec33a93bea710ae33c79240d1b6d75f994c69dde6342542d09` |
+| `runs/memory_carry_bae463d3` | 63 | 174698299 | `f1a83955086d220f6200b97a45c5205df59874f3f07536b0a886df7109d3606b` |
+
+## Closed-loop tables, arrays and the replacement scene left out
+
+| Item | Where it sits | Bytes | sha256 |
+|---|---|---:|---|
+| Plans unpinned, for the 2-core check (step 10, `out/cl18_thread_all.npz`) | `{working_folder}/out/cl18_thread_all.npz` | 308768 | `f31f152bba8745207e51e54b0c9bb7058202544c0df7b4deb33bbbe89133ed26` |
+| Plans pinned to 2 cores (step 10, `out/cl18_thread_two.npz`) | `{working_folder}/out/cl18_thread_two.npz` | 308768 | `9cc10f5adbdb2b9cf0ba4c802acfd4b9d104d5d77b77161545ee202e0a1ef15a` |
+| The withdrawn re-score, per drive (step 11, `out/fulldrive_rescore.json`) | `{working_folder}/out/fulldrive_rescore.json` | 101108 | `7cb187272569eb12dc38bbbaee6168192e3d0c65bf7e6e474946188f6ed05135` |
+| The replacement scene 44409f00, as downloaded; equal to the dataset repository's record (`tables/scene_draw/replacement_download.json`) | `{local_store}/new40_scenes/usdz/6ffea280-aabf-4695-903b-37dabe37ca73.usdz` | 1871395562 | `8f92e1c94a3b4ccb9ea07f22758ec6c8172e5b667da47acd98e5e1727289bec1` |
+
+## The simulator images
+
+Docker image ids on the training site. They are not files; the id is the sha256 of the image's configuration.
+
+| Image | Used by | Id |
+|---|---|---|
+| `alpasim-base:0.134.0`, the build of 31 Oct 2026 | step 09's 12 drives of the starting model (made by its own lane); deleted from the machine before 3 Nov | not recorded |
+| `alpasim-base:0.134.0`, built 12 Nov 2026 | step 09 (the memory drives and the image check) and step 10; deleted from the machine before 17 Nov | `sha256:9c5909dafcd5574dca1c783e6abc29dfbdfcc9fc2860725dd80030475b8f8881` |
+| `alpasim-base:0.134.0`, rebuilt 20 Nov 2026 | step 12 | `sha256:ab16bc78a4686dcd63c2b77a77fe585df3846528a61b552db6b71f9553983a44` |
+| `nvcr.io/nvidia/nre/nre-ga:26.04`, the renderer | all steps | `sha256:97f43e7130c5636ce3e80ea3184d97f56a87fdd989b05cce42230881dbdea284` |
+
+## Closed-loop logs
+
+In the working folder's `logs/` at the training site. The reports cite them as `logs/<name>`.
+
+| File | Bytes | sha256 |
+|---|---:|---|
+| `cl12_check_only_carry.log` | 2111 | `5408fef6cc29a5fa6a24cd4933c6c698a37c2ed1df4955a3519bed1efc6d2b4e` |
+| `cl12_check_only_carry_worker.log` | 4198 | `822391604d7ca5434cfed78617a7904222d020aeaa186708412f64cb5a4b234e` |
+| `cl12_check_only_reset.log` | 2111 | `bd4a15371a5c2eb7e69f4d263d2fd208a909940736083f0273767611fa56ce30` |
+| `cl12_check_only_reset_worker.log` | 4198 | `2d362089062edbfe7dd32cce43d1a39b681b697a05f2c537954cea53a7df33db` |
+| `cl12_imagecheck_cmp.log` | 783 | `c58db0481fd0fcaa4e3ad08bd5697c0293c56c79fc6f1f8d94a4b7e0d2af9f28` |
+| `cl12_proof_Ac.log` | 229 | `fd7a30ff14276ae51a4db2378f538401c163b6df5d845760f1ab7f3ab462e00c` |
+| `cl12_proof_Ac_p06a_worker.log` | 3666 | `c5a3761965634b5f3235db74769598f45621cde3f9a3d247a814af43648fe4c4` |
+| `cl12_proof_Ac_p06b_worker.log` | 3666 | `c5a3761965634b5f3235db74769598f45621cde3f9a3d247a814af43648fe4c4` |
+| `cl12_proof_A_first_run.log` | 1170 | `b4c9497848769a5dfb52467a07e59d98cdb8f09a9ef5c235640c1b696c694c0e` |
+| `cl12_proof_A.log` | 1232 | `2cbf43645025038a4b0955152574bdff228e9ab35173754fd6b6d390f2a22373` |
+| `cl12_proof_A_memory_worker.log` | 17197 | `9f6b5a523384a5782153cce8663f4997b89697ec98c4fa97956a22be39ce69aa` |
+| `cl12_proof_A_p06_worker.log` | 14664 | `2bc4c5e5294bbfa2a186828292372fc6146b2b93830978cdf648722859fbf8b6` |
+| `cl12_proof_A_shadow_off.log` | 1670 | `5fda269697c9073abd6131a9268d6759cc8efb1f65d7cf7018918c8acb1b31d9` |
+| `cl12_proof_B_carry_worker.log` | 8554 | `97bfd0da8434c01f66c93400187af06fb5da0e7fccbd54369a43b09cffaa4562` |
+| `cl12_proof_B.log` | 1024 | `b26eb0f335ce786c454f5aeb36b2317e8ea3169127664ff0e6b576b6fbe700c2` |
+| `cl12_proof_B_reset_worker.log` | 8554 | `f533925c2fcb9f16bced7ccfef39cac18c22b131c37cd56f316274605f3a6930` |
+| `cl12_proof_build.log` | 449 | `7b358dbac840305bd0c6d9b0a4ab051ded37a01303db736c89a68ea4e766f2ec` |
+| `cl12_proof_C.log` | 1184 | `aba9e011edeef73092004e4584d15d361af4e911491cbfb81a263efdb976367c` |
+| `cl12_proof_C_worker.log` | 9640 | `1e6c9f1108648dd4e0a38bf1d11f2b552c5fca3c57cfbe82dd5210f941c9e9ce` |
+| `cl12_proofs_chain.log` | 2257 | `cf2ceb9e3b3fbc585c57a2a7f0edab7dd257937823ce865cd896db61dedf5e5f` |
+| `cl12_queue.log` | 14339916 | `11362c893799c4ee2de581f1a4fb4fd35cf75fd3abe176485c83f37e9bd81175` |
+| `cl12_table.log` | 9928 | `744e2b5079cd728a9d3beaa6c51332607786530b016c8ca194147924de5bf498` |
+| `cl18_queue.log` | 17565036 | `a4992f9e0fcb9c910e93bba96769bb50b01bafdbdcae62eee71f59bba2e3d67a` |
+| `cl18_relaunch.log` | 234 | `0ec01f1e7c8b8c08a30bd21a4cec0325b5505acc07618fe1b7f23b3f93a0ec4e` |
+| `cl18_table.log` | 7412 | `181f0e7dde9554712a096780489de2a69eb7cb297dd9b12dfa69fa5e5c6c7c37` |
+| `cl18_thread_all_carry_worker.log` | 4277 | `feadbaccaef5c3b6318a70256e71877b433811e52ce96f4452c6e4ff6728191a` |
+| `cl18_thread_all.log` | 63 | `443e531ef35ce208a7a09ed24fdcb4de254df6ae5744a41a218c5439f74ae6dc` |
+| `cl18_thread_all_p06_worker.log` | 3666 | `c5a3761965634b5f3235db74769598f45621cde3f9a3d247a814af43648fe4c4` |
+| `cl18_thread_compare.log` | 604 | `50ebabf438017bc8dcdb1ac1f6a5448c3121fca0648b94688621eefa4b220a88` |
+| `cl18_thread_two_carry_worker.log` | 4277 | `feadbaccaef5c3b6318a70256e71877b433811e52ce96f4452c6e4ff6728191a` |
+| `cl18_thread_two.log` | 62 | `81ae350b024da79b073f2dd742b205deffd0ac23248918c5fcbf2c829a141287` |
+| `cl18_thread_two_p06_worker.log` | 3666 | `c5a3761965634b5f3235db74769598f45621cde3f9a3d247a814af43648fe4c4` |
+| `cl20_compare_page.log` | 5777 | `4632d4809f7c6f15bd0b7601aba0ccdbebda2ed52d1dedb7179f76c5e0633747` |
+| `cl20_imagecheck_cmp.log` | 1179 | `c4e67dddf3a6ce1d20fc4af05c9dadc9d6d65a3533c43e804aa8cb071b646cdc` |
+| `cl20_imagecheck_queue.log` | 3470325 | `dd231dfae2e14566917cbd1cb35040f3619ffcbd86cd7a87f123847b608daa99` |
+| `cl20_queue.log` | 20462172 | `c2c3433f23b07e2fd4a4849008cfb3ed548336060d70cf67070d49a01487a38d` |
+| `cl20_table.log` | 3206 | `e16176d1dca5306ece5b154560ff9b5c097b4296b13f6ac723a27431821a68ba` |
+| `fulldrive_017.log` | 3065 | `f1a5aecf9c943448ad86c666f8cab0201e6a183dacbf7a3b3532116ea62e97a0` |
+| `fulldrive_all.log` | 10963 | `c6a78fd0668b7410e76a35ab764df725c15fddffed5a6b9b75595436e670f291` |
+| `fulldrive_prereg.sha256` | 370 | `bcde59e393b75630506808e16cb2ff5e25fd87e0e7d1bb86b23402a7e63258fe` |
+| `new40_compare_page.log` | 6341 | `e59f718910cfaa2aeb26463817165064f538cbaa792a2f82ee19eac0305d507d` |
+| `new40_dryrun_018bp06.log` | 2323 | `ea087dab95cc8d2d4a7a316b9c2c64b442642040847e9a3f50613c14111d1aae` |
+| `new40_dryrun_carry.log` | 2590 | `8092259d15aed408faada74f79cfcd928107fbb4e081043a3b88f5f55aa3e899` |
+| `s13_compare_page_cl18_final.log` | 5114 | `f25eddf6e940aebb0245becda352cdc26f03ec636e735fbb7fbd6b1cdceed31b` |
+| `s13_compare_page_cl18.log` | 5310 | `024a53a6722fc254975ec7a6cf41f64cc252182c97d5a5a1718e343a1ab7325f` |
+| `s13_compare_page.log` | 3067 | `78dde9e81b863b0131c7a763b04c2b5d5c12b33ebc10d689ef9bbc65c79fa245` |
+| `s13_compare_page_rebuild.log` | 2923 | `7faec6bdf7e55c6d50a2db7d5b13933a6b5919b618aecb9e32b851f8e1ee3ae0` |
+| `s13_page_check.log` | 10956 | `7baa9b10df90ba8c443cc15e0d3c6f5589e2b90c3f53ad16c57f1d6fc50839e0` |
+| `cl12_proofs_before_freeze/cl12_proof_A.log` | 1251 | `309a2f20c92af31e5734d6698d385415bdb35a2f74ba515aa86f354281c605cc` |
+| `cl12_proofs_before_freeze/cl12_proof_B.log` | 1024 | `9cabbeb8a2628c314a8a67736f840e6b8459d4da50d7f1728e21ece98a0f987b` |
+| `cl12_proofs_before_freeze/cl12_proof_C.log` | 1184 | `aba9e011edeef73092004e4584d15d361af4e911491cbfb81a263efdb976367c` |
+
+The comparison page that shows every drive side by side, with its rendered videos, is served from
+`{local_store}/compare_page/` (built by `s20_compare_page.py`); it is a view of the drive folders above, not evidence of its own.
