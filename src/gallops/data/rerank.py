@@ -54,6 +54,7 @@ from pathlib import Path
 
 import numpy as np
 
+from gallops.compat import zip_strict
 from gallops.config import ConfigError, SiteConfig
 from gallops.train.rerank import FEATURE_PROBE
 
@@ -291,7 +292,7 @@ def feature_probe(rows: list[dict], x: np.ndarray) -> dict[str, np.ndarray]:
         np.array([speed(r) for r in head]),
         x[: len(head)],
     )
-    return dict(zip(FEATURE_PROBE, inputs, strict=True))
+    return dict(zip_strict(FEATURE_PROBE, inputs))
 
 
 def export(args: argparse.Namespace) -> None:

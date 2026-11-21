@@ -16,6 +16,7 @@ import pytest
 
 from gallops import recipe as recipes
 from gallops.checkpoint import Checkpoint, SidecarError
+from gallops.compat import zip_strict
 from gallops.config import REPO_ROOT, SiteConfig
 from gallops.drivejepa_wajepa import code, navtest_score, train, write_checkpoint
 
@@ -300,8 +301,8 @@ def write_csv(path: Path, rows: list[dict]) -> Path:
 
 def row(token: str, gates: tuple, soft: tuple, score: float, valid: str = "True") -> dict:
     r = {"token": token, "valid": valid, "score": score}
-    r.update(dict(zip(navtest_score.GATES, gates, strict=True)))
-    r.update(dict(zip((c for c, _ in navtest_score.SOFT), soft, strict=True)))
+    r.update(dict(zip_strict(navtest_score.GATES, gates)))
+    r.update(dict(zip_strict((c for c, _ in navtest_score.SOFT), soft)))
     return r
 
 

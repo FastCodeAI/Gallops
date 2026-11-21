@@ -23,6 +23,14 @@ so — that distinction is the standard both repos are held to.
 > normal pace and the crossing car hits it. A full sweep replaces 3.57. Its
 > KITScenes and NAVSIM rows are unaffected (identity lidar2ego there).
 
+> **Correction (2026-11-12), adding to the H01 correction above: what H05 read of `navtrain`.** H05 read its logs, its camera images and
+> the vendor's train metric cache: 1,192 graded logs, 126,694 moments with both front frames,
+> 91,977 of them graded (`experiments/H05_ssm_memory/`). The images are incomplete there: one copy
+> lacks the current frames of 298 logs and a second fills in 134 of them
+> (`src/gallops/memory/ticks.py`). Whether `trainval_sensor` is whole and whether
+> `synthetic_scenes/` is present were not checked. H01's trainers find it through `[datasets.navsim]`;
+> `gallops.memory` reads it through `[datasets.navtrain]` (see `gallops.toml.example`).
+
 ---
 
 ## Why this repo exists

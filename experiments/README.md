@@ -37,7 +37,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H02](H02_smallest_valid_gate/CARD.md) | Smallest valid gate: subset size per benchmark from the spread of past paired runs | enabler | Naren | 20 Oct – 21 Oct 2026 | ☑️ done | [H02_smallest_valid_gate/](H02_smallest_valid_gate/) |
 | [H03](H03_shared_store_and_tags/CARD.md) | One shared folder and group; every checkpoint tagged by weights sha256 with full metadata | enabler | Naren | 21 Oct 2026 | ⏳ running | [H03_shared_store_and_tags/](H03_shared_store_and_tags/) |
 | [H04](H04_subscore_scorer_navsim/CARD.md) | Training the scorer on the sub-scores closes the base's NAVSIM gap | hypothesis | Navvrat, Siddesh | 22 Oct 2026 | ⏳ running | [H04_subscore_scorer_navsim/](H04_subscore_scorer_navsim/) |
-| [H05](H05_ssm_memory/CARD.md) | A state-space memory layer makes plans steadier and reactions earlier | hypothesis | Naren | 21 Oct 2026 | 📝 planned | [H05_ssm_memory/](H05_ssm_memory/) |
+| [H05](H05_ssm_memory/CARD.md) | A state-space memory layer makes plans steadier and reactions earlier | hypothesis | Naren, Siddesh | 21 Oct – 5 Nov 2026 | ⏸ parked (inconclusive) | [H05_ssm_memory/](H05_ssm_memory/) |
 | [H06](H06_global_read/CARD.md) | The global read is what makes a model brake for the crossing car | hypothesis | Navvrat | 19 Oct 2026 | ⏳ running | [H06_global_read/](H06_global_read/) |
 | [H07](H07_encoder_lora/CARD.md) | A LoRA on the encoder closes the domain gap: the KITScenes gain holds in closed loop and on the base's encoder | hypothesis | Siddesh | 16 Oct 2026 | ⏳ running | [H07_encoder_lora/](H07_encoder_lora/) |
 | [H08](H08_sideways_velocity_fov/CARD.md) | Real sideways velocity and a matched camera field of view are free gains | hypothesis | Naren | 21 Oct 2026 | ⏳ running | [H08_sideways_velocity_fov/](H08_sideways_velocity_fov/) |
@@ -46,6 +46,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
 | [H18](H18_fact_scorer_navsim_lead/CARD.md) | The sub-score agent-look model's architecture, trained from scratch on NAVSIM + LEAD with a per-waypoint fact scorer | hypothesis | Navvrat | 18 Nov 2026 | ⏳ running | [H18_fact_scorer_navsim_lead/](H18_fact_scorer_navsim_lead/) |
+| [H19](H19_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | 📝 planned | [H19_prediction_memory/](H19_prediction_memory/) |
 <!-- /experiments:index -->
 
 ## Enablers
@@ -161,6 +162,7 @@ command line serve every experiment and are listed as shared.
 |---|---|---|
 | `gallops.checkpoint` | — | shared |
 | `gallops.cli` | — | shared |
+| `gallops.compat` | H05.r1 | experiment |
 | `gallops.config` | — | shared |
 | `gallops.data.nuscenes_real` | GC06.v3_nusc, GC07.sighted-v1, GC08.v6-r1a-loso0075, GC08.v6-r1b-all | experiment |
 | `gallops.data.rerank` | GC01.kitscenes-train-h128-t1 | experiment |
@@ -202,6 +204,12 @@ command line serve every experiment and are listed as shared.
 | `gallops.expert.rounds` | GC03.s3 | experiment |
 | `gallops.expert.scenarios` | GC03.stageA | experiment |
 | `gallops.expert.teacher` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.memory.cache` | H05.r1 | experiment |
+| `gallops.memory.checks` | H05.r1 | experiment |
+| `gallops.memory.inputs` | H05.r1 | experiment |
+| `gallops.memory.probe` | H05.r2 | experiment |
+| `gallops.memory.probe_control` | H05.r2 | experiment |
+| `gallops.memory.ticks` | H05.r1 | experiment |
 | `gallops.recipe` | — | shared |
 | `gallops.train.export` | GC03.stageA, GC03.v4, GC03.s1, GC03.s2, GC03.s3 | experiment |
 | `gallops.train.frame_cache` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |

@@ -7,10 +7,11 @@ paddock's `adding-a-model` guide prescribes for adapters: get the boring path
 green first, so that when something moves you know it was the model.
 """
 
-from __future__ import annotations
-
+# No `from __future__ import annotations` here: it turns every hint into a string, and under Drive-JEPA's
+# Python 3.9 typer then resolves them without their `Annotated` metadata. An option with no default
+# becomes an argument and an `envvar` is dropped, which is how `experiments pr-check` broke there.
 import json
-from typing import Annotated
+from typing import Annotated, Optional
 
 import typer
 
@@ -72,7 +73,10 @@ def show(directory: str) -> None:
 def recipe(
     name: str,
     stages: Annotated[
-        list[str] | None, typer.Argument(help="stages to show or run; all when omitted")
+        # Optional, not `| None`: typer evaluates these hints at run time, and Drive-JEPA's
+        # interpreter (Python 3.9, where a trainer's preflight runs the tests) has no `X | Y`.
+        Optional[list[str]],  # noqa: UP045
+        typer.Argument(help="stages to show or run; all when omitted"),
     ] = None,
     run: Annotated[bool, typer.Option("--run", help="run the stages in order; otherwise only print")] = False,
 ) -> None:
@@ -251,7 +255,8 @@ _WEIGHTS = (".safetensors", ".ckpt", ".pt", ".pth", ".npz", ".bin")
 def experiments_checkpoint(
     directory: Annotated[str, typer.Argument(help="a step directory holding checkpoint.json")],
     file: Annotated[
-        str | None, typer.Option("--file", help="the weights file paddock loads, when there are several")
+        Optional[str],  # noqa: UP045 -- typer evaluates hints at run time; see `recipe` above
+        typer.Option("--file", help="the weights file paddock loads, when there are several"),
     ] = None,
     ensemble: Annotated[
         bool, typer.Option("--ensemble", help="the weights files are one checkpoint together (seeds)")

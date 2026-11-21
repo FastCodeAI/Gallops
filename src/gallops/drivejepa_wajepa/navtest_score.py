@@ -27,6 +27,8 @@ import glob
 import json
 import math
 
+from gallops.compat import zip_strict
+
 SUMMARY = {"average_all_frames", "pseudo_closed_loop", "average_expert_frames"}
 GATES = [
     "no_at_fault_collisions",
@@ -75,7 +77,7 @@ def score(path: str) -> dict:
         "scenes": len(rows),
         "epdms_human_filter": 100 * mean([filtered(r) for r in rows]),
         "csv_score": 100 * mean([num(r["score"]) for r in rows]),
-        "sub_scores": {s: mean([num(r[c]) for r in rows]) for s, c in zip(SHORT, cols, strict=True)},
+        "sub_scores": {s: mean([num(r[c]) for r in rows]) for s, c in zip_strict(SHORT, cols)},
     }
 
 

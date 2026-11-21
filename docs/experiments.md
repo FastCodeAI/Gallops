@@ -53,6 +53,10 @@ Hypotheses and enablers share one numbering because the team prioritised them to
   the repository, in commit messages, sidecars, PR titles and conversation. New experiments take
   the next free number in the order they are registered; abandoning one marks it `dropped`, it
   does not free its number.
+- **The one exception is a clash before `main`** (Naren, 20 Nov 2026). An ID becomes fixed when it
+  reaches `main`. If two unmerged branches claim the same ID, the later one takes the lowest ID
+  not used on `main`, on any open PR or remote branch, or in a plan not yet pushed, and its README
+  says once what it was registered as. H19, registered as H15, is the first.
 - **Priority is a field, not the ID.** When the team reorders its plans, `priority` changes and
   the IDs stay.
 - **The folder is `<ID>_<slug>`,** the slug lower-case words joined by underscores

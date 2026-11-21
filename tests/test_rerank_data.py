@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from gallops.checkpoint import read
+from gallops.compat import zip_strict
 from gallops.config import SiteConfig
 from gallops.data import rerank as data
 from gallops.train import rerank
@@ -300,7 +301,7 @@ def test_the_weights_carry_a_feature_probe_a_reader_can_recompute(tmp_path):
         assert str(npz["format"]) == rerank.FORMAT
         probe = {key: npz[key] for key in rerank.FEATURE_PROBE}
     keys = ("feature_probe_proposals", "feature_probe_logits", "feature_probe_speed")
-    inputs = zip(*(probe[key] for key in keys), strict=True)
+    inputs = zip_strict(*(probe[key] for key in keys))
     recomputed = np.stack([data.candidate_features(*sample) for sample in inputs])
     assert recomputed.shape == (data.FEATURE_PROBE_SAMPLES, 3, len(data.FEATURE_NAMES))
     np.testing.assert_array_equal(recomputed, probe["feature_probe_x"])

@@ -20,7 +20,13 @@ from __future__ import annotations
 
 import os
 import subprocess
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.9
+    # A trainer's preflight runs the whole test suite in the interpreter that trains, and Drive-JEPA's
+    # is 3.9; config.py takes the same fallback.
+    import tomli as tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
