@@ -16,7 +16,7 @@ the files copied here are the ones that drove. Machine paths in them were replac
 | `drivejepamemory/planner.py`, `bridge.py`, `constants.py` | the starting model's planner, bridge and constants with the memory wired in; `constants.py` pins the starting model by sha256, and the runner pins the memory checkpoint |
 | `drivejepamemory/batch_fix.py`, `divider.py`, `momentum.py` | unchanged from the starting model's adapter |
 | `drivejepamemory/launch/` | the runner, the model server and the extra gates for one drive; `tables/` holds the build freeze and the three adapter proofs run before the first drive |
-| `drivejepamemory_vs_drivejepa018bp06.diff` | the change against the starting model's adapter, `launch/` left out. It replaces `launch/tables/adapter_018bp06_to_memory.diff`, which was written before the last change to `bridge.py` and misses it |
+| `drivejepamemory_vs_drivejepa018bp06.diff` | the change against the starting model's adapter, `launch/` left out, made again on 21 Nov. It carries the same changes as `launch/tables/adapter_018bp06_to_memory.diff`, the copy made before the first drive, and also lists `memory.py` as a new file |
 
 **Not copied: four links** to the shared Drive-JEPA adapter, which both models use unchanged: `src/` (the
 vendored upstream model code), `__init__.py`, `fake_model.py` and `real_model.py`, all under
