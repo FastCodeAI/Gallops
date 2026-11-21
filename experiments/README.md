@@ -46,7 +46,7 @@ indexed now, and the record moves into the folder when the branch merges.
 | [H11](H11_hugsim/CARD.md) | HUGSIM trial beside neuroNCAP, checked by reproducing WA-JEPA's published 0.4462 | enabler | Navvrat | 21 Oct 2026 | ⏳ running | [H11_hugsim/](H11_hugsim/) |
 | [H14](H14_aux_heads/CARD.md) | Auxiliary prediction heads on Drive-JEPA's refiner, fine-tuned on nuScenes train | hypothesis | Shreedhar | 20 Oct 2026 | ⏳ running | [H14_aux_heads/](H14_aux_heads/) |
 | [H18](H18_fact_scorer_navsim_lead/CARD.md) | The sub-score agent-look model's architecture, trained from scratch on NAVSIM + LEAD with a per-waypoint fact scorer | hypothesis | Navvrat | 18 Nov 2026 | ⏳ running | [H18_fact_scorer_navsim_lead/](H18_fact_scorer_navsim_lead/) |
-| [H19](H19_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | 📝 planned | [H19_prediction_memory/](H19_prediction_memory/) |
+| [H19](H19_prediction_memory/CARD.md) | Carrying the planner's output embeddings across moments makes the picker steadier and earlier | hypothesis | Naren, Siddesh | 5 Nov 2026 | ⏳ running | [H19_prediction_memory/](H19_prediction_memory/) |
 <!-- /experiments:index -->
 
 ## Enablers
@@ -77,6 +77,10 @@ tier's 3 neuroNCAP episodes can fail a checkpoint but cannot ship one.
 |---|---|---|---|---|---|---|---|---|---|---|
 | 20 Oct 2026 | [H02.timing](H02_smallest_valid_gate/CARD.md) | `740335c800e2` | all | ⚪ 0.875 → 0.875 | ⚪ 3.222 → 3.222 | ⚪ 2.497 → 2.497 | ⚪ 3.175 → 3.175 | ⚪ | — | ⏸ **HOLD** |
 | 28 Oct 2026 | [H07.exp3](H07_encoder_lora/CARD.md) | `91e13bc38aa7` | all | 🔴 0.8572 → 0.7533 | 🟢 2.5375 → 0.9204 | 🟢 2.4314 → 0.9152 | ⚪ 3.6792 → 2.7265 | 🔴 59.0360 → 0.2686 | 🔴 0.4344 → 0.1158 | ⛔ **FAIL** |
+| 6 Nov 2026 | [H19.r3-a-s0](H19_prediction_memory/CARD.md) | `0679ea453b97` | quick | ⚪ 0.857 → 0.858 | 🟢 2.537 → 2.292 | ⚪ 2.431 → 2.336 | ⚪ 3.179 → 2.533 | ▫️ 37.670 → 28.141 | ▫️ 0.929 → 0.967 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H19.r3-a-s0](H19_prediction_memory/CARD.md) | `0679ea453b97` | closed | — | — | — | ⚪ 3.679 → 3.404 | ⚪ 59.036 → 68.512 | ⚪ 0.434 → 0.394 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H19.r3-b-s0](H19_prediction_memory/CARD.md) | `dfd944c1c3f1` | quick | ⚪ 0.857 → 0.856 | 🟢 2.537 → 2.261 | 🟢 2.431 → 2.288 | ⚪ 3.179 → 4.213 | ▫️ 37.670 → 16.400 | ▫️ 0.929 → 1.000 | ⏸ **HOLD** |
+| 6 Nov 2026 | [H19.r3-b-s0](H19_prediction_memory/CARD.md) | `dfd944c1c3f1` | closed | — | — | — | ⚪ 3.679 → 3.531 | ⚪ 59.036 → 45.964 | ⚪ 0.434 → 0.508 | ⏸ **HOLD** |
 | 20 Nov 2026 | [H01.four-camera-planner](H01_four_camera_base/CARD.md) | `f8ce667cdcd7` | all | ⚪ 0.8572 → 0.8440 | 🟢 2.5375 → 2.0010 | 🟢 2.4314 → 2.0570 | ⚪ 3.6792 → 3.2800 | ⚪ 59.0360 → 80.2351 | ⚪ 0.4162 → 0.4503 | ⏸ **HOLD** |
 | 20 Nov 2026 | [H04.subscore-agent-look](H04_subscore_scorer_navsim/CARD.md) | `92185265cee9` | all | ⚪ 0.8572 → 0.8534 | 🟢 2.5375 → 2.1215 | 🟢 2.4314 → 2.1509 | ⚪ 3.6792 → 3.6915 | ⚪ 59.0360 → 40.8048 | ⚪ 0.4162 → 0.4391 | ⏸ **HOLD** |
 | 20 Nov 2026 | [H18.fact-scorer](H18_fact_scorer_navsim_lead/CARD.md) | `12ab840ef813` | all | 🔴 0.8572 → 0.8067 | ⚪ 2.5375 → 2.8596 | 🟢 2.4314 → 2.1173 | ⚪ 3.6792 → 3.9265 | ⚪ 59.0360 → 87.9614 | ⚪ 0.4162 → 0.1317 | ⛔ **FAIL** |
@@ -204,12 +208,17 @@ command line serve every experiment and are listed as shared.
 | `gallops.expert.rounds` | GC03.s3 | experiment |
 | `gallops.expert.scenarios` | GC03.stageA | experiment |
 | `gallops.expert.teacher` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |
+| `gallops.memory.align` | H19.r2 | experiment |
 | `gallops.memory.cache` | H05.r1 | experiment |
 | `gallops.memory.checks` | H05.r1 | experiment |
+| `gallops.memory.evaluate` | H19.r3 | experiment |
+| `gallops.memory.grade` | H19.r1 | experiment |
 | `gallops.memory.inputs` | H05.r1 | experiment |
+| `gallops.memory.model` | H19.r3 | experiment |
 | `gallops.memory.probe` | H05.r2 | experiment |
 | `gallops.memory.probe_control` | H05.r2 | experiment |
 | `gallops.memory.ticks` | H05.r1 | experiment |
+| `gallops.memory.train` | H19.r3 | experiment |
 | `gallops.recipe` | — | shared |
 | `gallops.train.export` | GC03.stageA, GC03.v4, GC03.s1, GC03.s2, GC03.s3 | experiment |
 | `gallops.train.frame_cache` | GC08.v6-r1a-loso0075, GC08.v6-r1b-all, GC08.v6-r2-short | experiment |

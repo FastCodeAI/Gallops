@@ -1,0 +1,231 @@
+diff --git a/src/paddock/adapters/models/drivejepa/model.yaml b/src/paddock/adapters/models/drivejepa/model.yaml
+index c949326..04bb773 100644
+--- a/src/paddock/adapters/models/drivejepa/model.yaml
++++ b/src/paddock/adapters/models/drivejepa/model.yaml
+@@ -37,6 +37,8 @@ runtime:
+     # benchmark and every gate run gets it; a site that sets "native" is the
+     # override and its runs are not valid.
+     DRIVEJEPA_IMAGE_GEOMETRY: "openscene"
++    # H15 prediction memory (memory.py): a gallops checkpoint directory; empty is the released node.
++    DRIVEJEPA_MEMORY: ""
+ 
+ capabilities:
+   cameras: [CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK]
+diff --git a/src/paddock/adapters/models/drivejepa/policy.py b/src/paddock/adapters/models/drivejepa/policy.py
+index 69c5785..602e157 100644
+--- a/src/paddock/adapters/models/drivejepa/policy.py
++++ b/src/paddock/adapters/models/drivejepa/policy.py
+@@ -64,11 +64,12 @@ from __future__ import annotations
+ 
+ import os
+ from concurrent.futures import ThreadPoolExecutor
++from types import SimpleNamespace
+ from typing import Any
+ 
+ import numpy as np
+ 
+-from paddock.adapters.models.drivejepa import momentum
++from paddock.adapters.models.drivejepa import memory, momentum
+ from paddock.policy.protocol import Observation, Policy, Trajectory
+ 
+ # Drive-JEPA camera slot -> nuScenes camera. The perception branch reads these
+@@ -140,6 +141,11 @@ class DriveJepaPolicy(Policy):
+         if switch not in momentum.SWITCHES:
+             raise ValueError(f"{momentum.SWITCH_ENV}={switch!r}; expected one of {momentum.SWITCHES}")
+         self.momentum = momentum.Momentum() if switch == "on" else None
++        # H15's prediction memory (memory.py): a gallops checkpoint directory, or empty for the
++        # released node, bit for bit.
++        self.memory_dir = os.environ.get(memory.ENV, "")
++        self.memory: memory.Memory | None = None
++        self._memory_ctx: dict[str, Any] | None = None
+         self.agent = None
+         self.feature_builder = None
+         self.history: list[dict[str, Any]] = []
+@@ -167,13 +173,55 @@ class DriveJepaPolicy(Policy):
+             # import them should fail to start, not fail its first `/infer`
+             # after the simulator and renderer are already up.
+             self.momentum.upstream = momentum.Upstream(self.agent._trajectory_sampling)
++        if self.memory_dir:
++            self.memory = memory.load(self.memory_dir, self.device)
++            self._hook_scorer()
+         self.reset()
+ 
++    def _hook_scorer(self) -> None:
++        """Nudge the scorer's final logit with the memory, inside the model's own forward.
++
++        A pre-hook keeps the scorer's input (the proposals and the last refiner pass's query
++        features); a forward hook steps the memory and returns the scorer's output with the final
++        logit nudged, so ``pdm_score``, the momentum stage and the argmax all see the nudged score.
++        Both act only while `_memory_ctx` is set, i.e. inside `forward`.
++        """
++        scorer = self.agent._pad_model.scorer
++        seen: dict[str, Any] = {}
++
++        def before(module, args):
++            seen["proposals"], seen["query"] = args[0], args[1]
++
++        def after(module, args, output):
++            ctx = self._memory_ctx
++            if ctx is None:
++                return None
++            proposals = seen["proposals"]
++            b, p, t = proposals.shape[:3]
++            embed = seen["query"].reshape(b, p, t, -1).amax(-2)  # scorer.py:41, the same expression
++            pred_logit = output[0]
++            nudge = self.memory.step(
++                ctx["timestamp"],
++                ctx["pose"],
++                proposals[0].float().cpu().numpy(),
++                embed[0].float(),
++                pred_logit[0].float(),
++                ctx["ego"],
++            )
++            nudged = pred_logit.clone()
++            nudged[0, :, -1] = nudged[0, :, -1] + nudge.to(nudged.dtype)
++            return (nudged, *output[1:])
++
++        scorer.register_forward_pre_hook(before)
++        scorer.register_forward_hook(after)
++
+     def reset(self) -> None:
+         """Drop the frame history, and the previous plan, between runs."""
+         self.history: list[dict[str, Any]] = []
+         if self.momentum is not None:
+             self.momentum.reset()
++        if self.memory is not None:
++            self.memory.reset()
+ 
+     def _record(self, obs: Observation) -> None:
+         # Images are decoded later, and only for the four frames
+@@ -326,9 +374,79 @@ class DriveJepaPolicy(Policy):
+ 
+         Not a pattern to copy into openpilot or visionpilot: both carry state
+         that each forward pass advances, so for them every pass is load-bearing.
++
++        The memory (``DRIVEJEPA_MEMORY``) keeps to this too: a recorded frame is run for the
++        memory only when a later plan needs it (`_catch_up`).
+         """
+         self._record(obs)
+ 
++    def _features(self) -> dict[str, Any]:
++        import torch
++
++        agent_input = self._agent_input()
++        features = self.feature_builder.compute_features(agent_input)
++        return {k: (v.unsqueeze(0).to(self.device) if torch.is_tensor(v) else v) for k, v in features.items()}
++
++    @staticmethod
++    def _memory_context(obs: Any, features: dict[str, Any]) -> dict[str, Any]:
++        # The ego row the memory was trained on: the newest of the model's own ego statuses.
++        return {
++            "timestamp": int(obs.timestamp_us),
++            "pose": np.asarray(obs.ego2world, dtype=np.float64),
++            "ego": features["ego_status"][0, -1].float(),
++        }
++
++    def _catch_up(self) -> None:
++        """Run the memory on the recorded frames of the newest frame's chain it has not seen yet.
++
++        The plan at t reads memory from the moments t - 0.5 s, t - 1.0 s, ... (at most L of them).
++        A frame that was only recorded (`observe`: an open-loop sample's history, or a closed-loop
++        tick between plans) is run here, oldest first, with the history as it stood at that frame,
++        so its features are the ones a pass at that frame would have computed. A frame runs only if
++        the history also holds one 0.45-0.55 s before it (a real pair of frames, as at every moment
++        the memory was trained on) and it is newer than the newest moment the memory already holds.
++        These passes plan nothing and feed no momentum. Only the newest frame's own chain is run:
++        no other frame can reach its score (`test_memory.py`: the 10 Hz chain equals the 2 Hz one).
++        On NAVSIM's four-frame sequences that gives the scored frame two earlier moments; at a
++        closed-loop plan every 0.5 s, the previous plan's frame is already in memory and nothing runs.
++        """
++        import torch
++
++        now = self.history[-1]["timestamp"]
++        latest = self.memory.entries[-1]["ts"] if self.memory.entries else None
++        for k in range(self.memory.length, 0, -1):
++            target = now - k * memory.TARGET_US
++            if latest is not None and target <= latest + (memory.MAX_AGE_US - memory.TARGET_US):
++                continue
++            index = next(
++                (
++                    i
++                    for i, f in enumerate(self.history[:-1])
++                    if abs(f["timestamp"] - target) <= memory.MAX_AGE_US - memory.TARGET_US
++                ),
++                None,
++            )
++            if index is None:
++                continue
++            frame = self.history[index]
++            paired = any(
++                momentum.MIN_AGE_US <= frame["timestamp"] - f["timestamp"] <= momentum.MAX_AGE_US
++                for f in self.history[:index]
++            )
++            if not paired:
++                continue
++            full, self.history = self.history, self.history[: index + 1]
++            try:
++                features = self._features()
++                self._memory_ctx = self._memory_context(
++                    SimpleNamespace(timestamp_us=frame["timestamp"], ego2world=frame["ego2world"]), features
++                )
++                with torch.no_grad():
++                    self.agent.forward(features)
++            finally:
++                self.history, self._memory_ctx = full, None
++            latest = frame["timestamp"]
++
+     def forward(self, obs: Observation) -> dict[str, Any]:
+         """Record *obs* and return the agent's raw output for it.
+ 
+@@ -341,14 +459,19 @@ class DriveJepaPolicy(Policy):
+         if self.agent is None:
+             raise RuntimeError("load() must be called before infer()")
+ 
+-        import torch
+-
+         self._record(obs)
+-        agent_input = self._agent_input()
+-        features = self.feature_builder.compute_features(agent_input)
+-        features = {
+-            k: (v.unsqueeze(0).to(self.device) if torch.is_tensor(v) else v) for k, v in features.items()
+-        }
++        if self.memory is not None and self.memory.mode == "carry":
++            self._catch_up()
++        features = self._features()
++        if self.memory is not None:
++            self._memory_ctx = self._memory_context(obs, features)
++        try:
++            return self._forward_features(obs, features)
++        finally:
++            self._memory_ctx = None
++
++    def _forward_features(self, obs: Observation, features: dict[str, Any]) -> dict[str, Any]:
++        import torch
+ 
+         # Whether this pass's pick was made against a previous plan; read by
+         # `_pick`. Set per call so a stale value cannot survive.
+@@ -440,6 +563,8 @@ class DriveJepaPolicy(Policy):
+         selection: dict[str, Any] = {"momentum": "off"}
+         if self.momentum is not None:
+             selection = {"momentum": "on", "momentum_counts": dict(self.momentum.counts)}
++        if self.memory is not None:
++            selection["memory"] = self.memory.diagnostics()
+         if not self.history:
+             return {
+                 "status": "no frame seen yet",
+diff --git a/src/paddock/adapters/models/drivejepa/tests/fixtures/README.md b/src/paddock/adapters/models/drivejepa/tests/fixtures/README.md
+index 46f0469..737b496 100644
+--- a/src/paddock/adapters/models/drivejepa/tests/fixtures/README.md
++++ b/src/paddock/adapters/models/drivejepa/tests/fixtures/README.md
+@@ -38,3 +38,11 @@ of the 30 drives recorded, so a bookkeeping error has the most chances to show.
+ **What it does not cover.** Every interval is exactly 0.5 s; the ego state is
+ the recorded driver's, not one built from a paddock `Observation`; and it is a
+ replay of fixed menus, not a drive in which the stage's picks moved the car.
++
++## `memory_fixture.npz`
++
++Pins this adapter's copy of H15's memory layer (`../../memory.py`) to the gallops copy that trained
++it: a small layer (hidden 16, every weight random so the nudge is not zero), three windows of five
++moments with unmatched paths and a left-padded window, and the scores gallops' `MemoryPicker` gave in
++carry and reset mode. Written by gallops' `experiments/H15_prediction_memory/scripts/make_memory_fixture.py`
++at cdacc38. Used by `../test_memory.py`, to 1e-6.

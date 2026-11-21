@@ -1,0 +1,586 @@
+"""Drive-JEPA (perception-based, v2) as a paddock Policy.
+
+Adapted from the NeuroNCAP model node. The model-specific reasoning is
+unchanged; the seams now implement `Policy`, and every path arrives through
+`model.yaml` rather than a hardcoded default.
+
+Of the four models this is the closest fit to NeuroNCAP out of the box: it is a
+NAVSIM agent, and NAVSIM's planning grid -- eight poses at 0.5 s, ego frame,
+x forward and y left -- is exactly the grid NeuroNCAP drives on. The first six
+poses are taken and nothing is resampled.
+
+Rather than reimplement the feature pipeline, this builds the ``AgentInput``
+dataclass NAVSIM already knows how to consume and calls the shipped feature
+builder and agent. That keeps the BEVFormer projection maths (lidar2img from
+each camera's sensor2lidar and intrinsics) in the code that was trained with it.
+
+Three adaptations:
+
+*Frame.* NAVSIM places every camera relative to the lidar (``sensor2lidar``),
+and in every OpenScene log the lidar frame *is* the ego frame: lidar2ego is the
+identity. The model relies on that without saying so -- the points it samples
+the image at are the candidate plans' box corners, written in ego coordinates
+(x forward, y left), and ``lidar2img`` is applied to them directly. So each
+camera goes in at its pose on the car, ``camera2ego``, whatever lidar the
+benchmark has. Placing it relative to a real lidar was a silent failure:
+nuScenes' LIDAR_TOP is yawed -90 degrees, which turned every sample point a
+quarter turn off the front camera. None landed in the image, the spatial
+cross-attention masked all of them, and the plan came from ego status alone --
+bit-identical given a black frame. Every neuroNCAP and nuScenes row made before
+this was that camera-blind model; NAVSIM and KITScenes pass an identity
+lidar2ego and were not.
+
+*Cameras.* Drive-JEPA's perception branch reads four views -- front, front-left,
+front-right and back -- which map onto nuScenes cameras of the same names. The
+resolutions differ (NAVSIM is 1920x1080, nuScenes 1600x900) but the geometry
+travels in the intrinsics and the pipeline rescales, so this is a genuine
+adaptation rather than a fudge. The one hard-coded number that does not travel
+is the ``[28:-28]`` crop the stitching path applies to reach a 2:1 aspect: on
+1080 rows that yields 1024, on 900 it yields 844. Both are then resized to
+512x256, so the effect is a slightly different vertical crop, not a distortion.
+
+*Rate.* Drive-JEPA is a 2 Hz agent with a four-frame history. NeuroNCAP may be
+stepping at 10 Hz to suit the other models, so the history is selected by
+timestamp at ~0.5 s spacing rather than by taking the last four requests --
+otherwise the model would see 0.3 s of history and read the scene as nearly
+static.
+
+*Momentum-aware selection* (paper section 3.5) is on: ``model.yaml`` declares
+``DRIVEJEPA_MOMENTUM=on``. ``off`` selects on the plain score, and is also what
+a node gets with the variable unset, for example one launched outside paddock.
+With it on, each replan is handed the plan this node chose about 0.5 s
+earlier, the way upstream's own evaluation loop hands it over, so the model's
+``calibrate_score`` runs before the argmax. See `momentum.py`.
+
+*The pick, reported.* Every answer carries ``extras["drivejepa_pick"]``: which
+of the 32 proposals was driven, its score, and whether the momentum stage was
+given a previous plan for it (`_pick`). A closed-loop client can then log the
+model's own choice rather than infer it from the path. Clients that read only
+``trajectory`` (neuroNCAP) never see it; `protocol.validate_extras` passes it
+as a model-native block.
+"""
+
+from __future__ import annotations
+
+import os
+from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
+from typing import Any
+
+import numpy as np
+
+from paddock.adapters.models.drivejepa import memory, momentum
+from paddock.policy.protocol import Observation, Policy, Trajectory
+
+# Drive-JEPA camera slot -> nuScenes camera. The perception branch reads these
+# four; the remaining slots stay empty and are skipped by the loader.
+CAMERA_MAP = {
+    "cam_f0": "CAM_FRONT",
+    "cam_l0": "CAM_FRONT_LEFT",
+    "cam_r0": "CAM_FRONT_RIGHT",
+    "cam_b0": "CAM_BACK",
+}
+NEEDED_CAMERAS = tuple(CAMERA_MAP.values())
+
+IMAGE_GEOMETRIES = ("native", "openscene")
+
+#: Threads decoding the selected history frames' images; see `_decode`.
+DECODE_THREADS = 4
+
+HISTORY_FRAMES = 4  # NAVSIM agent input depth
+HISTORY_DT = 0.5  # seconds between history frames, NAVSIM's rate
+
+# NeuroNCAP's Command enum -> NAVSIM's one-hot [left, straight, right, unknown].
+COMMAND_ONE_HOT = {
+    0: [0, 0, 1, 0],  # RIGHT
+    1: [1, 0, 0, 0],  # LEFT
+    2: [0, 1, 0, 0],  # STRAIGHT
+    3: [0, 0, 0, 1],  # FOLLOW_REFERENCE -> unknown
+}
+
+
+def yaw_of(pose: np.ndarray) -> float:
+    return float(np.arctan2(pose[1, 0], pose[0, 0]))
+
+
+def relative_pose(pose: np.ndarray, reference: np.ndarray) -> np.ndarray:
+    """(x, y, heading) of *pose* expressed in *reference*'s frame."""
+    delta = np.linalg.inv(reference) @ pose
+    return np.array([delta[0, 3], delta[1, 3], yaw_of(delta)], dtype=np.float64)
+
+
+class DriveJepaPolicy(Policy):
+    cameras = NEEDED_CAMERAS
+    waypoint_dt = HISTORY_DT
+
+    def __init__(self, checkpoint: str | None = None, device: str = "cuda") -> None:
+        # Resolved from model.yaml (DRIVEJEPA_CHECKPOINT) rather than defaulted
+        # to one machine's path, so a site with the checkpoint elsewhere needs
+        # no code change.
+        self.checkpoint = checkpoint or os.environ.get("DRIVEJEPA_CHECKPOINT")
+        self.device = device
+        # "openscene" crops and rescales each camera onto the OpenScene camera
+        # the checkpoint trained on -- what the devkit's own KITScenes loader
+        # does -- and is what model.yaml sets. "native" hands each camera over at
+        # its own intrinsics; every Drive-JEPA row published before 2026-10-22 was
+        # made that way. It matters: KITScenes' ring is 87 degrees against
+        # OpenScene's 64, and uncropped the model's ADE there was 3.222 m against
+        # 2.521 m. The fallback here stays "native" for a policy built outside the
+        # runner, with no model.yaml env.
+        self.image_geometry = os.environ.get("DRIVEJEPA_IMAGE_GEOMETRY", "native")
+        if self.image_geometry not in IMAGE_GEOMETRIES:
+            raise ValueError(
+                f"DRIVEJEPA_IMAGE_GEOMETRY={self.image_geometry!r}; expected one of {IMAGE_GEOMETRIES}"
+            )
+        # Off is how every published drivejepa row was made: the node took the
+        # raw argmax of the learned score. On adds the stage upstream's own
+        # evaluation runs before that argmax (`momentum.py`). It changes which
+        # of the 32 proposals is driven, so it is refused if misspelt rather
+        # than read as off.
+        switch = os.environ.get(momentum.SWITCH_ENV, "off")
+        if switch not in momentum.SWITCHES:
+            raise ValueError(f"{momentum.SWITCH_ENV}={switch!r}; expected one of {momentum.SWITCHES}")
+        self.momentum = momentum.Momentum() if switch == "on" else None
+        # H15's prediction memory (memory.py): a gallops checkpoint directory, or empty for the
+        # released node, bit for bit.
+        self.memory_dir = os.environ.get(memory.ENV, "")
+        self.memory: memory.Memory | None = None
+        self._memory_ctx: dict[str, Any] | None = None
+        self.agent = None
+        self.feature_builder = None
+        self.history: list[dict[str, Any]] = []
+        self.momentum_fed = False
+
+    def load(self) -> None:
+        # navsim only exists inside Drive-JEPA's own environment; this module is
+        # imported by `paddock list` and the test suite, which run in paddock's.
+        if not self.checkpoint:
+            raise RuntimeError(
+                "no checkpoint: set DRIVEJEPA_CHECKPOINT (model.yaml supplies it "
+                "from {data.navsim.exp}) or pass one to DriveJepaPolicy"
+            )
+        from navsim.agents.drive_jepa_perception_based.drive_jepa_agent import DriveJEPAAgent
+        from navsim.agents.drive_jepa_perception_based.drive_jepa_config import DriveJEPAConfig
+
+        config = DriveJEPAConfig()
+        self.agent = DriveJEPAAgent(config=config, lr=1e-4, checkpoint_path=self.checkpoint)
+        self.agent.initialize()
+        self.agent.eval().to(self.device)
+        self.feature_builder = self.agent.get_feature_builders()[0]
+        if self.momentum is not None:
+            # Here rather than on the first replan: the stage needs nuPlan's
+            # simulator and four more upstream modules, and a node that cannot
+            # import them should fail to start, not fail its first `/infer`
+            # after the simulator and renderer are already up.
+            self.momentum.upstream = momentum.Upstream(self.agent._trajectory_sampling)
+        if self.memory_dir:
+            self.memory = memory.load(self.memory_dir, self.device)
+            self._hook_scorer()
+        self.reset()
+
+    def _hook_scorer(self) -> None:
+        """Nudge the scorer's final logit with the memory, inside the model's own forward.
+
+        A pre-hook keeps the scorer's input (the proposals and the last refiner pass's query
+        features); a forward hook steps the memory and returns the scorer's output with the final
+        logit nudged, so ``pdm_score``, the momentum stage and the argmax all see the nudged score.
+        Both act only while `_memory_ctx` is set, i.e. inside `forward`.
+        """
+        scorer = self.agent._pad_model.scorer
+        seen: dict[str, Any] = {}
+
+        def before(module, args):
+            seen["proposals"], seen["query"] = args[0], args[1]
+
+        def after(module, args, output):
+            ctx = self._memory_ctx
+            if ctx is None:
+                return None
+            proposals = seen["proposals"]
+            b, p, t = proposals.shape[:3]
+            embed = seen["query"].reshape(b, p, t, -1).amax(-2)  # scorer.py:41, the same expression
+            pred_logit = output[0]
+            nudge = self.memory.step(
+                ctx["timestamp"],
+                ctx["pose"],
+                proposals[0].float().cpu().numpy(),
+                embed[0].float(),
+                pred_logit[0].float(),
+                ctx["ego"],
+            )
+            nudged = pred_logit.clone()
+            nudged[0, :, -1] = nudged[0, :, -1] + nudge.to(nudged.dtype)
+            return (nudged, *output[1:])
+
+        scorer.register_forward_pre_hook(before)
+        scorer.register_forward_hook(after)
+
+    def reset(self) -> None:
+        """Drop the frame history, and the previous plan, between runs."""
+        self.history: list[dict[str, Any]] = []
+        if self.momentum is not None:
+            self.momentum.reset()
+        if self.memory is not None:
+            self.memory.reset()
+
+    def _record(self, obs: Observation) -> None:
+        # Images are decoded later, and only for the four frames
+        # `_select_history` picks (`_decode`). An open-loop harness hands over
+        # every 10 Hz frame of its history window -- 49 on KITScenes, four ring
+        # cameras each -- as paths; decoding them all here cost ~10 s a sample
+        # to use 16 of 196.
+        self.history.append(
+            {
+                "obs": obs,
+                "timestamp": obs.timestamp_us,
+                "ego2world": obs.ego2world,
+                "camera2ego": obs.camera2ego,
+                "speed": obs.speed,
+                "accel": obs.accel,
+                "command": int(obs.command),
+            }
+        )
+        # 12 s of 10 Hz history is far more than the 1.5 s ever used. An entry
+        # holds its Observation until `_decode` picks it -- paths open-loop,
+        # pixels closed-loop -- then the four decoded cameras; trimming keeps
+        # either from growing without bound.
+        if len(self.history) > 128:
+            self.history = self.history[-128:]
+
+    def _decode(self, frames: list[dict[str, Any]]) -> None:
+        """Give each frame its `images` and `camera2image`, decoding in parallel.
+
+        PIL releases the GIL while decoding a JPEG, so four threads overlap four
+        8-megapixel reads. A frame keeps its pixels once decoded and drops the
+        observation it came from.
+        """
+        pending = {id(f): f for f in frames if "images" not in f}.values()
+        if not pending:
+            return
+        jobs = [(frame, camera) for frame in pending for camera in self.cameras]
+        with ThreadPoolExecutor(DECODE_THREADS) as pool:
+            pixels = list(pool.map(lambda job: job[0]["obs"].image(job[1]), jobs))
+        decoded = {(id(frame), camera): pixels[i] for i, (frame, camera) in enumerate(jobs)}
+        for frame in pending:
+            obs = frame.pop("obs")
+            images = {camera: decoded[(id(frame), camera)] for camera in self.cameras}
+            camera2image = obs.camera2image
+            if self.image_geometry == "openscene":
+                images, camera2image = self._to_openscene(images, camera2image)
+            frame["images"], frame["camera2image"] = images, camera2image
+
+    def _to_openscene(self, images: dict[str, np.ndarray], camera2image: dict[str, np.ndarray]):
+        """Crop and rescale every camera onto the OpenScene pinhole.
+
+        The window is the devkit KITScenes loader's own (`_crop_box`), imported
+        rather than restated, so a paddock run and that loader feed the model
+        the same pixels. Extrinsics are untouched: a crop about the principal
+        point changes only the intrinsics, which become OpenScene's exactly.
+        """
+        from PIL import Image
+
+        from paddock.adapters.models.drivejepa.kitscenes_adapter import (
+            TARGET_HEIGHT,
+            TARGET_WIDTH,
+            _crop_box,
+            target_intrinsics,
+        )
+
+        out_images, out_k = {}, {}
+        for camera, image in images.items():
+            k = camera2image[camera]
+            pinhole = {"focal_length": k[0, 0], "principal_point_u": k[0, 2], "principal_point_v": k[1, 2]}
+            cropped = Image.fromarray(image).crop(_crop_box(pinhole)[:4])
+            cropped = cropped.resize((TARGET_WIDTH, TARGET_HEIGHT), Image.BILINEAR)
+            out_images[camera] = np.asarray(cropped)
+            out_k[camera] = target_intrinsics().astype(np.float64)
+        return out_images, out_k
+
+    def _select_history(self) -> list[dict[str, Any]]:
+        """Four frames at ~0.5 s spacing, oldest first, clamped at the run start.
+
+        Selected by timestamp rather than by position, so the same node behaves
+        correctly whether NeuroNCAP is stepping at 0.5 s or 0.1 s.
+        """
+        now = self.history[-1]["timestamp"]
+        chosen = []
+        for step in range(HISTORY_FRAMES - 1, -1, -1):
+            target = now - int(step * HISTORY_DT * 1e6)
+            nearest = min(self.history, key=lambda f: abs(f["timestamp"] - target))
+            chosen.append(nearest)
+        return chosen
+
+    def _cameras(self, frame: dict[str, Any]):
+        from navsim.common.dataclasses import Camera, Cameras
+
+        slots: dict[str, Camera] = {}
+        for slot, camera in CAMERA_MAP.items():
+            # NAVSIM's "lidar" frame is the ego frame (module docstring, *Frame*),
+            # so sensor2lidar is the camera's pose on the car.
+            sensor2lidar = frame["camera2ego"][camera]
+            slots[slot] = Camera(
+                image=frame["images"][camera],
+                sensor2lidar_rotation=sensor2lidar[:3, :3].astype(np.float32),
+                sensor2lidar_translation=sensor2lidar[:3, 3].astype(np.float32),
+                intrinsics=frame["camera2image"][camera].astype(np.float32),
+            )
+        empty = Camera()
+        return Cameras(
+            cam_f0=slots["cam_f0"],
+            cam_l0=slots["cam_l0"],
+            cam_l1=empty,
+            cam_l2=empty,
+            cam_r0=slots["cam_r0"],
+            cam_r1=empty,
+            cam_r2=empty,
+            cam_b0=slots["cam_b0"],
+        )
+
+    def _agent_input(self):
+        from navsim.common.dataclasses import AgentInput, EgoStatus
+
+        frames = self._select_history()
+        self._decode(frames)
+        current = frames[-1]["ego2world"]
+
+        ego_statuses = []
+        for frame in frames:
+            ego_statuses.append(
+                EgoStatus(
+                    ego_pose=relative_pose(frame["ego2world"], current),
+                    ego_velocity=np.array([frame["speed"], 0.0], dtype=np.float32),
+                    ego_acceleration=np.array([frame["accel"], 0.0], dtype=np.float32),
+                    driving_command=np.array(COMMAND_ONE_HOT[frame["command"]], dtype=np.int64),
+                )
+            )
+        cameras = [self._cameras(frame) for frame in frames]
+        return AgentInput(ego_statuses=ego_statuses, cameras=cameras, lidars=[])
+
+    def observe(self, obs: Observation) -> None:
+        """Record a history frame without running the model.
+
+        The default `observe` is a full BEVFormer forward pass per frame with
+        the plan thrown away -- four passes to use one on NAVSIM. The model is
+        a pure function of its recorded history, so recording the first N-1
+        and inferring on the last produces the identical tensor: same
+        `_select_history`, same features, same forward. Bit-identical, four
+        times cheaper.
+
+        That holds with momentum on as well, for a narrower reason: a frame
+        that is only recorded is never planned from, so it leaves no previous
+        plan behind, and `infer_sequence` resets before it starts. A sequence
+        therefore always selects on the plain score -- which is why the NAVSIM
+        proxy, which scores through `infer_sequence`, is untouched by the switch.
+
+        Not a pattern to copy into openpilot or visionpilot: both carry state
+        that each forward pass advances, so for them every pass is load-bearing.
+
+        The memory (``DRIVEJEPA_MEMORY``) keeps to this too: a recorded frame is run for the
+        memory only when a later plan needs it (`_catch_up`).
+        """
+        self._record(obs)
+
+    def _features(self) -> dict[str, Any]:
+        import torch
+
+        agent_input = self._agent_input()
+        features = self.feature_builder.compute_features(agent_input)
+        return {k: (v.unsqueeze(0).to(self.device) if torch.is_tensor(v) else v) for k, v in features.items()}
+
+    @staticmethod
+    def _memory_context(obs: Any, features: dict[str, Any]) -> dict[str, Any]:
+        # The ego row the memory was trained on: the newest of the model's own ego statuses.
+        return {
+            "timestamp": int(obs.timestamp_us),
+            "pose": np.asarray(obs.ego2world, dtype=np.float64),
+            "ego": features["ego_status"][0, -1].float(),
+        }
+
+    def _catch_up(self) -> None:
+        """Run the memory on the recorded frames of the newest frame's chain it has not seen yet.
+
+        The plan at t reads memory from the moments t - 0.5 s, t - 1.0 s, ... (at most L of them).
+        A frame that was only recorded (`observe`: an open-loop sample's history, or a closed-loop
+        tick between plans) is run here, oldest first, with the history as it stood at that frame,
+        so its features are the ones a pass at that frame would have computed. A frame runs only if
+        the history also holds one 0.45-0.55 s before it (a real pair of frames, as at every moment
+        the memory was trained on) and it is newer than the newest moment the memory already holds.
+        These passes plan nothing and feed no momentum. Only the newest frame's own chain is run:
+        no other frame can reach its score (`test_memory.py`: the 10 Hz chain equals the 2 Hz one).
+        On NAVSIM's four-frame sequences that gives the scored frame two earlier moments; at a
+        closed-loop plan every 0.5 s, the previous plan's frame is already in memory and nothing runs.
+        """
+        import torch
+
+        now = self.history[-1]["timestamp"]
+        latest = self.memory.entries[-1]["ts"] if self.memory.entries else None
+        for k in range(self.memory.length, 0, -1):
+            target = now - k * memory.TARGET_US
+            if latest is not None and target <= latest + (memory.MAX_AGE_US - memory.TARGET_US):
+                continue
+            index = next(
+                (
+                    i
+                    for i, f in enumerate(self.history[:-1])
+                    if abs(f["timestamp"] - target) <= memory.MAX_AGE_US - memory.TARGET_US
+                ),
+                None,
+            )
+            if index is None:
+                continue
+            frame = self.history[index]
+            paired = any(
+                momentum.MIN_AGE_US <= frame["timestamp"] - f["timestamp"] <= momentum.MAX_AGE_US
+                for f in self.history[:index]
+            )
+            if not paired:
+                continue
+            full, self.history = self.history, self.history[: index + 1]
+            try:
+                features = self._features()
+                self._memory_ctx = self._memory_context(
+                    SimpleNamespace(timestamp_us=frame["timestamp"], ego2world=frame["ego2world"]), features
+                )
+                with torch.no_grad():
+                    self.agent.forward(features)
+            finally:
+                self.history, self._memory_ctx = full, None
+            latest = frame["timestamp"]
+
+    def forward(self, obs: Observation) -> dict[str, Any]:
+        """Record *obs* and return the agent's raw output for it.
+
+        Besides the chosen ``trajectory`` this holds all 32 ``proposals``, the
+        scorer's six ``pred_logit`` per proposal and its ``pdm_score``. `infer`
+        keeps only the pick; anything that studies the candidates needs the
+        rest, and reads it from here so it sees exactly the input path `infer`
+        does.
+        """
+        if self.agent is None:
+            raise RuntimeError("load() must be called before infer()")
+
+        self._record(obs)
+        if self.memory is not None and self.memory.mode == "carry":
+            self._catch_up()
+        features = self._features()
+        if self.memory is not None:
+            self._memory_ctx = self._memory_context(obs, features)
+        try:
+            return self._forward_features(obs, features)
+        finally:
+            self._memory_ctx = None
+
+    def _forward_features(self, obs: Observation, features: dict[str, Any]) -> dict[str, Any]:
+        import torch
+
+        # Whether this pass's pick was made against a previous plan; read by
+        # `_pick`. Set per call so a stale value cannot survive.
+        self.momentum_fed = False
+        if self.momentum is None:
+            with torch.no_grad():
+                return self.agent.forward(features)
+
+        extra, ego_state = self.momentum.features(*self._ego_now(obs))
+        self.momentum_fed = extra["past_ego_simulated_states"] is not None
+        features.update(extra)
+        with torch.no_grad():
+            output = self.agent.forward(features)
+            # What the argmax would have been without the stage: the same
+            # expression, on the same tensor, as drive_jepa_model.py:85.
+            plain = torch.argmax(torch.sigmoid(output["pred_logit"])[:, :, -1], dim=1)
+            changed = bool((plain != torch.argmax(output["pdm_score"], dim=1)).any())
+        chosen = output["trajectory"][0].float().cpu().numpy()
+        self.momentum.remember(chosen, ego_state, obs.timestamp_us, changed=changed)
+        return output
+
+    @staticmethod
+    def _ego_now(obs: Observation) -> tuple[np.ndarray, np.ndarray, np.ndarray, int]:
+        """Pose, velocity, acceleration and time the momentum stage is given.
+
+        Velocity and acceleration are the newest `EgoStatus` row `_agent_input`
+        builds -- the numbers the model itself is given -- which is upstream's
+        pairing: one frame record feeds both the model and the stage. The pose
+        is ego2world, which plays the part of upstream's global frame.
+        """
+        pose = np.array([obs.ego2world[0, 3], obs.ego2world[1, 3], yaw_of(obs.ego2world)], dtype=np.float64)
+        velocity = np.array([obs.speed, 0.0], dtype=np.float32)
+        acceleration = np.array([obs.accel, 0.0], dtype=np.float32)
+        return pose, velocity, acceleration, int(obs.timestamp_us)
+
+    def infer(self, obs: Observation) -> Trajectory:
+        output = self.forward(obs)
+        # NAVSIM plans eight poses at 0.5 s as (x, y, heading), ego frame,
+        # x forward and y left -- exactly the grid paddock uses, so nothing is
+        # resampled. All eight are returned: closed-loop takes the first six,
+        # and open-loop scoring wants the full horizon for FDE@3s.
+        trajectory = output["trajectory"][0].float().cpu().numpy()
+        return Trajectory(trajectory, dt=HISTORY_DT, extras={"drivejepa_pick": self._pick(output)})
+
+    def _pick(self, output: dict[str, Any]) -> dict[str, Any]:
+        """The proposal driven, as the model chose it (module docstring).
+
+        ``chosen_index`` is the proposal (of 32) whose trajectory `infer`
+        returns and ``chosen_score`` its score: the argmax and max of
+        ``pdm_score``, which is the momentum-recalibrated score when a previous
+        plan was fed and the learned one otherwise (drive_jepa_model.py:85-91).
+        ``momentum_fed`` is whether a previous plan was fed to this pick.
+        """
+        scores = output["pdm_score"][0].float().cpu().numpy()
+        index = int(np.argmax(scores))
+        return {
+            "chosen_index": index,
+            "chosen_score": float(scores[index]),
+            "momentum_fed": bool(self.momentum_fed),
+        }
+
+    def diagnostics(self) -> dict[str, Any]:
+        """History depth actually achieved, the image geometry, and momentum.
+
+        The reason history matters: it is selected by timestamp, so a
+        simulator stepping faster than 0.5 s still yields ~1.5 s of context. If
+        this collapses toward zero the model is reading a near-static scene and
+        its plans will look plausible while being badly under-informed.
+
+        The geometry is here because it changes the pixels the model sees, and
+        the runner stores this dict in run.json as `provenance.policy`. An
+        explicit env override also lands in `model_env`; the default does not,
+        so without this a `native` run would carry no record of being one.
+
+        Momentum is here for the same reason, and with its counts: `fed` of
+        `replans` is how often the stage actually had a previous plan, and a
+        run with the switch on and `fed` at zero selected on the plain score
+        throughout -- an open-loop sequence, or a simulator whose calls never
+        fall 0.45 to 0.55 s apart.
+
+        `camera_frame` marks a node that places each camera on the ego frame; a
+        run.json without it predates that fix and saw no image on nuScenes.
+        That matters for momentum in particular: its first neuroNCAP comparison
+        was made before the fix, on a model planning from ego status alone. The
+        marker describes the attempt that wrote run.json, not every episode in
+        it: a resumed run keeps the episodes of its earlier attempts, and the
+        runner does not yet check that those came from a node reporting the same.
+        """
+        selection: dict[str, Any] = {"momentum": "off"}
+        if self.momentum is not None:
+            selection = {"momentum": "on", "momentum_counts": dict(self.momentum.counts)}
+        if self.memory is not None:
+            selection["memory"] = self.memory.diagnostics()
+        if not self.history:
+            return {
+                "status": "no frame seen yet",
+                "image_geometry": self.image_geometry,
+                "camera_frame": "ego",
+                **selection,
+            }
+        chosen = self._select_history()
+        return {
+            "image_geometry": self.image_geometry,
+            "camera_frame": "ego",
+            **selection,
+            "frames_recorded": len(self.history),
+            "history_span_s": round((self.history[-1]["timestamp"] - chosen[0]["timestamp"]) / 1e6, 2),
+            "history_target_s": round((HISTORY_FRAMES - 1) * HISTORY_DT, 2),
+        }
+
+
+POLICY = DriveJepaPolicy
