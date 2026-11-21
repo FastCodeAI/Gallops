@@ -26,7 +26,7 @@ That is a different claim, so it is a new record ([H05](../H05_ssm_memory/README
 
 | Step | What | Decides |
 |---|---|---|
-| 1 | File H05's results, register it (as H19), commit PREDICTIONS.md | — |
+| 1 | File H05's results, register it (as H15), commit PREDICTIONS.md | — |
 | 2 | Grade the 32 released proposals at every graded moment, once (CPU, 4 cores): report logs first, then selection logs, then the rest. Timed on 200 moments first | — |
 | 3 | Align proposals across moments; train (a) carried, (b) wiped, against (c) released, 3 seeds each, momentum off | — |
 | 4 | **Go / no-go** on the 214 val logs: P1, (a) − (b) in true grade of the pick, CI excluding 0; flips and comfort secondary | whether to gate |
@@ -118,22 +118,25 @@ on all 878 train logs, where only the 763 with a graded moment gave a target.
 ## Files that still say H15
 
 This record ran as H15. The renumbering changed the record (IDs, paths and text here and in
-`experiment.toml`, `POINTERS.md`, `CARD.md`) and the maintained code in `src/gallops/memory/`; it did not
-change anything that ran or was written before a run. In those, read `H15` as H19:
+`experiment.toml`, `POINTERS.md`, `CARD.md`), the maintained code's text in `src/gallops/memory/`, and the
+heading of `PREDICTIONS.md` (dated note at its end). It changed nothing that ran. In the files below, read
+`H15` as H19:
 
 | Where | What says H15 |
 |---|---|
 | `paddock/` (the adapter as it ran, its diff, the gate scripts) and `scripts/` | names, comments and paths as they ran |
 | `GATE_EXPECTATIONS.md` | written before the first gate run and not to be changed after it |
 | the six checkpoints under `{weights}/drivejepa_memory/` | folder names `h15-r3-*`, and `experiment: H15` in each `checkpoint.json`; the weights and their sha256 are unchanged |
-| `{data}/memory_cache/h15/`, `MEMORY_H15_*.md`, the store folder `paddock-h15-runs` | file and folder names outside the repository |
+| the six sidecars' `selection_split` and `trained_on[0].split` | "the 100 H15 selection logs" (each run's `known_wrong` says so) |
+| `src/gallops/memory/`: `train.py` (checkpoint folder names `h15-r3-*`, default output `{data.navtrain.cache}/h15`) and `evaluate.py` (`--h15`, default `{data.navtrain.cache}/h15`) | names kept, so the code still finds the files that ran. A re-fit would write `experiment: H19` into an `h15-r3-*` folder |
+| `{data.navtrain.cache}/h15/`, `MEMORY_H15_*.md`, the store folder `paddock-h15-runs` | file and folder names outside the repository |
 | commits up to the renumbering, e.g. `1825bce` and the predictions commit `1d6ed20` | the folder `experiments/H15_prediction_memory/` |
 
 ## Where it stands (12 Nov 2026)
 
 Not decided. The record stays `running` with no decision row. By `docs/experiments.md`, a HOLD on the
 closed tier leads either to a stronger version as the next run, or to closing the hypothesis as
-inconclusive with a decision row; that choice is the owner's. The clash over the ID `H19` is settled: this record is now H19 (see the top).
+inconclusive with a decision row; that choice is the owner's. On 20 Nov the clash over the ID `H15` was settled: this record is now H19 (see the top).
 
 The follow-on, a memory that the generator and the scorer are trained to use, is a different claim and is
 recorded as H17.

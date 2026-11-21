@@ -113,3 +113,10 @@ Known before writing:
   So (c) has a small selection advantage on the report logs; (a) against (b) is unaffected.
 
 No true grade, and no output of any memory, has been seen.
+
+## Edits after training (dated)
+
+- **12 Nov 2026** (`da08ba4`): in P3, the gate's baseline file path was replaced by a placeholder
+  (`{paddock_site}`), so that no tracked file names a machine path. The file named is the same.
+- **21 Nov 2026** (`3e7b429`): the heading's ID, H15 → H19, when the record was renumbered (ruling of 20 Nov). Nothing else
+  above changed; `1d6ed20` and `97c518a` hold the text as committed before training.
