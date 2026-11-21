@@ -28,6 +28,7 @@ import subprocess
 import tarfile
 from pathlib import Path
 
+from gallops.compat import zip_strict
 from gallops.drivejepa_b2d.provenance import git_sha
 
 
@@ -72,7 +73,7 @@ def export(checkout: Path, sha: str, dest: Path) -> None:
 def build(checkout: Path, overlays: list[Path], out: Path, sha: str | None = None) -> dict:
     """Upstream at the pinned commit, then each overlay in order (a later one wins on a shared file)."""
     manifests = [load_manifest(o) for o in overlays]
-    files = [check_overlay(o, m) for o, m in zip(overlays, manifests, strict=True)]
+    files = [check_overlay(o, m) for o, m in zip_strict(overlays, manifests)]
     pins = {m["upstream"]["sha"] for m in manifests}
     if len(pins) != 1:
         raise SystemExit(f"the overlays pin different upstream commits: {sorted(pins)}")
@@ -85,7 +86,7 @@ def build(checkout: Path, overlays: list[Path], out: Path, sha: str | None = Non
     pinned = sha or pins.pop()
     export(checkout, pinned, tmp)
     replaced, layers = [], []
-    for overlay, manifest, rels in zip(overlays, manifests, files, strict=True):
+    for overlay, manifest, rels in zip_strict(overlays, manifests, files):
         for rel in rels:
             dest = tmp / rel
             if dest.exists():

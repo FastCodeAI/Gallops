@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import ast
 import sys
+from pathlib import Path
 
 import pytest
 
 from gallops import compat
+from gallops.config import REPO_ROOT
 
 CASES = [
     ([1, 2], ["a", "b"]),
@@ -52,3 +55,40 @@ def test_fallback_matches_builtin(args):
 
 def test_no_arguments():
     assert list(compat.zip_strict()) == []
+
+
+# The two places that call the built-in on purpose: the shim itself (behind its version check) and
+# the test above that compares the shim with the built-in (skipped below 3.10).
+_BUILTIN_ON_PURPOSE = {"src/gallops/compat.py", "tests/test_compat.py"}
+
+
+def strict_zips(path: Path) -> list[int]:
+    """Lines of `path` that call `zip(..., strict=...)`, which is a TypeError on Python 3.9."""
+    tree = ast.parse(path.read_text(), filename=str(path))
+    return [
+        node.lineno
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "zip"
+        and any(k.arg == "strict" for k in node.keywords)
+    ]
+
+
+def test_strict_zips_are_found(tmp_path):
+    sample = tmp_path / "sample.py"
+    sample.write_text("a = list(zip(x, y))\nb = list(zip(\n    x, y, strict=True\n))\n")
+    assert strict_zips(sample) == [2]
+
+
+def test_no_strict_zip_outside_the_shim():
+    """The preflight runs every test under the training interpreter (Python 3.9), so one
+    `zip(..., strict=True)` anywhere in `src/` or `tests/` refuses every training run there.
+    Use `compat.zip_strict`. Merges from `main` brought such calls in once already."""
+    found = {
+        f"{rel}:{line}"
+        for path in sorted([*(REPO_ROOT / "src").rglob("*.py"), *(REPO_ROOT / "tests").rglob("*.py")])
+        if (rel := path.relative_to(REPO_ROOT).as_posix()) not in _BUILTIN_ON_PURPOSE
+        for line in strict_zips(path)
+    }
+    assert not found, f"zip(..., strict=) fails on Python 3.9; use gallops.compat.zip_strict: {sorted(found)}"
