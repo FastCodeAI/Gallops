@@ -18,12 +18,14 @@ The sub-score agent-look model (`H04.subscore-agent-look`, called Run 3A while i
 trained on the sub-scores. How the code is kept, the stages of the 4-camera planner and the data are in the
 [4-camera stack's account](../H01_four_camera_base/README.md); this page is the rest.
 
-| Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
-|---|---:|---:|---:|---:|
-| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 33.8 † |
-| **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run |
-| **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | |
-| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct) | 40.4 † |
+| Run | navtest EPDMS, human filter | navtest, CSV score | Bench2Drive, 50 routes, mean DS (2 Hz) | Bench2Drive 220, mean DS (2 Hz) | HUGSIM HD-Score, 419 scenarios |
+|---|---:|---:|---:|---:|---:|
+| Released Drive-JEPA (ViT-L, the authors' checkpoint, same evaluation) | 87.78 | 84.49 | 57.60 | 40.74 ‡ | 33.8 † |
+| **The 4-camera planner** | **85.27** | **81.98** | 50.07 (18 Oct); 51.70 and 51.95 with the command fix (two runs) | not run | not run |
+| **The sub-score agent-look model**, default pick | **87.00** | **83.89** | | | |
+| **The sub-score agent-look model**, locked pick | **87.30** | **84.09** | 63.29 with the command fix (one run, 26 Oct); 56.15 in the 220's setup (21 Nov) | 52.15 with the command fix (one run per route, 21 Nov) | 40.4 † |
+
+‡ Released Drive-JEPA's paddock record `pooled220-86aa45e768a29a64-1507a1`, its own runs (6–7 Nov, momentum on), not this model's setup.
 
 † HUGSIM's 22 Oct campaign, which paddock's HUGSIM page marks superseded: six waypoints of each plan sent, the release with momentum off, and this model's run not stored in paddock. Paddock's current figure for the release (momentum on, the whole 4 s plan) is 37.1.
 
@@ -108,6 +110,14 @@ release, paired +6.6 [+3.6, +9.7], both from the 22 Oct campaign that paddock's 
 (six waypoints of each plan sent; the release with momentum off; this model's run not stored in paddock).
 Paddock's current figure for the release, momentum on and the whole 4 s plan sent, is 37.1. KITTI-360 and
 Waymo have no rear camera, so the sub-score agent-look model drove those with a black rear image.
+
+Bench2Drive 220 (21 Nov, every route of `bench2drive220`, 2 Hz, the command fix, one result per route), model
+`wajepa_dj_run3a_b2d` from worktree gate-oct27 (paddock 3daf4b9 + the ops adapters) on Bench2Drive copy b2d-fix, the
+setup H18's 220 ran in: DS 52.15, RC 67.06, 87 routes completed (59 deviated, 51 at the tick cap, 23 blocked). Paired
+per route against released Drive-JEPA's record (40.74): +11.40, t 4.87 (higher on 135, lower on 57, tied on 28);
+H18's model scores 58.81 (+6.66 over this, t 3.57). The 26 Oct native-50 run above came from worktree rerank-native on
+another Bench2Drive copy; the same 50 routes in the 220's setup score 56.15 (−7.13, t −1.66). Table and pairs by
+H18's `scripts/b2d220-compare/paired_b2d220.py` (`b2d220_paired.json`, H18's POINTERS.md).
 
 ## The regression gate
 

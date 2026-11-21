@@ -31,7 +31,9 @@ learned = """So far, the sub-score agent-look model narrowed the base's navtest 
 so the gain is not the sub-score heads' alone; no scorer-only arm is recorded. The regression gate, run by hand \
 from local paddock worktrees, says HOLD on the gate's current subsets: KITScenes and nuScenes GAIN against released Drive-JEPA; NAVSIM, \
 Bench2Drive (7 routes, command fix: 40.80 against 59.04), neuroNCAP and AlpaSim NEUTRAL; nothing regressed. Against the 4-camera \
-planner every pair is NEUTRAL except Bench2Drive, a REGRESSION (80.24 -> 40.80, t -2.57)."""
+planner every pair is NEUTRAL except Bench2Drive, a REGRESSION (80.24 -> 40.80, t -2.57). On all 220 Bench2Drive routes \
+(the command fix, 2 Hz, 21 Nov, in one setup with H18's run) it scores 52.15 against released Drive-JEPA's 40.74 (paired \
++11.40, t 4.87); in that setup the 26 Oct native-50 routes score 56.15, against that run's 63.29 (t -1.66)."""
 parents = ["H01"]
 narrative = "experiments/H04_subscore_scorer_navsim/README.md"
 external = [
@@ -185,6 +187,14 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   unit = "routes"
 
   [[runs.data]]
+  dataset = "bench2drive"
+  split = "bench2drive220"
+  role = "eval"
+  n = 220
+  unit = "routes"
+  note = "every route, one result per route (21 Nov)"
+
+  [[runs.data]]
   dataset = "hugsim"
   split = "419 scenarios"
   role = "eval"
@@ -271,8 +281,23 @@ notes = "† Mapped to H04 by inference: the branch never names the hypothesis, 
   value = "63.29"
   better = "higher"
   strength = "moderate"
-  note = "zero-shot; RC 79.02, 30 routes completed; the 4-camera planner in the same setup 51.70 / 51.95 (two runs); runs are not repeatable (the 4-camera planner's two differ by a mean of 9.1 DS per route)"
+  note = "zero-shot; RC 79.02, 30 routes completed; the 4-camera planner in the same setup 51.70 / 51.95 (two runs); runs are not repeatable (the 4-camera planner's two differ by a mean of 9.1 DS per route). Run from worktree rerank-native on another Bench2Drive copy; the same 50 routes re-run on 21 Nov in the 220's setup (next result) score 56.15, paired -7.13, t -1.66 against this run (b2d220_paired.json, H18's POINTERS.md)"
   source = "experiments/H04_subscore_scorer_navsim/README.md"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "all 220 routes of bench2drive220, the command fix, 2 Hz, one result per route (21 Nov)"
+  n = 220
+  unit = "route"
+  baseline = "released Drive-JEPA, its paddock record pooled220-86aa45e768a29a64-1507a1"
+  baseline_value = "40.74"
+  value = "52.15"
+  better = "higher"
+  strength = "moderate"
+  flags = ["no-record"]
+  note = "zero-shot; paired per route +11.40, t 4.87; higher on 135, lower on 57, tied on 28. Route completion 67.06 against 52.67; routes completed 87 against 51. Model wajepa_dj_run3a_b2d (this checkpoint, FOLLOW_REFERENCE fed as STRAIGHT, 2 Hz), run from worktree gate-oct27 (paddock 3daf4b9 + the ops adapters) on Bench2Drive copy b2d-fix (pin 7ec25d1 + patches 0001-0003), the setup H18's 220 ran in (H18: 58.81, +6.66 over this, t 3.57). Released Drive-JEPA's record is from its own runs of 6-7 Nov (momentum on, 2 Hz), not this setup. Not stored in paddock"
+  source = "b2d220_paired.json (H18's POINTERS.md), by experiments/H18_fact_scorer_navsim_lead/scripts/b2d220-compare/paired_b2d220.py"
 
   [[runs.results]]
   bench = "hugsim"
