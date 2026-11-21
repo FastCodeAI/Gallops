@@ -64,9 +64,9 @@ One structural change each, judged against the base by paddock's regression gate
 | [**H07**](experiments/H07_encoder_lora/CARD.md) | Encoder LoRA, domain gap | Siddesh | ⏳ running | KITScenes pick ADE (3 s), m 2.372 → **1.879** (n=223 moments) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 28 Oct |
 | [**H08**](experiments/H08_sideways_velocity_fov/CARD.md) | Sideways velocity and camera FOV | Naren | ⏳ running | KITScenes ADE (m), cropped 3.222 → **2.521** (n=223 keyframes) | ●●○○ moderate · open-loop | — |
 | [**H14**](experiments/H14_aux_heads/CARD.md) | Aux heads on the refiner | Shreedhar | ⏳ running | nuScenes picked-plan L2 at 3 s, m 3.760 → **2.934** (n=2,996 keyframes) | ●●○○ moderate · adapted, open-loop | — |
-| [**H15**](experiments/H15_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
 | [**H17**](experiments/H17_generator_scorer_memory/CARD.md) | Generator and scorer memory | Siddesh | 🗑 dropped | AlpaSim scene_score 0.7574 → **0.7464** (n=50 scenes) | ●●○○ moderate · adapted | — |
 | [**H18**](experiments/H18_fact_scorer_navsim_lead/CARD.md) | Fact scorer, NAVSIM + LEAD | Navvrat | ⏳ running | NAVSIM navtest EPDMS, human filter 87.78 → **86.35** (n=12,146 scenes) | ●●○○ moderate · adapted, open-loop | ⛔ **FAIL** 20 Nov |
+| [**H19**](experiments/H19_prediction_memory/CARD.md) | Prediction memory | Naren, Siddesh | ⏳ running | offline P1: mean strict PDM grade of the pick, (a) carried L=4 0.86715 → **0.86827** (n=15,320 samples) | ●●○○ moderate · open-loop | ⏸ **HOLD** 6 Nov |
 <!-- /experiments:hypotheses -->
 
 **Strength:** ●●●● proof · ●●●○ strong · ●●○○ moderate · ●○○○ argued · ○○○○ unverified.

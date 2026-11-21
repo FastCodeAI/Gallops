@@ -1,6 +1,8 @@
-# H15 — Prediction memory
+# H19 — Prediction memory
 
 **Owner:** Naren · **Contributor:** Siddesh · **Started:** 5 Nov 2026 · **Status:** running (hypothesis): trained, evaluated and gated; the owner's decision is open
+
+Registered as H15 on 5 Nov; renumbered to H19 on 20 Nov to resolve a clash with H15_perception_sidecar (Naren's ruling).
 
 The facts (runs, data, checkpoints, results, gate verdicts) live in
 [experiment.toml](experiment.toml) and are rendered into the repository README and [CARD.md](CARD.md). The
@@ -24,7 +26,7 @@ That is a different claim, so it is a new record ([H05](../H05_ssm_memory/README
 
 | Step | What | Decides |
 |---|---|---|
-| 1 | File H05's results, register H15, commit PREDICTIONS.md | — |
+| 1 | File H05's results, register it (as H19), commit PREDICTIONS.md | — |
 | 2 | Grade the 32 released proposals at every graded moment, once (CPU, 4 cores): report logs first, then selection logs, then the rest. Timed on 200 moments first | — |
 | 3 | Align proposals across moments; train (a) carried, (b) wiped, against (c) released, 3 seeds each, momentum off | — |
 | 4 | **Go / no-go** on the 214 val logs: P1, (a) − (b) in true grade of the pick, CI excluding 0; flips and comfort secondary | whether to gate |
@@ -36,14 +38,14 @@ That is a different claim, so it is a new record ([H05](../H05_ssm_memory/README
 Everything released stays frozen throughout: the encoder, the 32 proposed paths and their scores are the
 released model's. Only a small memory, 0.333 M parameters, is trained. It nudges the released final score.
 
-- **Grades (H15.r1).** Each of the 32 released paths at every graded navtrain moment (91,977) was given
+- **Grades (H19.r1).** Each of the 32 released paths at every graded navtrain moment (91,977) was given
   its true grade by the vendor's training-time grader. A check against a paddock NAVSIM run on 200 picks
   agreed exactly on seven terms; every remaining difference is explained by the benchmark's human filter or
   its finer lane check.
-- **Hand-over (H15.r2).** Each path takes the memory of the closest path of the previous moment, moved
+- **Hand-over (H19.r2).** Each path takes the memory of the closest path of the previous moment, moved
   into the current ego frame, or starts empty when none is within 2 m. On the 214 held-out logs the
   closest old path is 0.344 m away at the median, and 0.60 % of paths start empty.
-- **Training (H15.r3).** Two arms of the same size, three seeds each: **(a)** the memory carried along
+- **Training (H19.r3).** Two arms of the same size, three seeds each: **(a)** the memory carried along
   each path, and **(b)** the same layer wiped at every moment, which separates memory from extra capacity.
   **(c)** is the released model. The 100 selection logs chose a memory length of 4 moments and 6 epochs;
   the three lengths' selection losses differ by 5e-6, so the length is a coin toss.
@@ -113,12 +115,25 @@ compared with the cache and the trainer's scores; it needs the GPU and has not b
 (b) sidecars say `length: 4` where the weights wipe their memory every moment; all six say they trained
 on all 878 train logs, where only the 763 with a graded moment gave a target.
 
+## Files that still say H15
+
+This record ran as H15. The renumbering changed the record (IDs, paths and text here and in
+`experiment.toml`, `POINTERS.md`, `CARD.md`) and the maintained code in `src/gallops/memory/`; it did not
+change anything that ran or was written before a run. In those, read `H15` as H19:
+
+| Where | What says H15 |
+|---|---|
+| `paddock/` (the adapter as it ran, its diff, the gate scripts) and `scripts/` | names, comments and paths as they ran |
+| `GATE_EXPECTATIONS.md` | written before the first gate run and not to be changed after it |
+| the six checkpoints under `{weights}/drivejepa_memory/` | folder names `h15-r3-*`, and `experiment: H15` in each `checkpoint.json`; the weights and their sha256 are unchanged |
+| `{data}/memory_cache/h15/`, `MEMORY_H15_*.md`, the store folder `paddock-h15-runs` | file and folder names outside the repository |
+| commits up to the renumbering, e.g. `1825bce` and the predictions commit `1d6ed20` | the folder `experiments/H15_prediction_memory/` |
+
 ## Where it stands (12 Nov 2026)
 
 Not decided. The record stays `running` with no decision row. By `docs/experiments.md`, a HOLD on the
 closed tier leads either to a stronger version as the next run, or to closing the hypothesis as
-inconclusive with a decision row; that choice is the owner's. One more thing is open: the ID `H15` is also
-claimed by an unmerged branch (`drivejepa/auxilliary-head-02`), and the owner rules on which keeps it.
+inconclusive with a decision row; that choice is the owner's. The clash over the ID `H19` is settled: this record is now H19 (see the top).
 
 The follow-on, a memory that the generator and the scorer are trained to use, is a different claim and is
 recorded as H17.

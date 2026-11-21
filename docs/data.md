@@ -54,10 +54,6 @@ benchmark reporting should wait for a more stable release.
 
 > **Update, H01 (16 Oct):** `navtrain` is now held at the training site, under `[datasets.navsim]`; the 4-camera planner and the sub-score agent-look model
 > trained on it. The rest of this section is as written before that.
->
-> **Correction (2026-11-12):** `navtrain` is now on disk at the training site, with gaps in its
-> images; docs/STRATEGY.md's correction at the top says what was read and what was not checked.
-> The paragraph below is as it was written.
 
 `navtrain` / `trainval_sensor` is a separate, much larger download and is
 absent, as is `synthetic_scenes/` (needed for the two-stage scoring the public

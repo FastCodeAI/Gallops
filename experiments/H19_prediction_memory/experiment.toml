@@ -1,4 +1,4 @@
-# H15 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
+# H19 -- carrying the planner's own per-path outputs across moments makes the picker steadier and earlier.
 # Owner Naren.
 # Sources: Naren's plan of 5 Nov 2026 (paddock checkout, memory-layer-plan.md, "Rewritten 5 Nov 2026",
 # appendix :143-280), Siddesh's review MEMORY_PLAN_V2_REVIEW.md (paddock-sid/memory) and Siddesh's choices
@@ -9,7 +9,7 @@
 # The rules for every field are in docs/experiments.md; src/gallops/experiments.py validates them.
 
 schema = 1
-id = "H15"
+id = "H19"
 title = "Carrying the planner's output embeddings across moments makes the picker steadier and earlier"
 short = "Prediction memory"
 track = "hypothesis"
@@ -39,8 +39,8 @@ unless the 3-seed mean of (a) - (b) in true PDM grade of the pick is above 0 wit
 (flips and comfort are secondary, reported with CIs); after the gate unless (a) beats (b), nothing \
 regresses against released and braking starts no later. The effect size is stated in PREDICTIONS.md \
 once the val logs are graded, before training."""
-predictions = "experiments/H15_prediction_memory/PREDICTIONS.md"
-narrative = "experiments/H15_prediction_memory/README.md"
+predictions = "experiments/H19_prediction_memory/PREDICTIONS.md"
+narrative = "experiments/H19_prediction_memory/README.md"
 parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 
 # Pinned before anything runs (Siddesh, 5 Nov; Naren's agreement assumed on choices 10-12):
@@ -55,19 +55,19 @@ parents = ["H05"]  # the cache H05.r1 built is this experiment's input data
 #   choice 16: memory lengths 1, 2, 4 ("no limit" dropped); warm-up 1-16.
 #   choice 17: grading on 4 cores (taskset -c 0-3, 4 workers); training stays on 2 cores.
 #
-# Code: gallops.memory.grade (H15.r1), .align (H15.r2), .model, .train, .evaluate (H15.r3). The gate
+# Code: gallops.memory.grade (H19.r1), .align (H19.r2), .model, .train, .evaluate (H19.r3). The gate
 # runs (a) and (b) seed 0 by hand from a throwaway paddock checkout (Siddesh's choices 28-30, 5 Nov); paddock gets
 # no PR (paddock rule of 4 Nov: released checkpoints only).
 
 [[runs]]
-id = "H15.r1"
+id = "H19.r1"
 label = "true grades of the 32 released proposals at every graded navtrain moment"
 started = 2026-11-05
 start_from = "H05.r1"
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 notes = """The vendor's training-time grader (compute_navsim_score: simulate, score_proposals, \
 after_score_proposals) on H05.r1's cached proposals with the train metric cache, without the anchors \
-load: the strict grade H15 trains on (Siddesh's choice 22). Also stored per path: lane keeping and traffic light \
+load: the strict grade H19 trains on (Siddesh's choice 22). Also stored per path: lane keeping and traffic light \
 the benchmark's way (lane keeping checked every 0.1 s, not 0.5 s; either set to 1 where the human \
 driver's own path fails it), and the human path's own scores. States keep x, y relative to a float64 \
 origin. Navtest check (200 picks of navsim/drivejepa/20261023T202240-de2f00 against its CSV): the \
@@ -79,10 +79,10 @@ set on those same 200 tokens. Batches: val (214 logs), selection (100), rest (87
 
   [runs.code]
   modules = ["gallops.memory.grade"]
-  as_run = ["experiments/H15_prediction_memory/scripts/"]
+  as_run = ["experiments/H19_prediction_memory/scripts/"]
 
 [[runs]]
-id = "H15.r2"
+id = "H19.r2"
 label = "matching each path to the previous moment's closest path (built; statistics on the val logs)"
 started = 2026-11-05
 start_from = "H05.r1"
@@ -99,10 +99,10 @@ rebuilt with align.py at cdacc38 are identical (reported by the review of #31, n
 
   [runs.code]
   modules = ["gallops.memory.align"]
-  as_run = ["experiments/H15_prediction_memory/scripts/"]
+  as_run = ["experiments/H19_prediction_memory/scripts/"]
 
 [[runs]]
-id = "H15.r3"
+id = "H19.r3"
 label = "the memory picker: selection of length and epochs, then (a) carried and (b) wiped, 3 seeds, evaluated with (c) released on the val logs"
 started = 2026-11-05
 start_from = "released"
@@ -114,7 +114,7 @@ not selection logs; windows along chains, warm-up 1-16; 8 epochs; length and epo
 Selection (seed 0): L = 4 and 6 epochs by the rule; the three lengths' best selection losses differ by \
 5e-6 (0.288801 / 0.288804 / 0.288806), so the length is a coin toss; released 0.30156. Preflight passed \
 (untrained = released on 200/200 val moments, carry = reset on 256 chain starts). Trained on GPU with \
-cores 0-1 (Siddesh's choice 27), 2.7 min for the six final runs. Checkpoints are runs H15.r3-a-s0 ... H15.r3-b-s2. \
+cores 0-1 (Siddesh's choice 27), 2.7 min for the six final runs. Checkpoints are runs H19.r3-a-s0 ... H19.r3-b-s2. \
 Evaluated on the 214 val logs (15,320 graded moments in 179 of them), momentum off, 3-seed mean, \
 log-clustered paired bootstrap, 2,000 draws. Verdict: P1 supported but not useful; (a) level with \
 released on grade, -3.0 pts on two-frame comfort; matching rule: go to gate."""
@@ -125,7 +125,7 @@ train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
 
   [[runs.data]]
   dataset = "navsim"
-  split = "navtrain: the 878 train logs that are not H15 selection logs; 763 of them have a graded moment and gave the weights a target"
+  split = "navtrain: the 878 train logs that are not H19 selection logs; 763 of them have a graded moment and gave the weights a target"
   role = "train"
   n = 69650
   unit = "samples"
@@ -133,11 +133,11 @@ train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
 
   [[runs.data]]
   dataset = "navsim"
-  split = "navtrain: the 100 H15 selection logs"
+  split = "navtrain: the 100 H19 selection logs"
   role = "selection"
   n = 7007
   unit = "samples"
-  scene_list = "experiments/H15_prediction_memory/selection_logs.txt"
+  scene_list = "experiments/H19_prediction_memory/selection_logs.txt"
   note = "chose the memory length and the epoch count"
 
   [[runs.data]]
@@ -220,8 +220,8 @@ train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
   source = "{data}/memory_cache/h15/evaluate.json (navtrain cache); write-up MEMORY_H15_STEP3.md (Siddesh, 5 Nov)"
 
 [[runs]]
-id = "H15.r3-a-s0"
-label = "(a) memory carried, length 4, seed 0: the checkpoint H15.r3 evaluates"
+id = "H19.r3-a-s0"
+label = "(a) memory carried, length 4, seed 0: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -229,7 +229,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 0, preflight_passed."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 0, preflight_passed."
 
   [runs.checkpoint]
   model = "drivejepa_memory"
@@ -248,7 +248,7 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   verdict = "HOLD"
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
-  manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
+  manifest = "experiments/H19_prediction_memory/paddock/results/gate/"
   note = "By hand from a throwaway paddock worktree (Siddesh's choices 28-30), momentum on, one lane. neuroNCAP quick first failed to start its renderer (port 8900 held by another user's process) and was re-run on port 8950 (Sid). The Bench2Drive and AlpaSim crash checks ran cleanly (one unit: no verdict). Beside the scores, NAVSIM's no-at-fault-collisions term is a REGRESSION, 0.993 to 0.988 (t -2.19); per-term pairs never decide the gate."
 
     [[runs.gate.pairs]]
@@ -313,7 +313,7 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   verdict = "HOLD"
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
-  manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
+  manifest = "experiments/H19_prediction_memory/paddock/results/gate/"
   note = "Three lanes. AlpaSim on alpasim-base 9ee8dfb8 (rebuilt 3 Nov), checked first: released on 1acf2f5d gave 0.9294890766651916, the baseline's exact value (Naren's rule). P4 side pairs (braking start from ego poses): side-0103 score 0.00, did not brake, impact 8.71 m/s (released 2.44, 1.5 s, 3.17 m/s); side-0110 3.04, 0.6 s, 2.28 m/s (released 5.0, 0.2 s, none). AlpaSim at-fault collisions 3 against released 2 (new: d1a25a99)."
 
     [[runs.gate.pairs]]
@@ -347,8 +347,8 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
     verdict = "NEUTRAL"
 
 [[runs]]
-id = "H15.r3-a-s1"
-label = "(a) memory carried, length 4, seed 1: the checkpoint H15.r3 evaluates"
+id = "H19.r3-a-s1"
+label = "(a) memory carried, length 4, seed 1: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -356,7 +356,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 1, preflight_passed."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 1, preflight_passed."
 
   [runs.checkpoint]
   model = "drivejepa_memory"
@@ -370,8 +370,8 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   known_wrong = "trained_on names all 878 train logs that are not selection logs; only the 763 with a graded moment gave the weights a target"
 
 [[runs]]
-id = "H15.r3-a-s2"
-label = "(a) memory carried, length 4, seed 2: the checkpoint H15.r3 evaluates"
+id = "H19.r3-a-s2"
+label = "(a) memory carried, length 4, seed 2: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -379,7 +379,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 2, preflight_passed."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode carry, length 4, seed 2, preflight_passed."
 
   [runs.checkpoint]
   model = "drivejepa_memory"
@@ -393,8 +393,8 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   known_wrong = "trained_on names all 878 train logs that are not selection logs; only the 763 with a graded moment gave the weights a target"
 
 [[runs]]
-id = "H15.r3-b-s0"
-label = "(b) the same layer, wiped every moment, seed 0: the checkpoint H15.r3 evaluates"
+id = "H19.r3-b-s0"
+label = "(b) the same layer, wiped every moment, seed 0: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -402,7 +402,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 0, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 0, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
 
   [runs.checkpoint]
   model = "drivejepa_memory"
@@ -421,7 +421,7 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   verdict = "HOLD"
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
-  manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
+  manifest = "experiments/H19_prediction_memory/paddock/results/gate/"
   note = "As (a), same commands and site. No REGRESSION, terms included."
 
     [[runs.gate.pairs]]
@@ -486,7 +486,7 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   verdict = "HOLD"
   baseline = "released Drive-JEPA, the queue baselines {queue}/baselines/drivejepa.toml (job 4b7a and earlier; not re-run)"
   paddock_commit = "0fae534"  # plus the uncommitted adapter in paddock/ (this folder); never pushed
-  manifest = "experiments/H15_prediction_memory/paddock/results/gate/"
+  manifest = "experiments/H19_prediction_memory/paddock/results/gate/"
   note = "AlpaSim first INCOMPLETE: 2 of 10 scenes (e121e37d, d2715023) failed before driving (bridge not accepting connections within 60 s); completed on 6 Nov 23:15-23:30 IST by resuming the same run in place (paddock run --resume, the 8 finished scenes reused, Sid), then the gate re-checked the tier (gate_closed_b_recheck). P4 side pairs: side-0103 5.00, braking 0.9 s, no impact; side-0110 0.00, did not brake, impact 9.98 m/s. AlpaSim at-fault collisions: d1a25a99, b44a4a44 (released: b44a4a44, 8023dce5)."
 
     [[runs.gate.pairs]]
@@ -520,8 +520,8 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
     verdict = "NEUTRAL"
 
 [[runs]]
-id = "H15.r3-b-s1"
-label = "(b) the same layer, wiped every moment, seed 1: the checkpoint H15.r3 evaluates"
+id = "H19.r3-b-s1"
+label = "(b) the same layer, wiped every moment, seed 1: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -529,7 +529,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 1, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 1, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
 
   [runs.checkpoint]
   model = "drivejepa_memory"
@@ -543,8 +543,8 @@ notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimiz
   known_wrong = "notes.length is 4; the memory is wiped every moment, so it is 0; trained_on names all 878 train logs that are not selection logs; only the 763 with a graded moment gave the weights a target"
 
 [[runs]]
-id = "H15.r3-b-s2"
-label = "(b) the same layer, wiped every moment, seed 2: the checkpoint H15.r3 evaluates"
+id = "H19.r3-b-s2"
+label = "(b) the same layer, wiped every moment, seed 2: the checkpoint H19.r3 evaluates"
 started = 2026-11-05
 ended = 2026-11-05
 start_from = "released"
@@ -552,7 +552,7 @@ trained = ["memory picker, 0.333 M parameters"]
 frozen = ["all of Drive-JEPA: encoder, generator and scorer"]
 params_trained_m = 0.3333
 train_git_sha = "cdacc3871df01d87547cb707391c4b62b05c3e57"
-notes = "Trained by H15.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 2, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
+notes = "Trained by H19.r3 (its code, data and results); 6 epochs of 273 optimizer steps, batch 256, AdamW lr 3e-4. Sidecar notes: mode reset, seed 2, preflight_passed, and length 4, which is wrong: the trainer wrote --length for both arms, and these weights wipe their memory every moment (fixed in the trainer for later runs; this sidecar is not regenerated)."
 
   [runs.checkpoint]
   model = "drivejepa_memory"

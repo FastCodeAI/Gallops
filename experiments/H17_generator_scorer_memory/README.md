@@ -14,7 +14,7 @@ Drive-JEPA decides every moment from scratch: it sees two frames 0.5 s apart and
 experiments asked whether a memory helps while the released model stays frozen:
 
 - [H05](../H05_ssm_memory/README.md): the camera's past, read through a small probe, added little.
-- [H15](../H15_prediction_memory/README.md): a memory of the planner's own earlier outputs, per path, could
+- [H19](../H19_prediction_memory/README.md) (registered as H15): a memory of the planner's own earlier outputs, per path, could
   not be told from the same layer wiped.
 
 Neither let the model learn to use a memory. This experiment does: the generator, which proposes 32
@@ -135,9 +135,8 @@ What is measured and what is argued:
 
 Dropped, verdict negative: approach 3 is closed. The regression gate has not run: no checkpoint here is a
 candidate to ship. The next experiment is the car's own motion history (approach 4), which was the stronger
-signal in both reader tests. The decision row, "close approach 3; next is approach 4, motion history", by
-Siddesh and Naren, waits for Naren's sign-off; until then it is drafted in the PR description, not in
-`experiments/decisions.toml`.
+signal in both reader tests. Naren ruled on 20 Nov: decision D21 in
+`experiments/decisions.toml`, "close approach 3; next is approach 4, motion history", by Siddesh and Naren.
 
 ## Limits
 
@@ -234,7 +233,8 @@ Words the reports use, and what they mean here:
 
 | In the reports | Means |
 |---|---|
-| approach 3 | this experiment; approaches 1 and 2 are H05 and H15 |
+| approach 3 | this experiment; approaches 1 and 2 are H05 and H19 |
+| H15 (in `01_survey/`, written before the renumbering) | H19, the prediction memory, renumbered on 20 Nov by Naren's ruling |
 | recon; build 1 to build 5 | the survey; then the slices, the full cache, the model and trainer, the memory-collapse fix, the recall lesson |
 | pilot | the first training run |
 | carry, wiped, reset | memory kept from moment to moment; the same layer trained with its memory zeroed every moment; a trained memory put back to its start state every moment at test time |

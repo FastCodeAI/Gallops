@@ -7,11 +7,11 @@
 
 [← all experiments](../../README.md#hypothesis-experiments) · [the account](README.md) · [experiment.toml](experiment.toml)
 
-**Builds on:** [H05](../H05_ssm_memory/CARD.md), [H15](../H15_prediction_memory/CARD.md)
+**Builds on:** [H05](../H05_ssm_memory/CARD.md), [H19](../H19_prediction_memory/CARD.md) · **Evidence for:** D21 ([decision log](../README.md#decision-log))
 
 ## Question
 
-H05 found that the camera's past, read through a small probe, adds little; H15 carried only the planner's own outputs and could not be told from the same layer wiped. Both left the released model frozen. Does a memory help when the two parts that decide the drive, the generator that proposes 32 paths and the scorer that picks one, are trained to use it?
+H05 found that the camera's past, read through a small probe, adds little; H19 carried only the planner's own outputs and could not be told from the same layer wiped. Both left the released model frozen. Does a memory help when the two parts that decide the drive, the generator that proposes 32 paths and the scorer that picks one, are trained to use it?
 
 ## Hypothesis
 

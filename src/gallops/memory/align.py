@@ -1,6 +1,6 @@
 """Which of the previous moment's 32 paths each new path inherits its memory from.
 
-H15 hands each path's memory from one moment to the next (plan, "How one path's memory reaches the
+H19 hands each path's memory from one moment to the next (plan, "How one path's memory reaches the
 next moment"). Slot numbers are not enough: the slot that is closest is the same slot only 38% of
 the time (Naren's slot-stability measurement, 40 val logs). So, for every pair of back-to-back
 moments in a chain (same log and chain, chain_pos one apart, 0.5 s):
@@ -11,7 +11,7 @@ moments in a chain (same log and chain, chain_pos one apart, 0.5 s):
 2. **Compare** them with the current proposals' waypoints 1-7 (0.5 to 3.5 s): the distance between
    two paths is the mean over those 7 waypoints of the x, y distance (`distances`, old x new).
 3. **Match.** Each new path takes the memory of the old path closest to it; -1 when that is farther
-   than `LIMIT` (2 m, fixed in H15's PREDICTIONS.md) or when the moment starts its chain.
+   than `LIMIT` (2 m, fixed in H19's PREDICTIONS.md) or when the moment starts its chain.
 
 This is `slot_stability.py`'s geometry (paddock-runs `ops/memory_h15/`), which measured from the old
 path's side (`D.min(1)`, for each old path its closest new one); the memory needs the new path's side

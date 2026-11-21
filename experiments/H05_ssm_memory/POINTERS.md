@@ -27,7 +27,7 @@ locations at the training site.
 
 `{data.navtrain.cache}/release/`: one row per moment, 126,694 moments, float32. `manifest.json` names the
 released checkpoint by its sha256 (`740335c8…2d30d05`) and the commit that built the cache.
-[H15](../H15_prediction_memory/README.md) reads these files.
+[H19](../H19_prediction_memory/README.md) reads these files.
 
 | File | What it holds | Bytes | sha256 |
 |---|---|---:|---|

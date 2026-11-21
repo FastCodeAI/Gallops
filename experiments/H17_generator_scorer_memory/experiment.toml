@@ -14,7 +14,7 @@ started = 2026-11-07
 ended = 2026-11-20
 status = "dropped"
 verdict = "negative"
-question = """H05 found that the camera's past, read through a small probe, adds little; H15 carried only the \
+question = """H05 found that the camera's past, read through a small probe, adds little; H19 carried only the \
 planner's own outputs and could not be told from the same layer wiped. Both left the released model frozen. \
 Does a memory help when the two parts that decide the drive, the generator that proposes 32 paths and the \
 scorer that picks one, are trained to use it?"""
@@ -43,7 +43,7 @@ steering; by its rule written beforehand that is unclear, and no non-linear read
 car's own motion history is the stronger signal, and is a separate, later experiment. Limits: one seed, one data \
 set; one drive per scene; the closed-loop comparison is two models, so the memory is not separated from the 930 \
 extra training steps that came with it."""
-parents = ["H05", "H15"]
+parents = ["H05", "H19"]
 narrative = "experiments/H17_generator_scorer_memory/README.md"
 
 [[checks]]

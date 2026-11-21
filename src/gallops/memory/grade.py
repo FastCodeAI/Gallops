@@ -6,13 +6,13 @@ grader with that token's train metric cache: `before_score_proposals` (the PDM s
 0.1 s) and `PDMScorer.score_proposals` / `after_score_proposals`
 (`score_module/compute_navsim_score.py`). That is `get_sub_score` without its anchors load: the
 anchors index is the catalogue's precomputed grades, which the 32 proposals do not use, and it does
-not exist for navtest (H15 PREDICTIONS.md, "Fixed before training").
+not exist for navtest (H19 PREDICTIONS.md, "Fixed before training").
 
 **Two gradings, because the training grader and NAVSIM's benchmark differ in two known ways**
 (measured on 200 navtest picks; MEMORY_H15_STEP2.md, part C):
 
 - *strict* (`scores`) is the vendor's training grader as it is, the grade the released scorer was
-  trained against and the one H15 trains on (Sid D22). Its lane keeping is a coarse check (every
+  trained against and the one H19 trains on (Sid D22). Its lane keeping is a coarse check (every
   0.5 s, fail after 4 samples in a row off the centreline), and it never forgives a path for what the
   human driver also did.
 - *forgiving* (`forgiving`) re-states lane keeping and traffic light the benchmark's way: lane
@@ -42,7 +42,7 @@ Row 0 of the simulator's output is the PDM reference path the vendor scores the 
 `proposal_states` drops it from the states, so both hold the 32 proposals only.
 
 **Resumable per log**, like `cache.build`: the arrays are created whole, `progress.json` lists each
-finished log. **Order:** the val logs, then the selection logs (H15's `selection_logs.txt`), then
+finished log. **Order:** the val logs, then the selection logs (H19's `selection_logs.txt`), then
 the rest, so the report set is graded first; `--batch` restricts a build to one of those groups.
 Workers are processes (`--workers`), one log per task; pin them with taskset outside.
 

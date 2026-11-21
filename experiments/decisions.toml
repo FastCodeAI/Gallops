@@ -228,3 +228,15 @@ evidence = ["H02.timing", "H07.exp3"]
 next = ["H01"]
 baseline = "released Drive-JEPA; the 4-camera stack (`H01.four-camera-planner`) went through the gate by hand on 21, 27 and 28 Oct (overall HOLD, no pair regressed) with a paddock adapter not yet committed"
 source = "Naren, 6 Nov 2026"
+
+[[decision]]
+id = "D21"
+date = 2026-11-20
+short = "Approach 3 closes; approach 4 next"
+decision = """Approach 3, a memory that the generator and the scorer are trained to use (H17), closes: over 50 AlpaSim \
+scenes the memory model scored 0.7464 against the starting model's 0.7574, and on the 20 scenes never used before it \
+scored 0.6353 against 0.7644, against it by the rule written beforehand. Next is approach 4, the car's own motion \
+history, which has no ID yet."""
+by = ["Siddesh", "Naren"]
+evidence = ["H17.closed-loop"]
+source = "Naren, 20 Nov 2026"

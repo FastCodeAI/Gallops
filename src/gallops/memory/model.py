@@ -11,7 +11,7 @@ released scorer's six logits and g = the ego status (11):
 
 m(i) is the previous moment's path this one inherits from (`align.match`); the inherited state is 0
 when m(i) = -1 (no old path within 2 m), at a chain start, and always in **reset** mode, which is
-the same layer with nothing carried (H15's arm (b)).
+the same layer with nothing carried (H19's arm (b)).
 
 **Length L (carry mode).** h(t) is computed from the current moment and at most L earlier moments of
 its chain: the state handed into moment t - L is zero, so anything from t - L - 1 or earlier cannot
