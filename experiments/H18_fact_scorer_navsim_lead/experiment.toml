@@ -30,7 +30,7 @@ time-to-collision are its best of the four (NC .988, TTC .983), extended comfort
 ego progress and drivable area lower (EP .823 against .900, DAC .966 against .984). The regression gate, run by hand, \
 says FAIL against released Drive-JEPA: NAVSIM REGRESSION (0.857 -> 0.807, t -6.05), nuScenes GAIN, KITScenes and \
 neuroNCAP NEUTRAL. On AlpaSim (10 scenes) its scene score is 0.132 against released 0.416 (NEUTRAL, t -1.69) and \
-H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. On Bench2Drive's 7 gate routes, with the command fix, it scores 87.96 against released 59.04 (NEUTRAL, t 2.05) and H04's 40.80 (GAIN, t 3.72)."""
+H04's 0.439 (REGRESSION, t -2.29), with progress 0.174 against 0.473. On Bench2Drive's 7 gate routes, with the command fix, it scores 87.96 against released 59.04 (NEUTRAL, t 2.05) and H04's 40.80 (GAIN, t 3.72). On all 220 Bench2Drive routes, with the command fix and in one setup with H04's run, it scores 58.81 against H04's 52.15 (paired +6.66, t 3.57) and released Drive-JEPA's 40.74 (+18.06, t 7.74)."""
 parents = ["H04"]
 narrative = "experiments/H18_fact_scorer_navsim_lead/README.md"
 external = [
@@ -100,6 +100,14 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   n = 12146
   unit = "scenes"
   note = "never read in training or for any choice"
+
+  [[runs.data]]
+  dataset = "bench2drive"
+  split = "bench2drive220"
+  role = "eval"
+  n = 220
+  unit = "routes"
+  note = "every route, one result per route; the 380 LEAD routes that overlap them are out of training (lead360_overlap.json, POINTERS.md)"
 
 
   [runs.checkpoint]
@@ -184,6 +192,36 @@ notes = "Spec: Navvrat's of 19 Nov ~02:15, verbatim in specs/run3b_v2_spec.md; e
   flags = ["adapted"]
   note = "best of the 32: 0.959 against H04's 0.961. H04's numbers on the same samples are from its stored pick-tune dump, not re-run. Agents, NAVSIM 10-20 m recall 0.579 against H04's 0.621 on the same samples; LEAD as Bench2Drive recall / precision 0.552 / 0.795 (H04 on LEAD's 4,990 trial frames, quoted: 0.303 / 0.406)"
   source = "eval_step023859_final.json (POINTERS.md)"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "all 220 routes of bench2drive220, the command fix, 2 Hz, one result per route"
+  n = 220
+  unit = "route"
+  baseline = "released Drive-JEPA, its paddock record pooled220-86aa45e768a29a64-1507a1"
+  baseline_value = "40.74"
+  value = "58.81"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted", "no-record"]
+  note = "paired per route +18.06, t 7.74; higher on 142, lower on 51, tied on 27. Route completion 72.74 against 52.67; routes completed 99 against 51. Run 20-21 Nov from worktree gate-oct27 (paddock 3daf4b9 + the ops adapters) on Bench2Drive copy b2d-fix (pin 7ec25d1 + patches 0001-0003); released Drive-JEPA's record is from its own runs of 6-7 Nov (momentum on, 2 Hz), not this setup. In-domain for this model (trained on LEAD, CARLA). Not stored in paddock"
+  source = "b2d220_paired.json (POINTERS.md), by scripts/b2d220-compare/paired_b2d220.py"
+
+  [[runs.results]]
+  bench = "bench2drive"
+  metric = "mean driving score"
+  subset = "all 220 routes of bench2drive220, the command fix, 2 Hz, one result per route"
+  n = 220
+  unit = "route"
+  baseline = "H04.subscore-agent-look, the same setup (21 Nov)"
+  baseline_value = "52.15"
+  value = "58.81"
+  better = "higher"
+  strength = "moderate"
+  flags = ["adapted", "no-record"]
+  note = "paired per route +6.66, t 3.57; higher on 96, lower on 59, tied on 65. Route completion 72.74 against 67.06; routes completed 99 against 87. On the native-50 routes +6.31, t 1.75 (62.46 against 56.15). Summed infractions, this model / H04: vehicle collisions 78 / 54, route deviations 85 / 69, layout collisions 16 / 25, red lights 16 / 21, stop signs 8 / 13, blocked 14 / 23, pedestrian collisions 4 / 8. Both models ran from the same worktree, Bench2Drive copy, ports scheme and gates"
+  source = "b2d220_paired.json (POINTERS.md), by scripts/b2d220-compare/paired_b2d220.py"
 
   [[runs.gate]]
   date = 2026-11-20

@@ -38,6 +38,7 @@ b890ba008241ba6c57937de57c98859a9dee602d0a4c447291567b35fbf0110e  worktrees/gate
 fa5b236ba74e682dbb6fdd768166ac2cb9cf461533d5ec4076b88b62de7ff0f3  gate-run3b/b2d_run3b.sh  scripts/gate-run3b/b2d_run3b.sh
 a3a55731e7ca5f3ffc121c7d8611ff6a2eab255431925008d42bb478f55f721d  run3a/build/navtest_table.py  scripts/run3a/build/navtest_table.py
 e495f6a7cfba86bed884ca459dca9aa3945348b635f4be455591c5d5ab1ad5ff  run3a-adapted/phase1/model/lora.py  scripts/run3a-adapted/phase1/model/lora.py
+8b79156eb8419ea9a5d0be854bd6bff1135c8da7fcf0d9e6b2913c4586615318  b2d220-compare/paired_b2d220.py  scripts/b2d220-compare/paired_b2d220.py
 # Off-tree code the trainer and the evaluation imported, from earlier work at the training site: Phase 1's modules
 # ({runs}/run3a-adapted, a local repo at 24aacaa), the fact-label rules (run3a/facts, the CARLA labeller and its
 # carla_v3 / carla_v2 / carla modules, the GPU geometry), run3a/contrast/d_noaux.py and navtest_table. Hashed in place;
