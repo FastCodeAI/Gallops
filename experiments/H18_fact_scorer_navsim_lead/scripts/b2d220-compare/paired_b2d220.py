@@ -2,7 +2,8 @@
 setup (worktree gate-oct27 = paddock 3daf4b9 + ops adapters, Bench2Drive copy b2d-fix, command fix, 2 Hz), against
 released Drive-JEPA's committed paddock record (results/bench2drive/drivejepa/pooled220-86aa45e768a29a64-1507a1, its
 22 source runs). Per route: the last attempt whose status is not a crash (sorted by run directory), else the last.
-The native-50 routes: released Drive-JEPA's native-50 record's routes_subset (dj50_run.json, copied beside this file).
+Also Run 3A's own native-50 run of 26 Oct (worktree rerank-native, model wajepa_dj_run3a, another Bench2Drive copy)
+against the same 50 routes in the 220's setup. The native-50 routes: released Drive-JEPA's native-50 record's routes_subset (dj50_run.json, copied beside this file).
 Paired by route: mean difference, t = mean / (sd / sqrt(n)), higher / lower / tied (|diff| < 1e-9 = tied).
 Writes b2d220_paired.json beside this file. usage: paired_b2d220.py"""
 import ast, collections, glob, json, math, os, re
@@ -10,6 +11,7 @@ import ast, collections, glob, json, math, os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 RUN3B = "{data.p3_renesas}/b2d220_run3b_cmdfix/bench2drive/run3b_v2_b2d"
 RUN3A = "{data.p3_renesas}/b2d220_run3a_cmdfix/bench2drive/wajepa_dj_run3a_b2d"
+RUN3A_26OCT = "{data.p3_renesas}/paddock-runs/run3a_cmdfix/repa/bench2drive/wajepa_dj_run3a"  # worktree rerank-native
 DJ_RUNS = "{data.paddock_dump}/b2d220/bench2drive/drivejepa"
 DJ_RECORD = os.path.join(HERE, "dj_pooled220_run.json")  # git show origin/main:results/.../run.json (paddock)
 L = lambda v: v if isinstance(v, list) else ast.literal_eval(v)
@@ -68,12 +70,16 @@ def paired(a, b, sel):
             "lower": sum(x < -1e-9 for x in d), "tied": sum(abs(x) <= 1e-9 for x in d)}
 
 
+oct26 = pick(glob.glob(RUN3A_26OCT + "/*/*/results.json"))
+assert sorted(oct26) == native50, len(oct26)
 res = {"routes": ids, "summary": {k: summary(m, ids) for k, m in M.items()},
        "summary_native50": {k: summary(m, native50) for k, m in M.items()},
        "paired": {"run3b-run3a": paired(M["run3b"], M["run3a"], ids),
                   "run3b-run3a_native50": paired(M["run3b"], M["run3a"], native50),
                   "run3b-released": paired(M["run3b"], M["released_drivejepa"], ids),
-                  "run3a-released": paired(M["run3a"], M["released_drivejepa"], ids)},
+                  "run3a-released": paired(M["run3a"], M["released_drivejepa"], ids),
+                  "run3a-run3a_26oct_native50": paired(M["run3a"], oct26, native50)},
+       "run3a_26oct_native50": summary(oct26, native50),
        "by_scenario": {}, "per_route": {i: {k: M[k][i] for k in M} for i in ids}}
 g = collections.defaultdict(list)
 for i in ids:
