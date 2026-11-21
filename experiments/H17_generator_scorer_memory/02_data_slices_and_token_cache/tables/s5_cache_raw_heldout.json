@@ -1,0 +1,65 @@
+{
+ "slice": "raw_heldout",
+ "started": "2026-11-08 03:18:12",
+ "gpu_before": "11369 MiB, 97887 MiB, 0 %",
+ "loadavg_before": [
+  "7.44",
+  "8.49",
+  "9.20"
+ ],
+ "p06_sha_verified_s": 0.6,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "resume": {
+  "clips_already_cached_and_verified": 0
+ },
+ "batch_check": {
+  "encoder_batch": 1,
+  "loader_batch": 8,
+  "batch8_equals_batch1_bitwise": true,
+  "max_abs_diff_batch8_vs_batch1": 0.0,
+  "batch8_deterministic": true
+ },
+ "counts": {
+  "manifest_moments": 9566,
+  "cached_moments": 9566,
+  "missing": [],
+  "clips": 300,
+  "files": 300
+ },
+ "disk": {
+  "clip_files_bytes": 5341914588,
+  "pooled_npy_bytes": 323254400,
+  "index_bytes": 166245,
+  "index_sha256": "2de890c7facf71eb6946fe8f01f0c889ed683518365d7a99610c633ad38361f6"
+ },
+ "timing": {
+  "wall_s": 3872.5,
+  "encoder_gpu_s_this_run": 188.2,
+  "moments_encoded_this_run": 9566,
+  "gpu_s_per_moment": 0.019670838694579428,
+  "moments_per_s_wall": 2.47022108816557
+ },
+ "loader": {
+  "workers": 8,
+  "context": "spawn",
+  "batch": 8,
+  "encoder_batch": 1,
+  "nice": 19,
+  "affinity": "all cores (one-off exception)",
+  "zero_accel": false,
+  "slim_root": "None",
+  "cache_path": "{experiment_store}/raw_heldout/cache",
+  "split_guard": "val"
+ },
+ "gpu_after": "13329 MiB, 97887 MiB, 0 %",
+ "gpu_peak_alloc_gb": 1.303168,
+ "ended": "2026-11-08 04:22:52"
+}

@@ -1,0 +1,23 @@
+2c2
+< Modes: nurec | braw | ordinary | heldout. Only the loaders and the outputs differ from b4_events.py:
+---
+> Modes: nurec | braw | ordinary | heldout | graded_heldout | raw_heldout2 (b4c: the two approach-3 slices; loaders only). Only the loaders and the outputs differ from b4_events.py:
+14a15
+> A3="{experiment_store}"
+16a18,21
+> elif which=="graded_heldout":
+>     tr=pd.read_parquet(f"{A3}/slices/manifest_graded_heldout.parquet"); ZR=None; MR=None          # reconstructed clips: pool clipgt tracks (load_nurec)
+> elif which=="raw_heldout2":
+>     tr=pd.read_parquet(f"{A3}/slices/manifest_raw_heldout.parquet"); ZR=f"{HO}/raw/labels/egomotion.offline"; MR=f"{A3}/raw_heldout/raw/labels/obstacle.offline.members"
+23c28
+< elif which=="heldout": clips=tr.drop_duplicates('clip_uuid')
+---
+> elif which in ("heldout","graded_heldout","raw_heldout2"): clips=tr.drop_duplicates('clip_uuid')
+38c43
+<         if which=="heldout": return S, EMPTY.copy(), False
+---
+>         if which in ("heldout","raw_heldout2"): return S, EMPTY.copy(), False
+104c109
+<         S,ob,has=load_nurec(r.clip_uuid) if which=="nurec" else load_raw(r.clip_uuid, r.chunk)
+---
+>         S,ob,has=load_nurec(r.clip_uuid) if which in ("nurec","graded_heldout") else load_raw(r.clip_uuid, r.chunk)

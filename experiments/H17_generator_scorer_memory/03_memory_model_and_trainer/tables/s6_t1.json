@@ -1,0 +1,375 @@
+{
+ "started": "2026-11-09 22:03:44",
+ "env_patch": {
+  "applied": true,
+  "was": "{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "34543 MiB, 97887 MiB, 68 %",
+ "loadavg": [
+  "8.86",
+  "9.21",
+  "8.12"
+ ],
+ "avail_ram_gb": 84.5,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "reference": {
+  "moments": 2591,
+  "wall_s": 147.6
+ },
+ "motion_source_check": {
+  "pairs": 2494,
+  "max_mismatch_m": 0.13131284525089795,
+  "p99_mismatch_m": 0.03405318481131311,
+  "median_mismatch_m": 0.000675901656423654
+ },
+ "carry": {
+  "vs_018b_cached_forward": {
+   "moments": 2591,
+   "proposals_bit_identical": true,
+   "pred_logit_bit_identical": true,
+   "chosen_bit_identical": true,
+   "picks_equal": 2591,
+   "max_abs_plan_diff_m": 0.0,
+   "max_abs_logit_diff": 0.0,
+   "pass": true
+  },
+  "replay_wall_s": 53.2,
+  "M_read_max_abs_over_all_moments": 3.80629301071167
+ },
+ "wiped": {
+  "vs_018b_cached_forward": {
+   "moments": 2591,
+   "proposals_bit_identical": true,
+   "pred_logit_bit_identical": true,
+   "chosen_bit_identical": true,
+   "picks_equal": 2591,
+   "max_abs_plan_diff_m": 0.0,
+   "max_abs_logit_diff": 0.0,
+   "pass": true
+  },
+  "replay_wall_s": 50.7,
+  "M_read_max_abs_over_all_moments": 0.0
+ },
+ "step0_018b": {
+  "pick_grade_mean_map": 0.7684893608093262,
+  "map_moments": 1131,
+  "hard_picks_above10": 0,
+  "moments_above10": 745,
+  "go_rate_pull_away": 0.839622641509434,
+  "standstill_pull_away": 106,
+  "closest_of_32_ade3_all": 0.23844547559733972,
+  "pick_ade3_all": 1.108192926968251,
+  "pick_ade3_slow15": 1.056090854424184,
+  "follows_previous": {
+   "rate": 0.2917316692667707,
+   "n": 1923,
+   "ade_mean_m": 1.1037550850450675,
+   "ade_median_m": 0.8396807826733296
+  },
+  "safety": {
+   "map_moments": 1131,
+   "pick_grade_mean": 0.7684893608093262,
+   "best_grade_mean": 0.9042530655860901,
+   "hard_picks_above10": 0,
+   "moments_above10": 745,
+   "hard_plans_above10": 1593,
+   "unsafe_pick_while_safe": "107/1099",
+   "unsafe_pick_rate": 0.09736123748862602,
+   "standstill_with_safe_go": 164,
+   "go_rate": 0.7865853658536586,
+   "median_rank_best_safe_go": 1.0,
+   "safe_per_menu_mean": 25.414677276746243,
+   "menus_no_safe": 32,
+   "map_menu_variety_m": 3.2288429737091064,
+   "standstill_pull_away": 106,
+   "go_rate_pull_away": 0.839622641509434,
+   "standstill_human_stayed": 58,
+   "waits_correctly": 0.3103448275862069,
+   "pull_away_go_stay_grade_ties": 66
+  },
+  "summary": {
+   "ALL": {
+    "n": 2000,
+    "m1a": 0.23844547559733972,
+    "m6_pick_ade": 1.108192926968251,
+    "m3_variety": 3.1046200687896692,
+    "pick_fde3": 2.4718835614111203
+   },
+   "SLOW": {
+    "n": 769,
+    "m1a": 0.17960752837069763,
+    "m6_pick_ade": 0.9840684350559388,
+    "m3_variety": 2.0231764537180235,
+    "pick_fde3": 2.1862030925769527
+   },
+   "SLOW15": {
+    "n": 1482,
+    "m1a": 0.20503584251015033,
+    "m6_pick_ade": 1.056090854424184,
+    "m3_variety": 2.329784918149621,
+    "pick_fde3": 2.3872562094231173
+   },
+   "SLOW_TURNS": {
+    "n": 383,
+    "m1a": 0.3037090706661343,
+    "m6_pick_ade": 1.2388830355927603,
+    "m3_variety": 2.169002814729436,
+    "pick_fde3": 2.7834870730219885
+   },
+   "FAST": {
+    "n": 468,
+    "m1a": 0.34446404530133173,
+    "m6_pick_ade": 1.2709181906603755,
+    "m3_variety": 5.553860356379573,
+    "pick_fde3": 2.733376643059127
+   },
+   "CLOSE_PASS": {
+    "n": 397,
+    "m1a": 0.16673495713695216,
+    "m6_pick_ade": 0.9426366394111022,
+    "m3_variety": 2.0801040025855873,
+    "pick_fde3": 2.099435734203616
+   },
+   "PULL_OUT": {
+    "n": 24,
+    "m1a": 0.11863430174669164,
+    "m6_pick_ade": 0.7046935876310174,
+    "m3_variety": 1.4940332544280546,
+    "pick_fde3": 1.5750920617957698
+   }
+  },
+  "grading_s": 411.9,
+  "gate_hard_ok": true,
+  "gate_go_ok": true,
+  "gate_ok": true,
+  "time_s": {
+   "replay": 53.2,
+   "measures": 412.3
+  }
+ },
+ "step0_carry": {
+  "pick_grade_mean_map": 0.7684893608093262,
+  "map_moments": 1131,
+  "hard_picks_above10": 0,
+  "moments_above10": 745,
+  "go_rate_pull_away": 0.839622641509434,
+  "standstill_pull_away": 106,
+  "closest_of_32_ade3_all": 0.23844547559733972,
+  "pick_ade3_all": 1.108192926968251,
+  "pick_ade3_slow15": 1.056090854424184,
+  "follows_previous": {
+   "rate": 0.2917316692667707,
+   "n": 1923,
+   "ade_mean_m": 1.1037550850450675,
+   "ade_median_m": 0.8396807826733296
+  },
+  "safety": {
+   "map_moments": 1131,
+   "pick_grade_mean": 0.7684893608093262,
+   "best_grade_mean": 0.9042530655860901,
+   "hard_picks_above10": 0,
+   "moments_above10": 745,
+   "hard_plans_above10": 1593,
+   "unsafe_pick_while_safe": "107/1099",
+   "unsafe_pick_rate": 0.09736123748862602,
+   "standstill_with_safe_go": 164,
+   "go_rate": 0.7865853658536586,
+   "median_rank_best_safe_go": 1.0,
+   "safe_per_menu_mean": 25.414677276746243,
+   "menus_no_safe": 32,
+   "map_menu_variety_m": 3.2288429737091064,
+   "standstill_pull_away": 106,
+   "go_rate_pull_away": 0.839622641509434,
+   "standstill_human_stayed": 58,
+   "waits_correctly": 0.3103448275862069,
+   "pull_away_go_stay_grade_ties": 66
+  },
+  "summary": {
+   "ALL": {
+    "n": 2000,
+    "m1a": 0.23844547559733972,
+    "m6_pick_ade": 1.108192926968251,
+    "m3_variety": 3.1046200687896692,
+    "pick_fde3": 2.4718835614111203
+   },
+   "SLOW": {
+    "n": 769,
+    "m1a": 0.17960752837069763,
+    "m6_pick_ade": 0.9840684350559388,
+    "m3_variety": 2.0231764537180235,
+    "pick_fde3": 2.1862030925769527
+   },
+   "SLOW15": {
+    "n": 1482,
+    "m1a": 0.20503584251015033,
+    "m6_pick_ade": 1.056090854424184,
+    "m3_variety": 2.329784918149621,
+    "pick_fde3": 2.3872562094231173
+   },
+   "SLOW_TURNS": {
+    "n": 383,
+    "m1a": 0.3037090706661343,
+    "m6_pick_ade": 1.2388830355927603,
+    "m3_variety": 2.169002814729436,
+    "pick_fde3": 2.7834870730219885
+   },
+   "FAST": {
+    "n": 468,
+    "m1a": 0.34446404530133173,
+    "m6_pick_ade": 1.2709181906603755,
+    "m3_variety": 5.553860356379573,
+    "pick_fde3": 2.733376643059127
+   },
+   "CLOSE_PASS": {
+    "n": 397,
+    "m1a": 0.16673495713695216,
+    "m6_pick_ade": 0.9426366394111022,
+    "m3_variety": 2.0801040025855873,
+    "pick_fde3": 2.099435734203616
+   },
+   "PULL_OUT": {
+    "n": 24,
+    "m1a": 0.11863430174669164,
+    "m6_pick_ade": 0.7046935876310174,
+    "m3_variety": 1.4940332544280546,
+    "pick_fde3": 1.5750920617957698
+   }
+  },
+  "grading_s": 411.9,
+  "gate_hard_ok": true,
+  "gate_go_ok": true,
+  "gate_ok": true,
+  "time_s": {
+   "replay": 53.2,
+   "measures": 412.3
+  },
+  "note": "dump bit-identical to the reference: its measures and menu grades apply",
+  "vs_018b": {
+   "closest_of_32_ade3_delta_m": 0.0,
+   "ade_within_tolerance": true,
+   "follows_previous_rate_018b": 0.2917316692667707
+  }
+ },
+ "step0_wiped": {
+  "pick_grade_mean_map": 0.7684893608093262,
+  "map_moments": 1131,
+  "hard_picks_above10": 0,
+  "moments_above10": 745,
+  "go_rate_pull_away": 0.839622641509434,
+  "standstill_pull_away": 106,
+  "closest_of_32_ade3_all": 0.23844547559733972,
+  "pick_ade3_all": 1.108192926968251,
+  "pick_ade3_slow15": 1.056090854424184,
+  "follows_previous": {
+   "rate": 0.2917316692667707,
+   "n": 1923,
+   "ade_mean_m": 1.1037550850450675,
+   "ade_median_m": 0.8396807826733296
+  },
+  "safety": {
+   "map_moments": 1131,
+   "pick_grade_mean": 0.7684893608093262,
+   "best_grade_mean": 0.9042530655860901,
+   "hard_picks_above10": 0,
+   "moments_above10": 745,
+   "hard_plans_above10": 1593,
+   "unsafe_pick_while_safe": "107/1099",
+   "unsafe_pick_rate": 0.09736123748862602,
+   "standstill_with_safe_go": 164,
+   "go_rate": 0.7865853658536586,
+   "median_rank_best_safe_go": 1.0,
+   "safe_per_menu_mean": 25.414677276746243,
+   "menus_no_safe": 32,
+   "map_menu_variety_m": 3.2288429737091064,
+   "standstill_pull_away": 106,
+   "go_rate_pull_away": 0.839622641509434,
+   "standstill_human_stayed": 58,
+   "waits_correctly": 0.3103448275862069,
+   "pull_away_go_stay_grade_ties": 66
+  },
+  "summary": {
+   "ALL": {
+    "n": 2000,
+    "m1a": 0.23844547559733972,
+    "m6_pick_ade": 1.108192926968251,
+    "m3_variety": 3.1046200687896692,
+    "pick_fde3": 2.4718835614111203
+   },
+   "SLOW": {
+    "n": 769,
+    "m1a": 0.17960752837069763,
+    "m6_pick_ade": 0.9840684350559388,
+    "m3_variety": 2.0231764537180235,
+    "pick_fde3": 2.1862030925769527
+   },
+   "SLOW15": {
+    "n": 1482,
+    "m1a": 0.20503584251015033,
+    "m6_pick_ade": 1.056090854424184,
+    "m3_variety": 2.329784918149621,
+    "pick_fde3": 2.3872562094231173
+   },
+   "SLOW_TURNS": {
+    "n": 383,
+    "m1a": 0.3037090706661343,
+    "m6_pick_ade": 1.2388830355927603,
+    "m3_variety": 2.169002814729436,
+    "pick_fde3": 2.7834870730219885
+   },
+   "FAST": {
+    "n": 468,
+    "m1a": 0.34446404530133173,
+    "m6_pick_ade": 1.2709181906603755,
+    "m3_variety": 5.553860356379573,
+    "pick_fde3": 2.733376643059127
+   },
+   "CLOSE_PASS": {
+    "n": 397,
+    "m1a": 0.16673495713695216,
+    "m6_pick_ade": 0.9426366394111022,
+    "m3_variety": 2.0801040025855873,
+    "pick_fde3": 2.099435734203616
+   },
+   "PULL_OUT": {
+    "n": 24,
+    "m1a": 0.11863430174669164,
+    "m6_pick_ade": 0.7046935876310174,
+    "m3_variety": 1.4940332544280546,
+    "pick_fde3": 1.5750920617957698
+   }
+  },
+  "grading_s": 411.9,
+  "gate_hard_ok": true,
+  "gate_go_ok": true,
+  "gate_ok": true,
+  "time_s": {
+   "replay": 53.2,
+   "measures": 412.3
+  },
+  "note": "dump bit-identical to the reference: its measures and menu grades apply",
+  "vs_018b": {
+   "closest_of_32_ade3_delta_m": 0.0,
+   "ade_within_tolerance": true,
+   "follows_previous_rate_018b": 0.2917316692667707
+  }
+ },
+ "measures_wall_s": 412.3,
+ "step0_identical_measures": true,
+ "pass": true,
+ "ended": "2026-11-09 22:14:49"
+}

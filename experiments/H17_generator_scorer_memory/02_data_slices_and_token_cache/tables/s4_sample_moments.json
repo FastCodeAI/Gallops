@@ -1,0 +1,23 @@
+{
+ "clips": 32,
+ "moments": 1022,
+ "picking_moments": 775,
+ "graded": 414,
+ "graded_in_picking": 335,
+ "by_source": {
+  "raw": 608,
+  "nurec": 414
+ },
+ "by_type": {
+  "ordinary": 670,
+  "A": 256,
+  "B_pass": 64,
+  "B_raw": 32
+ },
+ "anchor_steps_consecutive": 0.998989898989899,
+ "moments_per_clip": {
+  "min": 30.0,
+  "50%": 32.0,
+  "max": 32.0
+ }
+}

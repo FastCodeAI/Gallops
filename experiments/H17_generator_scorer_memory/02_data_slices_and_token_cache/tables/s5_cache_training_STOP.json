@@ -1,0 +1,31 @@
+{
+ "slice": "training",
+ "started": "2026-11-08 00:20:44",
+ "gpu_before": "45739 MiB, 97887 MiB, 17 %",
+ "loadavg_before": [
+  "26.23",
+  "26.32",
+  "25.69"
+ ],
+ "p06_sha_verified_s": 0.9,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "resume": {
+  "clips_already_cached_and_verified": 0
+ },
+ "batch_check": {
+  "batch": 8,
+  "batch8_equals_batch1_bitwise": false,
+  "max_abs_diff_batch8_vs_batch1": 0.02113819122314453,
+  "batch8_deterministic": true
+ },
+ "stopped": "batch-8 encoder output is not bit-identical to batch 1 (or not deterministic); nothing cached",
+ "ended": "2026-11-08 00:26:02"
+}

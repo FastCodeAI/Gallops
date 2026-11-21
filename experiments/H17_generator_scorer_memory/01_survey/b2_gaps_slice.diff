@@ -1,0 +1,11 @@
+0a1,3
+> """b2_gaps.py with the slice paths taken from the environment (MAN = manifest parquet, ZR = egomotion zip root, CL = clip folder root);
+> lines 4-7 of b2_gaps.py replaced, every other line byte-identical (checked with diff in logs/).
+> """
+4,7c7
+< if which=="train":
+<     man=pd.read_parquet(f"{RD}/s3_assembly/manifest.parquet"); ZR=f"{P}/s0_census/raw/labels/egomotion.offline"; CL=f"{P}/s3_assembly/s1/clips"
+< else:
+<     man=pd.read_parquet(f"{NAS}/heldout/manifest_heldout.parquet"); ZR=f"{NAS}/heldout/raw/labels/egomotion.offline"; CL=f"{NAS}/heldout/clips"
+---
+> man=pd.read_parquet(os.environ["MAN"]); ZR=os.environ["ZR"]; CL=os.environ["CL"]

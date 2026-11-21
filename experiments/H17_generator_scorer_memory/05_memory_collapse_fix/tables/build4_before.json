@@ -1,0 +1,135 @@
+{
+ "started": "2026-11-11 04:24:06",
+ "checkpoint": "{experiment_store}/runs/pilot_seed0/carry/ckpt/p00.2.pt",
+ "checkpoint_meta": {
+  "mode": "carry",
+  "start": {
+   "checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+   "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66"
+  },
+  "new_params": {
+   "generator_read": 263168,
+   "scorer_read_summary": 263424,
+   "rating_head_new_columns": 262144,
+   "update_block": 876801,
+   "total_new": 1665537,
+   "memory_state_values": 4096
+  },
+  "saved": "2026-11-10 00:57:19",
+  "step": 930,
+  "progress": 0.217,
+  "seed": 0,
+  "arm": "carry"
+ },
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "stats": {
+  "clips": 84,
+  "moments": 2591,
+  "moments_after_warmup": 1705,
+  "cos_read_mean": 0.9999771316729683,
+  "cos_new_mean": 0.9999797783988662,
+  "gate_mean_per_slot": [
+   0.0166818518191576,
+   0.01669013872742653,
+   0.016693389043211937,
+   0.01668744906783104,
+   0.01669793389737606,
+   0.016690125688910484,
+   0.01668412610888481,
+   0.016691815108060837,
+   0.016692781820893288,
+   0.01669246144592762,
+   0.016690023243427277,
+   0.01668625697493553,
+   0.016686266288161278,
+   0.01669527404010296,
+   0.016691360622644424,
+   0.016696013510227203
+  ],
+  "gate_min": 0.0166818518191576,
+  "gate_median": 0.016690749675035477,
+  "gate_max": 0.01669793389737606,
+  "slots_gate_ge_0.05": 0,
+  "gate_max_over_min": 1.0009640455245972,
+  "memory_change_per_moment": 0.0570158044935977,
+  "memory_change_median": 0.037380579859018326,
+  "M_read_norm_mean": 18.538598810402878,
+  "finite_all": true,
+  "non_finite_moments": 0,
+  "between_clip_cos_mean": 0.9502876400947571,
+  "between_clip_clips": 84,
+  "read_norms": {
+   "generator_read_out_proj_weight_norm": 0.22146791219711304,
+   "generator_read_out_proj_bias_norm": 0.0189417265355587,
+   "rating_head_new_columns_norm": 0.7131537199020386
+  },
+  "replay_s": 720.8,
+  "tag": "before: pilot carry step 930",
+  "mode": "carry"
+ },
+ "rule_abc_only": {
+  "conditions": {
+   "a_slot_diversity": false,
+   "b_gate_spread": false,
+   "c_memory_change": true,
+   "d_finite": true,
+   "e_pick_grade": false
+  },
+  "failed": [
+   "a_slot_diversity",
+   "b_gate_spread",
+   "e_pick_grade"
+  ],
+  "pass": false,
+  "rule": {
+   "cos_read_max": 0.9,
+   "gate_slots_min": 8,
+   "gate_min": 0.05,
+   "gate_ratio_min": 3.0,
+   "change_min": 0.05,
+   "pick_grade_min": 0.74
+  }
+ },
+ "pilot_check_same_numbers": {
+  "pick_grade": 0.7526414394378662,
+  "cos_read_mean": 0.9999771316729683,
+  "gate_mean_per_slot": [
+   0.0166818518191576,
+   0.01669013872742653,
+   0.016693389043211937,
+   0.01668744906783104,
+   0.01669793389737606,
+   0.016690125688910484,
+   0.01668412610888481,
+   0.016691815108060837,
+   0.016692781820893288,
+   0.01669246144592762,
+   0.016690023243427277,
+   0.01668625697493553,
+   0.016686266288161278,
+   0.01669527404010296,
+   0.016691360622644424,
+   0.016696013510227203
+  ],
+  "M_read_norm_mean": 18.538598810402878,
+  "memory_use": {
+   "generator_read_out_proj_weight_norm": 0.22146791219711304,
+   "generator_read_out_proj_bias_norm": 0.0189417265355587,
+   "rating_head_new_columns_norm": 0.7131537199020386
+  }
+ },
+ "agrees_with_pilot_check": {
+  "cos_read": true,
+  "gate": true
+ },
+ "ended": "2026-11-11 04:24:06"
+}

@@ -1,0 +1,10 @@
+run_time: '2026-11-14 01:20:40'
+run_name: LR-fee3e0a1-92f7-4e5b-8d56-2afd82d77098
+run_uuid: fee3e0a1-92f7-4e5b-8d56-2afd82d77098
+slurm_job_id: 0
+run_user: siddesh
+run_dir: {experiment_store}/runs/cl18/runs/memory_carry_01d503d4
+run_args: unknownArgs
+submitter: unspecified
+description: unspecified
+test_suite_id: null

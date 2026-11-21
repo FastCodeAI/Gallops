@@ -1,0 +1,14 @@
+{
+ "moments": 64,
+ "bit_identical": {
+  "trajectory": 64,
+  "pdm_score": 64,
+  "momentum_states": 64
+ },
+ "max_abs_diff": {
+  "trajectory": 0.0,
+  "pdm_score": 0.0,
+  "momentum_states": 0.0
+ },
+ "differences": []
+}

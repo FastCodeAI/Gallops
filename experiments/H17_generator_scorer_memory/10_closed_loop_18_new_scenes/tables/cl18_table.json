@@ -1,0 +1,90 @@
+{
+ "scenes_18": [
+  "01d503d4",
+  "023b7fcc",
+  "0245ff75",
+  "026d6a39",
+  "02e075b9",
+  "02eadd92",
+  "032b6f21",
+  "04394343",
+  "16b83346",
+  "1acf2f5d",
+  "2e1ce314",
+  "6725df2d",
+  "71d7d03b",
+  "791d68ce",
+  "89f2eeb8",
+  "98dd56b2",
+  "acd22430",
+  "b44a4a44"
+ ],
+ "done_18": {
+  "carry": 18,
+  "018bp06": 18
+ },
+ "mean_18": {
+  "carry": 0.8864878089789406,
+  "018bp06": 0.8598692973619225,
+  "017_earlier_image": 0.8333333333333334
+ },
+ "d": 0.026618511617018163,
+ "atfault_carry": [
+  "0245ff75",
+  "032b6f21"
+ ],
+ "atfault_018bp06": [
+  "026d6a39"
+ ],
+ "atfault_carry_not_018bp06": [
+  "0245ff75",
+  "032b6f21"
+ ],
+ "atfault_018bp06_not_carry": [
+  "026d6a39"
+ ],
+ "verdict": "HURTS",
+ "robust": {
+  "two_most_in_carrys_favour": [
+   "98dd56b2",
+   "1acf2f5d"
+  ],
+  "d_without_them": 0.00657228418220783,
+  "wins": [
+   "1acf2f5d",
+   "98dd56b2",
+   "b44a4a44"
+  ],
+  "losses": [],
+  "ties": 15,
+  "offroad_carry": [
+   "026d6a39",
+   "04394343",
+   "16b83346",
+   "791d68ce",
+   "acd22430"
+  ],
+  "offroad_018bp06": [
+   "16b83346",
+   "791d68ce",
+   "acd22430"
+  ]
+ },
+ "shadow": {
+  "calls": 702,
+  "final_pick_differs_pct": 12.678062678062679,
+  "scorer_pick_differs_pct": 13.247863247863247,
+  "chain_resets": 0
+ },
+ "mean_30": {
+  "carry": 0.8203984493415034,
+  "018bp06": 0.7526977870724586,
+  "017_earlier_image": 0.7696771320451907,
+  "atfault_carry": 4,
+  "atfault_018bp06": 4,
+  "atfault_017": 4,
+  "offroad_carry": 7,
+  "offroad_018bp06": 4,
+  "offroad_017": 2
+ }
+}

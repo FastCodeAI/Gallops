@@ -1,0 +1,14 @@
+{
+ "anchor_pairs_decel_ge_3": 280,
+ "clips_with_decel_ge_3": 127,
+ "anchor_pairs_decel_ge_4": 33,
+ "clips_with_decel_ge_4": 20,
+ "anchor_pairs_decel_ge_6": 4,
+ "clips_with_decel_ge_6": 3,
+ "anchor_pairs_checked": 122828,
+ "clips": 4015,
+ "hours": 22.305555555555557,
+ "rate_per_hour_ge_3": 12.552926525529264,
+ "rate_per_hour_ge_4": 1.4794520547945205,
+ "rate_per_hour_ge_6": 0.1793275217932752
+}

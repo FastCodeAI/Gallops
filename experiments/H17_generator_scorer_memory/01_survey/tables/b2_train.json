@@ -1,0 +1,41 @@
+{
+ "which": "train",
+ "nclips": 4015,
+ "tol": {
+  "ego": 0.15,
+  "frame": 0.05
+ },
+ "hist_bins": [
+  0,
+  0.5,
+  1,
+  2,
+  5,
+  10,
+  20
+ ],
+ "hist_counts": [
+  180,
+  3973,
+  7946,
+  23841,
+  39693,
+  51348,
+  0
+ ],
+ "median": 8.0,
+ "share_ge5": 0.716965530276183,
+ "whole_counts": [
+  0,
+  3971,
+  7945,
+  23842,
+  39691,
+  51532,
+  0
+ ],
+ "whole_median": 8.0,
+ "whole_share_ge5": 0.7183988155708334,
+ "clips_with_pose_gap": 1,
+ "clips_with_frame_gap": 0
+}

@@ -1,0 +1,53 @@
+{
+ "started": "2026-11-08 04:23:35",
+ "training": {
+  "clips": 7,
+  "moments": 224,
+  "cached_tokens_equal_batch1_tokens": "224/224",
+  "cached_tokens_max_abs_diff": 0.0,
+  "wall_s": 60.8,
+  "pick_agreement_pct": 100.0,
+  "picks_changed": 0,
+  "plan_diff_max_m": 0.0,
+  "logit_diff_max": 0.0,
+  "plans_identical": true,
+  "logits_identical": true,
+  "pass": true
+ },
+ "picking": {
+  "clips": 7,
+  "moments": 224,
+  "cached_tokens_equal_batch1_tokens": "224/224",
+  "cached_tokens_max_abs_diff": 0.0,
+  "wall_s": 50.8,
+  "pick_agreement_pct": 100.0,
+  "picks_changed": 0,
+  "plan_diff_max_m": 0.0,
+  "logit_diff_max": 0.0,
+  "plans_identical": true,
+  "logits_identical": true,
+  "pass": true
+ },
+ "graded_heldout": {
+  "clips": 7,
+  "moments": 215,
+  "cached_tokens_equal_batch1_tokens": "215/215",
+  "cached_tokens_max_abs_diff": 0.0,
+  "wall_s": 47.1,
+  "plans_identical": "yes",
+  "logits_identical": "yes",
+  "pass": true
+ },
+ "raw_heldout": {
+  "clips": 7,
+  "moments": 223,
+  "cached_tokens_equal_batch1_tokens": "223/223",
+  "cached_tokens_max_abs_diff": 0.0,
+  "wall_s": 50.1,
+  "plans_identical": "yes",
+  "logits_identical": "yes",
+  "pass": true
+ },
+ "all_pass": true,
+ "ended": "2026-11-08 04:27:09"
+}

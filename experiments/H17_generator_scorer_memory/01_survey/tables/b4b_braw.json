@@ -1,0 +1,79 @@
+{
+ "which": "braw",
+ "clips": 283,
+ "clips_without_tracks": 0,
+ "failed": 0,
+ "clip_hours": 1.5721945147222178,
+ "clip_hours_with_tracks": 1.5721945147222178,
+ "moments": 9053,
+ "moments_in_clips_with_tracks": 9053,
+ "tracks": 20139,
+ "events": {
+  "hb3": 4,
+  "hb4": 0,
+  "hb6": 0,
+  "cut_in": 15,
+  "oov": 0,
+  "crossing": 3
+ },
+ "rate_per_hour": {
+  "hb3": 2.5442144483672475,
+  "hb4": 0.0,
+  "hb6": 0.0,
+  "cut_in": 9.540804181377178,
+  "oov": 0.0,
+  "crossing": 1.9081608362754356
+ },
+ "rate_per_hour_tracked": {
+  "hb3": 2.5442144483672475,
+  "hb4": 0.0,
+  "hb6": 0.0,
+  "cut_in": 9.540804181377178,
+  "oov": 0.0,
+  "crossing": 1.9081608362754356
+ },
+ "clips_with_event": {
+  "hb3": 4,
+  "hb4": 0,
+  "hb6": 0,
+  "cut_in": 15,
+  "oov": 0,
+  "crossing": 3
+ },
+ "memory_relevant_moments": {
+  "hb3": 31,
+  "hb4": 0,
+  "hb6": 0,
+  "cut_in": 138,
+  "oov": 0,
+  "crossing": 24
+ },
+ "memory_relevant_share": {
+  "hb3": 0.0034242792444493537,
+  "hb4": 0.0,
+  "hb6": 0.0,
+  "cut_in": 0.01524356566883906,
+  "oov": 0.0,
+  "crossing": 0.0026510548989285318
+ },
+ "categories": {
+  "automobile": 16498,
+  "protruding_object": 405,
+  "person": 2236,
+  "rider": 168,
+  "trailer": 240,
+  "heavy_truck": 419,
+  "stroller": 31,
+  "bus": 89,
+  "animal": 7,
+  "other_vehicle": 39,
+  "train_or_tram_car": 7
+ },
+ "rules": {
+  "hard_brake": "acc = d/dt of 0.5 s-smoothed speed at 10 Hz; event = >= 3 consecutive samples (0.3 s) with acc <= -THR m/s^2 and speed >= 2 m/s at the run start; runs < 1 s apart merged; THR in {3,4,6}",
+  "cut_in": "vehicle track (not person/stroller/protruding_object/animal/unknown), at sample j: ego speed >= 2 m/s, track ahead 0 < lon <= 40 m in the ego frame, lateral distance to the ego's next-5 s path <= 1.25 m, track speed >= 1 m/s, motion direction within 45 deg of ego heading; and within the previous 2 s the same track had lateral distance >= 2.5 m while ahead (lon > 0); one event per track per 5 s",
+  "out_of_view_return": "same track id: a gap >= 1.0 s between consecutive raw observations, with the track within 60 m of the ego at both ends of the gap; one event per gap",
+  "crossing": "track speed >= 1 m/s, motion direction 60-120 deg from ego heading, ahead 0 < lon <= 50 m, lateral distance to the ego's next-5 s path <= 1.75 m; one event per track",
+  "memory_relevant_moment": "a training moment (anchor) within (t_event, t_event + 5 s]"
+ }
+}

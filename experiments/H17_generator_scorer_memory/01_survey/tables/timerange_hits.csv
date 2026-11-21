@@ -1,0 +1,348 @@
+test,test_country,clip,slice,picking,country,gap_s
+01d503d4,United States,000548db-e266-49e5-a832-6674ab53a615,train,False,United States,233.419
+01d503d4,United States,0009402a-a514-443b-9a4c-0e792f5ae581,train,False,United States,455.982
+01d503d4,United States,02ce6aee-45fb-4d4d-921c-4836f9a64be0,val_full,True,United States,89.083
+01d503d4,United States,04251a0a-bc85-4369-94ea-c92726b467fd,train,False,United States,21.041
+01d503d4,United States,10fe595e-5aa9-44fe-ac74-af3c0b5fecdb,val_full,False,Sweden,266.789
+01d503d4,United States,1182b9c0-56b4-4c28-b7c3-5c9de0256699,train,False,United States,142.428
+01d503d4,United States,11e26412-dfa2-404f-a163-c2c8743821ff,train,False,United States,31.502
+01d503d4,United States,120b0581-8e71-488d-a377-e2a96b0d2e89,train,False,United States,456.989
+01d503d4,United States,1a394766-ea99-4cf5-98de-d1821222612b,val_full,False,Italy,226.44
+01d503d4,United States,1a89339b-48d2-42c9-9b6b-277dd098112a,train,False,Austria,236.585
+01d503d4,United States,1e0f1cb2-0c16-4f65-b7f4-3858337ca7da,train,False,United States,73.59375
+01d503d4,United States,21ba518c-a6a8-493e-b2c8-f96d043b4c06,train,False,Austria,430.589
+01d503d4,United States,297777d4-3ca7-49fd-8d54-b3d784bf70b3,train,False,Belgium,205.473
+01d503d4,United States,2a0efada-f32d-4757-9901-88fb8bfb501e,val_full,False,Germany,54.549
+01d503d4,United States,300465f7-0025-4f39-ac20-9f0eaa36ea68,val_full,False,United States,422.048
+01d503d4,United States,395b7b6c-4e8e-4b99-b268-87113fec9b2a,train,False,United States,142.682
+01d503d4,United States,3a9824bc-0e4e-491d-b848-81babda68457,val_full,False,Germany,203.912
+01d503d4,United States,45d935e4-de5b-4910-a7ac-ba9d832b05be,train,False,United States,185.322
+01d503d4,United States,464f923c-cc39-408e-8ebc-e55ffe475f0b,train,False,United States,304.504
+01d503d4,United States,4f8168cc-0add-48aa-a44b-206268cd07b9,train,False,France,165.72
+01d503d4,United States,4fa2f86c-cfff-4cb7-b68c-29109aeef91b,train,False,United States,453.312
+01d503d4,United States,510831a8-7a8f-4640-bf5b-ba9505880268,train,False,United States,62.738
+01d503d4,United States,51dd9863-3749-4ac8-86d8-0bddd140f9c7,train,False,France,253.939
+01d503d4,United States,52003cee-c163-41b2-9bc7-7bf4cc46d505,train,False,United States,371.373
+01d503d4,United States,546804fb-a638-4d51-9bd3-43b02f7aca52,train,False,Germany,571.508155
+01d503d4,United States,659ed0bf-ddce-4bc8-b6fc-5318ca5cbaf7,train,False,United States,544.988
+01d503d4,United States,881b9dd6-7e2c-4c48-b270-cce2dc790b34,train,False,United States,109.35
+01d503d4,United States,8913f537-ed6d-441f-a4d0-31a16759d433,train,False,Germany,29.807
+01d503d4,United States,8f03f4db-6187-423c-807c-c5e0a1e62874,train,False,United States,44.224
+01d503d4,United States,98027855-ae64-4e26-8cb6-086d97c4586a,val_full,False,United States,156.062503
+01d503d4,United States,9b7ea42a-144c-4ff8-8e31-85e554877bee,train,False,Germany,272.971
+01d503d4,United States,a38826b1-7911-4b39-a787-b48a3c938b8f,val_full,False,United States,151.046
+01d503d4,United States,a9162b2d-b0f6-4c56-9642-c96a11e69fdb,val_full,False,United States,405.686
+01d503d4,United States,ac73935a-548f-402f-8a6b-16688261b219,train,False,United States,208.798
+01d503d4,United States,b40f4729-29c4-4846-a04b-72c78832a062,train,False,United States,410.587
+01d503d4,United States,bb4c859c-a4af-49ce-ad4d-0c4347053dd8,train,False,United States,258.237
+01d503d4,United States,be794864-766e-438a-86d7-ec06da5ee921,train,False,Spain,536.37256
+01d503d4,United States,c326465f-e1cd-4191-8778-9b4be26d2836,train,False,Germany,107.906
+01d503d4,United States,c59e9d03-fba8-423b-b79c-06594cffff10,train,False,United States,53.500668
+01d503d4,United States,cda8a096-0982-4a91-b721-624dac7c83b8,val_full,False,United States,455.261
+01d503d4,United States,d0962d4d-23c0-4b5d-a059-2c1435f81468,train,False,United States,205.185
+01d503d4,United States,d7328fed-a0ce-452c-a966-1b010d09e2dd,val_full,False,Germany,179.992
+01d503d4,United States,d7dd965b-cbe9-41ec-aba8-0ef08fe398ad,val_full,False,United States,62.987
+01d503d4,United States,d8ba63a8-1ac8-453f-9f33-a8511914621a,train,False,Germany,477.976254
+01d503d4,United States,dc2b1bc4-af24-45aa-8a03-19cd1333d0cc,train,False,Germany,303.638
+01d503d4,United States,ef1d76a9-a754-40f3-ae3c-8edb3cd112ef,train,False,Netherlands,20.763
+01d503d4,United States,f69a9538-6694-48aa-952e-5b27b3f915fd,val_full,True,United States,223.573
+01d503d4,United States,f8ee31cb-cf0f-45ef-bce5-1b43bd6a4d25,train,False,United States,222.103
+01d503d4,United States,febd36c4-abb1-498c-9e79-7f4d90d0285f,train,False,United States,535.478
+02e075b9,Germany,02183dc6-33b5-4f43-b8a3-986af09da831,train,False,United States,415.735
+02e075b9,Germany,56353daf-da6b-4425-a328-fddef32b5b70,train,False,United States,496.802
+02e075b9,Germany,655a0c29-017c-4e31-8f6b-e140d9587369,val_full,False,United States,79.167
+02e075b9,Germany,9f393c8a-4e24-4b04-b98a-099a28bde89a,train,False,Finland,405.177
+02e075b9,Germany,cc466599-a3da-438c-b3ef-fdc6bd282e31,train,False,United States,276.1
+048b974e,Germany,000548db-e266-49e5-a832-6674ab53a615,train,False,United States,214.197
+048b974e,Germany,0026708c-a386-4dd2-82b1-286da952c68f,train,False,United States,359.505
+048b974e,Germany,0208defb-0502-4293-ba29-9273b1a4ee7f,train,False,United States,593.216
+048b974e,Germany,027a5570-83b3-4ebe-b332-ba4f054636ce,train,False,Germany,351.319
+048b974e,Germany,02ce6aee-45fb-4d4d-921c-4836f9a64be0,val_full,True,United States,358.533
+048b974e,Germany,04251a0a-bc85-4369-94ea-c92726b467fd,train,False,United States,508.657
+048b974e,Germany,0c9a6929-6273-4b6f-b484-09fb46f65fb0,train,False,Germany,430.101
+048b974e,Germany,11e26412-dfa2-404f-a163-c2c8743821ff,train,False,United States,519.118
+048b974e,Germany,133a9c96-0cb9-41ae-8b84-ea87b74f3376,train,False,United States,153.874
+048b974e,Germany,1a394766-ea99-4cf5-98de-d1821222612b,val_full,False,Italy,221.176
+048b974e,Germany,1e0f1cb2-0c16-4f65-b7f4-3858337ca7da,train,False,United States,561.20975
+048b974e,Germany,297777d4-3ca7-49fd-8d54-b3d784bf70b3,train,False,Belgium,242.143
+048b974e,Germany,2a0efada-f32d-4757-9901-88fb8bfb501e,val_full,False,Germany,393.067
+048b974e,Germany,300465f7-0025-4f39-ac20-9f0eaa36ea68,val_full,False,United States,25.568
+048b974e,Germany,37ef2c67-ab41-4da6-9f55-96ef83e0f49f,val_full,False,United States,213.077
+048b974e,Germany,39b6115a-a221-45ea-8faa-3dd98b772058,train,False,United States,568.274
+048b974e,Germany,3c91d836-ede2-4e15-9f34-5b7ebe0b1c0d,train,False,France,233.52
+048b974e,Germany,45d935e4-de5b-4910-a7ac-ba9d832b05be,train,False,United States,262.294
+048b974e,Germany,4ac6e6fb-8a9b-46c7-b7b4-b8d33368f6fb,train,False,Spain,520.085
+048b974e,Germany,4e454838-a16b-4f7a-929f-b6e047dd8170,train,False,Germany,481.037
+048b974e,Germany,510831a8-7a8f-4640-bf5b-ba9505880268,train,False,United States,384.878
+048b974e,Germany,52003cee-c163-41b2-9bc7-7bf4cc46d505,train,False,United States,76.243
+048b974e,Germany,55bb852d-2af0-4c64-9a69-b482da66cfcd,val_full,False,Germany,365.416
+048b974e,Germany,659ed0bf-ddce-4bc8-b6fc-5318ca5cbaf7,train,False,United States,57.372
+048b974e,Germany,666e32ef-8af7-408a-bb25-f5b107f53a45,train,False,United States,526.362
+048b974e,Germany,82471d1e-c1d1-45c0-80a5-5f36e242913d,train,False,United States,413.002
+048b974e,Germany,881b9dd6-7e2c-4c48-b270-cce2dc790b34,train,False,United States,596.966
+048b974e,Germany,8913f537-ed6d-441f-a4d0-31a16759d433,train,False,Germany,417.809
+048b974e,Germany,8f03f4db-6187-423c-807c-c5e0a1e62874,train,False,United States,403.392
+048b974e,Germany,93f344e8-2249-4210-830c-812695106c84,val_full,False,United States,524.458
+048b974e,Germany,94877a4a-cbf1-4353-ae4a-f4453def52cc,val_full,False,Germany,522.326
+048b974e,Germany,9b7ea42a-144c-4ff8-8e31-85e554877bee,train,False,Germany,174.645
+048b974e,Germany,a0015a41-513b-4f58-9e41-df7159bb1d42,val_full,False,United States,197.755
+048b974e,Germany,a38826b1-7911-4b39-a787-b48a3c938b8f,val_full,False,United States,296.57
+048b974e,Germany,a9162b2d-b0f6-4c56-9642-c96a11e69fdb,val_full,False,United States,41.93
+048b974e,Germany,ac73935a-548f-402f-8a6b-16688261b219,train,False,United States,238.818
+048b974e,Germany,ae42a281-c845-4b25-9dec-d9a67be39df5,train,False,United States,405.781
+048b974e,Germany,b0499b70-4b20-4389-8e0f-cd9fce07e7b2,train,False,United States,461.893
+048b974e,Germany,b40f4729-29c4-4846-a04b-72c78832a062,train,False,United States,37.029
+048b974e,Germany,c326465f-e1cd-4191-8778-9b4be26d2836,train,False,Germany,595.522
+048b974e,Germany,c59e9d03-fba8-423b-b79c-06594cffff10,train,False,United States,541.116668
+048b974e,Germany,c88ff67f-e20d-4528-a085-37ac52e7be8a,train,False,United States,149.286
+048b974e,Germany,cda8a096-0982-4a91-b721-624dac7c83b8,val_full,False,United States,0.0
+048b974e,Germany,d0962d4d-23c0-4b5d-a059-2c1435f81468,train,False,United States,242.431
+048b974e,Germany,d7dd965b-cbe9-41ec-aba8-0ef08fe398ad,val_full,False,United States,384.629
+048b974e,Germany,ef1d76a9-a754-40f3-ae3c-8edb3cd112ef,train,False,Netherlands,426.853
+048b974e,Germany,f128a0bb-1f4b-460e-8f62-6b387988a069,val_full,False,United States,470.703
+048b974e,Germany,f8ee31cb-cf0f-45ef-bce5-1b43bd6a4d25,train,False,United States,225.513
+048b974e,Germany,f9b13f62-5c78-470a-beb2-3b2ce16f9864,train,False,United States,214.563
+048b974e,Germany,ff369d2c-939d-45f2-9644-8be3af66b08b,val_full,False,United States,377.248
+1acf2f5d,,03f14707-e02a-4a8e-a448-cf667458c127,train,False,United States,459.404276
+1acf2f5d,,0418c913-fead-437c-a856-bc397fc606cb,val_full,True,United States,274.005724
+1acf2f5d,,0bd5202f-5f7c-4748-b78d-20d1f921b4db,val_full,False,United States,501.138276
+1acf2f5d,,0e3771c0-04ed-4002-bce1-993fa746c8f3,val_full,False,United States,266.458368
+1acf2f5d,,0ec1da73-99b4-4f0a-8266-6f696947b162,train,False,United States,416.205724
+1acf2f5d,,0ec477bb-58d9-4868-8441-235a1d2df0dd,val_full,True,United States,408.326724
+1acf2f5d,,17fa63c0-e650-4841-9f1e-e44f8cce182d,train,False,United States,546.449873
+1acf2f5d,,2ae30ba8-80c0-45b3-8050-1c30bd6ed0ef,train,False,Germany,248.732724
+1acf2f5d,,387a9a98-3101-49ec-8f91-46156d8b6da3,val_full,False,Germany,61.287724
+1acf2f5d,,689889c5-95b0-42ce-a1c9-f97a4388cb28,train,False,United States,0.0
+1acf2f5d,,68e80e25-fba2-45d2-9347-791842ec061a,train,False,United States,130.800724
+1acf2f5d,,6b4ed79b-f9f3-4c1f-aa57-2875a72c2a7d,train,False,Germany,321.301276
+1acf2f5d,,83361019-2822-4c0e-9a99-7f316c6f6f31,val_full,False,United States,278.012075
+1acf2f5d,,89dca270-b3a8-4470-8d67-e42de4db7787,train,False,United States,419.978724
+1acf2f5d,,914f293b-1699-4bd9-8861-7e7a5327909b,train,False,United States,487.616724
+1acf2f5d,,9b5b5718-8797-448a-9c28-8e380071ec1d,train,False,Germany,347.612724
+1acf2f5d,,9bab530f-065f-48a5-9e8d-0ef420818c02,val_full,True,Germany,476.391724
+1acf2f5d,,a8fb9c09-0cbf-42e3-a0e3-1b6dbc16816b,val_full,False,United States,190.456724
+1acf2f5d,,aaf3ce56-fdd7-4dab-84af-c44606d760eb,train,False,United States,97.468724
+1acf2f5d,,adcc59de-e15f-41c0-9bb0-fe95567fd417,train,False,United States,443.107724
+1acf2f5d,,b5305cf7-963b-4cb1-87b8-7bcbb6443af8,train,False,Germany,445.590276
+1acf2f5d,,ca7accbc-3505-4fe3-9ef8-ad1e5a5041e4,val_full,True,United States,21.562724
+1acf2f5d,,cb909f6e-6488-405b-9bb0-c9b50d29a7c2,train,False,Germany,549.033724
+1acf2f5d,,cd3958e4-7022-4cba-96e4-44832f6ce7db,train,False,Netherlands,398.570276
+1acf2f5d,,cf9ca3f2-19c1-4bfb-8e10-9463bd85d800,val_full,False,United States,65.386724
+1acf2f5d,,d38cf375-2145-4788-910d-6edb3e0d1398,val_full,False,Germany,282.607276
+1acf2f5d,,ddb6a43a-f63e-477d-9fa8-bb282fed7454,val_full,False,United States,189.727724
+1acf2f5d,,e5a86ca0-222f-4bff-bfb6-4b348e9324ee,val_full,False,United States,286.821724
+1acf2f5d,,f8becb46-598e-4a77-b8e4-f875ab02625a,train,False,United States,21.241724
+5f064b02,United States,169d74f6-99f6-4f65-8352-b43bc6e80520,train,False,United States,378.43
+5f064b02,United States,17343b97-975b-4e32-9d1f-3ce37f99effc,val_full,False,Germany,439.791
+5f064b02,United States,1e0b54b8-2608-4fe2-a2d2-0b05bf169e4a,train,False,Germany,278.879
+5f064b02,United States,1e883544-6828-4b76-8675-4da6adbec601,train,False,Germany,428.237
+5f064b02,United States,2e4b7685-7564-464c-aef8-5d5d307c67ef,train,False,Italy,288.956
+5f064b02,United States,3ce13eed-f97b-4c37-8716-a590569fab77,train,False,Spain,420.684
+5f064b02,United States,67be5782-eadb-4a1e-8319-d48b6cce7f04,val_full,False,Sweden,329.069
+5f064b02,United States,6ac28ce5-ca21-4610-9f25-ddba46d91d51,val_full,True,United States,71.173
+5f064b02,United States,6d42246a-5be0-4160-a7da-003a1528496b,val_full,False,Germany,0.802
+5f064b02,United States,81ce115e-0c2a-4c27-9e1a-6d6716cf0ee1,train,False,United States,557.621
+5f064b02,United States,89650e2d-732f-4405-ab31-9f20473fb53f,train,False,Finland,82.021
+5f064b02,United States,8b505a1f-ab8f-423d-b683-8624441c1dc1,train,False,United States,439.86
+5f064b02,United States,904af7cf-d4ad-4ebc-867a-c77044eac8bb,train,False,United States,189.804
+5f064b02,United States,93c1a844-e550-44c1-b635-c440099f440a,val_full,False,United States,92.138
+5f064b02,United States,964e7935-2947-4af8-9f97-4757b744d45c,train,False,United States,181.691
+5f064b02,United States,97eeb9d7-866d-46bf-bc37-134191c34818,train,False,United States,11.072
+5f064b02,United States,9d702a4b-aad2-4f18-a643-8bcd6a0b82cc,train,False,United States,569.366
+5f064b02,United States,a5414a7e-00de-41ad-ae50-874dc811fb2c,train,False,Germany,578.525
+5f064b02,United States,af7e58a3-a943-4cfc-9d25-fe602c0caf15,train,False,United States,451.269
+5f064b02,United States,af9e31e9-9ad2-4ea1-8151-db6aa5e2330f,train,False,Italy,95.014
+5f064b02,United States,b283c68f-3048-4d2d-806f-20592d894744,train,False,United States,23.982
+5f064b02,United States,d19d1b01-9e6b-465f-bb85-d11718a526c7,val_full,False,United States,58.48
+5f064b02,United States,d54d0ed1-a494-42c6-bfb0-ffde27c7ef57,train,False,Germany,86.882
+5f064b02,United States,d9c1b946-498f-4cc2-8145-80d16a05c5d3,val_full,False,United States,9.321636
+5f064b02,United States,de620c90-3a40-49a9-8c81-7b3c117fd847,train,False,United States,56.227
+5f064b02,United States,e5561d95-e099-4001-ae9e-2579109824b1,train,False,Germany,490.037
+5f064b02,United States,e9fe4c3b-a052-4ece-95a0-6f4bc9463a39,train,False,United States,9.159
+5f064b02,United States,ec7ca221-f28a-4b73-a397-b804a101a1b9,train,False,Germany,240.12
+5f064b02,United States,fab24f4f-5d90-4460-bd85-7850faf12739,val_full,True,United States,257.54
+5f064b02,United States,fd1b8b64-a994-47c1-b739-5b5840ad4729,train,False,Italy,9.848
+791d68ce,Germany,0a228e44-2e22-40fa-a4da-9dcded392963,val_full,False,United States,27.607
+791d68ce,Germany,0d2eef98-722f-418e-bd3f-e334fd44af6f,val_full,False,Germany,0.0
+791d68ce,Germany,10e91619-c0e2-4e87-abbb-40791a7ecb6b,val_full,True,United States,127.576
+791d68ce,Germany,22fa5c92-6e6f-4f4e-bbfa-9a1490f9cd38,val_full,True,United States,589.274
+791d68ce,Germany,2b5cab45-ddf5-4193-8be2-ee1a4424e5c5,train,False,United States,126.289
+791d68ce,Germany,2bce2cbf-166c-4a52-a25c-25cfa1269ffc,train,False,United States,29.177
+791d68ce,Germany,2c1e7643-dba1-4434-80f8-89831d0b884b,val_full,False,United States,412.393
+791d68ce,Germany,2f8004f7-2f86-4b8a-861b-816a44d0da85,train,False,Germany,2.01
+791d68ce,Germany,35cec769-9f45-4b14-a70d-b8778732ce0c,train,False,United States,265.906338
+791d68ce,Germany,3764254a-8653-437b-9ad7-667778d0524a,train,False,France,427.906
+791d68ce,Germany,3b6078dd-9eff-4269-8afc-3432e2d4729e,val_full,False,Germany,76.645
+791d68ce,Germany,3d6a22f7-daa6-467e-b40d-ed9099063025,train,False,Germany,151.582
+791d68ce,Germany,5b0362c8-046c-4b24-a474-86acabaa34a2,train,False,Germany,336.654
+791d68ce,Germany,5bf8dbed-f0a8-4fd5-b1ef-8ce7bf495fd1,train,False,Sweden,21.174
+791d68ce,Germany,67466fc2-53a3-4654-9c36-fe9e850bcc70,train,False,Germany,264.387
+791d68ce,Germany,69fc21e8-6faf-487b-806f-1d24654805ce,train,False,Germany,410.391
+791d68ce,Germany,6dd219de-772b-4c1b-bcdb-14c9089bf8ba,train,False,United States,425.603637
+791d68ce,Germany,7685e516-96ca-4656-a545-7e08b9a7c60b,val_full,False,United States,245.62
+791d68ce,Germany,7c6529f6-c6cf-465d-affe-b2bb30f3716d,val_full,False,United States,561.819
+791d68ce,Germany,864ec5ea-9eaa-4d80-a846-8bf5c982f140,val_full,True,Italy,103.903
+791d68ce,Germany,88bbf0c9-9ba5-45b4-bc15-9dca85ca84b9,val_full,False,United States,125.274472
+791d68ce,Germany,91194ec4-75de-4418-9e49-0d706d84c7a7,val_full,True,United States,277.731
+791d68ce,Germany,923f1ddf-f5ea-4a50-bf13-505ca7d03b5a,val_full,False,United States,121.639
+791d68ce,Germany,941b5779-2925-4268-aa66-dc1d88d61e35,train,False,United States,134.145
+791d68ce,Germany,951fbca0-a83e-4a23-b1a0-8d0ffa3f0950,train,False,Sweden,413.529
+791d68ce,Germany,969382f2-b629-4163-ac2d-9b51fefe137a,val_full,False,Germany,196.44
+791d68ce,Germany,9895e012-2112-40dd-8d1f-cb86e70b6431,train,False,United States,576.205
+791d68ce,Germany,9d9052bd-2579-477a-89ba-822a1438905d,train,False,Germany,176.566
+791d68ce,Germany,a299c641-3565-4092-a554-f0f4e977d138,train,False,United States,137.239463
+791d68ce,Germany,a2bd8a78-0011-4790-9981-cb48bceb3896,val_full,False,Germany,216.14
+791d68ce,Germany,a45776a3-df71-4dc5-accb-8f06135329bb,train,False,United States,0.0
+791d68ce,Germany,a6da35fb-ff20-48a4-adac-87fb9982a46c,train,False,Germany,591.250356
+791d68ce,Germany,a7733a20-3b3a-48a3-a7fc-77379f654094,val_full,True,United States,289.177
+791d68ce,Germany,a784414a-5989-4a5a-9a4f-74ad9327b934,val_full,False,Germany,83.793
+791d68ce,Germany,ac085732-d1a7-4d5d-bb61-320c2b94fc39,train,False,United States,519.142
+791d68ce,Germany,ad55f513-9a59-4052-9f66-ad67bb57f135,train,False,United States,16.617935
+791d68ce,Germany,b680a689-9afe-4d66-accd-41fa7c0fb633,val_full,False,United States,134.939
+791d68ce,Germany,b7bfcbd9-4ab7-46ff-a21c-a5b6d66191a6,train,False,United States,168.629
+791d68ce,Germany,c6fda46d-1c2c-4646-af7c-caa041c5d27d,train,False,United States,585.844
+791d68ce,Germany,c9794ef0-4b7d-4682-8813-f1e23c5916d7,train,False,Italy,482.969
+791d68ce,Germany,ce75af77-b53c-41b1-8524-390e317d4683,val_full,True,Sweden,51.549
+791d68ce,Germany,d1ba973a-5f8b-4cc1-9016-9f1205b5ded8,val_full,True,Germany,230.459
+791d68ce,Germany,d2a7ae02-b6ed-4ffc-b245-be1b4b676c8f,train,False,United States,379.587
+791d68ce,Germany,d2b2fe82-d2ef-4c48-933e-40c73980d951,val_full,False,United States,427.861
+791d68ce,Germany,db6a7b48-8079-4c37-a284-2162cc414ee4,train,False,United States,72.908
+791d68ce,Germany,dc222bc3-c7bc-47f8-8106-778b3059c53e,train,False,United States,0.0
+791d68ce,Germany,e27ce7cd-1c67-4300-9e4e-0ff3e6932e0d,train,False,United States,209.582
+791d68ce,Germany,e451d382-4edc-4291-99bc-ccc1b7a45bc8,val_full,False,Germany,502.883
+791d68ce,Germany,e9384415-5802-47d9-ac6b-d61d48f40dd4,val_full,False,United States,504.287
+791d68ce,Germany,f335b031-bbaf-42a1-bd5d-465081ec5f4b,train,False,Germany,258.784
+791d68ce,Germany,f9b8a142-8d3b-4f30-9b00-c484d23d28fb,train,False,United States,59.039222
+791d68ce,Germany,f9e361aa-5e93-41bd-aa5c-406999a5b9db,val_full,False,United States,229.617017
+791d68ce,Germany,fc41d9e9-321d-4835-9ec0-776ff74ca61e,train,False,United States,162.854
+791d68ce,Germany,fc89c237-ee5e-40bd-be20-dcecb4ca97ae,train,False,Germany,556.95
+98dd56b2,,17ad7fea-5672-4a12-8578-a3b3993b1027,train,False,Germany,230.229209
+b44a4a44,Germany,09528162-2142-4082-a31b-decf787c8ada,train,False,United States,549.005
+b44a4a44,Germany,0dc1f11c-9dfa-4366-bb56-e488800e3b0e,val_full,False,Germany,466.173
+b44a4a44,Germany,0f4b8753-22c6-4440-814d-8cb6d641ffd0,train,False,Germany,487.621
+b44a4a44,Germany,14850e11-6a08-4cd7-9875-be353f1a764b,train,False,United States,129.148
+b44a4a44,Germany,19585c5c-d523-49f4-bf15-59291e6c9278,val_full,True,United States,501.477
+b44a4a44,Germany,1ee06414-734b-47f3-8b5b-e1a810eb83e6,val_full,False,United States,418.239
+b44a4a44,Germany,2ce4e533-bfc2-4805-8d31-19542cc17408,train,False,Germany,544.249
+b44a4a44,Germany,3250c8af-5afd-4ba4-ae46-3cd62ae7b5db,train,False,United States,9.875683
+b44a4a44,Germany,325a6911-8ee8-4a04-8b84-55dbfcada98f,train,False,United States,129.758
+b44a4a44,Germany,3264f6cd-8593-42a6-95f1-ab223886636f,val_full,False,Germany,584.112
+b44a4a44,Germany,3c292d83-970e-4c9b-82df-90f5ad9e7379,val_full,False,Germany,443.851
+b44a4a44,Germany,3ee65034-1980-4180-b092-aac471402463,train,False,United States,269.962
+b44a4a44,Germany,404541da-5297-4c32-b0af-21740de150b0,val_full,False,Germany,468.96472
+b44a4a44,Germany,45f8999a-12ea-4bac-b786-da23e31cd73f,val_full,False,United States,171.231
+b44a4a44,Germany,46ea6266-fa8d-48dc-baf2-68d7f367cfb9,val_full,False,United States,554.287
+b44a4a44,Germany,477ab28c-3309-473a-8ecd-12a832feeb6a,train,False,United States,272.601
+b44a4a44,Germany,49a2bbf7-1b3b-4a31-a54d-40071ec42449,val_full,False,France,233.046
+b44a4a44,Germany,4f7cb072-89c6-40f5-b6a5-d8c775784c2a,train,False,United States,97.418
+b44a4a44,Germany,51904be9-9fd8-427f-96ac-42a66d338314,train,False,United States,386.892
+b44a4a44,Germany,54bcdd40-b5e3-4bea-94d5-755a4ec83667,train,False,United States,579.747
+b44a4a44,Germany,627ea927-602a-4f2c-96b1-e64df477bf9a,train,False,Germany,566.134
+b44a4a44,Germany,6bffbe09-1e0d-4ac3-833c-ca6178346e76,train,False,United States,373.602
+b44a4a44,Germany,7652eb53-0bc4-4f3e-8fd2-d24e84b7485c,train,False,Denmark,158.6463
+b44a4a44,Germany,77a9ad17-793b-47e3-bb68-de122122dca8,val_full,False,United States,484.14944
+b44a4a44,Germany,8266c272-9c74-472b-8ccb-fffe911a6e78,train,False,United States,75.539
+b44a4a44,Germany,829c55af-6301-4552-a476-dc6b80e5ee7e,train,False,Germany,202.338
+b44a4a44,Germany,8cc4c64e-c4f1-4a08-bfa4-f796d2c4250c,val_full,False,Spain,520.3
+b44a4a44,Germany,8d56c7ba-c404-4764-a7d1-b45e6bc2d952,train,False,Sweden,152.02
+b44a4a44,Germany,b706e6a9-0c43-4faa-940e-91d80529804f,train,False,United States,539.667
+b44a4a44,Germany,cca40c7a-35b5-449f-a177-f7be61c96660,val_full,False,United States,362.124772
+b44a4a44,Germany,d32206ef-c011-47be-8d14-aa3936347008,val_full,False,United States,121.124689
+b44a4a44,Germany,dbfd6c72-9060-4a3e-b0f8-1ee57befde90,train,False,United States,323.671
+b44a4a44,Germany,e2781af3-c9a5-4062-8b60-e33799288b82,val_full,False,Spain,409.38
+b44a4a44,Germany,e4a8ce47-7785-4b53-8be5-df70ae234eb6,train,False,United States,59.766
+b44a4a44,Germany,e6fc5ab4-58ce-4e9c-903c-3c12930becd7,val_full,False,Germany,537.807
+b44a4a44,Germany,fe313a2d-fb9e-4c0a-8efe-31f84f25f747,val_full,False,United States,8.771
+d1a25a99,Germany,008513a2-ab70-4e21-852a-6cfe574d3d63,train,False,Italy,424.35
+d1a25a99,Germany,018ab4b0-f802-47a0-9d60-a56df187be17,train,False,United States,361.805
+d1a25a99,Germany,132ae6cb-1e58-42aa-8bf3-4381eb958e43,train,False,United States,105.515
+d1a25a99,Germany,1370aa93-94e4-4dcb-9855-ede07046cbff,train,False,United States,248.628
+d1a25a99,Germany,185ee101-147e-4e76-af41-a0d8b4beb2fe,val_full,False,Netherlands,296.372
+d1a25a99,Germany,2374aa97-69ec-4365-8735-b051ff0e1886,train,False,Germany,74.447
+d1a25a99,Germany,245495e4-24f4-4edb-8eb2-a02f0d20b3f8,val_full,False,United States,307.054
+d1a25a99,Germany,252f2781-e7f5-459f-a5bf-1129bfa2ed62,val_full,False,United States,491.424
+d1a25a99,Germany,2a882d89-eadc-42a4-a15c-5977361845f6,train,False,Germany,159.489
+d1a25a99,Germany,30afa2c6-48f6-4473-a8db-5430e1e88584,train,False,United States,326.142558
+d1a25a99,Germany,31e55046-8717-4b57-bd9b-5dd01edf8f97,train,False,Germany,203.32
+d1a25a99,Germany,33a95264-5147-4848-b8f9-eea4d1b32450,train,False,Austria,190.610491
+d1a25a99,Germany,33cb3ae6-5cb8-4e96-8214-7633033ec2a1,train,False,United States,530.497
+d1a25a99,Germany,52bd89ce-db30-4525-9fa1-b0c0dd72f5f4,train,False,United States,387.202
+d1a25a99,Germany,55bd2955-6ac8-4c88-a3c8-b9675d08be40,val_full,False,United States,311.235
+d1a25a99,Germany,626d1d1e-013f-477f-b99c-0d56fc9f89e8,val_full,False,Germany,0.0
+d1a25a99,Germany,655544ed-b8a1-4c27-aab0-1435898fbaa8,val_full,False,Italy,259.976
+d1a25a99,Germany,6f2fb06e-59df-4ad1-8854-594288096989,val_full,False,United States,192.545
+d1a25a99,Germany,7475c381-6a59-4404-99d9-e74c0ed54d0f,train,False,Netherlands,313.969
+d1a25a99,Germany,7fd4d554-b155-45c6-a46a-646486029d85,val_full,False,United States,166.231
+d1a25a99,Germany,8a365ac2-e5d5-4fd6-903d-497b2225151c,train,False,United States,373.948
+d1a25a99,Germany,92724945-2dff-46ef-9f2c-e7e1f2f1ac0c,val_full,False,United States,226.277
+d1a25a99,Germany,9f925aad-732f-43aa-9dda-f1e5d095bb5a,val_full,False,Germany,172.224
+d1a25a99,Germany,a0c831e6-5275-4a8a-bd67-9e0d59de52e8,val_full,False,United States,132.38969
+d1a25a99,Germany,b1d93f58-d8dd-4a84-959c-aaea3aa0701b,val_full,False,Germany,349.171
+d1a25a99,Germany,b30ac7f8-55a6-41d9-9c57-5df0762e0e87,train,False,United States,368.95018
+d1a25a99,Germany,b89326b4-bef7-4cd3-b3a7-d2288f681c57,train,False,United States,425.852
+d1a25a99,Germany,bbf8ca4c-c999-4dd4-bb21-cb05832c86bb,train,False,France,47.697
+d1a25a99,Germany,c4a58f83-eeba-4f43-a5b6-6075b7a8437e,train,False,United States,241.309
+d1a25a99,Germany,c51a2930-b9f6-4748-b67d-38fa7f0495f2,train,False,United States,313.002
+d1a25a99,Germany,c76072c5-82a6-4b1e-b62f-a9da2ef48762,train,False,Germany,191.877
+d1a25a99,Germany,cb1b00aa-b3a5-40b2-99d1-5175d6f70e13,val_full,True,United States,407.306
+d1a25a99,Germany,e8ef86c4-d514-4454-b838-f41d2a3f590f,train,False,United States,127.276
+d1a25a99,Germany,fab5bc4a-17f5-42ab-af79-47c2bed9769d,val_full,False,United States,334.738
+d2715023,,0026708c-a386-4dd2-82b1-286da952c68f,train,False,United States,442.634
+d2715023,,00eb506e-de3a-407c-8a76-c763de8dc0d8,train,False,United States,166.886697
+d2715023,,0208defb-0502-4293-ba29-9273b1a4ee7f,train,False,United States,208.923
+d2715023,,027a5570-83b3-4ebe-b332-ba4f054636ce,train,False,Germany,450.82
+d2715023,,031f43ff-bc87-4cf3-99a1-6aef48e6628f,train,False,United States,330.739
+d2715023,,089f9b45-e587-499e-971f-ee3a1ab51e30,train,False,Spain,127.279
+d2715023,,09c52e7f-0ce8-4810-bec0-2e38311c55b8,train,False,United States,98.597
+d2715023,,0c9a6929-6273-4b6f-b484-09fb46f65fb0,train,False,Germany,372.038
+d2715023,,16f25e75-5fc4-476c-9112-dd455dced8b9,train,False,United States,287.541
+d2715023,,1bed5f04-325a-41d1-9eb6-973285f62dae,train,False,Germany,539.03
+d2715023,,25343c92-abac-49bd-8cd3-bedc3215ed0f,train,False,United States,90.46
+d2715023,,28c58eaa-60cc-4db4-b9cb-9b9b36df4694,train,False,Germany,137.085044
+d2715023,,2ee841e9-a7cf-4fc6-86af-ebbb1ffe9542,train,False,United States,106.096
+d2715023,,2ff0eef3-fdb9-4334-8096-1df3c4cd86f4,train,False,United States,407.736996
+d2715023,,31f78fe4-abe4-4966-88af-0d857d1d2c21,val_full,False,United States,402.818
+d2715023,,37ef2c67-ab41-4da6-9f55-96ef83e0f49f,val_full,False,United States,589.062
+d2715023,,39b6115a-a221-45ea-8faa-3dd98b772058,train,False,United States,233.865
+d2715023,,3c91d836-ede2-4e15-9f34-5b7ebe0b1c0d,train,False,France,568.619
+d2715023,,4ac6e6fb-8a9b-46c7-b7b4-b8d33368f6fb,train,False,Spain,282.054
+d2715023,,4e454838-a16b-4f7a-929f-b6e047dd8170,train,False,Germany,321.102
+d2715023,,5487b8af-4a81-4a99-aeac-35719bbb7cb1,train,False,Germany,0.0
+d2715023,,55bb852d-2af0-4c64-9a69-b482da66cfcd,val_full,False,Germany,436.723
+d2715023,,58b5c3ad-5f6a-4e7c-ba0b-c76d52c8f478,train,False,Spain,39.58
+d2715023,,604b2b18-04d2-48c4-a4c3-c3a2ecee5926,train,False,Germany,304.363
+d2715023,,60cc35db-1c6f-4aef-b86f-ffca69fbc3cb,train,False,United States,211.627
+d2715023,,62cfe9d3-df92-4395-9faf-897ee20ef839,train,False,Germany,256.658
+d2715023,,666e32ef-8af7-408a-bb25-f5b107f53a45,train,False,United States,275.777
+d2715023,,67e25d4b-5aa3-4960-8a0c-002ec80a7bd8,train,False,Spain,26.796
+d2715023,,6f57aa31-71c8-4226-8d69-029016b33405,train,False,United States,181.1
+d2715023,,76353421-34fc-457e-b3b7-56e5989a38a0,val_full,False,United States,386.171
+d2715023,,79919eb2-72c2-440a-94ea-24754fcad0fd,train,False,Finland,354.105
+d2715023,,7daa7410-5f82-43ed-b79f-c9e4a3997563,train,False,United States,53.614
+d2715023,,82471d1e-c1d1-45c0-80a5-5f36e242913d,train,False,United States,389.137
+d2715023,,84289264-b1e3-4a3c-bfd8-c0b823cfb955,val_full,False,Germany,335.942
+d2715023,,92163671-81b0-466b-8e85-5c931f8d78e3,train,False,United States,123.629
+d2715023,,93f344e8-2249-4210-830c-812695106c84,val_full,False,United States,277.681
+d2715023,,94877a4a-cbf1-4353-ae4a-f4453def52cc,val_full,False,Germany,279.813
+d2715023,,a4d2f7cf-b7cd-4494-8d79-58ad90f1c66d,val_full,False,United States,181.653
+d2715023,,a6b0c924-fdec-466b-b680-7d2bfc9e6653,val_full,False,Germany,77.227
+d2715023,,a6ddac95-b22a-40d9-b4b8-c62a17563114,val_full,False,United States,464.56
+d2715023,,a7ffaa6f-ee4e-46c7-b2d7-7123e6f2c620,train,False,United States,78.377
+d2715023,,abafd435-ae49-4bfb-88eb-3671b45092a4,train,False,United States,438.331
+d2715023,,ae42a281-c845-4b25-9dec-d9a67be39df5,train,False,United States,396.358
+d2715023,,b0499b70-4b20-4389-8e0f-cd9fce07e7b2,train,False,United States,340.246
+d2715023,,b303ebe3-9636-45ed-9de7-63f254ef8eae,train,False,Germany,0.0
+d2715023,,b8336d4b-24b0-4d90-b811-4369eb3f64fa,train,False,Austria,384.875
+d2715023,,bad7a546-ebed-4ba6-9fd5-a0925e725689,train,False,Sweden,36.958
+d2715023,,bc9ffa8d-7428-49b9-9c1e-54d9e27f134b,train,False,United States,78.08
+d2715023,,c25bc17c-e4f9-4880-ae9c-040d89d9c61f,train,False,United States,581.149985
+d2715023,,cd431630-55a5-4056-ba5e-7362040fa289,train,False,United States,200.752
+d2715023,,d5e79abb-b889-4199-a50c-0e999447709d,val_full,False,Germany,86.033
+d2715023,,d604fdc3-c0ca-4e41-8a9a-e601ec30e9f1,train,False,United States,155.063
+d2715023,,ec910872-2c20-4a85-a0ac-da6833ee0f92,val_full,False,United States,140.319
+d2715023,,ede8c19c-d344-4835-8613-4692b0c605f4,val_full,True,United States,457.183
+d2715023,,f128a0bb-1f4b-460e-8f62-6b387988a069,val_full,False,United States,331.436
+d2715023,,f5e44ac9-000a-41db-b4ab-28d46330bcee,train,False,Germany,97.922
+d2715023,,f7e71bb3-7aa5-486f-81e0-70b4ea8793ef,train,False,United States,101.005
+d2715023,,f9b13f62-5c78-470a-beb2-3b2ce16f9864,train,False,United States,587.576
+d2715023,,ff369d2c-939d-45f2-9644-8be3af66b08b,val_full,False,United States,424.891

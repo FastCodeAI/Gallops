@@ -1,0 +1,2018 @@
+{
+ "result": {
+  "verdict": "AGAINST",
+  "missing": [],
+  "primary_20": {
+   "n": 20,
+   "mean": {
+    "carry": 0.6352927296706958,
+    "018b": 0.7643785429558685
+   },
+   "d": -0.12908581328517263,
+   "wins": [
+    "a32549eb"
+   ],
+   "losses": [
+    "29815599",
+    "320c11f3",
+    "34226720",
+    "68e53160",
+    "8fd8f4f0"
+   ],
+   "ties": 14,
+   "atfault_window": {
+    "carry": [
+     "68e53160",
+     "8fd8f4f0",
+     "9d8fca3b",
+     "c438a779"
+    ],
+    "018b": [
+     "9d8fca3b",
+     "c438a779"
+    ]
+   },
+   "atfault_window_carry_not_018b": [
+    "68e53160",
+    "8fd8f4f0"
+   ],
+   "atfault_exit": {
+    "carry": [
+     "320c11f3",
+     "68e53160",
+     "8578f2c7",
+     "8fd8f4f0",
+     "9d8fca3b",
+     "c438a779"
+    ],
+    "018b": [
+     "9d8fca3b",
+     "c438a779"
+    ]
+   },
+   "atfault_exit_carry_not_018b": [
+    "320c11f3",
+    "68e53160",
+    "8578f2c7",
+    "8fd8f4f0"
+   ],
+   "both_perfect": 10,
+   "top2": [
+    "a32549eb",
+    "e883822a"
+   ],
+   "d_wo_top2": -0.19945870702991367
+  },
+  "all_50": {
+   "n": 50,
+   "mean": {
+    "carry": 0.7463561614731804,
+    "018b": 0.7573700894258226
+   },
+   "d": -0.011013927952642149,
+   "wins": [
+    "a32549eb",
+    "bae463d3",
+    "b1b170d0",
+    "04749bb9",
+    "1acf2f5d",
+    "98dd56b2",
+    "b44a4a44"
+   ],
+   "losses": [
+    "29815599",
+    "320c11f3",
+    "34226720",
+    "68e53160",
+    "8fd8f4f0"
+   ],
+   "ties": 38,
+   "atfault_window": {
+    "carry": [
+     "68e53160",
+     "8fd8f4f0",
+     "9d8fca3b",
+     "c438a779",
+     "8023dce5",
+     "bd07fb91"
+    ],
+    "018b": [
+     "9d8fca3b",
+     "c438a779",
+     "8023dce5",
+     "bd07fb91",
+     "04749bb9"
+    ]
+   },
+   "atfault_window_carry_not_018b": [
+    "68e53160",
+    "8fd8f4f0"
+   ],
+   "atfault_exit": {
+    "carry": [
+     "320c11f3",
+     "68e53160",
+     "8578f2c7",
+     "8fd8f4f0",
+     "9d8fca3b",
+     "c438a779",
+     "8023dce5",
+     "bd07fb91",
+     "0245ff75",
+     "032b6f21"
+    ],
+    "018b": [
+     "9d8fca3b",
+     "c438a779",
+     "8023dce5",
+     "bd07fb91",
+     "04749bb9",
+     "026d6a39"
+    ]
+   },
+   "atfault_exit_carry_not_018b": [
+    "320c11f3",
+    "68e53160",
+    "8578f2c7",
+    "8fd8f4f0",
+    "0245ff75",
+    "032b6f21"
+   ],
+   "both_perfect": 28,
+   "top2": [
+    "a32549eb",
+    "04749bb9"
+   ],
+   "d_wo_top2": -0.04703761786934154
+  },
+  "old_30": {
+   "n": 30,
+   "mean": {
+    "carry": 0.8203984493415035,
+    "018b": 0.7526977870724586
+   },
+   "d": 0.06770066226904484,
+   "wins": [
+    "bae463d3",
+    "b1b170d0",
+    "04749bb9",
+    "1acf2f5d",
+    "98dd56b2",
+    "b44a4a44"
+   ],
+   "losses": [],
+   "ties": 24,
+   "atfault_window": {
+    "carry": [
+     "8023dce5",
+     "bd07fb91"
+    ],
+    "018b": [
+     "8023dce5",
+     "bd07fb91",
+     "04749bb9"
+    ]
+   },
+   "atfault_window_carry_not_018b": [],
+   "atfault_exit": {
+    "carry": [
+     "8023dce5",
+     "bd07fb91",
+     "0245ff75",
+     "032b6f21"
+    ],
+    "018b": [
+     "8023dce5",
+     "bd07fb91",
+     "04749bb9",
+     "026d6a39"
+    ]
+   },
+   "atfault_exit_carry_not_018b": [
+    "0245ff75",
+    "032b6f21"
+   ],
+   "both_perfect": 18,
+   "top2": [
+    "04749bb9",
+    "bae463d3"
+   ],
+   "d_wo_top2": 0.02513578427834881
+  },
+  "rule": "SUPPORTS if d >= +0.05 AND wins > losses AND no at-fault (in window) crash carry has that 0.1.8b lacks; AGAINST if d <= -0.05 OR losses > wins OR carry adds such a crash; else NO DETECTABLE EFFECT (20 new scenes)"
+ },
+ "rows": [
+  {
+   "scene": "29815599",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_29815599",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +9.65 s",
+    "atfault_exit": false,
+    "window_end_rel": 9.649999999999999,
+    "events": [
+     [
+      "off-road",
+      9.65,
+      true
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_29815599",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 11.75,
+    "events": []
+   }
+  },
+  {
+   "scene": "320c11f3",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_320c11f3",
+    "score": 0.7058545934139172,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +14.10 s",
+    "atfault_exit": true,
+    "window_end_rel": 7.7,
+    "events": [
+     [
+      "front collision",
+      14.1,
+      false
+     ],
+     [
+      "hit from behind",
+      14.8,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_320c11f3",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.600000000000001,
+    "events": []
+   }
+  },
+  {
+   "scene": "34226720",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_34226720",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +8.70 s",
+    "atfault_exit": false,
+    "window_end_rel": 8.7,
+    "events": [
+     [
+      "off-road",
+      8.7,
+      true
+     ],
+     [
+      "front collision",
+      12.95,
+      false
+     ],
+     [
+      "hit from behind",
+      13.2,
+      false
+     ],
+     [
+      "front collision",
+      15.55,
+      false
+     ],
+     [
+      "hit from behind",
+      15.9,
+      false
+     ],
+     [
+      "off-road",
+      16.2,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_34226720",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "44409f00",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_44409f00",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.7,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_44409f00",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "49e0ea24",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_49e0ea24",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 10.3,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_49e0ea24",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.2,
+    "events": []
+   }
+  },
+  {
+   "scene": "4a495c2d",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_4a495c2d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.55,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_4a495c2d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.2,
+    "events": []
+   }
+  },
+  {
+   "scene": "5c1b7555",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_5c1b7555",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.95,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_5c1b7555",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.900000000000002,
+    "events": []
+   }
+  },
+  {
+   "scene": "68e53160",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_68e53160",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (side) at +8.70 s",
+    "atfault_exit": true,
+    "window_end_rel": 8.7,
+    "events": [
+     [
+      "side collision",
+      8.7,
+      true
+     ],
+     [
+      "front collision",
+      8.95,
+      false
+     ],
+     [
+      "side collision",
+      10.15,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_68e53160",
+    "score": 0.2961113199523631,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "hit from behind at +12.70 s",
+    "atfault_exit": false,
+    "window_end_rel": 12.7,
+    "events": [
+     [
+      "hit from behind",
+      12.7,
+      true
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "6ae687bb",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_6ae687bb",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.100000000000001,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_6ae687bb",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "7747986c",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_7747986c",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +-0.50 s",
+    "atfault_exit": false,
+    "window_end_rel": 0.0,
+    "events": [
+     [
+      "off-road",
+      -0.5,
+      true
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_7747986c",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +-0.50 s",
+    "atfault_exit": false,
+    "window_end_rel": 0.0,
+    "events": [
+     [
+      "off-road",
+      -0.5,
+      true
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "8578f2c7",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_8578f2c7",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +15.85 s",
+    "atfault_exit": true,
+    "window_end_rel": 10.850000000000001,
+    "events": [
+     [
+      "front collision",
+      15.85,
+      false
+     ],
+     [
+      "side collision",
+      16.05,
+      false
+     ],
+     [
+      "hit from behind",
+      16.1,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_8578f2c7",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 11.7,
+    "events": []
+   }
+  },
+  {
+   "scene": "8fd8f4f0",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_8fd8f4f0",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +6.45 s",
+    "atfault_exit": true,
+    "window_end_rel": 6.45,
+    "events": [
+     [
+      "front collision",
+      6.45,
+      true
+     ],
+     [
+      "side collision",
+      6.5,
+      false
+     ],
+     [
+      "hit from behind",
+      6.7,
+      false
+     ],
+     [
+      "off-road",
+      16.7,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_8fd8f4f0",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 9.0,
+    "events": []
+   }
+  },
+  {
+   "scene": "9d8fca3b",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_9d8fca3b",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +4.35 s",
+    "atfault_exit": true,
+    "window_end_rel": 4.35,
+    "events": [
+     [
+      "front collision",
+      4.35,
+      true
+     ],
+     [
+      "side collision",
+      4.45,
+      false
+     ],
+     [
+      "hit from behind",
+      4.5,
+      false
+     ],
+     [
+      "front collision",
+      9.55,
+      false
+     ],
+     [
+      "side collision",
+      9.75,
+      false
+     ],
+     [
+      "hit from behind",
+      9.8,
+      false
+     ],
+     [
+      "front collision",
+      10.2,
+      false
+     ],
+     [
+      "hit from behind",
+      10.5,
+      false
+     ],
+     [
+      "front collision",
+      11.1,
+      false
+     ],
+     [
+      "side collision",
+      11.2,
+      false
+     ],
+     [
+      "front collision",
+      12.1,
+      false
+     ],
+     [
+      "hit from behind",
+      12.35,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_9d8fca3b",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +13.90 s",
+    "atfault_exit": true,
+    "window_end_rel": 13.900000000000002,
+    "events": [
+     [
+      "front collision",
+      13.9,
+      true
+     ],
+     [
+      "side collision",
+      14.15,
+      false
+     ],
+     [
+      "front collision",
+      15.95,
+      false
+     ],
+     [
+      "hit from behind",
+      16.45,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "a32549eb",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_a32549eb",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.3,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_a32549eb",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +6.00 s",
+    "atfault_exit": false,
+    "window_end_rel": 5.999999999999999,
+    "events": [
+     [
+      "off-road",
+      6.0,
+      true
+     ],
+     [
+      "off-road",
+      8.35,
+      false
+     ],
+     [
+      "front collision",
+      10.2,
+      false
+     ],
+     [
+      "hit from behind",
+      10.25,
+      false
+     ],
+     [
+      "off-road",
+      13.3,
+      false
+     ],
+     [
+      "front collision",
+      13.35,
+      false
+     ],
+     [
+      "off-road",
+      14.1,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "c438a779",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_c438a779",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +8.25 s",
+    "atfault_exit": true,
+    "window_end_rel": 8.25,
+    "events": [
+     [
+      "front collision",
+      8.25,
+      true
+     ],
+     [
+      "hit from behind",
+      8.5,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_c438a779",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +13.50 s",
+    "atfault_exit": true,
+    "window_end_rel": 13.5,
+    "events": [
+     [
+      "front collision",
+      13.5,
+      true
+     ],
+     [
+      "hit from behind",
+      15.25,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "dd0f84df",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_dd0f84df",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.75,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_dd0f84df",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "e883822a",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_e883822a",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.35,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_e883822a",
+    "score": 0.9914595391650068,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   }
+  },
+  {
+   "scene": "f005ac5f",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_f005ac5f",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "hit from behind at +12.50 s",
+    "atfault_exit": false,
+    "window_end_rel": 12.5,
+    "events": [
+     [
+      "hit from behind",
+      12.5,
+      true
+     ],
+     [
+      "front collision",
+      14.9,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_f005ac5f",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "hit from behind at +12.20 s",
+    "atfault_exit": false,
+    "window_end_rel": 12.2,
+    "events": [
+     [
+      "hit from behind",
+      12.2,
+      true
+     ],
+     [
+      "front collision",
+      13.9,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "f3a87e7a",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_f3a87e7a",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.3,
+    "events": []
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_f3a87e7a",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.900000000000002,
+    "events": []
+   }
+  },
+  {
+   "scene": "f890fe10",
+   "block": "20",
+   "carry": {
+    "run": "{local_store}/runs/new40/runs/memory_carry_f890fe10",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +7.90 s",
+    "atfault_exit": false,
+    "window_end_rel": 5.05,
+    "events": [
+     [
+      "off-road",
+      7.9,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{local_store}/runs/new40/018bp06/runs/drivejepa_018bp06_f890fe10",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "e3ed554f",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_e3ed554f",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_e3ed554f",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "8023dce5",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_8023dce5",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +6.30 s",
+    "atfault_exit": true,
+    "window_end_rel": 6.3,
+    "events": [
+     [
+      "front collision",
+      6.3,
+      true
+     ],
+     [
+      "side collision",
+      10.25,
+      false
+     ],
+     [
+      "off-road",
+      13.75,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_8023dce5",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +6.90 s",
+    "atfault_exit": true,
+    "window_end_rel": 6.8999999999999995,
+    "events": [
+     [
+      "front collision",
+      6.9,
+      true
+     ],
+     [
+      "hit from behind",
+      12.6,
+      false
+     ],
+     [
+      "front collision",
+      12.85,
+      false
+     ],
+     [
+      "side collision",
+      15.6,
+      false
+     ],
+     [
+      "hit from behind",
+      16.0,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "5f064b02",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_5f064b02",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_5f064b02",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   }
+  },
+  {
+   "scene": "e121e37d",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_e121e37d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.650000000000002,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_e121e37d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.2,
+    "events": []
+   }
+  },
+  {
+   "scene": "048b974e",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_048b974e",
+    "score": 0.9480636585278862,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_048b974e",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.35,
+    "events": []
+   }
+  },
+  {
+   "scene": "cdd9448c",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_cdd9448c",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.600000000000001,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_cdd9448c",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   }
+  },
+  {
+   "scene": "d2715023",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_d2715023",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 11.600000000000001,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_d2715023",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.7,
+    "events": []
+   }
+  },
+  {
+   "scene": "bd07fb91",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_bd07fb91",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +5.85 s",
+    "atfault_exit": true,
+    "window_end_rel": 5.8500000000000005,
+    "events": [
+     [
+      "front collision",
+      5.85,
+      true
+     ],
+     [
+      "hit from behind",
+      6.1,
+      false
+     ],
+     [
+      "off-road",
+      7.35,
+      false
+     ],
+     [
+      "front collision",
+      7.45,
+      false
+     ],
+     [
+      "side collision",
+      7.55,
+      false
+     ],
+     [
+      "hit from behind",
+      7.65,
+      false
+     ],
+     [
+      "off-road",
+      13.15,
+      false
+     ],
+     [
+      "off-road",
+      13.7,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_bd07fb91",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +6.95 s",
+    "atfault_exit": true,
+    "window_end_rel": 6.95,
+    "events": [
+     [
+      "front collision",
+      6.95,
+      true
+     ],
+     [
+      "hit from behind",
+      7.4,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "bae463d3",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_bae463d3",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_bae463d3",
+    "score": 0.3798913518187078,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   }
+  },
+  {
+   "scene": "d1a25a99",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_d1a25a99",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +5.80 s",
+    "atfault_exit": false,
+    "window_end_rel": 5.8,
+    "events": [
+     [
+      "off-road",
+      5.8,
+      true
+     ],
+     [
+      "hit from behind",
+      10.15,
+      false
+     ],
+     [
+      "front collision",
+      10.75,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_d1a25a99",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +6.95 s",
+    "atfault_exit": false,
+    "window_end_rel": 6.95,
+    "events": [
+     [
+      "off-road",
+      6.95,
+      true
+     ],
+     [
+      "hit from behind",
+      9.7,
+      false
+     ],
+     [
+      "front collision",
+      10.3,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "b1b170d0",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_b1b170d0",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 12.95,
+    "events": []
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_b1b170d0",
+    "score": 0.7233949078404465,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 8.100000000000001,
+    "events": []
+   }
+  },
+  {
+   "scene": "04749bb9",
+   "block": "12",
+   "carry": {
+    "run": "{experiment_store}/runs/cl12/runs/memory_carry_04749bb9",
+    "score": 0.7071092600962864,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +6.90 s",
+    "atfault_exit": false,
+    "window_end_rel": 6.3999999999999995,
+    "events": [
+     [
+      "off-road",
+      6.9,
+      false
+     ],
+     [
+      "off-road",
+      13.2,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{retrain_store}/018b/closed_loop/runs/drivejepa_018bp06_04749bb9",
+    "score": 0.0,
+    "atfault_window": true,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +12.40 s",
+    "atfault_exit": true,
+    "window_end_rel": 12.399999999999999,
+    "events": [
+     [
+      "front collision",
+      12.4,
+      true
+     ],
+     [
+      "side collision",
+      13.2,
+      false
+     ],
+     [
+      "hit from behind",
+      13.25,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "01d503d4",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_01d503d4",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 12.95,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_01d503d4",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.5,
+    "events": []
+   }
+  },
+  {
+   "scene": "023b7fcc",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_023b7fcc",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.2,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_023b7fcc",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.0,
+    "events": []
+   }
+  },
+  {
+   "scene": "0245ff75",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_0245ff75",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +15.75 s",
+    "atfault_exit": true,
+    "window_end_rel": 13.75,
+    "events": [
+     [
+      "front collision",
+      15.75,
+      false
+     ],
+     [
+      "hit from behind",
+      16.45,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_0245ff75",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.55,
+    "events": []
+   }
+  },
+  {
+   "scene": "026d6a39",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_026d6a39",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +11.20 s",
+    "atfault_exit": false,
+    "window_end_rel": 7.249999999999999,
+    "events": [
+     [
+      "off-road",
+      11.2,
+      false
+     ],
+     [
+      "hit from behind",
+      12.05,
+      false
+     ],
+     [
+      "off-road",
+      13.35,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_026d6a39",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "at-fault collision (side) at +14.55 s",
+    "atfault_exit": true,
+    "window_end_rel": 7.8500000000000005,
+    "events": [
+     [
+      "side collision",
+      14.55,
+      false
+     ],
+     [
+      "front collision",
+      14.95,
+      false
+     ],
+     [
+      "off-road",
+      15.1,
+      false
+     ],
+     [
+      "side collision",
+      15.7,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "02e075b9",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_02e075b9",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 14.850000000000001,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_02e075b9",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.0,
+    "events": []
+   }
+  },
+  {
+   "scene": "02eadd92",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_02eadd92",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_02eadd92",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "032b6f21",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_032b6f21",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "at-fault collision (front) at +15.50 s",
+    "atfault_exit": true,
+    "window_end_rel": 12.5,
+    "events": [
+     [
+      "front collision",
+      15.5,
+      false
+     ],
+     [
+      "hit from behind",
+      16.05,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_032b6f21",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.5,
+    "events": []
+   }
+  },
+  {
+   "scene": "04394343",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_04394343",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +11.65 s",
+    "atfault_exit": false,
+    "window_end_rel": 11.149999999999999,
+    "events": [
+     [
+      "off-road",
+      11.65,
+      false
+     ],
+     [
+      "off-road",
+      12.15,
+      false
+     ],
+     [
+      "off-road",
+      12.45,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_04394343",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "16b83346",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_16b83346",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +11.65 s",
+    "atfault_exit": false,
+    "window_end_rel": 5.7,
+    "events": [
+     [
+      "off-road",
+      11.65,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_16b83346",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "off-road at +14.15 s",
+    "atfault_exit": false,
+    "window_end_rel": 6.1499999999999995,
+    "events": [
+     [
+      "off-road",
+      14.15,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "1acf2f5d",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_1acf2f5d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 12.350000000000001,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_1acf2f5d",
+    "score": 0.8349994739634087,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "2e1ce314",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_2e1ce314",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.400000000000002,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_2e1ce314",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 15.8,
+    "events": []
+   }
+  },
+  {
+   "scene": "6725df2d",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_6725df2d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 11.149999999999999,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_6725df2d",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 11.95,
+    "events": []
+   }
+  },
+  {
+   "scene": "71d7d03b",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_71d7d03b",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 12.95,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_71d7d03b",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.2,
+    "events": []
+   }
+  },
+  {
+   "scene": "791d68ce",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_791d68ce",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +-3.21 s",
+    "atfault_exit": false,
+    "window_end_rel": 0.0,
+    "events": [
+     [
+      "off-road",
+      -3.21,
+      true
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_791d68ce",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +-3.21 s",
+    "atfault_exit": false,
+    "window_end_rel": 0.0,
+    "events": [
+     [
+      "off-road",
+      -3.21,
+      true
+     ],
+     [
+      "off-road",
+      13.3,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "89f2eeb8",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_89f2eeb8",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 13.900000000000002,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_89f2eeb8",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.85,
+    "events": []
+   }
+  },
+  {
+   "scene": "98dd56b2",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_98dd56b2",
+    "score": 1.0,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.3,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_98dd56b2",
+    "score": 0.7910238638455896,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "hit from behind at +12.60 s",
+    "atfault_exit": false,
+    "window_end_rel": 12.600000000000001,
+    "events": [
+     [
+      "hit from behind",
+      12.6,
+      true
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "acd22430",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_acd22430",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +4.70 s",
+    "atfault_exit": false,
+    "window_end_rel": 4.7,
+    "events": [
+     [
+      "off-road",
+      4.7,
+      true
+     ],
+     [
+      "front collision",
+      4.9,
+      false
+     ],
+     [
+      "side collision",
+      5.45,
+      false
+     ],
+     [
+      "hit from behind",
+      5.55,
+      false
+     ],
+     [
+      "off-road",
+      9.6,
+      false
+     ],
+     [
+      "front collision",
+      10.15,
+      false
+     ],
+     [
+      "side collision",
+      10.55,
+      false
+     ],
+     [
+      "hit from behind",
+      10.6,
+      false
+     ]
+    ]
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_acd22430",
+    "score": 0.0,
+    "atfault_window": false,
+    "offroad_window": true,
+    "exit": "off-road at +7.00 s",
+    "atfault_exit": false,
+    "window_end_rel": 6.999999999999999,
+    "events": [
+     [
+      "off-road",
+      7.0,
+      true
+     ],
+     [
+      "front collision",
+      8.8,
+      false
+     ],
+     [
+      "side collision",
+      9.5,
+      false
+     ],
+     [
+      "hit from behind",
+      9.65,
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "scene": "b44a4a44",
+   "block": "18",
+   "carry": {
+    "run": "{experiment_store}/runs/cl18/runs/memory_carry_b44a4a44",
+    "score": 0.9567805616209321,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   },
+   "018b": {
+    "run": "{experiment_store}/runs/cl18/018bp06/runs/drivejepa_018bp06_b44a4a44",
+    "score": 0.8516240147056068,
+    "atfault_window": false,
+    "offroad_window": false,
+    "exit": "pass",
+    "atfault_exit": false,
+    "window_end_rel": 16.8,
+    "events": []
+   }
+  }
+ ]
+}

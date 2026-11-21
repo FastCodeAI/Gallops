@@ -1,0 +1,825 @@
+{
+ "started": "2026-11-11 11:15:10",
+ "version": 3,
+ "env_patch": {
+  "applied": true,
+  "was": "{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "72897 MiB, 97887 MiB, 4 %",
+ "loadavg": [
+  "89.33",
+  "67.55",
+  "48.35"
+ ],
+ "avail_ram_gb": 66.9,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "pass_plan": {
+  "windows": 8576,
+  "duplicated_event_windows": 898,
+  "clips_skipped_no_16_run": 57,
+  "clips_used": 3958,
+  "steps": 4288,
+  "moments_per_pass": 137216
+ },
+ "t2_warm": [
+  {
+   "recall": 0.6704010367393494,
+   "recall_raw": 0.3352005183696747,
+   "recall_2s": 0.33095985651016235,
+   "recall_4s": 0.341561496257782,
+   "recall_n": 40,
+   "recall_forward_s": 0.0011,
+   "loss": 2.8690285682678223,
+   "generator": 0.5213398337364197,
+   "grade": 0.0,
+   "human": 1.6772876977920532,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 0.42,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8977468609809875,
+    0.8447058200836182,
+    0.7864574790000916,
+    0.7365251779556274,
+    0.6837589740753174,
+    0.6264967918395996,
+    0.5768916606903076,
+    0.5164370536804199,
+    0.471133291721344,
+    0.41460955142974854,
+    0.359829306602478,
+    0.31050583720207214,
+    0.26162007451057434,
+    0.2008427381515503,
+    0.1481757014989853,
+    0.09726530313491821
+   ],
+   "M_norm_last": 63.05672073364258,
+   "M_read_max_abs": 3.7139551639556885,
+   "M_after_first_moment_norm": 60.57421112060547,
+   "M_read_max_dev_from_start": 4.987995147705078,
+   "M_after_first_moment_dev_from_start_norm": 26.109561920166016,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.12,
+   "step_s": 0.544,
+   "data_wait_s": 0.041
+  },
+  {
+   "recall": 0.7467890977859497,
+   "recall_raw": 0.37339454889297485,
+   "recall_2s": 0.3712388873100281,
+   "recall_4s": 0.376628041267395,
+   "recall_n": 40,
+   "recall_forward_s": 0.0024,
+   "loss": 3.6248130798339844,
+   "generator": 1.0533500909805298,
+   "grade": 0.24094747006893158,
+   "human": 1.5094412565231323,
+   "collision": 0.07300364226102829,
+   "drivable": 0.0012818166287615895,
+   "map_rows": 24,
+   "zeroed_targets": 85,
+   "pull_rows": 0,
+   "grade_wait_s": 6.38,
+   "forward_s": 4.014,
+   "index_s": 0.023,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8995643258094788,
+    0.8459510207176208,
+    0.7903487682342529,
+    0.7389558553695679,
+    0.6856323480606079,
+    0.6314932107925415,
+    0.5823466181755066,
+    0.5220672488212585,
+    0.4735815227031708,
+    0.41687607765197754,
+    0.36210739612579346,
+    0.31309774518013,
+    0.2627609968185425,
+    0.20430734753608704,
+    0.15029644966125488,
+    0.09798824042081833
+   ],
+   "M_norm_last": 62.80758285522461,
+   "M_read_max_abs": 3.675307512283325,
+   "M_after_first_moment_norm": 58.65104675292969,
+   "M_read_max_dev_from_start": 5.238962173461914,
+   "M_after_first_moment_dev_from_start_norm": 26.854307174682617,
+   "grade_rows_submitted": 24,
+   "backward_s": 0.201,
+   "step_s": 10.872,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.7459969520568848,
+   "recall_raw": 0.3729984760284424,
+   "recall_2s": 0.3701135814189911,
+   "recall_4s": 0.37732577323913574,
+   "recall_n": 40,
+   "recall_forward_s": 0.0023,
+   "loss": 4.2636871337890625,
+   "generator": 1.0338807106018066,
+   "grade": 0.6404134631156921,
+   "human": 1.8415184020996094,
+   "collision": 0.0009786902228370309,
+   "drivable": 0.0008988264598883688,
+   "map_rows": 12,
+   "zeroed_targets": 24,
+   "pull_rows": 0,
+   "grade_wait_s": 0.566,
+   "forward_s": 3.622,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8981400728225708,
+    0.8439543843269348,
+    0.7877870202064514,
+    0.7361343502998352,
+    0.6823933720588684,
+    0.6271851062774658,
+    0.5782795548439026,
+    0.5189380645751953,
+    0.46818679571151733,
+    0.4155293405056,
+    0.36052578687667847,
+    0.30995917320251465,
+    0.2616380751132965,
+    0.2030802071094513,
+    0.1498701423406601,
+    0.09775286167860031
+   ],
+   "M_norm_last": 62.39210510253906,
+   "M_read_max_abs": 3.579007387161255,
+   "M_after_first_moment_norm": 58.56256103515625,
+   "M_read_max_dev_from_start": 4.922341346740723,
+   "M_after_first_moment_dev_from_start_norm": 28.091005325317383,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.15,
+   "step_s": 4.861,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.678963840007782,
+   "recall_raw": 0.339481920003891,
+   "recall_2s": 0.3401881158351898,
+   "recall_4s": 0.3384226858615875,
+   "recall_n": 40,
+   "recall_forward_s": 0.0126,
+   "loss": 3.2209415435791016,
+   "generator": 0.8028432130813599,
+   "grade": 0.2918640673160553,
+   "human": 1.446269154548645,
+   "collision": 0.00025589586584828794,
+   "drivable": 0.0007453145808540285,
+   "map_rows": 12,
+   "zeroed_targets": 70,
+   "pull_rows": 0,
+   "grade_wait_s": 0.576,
+   "forward_s": 6.166,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8977369070053101,
+    0.8433608412742615,
+    0.7881746888160706,
+    0.7355211973190308,
+    0.6815661787986755,
+    0.626831591129303,
+    0.5746292471885681,
+    0.519274115562439,
+    0.46786004304885864,
+    0.4133109748363495,
+    0.3588443994522095,
+    0.30728012323379517,
+    0.2607424259185791,
+    0.2013227939605713,
+    0.14835844933986664,
+    0.09648063778877258
+   ],
+   "M_norm_last": 62.308006286621094,
+   "M_read_max_abs": 3.5602972507476807,
+   "M_after_first_moment_norm": 57.35086441040039,
+   "M_read_max_dev_from_start": 5.1660475730896,
+   "M_after_first_moment_dev_from_start_norm": 34.214752197265625,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.139,
+   "step_s": 7.08,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.5706815719604492,
+   "recall_raw": 0.2853407859802246,
+   "recall_2s": 0.2916662096977234,
+   "recall_4s": 0.2758527100086212,
+   "recall_n": 40,
+   "recall_forward_s": 0.0014,
+   "loss": 2.8129777908325195,
+   "generator": 0.5955095291137695,
+   "grade": 0.0,
+   "human": 1.6467865705490112,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 0.266,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8979920148849487,
+    0.8433176279067993,
+    0.7872624397277832,
+    0.736178457736969,
+    0.6817809343338013,
+    0.6259147524833679,
+    0.5750282406806946,
+    0.5193314552307129,
+    0.46783503890037537,
+    0.4135141670703888,
+    0.3577311635017395,
+    0.3062513470649719,
+    0.26020222902297974,
+    0.1995169222354889,
+    0.14694803953170776,
+    0.09642405807971954
+   ],
+   "M_norm_last": 62.71990203857422,
+   "M_read_max_abs": 3.6432714462280273,
+   "M_after_first_moment_norm": 61.975887298583984,
+   "M_read_max_dev_from_start": 4.974738121032715,
+   "M_after_first_moment_dev_from_start_norm": 20.692447662353516,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.122,
+   "step_s": 0.392,
+   "data_wait_s": 0.0
+  }
+ ],
+ "t3_carry_M_after_first_moment_norm": [
+  60.57421112060547,
+  58.65104675292969,
+  58.56256103515625,
+  57.35086441040039,
+  61.975887298583984
+ ],
+ "t2_batch": {
+  "map_rows": 0,
+  "clips": [
+   "11c7e716-7d86-464e-9fab-2f79bb68db35",
+   "f5fd97f9-6e38-4346-83ec-1f60d93af96b"
+  ]
+ },
+ "t2_routing": {
+  "table": {
+   "generator": {
+    "generator": "yes",
+    "generator_lookup": "yes",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes",
+    "read_out": "no"
+   },
+   "grade": "no graph (lesson is a constant 0 on this batch)",
+   "human": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "yes",
+    "scorer_summary": "yes",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes",
+    "read_out": "no"
+   },
+   "collision": "no graph (lesson is a constant 0 on this batch)",
+   "drivable": "no graph (lesson is a constant 0 on this batch)",
+   "recall": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes",
+    "read_out": "yes"
+   }
+  },
+  "expected": {
+   "generator": [
+    "generator",
+    "generator_lookup",
+    "start_state",
+    "update_block"
+   ],
+   "grade": [
+    "rating_head",
+    "scorer_summary",
+    "start_state",
+    "update_block"
+   ],
+   "human": [
+    "rating_head",
+    "scorer_summary",
+    "start_state",
+    "update_block"
+   ],
+   "collision": [
+    "collision_head"
+   ],
+   "drivable": [
+    "drivable_head"
+   ],
+   "recall": [
+    "read_out",
+    "start_state",
+    "update_block"
+   ]
+  },
+  "mismatches": [
+   "grade: no map rows in the batch",
+   "collision: no map rows in the batch",
+   "drivable: no map rows in the batch"
+  ],
+  "pass": false,
+  "detail": {
+   "generator": {
+    "generator": {
+     "nonzero_tensors": 41,
+     "tensors": 41,
+     "any": true
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 8,
+     "tensors": 8,
+     "any": true
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    },
+    "read_out": {
+     "nonzero_tensors": 0,
+     "tensors": 16,
+     "any": false
+    }
+   },
+   "grade": {
+    "no_graph": true
+   },
+   "human": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 11,
+     "tensors": 11,
+     "any": true
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 9,
+     "tensors": 9,
+     "any": true
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    },
+    "read_out": {
+     "nonzero_tensors": 0,
+     "tensors": 16,
+     "any": false
+    }
+   },
+   "collision": {
+    "no_graph": true
+   },
+   "drivable": {
+    "no_graph": true
+   },
+   "recall": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    },
+    "read_out": {
+     "nonzero_tensors": 16,
+     "tensors": 16,
+     "any": true
+    }
+   }
+  }
+ },
+ "t3_warm": [
+  {
+   "recall": 0.6704010367393494,
+   "recall_raw": 0.3352005183696747,
+   "recall_2s": 0.33095985651016235,
+   "recall_4s": 0.341561496257782,
+   "recall_n": 40,
+   "recall_forward_s": 0.0012,
+   "loss": 2.8690285682678223,
+   "generator": 0.5213398337364197,
+   "grade": 0.0,
+   "human": 1.6772876977920532,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 0.516,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.898921012878418,
+    0.8446191549301147,
+    0.7907224893569946,
+    0.7419480085372925,
+    0.6855231523513794,
+    0.6337840557098389,
+    0.5768308639526367,
+    0.5164244174957275,
+    0.47721901535987854,
+    0.41902145743370056,
+    0.36051005125045776,
+    0.3081386089324951,
+    0.26237618923187256,
+    0.2011338323354721,
+    0.15001049637794495,
+    0.09844640642404556
+   ],
+   "M_norm_last": 60.542213439941406,
+   "M_read_max_abs": 3.5601537227630615,
+   "M_after_first_moment_norm": 60.57421112060547,
+   "M_read_max_dev_from_start": 0.0,
+   "M_after_first_moment_dev_from_start_norm": 26.109561920166016,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.118,
+   "step_s": 0.639,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.7466923594474792,
+   "recall_raw": 0.3733461797237396,
+   "recall_2s": 0.37120065093040466,
+   "recall_4s": 0.37656447291374207,
+   "recall_n": 40,
+   "recall_forward_s": 0.0023,
+   "loss": 3.635164260864258,
+   "generator": 1.063570261001587,
+   "grade": 0.24077554047107697,
+   "human": 1.508933424949646,
+   "collision": 0.0739138126373291,
+   "drivable": 0.0012789625907316804,
+   "map_rows": 24,
+   "zeroed_targets": 85,
+   "pull_rows": 0,
+   "grade_wait_s": 10.025,
+   "forward_s": 4.206,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8985735774040222,
+    0.8452852964401245,
+    0.7898074984550476,
+    0.7405638098716736,
+    0.6866059303283691,
+    0.6358599066734314,
+    0.5789716243743896,
+    0.5165022015571594,
+    0.47854501008987427,
+    0.41885069012641907,
+    0.3604634404182434,
+    0.30927446484565735,
+    0.2627044916152954,
+    0.20215433835983276,
+    0.15044620633125305,
+    0.09834612905979156
+   ],
+   "M_norm_last": 58.2188720703125,
+   "M_read_max_abs": 3.5601537227630615,
+   "M_after_first_moment_norm": 58.64990234375,
+   "M_read_max_dev_from_start": 0.0,
+   "M_after_first_moment_dev_from_start_norm": 26.855331420898438,
+   "grade_rows_submitted": 24,
+   "backward_s": 0.199,
+   "step_s": 14.537,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.7466587424278259,
+   "recall_raw": 0.37332937121391296,
+   "recall_2s": 0.37043333053588867,
+   "recall_4s": 0.3776734173297882,
+   "recall_n": 40,
+   "recall_forward_s": 0.0018,
+   "loss": 4.216512203216553,
+   "generator": 1.0223915576934814,
+   "grade": 0.6371546983718872,
+   "human": 1.8084230422973633,
+   "collision": 0.0009855784010142088,
+   "drivable": 0.0008982880972325802,
+   "map_rows": 12,
+   "zeroed_targets": 24,
+   "pull_rows": 0,
+   "grade_wait_s": 1.873,
+   "forward_s": 3.432,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8987102508544922,
+    0.8441789150238037,
+    0.7914121150970459,
+    0.7407912015914917,
+    0.684686005115509,
+    0.6372888684272766,
+    0.5777389407157898,
+    0.5170626640319824,
+    0.47466641664505005,
+    0.41587531566619873,
+    0.36006009578704834,
+    0.308341920375824,
+    0.2620464265346527,
+    0.20271369814872742,
+    0.15014436841011047,
+    0.09862964600324631
+   ],
+   "M_norm_last": 58.37413024902344,
+   "M_read_max_abs": 3.560079336166382,
+   "M_after_first_moment_norm": 58.56287384033203,
+   "M_read_max_dev_from_start": 0.0,
+   "M_after_first_moment_dev_from_start_norm": 28.429500579833984,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.198,
+   "step_s": 5.543,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.6787622570991516,
+   "recall_raw": 0.3393811285495758,
+   "recall_2s": 0.3400878310203552,
+   "recall_4s": 0.33832111954689026,
+   "recall_n": 40,
+   "recall_forward_s": 0.0012,
+   "loss": 3.2455599308013916,
+   "generator": 0.813744068145752,
+   "grade": 0.30458319187164307,
+   "human": 1.4474636316299438,
+   "collision": 0.0002557095140218735,
+   "drivable": 0.0007511093281209469,
+   "map_rows": 12,
+   "zeroed_targets": 68,
+   "pull_rows": 0,
+   "grade_wait_s": 0.593,
+   "forward_s": 2.236,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8999525904655457,
+    0.8446357250213623,
+    0.7928822040557861,
+    0.7433207035064697,
+    0.6868664026260376,
+    0.641696572303772,
+    0.5785682797431946,
+    0.52170330286026,
+    0.476265549659729,
+    0.41672131419181824,
+    0.36233481764793396,
+    0.3099021315574646,
+    0.26212579011917114,
+    0.20398974418640137,
+    0.1513744294643402,
+    0.09930761158466339
+   ],
+   "M_norm_last": 57.31459045410156,
+   "M_read_max_abs": 3.560032844543457,
+   "M_after_first_moment_norm": 57.1368408203125,
+   "M_read_max_dev_from_start": 0.0,
+   "M_after_first_moment_dev_from_start_norm": 35.887718200683594,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.178,
+   "step_s": 3.051,
+   "data_wait_s": 0.0
+  },
+  {
+   "recall": 0.5708918571472168,
+   "recall_raw": 0.2854459285736084,
+   "recall_2s": 0.29176634550094604,
+   "recall_4s": 0.27596527338027954,
+   "recall_n": 40,
+   "recall_forward_s": 0.0009,
+   "loss": 2.753994941711426,
+   "generator": 0.5575265884399414,
+   "grade": 0.0,
+   "human": 1.625576376914978,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 0.325,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.9010978937149048,
+    0.8445440530776978,
+    0.7948781251907349,
+    0.7469522953033447,
+    0.6876615881919861,
+    0.6447676420211792,
+    0.5801897048950195,
+    0.5231926441192627,
+    0.4750106632709503,
+    0.4195505976676941,
+    0.3643572926521301,
+    0.3124108612537384,
+    0.26205068826675415,
+    0.20426839590072632,
+    0.1519944965839386,
+    0.10040425509214401
+   ],
+   "M_norm_last": 59.85987854003906,
+   "M_read_max_abs": 3.560049533843994,
+   "M_after_first_moment_norm": 61.89147186279297,
+   "M_read_max_dev_from_start": 0.0,
+   "M_after_first_moment_dev_from_start_norm": 21.221336364746094,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.11,
+   "step_s": 0.439,
+   "data_wait_s": 0.0
+  }
+ ],
+ "t3_carry_M_after_first_moment_dev_from_start_norm": [
+  26.109561920166016,
+  26.854307174682617,
+  28.091005325317383,
+  34.214752197265625,
+  20.692447662353516
+ ],
+ "t3_wiped": {
+  "M_read_max_abs_per_step": [
+   3.5601537227630615,
+   3.5601537227630615,
+   3.560079336166382,
+   3.560032844543457,
+   3.560049533843994,
+   3.560086727142334
+  ],
+  "M_read_max_dev_from_start_per_step": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "M_equals_start_at_every_read": true,
+  "M_zero_at_every_read": false,
+  "update_block_grad_after_5_steps": {
+   "tensors": 27,
+   "none": 27,
+   "all_zero_or_none": true
+  },
+  "other_groups_grad": {
+   "generator": true,
+   "generator_lookup": true,
+   "rating_head": true,
+   "scorer_summary": true,
+   "collision_head": false,
+   "drivable_head": false,
+   "update_block": false,
+   "start_state": true,
+   "read_out": false
+  },
+  "pass": true,
+  "update_block_grad_from_recall_alone": {
+   "tensors": 27,
+   "nonzero_tensors": 27,
+   "grad_norm": 0.0034634063486009836,
+   "any": true,
+   "M0_reached": true,
+   "other_groups_reached": []
+  },
+  "update_block_grad_without_recall": {
+   "tensors": 27,
+   "none": 27,
+   "all_zero_or_none": true
+  }
+ },
+ "ended": "2026-11-11 11:16:01",
+ "gpu_peak_alloc_gb": 3.415170669555664
+}

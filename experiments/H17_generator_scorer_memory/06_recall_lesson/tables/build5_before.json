@@ -1,0 +1,462 @@
+{
+ "started": "2026-11-11 20:29:19",
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "gate": {
+  "load5": 21.9,
+  "avail_ram_gb": 59.1
+ },
+ "build4_step930": {
+  "checkpoint": "{experiment_store}/runs/build4_short/ckpt/step0930.pt",
+  "version": 2,
+  "measures": {
+   "tag": "build4_step930",
+   "clips": 84,
+   "ref_norm_M0": 64.00689697265625,
+   "carried": {
+    "clips": 84,
+    "moments": 2591,
+    "moments_after_warmup": 1705,
+    "cos_read_mean": 0.44169051212387,
+    "cos_new_mean": 0.45813345345409034,
+    "gate_mean_per_slot": [
+     0.5531104803085327,
+     0.386686772108078,
+     0.3037211298942566,
+     0.25528791546821594,
+     0.21720390021800995,
+     0.17746122181415558,
+     0.14081645011901855,
+     0.13701710104942322,
+     0.11596003919839859,
+     0.07960467040538788,
+     0.07199840247631073,
+     0.052629921585321426,
+     0.08242033421993256,
+     0.046964045614004135,
+     0.029060622677206993,
+     0.02153218351304531
+    ],
+    "gate_min": 0.02153218351304531,
+    "gate_median": 0.1264885663986206,
+    "gate_max": 0.5531104803085327,
+    "slots_gate_ge_0.05": 13,
+    "gate_max_over_min": 25.6876163482666,
+    "memory_change_per_moment": 0.042456347399727166,
+    "memory_change_median": 0.036248717457056046,
+    "M_read_norm_mean": 59.36625938974867,
+    "finite_all": true,
+    "non_finite_moments": 0,
+    "between_clip_cos_mean": 0.8477567434310913,
+    "between_clip_clips": 84,
+    "ref_norm": 64.00689697265625,
+    "abs_change_per_moment": 2.509448814007544,
+    "abs_change_over_ref": 0.03920591268593415,
+    "norm_over_ref": 0.9274978509754963,
+    "gate_mean": 0.16696719941683114,
+    "recall_2s": null,
+    "recall_2s_n": 0,
+    "recall_4s": null,
+    "recall_4s_n": 0,
+    "between_clip_cos_mean_removed": 0.04350453242659569,
+    "replay_s": 518.8
+   },
+   "reset": {
+    "clips": 84,
+    "moments": 2591,
+    "moments_after_warmup": 1705,
+    "cos_read_mean": 4.196167355985381e-05,
+    "cos_new_mean": 0.023820237191038922,
+    "gate_mean_per_slot": [
+     0.876192569732666,
+     0.7445272207260132,
+     0.5926253199577332,
+     0.58766770362854,
+     0.5010650753974915,
+     0.3952033221721649,
+     0.29451003670692444,
+     0.3452454209327698,
+     0.2188614159822464,
+     0.1408960074186325,
+     0.1359030306339264,
+     0.07803750038146973,
+     0.17620253562927246,
+     0.07437767088413239,
+     0.04612983390688896,
+     0.030309835448861122
+    ],
+    "gate_min": 0.030309835448861122,
+    "gate_median": 0.256685733795166,
+    "gate_max": 0.876192569732666,
+    "slots_gate_ge_0.05": 14,
+    "gate_max_over_min": 28.90786361694336,
+    "memory_change_per_moment": 0.3440709928263667,
+    "memory_change_median": 0.3671453297138214,
+    "M_read_norm_mean": 64.00689697265625,
+    "finite_all": true,
+    "non_finite_moments": 0,
+    "between_clip_cos_mean": 0.973421573638916,
+    "between_clip_clips": 84,
+    "ref_norm": 64.00689697265625,
+    "abs_change_per_moment": 22.022916866537415,
+    "abs_change_over_ref": 0.3440709971605967,
+    "norm_over_ref": 1.0,
+    "gate_mean": 0.3273596562212333,
+    "recall_2s": null,
+    "recall_2s_n": 0,
+    "recall_4s": null,
+    "recall_4s_n": 0,
+    "between_clip_cos_mean_removed": 0.032409895211458206,
+    "replay_s": 186.3
+   },
+   "probe": {
+    "2s": {
+     "samples": 1705,
+     "now_only": {
+      "lam": 1.0,
+      "mse": 0.6488780569980346,
+      "r2": 0.42223229091465686
+     },
+     "carried": {
+      "lam": 1.0,
+      "mse": 0.6017799521589946,
+      "r2": 0.4641689288416748
+     },
+     "reset": {
+      "lam": 1.0,
+      "mse": 0.6484744826651522,
+      "r2": 0.42259163765976626
+     },
+     "gap": 0.07200673542966357
+    },
+    "4s": {
+     "samples": 1420,
+     "now_only": {
+      "lam": 10.0,
+      "mse": 0.8591213619879422,
+      "r2": 0.22553710132804528
+     },
+     "carried": {
+      "lam": 1.0,
+      "mse": 0.7303389496423845,
+      "r2": 0.3416291981795577
+     },
+     "reset": {
+      "lam": 10.0,
+      "mse": 0.8636585938139888,
+      "r2": 0.22144697172887462
+     },
+     "gap": 0.1543661408877477
+    }
+   },
+   "recall_gap": {
+    "2s": null,
+    "4s": null
+   },
+   "read_norms": {
+    "generator_read_out_proj_weight_norm": 0.2740972340106964,
+    "generator_read_out_proj_bias_norm": 0.010713784955441952,
+    "rating_head_new_columns_norm": 1.059002161026001,
+    "M0_norm": 64.00689697265625,
+    "M0_row_norm_mean": 16.001724243164062,
+    "M0_pairwise_cos_mean": 4.196167355985381e-05,
+    "gate_bias": [
+     2.185168743133545,
+     1.7049983739852905,
+     1.335805892944336,
+     1.0360654592514038,
+     0.7743964791297913,
+     0.537909209728241,
+     0.316585510969162,
+     0.09740176796913147,
+     -0.12558281421661377,
+     -0.3322311341762543,
+     -0.5546665191650391,
+     -0.797646164894104,
+     -1.052281379699707,
+     -1.3584202527999878,
+     -1.7159503698349,
+     -2.2028470039367676
+    ],
+    "gate_bias_sigmoid": [
+     0.8989097476005554,
+     0.8461863994598389,
+     0.7917994260787964,
+     0.7380900979042053,
+     0.6844711899757385,
+     0.631325900554657,
+     0.5784918665885925,
+     0.5243312120437622,
+     0.46864548325538635,
+     0.41769787669181824,
+     0.3647824227809906,
+     0.31052926182746887,
+     0.25878724455833435,
+     0.20449717342853546,
+     0.15239351987838745,
+     0.09949512034654617
+    ],
+    "gate_weight_norm": 0.16594895720481873
+   }
+  },
+  "pick_grade_from_its_own_check": 0.749567985534668,
+  "rule": {
+   "values": {
+    "a": 0.44169051212387,
+    "b": 0.07200673542966357,
+    "c": 0.1543661408877477,
+    "d": 0.03920591268593415,
+    "e": 0.9274978509754963,
+    "f": {
+     "gate_mean": 0.16696719941683114,
+     "slots_ge_0.05": 13,
+     "max_over_min": 25.68761686307521,
+     "min": 0.02153218351304531,
+     "median": 0.1264885701239109,
+     "max": 0.5531104803085327
+    },
+    "g_non_finite_moments": 0,
+    "h": 0.749567985534668
+   },
+   "conditions": {
+    "a_slots_alike": true,
+    "b_recall_2s": true,
+    "c_recall_4s": true,
+    "d_abs_change": true,
+    "e_norm": true,
+    "f_gate": true,
+    "g_finite": true,
+    "h_pick_grade": true
+   },
+   "failed": [],
+   "pass": true,
+   "rule": {
+    "a_cos_read_max": 0.9,
+    "b_recall_2s_min": 0.05,
+    "c_recall_4s_min": 0.06,
+    "d_abs_change_min": 0.025,
+    "e_norm_ratio_min": 0.5,
+    "f_gate_mean_min": 0.1,
+    "f_gate_slots_min": 8,
+    "f_gate_slot_floor": 0.05,
+    "f_gate_ratio_min": 3.0,
+    "h_pick_grade_min": 0.74
+   },
+   "recall_source": "linear probe (no trained read-out in this checkpoint)"
+  }
+ },
+ "pilot_step930": {
+  "checkpoint": "{experiment_store}/runs/pilot_seed0/carry/ckpt/p00.2.pt",
+  "version": 1,
+  "measures": {
+   "tag": "pilot_step930",
+   "clips": 84,
+   "ref_norm_M0": 64.0,
+   "carried": {
+    "clips": 84,
+    "moments": 2591,
+    "moments_after_warmup": 1705,
+    "cos_read_mean": 0.9999771316729683,
+    "cos_new_mean": 0.9999797783988662,
+    "gate_mean_per_slot": [
+     0.0166818518191576,
+     0.01669013872742653,
+     0.016693389043211937,
+     0.01668744906783104,
+     0.01669793389737606,
+     0.016690125688910484,
+     0.01668412610888481,
+     0.016691815108060837,
+     0.016692781820893288,
+     0.01669246144592762,
+     0.016690023243427277,
+     0.01668625697493553,
+     0.016686266288161278,
+     0.01669527404010296,
+     0.016691360622644424,
+     0.016696013510227203
+    ],
+    "gate_min": 0.0166818518191576,
+    "gate_median": 0.016690749675035477,
+    "gate_max": 0.01669793389737606,
+    "slots_gate_ge_0.05": 0,
+    "gate_max_over_min": 1.0009640455245972,
+    "memory_change_per_moment": 0.0570158044935977,
+    "memory_change_median": 0.037380579859018326,
+    "M_read_norm_mean": 18.538598810402878,
+    "finite_all": true,
+    "non_finite_moments": 0,
+    "between_clip_cos_mean": 0.9502876400947571,
+    "between_clip_clips": 84,
+    "ref_norm": 64.0,
+    "abs_change_per_moment": 0.7889694812360747,
+    "abs_change_over_ref": 0.012327648144313667,
+    "norm_over_ref": 0.28966560641254496,
+    "gate_mean": 0.01669045421294868,
+    "recall_2s": null,
+    "recall_2s_n": 0,
+    "recall_4s": null,
+    "recall_4s_n": 0,
+    "between_clip_cos_mean_removed": 0.007431194186210632,
+    "replay_s": 189.9
+   },
+   "reset": {
+    "clips": 84,
+    "moments": 2591,
+    "moments_after_warmup": 1705,
+    "cos_read_mean": null,
+    "cos_new_mean": 0.9997461926552558,
+    "gate_mean_per_slot": [
+     0.03392545506358147,
+     0.034068766981363297,
+     0.034174129366874695,
+     0.033834878355264664,
+     0.034128181636333466,
+     0.03385515138506889,
+     0.03403669223189354,
+     0.03418225049972534,
+     0.03413648158311844,
+     0.03418157249689102,
+     0.033949945122003555,
+     0.0336994007229805,
+     0.033712197095155716,
+     0.034131404012441635,
+     0.033898040652275085,
+     0.03435664623975754
+    ],
+    "gate_min": 0.0336994007229805,
+    "gate_median": 0.03405272960662842,
+    "gate_max": 0.03435664623975754,
+    "slots_gate_ge_0.05": 0,
+    "gate_max_over_min": 1.0195032358169556,
+    "memory_change_per_moment": null,
+    "memory_change_median": null,
+    "M_read_norm_mean": 0.0,
+    "finite_all": true,
+    "non_finite_moments": 0,
+    "between_clip_cos_mean": 0.8730852603912354,
+    "between_clip_clips": 84,
+    "ref_norm": 64.0,
+    "abs_change_per_moment": 2.1788823108868867,
+    "abs_change_over_ref": 0.034045036107607604,
+    "norm_over_ref": 0.0,
+    "gate_mean": 0.03401694959029555,
+    "recall_2s": null,
+    "recall_2s_n": 0,
+    "recall_4s": null,
+    "recall_4s_n": 0,
+    "between_clip_cos_mean_removed": 0.03972843289375305,
+    "replay_s": 18.2
+   },
+   "probe": {
+    "2s": {
+     "samples": 1705,
+     "now_only": {
+      "lam": 1.0,
+      "mse": 0.6488780569980346,
+      "r2": 0.42223229091465686
+     },
+     "carried": {
+      "lam": 1.0,
+      "mse": 0.6231442084406124,
+      "r2": 0.4451459748751796
+     },
+     "reset": {
+      "lam": 1.0,
+      "mse": 0.6553737465741092,
+      "r2": 0.416448461973575
+     },
+     "gap": 0.04917734087148444
+    },
+    "4s": {
+     "samples": 1420,
+     "now_only": {
+      "lam": 10.0,
+      "mse": 0.8591213619879422,
+      "r2": 0.22553710132804528
+     },
+     "carried": {
+      "lam": 1.0,
+      "mse": 0.7708404832640102,
+      "r2": 0.3051187160554919
+     },
+     "reset": {
+      "lam": 10.0,
+      "mse": 0.8668016317904057,
+      "r2": 0.21861365107180308
+     },
+     "gap": 0.11070716183146165
+    }
+   },
+   "recall_gap": {
+    "2s": null,
+    "4s": null
+   },
+   "read_norms": {
+    "generator_read_out_proj_weight_norm": 0.22146791219711304,
+    "generator_read_out_proj_bias_norm": 0.0189417265355587,
+    "rating_head_new_columns_norm": 0.7131537199020386
+   }
+  },
+  "pick_grade_from_its_own_check": 0.7526414394378662,
+  "rule": {
+   "values": {
+    "a": 0.9999771316729683,
+    "b": 0.04917734087148444,
+    "c": 0.11070716183146165,
+    "d": 0.012327648144313667,
+    "e": 0.28966560641254496,
+    "f": {
+     "gate_mean": 0.01669045421294868,
+     "slots_ge_0.05": 0,
+     "max_over_min": 1.0009640463416651,
+     "min": 0.0166818518191576,
+     "median": 0.016690749675035477,
+     "max": 0.01669793389737606
+    },
+    "g_non_finite_moments": 0,
+    "h": 0.7526414394378662
+   },
+   "conditions": {
+    "a_slots_alike": false,
+    "b_recall_2s": false,
+    "c_recall_4s": true,
+    "d_abs_change": false,
+    "e_norm": false,
+    "f_gate": false,
+    "g_finite": true,
+    "h_pick_grade": true
+   },
+   "failed": [
+    "a_slots_alike",
+    "b_recall_2s",
+    "d_abs_change",
+    "e_norm",
+    "f_gate"
+   ],
+   "pass": false,
+   "rule": {
+    "a_cos_read_max": 0.9,
+    "b_recall_2s_min": 0.05,
+    "c_recall_4s_min": 0.06,
+    "d_abs_change_min": 0.025,
+    "e_norm_ratio_min": 0.5,
+    "f_gate_mean_min": 0.1,
+    "f_gate_slots_min": 8,
+    "f_gate_slot_floor": 0.05,
+    "f_gate_ratio_min": 3.0,
+    "h_pick_grade_min": 0.74
+   },
+   "recall_source": "linear probe (no trained read-out in this checkpoint)"
+  }
+ },
+ "ended": "2026-11-11 20:45:08"
+}

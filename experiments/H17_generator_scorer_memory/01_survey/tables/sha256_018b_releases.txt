@@ -1,0 +1,7 @@
+3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66  release/drive_jepa_018b_p06.ckpt
+7469b45dbd09c8d9ea60fe56130214a94fb6f703716dc1a59d0c88f91d692657  release/drive_jepa_018b_p02.ckpt
+ff50947eb24d5d7edcfbac46aa2c69729315ec036729f96e65a0867873d907fe  release/drive_jepa_018b_p10.ckpt
+
+real	14m8.656s
+user	0m1.523s
+sys	0m0.889s

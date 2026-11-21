@@ -1,0 +1,502 @@
+{
+ "started": "2026-11-09 21:58:09",
+ "env_patch": {
+  "applied": true,
+  "was": "{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "34543 MiB, 97887 MiB, 99 %",
+ "loadavg": [
+  "5.52",
+  "5.31",
+  "6.59"
+ ],
+ "avail_ram_gb": 83.1,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "t2_warm": [
+  {
+   "loss": 2.198627471923828,
+   "generator": 0.5213398337364197,
+   "grade": 0.0,
+   "human": 1.6772876977920532,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 2.801,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125,
+    0.46075439453125
+   ],
+   "M_norm_last": 63.527198791503906,
+   "M_read_max_abs": 3.1844067573547363,
+   "M_after_first_moment_norm": 40.62480926513672,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.65,
+   "step_s": 3.697,
+   "data_wait_s": 1.155
+  },
+  {
+   "loss": 2.898139715194702,
+   "generator": 1.0562373399734497,
+   "grade": 0.23950093984603882,
+   "human": 1.5265158414840698,
+   "collision": 0.07460404932498932,
+   "drivable": 0.0012814566725865006,
+   "map_rows": 24,
+   "zeroed_targets": 85,
+   "pull_rows": 0,
+   "grade_wait_s": 37.82,
+   "forward_s": 2.185,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125,
+    0.50567626953125
+   ],
+   "M_norm_last": 63.84368133544922,
+   "M_read_max_abs": 2.8758034706115723,
+   "M_after_first_moment_norm": 37.12482833862305,
+   "grade_rows_submitted": 24,
+   "backward_s": 0.092,
+   "step_s": 40.194,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 3.5230565071105957,
+   "generator": 1.0350037813186646,
+   "grade": 0.6495671272277832,
+   "human": 1.8365812301635742,
+   "collision": 0.0010027328971773386,
+   "drivable": 0.0009015835821628571,
+   "map_rows": 12,
+   "zeroed_targets": 24,
+   "pull_rows": 0,
+   "grade_wait_s": 0.861,
+   "forward_s": 2.407,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875,
+    0.46258544921875
+   ],
+   "M_norm_last": 63.99794006347656,
+   "M_read_max_abs": 2.9129719734191895,
+   "M_after_first_moment_norm": 37.50086212158203,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.091,
+   "step_s": 3.472,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 2.5193612575531006,
+   "generator": 0.7658854126930237,
+   "grade": 0.2951928377151489,
+   "human": 1.4572635889053345,
+   "collision": 0.0002629666414577514,
+   "drivable": 0.000756360066588968,
+   "map_rows": 12,
+   "zeroed_targets": 68,
+   "pull_rows": 0,
+   "grade_wait_s": 0.295,
+   "forward_s": 1.731,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375,
+    0.43988037109375
+   ],
+   "M_norm_last": 63.80852127075195,
+   "M_read_max_abs": 3.1618247032165527,
+   "M_after_first_moment_norm": 35.87562561035156,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.098,
+   "step_s": 2.274,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 2.3735084533691406,
+   "generator": 0.6971122026443481,
+   "grade": 0.0,
+   "human": 1.676396369934082,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 0.446,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125,
+    0.3770751953125
+   ],
+   "M_norm_last": 63.151329040527344,
+   "M_read_max_abs": 2.8086745738983154,
+   "M_after_first_moment_norm": 37.12584686279297,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.077,
+   "step_s": 0.528,
+   "data_wait_s": 0.0
+  }
+ ],
+ "t2_batch": {
+  "index": 130,
+  "map_rows": 24,
+  "clips": [
+   "7cba46df-8fb1-4d73-a8f2-9d3a1db75718",
+   "00097de1-5ded-4fba-a5ed-4b527678d1b0"
+  ]
+ },
+ "t2_routing": {
+  "table": {
+   "generator": {
+    "generator": "yes",
+    "generator_lookup": "yes",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes"
+   },
+   "grade": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "yes",
+    "scorer_summary": "yes",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes"
+   },
+   "human": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "yes",
+    "scorer_summary": "yes",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes"
+   },
+   "collision": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "yes",
+    "drivable_head": "no",
+    "update_block": "no"
+   },
+   "drivable": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "yes",
+    "update_block": "no"
+   }
+  },
+  "expected": {
+   "generator": [
+    "generator",
+    "generator_lookup",
+    "update_block"
+   ],
+   "grade": [
+    "rating_head",
+    "scorer_summary",
+    "update_block"
+   ],
+   "human": [
+    "rating_head",
+    "scorer_summary",
+    "update_block"
+   ],
+   "collision": [
+    "collision_head"
+   ],
+   "drivable": [
+    "drivable_head"
+   ]
+  },
+  "mismatches": [],
+  "pass": true,
+  "detail": {
+   "generator": {
+    "generator": {
+     "nonzero_tensors": 41,
+     "tensors": 41,
+     "any": true
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 4,
+     "tensors": 8,
+     "any": true
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 26,
+     "tensors": 26,
+     "any": true
+    }
+   },
+   "grade": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 11,
+     "tensors": 11,
+     "any": true
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 4,
+     "tensors": 9,
+     "any": true
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 26,
+     "tensors": 26,
+     "any": true
+    }
+   },
+   "human": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 11,
+     "tensors": 11,
+     "any": true
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 4,
+     "tensors": 9,
+     "any": true
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 26,
+     "tensors": 26,
+     "any": true
+    }
+   },
+   "collision": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 10,
+     "tensors": 10,
+     "any": true
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 0,
+     "tensors": 26,
+     "any": false
+    }
+   },
+   "drivable": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 10,
+     "tensors": 10,
+     "any": true
+    },
+    "update_block": {
+     "nonzero_tensors": 0,
+     "tensors": 26,
+     "any": false
+    }
+   }
+  }
+ },
+ "ended": "2026-11-09 21:59:11"
+}

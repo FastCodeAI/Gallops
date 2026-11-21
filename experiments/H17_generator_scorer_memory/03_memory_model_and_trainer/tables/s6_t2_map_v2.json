@@ -1,0 +1,546 @@
+{
+ "started": "2026-11-11 03:51:05",
+ "version": 2,
+ "env_patch": {
+  "applied": true,
+  "was": "{paddock_sid}/Alpasim/adapters/drivejepa/src/navsim_v2"
+ },
+ "gpu_before": "69040 MiB, 97887 MiB, 100 %",
+ "loadavg": [
+  "37.96",
+  "39.78",
+  "40.41"
+ ],
+ "avail_ram_gb": 50.1,
+ "affinity": [
+  0,
+  1
+ ],
+ "nice": 19,
+ "seed": 0,
+ "agent": {
+  "init_checkpoint": "{retrain_store}/018b/release/drive_jepa_018b_p06.ckpt",
+  "sha256": "3d566eb211b5ce0f556680196a46fc0a74da29091ae62ac588910a48d62b8e66",
+  "tensors": 495,
+  "loaded_equal": "495/495",
+  "batch_fix": {
+   "tsa": 1,
+   "sca": 1
+  }
+ },
+ "t2_warm": [
+  {
+   "loss": 2.198627471923828,
+   "generator": 0.5213398337364197,
+   "grade": 0.0,
+   "human": 1.6772876977920532,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 7.703,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8977468609809875,
+    0.8447058200836182,
+    0.7864574790000916,
+    0.7365251779556274,
+    0.6837589740753174,
+    0.6264967918395996,
+    0.5768916606903076,
+    0.5164370536804199,
+    0.471133291721344,
+    0.41460955142974854,
+    0.359829306602478,
+    0.31050583720207214,
+    0.26162007451057434,
+    0.2008427381515503,
+    0.1481757014989853,
+    0.09726530313491821
+   ],
+   "M_norm_last": 63.05672073364258,
+   "M_read_max_abs": 3.7139551639556885,
+   "M_after_first_moment_norm": 60.57421112060547,
+   "M_read_max_dev_from_start": 4.987995147705078,
+   "M_after_first_moment_dev_from_start_norm": 26.109561920166016,
+   "grade_rows_submitted": 0,
+   "backward_s": 2.096,
+   "step_s": 10.301,
+   "data_wait_s": 2.913
+  },
+  {
+   "loss": 2.8853564262390137,
+   "generator": 1.0618093013763428,
+   "grade": 0.24037085473537445,
+   "human": 1.5090078115463257,
+   "collision": 0.0728871077299118,
+   "drivable": 0.0012812040513381362,
+   "map_rows": 24,
+   "zeroed_targets": 85,
+   "pull_rows": 0,
+   "grade_wait_s": 102.207,
+   "forward_s": 3.379,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8995802402496338,
+    0.8459619283676147,
+    0.790388286113739,
+    0.7389896512031555,
+    0.6856418251991272,
+    0.6315804719924927,
+    0.5824103355407715,
+    0.5221037864685059,
+    0.4735870957374573,
+    0.41690343618392944,
+    0.3620877265930176,
+    0.313102126121521,
+    0.26275843381881714,
+    0.20431187748908997,
+    0.15030816197395325,
+    0.09799918532371521
+   ],
+   "M_norm_last": 62.80708312988281,
+   "M_read_max_abs": 3.6732258796691895,
+   "M_after_first_moment_norm": 58.64754867553711,
+   "M_read_max_dev_from_start": 5.239524841308594,
+   "M_after_first_moment_dev_from_start_norm": 26.85878562927246,
+   "grade_rows_submitted": 24,
+   "backward_s": 1.298,
+   "step_s": 107.972,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 3.53712797164917,
+   "generator": 1.0414046049118042,
+   "grade": 0.6432706713676453,
+   "human": 1.8505779504776,
+   "collision": 0.0009790341136977077,
+   "drivable": 0.00089598773047328,
+   "map_rows": 12,
+   "zeroed_targets": 24,
+   "pull_rows": 0,
+   "grade_wait_s": 0.989,
+   "forward_s": 7.289,
+   "index_s": 0.004,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8981199264526367,
+    0.8440279960632324,
+    0.787717342376709,
+    0.7360031604766846,
+    0.6824143528938293,
+    0.6269547939300537,
+    0.5780938863754272,
+    0.5187256932258606,
+    0.4682238698005676,
+    0.4154475927352905,
+    0.36045897006988525,
+    0.309813529253006,
+    0.26149696111679077,
+    0.2030734270811081,
+    0.1499081254005432,
+    0.0977322906255722
+   ],
+   "M_norm_last": 62.13422393798828,
+   "M_read_max_abs": 3.5777266025543213,
+   "M_after_first_moment_norm": 58.521095275878906,
+   "M_read_max_dev_from_start": 5.128212928771973,
+   "M_after_first_moment_dev_from_start_norm": 28.098934173583984,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.174,
+   "step_s": 9.321,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 2.6536660194396973,
+   "generator": 0.8637126684188843,
+   "grade": 0.3125183880329132,
+   "human": 1.4764328002929688,
+   "collision": 0.00025320553686469793,
+   "drivable": 0.0007491596043109894,
+   "map_rows": 12,
+   "zeroed_targets": 58,
+   "pull_rows": 0,
+   "grade_wait_s": 0.282,
+   "forward_s": 6.763,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8982316851615906,
+    0.8441646099090576,
+    0.7897205352783203,
+    0.737612247467041,
+    0.6831396818161011,
+    0.6284596920013428,
+    0.5767902135848999,
+    0.5212319493293762,
+    0.4703208804130554,
+    0.41432011127471924,
+    0.35982057452201843,
+    0.30904561281204224,
+    0.25954097509384155,
+    0.2017975002527237,
+    0.14932671189308167,
+    0.09606023877859116
+   ],
+   "M_norm_last": 62.344268798828125,
+   "M_read_max_abs": 3.5602965354919434,
+   "M_after_first_moment_norm": 57.30614471435547,
+   "M_read_max_dev_from_start": 5.163424968719482,
+   "M_after_first_moment_dev_from_start_norm": 34.23303985595703,
+   "grade_rows_submitted": 12,
+   "backward_s": 0.188,
+   "step_s": 7.755,
+   "data_wait_s": 0.0
+  },
+  {
+   "loss": 2.3404901027679443,
+   "generator": 0.6646576523780823,
+   "grade": 0.0,
+   "human": 1.6758323907852173,
+   "collision": 0.0,
+   "drivable": 0.0,
+   "map_rows": 0,
+   "zeroed_targets": 0,
+   "pull_rows": 0,
+   "grade_wait_s": 0.0,
+   "forward_s": 5.398,
+   "index_s": 0.0,
+   "finite": true,
+   "gate_mean_per_slot": [
+    0.8979543447494507,
+    0.8440343141555786,
+    0.7889851331710815,
+    0.7370057106018066,
+    0.6828965544700623,
+    0.6274014711380005,
+    0.5766075253486633,
+    0.5199423432350159,
+    0.46947264671325684,
+    0.4144613742828369,
+    0.3597148656845093,
+    0.30860286951065063,
+    0.2592955231666565,
+    0.20127859711647034,
+    0.14832715690135956,
+    0.09537971764802933
+   ],
+   "M_norm_last": 62.58201599121094,
+   "M_read_max_abs": 3.56032133102417,
+   "M_after_first_moment_norm": 61.873138427734375,
+   "M_read_max_dev_from_start": 4.775577545166016,
+   "M_after_first_moment_dev_from_start_norm": 21.116701126098633,
+   "grade_rows_submitted": 0,
+   "backward_s": 0.175,
+   "step_s": 5.66,
+   "data_wait_s": 0.0
+  }
+ ],
+ "t2_batch": {
+  "index": 130,
+  "map_rows": 24,
+  "clips": [
+   "7cba46df-8fb1-4d73-a8f2-9d3a1db75718",
+   "00097de1-5ded-4fba-a5ed-4b527678d1b0"
+  ]
+ },
+ "t2_routing": {
+  "table": {
+   "generator": {
+    "generator": "yes",
+    "generator_lookup": "yes",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes"
+   },
+   "grade": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "yes",
+    "scorer_summary": "yes",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes"
+   },
+   "human": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "yes",
+    "scorer_summary": "yes",
+    "collision_head": "no",
+    "drivable_head": "no",
+    "update_block": "yes",
+    "start_state": "yes"
+   },
+   "collision": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "yes",
+    "drivable_head": "no",
+    "update_block": "no",
+    "start_state": "no"
+   },
+   "drivable": {
+    "generator": "no",
+    "generator_lookup": "no",
+    "rating_head": "no",
+    "scorer_summary": "no",
+    "collision_head": "no",
+    "drivable_head": "yes",
+    "update_block": "no",
+    "start_state": "no"
+   }
+  },
+  "expected": {
+   "generator": [
+    "generator",
+    "generator_lookup",
+    "start_state",
+    "update_block"
+   ],
+   "grade": [
+    "rating_head",
+    "scorer_summary",
+    "start_state",
+    "update_block"
+   ],
+   "human": [
+    "rating_head",
+    "scorer_summary",
+    "start_state",
+    "update_block"
+   ],
+   "collision": [
+    "collision_head"
+   ],
+   "drivable": [
+    "drivable_head"
+   ]
+  },
+  "mismatches": [],
+  "pass": true,
+  "detail": {
+   "generator": {
+    "generator": {
+     "nonzero_tensors": 41,
+     "tensors": 41,
+     "any": true
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 8,
+     "tensors": 8,
+     "any": true
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    }
+   },
+   "grade": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 11,
+     "tensors": 11,
+     "any": true
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 9,
+     "tensors": 9,
+     "any": true
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    }
+   },
+   "human": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 11,
+     "tensors": 11,
+     "any": true
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 9,
+     "tensors": 9,
+     "any": true
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 27,
+     "tensors": 27,
+     "any": true
+    },
+    "start_state": {
+     "nonzero_tensors": 1,
+     "tensors": 1,
+     "any": true
+    }
+   },
+   "collision": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 10,
+     "tensors": 10,
+     "any": true
+    },
+    "drivable_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "update_block": {
+     "nonzero_tensors": 0,
+     "tensors": 27,
+     "any": false
+    },
+    "start_state": {
+     "nonzero_tensors": 0,
+     "tensors": 1,
+     "any": false
+    }
+   },
+   "drivable": {
+    "generator": {
+     "nonzero_tensors": 0,
+     "tensors": 41,
+     "any": false
+    },
+    "generator_lookup": {
+     "nonzero_tensors": 0,
+     "tensors": 8,
+     "any": false
+    },
+    "rating_head": {
+     "nonzero_tensors": 0,
+     "tensors": 11,
+     "any": false
+    },
+    "scorer_summary": {
+     "nonzero_tensors": 0,
+     "tensors": 9,
+     "any": false
+    },
+    "collision_head": {
+     "nonzero_tensors": 0,
+     "tensors": 10,
+     "any": false
+    },
+    "drivable_head": {
+     "nonzero_tensors": 10,
+     "tensors": 10,
+     "any": true
+    },
+    "update_block": {
+     "nonzero_tensors": 0,
+     "tensors": 27,
+     "any": false
+    },
+    "start_state": {
+     "nonzero_tensors": 0,
+     "tensors": 1,
+     "any": false
+    }
+   }
+  }
+ },
+ "ended": "2026-11-11 03:53:57"
+}

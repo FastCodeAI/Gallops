@@ -1,0 +1,80 @@
+{
+ "scenes_run": {
+  "carry": 12,
+  "reset": 12,
+  "018bp06": 12,
+  "017": 12
+ },
+ "means": {
+  "carry": 0.7212644098853477,
+  "reset": 0.5176780753773079,
+  "018bp06": 0.5919405216382628,
+  "017": 0.6741928301129771
+ },
+ "offline_pick_grade": {
+  "build5_carried": 0.7313,
+  "build5_reset": 0.7355,
+  "018b_pass_0.6": 0.7685
+ },
+ "carry_minus_reset": 0.20358633450803976,
+ "atfault_carry": [
+  "8023dce5",
+  "bd07fb91"
+ ],
+ "atfault_reset": [
+  "8023dce5",
+  "bd07fb91",
+  "04749bb9"
+ ],
+ "atfault_carry_not_reset": [],
+ "atfault_reset_not_carry": [
+  "04749bb9"
+ ],
+ "offroad_carry": [
+  "d1a25a99",
+  "04749bb9"
+ ],
+ "offroad_reset": [
+  "d1a25a99"
+ ],
+ "scenes_differ_gt_0.1": [
+  [
+   "5f064b02",
+   1.0,
+   0.172
+  ],
+  [
+   "bae463d3",
+   1.0,
+   0.04
+  ],
+  [
+   "04749bb9",
+   0.707,
+   0.0
+  ]
+ ],
+ "picked_differently_pct": {
+  "carry_run": {
+   "scorer_pick_all_calls": 17.307692307692307,
+   "final_pick_all_calls": 16.025641025641026,
+   "scorer_pick_after_handover": 19.19191919191919,
+   "final_pick_after_handover": 17.67676767676768,
+   "calls": 468,
+   "calls_after_handover": 396
+  },
+  "reset_run": {
+   "scorer_pick_all_calls": 19.444444444444443,
+   "final_pick_all_calls": 19.017094017094017,
+   "scorer_pick_after_handover": 21.717171717171716,
+   "final_pick_after_handover": 20.707070707070706,
+   "calls": 468,
+   "calls_after_handover": 396
+  }
+ },
+ "chain_resets_total": {
+  "carry": 0,
+  "reset": 0
+ },
+ "verdict": "memory helps in closed loop"
+}
