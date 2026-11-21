@@ -24,12 +24,15 @@ the scorer pick better paths than the same model with the memory wiped at every 
 mean grade of the picked path on the picking set, and at least +0.01 on moments within 5 s after a cut-in, a \
 crossing or a hard brake. Refuted if the carried memory does not beat the wiped one."""
 predictions = "none: the rule for each run was written before it started (file times and run logs agree) but in a folder outside git, so no commit date shows it"
-learned = """Camera memory gave no gain in closed loop over 50 scenes: 0.7464 against the starting model's \
-0.7574 on AlpaSim's scene score, one drive per scene. Its early lead came from the 12 scenes that had been looked \
-at first (+0.129 there); on the 18 others it was +0.027, and on 20 scenes never looked at before it was -0.129, \
-against by the rule written beforehand, with two at-fault crashes inside the score window that the starting model \
-does not have. The memory car drifted 4 m from the human path sooner, on 16 of those 20 scenes. The car's own \
-motion history is the stronger signal (the next experiment). Offline the picture was the same: camera memory has \
+learned = """In closed loop the memory model gave no gain over the starting model across 50 scenes: 0.7464 \
+against 0.7574 on AlpaSim's scene score, one drive per scene. Its lead was on the 12 scenes that had been looked \
+at first (+0.129 there; that choosing them made the lead is argued); on the 18 others it was +0.027, and on 20 \
+scenes never looked at before it was -0.129, against by the rule written beforehand, with two at-fault crashes \
+inside the score window that the starting model does not have. On those 20 its score window closed earlier on 16: \
+on 8 by reaching 4 m from the human path clearly sooner, on 6 by a crash or leaving the road, on 2 by 0.1 s or \
+less. The only closed-loop test of the memory itself, the same weights with the memory reset every call, ran on \
+the 12 scenes and favoured the carried memory (0.7213 against 0.5177); the 18 and the 20 had no reset drive. \
+Offline the picture was the same: camera memory has \
 a low ceiling on this data, as far as a linear reader of pooled camera views can see. With a healthy memory (slots distinct, gates open, earlier views recalled), carrying it gave a pick \
 grade of 0.7313 against 0.7355 with the same weights and the memory reset every moment, on 1,131 graded \
 moments (-0.0042, 95 % interval -0.0103 to +0.0012): no gain. The first training run's gap in favour of the \

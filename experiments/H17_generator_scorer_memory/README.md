@@ -66,7 +66,8 @@ AV dataset. Its own record is not in this repository yet, so it is pinned here b
 ### In closed loop
 
 AlpaSim's standard scene score (0 to 1): the score window ends at the first crash or off-road, or when the
-car is 4 m from the human path. One drive per scene. "Starting model" is Drive-JEPA 0.1.8b pass 0.6.
+car is 4 m from the human path. A drive scores 1 once it covers 80 % of the human path's progress inside
+the window. One drive per scene. "Starting model" is Drive-JEPA 0.1.8b pass 0.6.
 
 | Scenes | Starting model | Memory carried | Gap |
 |---|---:|---:|---:|
@@ -76,15 +77,17 @@ car is 4 m from the human path. One drive per scene. "Starting model" is Drive-J
 | 12 diagnosis scenes, looked at before | 0.5919 | 0.7213 | +0.129 |
 
 - **Over 50 scenes the memory gives no gain.** 7 scenes won, 5 lost, 38 within 0.1.
-- **Its early lead came from the scenes looked at first.** On the 12 diagnosis scenes it was ahead by
-  0.129; on the 38 others it is behind by 0.055.
+- **Its lead was on the scenes looked at first.** On the 12 diagnosis scenes it was ahead by 0.129; on
+  the 38 others it is behind by 0.055. That choosing those scenes made the lead is argued, not shown.
 - **On the 20 new scenes the rule written beforehand says: against the memory,** on all three of its
   conditions: the gap is −0.129, it loses 5 scenes and wins 1, and it has two at-fault crashes inside the
   score window that the starting model does not (68e53160, 8fd8f4f0).
-- **The memory car drifts off the human path sooner.** Its score window closed earlier on 16 of the 20
-  new scenes, which also hides some of its later crashes and off-roads from the score.
+- **Its score window closed earlier on 16 of the 20 new scenes:** on 8 by reaching 4 m from the human
+  path clearly sooner, on 6 by a crash or leaving the road, on 2 by 0.1 s or less. An earlier close also
+  hides some of its later crashes and off-roads from the score.
 - **On the 12 scenes, carried beat reset** (0.7213 against 0.5177), and its rule said the memory helps.
-  Those were the scenes looked at first; the 18 and the 20 did not repeat it.
+  Those were the scenes looked at first, and the only ones with a reset drive: on the 18 and the 20 the
+  memory model was compared with the starting model only, so they could not test this.
 
 ### Offline
 
@@ -227,7 +230,8 @@ in its step folder's `tables/`, or in POINTERS.md if it was left out. Logs are i
 
 Run IDs: the first version of this record called the runs `H17.r1` to `H17.r4`. They are now named by what
 they did (`H17.token-cache`, `H17.carried-vs-wiped`, `H17.collapse-fix`, `H17.recall-lesson`); the checkpoints'
-template locations keep the old names (`h17-r2-carried` and so on), so they still point at the files.
+template locations keep the old names (`h17-r2-carried` and so on). Nothing sits at those template locations
+at this site; [POINTERS.md](POINTERS.md) gives where each checkpoint is.
 
 Words the reports use, and what they mean here:
 
